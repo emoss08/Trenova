@@ -23,8 +23,11 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -41,11 +44,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -125,6 +128,7 @@ class Profile(TimeStampedModel):
     """
     Profile Model
     """
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,

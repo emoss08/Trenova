@@ -30,7 +30,7 @@ UserModel: Type[AbstractBaseUser | AbstractBaseUser] = get_user_model()
 
 
 class UserBackend(ModelBackend):
-    """ User Authentication backend
+    """User Authentication backend
 
     This class is used to authenticate users using their user id. Returns the user object if the user is authenticated.
     Along with related profile, title and organization objects.
