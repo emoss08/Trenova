@@ -1,0 +1,101 @@
+# -*- coding: utf-8 -*-
+"""
+COPYRIGHT 2022 MONTA
+
+This file is part of Monta.
+
+Monta is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Monta is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+from typing import final
+
+from django.db import models  # type: ignore
+from django.urls import reverse  # type: ignore
+from django.utils.translation import gettext_lazy as _  # type: ignore
+from django_extensions.db.models import TimeStampedModel  # type: ignore
+
+from organization.models import Organization
+
+
+@final
+class IntegrationChoices(models.TextChoices):
+    """
+    Integration Choices
+    """
+
+    GOOGLE_MAPS = "google_maps", _("Google Maps")
+    GOOGLE_PLACES = "google_places", _("Google Places")
+
+
+class Integration(TimeStampedModel):
+    """
+    Integration Model Fields
+    """
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="integrations",
+    )
+    is_active = models.BooleanField(
+        _("Is Active"), default=False, help_text=_("Is the integration active?")
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        choices=IntegrationChoices.choices,
+    )
+    api_key = models.CharField(
+        _("API Key"),
+        max_length=255,
+        help_text=_("API Key"),
+        null=True,
+        blank=True,
+    )
+    client_id = models.CharField(
+        _("Client ID"),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+    client_secret = models.CharField(
+        _("Client Secret"),
+        max_length=255,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for Integration
+        """
+
+        verbose_name = _("Integration")
+        verbose_name_plural = _("Integrations")
+        ordering: list[str] = ["name"]
+        indexes: list[models.Index] = [
+            models.Index(fields=["name"]),
+        ]
+
+    def __str__(self) -> str:
+        """
+        Returns: String representation of the Integration
+        """
+        return self.name
+
+    def get_absolute_url(self) -> str:
+        """
+        Returns: Absolute URL for the Integration
+        """
+        return reverse("integration_detail", kwargs={"pk": self.pk})
