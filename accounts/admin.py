@@ -26,15 +26,19 @@ from django.contrib.admin.options import IS_POPUP_VAR, csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.admin import sensitive_post_parameters_m
-from django.contrib.auth.forms import (AdminPasswordChangeForm, UserChangeForm,
-                                       UserCreationForm)
+from django.contrib.auth.forms import (
+    AdminPasswordChangeForm,
+    UserChangeForm,
+    UserCreationForm,
+)
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from accounts import models
 
@@ -105,7 +109,6 @@ class UserAdmin(admin.ModelAdmin):
 
         Returns:
             fieldsets
-
         """
         if not obj:
             return self.add_fieldsets
@@ -135,12 +138,12 @@ class UserAdmin(admin.ModelAdmin):
             list[URLPattern]: urls for user admin
         """
         return [
-                   path(
-                       "<id>/password/",
-                       self.admin_site.admin_view(self.user_change_password),
-                       name="auth_user_password_change",
-                   ),
-               ] + super().get_urls()
+            path(
+                "<id>/password/",
+                self.admin_site.admin_view(self.user_change_password),
+                name="auth_user_password_change",
+            ),
+        ] + super().get_urls()
 
     def lookup_allowed(self, lookup: str, value: str) -> bool:
         """Allow lookup for username
@@ -159,7 +162,9 @@ class UserAdmin(admin.ModelAdmin):
 
     @sensitive_post_parameters_m
     @csrf_protect_m
-    def add_view(self, request: HttpRequest, form_url: str = "", extra_context: Any = None) -> HttpResponse:
+    def add_view(
+        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+    ) -> HttpResponse:
         """The 'add' admin view for this model.
 
         Args:
@@ -174,7 +179,7 @@ class UserAdmin(admin.ModelAdmin):
             return self._add_view(request, form_url, extra_context)
 
     def _add_view(self, request, form_url="", extra_context=None) -> HttpResponse:
-        # It's an error for a user to have add permission but NOT change
+        # It's an error for a user to have added permission but NOT change
         # permission for users. If we allowed such users to add users, they
         # could create superusers, which would mean they would essentially have
         # the permission to change users. To avoid the problem entirely, we
@@ -202,7 +207,19 @@ class UserAdmin(admin.ModelAdmin):
         return super().add_view(request, form_url, extra_context)
 
     @sensitive_post_parameters_m
-    def user_change_password(self, request, id, form_url="") -> HttpResponseRedirect | TemplateResponse:
+    def user_change_password(
+        self, request: HttpRequest, id: int, form_url: str = ""
+    ) -> HttpResponseRedirect | TemplateResponse:
+        """Allow a user to change their password from the admin.
+
+        Args:
+            request (HttpRequest): request object
+            id (int): user id
+            form_url (str): form url
+
+        Returns:
+            HttpResponseRedirect | TemplateResponse: response
+        """
         user = self.get_object(request, unquote(id))
         if not self.has_change_permission(request, user):
             raise PermissionDenied
@@ -215,7 +232,9 @@ class UserAdmin(admin.ModelAdmin):
                 }
             )
         if request.method == "POST":
-            form: AdminPasswordChangeForm = self.change_password_form(user, request.POST)
+            form: AdminPasswordChangeForm = self.change_password_form(
+                user, request.POST
+            )
             if form.is_valid():
                 form.save()
                 change_message = self.construct_change_message(request, form, None)
