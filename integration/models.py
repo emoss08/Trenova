@@ -64,7 +64,7 @@ class Integration(TimeStampedModel):
         verbose_name=_("Organization"),
     )
     is_active = models.BooleanField(
-        _("Is Active"), default=False, help_text=_("Is the integration active?")
+        _("Is Active"), default=True, help_text=_("Is the integration active?")
     )
     name = models.CharField(
         _("Name"),
@@ -88,9 +88,9 @@ class Integration(TimeStampedModel):
         help_text=_("Login URL for the integration"),
     )
     auth_token = models.CharField(
-        _("API Key"),
+        _("Auth Token"),
         max_length=255,
-        help_text=_("API Key for the specified integration"),
+        help_text=_("Api or Bearer Token  for the specified integration"),
         null=True,
         blank=True,
     )
@@ -143,22 +143,27 @@ class Integration(TimeStampedModel):
         return self.name
 
     def clean(self) -> None:
-        """Validation for the Integrations
+        """Clean method to validate the Integration Model
 
         Returns:
             None
 
         Raises:
-            ValidationError: If the Integration is not active and the auth_type is not NO_AUTH
+            ValidationError: If the Integration is not active and the auth_type is not NO_AUTH.
         """
 
         if self.name in [
             IntegrationChoices.GOOGLE_MAPS,
             IntegrationChoices.GOOGLE_PLACES,
         ]:
-            if not self.auth_token:
+            if not self.auth_type == IntegrationAuthTypes.API_KEY:
                 raise ValidationError(
-                    {"auth_token": _("API Key is required for Google integrations.")}
+                    {
+                        "auth_type": ValidationError(
+                            _("API Key is required for Google Integrations"),
+                            code="invalid",
+                        )
+                    }
                 )
 
         if self.auth_type in [
@@ -168,17 +173,48 @@ class Integration(TimeStampedModel):
             if not self.auth_token:
                 raise ValidationError(
                     {
-                        "auth_token": _(
-                            "Auth or Bearer Token is required for this integration."
+                        "auth_token": ValidationError(
+                            _("Auth Token required for Authentication Type."),
+                            code="required",
                         )
                     }
                 )
-        elif self.auth_type == IntegrationAuthTypes.BASIC_AUTH:
+
+        if self.auth_type == IntegrationAuthTypes.BASIC_AUTH:
             if not self.username or not self.password:
                 raise ValidationError(
                     {
-                        "username": _("Username is required for this integration."),
-                        "password": _("Password is required for this integration."),
+                        "username": ValidationError(
+                            _(
+                                "Username and Password required for Authentication Type."
+                            ),
+                            code="required",
+                        ),
+                        "password": ValidationError(
+                            _(
+                                "Username and Password required for Authentication Type."
+                            ),
+                            code="required",
+                        ),
+                    }
+                )
+
+        if self.auth_type == IntegrationAuthTypes.NO_AUTH:
+            if self.auth_token or self.username or self.password:
+                raise ValidationError(
+                    {
+                        "auth_token": ValidationError(
+                            _("Auth Token not required for Authentication Type."),
+                            code="invalid",
+                        ),
+                        "username": ValidationError(
+                            _("Username not required for Authentication Type."),
+                            code="invalid",
+                        ),
+                        "password": ValidationError(
+                            _("Password not required for Authentication Type."),
+                            code="invalid",
+                        ),
                     }
                 )
 
