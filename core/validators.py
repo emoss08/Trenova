@@ -18,24 +18,34 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils.deconstruct import deconstructible
 
 
 @deconstructible
-class MinimumSizeValidator:
+class ImageSizeValidator:
     """Validate image dimensions
 
     Args:
         width (int): Width of the image.
         height (int): Height of the image.
+        less_than (bool): If True, image dimensions must be less than width and height.
+        greater_than (bool): If True, image dimensions must be greater than width and height.
     """
 
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(
+            self,
+            width: int,
+            height: int,
+            less_than: Optional[bool],
+            greater_than: Optional[bool]
+    ) -> None:
         self.width = width
         self.height = height
+        self.less_than = less_than
+        self.greater_than = greater_than
 
     def __call__(self, image: Any) -> None:
         """Validator function to validate image dimensions
@@ -50,14 +60,32 @@ class MinimumSizeValidator:
             ValidationError: If image dimension are too big for the field being validated.
         """
         error = False
-        if self.width is not None and image.width < self.width:
-            error = True
-        if self.height is not None and image.height < self.height:
-            error = True
-        if error:
-            raise ValidationError(
-                [f"Size should be at least {self.width} x {self.height} pixels."]
+
+        if self.greater_than and self.less_than:
+            raise ImproperlyConfigured(
+                f"{self.__class__.__name__} cannot be used with both "
+                "greater_than and less_than set to True."
             )
+
+        if self.less_than:
+            if self.width is not None and image.width > self.width:
+                error = True
+            if self.height is not None and image.height > self.height:
+                error = True
+            if error:
+                raise ValidationError(
+                    [f"Size should be greater than {self.width} x {self.height} pixels."]
+                )
+
+        if self.greater_than:
+            if self.width is not None and image.width < self.width:
+                error = True
+            if self.height is not None and image.height < self.height:
+                error = True
+            if error:
+                raise ValidationError(
+                    [f"Size should be less than {self.width} x {self.height} pixels."]
+                )
 
     def __eq__(self, other: Callable) -> bool:
         """Compare two validators. Inverse of __ne__.
@@ -72,6 +100,8 @@ class MinimumSizeValidator:
                 isinstance(other, self.__class__)
                 and self.width == other.width
                 and self.height == other.height
+                and self.less_than == other.less_than
+                and self.greater_than == other.greater_than
         )
 
     def __ne__(self, other: Callable) -> bool:

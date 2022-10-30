@@ -7,7 +7,6 @@ import core.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0001_initial"),
     ]
@@ -21,7 +20,7 @@ class Migration(migrations.Migration):
                 help_text="The profile picture of the user",
                 null=True,
                 upload_to="profiles/",
-                validators=[core.validators.MinimumSizeValidator(600, 600)],
+                validators=[core.validators.ImageSizeValidator(600, 600, True, False)],
                 verbose_name="Profile Picture",
             ),
         ),
