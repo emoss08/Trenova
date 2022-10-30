@@ -23,8 +23,11 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -33,6 +36,7 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 
+from core.validators import MinimumSizeValidator
 from organization.models import Organization
 
 
@@ -190,6 +194,7 @@ class Profile(TimeStampedModel):
         null=True,
         blank=True,
         help_text=_("The profile picture of the user"),
+        validators=[MinimumSizeValidator(600, 600)],
     )
     bio = models.TextField(
         _("Bio"),
