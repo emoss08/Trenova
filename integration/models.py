@@ -223,4 +223,4 @@ class Integration(TimeStampedModel):
         Returns:
             (str): Absolute URL for the Integration
         """
-        return reverse("integration:integration_detail", kwargs={"pk": self.pk})
+        return reverse("integration:detail", kwargs={"pk": self.pk})
