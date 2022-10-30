@@ -34,17 +34,16 @@ class UserBackend(ModelBackend):
 
     This class is used to authenticate users using their user id. Returns the user object if the user is authenticated.
     Along with related profile, title and organization objects.
-
     """
 
     def get_user(self, user_id: int) -> Optional[User]:
-        """
+        """Get the user object.
 
         Args:
-            user_id (int):
+            user_id (int): parameter to get the primary key of the user.
 
         Returns:
-
+            Optional[User]: Returns a user object if the user is authenticated.
         """
         try:
             user = UserModel._default_manager.select_related(

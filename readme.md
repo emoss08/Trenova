@@ -13,8 +13,8 @@ It is built on top of the Django framework and is designed to be easily extendab
 
 ## Prerequisites
 
-- Python 3.10+ (Recommended)
-    - Currently, being developed on Python 3.11.0
+- Python 3.11+
+    - No lower version supported.
 - Django 4.1.2 (Recommended)
     - Does support Django 4.0.0+
 - PostgreSQL 12+ (no plans to support other databases)
