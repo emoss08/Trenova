@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
