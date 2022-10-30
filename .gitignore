@@ -1,0 +1,12 @@
+*.pyc
+*.iml
+.gitattributes
+/.vscode/
+/.mypy_cache/
+/backend/venv/
+/.idea/
+/backend/backend/
+/venv
+.env
+.pytest_cache
+
