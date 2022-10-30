@@ -28,6 +28,7 @@ from django.contrib.auth.models import (
     BaseUserManager,
     PermissionsMixin,
 )
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -44,11 +45,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -76,6 +77,27 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
+    def create_superuser(
+            self, username: str, email: str, password: str = None, **extra_fields: Any
+    ) -> User:
+        """
+        Create and save a superuser with the given username, email and password.
+        Args:
+            username (str): Username of the user.
+            email (str): Email address of the user.
+            password (str): Password for the user.
+            **extra_fields (str): Extra fields for the user.
+        """
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError(_("Superuser must have is_staff=True."))
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError(_("Superuser must have is_superuser=True."))
+
+        return self.create_user(username, email, password, **extra_fields)
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
@@ -95,7 +117,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         help_text=_("Required. A valid email address."),
     )
-    date_joined = models.DateTimeField(_("Date Joined"), default=timezone.now)
+    is_staff = models.BooleanField(
+        _("Staff Status"),
+        default=False,
+        help_text=_("Designates whether the user can log into this admin site."),
+    )
+    date_joined = models.DateTimeField(
+        _("Date Joined"),
+        default=timezone.now
+    )
 
     objects = UserManager()
 
@@ -137,7 +167,7 @@ class Profile(TimeStampedModel):
         verbose_name=_("User"),
     )
     organization = models.ForeignKey(
-        "Organization",
+        Organization,
         on_delete=models.PROTECT,
         related_name="profiles",
         related_query_name="profile",
@@ -176,14 +206,14 @@ class Profile(TimeStampedModel):
     address_line_1 = models.CharField(
         _("Address"),
         max_length=100,
-        help_text=_("The address of the user"),
+        help_text=_("The address line 1 of the user"),
     )
     address_line_2 = models.CharField(
         _("Address Line 2"),
         max_length=100,
         null=True,
         blank=True,
-        help_text=_("The address of the user"),
+        help_text=_("The address line 2 of the user"),
     )
     city = models.CharField(
         _("City"),
@@ -192,11 +222,11 @@ class Profile(TimeStampedModel):
     )
     state = USStateField(
         _("State"),
-        help_text=_("Enter the state of the user"),
+        help_text=_("The state of the user"),
     )
     zip_code = USZipCodeField(
         _("Zip Code"),
-        help_text=_("Enter the zip code of the user"),
+        help_text=_("The zip code of the user"),
     )
     phone = models.CharField(
         _("Phone Number"),
@@ -208,7 +238,7 @@ class Profile(TimeStampedModel):
     email_verified = models.BooleanField(
         _("Email Verified"),
         default=False,
-        help_text=_("If the user has verified their email"),
+        help_text=_("User has verified their email"),
     )
 
     class Meta:
@@ -227,7 +257,20 @@ class Profile(TimeStampedModel):
         """
         Returns (str): String representation of the Profile Model
         """
-        return str(self.user.username)
+        return self.user.username
+
+    def clean(self) -> None:
+        """
+        Clean the model
+
+        Returns: None
+
+        Raises: ValidationError
+        """
+        if self.title.is_active is False:
+            raise ValidationError({
+                "title": _("You cannot assign a job title that is not active to a user."),
+            })
 
     def get_absolute_url(self) -> str:
         """
@@ -282,6 +325,11 @@ class JobTitle(TimeStampedModel):
         blank=True,
         help_text=_("Description of the job title"),
     )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("If the job title is active"),
+    )
 
     class Meta:
         """
@@ -299,7 +347,7 @@ class JobTitle(TimeStampedModel):
         """
         Returns (str): String representation of the JobTitle model
         """
-        return str(self.name)
+        return self.name
 
     def get_absolute_url(self) -> str:
         """
