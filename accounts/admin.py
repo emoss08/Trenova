@@ -35,6 +35,10 @@ class ProfileInline(admin.StackedInline):
     verbose_name_plural: str = "profiles"
     fk_name: str = "user"
     extra: int = 0
+    autocomplete_fields: tuple[str, ...] = (
+        "organization",
+        "title",
+    )
 
 
 @admin.register(models.User)
@@ -48,6 +52,7 @@ class UserAdmin(admin.ModelAdmin):
         "username",
         "email",
     )
+    search_fields = ("username", "email")
 
 
 @admin.register(models.JobTitle)
@@ -59,3 +64,5 @@ class JobTitleAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("organization", "name", "is_active", "description")}),
     )
+    search_fields = ("name",)
+    autocomplete_fields = ("organization",)
