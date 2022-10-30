@@ -42,7 +42,7 @@ def create_user(username: str, email_address: str, pass_word: str) -> User:
 
 def find_user_by_username(user_name: str) -> Optional[User]:
     """
-    filter_user_by_username _summary_
+    filter_user_by_username - Filter user by username
 
     Args:
         user_name (str): username for the user
