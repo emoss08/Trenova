@@ -39,6 +39,24 @@ class IntegrationChoices(models.TextChoices):
     GOOGLE_PLACES = "google_places", _("Google Places")
 
 
+@final
+class IntegrationAuthTypes(models.TextChoices):
+    """
+    Integration Auth Types
+    """
+    NO_AUTH = "no_auth", _("No Auth")
+    API_KEY = "api_key", _("API Key")
+    OAUTH = "oauth", _("OAuth")
+    OAUTH2 = "oauth2", _("OAuth 2.0")
+    BEARER_TOKEN = "bearer_token", _("Bearer Token")
+    BASIC_AUTH = "basic_auth", _("Basic Auth")
+    DIGEST_AUTH = "digest_auth", _("Digest Auth")
+    HAWK_AUTH = "hawk_auth", _("Hawk Auth")
+    AWS_SIG4 = "aws_sig4", _("AWS Sig4")
+    NTLM_AUTH = "ntlm_auth", _("NTLM Auth")
+    AKAMAI = "akamai_edgegrid", _("Akamai EdgeGrid")
+
+
 class Integration(TimeStampedModel):
     """
     Integration Model Fields
@@ -52,7 +70,9 @@ class Integration(TimeStampedModel):
         verbose_name=_("Organization"),
     )
     is_active = models.BooleanField(
-        _("Is Active"), default=False, help_text=_("Is the integration active?")
+        _("Is Active"),
+        default=False,
+        help_text=_("Is the integration active?")
     )
     name = models.CharField(
         _("Name"),
@@ -61,10 +81,31 @@ class Integration(TimeStampedModel):
         unique=True,
         help_text=_("Name of the integration"),
     )
-    api_key = models.CharField(
+    auth_type = models.CharField(
+        _("Auth Type"),
+        max_length=100,
+        choices=IntegrationAuthTypes.choices,
+        help_text=_("Authentication type for the integration"),
+        default=IntegrationAuthTypes.NO_AUTH,
+    )
+    auth_token = models.CharField(
         _("API Key"),
         max_length=255,
         help_text=_("API Key for the specified integration"),
+        null=True,
+        blank=True,
+    )
+    username = models.CharField(
+        _("Username"),
+        max_length=255,
+        help_text=_("Username for the specified integration"),
+        null=True,
+        blank=True,
+    )
+    password = models.CharField(
+        _("Password"),
+        max_length=255,
+        help_text=_("Password for the specified integration"),
         null=True,
         blank=True,
     )
@@ -95,7 +136,7 @@ class Integration(TimeStampedModel):
 
     def __str__(self) -> str:
         """
-        Returns: String representation of the Integration
+        Returns (str): String representation of the Integration
         """
         return self.name
 
@@ -111,29 +152,14 @@ class Integration(TimeStampedModel):
             IntegrationChoices.GOOGLE_MAPS,
             IntegrationChoices.GOOGLE_PLACES,
         ]:
-            if not self.api_key:
+            if not self.auth_token:
                 raise ValidationError(
-                    {"api_key": _("API Key is required for this integration")}
+                    {"auth_token": _("API Key is required for Google integrations")}
                 )
 
-    def save(self, **kwargs: Any) -> None:
-        """save method for the Integration
 
-        Args:
-            **kwargs (Any): Keyword arguments
-
-        Returns: None
-        """
-        self.full_clean()
-
-        if self.api_key:
-            # Activate the integration if an API key is provided
-            self.is_active = True
-
-        super().save(**kwargs)
-
-    def get_absolute_url(self) -> str:
-        """
-        Returns: Absolute URL for the Integration
-        """
-        return reverse("integration_detail", kwargs={"pk": self.pk})
+def get_absolute_url(self) -> str:
+    """
+    Returns (str): Absolute URL for the Integration
+    """
+    return reverse("integration:integration_detail", kwargs={"pk": self.pk})
