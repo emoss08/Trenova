@@ -25,20 +25,6 @@ from django.contrib import admin
 from accounts import models
 
 
-@admin.register(models.JobTitle)
-class JobTitleAdmin(admin.ModelAdmin):
-    """
-    Job title admin
-    """
-
-    list_display: tuple[str, ...] = (
-        "name",
-        "description",
-    )
-    list_filter: tuple[str, ...] = ("name",)
-    search_fields: tuple[str, ...] = ("name",)
-
-
 class ProfileInline(admin.StackedInline):
     """
     Profile inline
@@ -61,4 +47,15 @@ class UserAdmin(admin.ModelAdmin):
     list_display: tuple[str, ...] = (
         "username",
         "email",
+    )
+
+
+@admin.register(models.JobTitle)
+class JobTitleAdmin(admin.ModelAdmin):
+    """
+    Job title admin
+    """
+
+    fieldsets = (
+        (None, {"fields": ("organization", "name", "is_active", "description")}),
     )
