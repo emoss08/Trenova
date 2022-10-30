@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from typing import Type
+
 from django.contrib import admin
 
 from accounts import models
@@ -29,22 +30,20 @@ class JobTitleAdmin(admin.ModelAdmin):
     """
     Job title admin
     """
+
     list_display: tuple[str, ...] = (
         "name",
         "description",
     )
-    list_filter: tuple[str, ...] = (
-        "name",
-    )
-    search_fields: tuple[str, ...] = (
-        "name",
-    )
+    list_filter: tuple[str, ...] = ("name",)
+    search_fields: tuple[str, ...] = ("name",)
 
 
 class ProfileInline(admin.StackedInline):
     """
     Profile inline
     """
+
     model: Type[models.Profile] = models.Profile
     can_delete: bool = False
     verbose_name_plural: str = "profiles"
@@ -57,9 +56,9 @@ class UserAdmin(admin.ModelAdmin):
     """
     User Admin
     """
+
     inlines: tuple[Type[ProfileInline]] = (ProfileInline,)
     list_display: tuple[str, ...] = (
         "username",
         "email",
     )
-

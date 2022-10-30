@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, final
+from typing import final
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -44,17 +44,11 @@ class IntegrationAuthTypes(models.TextChoices):
     """
     Integration Auth Types
     """
+
     NO_AUTH = "no_auth", _("No Auth")
     API_KEY = "api_key", _("API Key")
-    OAUTH = "oauth", _("OAuth")
-    OAUTH2 = "oauth2", _("OAuth 2.0")
     BEARER_TOKEN = "bearer_token", _("Bearer Token")
     BASIC_AUTH = "basic_auth", _("Basic Auth")
-    DIGEST_AUTH = "digest_auth", _("Digest Auth")
-    HAWK_AUTH = "hawk_auth", _("Hawk Auth")
-    AWS_SIG4 = "aws_sig4", _("AWS Sig4")
-    NTLM_AUTH = "ntlm_auth", _("NTLM Auth")
-    AKAMAI = "akamai_edgegrid", _("Akamai EdgeGrid")
 
 
 class Integration(TimeStampedModel):
@@ -70,9 +64,7 @@ class Integration(TimeStampedModel):
         verbose_name=_("Organization"),
     )
     is_active = models.BooleanField(
-        _("Is Active"),
-        default=False,
-        help_text=_("Is the integration active?")
+        _("Is Active"), default=False, help_text=_("Is the integration active?")
     )
     name = models.CharField(
         _("Name"),
@@ -87,6 +79,13 @@ class Integration(TimeStampedModel):
         choices=IntegrationAuthTypes.choices,
         help_text=_("Authentication type for the integration"),
         default=IntegrationAuthTypes.NO_AUTH,
+    )
+    login_url = models.URLField(
+        _("Login URL"),
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Login URL for the integration"),
     )
     auth_token = models.CharField(
         _("API Key"),
@@ -110,16 +109,18 @@ class Integration(TimeStampedModel):
         blank=True,
     )
     client_id = models.CharField(
-        _("Client ID for the specified integration"),
+        _("Client ID"),
         max_length=255,
         null=True,
         blank=True,
+        help_text=_("Client ID for the specified integration"),
     )
     client_secret = models.CharField(
-        _("Client Secret for the specified integration"),
+        _("Client Secret"),
         max_length=255,
         null=True,
         blank=True,
+        help_text=_("Client Secret for the specified integration"),
     )
 
     class Meta:
@@ -136,16 +137,19 @@ class Integration(TimeStampedModel):
 
     def __str__(self) -> str:
         """
-        Returns (str): String representation of the Integration
+        Returns:
+            (str): String representation of the Integration
         """
         return self.name
 
     def clean(self) -> None:
         """Validation for the Integrations
 
-        Returns: None
+        Returns:
+            None
 
-        Raises: ValidationError
+        Raises:
+            ValidationError: If the Integration is not active and the auth_type is not NO_AUTH
         """
 
         if self.name in [
@@ -154,12 +158,33 @@ class Integration(TimeStampedModel):
         ]:
             if not self.auth_token:
                 raise ValidationError(
-                    {"auth_token": _("API Key is required for Google integrations")}
+                    {"auth_token": _("API Key is required for Google integrations.")}
                 )
 
+        if self.auth_type in [
+            IntegrationAuthTypes.BEARER_TOKEN,
+            IntegrationAuthTypes.API_KEY,
+        ]:
+            if not self.auth_token:
+                raise ValidationError(
+                    {
+                        "auth_token": _(
+                            "Auth or Bearer Token is required for this integration."
+                        )
+                    }
+                )
+        elif self.auth_type == IntegrationAuthTypes.BASIC_AUTH:
+            if not self.username or not self.password:
+                raise ValidationError(
+                    {
+                        "username": _("Username is required for this integration."),
+                        "password": _("Password is required for this integration."),
+                    }
+                )
 
-def get_absolute_url(self) -> str:
-    """
-    Returns (str): Absolute URL for the Integration
-    """
-    return reverse("integration:integration_detail", kwargs={"pk": self.pk})
+    def get_absolute_url(self) -> str:
+        """
+        Returns:
+            (str): Absolute URL for the Integration
+        """
+        return reverse("integration:integration_detail", kwargs={"pk": self.pk})

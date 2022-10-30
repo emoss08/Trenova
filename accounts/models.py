@@ -122,10 +122,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text=_("Designates whether the user can log into this admin site."),
     )
-    date_joined = models.DateTimeField(
-        _("Date Joined"),
-        default=timezone.now
-    )
+    date_joined = models.DateTimeField(_("Date Joined"), default=timezone.now)
 
     objects = UserManager()
 
@@ -268,9 +265,13 @@ class Profile(TimeStampedModel):
         Raises: ValidationError
         """
         if self.title.is_active is False:
-            raise ValidationError({
-                "title": _("You cannot assign a job title that is not active to a user."),
-            })
+            raise ValidationError(
+                {
+                    "title": _(
+                        "You cannot assign a job title that is not active to a user."
+                    ),
+                }
+            )
 
     def get_absolute_url(self) -> str:
         """
@@ -345,12 +346,14 @@ class JobTitle(TimeStampedModel):
 
     def __str__(self) -> str:
         """
-        Returns (str): String representation of the JobTitle model
+        Returns:
+            str: String representation of the JobTitle Model.
         """
         return self.name
 
     def get_absolute_url(self) -> str:
         """
-        Returns (str): Get the absolute url of the job title
+        Returns:
+            str: Get the absolute url of the job title
         """
         return reverse("user:job-title-view", kwargs={"pk": self.pk})

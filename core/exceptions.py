@@ -29,7 +29,7 @@ class MontaCoreException(Exception):
 
         Args:
             message (str): The error message
-            status_code (): The status code of the error
+            status_code (int): The status code of the error
 
         Returns:
             None
@@ -39,10 +39,9 @@ class MontaCoreException(Exception):
         super().__init__(self.message, self.status_code)
 
     def __str__(self) -> str:
-        """
-        This is the string representation of the AuthenticationError class.
+        """String representation of the exception.
 
-        :return: The error message
-        :rtype: str
+        Returns:
+            str: The string representation of the exception
         """
         return f"{self.message} (Status Code: {self.status_code})"
