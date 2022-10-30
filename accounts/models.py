@@ -36,7 +36,7 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 
-from core.validators import MinimumSizeValidator
+from core.validators import ImageSizeValidator
 from organization.models import Organization
 
 
@@ -46,11 +46,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -79,7 +79,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, username: str, email: str, password: str = None, **extra_fields: Any
+            self, username: str, email: str, password: str = None, **extra_fields: Any
     ) -> User:
         """
         Create and save a superuser with the given username, email and password.
@@ -194,7 +194,7 @@ class Profile(TimeStampedModel):
         null=True,
         blank=True,
         help_text=_("The profile picture of the user"),
-        validators=[MinimumSizeValidator(600, 600)],
+        validators=[ImageSizeValidator(600, 600, False, True)],
     )
     bio = models.TextField(
         _("Bio"),
