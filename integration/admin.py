@@ -29,7 +29,11 @@ class IntegrationAdmin(admin.ModelAdmin):
     Integration Admin
     """
 
-    list_display: tuple[str, ...] = ("name", "login_url", "is_active")
-    list_filter: tuple[str, ...] = ("is_active",)
-    search_fields: tuple[str, ...] = ("name", "login_url", "description")
-    ordering: tuple[str] = ("name",)
+    fieldsets = (
+        (None, {"fields": ("organization", "name", "auth_type", "is_active")}),
+        ("Basic Credentials", {"fields": ("auth_token", "client_id", "client_secret")}),
+        (
+            "Advanced Credentials",
+            {"classes": ("collapse",), "fields": ("login_url", "username", "password")},
+        ),
+    )
