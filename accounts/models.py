@@ -266,11 +266,7 @@ class Profile(TimeStampedModel):
         """
         if self.title.is_active is False:
             raise ValidationError(
-                {
-                    "title": _(
-                        "You cannot assign a job title that is not active to a user."
-                    ),
-                }
+                {"title": ValidationError(_("Title is not active"), code="invalid")}
             )
 
     def get_absolute_url(self) -> str:

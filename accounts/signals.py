@@ -18,24 +18,28 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.contrib import admin
+from typing import Any, Optional
 
-from .models import Integration
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from .models import Profile, User
 
 
-@admin.register(Integration)
-class IntegrationAdmin(admin.ModelAdmin):
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance: User, created: bool, **kwargs: Any) -> None:
+    """Create User Profile
+
+    Create a user profile when a new user is added.
+
+    Args:
+        sender ():
+        instance (User):
+        created (bool):
+        **kwargs (Anu):
+
+    Returns:
+        None:
     """
-    Integration Admin
-    """
-
-    fieldsets = (
-        (None, {"fields": ("organization", "name", "auth_type", "is_active")}),
-        ("Basic Credentials", {"fields": ("auth_token", "client_id", "client_secret")}),
-        (
-            "Advanced Credentials",
-            {"classes": ("collapse",), "fields": ("login_url", "username", "password")},
-        ),
-    )
-    search_fields = ("name",)
-    autocomplete_fields = ("organization",)
+    if created:
+        Profile.objects.create(user=instance)
