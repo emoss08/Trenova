@@ -18,30 +18,11 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any
+from rest_framework.routers import DefaultRouter
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
+from equipment.api import EquipmentViewSet
 
-from .models import Profile, User
+router = DefaultRouter()
+router.register(r"equipment", EquipmentViewSet, basename="equipment")
 
-
-@receiver(post_save, sender=User)
-def create_user_profile(
-    sender: User, instance: User, created: bool, **kwargs: Any
-) -> None:
-    """Create User Profile
-
-    Create a user profile when a new user is added.
-
-    Args:
-        sender ():
-        instance (User):
-        created (bool):
-        **kwargs (Anu):
-
-    Returns:
-        None:
-    """
-    if created:
-        Profile.objects.create(user=instance)
+urlpatterns = router.urls
