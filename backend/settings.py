@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     "organization",
     "integration",
     "equipment",
+    "cacheops",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -140,3 +142,37 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
+
+# Redis settings
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# Cacheops settings
+CACHEOPS_REDIS = {
+    'host': 'localhost',  # redis-server is on same machine
+    'port': 6379,  # default redis port
+    'db': 1,  # SELECT non-default redis database
+    # using separate redis db or redis instance
+    # is highly recommended
+
+    'socket_timeout': 3,  # connection timeout in seconds, optional
+    'password': '...',  # optional
+    'unix_socket_path': ''  # replaces host and port
+}
+
+CACHEOPS = {
+    'auth.user': {'ops': 'get', 'timeout': 60 * 15},
+    'auth.*': {'ops': ('fetch', 'get'), 'timeout': 60 * 15},
+    'auth.permission': {'ops': 'all', 'timeout': 60 * 60},
+    '*.*': {'ops': (), 'timeout': 60 * 15},
+}
