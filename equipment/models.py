@@ -23,14 +23,17 @@ from typing import final
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from localflavor.us.models import USStateField
 
 from core.models import GenericModel
 
 
 class EquipmentType(GenericModel):
     """
-    Equipment Type Model Fields
+    Stores the equipment type information that can later be used to
+    create :model:`equipment.Equipment` objects.
     """
+
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -47,6 +50,7 @@ class EquipmentType(GenericModel):
         """
         Equipment Type Model Metaclass
         """
+
         verbose_name = _("Equipment Type")
         verbose_name_plural = _("Equipment Types")
         ordering: list[str] = ["-name"]
@@ -70,7 +74,7 @@ class EquipmentType(GenericModel):
 
 class EquipmentTypeDetail(GenericModel):
     """
-    Equipment Type Detail Model Fields
+    Stores detailed information about a :model:`equipment.EquipmentType`.
     """
 
     @final
@@ -161,6 +165,7 @@ class EquipmentTypeDetail(GenericModel):
         """
         Equipment Type Detail Model Metaclass
         """
+
         verbose_name = _("Equipment Type Detail")
         verbose_name_plural = _("Equipment Type Details")
         ordering: list[str] = ["-equipment_type"]
@@ -180,3 +185,244 @@ class EquipmentTypeDetail(GenericModel):
             str: Absolute URL of the Equipment Type Detail Model
         """
         return reverse("equipment:view-equipment-type-detail", kwargs={"pk": self.pk})
+
+
+class EquipmentManufacturer(GenericModel):
+    """
+    Stores the equipment manufacturer information that can later be used to
+    create :model:`equipment.Equipment` objects.
+    """
+
+    id = models.CharField(
+        _("ID"),
+        max_length=50,
+        primary_key=True,
+        help_text=_("ID of the equipment manufacturer."),
+    )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("Description of the equipment manufacturer."),
+    )
+
+    class Meta:
+        """
+        Equipment Manufacturer Model Metaclass
+        """
+
+        verbose_name = _("Equipment Manufacturer")
+        verbose_name_plural = _("Equipment Manufacturers")
+        ordering: list[str] = ["-id"]
+
+    def __str__(self) -> str:
+        """Equipment Manufacturer string representation
+
+        Returns:
+            str: String representation of the Equipment Manufacturer Model
+        """
+        return self.id
+
+    def get_absolute_url(self) -> str:
+        """Equipment Manufacturer absolute URL
+
+        Returns:
+            str: Absolute URL of the Equipment Manufacturer Model
+        """
+        return reverse("equipment:view-equipment-manufacturer", kwargs={"pk": self.pk})
+
+
+class Equipment(GenericModel):
+    """
+    Stores a single piece of equipment.
+    """
+
+    @final
+    class AuxiliaryPowerUnitTypeChoices(models.TextChoices):
+        """
+        Auxiliary Power Unit Type Choices
+        """
+
+        NONE = "none", _("None")
+        APU = "apu", _("APU")
+        BUNK = "bunk-heater", _("Bunk Heater")
+        HYBRID = "hybrid", _("Hybrid")
+
+    id = models.CharField(
+        _("ID"),
+        max_length=50,
+        primary_key=True,
+        help_text=_("ID of the equipment."),
+    )
+    equipment_type = models.ForeignKey(
+        EquipmentType,
+        on_delete=models.CASCADE,
+        related_name="equipment",
+        related_query_name="equipment",
+        verbose_name=_("Equipment Type"),
+    )
+    is_active = models.BooleanField(
+        _("Active"),
+        default=True,
+        help_text=_("Whether the Equipment is active or not."),
+    )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("Description of the equipment."),
+    )
+    license_plate_number = models.CharField(
+        _("License Plate Number"),
+        max_length=50,
+        blank=True,
+        help_text=_("License plate number of the equipment."),
+    )
+    vin_number = models.CharField(
+        _("VIN Number"),
+        max_length=17,
+        blank=True,
+        null=True,
+        help_text=_("VIN number of the equipment."),
+    )
+    odometer = models.PositiveIntegerField(
+        _("Odometer"),
+        default=0,
+        help_text=_("Odometer of the equipment."),
+    )
+    engine_hours = models.PositiveIntegerField(
+        _("Engine Hours"),
+        default=0,
+        help_text=_("Engine hours of the equipment."),
+    )
+    manufacturer = models.ForeignKey(
+        EquipmentManufacturer,
+        on_delete=models.CASCADE,
+        related_name="equipments",
+        related_query_name="equipment",
+        verbose_name=_("Manufacturer"),
+        blank=True,
+        null=True,
+    )
+    manufactured_date = models.DateField(
+        _("Manufactured Date"),
+        blank=True,
+        null=True,
+        help_text=_("Manufactured date of the equipment."),
+    )
+    model = models.CharField(
+        _("Model"),
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text=_("Model of the equipment."),
+    )
+    model_year = models.PositiveIntegerField(
+        _("Model Year"),
+        null=True,
+        blank=True,
+        help_text=_("Model year of the equipment."),
+    )
+    state = USStateField(
+        _("State"),
+        blank=True,
+        null=True,
+        help_text=_("State of the equipment."),
+    )
+    leased = models.BooleanField(
+        _("Leased"),
+        default=False,
+        help_text=_("Leased of the equipment."),
+    )
+    leased_date = models.DateField(
+        _("Leased Date"),
+        blank=True,
+        null=True,
+        help_text=_("Leased date of the equipment."),
+    )
+
+    # Advanced Options for the Equipment
+    hos_exempt = models.BooleanField(
+        _("HOS Exempt"),
+        default=False,
+        help_text=_("HOS exempt of the equipment."),
+    )
+    aux_power_unit_type = models.CharField(
+        _("Auxiliary Power Unit Type"),
+        max_length=50,
+        choices=AuxiliaryPowerUnitTypeChoices.choices,
+        default=AuxiliaryPowerUnitTypeChoices.NONE,
+        help_text=_("Auxiliary power unit type of the equipment."),
+    )
+    fuel_draw_capacity = models.PositiveIntegerField(
+        _("Fuel Draw Capacity"),
+        default=0,
+        help_text=_("Fuel draw capacity of the equipment."),
+    )
+    num_of_axles = models.PositiveIntegerField(
+        _("Number of Axles"),
+        default=0,
+        help_text=_("Number of axles of the equipment."),
+    )
+    transmission_manufacturer = models.CharField(
+        _("Transmission Manufacturer"),
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text=_("Transmission manufacturer of the equipment."),
+    )
+    transmission_type = models.CharField(
+        _("Transmission Type"),
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text=_("Transmission type of the equipment."),
+    )
+    has_berth = models.BooleanField(
+        _("Has Berth"),
+        default=False,
+        help_text=_("Equipment has Sleeper Berth."),
+    )
+    has_electronic_engine = models.BooleanField(
+        _("Has Electronic Engine"),
+        default=False,
+        help_text=_("Equipment has Electronic Engine."),
+    )
+    highway_use_tax = models.BooleanField(
+        _("Highway Use Tax"),
+        default=False,
+        help_text=_("Equipment has Highway Use Tax."),
+    )
+    owner_operated = models.BooleanField(
+        _("Owner Operated"),
+        default=False,
+        help_text=_("Equipment is Owner Operated."),
+    )
+    ifta_qualified = models.BooleanField(
+        _("IFTA Qualified"),
+        default=False,
+        help_text=_("Equipment is IFTA Qualified."),
+    )
+
+    class Meta:
+        """
+        Equipment Model Metaclass
+        """
+
+        verbose_name = _("Equipment")
+        verbose_name_plural = _("Equipment")
+        ordering: list[str] = ["id"]
+
+    def __str__(self) -> str:
+        """Equipment string representation
+
+        Returns:
+            str: String representation of the Equipment Model
+        """
+        return self.id
+
+    def get_absolute_url(self) -> str:
+        """Equipment absolute URL
+
+        Returns:
+            str: Absolute URL of the Equipment Model
+        """
+        return reverse("equipment:view-equipment", kwargs={"pk": self.pk})
