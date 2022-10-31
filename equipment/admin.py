@@ -17,17 +17,37 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from typing import Type
 
 from django.contrib import admin
 
-from .models import EquipmentType, EquipmentTypeDetail
+from .models import Equipment, EquipmentManufacturer, EquipmentType, EquipmentTypeDetail
+
+
+@admin.register(EquipmentManufacturer)
+class EquipmentManufacturerAdmin(admin.ModelAdmin):
+    """
+    Equipment Manufacturer Admin
+    """
+
+    model: Type[EquipmentManufacturer] = EquipmentManufacturer
+    list_display: tuple[str, ...] = (
+        "id",
+        "description",
+    )
+    search_fields: tuple[str, ...] = (
+        "id",
+        "description",
+    )
+    autocomplete_fields: tuple[str, ...] = ("organization",)
 
 
 class EquipmentTypeDetailAdmin(admin.StackedInline):
     """
     Equipment Type Detail Admin
     """
+
     model: Type[EquipmentTypeDetail] = EquipmentTypeDetail
     can_delete: bool = False
     verbose_name_plural: str = "Equipment Type Details"
@@ -41,8 +61,38 @@ class EquipmentTypeAdmin(admin.ModelAdmin):
     """
     Equipment Type Admin
     """
+
     model: Type[EquipmentType] = EquipmentType
     list_display: tuple[str, ...] = ("name", "description")
     search_fields: tuple[str, ...] = ("name", "description")
     inlines: tuple[Type[EquipmentTypeDetailAdmin], ...] = (EquipmentTypeDetailAdmin,)
     autocomplete_fields: tuple[str, ...] = ("organization",)
+
+
+@admin.register(Equipment)
+class EquipmentAdmin(admin.ModelAdmin):
+    """
+    Equipment Admin
+    """
+
+    model: Type[Equipment] = Equipment
+    list_display: tuple[str, ...] = ("id", "description", "license_plate_number",)
+    search_fields: tuple[str, ...] = ("id", "description", "license_plate_number",)
+    autocomplete_fields: tuple[str, ...] = ("equipment_type", "organization", "manufacturer",)
+    fieldsets = (
+        (None, {"fields": ("is_active", "organization", "id", "equipment_type", "description")}),
+        ("Equipment Details",
+         {"classes": ("collapse",),
+          "fields": (
+              "license_plate_number", "vin_number", "manufacturer", "model", "model_year", "state",
+              "leased", "leased_date",
+          )},
+         ),
+        ("Advanced Options",
+         {"classes": ("collapse",),
+          "fields": (
+              "hos_exempt", "aux_power_unit_type", "fuel_draw_capacity", "num_of_axles", "transmission_manufacturer",
+              "transmission_type", "has_berth", "has_electronic_engine", "highway_use_tax", "owner_operated",
+              "ifta_qualified")
+          }),
+    )
