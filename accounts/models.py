@@ -43,20 +43,20 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
 
         Args:
-            user_name (str):
-            email (str):
+            user_name (str): Username of the user.
+            email (str): Email address of the user.
             password (str | None, optional): Password for the user. Defaults to None.
-            **extra_fields (Any):
+            **extra_fields (Any): Extra fields for the user.
 
         Returns:
             User: User object.
@@ -76,7 +76,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self, username: str, email: str, password: str = None, **extra_fields: Any
+        self, username: str, email: str, password: str = None, **extra_fields: Any
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -159,15 +159,15 @@ class Profile(GenericModel):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name="profiles",
-        related_query_name="profile",
+        related_name="profile",
+        related_query_name="profiles",
         verbose_name=_("User"),
     )
     title = models.ForeignKey(
         "JobTitle",
         on_delete=models.PROTECT,
-        related_name="profiles",
-        related_query_name="profile",
+        related_name="profile",
+        related_query_name="profiles",
         verbose_name=_("Job Title"),
     )
     first_name = models.CharField(
@@ -245,15 +245,15 @@ class Profile(GenericModel):
         ]
 
     def __str__(self) -> str:
-        """
+        """Profile string representation
+
         Returns:
             str: String representation of the Profile
         """
         return self.user.username
 
     def clean(self) -> None:
-        """
-        Clean the model
+        """Clean the model
 
         Returns:
             None
@@ -267,14 +267,16 @@ class Profile(GenericModel):
             )
 
     def get_absolute_url(self) -> str:
-        """
+        """Absolute URL for the Profile.
+
         Returns:
             str: Get the absolute url of the Profile
         """
         return reverse("user:profile-view", kwargs={"pk": self.pk})
 
     def get_user_profile_pic(self) -> str:
-        """
+        """Get the user profile picture.
+
         Returns:
             str: Get the user profile picture
         """
@@ -283,7 +285,8 @@ class Profile(GenericModel):
         return "/static/media/avatars/blank.avif"
 
     def get_user_city_state(self) -> Optional[str]:
-        """
+        """User City and state combination.
+
         Returns:
             str: Get the city and state of the user
         """
@@ -292,7 +295,8 @@ class Profile(GenericModel):
         return None
 
     def get_full_name(self) -> str:
-        """
+        """Full name of the user.
+
         Returns:
             str: Get the full name of the user
         """
