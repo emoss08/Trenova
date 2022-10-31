@@ -36,11 +36,11 @@ class ImageSizeValidator:
     """
 
     def __init__(
-            self,
-            width: int,
-            height: int,
-            less_than: Optional[bool],
-            greater_than: Optional[bool]
+        self,
+        width: int,
+        height: int,
+        less_than: Optional[bool],
+        greater_than: Optional[bool],
     ) -> None:
         self.width = width
         self.height = height
@@ -74,7 +74,9 @@ class ImageSizeValidator:
                 error = True
             if error:
                 raise ValidationError(
-                    [f"Size should be greater than {self.width} x {self.height} pixels."]
+                    [
+                        f"Size should be greater than {self.width} x {self.height} pixels."
+                    ]
                 )
 
         if self.greater_than:
@@ -97,11 +99,11 @@ class ImageSizeValidator:
             bool: True if validators are equal, False otherwise.
         """
         return (
-                isinstance(other, self.__class__)
-                and self.width == other.width
-                and self.height == other.height
-                and self.less_than == other.less_than
-                and self.greater_than == other.greater_than
+            isinstance(other, self.__class__)
+            and self.width == other.width
+            and self.height == other.height
+            and self.less_than == other.less_than
+            and self.greater_than == other.greater_than
         )
 
     def __ne__(self, other: Callable) -> bool:

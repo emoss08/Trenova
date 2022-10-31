@@ -26,6 +26,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
+from core.models import GenericModel
 from organization.models import Organization
 
 
@@ -51,18 +52,11 @@ class IntegrationAuthTypes(models.TextChoices):
     BASIC_AUTH = "basic_auth", _("Basic Auth")
 
 
-class Integration(TimeStampedModel):
+class Integration(GenericModel):
     """
     Integration Model Fields
     """
 
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        related_name="integrations",
-        related_query_name="integration",
-        verbose_name=_("Organization"),
-    )
     is_active = models.BooleanField(
         _("Is Active"), default=True, help_text=_("Is the integration active?")
     )
@@ -138,7 +132,7 @@ class Integration(TimeStampedModel):
     def __str__(self) -> str:
         """
         Returns:
-            (str): String representation of the Integration
+            str: String representation of the Integration
         """
         return self.name
 
@@ -149,7 +143,7 @@ class Integration(TimeStampedModel):
             None
 
         Raises:
-            ValidationError: If the Integration is not active and the auth_type is not NO_AUTH.
+            ValidationError: Validation Errors for the Integration Model
         """
 
         if self.name in [
@@ -221,6 +215,6 @@ class Integration(TimeStampedModel):
     def get_absolute_url(self) -> str:
         """
         Returns:
-            (str): Absolute URL for the Integration
+            str: Absolute URL for the Integration
         """
-        return reverse("integration:detail", kwargs={"pk": self.pk})
+        return reverse("integration:integration-detail", kwargs={"pk": self.pk})
