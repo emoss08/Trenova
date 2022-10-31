@@ -23,11 +23,8 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -36,8 +33,8 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 
+from core.models import GenericModel
 from core.validators import ImageSizeValidator
-from organization.models import Organization
 
 
 class UserManager(BaseUserManager):
@@ -46,11 +43,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -61,8 +58,8 @@ class UserManager(BaseUserManager):
             password (str | None, optional): Password for the user. Defaults to None.
             **extra_fields (Any):
 
-        Returns: User
-
+        Returns:
+            User: User object.
         """
         if not user_name:
             raise ValueError(_("The username must be set"))
@@ -79,10 +76,10 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self, username: str, email: str, password: str = None, **extra_fields: Any
+        self, username: str, email: str, password: str = None, **extra_fields: Any
     ) -> User:
-        """
-        Create and save a superuser with the given username, email and password.
+        """Create and save a superuser with the given username, email and password.
+
         Args:
             username (str): Username of the user.
             email (str): Email address of the user.
@@ -141,18 +138,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self) -> str:
         """
-        Returns (str): String representation of the User
+        Returns:
+            str: String representation of the User
         """
         return self.username
 
     def get_absolute_url(self) -> str:
         """
-        Returns (str): Get the absolute url of the User
+        Returns:
+            str: Absolute URL for the User
         """
         return reverse("users:detail", kwargs={"pk": self.pk})
 
 
-class Profile(TimeStampedModel):
+class Profile(GenericModel):
     """
     Profile Model
     """
@@ -163,13 +162,6 @@ class Profile(TimeStampedModel):
         related_name="profiles",
         related_query_name="profile",
         verbose_name=_("User"),
-    )
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.PROTECT,
-        related_name="profiles",
-        related_query_name="profile",
-        verbose_name=_("Organization"),
     )
     title = models.ForeignKey(
         "JobTitle",
@@ -254,7 +246,8 @@ class Profile(TimeStampedModel):
 
     def __str__(self) -> str:
         """
-        Returns (str): String representation of the Profile Model
+        Returns:
+            str: String representation of the Profile
         """
         return self.user.username
 
@@ -275,21 +268,24 @@ class Profile(TimeStampedModel):
 
     def get_absolute_url(self) -> str:
         """
-        Returns (str): Get the absolute url of the profile
+        Returns:
+            str: Get the absolute url of the Profile
         """
         return reverse("user:profile-view", kwargs={"pk": self.pk})
 
     def get_user_profile_pic(self) -> str:
         """
-        Returns (str): Get the profile picture of the user
+        Returns:
+            str: Get the user profile picture
         """
         if self.profile_picture:
-            return str(self.profile_picture)
+            return self.profile_picture.url
         return "/static/media/avatars/blank.avif"
 
     def get_user_city_state(self) -> Optional[str]:
         """
-        Returns (str): Get the city and state of the user
+        Returns:
+            str: Get the city and state of the user
         """
         if self.city and self.state:
             return f"{self.city}, {self.state}"
@@ -297,23 +293,17 @@ class Profile(TimeStampedModel):
 
     def get_full_name(self) -> str:
         """
-        Returns (str): Get the full name of the user
+        Returns:
+            str: Get the full name of the user
         """
         return f"{self.first_name} {self.last_name}"
 
 
-class JobTitle(TimeStampedModel):
+class JobTitle(GenericModel):
     """
     Job Title Model Fields
     """
 
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        related_name="job_titles",
-        related_query_name="job_title",
-        verbose_name=_("Organization"),
-    )
     name = models.CharField(
         _("Name"),
         max_length=100,
