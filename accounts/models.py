@@ -30,8 +30,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_extensions.db.models import TimeStampedModel
-from localflavor.us.models import USStateField, USZipCodeField
+from django_extensions.db.models import TimeStampedModel  # type: ignore
+from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
 
 from core.models import GenericModel
 from core.validators import ImageSizeValidator
@@ -43,11 +43,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -76,7 +76,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, username: str, email: str, password: str = None, **extra_fields: Any
+            self, username: str, email: str, password: str = None, **extra_fields: Any
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 

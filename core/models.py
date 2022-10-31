@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django_extensions.db.models import TimeStampedModel
+from django_extensions.db.models import TimeStampedModel  # type: ignore
 
 from organization.models import Organization
 

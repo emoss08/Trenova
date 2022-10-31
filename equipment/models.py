@@ -20,10 +20,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import final
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField
+from localflavor.us.models import USStateField  # type: ignore
 
 from core.models import GenericModel
 
@@ -426,3 +427,126 @@ class Equipment(GenericModel):
             str: Absolute URL of the Equipment Model
         """
         return reverse("equipment:view-equipment", kwargs={"pk": self.pk})
+
+
+class EquipmentMaintenancePlan(GenericModel):
+    """
+    Stores the maintenance plan information related to
+    `equipment.EquipmentType` model.
+    """
+
+    id = models.CharField(
+        _("ID"),
+        max_length=50,
+        primary_key=True,
+        help_text=_("ID of the equipment maintenance plan."),
+    )
+    equipment_types = models.ManyToManyField(
+        EquipmentType,
+        related_name="maintenance_plans",
+        related_query_name="maintenance_plan",
+        verbose_name=_("Equipment Types"),
+    )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("Description of the equipment maintenance plan."),
+    )
+    by_distance = models.BooleanField(
+        _("By Distance"),
+        default=False,
+        help_text=_("Maintenance plan is by distance."),
+    )
+    by_time = models.BooleanField(
+        _("By Time"),
+        default=False,
+        help_text=_("Maintenance plan is by time."),
+    )
+    by_engine_hours = models.BooleanField(
+        _("By Engine Hours"),
+        default=False,
+        help_text=_("Maintenance plan is by engine hours."),
+    )
+    miles = models.PositiveIntegerField(
+        _("Miles"),
+        default=0,
+        help_text=_("Miles of the equipment maintenance plan."),
+    )
+    months = models.PositiveIntegerField(
+        _("Months"),
+        default=0,
+        help_text=_("Months of the equipment maintenance plan."),
+    )
+    engine_hours = models.PositiveIntegerField(
+        _("Engine Hours"),
+        default=0,
+        help_text=_("Engine hours of the equipment maintenance plan."),
+    )
+
+    class Meta:
+        """
+        EquipmentMaintenancePlan Model Metaclass
+        """
+
+        verbose_name = _("Equipment Maintenance Plan")
+        verbose_name_plural = _("Equipment Maintenance Plans")
+        ordering: list[str] = ["id"]
+
+    def __str__(self) -> str:
+        """Equipment Maintenance Plan string representation
+
+        Returns:
+            str: String representation of the EquipmentMaintenancePlan Model
+        """
+        return self.id
+
+    def clean(self) -> None:
+        """Equipment Maintenance Plan clean method
+
+        Raises:
+            ValidationError: Validation Errors for the EquipmentMaintenancePlan Model
+        """
+        if self.by_distance:
+            if self.miles == 0:
+                raise ValidationError(
+                    ValidationError(
+                        {
+                            "miles": _("Miles must be greater than 0."),
+                        },
+                        code="invalid",
+                    ),
+                )
+        if self.by_time:
+            if self.months == 0:
+                raise ValidationError(
+                    ValidationError(
+                        {
+                            "months": _(
+                                "Months must be greater than 0 if by time is selected."
+                            ),
+                        },
+                        code="invalid",
+                    )
+                )
+        if self.by_engine_hours:
+            if self.engine_hours == 0:
+                raise ValidationError(
+                    ValidationError(
+                        {
+                            "engine_hours": _(
+                                "Engine hours must be greater than 0 if by engine hours is selected."
+                            )
+                        },
+                        code="invalid",
+                    )
+                )
+
+    def get_absolute_url(self) -> str:
+        """Equipment Maintenance Plan absolute URL
+
+        Returns:
+            str: Absolute URL of the EquipmentMaintenancePlan Model
+        """
+        return reverse(
+            "equipment:view-equipment-maintenance-plan", kwargs={"pk": self.pk}
+        )

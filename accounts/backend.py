@@ -20,13 +20,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Optional, Type
 
-from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.base_user import AbstractBaseUser
 
 from .models import User
 
-UserModel: Type[AbstractBaseUser | AbstractBaseUser] = get_user_model()
+UserModel: Type[User] = User
 
 
 class UserBackend(ModelBackend):

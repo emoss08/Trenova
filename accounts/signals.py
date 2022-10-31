@@ -27,7 +27,7 @@ from .models import Profile, User
 
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance: User, created: bool, **kwargs: Any) -> None:
+def create_user_profile(sender: User, instance: User, created: bool, **kwargs: Any) -> None:
     """Create User Profile
 
     Create a user profile when a new user is added.

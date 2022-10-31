@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils.deconstruct import deconstructible
@@ -36,11 +36,11 @@ class ImageSizeValidator:
     """
 
     def __init__(
-        self,
-        width: int,
-        height: int,
-        less_than: Optional[bool],
-        greater_than: Optional[bool],
+            self,
+            width: int,
+            height: int,
+            less_than: Optional[bool],
+            greater_than: Optional[bool],
     ) -> None:
         self.width = width
         self.height = height
@@ -89,30 +89,31 @@ class ImageSizeValidator:
                     [f"Size should be less than {self.width} x {self.height} pixels."]
                 )
 
-    def __eq__(self, other: Callable) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare two validators. Inverse of __ne__.
 
         Args:
-            other (Callable): Validator to compare to.
+            other (object): Validator to compare to.
 
         Returns:
             bool: True if validators are equal, False otherwise.
         """
+        if not isinstance(other, ImageSizeValidator):
+            return NotImplemented
         return (
-            isinstance(other, self.__class__)
-            and self.width == other.width
-            and self.height == other.height
-            and self.less_than == other.less_than
-            and self.greater_than == other.greater_than
+                self.width == other.width
+                and self.height == other.height
+                and self.less_than == other.less_than
+                and self.greater_than == other.greater_than
         )
 
-    def __ne__(self, other: Callable) -> bool:
+    def __ne__(self, other: object) -> bool:
         """Compare two validators. Inverse of __eq__.
 
         Args:
-            other (Callable): Validator to compare to.
+            other (object): Validator to compare to.
 
         Returns:
             bool: True if validators are not equal, False otherwise.
         """
-        return not self.__eq__(other)
+        return not (self == other)

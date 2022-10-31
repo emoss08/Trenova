@@ -29,7 +29,9 @@ class DynamicModelSerializer(serializers.ModelSerializer):
     controls which fields should be displayed.
     """
 
-    def get_default_field_names(self, declared_fields, model_info) -> tuple | list | ...:
+    def get_default_field_names(
+        self, declared_fields, model_info
+    ) -> tuple | list | ...:
         """
         Return the default set of field names that should be used for the
         serializer.
@@ -41,7 +43,9 @@ class DynamicModelSerializer(serializers.ModelSerializer):
         Returns:
             tuple | list | ...: The default set of field names
         """
-        field_names: list | tuple | ... = super().get_field_names(declared_fields, model_info)
+        field_names: list | tuple | ... = super().get_field_names(
+            declared_fields, model_info
+        )
         if self.dynamic_fields is not None:
             allowed = set(self.dynamic_fields)
             excluded_field_names: set = set(field_names) - allowed

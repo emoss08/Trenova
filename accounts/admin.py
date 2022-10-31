@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Type
+from typing import Any, Optional, Type
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -30,13 +30,13 @@ from django.contrib.auth.forms import (AdminPasswordChangeForm, UserChangeForm,
                                        UserCreationForm)
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
+from django.forms.models import ModelForm
 from django.http import (Http404, HttpRequest, HttpResponse,
                          HttpResponseRedirect)
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
-from django.utils.translation import gettext
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 
 from accounts import models
 
@@ -112,12 +112,19 @@ class UserAdmin(admin.ModelAdmin):
             return self.add_fieldsets
         return super().get_fieldsets(request, obj)
 
-    def get_form(self, request: HttpRequest, obj=None, **kwargs: Any) -> UserChangeForm:
+    def get_form(
+            self,
+            request: HttpRequest,
+            obj: Optional[Any] = ...,
+            change: bool = True,
+            **kwargs: Any
+    ) -> Type[ModelForm]:
         """Get form for user admin
 
         Args:
+            change (bool): change
             request (HttpRequest): request
-            obj: object
+            obj (Optional[Any], optional): object. Defaults to ....
             **kwargs (Any): kwargs
 
         Returns:
@@ -127,7 +134,7 @@ class UserAdmin(admin.ModelAdmin):
         if obj is None:
             defaults["form"] = self.add_form
         defaults.update(kwargs)
-        return super().get_form(request, obj, **defaults)
+        return super().get_form(request=request, obj=obj, change=True, **defaults)
 
     def get_urls(self) -> list[URLPattern]:
         """Get urls for user admin
@@ -136,12 +143,12 @@ class UserAdmin(admin.ModelAdmin):
             list[URLPattern]: urls for user admin
         """
         return [
-            path(
-                "<id>/password/",
-                self.admin_site.admin_view(self.user_change_password),
-                name="auth_user_password_change",
-            ),
-        ] + super().get_urls()
+                   path(
+                       "<id>/password/",
+                       self.admin_site.admin_view(self.user_change_password),
+                       name="auth_user_password_change",
+                   ),
+               ] + super().get_urls()
 
     def lookup_allowed(self, lookup: str, value: str) -> bool:
         """Allow lookup for username
@@ -161,7 +168,7 @@ class UserAdmin(admin.ModelAdmin):
     @sensitive_post_parameters_m
     @csrf_protect_m
     def add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -206,7 +213,7 @@ class UserAdmin(admin.ModelAdmin):
 
     @sensitive_post_parameters_m
     def user_change_password(
-        self, request: HttpRequest, id: int, form_url: str = ""
+            self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
@@ -235,7 +242,7 @@ class UserAdmin(admin.ModelAdmin):
             )
             if form.is_valid():
                 form.save()
-                change_message = self.construct_change_message(request, form, None)
+                change_message = self.construct_change_message(request, form, None)  # type: ignore
                 self.log_change(request, user, change_message)
                 msg: str = gettext("Password changed successfully.")
                 messages.success(request, msg)
@@ -252,10 +259,10 @@ class UserAdmin(admin.ModelAdmin):
                     )
                 )
         else:
-            form: AdminPasswordChangeForm = self.change_password_form(user)
+            form: AdminPasswordChangeForm = self.change_password_form(user)  # type: ignore
 
         fieldsets = [(None, {"fields": list(form.base_fields)})]
-        adminForm = admin.helpers.AdminForm(form, fieldsets, {})
+        adminForm = admin.helpers.AdminForm(form, fieldsets, {})  # type: ignore
 
         context = {
             "title": _("Change password: %s") % escape(user.get_username()),
@@ -276,7 +283,7 @@ class UserAdmin(admin.ModelAdmin):
             **self.admin_site.each_context(request),
         }
 
-        request.current_app = self.admin_site.name
+        request.current_app = self.admin_site.name  # type: ignore
 
         return TemplateResponse(
             request,
