@@ -18,26 +18,21 @@ You should have received a copy of the GNU General Puboooolic License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Literal
+from django.test import TestCase
+from rest_framework.test import APIClient
 
-import pytest
+from accounts.tests.factories.user import Userfactory
 
-from accounts.services import create_user, find_user_by_username
+user = Userfactory()
+client = APIClient()
 
 
-@pytest.mark.django_db
-def test_create_user() -> None:
-    """
-    test_create_user - Test creation of a user
-    """
-    user_name: Literal["test_user"] = "test_user"
-    email_address: Literal["test@test.com"] = "test@test.com"
-    pass_word: Literal["test_password"] = "test_password"
+class TestEquipment(TestCase):
+    def setUp(self) -> None:
+        client = APIClient()
+        user = Userfactory()
 
-    user = create_user(user_name, email_address, pass_word)
+        client.force_authenticate(user=user)
 
-    assert user.username == user_name
-
-    found_user = find_user_by_username(user_name)
-
-    assert found_user == user
+    def test_user_logged_in(self) -> None:
+        print(client.force_authenticate(user=user))
