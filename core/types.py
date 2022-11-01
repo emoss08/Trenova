@@ -27,4 +27,5 @@ class AuthenticatedHttpRequest(HttpRequest):
     """
     Custom HttpRequest class that adds the authenticated user to the request.
     """
+
     user: User
