@@ -10,21 +10,23 @@ https://www.twitch.tv/techygrrrl
 
 import math
 
+import numpy as np
+
 
 def longest_common_substring(s1: str, s2: str) -> str:
     """Find the longest common substring between two strings.
 
-    This was implemented for absolutely no reason other than I was bored.
-`
-    Args:
-        s1 (str): The first string.
-        s2 (str): The second string.
+        This was implemented for absolutely no reason other than I was bored.
+    `
+        Args:
+            s1 (str): The first string.
+            s2 (str): The second string.
 
-    Returns:
-        str: The longest common substring.
+        Returns:
+            str: The longest common substring.
 
-    Typical Usage Example:
-        >>> longest_common_substring("SIKE", "SIKE YOU THOUGHT")
+        Typical Usage Example:
+            >>> longest_common_substring("SIKE", "SIKE YOU THOUGHT")
     """
     m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]
     longest, x_longest = 0, 0
@@ -37,11 +39,11 @@ def longest_common_substring(s1: str, s2: str) -> str:
                     x_longest = x
             else:
                 m[x][y] = 0
-    return s1[x_longest - longest: x_longest]
+    return s1[x_longest - longest : x_longest]
 
 
 def haversine(
-        lat1: float, lon1: float, lat2: float, lon2: float, unit: str = "km"
+    lat1: float, lon1: float, lat2: float, lon2: float, unit: str = "km"
 ) -> float:
     """Find the distance between two points on a sphere.
 
@@ -63,13 +65,9 @@ def haversine(
     r = 6371
     dlat: float = math.radians(lat2 - lat1)
     dlon: float = math.radians(lon2 - lon1)
-    a: float = (
-            math.sin(dlat / 2) * math.sin(dlat / 2)
-            + math.cos(math.radians(lat1))
-            * math.cos(math.radians(lat2))
-            * math.sin(dlon / 2)
-            * math.sin(dlon / 2)
-    )
+    a: float = math.sin(dlat / 2) * math.sin(dlat / 2) + math.cos(
+        math.radians(lat1)
+    ) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) * math.sin(dlon / 2)
     c: float = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     d: float = r * c
     if unit == "km":
@@ -128,8 +126,9 @@ def regex_match(pattern: str, string: str) -> bool:
     first_match = bool(string) and pattern[0] in {string[0], "."}
     if len(pattern) >= 2 and pattern[1] == "*":
         return (
-                regex_match(pattern[2:], string)
-                or first_match and regex_match(pattern, string[1:])
+            regex_match(pattern[2:], string)
+            or first_match
+            and regex_match(pattern, string[1:])
         )
     else:
         return first_match and regex_match(pattern[1:], string[1:])
@@ -154,8 +153,9 @@ def regex_match_iterative(pattern: str, string: str) -> bool:
     first_match = bool(string) and pattern[0] in {string[0], "."}
     if len(pattern) >= 2 and pattern[1] == "*":
         return (
-                regex_match_iterative(pattern[2:], string)
-                or first_match and regex_match_iterative(pattern, string[1:])
+            regex_match_iterative(pattern[2:], string)
+            or first_match
+            and regex_match_iterative(pattern, string[1:])
         )
     else:
         return first_match and regex_match_iterative(pattern[1:], string[1:])
@@ -215,19 +215,11 @@ def url_parser(url: str) -> dict:
     url, query_string = url.split("?")
     query_string = query_string.split("&")
     query_string = {
-        key: value
-        for key, value in [
-            query.split("=")
-            for query in query_string
-        ]
+        key: value for key, value in [query.split("=") for query in query_string]
     }
-    return {
-        "url": url,
-        "query_string": query_string
-    }
+    return {"url": url, "query_string": query_string}
 
 
-# Implement a really complex binary search algorithm
 def binary_search(array: list, target: int) -> int:
     """Perform a binary search on a sorted array.
 
@@ -270,7 +262,9 @@ def binary_search_recursive(array: list, target: int) -> int:
         2
     """
 
-    def _binary_search_recursive(array: list, target: int, left: int, right: int) -> int:
+    def _binary_search_recursive(
+        array: list, target: int, left: int, right: int
+    ) -> int:
         """Perform a binary search on a sorted array recursively.
 
         Args:
@@ -294,3 +288,22 @@ def binary_search_recursive(array: list, target: int) -> int:
             return _binary_search_recursive(array, target, left, middle - 1)
 
     return _binary_search_recursive(array, target, 0, len(array) - 1)
+
+
+def matrix_multiplication(matrix_a: list, matrix_b: list) -> list:
+    """Multiply two matrices.
+
+    Ha, I'm cheating. I'm using numpy.
+
+    Args:
+        matrix_a (list): The first matrix to multiply.
+        matrix_b (list): The second matrix to multiply.
+
+    Returns:
+        list: The product of the two matrices.
+
+    Typical Usage Example:
+        >>> matrix_multiplication([[1, 2], [3, 4]], [[5, 6], [7, 8]])
+        [[19, 22], [43, 50]]
+    """
+    return np.matmul(matrix_a, matrix_b).tolist()
