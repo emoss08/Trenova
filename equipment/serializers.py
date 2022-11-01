@@ -22,7 +22,8 @@ from typing import Type
 
 from rest_framework import serializers
 
-from .models import Equipment
+from .models import (Equipment, EquipmentMaintenancePlan,
+                     EquipmentManufacturer, EquipmentType)
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
@@ -34,6 +35,7 @@ class EquipmentSerializer(serializers.ModelSerializer):
         """
         Metaclass for EquipmentSerializer.
         """
+
         model: Type[Equipment] = Equipment
         fields: tuple[str, ...] = (
             "id",
@@ -65,9 +67,128 @@ class EquipmentSerializer(serializers.ModelSerializer):
         )
 
     def to_representation(self, instance: Equipment) -> dict:
-        """
-        Serialize Equipment objects to JSON.
+        """Serialize Equipment objects to JSON.
+
+        Args:
+            instance (Equipment): The Equipment object to serialize.
+
+        Returns:
+            dict: The serialized Equipment object.
         """
         data = super().to_representation(instance)
         data = {k: v if v is not None else "" for k, v in data.items()}
+        return data
+
+
+class EquipmentManufacturerSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Equipment Manufacturer Model.
+    """
+
+    class Meta:
+        """
+        Metaclass for EquipmentManufacturerSerializer.
+        """
+
+        model: Type[EquipmentManufacturer] = EquipmentManufacturer
+        fields: tuple[str, ...] = (
+            "id",
+            "description",
+        )
+
+    def create(self, validated_data: dict) -> EquipmentManufacturer:
+        """Create a new EquipmentManufacturer.
+
+        Args:
+            validated_data (dict): The validated data.
+
+        Returns:
+            EquipmentManufacturer: The new EquipmentManufacturer.
+        """
+        validated_data["organization"] = self.context[
+            "request"
+        ].user.profile.organization
+        return super().create(validated_data)
+
+
+class EquipmentTypeSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Equipment Type Model.
+    """
+
+    class Meta:
+        """
+        Metaclass for EquipmentTypeSerializer.
+        """
+
+        model: Type[EquipmentType] = EquipmentType
+        fields: tuple[str, ...] = (
+            "id",
+            "name",
+            "description",
+        )
+
+    def create(self, validated_data: dict) -> EquipmentType:
+        """Create a new EquipmentType.
+
+        Args:
+            validated_data (dict): The validated data.
+
+        Returns:
+            EquipmentType: The new EquipmentType.
+        """
+        validated_data["organization"] = self.context[
+            "request"
+        ].user.profile.organization
+        return super().create(validated_data)
+
+
+class EquipmentMaintenancePlanSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Equipment Maintenance Plan Model.
+    """
+
+    class Meta:
+        """
+        Metaclass for EquipmentMaintenancePlanSerializer.
+        """
+
+        model: Type[EquipmentMaintenancePlan] = EquipmentMaintenancePlan
+        fields: tuple[str, ...] = (
+            "id",
+            "equipment_types",
+            "description",
+            "by_distance",
+            "by_time",
+            "by_engine_hours",
+            "miles",
+            "months",
+            "engine_hours",
+        )
+
+    def create(self, validated_data: dict) -> EquipmentMaintenancePlan:
+        """Create a new EquipmentMaintenancePlan.
+
+        Args:
+            validated_data (dict): The validated data.
+
+        Returns:
+            EquipmentMaintenancePlan: The new EquipmentMaintenancePlan.
+        """
+        validated_data["organization"] = self.context[
+            "request"
+        ].user.profile.organization
+        return super().create(validated_data)
+
+    def to_representation(self, instance: EquipmentMaintenancePlan) -> dict:
+        """Serialize EquipmentMaintenancePlan objects to JSON.
+
+        Args:
+            instance (EquipmentMaintenancePlan): The EquipmentMaintenancePlan object to serialize.
+
+        Returns:
+            dict: The serialized EquipmentMaintenancePlan object.
+        """
+        data = super().to_representation(instance)
+        data["equipment_types"] = [et.name for et in instance.equipment_types.all()]
         return data
