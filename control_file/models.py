@@ -83,7 +83,7 @@ class DispatchControl(GenericModel):
     driver_assign = models.BooleanField(
         _("Enforce Driver Assign"),
         default=False,
-        help_text=_("Enforce driver assign for the company."),
+        help_text=_("Enforce driver assign to orders for the company."),
     )
     trailer_continuity = models.BooleanField(
         _("Enforce Trailer Continuity"),

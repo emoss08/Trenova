@@ -144,7 +144,7 @@ class Worker(GenericModel):
         Returns:
             str: Worker string representation
         """
-        return self.code
+        return f"{self.first_name} {self.last_name}"
 
     def generate_code(self) -> str:
         """Generate a unique code for the worker
@@ -156,11 +156,9 @@ class Worker(GenericModel):
         last_name: str = self.last_name[:9]
 
         code: str = f"{first_name}{last_name}".upper()
+        new_code: str = f"{code}{Worker.objects.count()}"
 
-        if Worker.objects.filter(code=code).exists():
-            code: str = f"{code}{Worker.objects.count()}"
-
-        return code
+        return code if not Worker.objects.filter(code=code).exists() else new_code
 
     def save(self, **kwargs: Any) -> None:
         """Save the worker
