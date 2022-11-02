@@ -23,12 +23,12 @@ from typing import Any
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import Profile, User
+from .models import User, UserProfile
 
 
 @receiver(post_save, sender=User)
 def create_user_profile(
-    sender: User, instance: User, created: bool, **kwargs: Any
+        sender: User, instance: User, created: bool, **kwargs: Any
 ) -> None:
     """Create User Profile
 
@@ -44,4 +44,4 @@ def create_user_profile(
         None:
     """
     if created:
-        Profile.objects.create(user=instance)
+        UserProfile.objects.create(user=instance)

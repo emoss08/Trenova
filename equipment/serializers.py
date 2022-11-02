@@ -22,8 +22,12 @@ from typing import Type
 
 from rest_framework import serializers
 
-from .models import (Equipment, EquipmentMaintenancePlan,
-                     EquipmentManufacturer, EquipmentType)
+from .models import (
+    Equipment,
+    EquipmentMaintenancePlan,
+    EquipmentManufacturer,
+    EquipmentType,
+)
 
 
 class EquipmentSerializer(serializers.ModelSerializer):
@@ -191,4 +195,30 @@ class EquipmentMaintenancePlanSerializer(serializers.ModelSerializer):
         """
         data = super().to_representation(instance)
         data["equipment_types"] = [et.name for et in instance.equipment_types.all()]
+        return data
+
+    def validate(self, data) -> dict:
+        """Validate the data.
+
+        Args:
+            data (dict): The data to validate.
+
+        Returns:
+            dict: The validated data.
+        """
+        if data["by_distance"]:
+            if not data["miles"]:
+                raise serializers.ValidationError(
+                    "The field miles is required when by_distance is checked."
+                )
+        if data["by_time"]:
+            if not data["months"]:
+                raise serializers.ValidationError(
+                    "The field months is required when by_time is checked."
+                )
+        if data["by_engine_hours"]:
+            if not data["engine_hours"]:
+                raise serializers.ValidationError(
+                    "The field engine_hours is required when by_engine_hours is checked."
+                )
         return data

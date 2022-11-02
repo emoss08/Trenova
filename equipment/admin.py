@@ -22,8 +22,13 @@ from typing import Type
 
 from django.contrib import admin
 
-from .models import (Equipment, EquipmentMaintenancePlan,
-                     EquipmentManufacturer, EquipmentType, EquipmentTypeDetail)
+from .models import (
+    Equipment,
+    EquipmentMaintenancePlan,
+    EquipmentManufacturer,
+    EquipmentType,
+    EquipmentTypeDetail,
+)
 
 
 @admin.register(EquipmentManufacturer)

@@ -443,8 +443,8 @@ class EquipmentMaintenancePlan(GenericModel):
     )
     equipment_types = models.ManyToManyField(
         EquipmentType,
-        related_name="maintenance_plans",
-        related_query_name="maintenance_plan",
+        related_name="maintenance_plan",
+        related_query_name="maintenance_plans",
         verbose_name=_("Equipment Types"),
     )
     description = models.TextField(
