@@ -335,7 +335,7 @@ class WorkerProfile(GenericModel):
         Returns:
             str: Worker Profile string representation
         """
-        return self.worker.code
+        return f"{self.worker.first_name} {self.worker.last_name} Profile"
 
     def clean(self) -> None:
         """Worker Profile clean method
