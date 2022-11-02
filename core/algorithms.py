@@ -26,7 +26,7 @@ def longest_common_substring(s1: str, s2: str) -> str:
             str: The longest common substring.
 
         Typical Usage Example:
-            >>> longest_common_substring("SIKE", "SIKE YOU THOUGHT")
+            >>> longest_common_substring("FUCK", "FUCK YOU")
     """
     m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]
     longest, x_longest = 0, 0

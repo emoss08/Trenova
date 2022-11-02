@@ -208,12 +208,12 @@ class DepotDetail(TimeStampedModel):
         help_text=_("The depot that the depot detail belongs to."),
     )
     address_line_1 = models.CharField(
-        _("Address"),
+        _("Address Line 1"),
         max_length=255,
         help_text=_("The address line 1 of the depot."),
     )
     address_line_2 = models.CharField(
-        _("Address"),
+        _("Address Line 2"),
         max_length=255,
         help_text=_("The address line 2 of the depot."),
         blank=True,

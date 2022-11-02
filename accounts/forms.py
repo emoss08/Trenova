@@ -17,3 +17,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from django.forms import forms
+
+
+class form(forms.Form):
+    field = forms.CharField(
+        label='label',
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        max_length=50,
+        required=True,
+    )
