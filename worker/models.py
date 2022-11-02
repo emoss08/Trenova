@@ -181,6 +181,7 @@ class Worker(GenericModel):
         """
         return reverse("worker:detail", kwargs={"pk": self.pk})
 
+    @property
     def get_full_name(self) -> str:
         """Worker full name
 
@@ -189,6 +190,7 @@ class Worker(GenericModel):
         """
         return f"{self.first_name} {self.last_name}"
 
+    @property
     def get_full_address(self) -> str:
         """Worker full address
 
@@ -347,12 +349,12 @@ class WorkerProfile(GenericModel):
             ValidationError: If the worker profile is not valid.
         """
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
@@ -381,9 +383,7 @@ class WorkerProfile(GenericModel):
                 )
             )
         if self.objects.filter(license_number=self.license_number).exists():
-            worker_profile = self.objects.get(
-                license_number=self.license_number
-            )
+            worker_profile = self.objects.get(license_number=self.license_number)
             if worker_profile != self:
                 raise ValidationError(
                     ValidationError(

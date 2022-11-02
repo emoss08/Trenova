@@ -84,7 +84,18 @@ class WorkerAdmin(admin.ModelAdmin):
     )
     autocomplete_fields: tuple[str, ...] = ("organization",)
     fieldsets = (
-        (None, {"fields": ("organization", "is_active", "worker_type", "depot", "manager")}),
+        (
+            None,
+            {
+                "fields": (
+                    "organization",
+                    "is_active",
+                    "worker_type",
+                    "depot",
+                    "manager",
+                )
+            },
+        ),
         (
             "Personal Information",
             {

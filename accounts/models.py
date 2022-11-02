@@ -23,11 +23,8 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -46,11 +43,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -79,7 +76,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self, username: str, email: str, password: str = None, **extra_fields: Any
+        self, username: str, email: str, password: str = None, **extra_fields: Any
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -102,7 +99,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    User model
+    Stores basic user information.
     """
 
     username = models.CharField(
@@ -156,7 +153,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class UserProfile(GenericModel):
     """
-    Profile Model
+    Stores additional information for a related :model:`User`.
     """
 
     user = models.OneToOneField(
@@ -262,7 +259,7 @@ class UserProfile(GenericModel):
             None
 
         Raises:
-            ValidationError
+            ValidationError: Validation error for the UserProfile Model
         """
         if self.title.is_active is False:
             raise ValidationError(
@@ -277,6 +274,7 @@ class UserProfile(GenericModel):
         """
         return reverse("user:profile-view", kwargs={"pk": self.pk})
 
+    @property
     def get_user_profile_pic(self) -> str:
         """Get the user profile picture.
 
@@ -287,6 +285,7 @@ class UserProfile(GenericModel):
             return self.profile_picture.url
         return "/static/media/avatars/blank.avif"
 
+    @property
     def get_user_city_state(self) -> Optional[str]:
         """User City and state combination.
 
@@ -297,6 +296,7 @@ class UserProfile(GenericModel):
             return f"{self.city}, {self.state}"
         return None
 
+    @property
     def get_full_name(self) -> str:
         """Full name of the user.
 
@@ -308,7 +308,7 @@ class UserProfile(GenericModel):
 
 class JobTitle(GenericModel):
     """
-    Job Title Model Fields
+    Stores the job title of a :model:`User`.
     """
 
     name = models.CharField(
@@ -342,7 +342,7 @@ class JobTitle(GenericModel):
         ]
 
     def __str__(self) -> str:
-        """Job Title string representation
+        """Job Title string representation.
 
         Returns:
             str: String representation of the JobTitle Model.
