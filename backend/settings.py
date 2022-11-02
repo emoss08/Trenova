@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "equipment",
     "worker",
     "control_file",
+    "dispatch",
 ]
 
 # Middleware configurations

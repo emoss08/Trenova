@@ -22,12 +22,8 @@ from typing import Type
 
 from rest_framework import serializers
 
-from .models import (
-    Equipment,
-    EquipmentMaintenancePlan,
-    EquipmentManufacturer,
-    EquipmentType,
-)
+from .models import (Equipment, EquipmentMaintenancePlan,
+                     EquipmentManufacturer, EquipmentType)
 
 
 class EquipmentSerializer(serializers.ModelSerializer):

@@ -29,118 +29,9 @@ from core.models import GenericModel
 from organization.models import Organization
 
 
-class DispatchControl(GenericModel):
-    """
-    Stores the dispatch control information for a related :model:`organization.Organization`.
-    """
-
-    @final
-    class ServiceIncidentControlChoices(models.TextChoices):
-        """
-        Service Incident Control Choices
-        """
-
-        NEVER = "Never", _("Never")
-        PICKUP = "Pickup", _("Pickup")
-        DELIVERY = "Delivery", _("Delivery")
-        PICKUP_DELIVERY = "Pickup and Delivery", _("Pickup and Delivery")
-        ALL_EX_SHIPPER = "All except shipper", _("All except shipper")
-
-    @final
-    class DistanceMethodChoices(models.TextChoices):
-        """
-        Distance method choices for Order model
-        """
-
-        GOOGLE = "Google", _("Google")
-        MONTA = "Monta", _("Monta")
-
-    organization = models.OneToOneField(
-        Organization,
-        on_delete=models.CASCADE,
-        verbose_name=_("Organization"),
-        related_name="dispatch_control",
-        related_query_name="dispatch_controls",
-    )
-    record_service_incident = models.CharField(
-        _("Record Service Incident"),
-        max_length=19,
-        choices=ServiceIncidentControlChoices.choices,
-        default=ServiceIncidentControlChoices.NEVER,
-    )
-    grace_period = models.PositiveIntegerField(
-        _("Grace Period"),
-        default=0,
-        help_text=_("Grace period for the service incident in minutes."),
-    )
-    deadhead_target = models.DecimalField(
-        _("Deadhead Target"),
-        max_digits=5,
-        decimal_places=2,
-        default=0.00,
-        help_text=_("Deadhead Mileage target for the company."),
-    )
-    driver_assign = models.BooleanField(
-        _("Enforce Driver Assign"),
-        default=False,
-        help_text=_("Enforce driver assign to orders for the company."),
-    )
-    trailer_continuity = models.BooleanField(
-        _("Enforce Trailer Continuity"),
-        default=False,
-        help_text=_("Enforce trailer continuity for the company."),
-    )
-    distance_method = models.CharField(
-        _("Distance Method"),
-        max_length=20,
-        choices=DistanceMethodChoices.choices,
-        default=DistanceMethodChoices.MONTA,
-        help_text=_("Distance method for the company."),
-    )
-    dupe_trailer_check = models.BooleanField(
-        _("Enforce Duplicate Trailer Check"),
-        default=False,
-        help_text=_("Enforce duplicate trailer check for the company."),
-    )
-    regulatory_check = models.BooleanField(
-        _("Enforce Regulatory Check"),
-        default=False,
-        help_text=_("Enforce regulatory check for the company."),
-    )
-    prev_orders_on_hold = models.BooleanField(
-        _("Prevent Orders On Hold"),
-        default=False,
-        help_text=_("Prevent dispatch of orders on hold for the company."),
-    )
-
-    class Meta:
-        """
-        Metaclass for DispatchControl
-        """
-        verbose_name = _("Dispatch Control")
-        verbose_name_plural = _("Dispatch Controls")
-        ordering: list[str] = ["organization"]
-
-    def __str__(self) -> str:
-        """Dispatch control string representation
-
-        Returns:
-            str: Dispatch control string representation
-        """
-        return f"{self.organization}"
-
-    def get_absolute_url(self) -> str:
-        """Dispatch control absolute url
-
-        Returns:
-            str: Dispatch control absolute url
-        """
-        return reverse("dispatch_control:detail", kwargs={"pk": self.pk})
-
-
 class OrderControl(GenericModel):
     """
-    Order Control Model Fields
+    Stores the order control information for a related :model:`organization.Organization`.
     """
 
     organization = models.OneToOneField(
@@ -191,6 +82,7 @@ class OrderControl(GenericModel):
         """
         Metaclass for OrderControl
         """
+
         verbose_name: str = _("Order Control")
         verbose_name_plural: str = _("Order Controls")
         ordering: list[str] = ["organization"]
@@ -214,7 +106,7 @@ class OrderControl(GenericModel):
 
 class GoogleAPI(GenericModel):
     """
-    Google API Model Fields
+    Stores the Google API information for a related :model:`organization.Organization`.
     """
 
     @final
@@ -281,6 +173,7 @@ class GoogleAPI(GenericModel):
         """
         Metaclass for GoogleAPI
         """
+
         verbose_name: str = _("Google API")
         verbose_name_plural: str = _("Google APIs")
         ordering: list[str] = ["organization"]

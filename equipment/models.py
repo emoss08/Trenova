@@ -234,7 +234,7 @@ class EquipmentManufacturer(GenericModel):
 
 class Equipment(GenericModel):
     """
-    Stores a single piece of equipment.
+    Stores information about a piece of equipment.
     """
 
     @final
