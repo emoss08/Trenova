@@ -20,9 +20,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework.routers import DefaultRouter
 
-from equipment.api import (EquipmentMaintenancePlanViewSet,
-                           EquipmentManufacturerViewSet, EquipmentTypeViewSet,
-                           EquipmentViewSet)
+from equipment.api import (
+    EquipmentMaintenancePlanViewSet,
+    EquipmentManufacturerViewSet,
+    EquipmentTypeViewSet,
+    EquipmentViewSet,
+)
 
 router = DefaultRouter()
 

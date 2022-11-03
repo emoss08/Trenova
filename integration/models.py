@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+import textwrap
 from typing import final
 
 from django.core.exceptions import ValidationError
@@ -134,7 +134,7 @@ class Integration(GenericModel):
         Returns:
             str: String representation of the Integration
         """
-        return self.name
+        return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
         """Clean method to validate the Integration Model

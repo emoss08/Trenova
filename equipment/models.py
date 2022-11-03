@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+import textwrap
 from typing import final
 
 from django.core.exceptions import ValidationError
@@ -62,7 +62,7 @@ class EquipmentType(GenericModel):
         Returns:
             str: String representation of the Equipment Type Model
         """
-        return self.name
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Type absolute URL
@@ -177,7 +177,7 @@ class EquipmentTypeDetail(GenericModel):
         Returns:
             str: String representation of the Equipment Type Detail Model
         """
-        return self.equipment_type.name
+        return textwrap.wrap(self.equipment_type.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Type Detail absolute URL
@@ -221,7 +221,7 @@ class EquipmentManufacturer(GenericModel):
         Returns:
             str: String representation of the Equipment Manufacturer Model
         """
-        return self.id
+        return textwrap.wrap(self.id, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Manufacturer absolute URL
@@ -418,7 +418,7 @@ class Equipment(GenericModel):
         Returns:
             str: String representation of the Equipment Model
         """
-        return self.id
+        return textwrap.wrap(self.id, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment absolute URL
@@ -498,7 +498,7 @@ class EquipmentMaintenancePlan(GenericModel):
         Returns:
             str: String representation of the EquipmentMaintenancePlan Model
         """
-        return self.id
+        return textwrap.wrap(self.id, 50)[0]
 
     def clean(self) -> None:
         """Equipment Maintenance Plan clean method
