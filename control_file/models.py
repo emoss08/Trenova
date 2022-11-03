@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import textwrap
 from typing import final
 
 from django.db import models
@@ -93,7 +94,7 @@ class OrderControl(GenericModel):
         Returns:
             str: Order control string representation
         """
-        return self.organization.name
+        return textwrap.wrap(self.organization.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Order control absolute url
@@ -174,8 +175,8 @@ class GoogleAPI(GenericModel):
         Metaclass for GoogleAPI
         """
 
-        verbose_name: str = _("Google API")
-        verbose_name_plural: str = _("Google APIs")
+        verbose_name = _("Google API")
+        verbose_name_plural = _("Google APIs")
         ordering: list[str] = ["organization"]
 
     def __str__(self) -> str:
@@ -184,7 +185,7 @@ class GoogleAPI(GenericModel):
         Returns:
             str: Google API string representation
         """
-        return self.organization.name
+        return textwrap.wrap(self.organization.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Google API absolute url
@@ -193,3 +194,45 @@ class GoogleAPI(GenericModel):
             str: Google API absolute url
         """
         return reverse("google_api:detail", kwargs={"pk": self.pk})
+
+
+class CommentType(GenericModel):
+    """
+    Stores the comment type information for a related :model:`organization.Organization`.
+    """
+
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("Comment type name"),
+    )
+    description = models.TextField(
+        _("Description"),
+        max_length=255,
+        help_text=_("Comment type description"),
+    )
+
+    class Meta:
+        """
+        Metaclass for CommentType
+        """
+
+        verbose_name: str = _("Comment Type")
+        verbose_name_plural: str = _("Comment Types")
+        ordering: list[str] = ["organization"]
+
+    def __str__(self) -> str:
+        """Comment type string representation
+
+        Returns:
+            str: Comment type string representation
+        """
+        return textwrap.wrap(self.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Comment type absolute url
+
+        Returns:
+            str: Comment type absolute url
+        """
+        return reverse("comment_type:detail", kwargs={"pk": self.pk})

@@ -24,7 +24,7 @@ from .models import Integration
 
 
 @admin.register(Integration)
-class IntegrationAdmin(admin.ModelAdmin):
+class IntegrationAdmin(admin.ModelAdmin[Integration]):
     """
     Integration Admin
     """

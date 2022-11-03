@@ -22,12 +22,17 @@ from typing import Type
 
 from django.contrib import admin
 
-from .models import (Equipment, EquipmentMaintenancePlan,
-                     EquipmentManufacturer, EquipmentType, EquipmentTypeDetail)
+from .models import (
+    Equipment,
+    EquipmentMaintenancePlan,
+    EquipmentManufacturer,
+    EquipmentType,
+    EquipmentTypeDetail,
+)
 
 
 @admin.register(EquipmentManufacturer)
-class EquipmentManufacturerAdmin(admin.ModelAdmin):
+class EquipmentManufacturerAdmin(admin.ModelAdmin[EquipmentManufacturer]):
     """
     Equipment Manufacturer Admin
     """
@@ -58,7 +63,7 @@ class EquipmentTypeDetailAdmin(admin.StackedInline):
 
 
 @admin.register(EquipmentType)
-class EquipmentTypeAdmin(admin.ModelAdmin):
+class EquipmentTypeAdmin(admin.ModelAdmin[EquipmentType]):
     """
     Equipment Type Admin
     """
@@ -71,7 +76,7 @@ class EquipmentTypeAdmin(admin.ModelAdmin):
 
 
 @admin.register(Equipment)
-class EquipmentAdmin(admin.ModelAdmin):
+class EquipmentAdmin(admin.ModelAdmin[Equipment]):
     """
     Equipment Admin
     """
@@ -144,7 +149,7 @@ class EquipmentAdmin(admin.ModelAdmin):
 
 
 @admin.register(EquipmentMaintenancePlan)
-class EquipmentMaintenancePlanAdmin(admin.ModelAdmin):
+class EquipmentMaintenancePlanAdmin(admin.ModelAdmin[EquipmentMaintenancePlan]):
     """
     Equipment Maintenance Plan Admin
     """

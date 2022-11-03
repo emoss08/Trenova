@@ -63,7 +63,7 @@ class WorkerCommentAdmin(admin.StackedInline):
 
 
 @admin.register(Worker)
-class WorkerAdmin(admin.ModelAdmin):
+class WorkerAdmin(admin.ModelAdmin[Worker]):
     """
     Worker Admin
     """

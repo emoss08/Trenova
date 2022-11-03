@@ -21,7 +21,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from pathlib import Path
 
-import environ
+import django_stubs_ext
+import environ  # type: ignore
+
+django_stubs_ext.monkeypatch()
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -34,7 +37,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = []  # type: ignore
 
 # Application definition
 INSTALLED_APPS = [
@@ -60,6 +63,8 @@ INSTALLED_APPS = [
     "worker",
     "control_file",
     "dispatch",
+    "location",
+    "order",
 ]
 
 # Middleware configurations

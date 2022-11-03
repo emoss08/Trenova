@@ -17,9 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+import textwrap
 from typing import Any, final
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -27,9 +28,11 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField  # type: ignore
 
-from accounts.models import User
+from control_file.models import CommentType
 from core.models import GenericModel
 from organization.models import Depot
+
+User = settings.AUTH_USER_MODEL
 
 
 class Worker(GenericModel):
@@ -144,7 +147,7 @@ class Worker(GenericModel):
         Returns:
             str: Worker string representation
         """
-        return f"{self.first_name} {self.last_name}"
+        return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
 
     def generate_code(self) -> str:
         """Generate a unique code for the worker
@@ -337,7 +340,7 @@ class WorkerProfile(GenericModel):
         Returns:
             str: Worker Profile string representation
         """
-        return f"{self.worker.first_name} {self.worker.last_name} Profile"
+        return textwrap.wrap(f"{self.worker.first_name} {self.worker.last_name} Profile", 50)[0]
 
     def clean(self) -> None:
         """Worker Profile clean method
@@ -349,12 +352,12 @@ class WorkerProfile(GenericModel):
             ValidationError: If the worker profile is not valid.
         """
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
@@ -468,7 +471,7 @@ class WorkerContact(GenericModel):
         Returns:
             str: Worker Contact string representation
         """
-        return self.name
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Worker Contact absolute url
@@ -477,43 +480,6 @@ class WorkerContact(GenericModel):
             str: Worker Contact absolute url
         """
         return reverse("worker:contact-detail", kwargs={"pk": self.pk})
-
-
-class WorkerCommentType(GenericModel):
-    """
-    Worker Comment Type Model
-    """
-
-    name = models.CharField(
-        _("name"), max_length=255, unique=True, help_text=_("Name of the comment type.")
-    )
-    description = models.TextField(
-        _("description"),
-        blank=True,
-        null=True,
-        help_text=_("Description of the comment type."),
-    )
-
-    class Meta:
-        verbose_name = _("worker comment type")
-        verbose_name_plural = _("worker comment types")
-        ordering: list[str] = ["name"]
-
-    def __str__(self) -> str:
-        """Worker Comment Type string representation
-
-        Returns:
-            str: Worker Comment Type string representation
-        """
-        return self.name
-
-    def get_absolute_url(self) -> str:
-        """Worker Comment Type absolute url
-
-        Returns:
-            str: Worker Comment Type absolute url
-        """
-        return reverse("worker:comment-type-detail", kwargs={"pk": self.pk})
 
 
 class WorkerComment(GenericModel):
@@ -531,7 +497,7 @@ class WorkerComment(GenericModel):
         help_text=_("Related worker."),
     )
     comment_type = models.ForeignKey(
-        WorkerCommentType,
+        CommentType,
         on_delete=models.CASCADE,
         related_name="comments",
         related_query_name="comments",
@@ -562,7 +528,7 @@ class WorkerComment(GenericModel):
         Returns:
             str: Worker Comment string representation
         """
-        return self.comment
+        return textwrap.wrap(self.comment, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Worker Comment absolute url

@@ -26,7 +26,7 @@ from .models import Depot, DepotDetail, Organization
 
 
 @admin.register(Organization)
-class OrganizationAdmin(admin.ModelAdmin):
+class OrganizationAdmin(admin.ModelAdmin[Organization]):
     """
     Organization Admin
     """
@@ -58,7 +58,7 @@ class DepotDetailInline(admin.StackedInline):
 
 
 @admin.register(Depot)
-class DepotAdmin(admin.ModelAdmin):
+class DepotAdmin(admin.ModelAdmin[Depot]):
     """
     Depot Admin
     """

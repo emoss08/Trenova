@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+import textwrap
 from typing import final
 
 from django.core.exceptions import ValidationError
@@ -131,7 +131,7 @@ class DispatchControl(GenericModel):
         Returns:
             str: Dispatch control string representation
         """
-        return f"{self.organization}"
+        return textwrap.wrap(self.organization.name, 50)[0]
 
     def clean(self) -> None:
         """Dispatch control clean method
@@ -144,10 +144,10 @@ class DispatchControl(GenericModel):
         """
         super().clean()
         if self.distance_method == self.DistanceMethodChoices.GOOGLE and not any(
-            [
-                integration.integration_type == IntegrationChoices.GOOGLE_MAPS
-                for integration in self.organization.integrations.all()
-            ]
+                [
+                    integration.integration_type == IntegrationChoices.GOOGLE_MAPS
+                    for integration in self.organization.integrations.all()
+                ]
         ):
             raise ValidationError(
                 ValidationError(
@@ -168,3 +168,52 @@ class DispatchControl(GenericModel):
             str: Dispatch control absolute URL
         """
         return reverse("dispatch:dispatch-control-detail", kwargs={"pk": self.pk})
+
+
+class DelayCode(GenericModel):
+    """
+    Store Delay code information that can be used by :model:`ServiceIncident`.
+    """
+
+    code = models.CharField(
+        _("Delay Code"),
+        max_length=4,
+        primary_key=True,
+        unique=True,
+        help_text=_("Delay code for the service incident."),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description for the delay code."),
+    )
+    f_carrier_or_driver = models.BooleanField(
+        _("Fault of Carrier or Driver"),
+        default=False,
+        help_text=_("Fault is carrier or driver."),
+    )
+
+    class Meta:
+        """
+        Metaclass for DelayCode
+        """
+
+        verbose_name = _("Delay Code")
+        verbose_name_plural = _("Delay Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """Delay code string representation
+
+        Returns:
+            str: Delay code string representation
+        """
+        return textwrap.wrap(self.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Delay code absolute URL
+
+        Returns:
+            str: Delay code absolute URL
+        """
+        return reverse("dispatch:delay-code-detail", kwargs={"pk": self.pk})

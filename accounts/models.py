@@ -20,11 +20,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import textwrap
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -43,11 +47,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -76,7 +80,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self, username: str, email: str, password: str = None, **extra_fields: Any
+            self, username: str, email: str, password: str = None, **extra_fields: Any
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -141,7 +145,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns:
             str: String representation of the User
         """
-        return self.username
+        return textwrap.wrap(self.username, 30)[0]
 
     def get_absolute_url(self) -> str:
         """
@@ -250,7 +254,7 @@ class UserProfile(GenericModel):
         Returns:
             str: String representation of the Profile
         """
-        return self.user.username
+        return textwrap.wrap(self.user.username, 30)[0]
 
     def clean(self) -> None:
         """Clean the model
@@ -347,7 +351,7 @@ class JobTitle(GenericModel):
         Returns:
             str: String representation of the JobTitle Model.
         """
-        return self.name
+        return textwrap.wrap(self.name, 30)[0]
 
     def get_absolute_url(self) -> str:
         """Absolute URL for the JobTitle.

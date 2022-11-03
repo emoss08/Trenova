@@ -18,38 +18,34 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from .models import DelayCode, DispatchControl
+from .models import HazardousMaterial, OrderType
 
 
-@admin.register(DispatchControl)
-class DispatchControlAdmin(admin.ModelAdmin[DispatchControl]):
+@admin.register(OrderType)
+class OrderTypeAdmin(admin.ModelAdmin[OrderType]):
     """
-    Dispatch Control Admin
+    Order Type Admin
     """
 
-    model: Type[DispatchControl] = DispatchControl
     list_display = (
-        "organization",
-        "record_service_incident",
+        "name",
+        "description",
     )
-    search_fields = ("organization",)
+    search_fields = ("name", "description")
     autocomplete_fields = ("organization",)
 
 
-@admin.register(DelayCode)
-class DelayCodeAdmin(admin.ModelAdmin[DelayCode]):
+@admin.register(HazardousMaterial)
+class HazardousMaterialAdmin(admin.ModelAdmin[HazardousMaterial]):
     """
-    Delay Code Admin
+    Hazardous Material Admin
     """
 
-    model: Type[DelayCode] = DelayCode
     list_display = (
-        "code",
+        "name",
         "description",
     )
-    search_fields = ("code", "description")
+    search_fields = ("name", "description")
     autocomplete_fields = ("organization",)

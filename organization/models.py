@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+import textwrap
 from typing import final
 
 from django.db import models
@@ -120,7 +120,7 @@ class Organization(TimeStampedModel):
         Returns:
             str: String representation of the organization.
         """
-        return self.name
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """
@@ -175,7 +175,7 @@ class Depot(TimeStampedModel):
         Returns:
             str: String representation of the depot.
         """
-        return self.name
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Depot absolute URL
@@ -273,7 +273,7 @@ class DepotDetail(TimeStampedModel):
         Returns:
             str: String representation of the depot detail.
         """
-        return self.depot.name
+        return textwrap.wrap(self.depot.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """DepotDetail absolute URL
