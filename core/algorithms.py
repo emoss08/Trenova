@@ -307,3 +307,69 @@ def matrix_multiplication(matrix_a: list, matrix_b: list) -> list:
         [[19, 22], [43, 50]]
     """
     return np.matmul(matrix_a, matrix_b).tolist()
+
+
+# Solve leetcocde problem 79 word search using backtracking
+def exist(board: list, word: str) -> bool:
+    """Given a 2D board and a word, find if the word exists in the grid.
+
+    The word can be constructed from letters of sequentially adjacent cell,
+    where "adjacent" cells are those horizontally or vertically neighboring.
+    The same letter cell may not be used more than once.
+
+    Args:
+        board (list): A 2D board of characters.
+        word (str): The word to search for.
+
+    Returns:
+        bool: Whether the word exists in the grid.
+
+    Typical Usage Example:
+        >>> exist([["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], "ABCCED")
+        True
+    """
+    if not board:
+        return False
+
+    def _exist(board: list, i: int, j: int, word: str) -> bool:
+        """Given a 2D board and a word, find if the word exists in the grid.
+
+        The word can be constructed from letters of sequentially adjacent cell,
+        where "adjacent" cells are those horizontally or vertically neighboring.
+        The same letter cell may not be used more than once.
+
+        Args:
+            board (list): A 2D board of characters.
+            i (int): The row index of the board.
+            j (int): The column index of the board.
+            word (str): The word to search for.
+
+        Returns:
+            bool: Whether the word exists in the grid.
+
+        """
+        if len(word) == 0:
+            return True
+        if (
+            i < 0
+            or i >= len(board)
+            or j < 0
+            or j >= len(board[0])
+            or board[i][j] != word[0]
+        ):
+            return False
+        temp = board[i][j]
+        board[i][j] = "#"
+        result = (
+            _exist(board, i + 1, j, word[1:])
+            or _exist(board, i - 1, j, word[1:])
+            or _exist(board, i, j + 1, word[1:])
+            or _exist(board, i, j - 1, word[1:])
+        )
+        board[i][j] = temp
+        return result
+
+    for i in range(len(board)):
+        for j in range(len(board[0])):
+            if _exist(board, i, j, word):
+                return True

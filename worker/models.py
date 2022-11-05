@@ -340,7 +340,9 @@ class WorkerProfile(GenericModel):
         Returns:
             str: Worker Profile string representation
         """
-        return textwrap.wrap(f"{self.worker.first_name} {self.worker.last_name} Profile", 50)[0]
+        return textwrap.wrap(
+            f"{self.worker.first_name} {self.worker.last_name} Profile", 50
+        )[0]
 
     def clean(self) -> None:
         """Worker Profile clean method
@@ -352,12 +354,12 @@ class WorkerProfile(GenericModel):
             ValidationError: If the worker profile is not valid.
         """
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
