@@ -291,3 +291,96 @@ class Commodity(GenericModel):
             str: Commodity Absolute URL
         """
         return reverse("order:commodity_detail", kwargs={"pk": self.pk})
+
+
+class QualifierCode(GenericModel):
+    """
+    Stores Qualifier Code information that can be used in stop notes
+    """
+
+    code = models.CharField(
+        _("Code"),
+        max_length=255,
+        unique=True,
+        help_text=_("Code of the Qualifier Code"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description of the Qualifier Code"),
+    )
+
+    class Meta:
+        verbose_name = _("Qualifier Code")
+        verbose_name_plural = _("Qualifier Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """Qualifier Code String Representation
+
+        Returns:
+            str: Code of the Qualifier
+        """
+        return textwrap.wrap(self.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Qualifier Code Absolute URL
+
+        Returns:
+            str: Qualifier Code Absolute URL
+        """
+        return reverse("order:qualifiercode-detail", kwargs={"pk": self.pk})
+
+
+class ReasonCode(GenericModel):
+    """
+    Stores Reason code information for when a load is voided or cancelled.
+    """
+
+    @final
+    class CodeTypeChoices(models.TextChoices):
+        """
+        Code Type choices for Reason Code model
+        """
+
+        VOIDED = "VOIDED", _("Voided")
+        CANCELLED = "CANCELLED", _("Cancelled")
+
+    code = models.CharField(
+        _("Code"),
+        max_length=255,
+        unique=True,
+        help_text=_("Code of the Reason Code"),
+    )
+    code_type = models.CharField(
+        _("Code Type"),
+        max_length=9,
+        choices=CodeTypeChoices.choices,
+        help_text=_("Code Type of the Reason Code"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description of the Reason Code"),
+    )
+
+    class Meta:
+        verbose_name = _("Reason Code")
+        verbose_name_plural = _("Reason Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """Reason Code String Representation
+
+        Returns:
+            str: Code of the Reason
+        """
+        return textwrap.wrap(self.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Reason Code Absolute URL
+
+        Returns:
+            str: Reason Code Absolute URL
+        """
+        return reverse("order:reasoncode-detail", kwargs={"pk": self.pk})

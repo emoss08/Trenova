@@ -22,7 +22,7 @@ from typing import Type
 
 from django.contrib import admin
 
-from .models import DelayCode, DispatchControl
+from .models import DelayCode, DispatchControl, FleetCode
 
 
 @admin.register(DispatchControl)
@@ -47,6 +47,21 @@ class DelayCodeAdmin(admin.ModelAdmin[DelayCode]):
     """
 
     model: Type[DelayCode] = DelayCode
+    list_display = (
+        "code",
+        "description",
+    )
+    search_fields = ("code", "description")
+    autocomplete_fields = ("organization",)
+
+
+@admin.register(FleetCode)
+class FleetCodeAdmin(admin.ModelAdmin[FleetCode]):
+    """
+    Fleet Code Admin
+    """
+
+    model: Type[FleetCode] = FleetCode
     list_display = (
         "code",
         "description",
