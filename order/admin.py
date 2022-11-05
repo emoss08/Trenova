@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from .models import HazardousMaterial, OrderType
+from .models import Commodity, HazardousMaterial, OrderType
 
 
 @admin.register(OrderType)
@@ -49,3 +49,34 @@ class HazardousMaterialAdmin(admin.ModelAdmin[HazardousMaterial]):
     )
     search_fields = ("name", "description")
     autocomplete_fields = ("organization",)
+
+
+@admin.register(Commodity)
+class CommodityAdmin(admin.ModelAdmin[Commodity]):
+    """
+    Commodity Admin
+    """
+
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = ("name", "description")
+    autocomplete_fields = ("organization", "hazmat")
+    fieldsets = (
+        (None, {"fields": ("organization", "name", "description")}),
+        (
+            "Hazmat Information",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "min_temp",
+                    "max_temp",
+                    "set_point_temp",
+                    "unit_of_measure",
+                    "hazmat",
+                    "is_hazmat",
+                ),
+            },
+        ),
+    )

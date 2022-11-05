@@ -266,7 +266,7 @@ class Commodity(GenericModel):
         blank=True,
     )
     is_hazmat = models.BooleanField(
-        _("Hazardous Material"),
+        _("Is Hazardous Material"),
         default=False,
         help_text=_("Is the Commodity a Hazardous Material"),
     )
