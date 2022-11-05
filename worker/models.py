@@ -30,7 +30,9 @@ from localflavor.us.models import USStateField  # type: ignore
 
 from control_file.models import CommentType
 from core.models import GenericModel
+from dispatch.models import DispatchControl
 from organization.models import Depot
+from dispatch.validators.regulatory import validate_worker_regulatory_information
 
 User = settings.AUTH_USER_MODEL
 
@@ -264,14 +266,20 @@ class WorkerProfile(GenericModel):
         _("License Number"),
         max_length=20,
         help_text=_("License Number."),
+        null=True,
+        blank=True,
     )
     license_state = USStateField(
         _("License State"),
         help_text=_("License State."),
+        null=True,
+        blank=True,
     )
     license_expiration_date = models.DateField(
         _("License Expiration Date"),
         help_text=_("License Expiration Date."),
+        null=True,
+        blank=True,
     )
     endorsements = models.CharField(
         _("Endorsements"),
@@ -279,6 +287,8 @@ class WorkerProfile(GenericModel):
         choices=EndorsementChoices.choices,
         default=EndorsementChoices.NONE,
         help_text=_("Endorsements."),
+        null=True,
+        blank=True,
     )
     hazmat_expiration_date = models.DateField(
         _("Hazmat Expiration Date"),
@@ -353,53 +363,41 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
-        if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
-        ):
-            raise ValidationError(
-                ValidationError(
-                    {
-                        "hazmat_expiration_date": _(
-                            "Hazmat expiration date is required for this endorsement."
-                        ),
-                    },
-                    code="invalid",
-                )
-            )
-        existing_drivers = [
-            driver
-            for driver in WorkerProfile.objects.all()
-            if driver.license_number == self.license_number
-        ]
-        if existing_drivers:
-            raise ValidationError(
-                ValidationError(
-                    {
-                        "license_number": _(
-                            f"License number already exists for {existing_drivers[0].worker.code}."
-                        ),
-                    },
-                    code="invalid",
-                )
-            )
-        if self.objects.filter(license_number=self.license_number).exists():
-            worker_profile = self.objects.get(license_number=self.license_number)
-            if worker_profile != self:
-                raise ValidationError(
-                    ValidationError(
-                        {
-                            "license_number": _(
-                                f"License number already exists. Worker: {worker_profile.worker}"
-                            ),
-                        },
-                        code="invalid",
-                    )
-                )
+        # if (
+        #         self.endorsements
+        #         in [
+        #     WorkerProfile.EndorsementChoices.X,
+        #     WorkerProfile.EndorsementChoices.HAZMAT,
+        # ]
+        #         and not self.hazmat_expiration_date
+        # ):
+        #     raise ValidationError(
+        #         ValidationError(
+        #             {
+        #                 "hazmat_expiration_date": _(
+        #                     "Hazmat expiration date is required for this endorsement."
+        #                 ),
+        #             },
+        #             code="invalid",
+        #         )
+        #     )
+        # existing_drivers = [
+        #     driver
+        #     for driver in WorkerProfile.objects.all()
+        #     if driver.license_number == self.license_number
+        # ]
+        # if existing_drivers:
+        #     raise ValidationError(
+        #         ValidationError(
+        #             {
+        #                 "license_number": _(
+        #                     f"License number already exists for {existing_drivers[0].worker.code}."
+        #                 ),
+        #             },
+        #             code="invalid",
+        #         )
+        #     )
+        validate_worker_regulatory_information(self)
 
     def get_absolute_url(self) -> str:
         """Worker Profile absolute url
