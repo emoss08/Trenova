@@ -15,8 +15,6 @@ It is built on top of the Django framework and is designed to be easily extendab
 
 - Python 3.11+
     - No lower version supported.
-- Django 4.1.2 (Recommended)
-    - Does support Django 4.0.0+
 - PostgreSQL 12+ (no plans to support other databases)
 - Redis 6.0+
 
@@ -58,3 +56,8 @@ However, we do not follow the style guides to the letter.
   support complex functional testing for applications and libraries.
 - [pytest-django](https://pytest-django.readthedocs.io/en/latest/) - Pytest plugin for Django projects.
 - [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/) - Pytest plugin for measuring coverage.
+
+## Continuous Integration
+
+- [Pre-commit](https://pre-commit.com/) - A framework for managing and maintaining multi-language pre-commit hooks.
+- [Pre-commit CI](https://pre-commit.ci/) - A free service for running pre-commit hooks on GitHub.
