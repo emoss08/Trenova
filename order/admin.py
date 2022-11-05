@@ -20,7 +20,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from .models import Commodity, HazardousMaterial, OrderType
+from .models import (Commodity, HazardousMaterial, OrderType, QualifierCode,
+                     ReasonCode)
 
 
 @admin.register(OrderType)
@@ -80,3 +81,31 @@ class CommodityAdmin(admin.ModelAdmin[Commodity]):
             },
         ),
     )
+
+
+@admin.register(QualifierCode)
+class QualifierCodeAdmin(admin.ModelAdmin[QualifierCode]):
+    """
+    Qualifier Code Admin
+    """
+
+    list_display = (
+        "code",
+        "description",
+    )
+    search_fields = ("code", "description")
+    autocomplete_fields = ("organization",)
+
+
+@admin.register(ReasonCode)
+class ReasonCodeAdmin(admin.ModelAdmin[ReasonCode]):
+    """
+    Reason Code Admin
+    """
+
+    list_display = (
+        "code",
+        "description",
+    )
+    search_fields = ("code", "description")
+    autocomplete_fields = ("organization",)
