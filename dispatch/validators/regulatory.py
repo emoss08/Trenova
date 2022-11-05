@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -29,15 +30,17 @@ def validate_worker_regulatory_information(value) -> None:
     then require the user to enter license number, state, expiration date and endorsement information in the worker.
 
     Args:
-        value (WorkerProfile): WorkerProfile object
+        value (WorkerProfile): Instance of worker profile
 
     Raises:
         ValidationError: Validate the worker regulatory information.
+
+    Typical
     """
-    dispatch_control = DispatchControl.objects.filter(
+    dispatch_control: Optional[DispatchControl] = DispatchControl.objects.filter(
         organization=value.organization
     ).first()
-    errors = {}
+    errors: dict[str, str] = {}
     if dispatch_control and dispatch_control.regulatory_check:
         if not value.license_number:
             errors["license_number"] = _(
