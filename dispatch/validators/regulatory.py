@@ -40,14 +40,21 @@ def validate_worker_regulatory_information(value) -> None:
     errors = {}
     if dispatch_control and dispatch_control.regulatory_check:
         if not value.license_number:
-            errors["license_number"] = _("Organization has regulatory check enabled. Please enter a license number.")
+            errors["license_number"] = _(
+                "Organization has regulatory check enabled. Please enter a license number."
+            )
         if not value.license_state:
-            errors["license_state"] = _("Organization has regulatory check enabled. Please enter a license state.")
+            errors["license_state"] = _(
+                "Organization has regulatory check enabled. Please enter a license state."
+            )
         if not value.license_expiration_date:
-            errors["license_expiration_date"] = _("Organization has regulatory check enabled."
-                                                  " Please enter a license expiration date.")
+            errors["license_expiration_date"] = _(
+                "Organization has regulatory check enabled."
+                " Please enter a license expiration date."
+            )
         if not value.endorsements:
-            errors["endorsements"] = _("Organization has regulatory check enabled. Please enter endorsements.")
+            errors["endorsements"] = _(
+                "Organization has regulatory check enabled. Please enter endorsements."
+            )
     if errors:
-        print(errors)
         raise ValidationError(errors)
