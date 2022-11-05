@@ -196,6 +196,7 @@ class Commodity(GenericModel):
     Commodity Model Fields
     """
 
+    @final
     class UnitOfMeasureChoices(models.TextChoices):
         """
         Unit of Measure choices for Commodity model
