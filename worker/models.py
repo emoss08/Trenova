@@ -364,40 +364,44 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
-        # if (
-        #         self.endorsements
-        #         in [
-        #     WorkerProfile.EndorsementChoices.X,
-        #     WorkerProfile.EndorsementChoices.HAZMAT,
-        # ]
-        #         and not self.hazmat_expiration_date
-        # ):
-        #     raise ValidationError(
-        #         ValidationError(
-        #             {
-        #                 "hazmat_expiration_date": _(
-        #                     "Hazmat expiration date is required for this endorsement."
-        #                 ),
-        #             },
-        #             code="invalid",
-        #         )
-        #     )
-        # existing_drivers = [
-        #     driver
-        #     for driver in WorkerProfile.objects.all()
-        #     if driver.license_number == self.license_number
-        # ]
-        # if existing_drivers:
-        #     raise ValidationError(
-        #         ValidationError(
-        #             {
-        #                 "license_number": _(
-        #                     f"License number already exists for {existing_drivers[0].worker.code}."
-        #                 ),
-        #             },
-        #             code="invalid",
-        #         )
-        #     )
+        super().clean()
+
+        if (
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
+        ):
+            raise ValidationError(
+                ValidationError(
+                    {
+                        "hazmat_expiration_date": _(
+                            "Hazmat expiration date is required for this endorsement."
+                        ),
+                    },
+                    code="invalid",
+                )
+            )
+        existing_drivers = [
+            driver
+            for driver in WorkerProfile.objects.all()
+            if self.license_number is not None
+            and driver.license_number == self.license_number
+        ]
+        if existing_drivers:
+            raise ValidationError(
+                ValidationError(
+                    {
+                        "license_number": _(
+                            f"License number already exists for {existing_drivers[0].worker.code}."
+                        ),
+                    },
+                    code="invalid",
+                )
+            )
+        # validate worker regulatory information
         validate_worker_regulatory_information(self)
 
     def get_absolute_url(self) -> str:
