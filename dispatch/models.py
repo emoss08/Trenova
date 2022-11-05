@@ -31,7 +31,6 @@ from integration.models import IntegrationChoices
 from organization.models import Organization
 
 
-# Create your models here.
 class DispatchControl(GenericModel):
     """
     Stores the dispatch control information for a related :model:`organization.Organization`.
@@ -217,3 +216,73 @@ class DelayCode(GenericModel):
             str: Delay code absolute URL
         """
         return reverse("dispatch:delay-code-detail", kwargs={"pk": self.pk})
+
+
+class FleetCode(GenericModel):
+    """
+    Stores the Fleet Code information.
+    """
+
+    code = models.CharField(
+        _("Fleet Code"),
+        max_length=4,
+        primary_key=True,
+        unique=True,
+        help_text=_("Fleet code for the service incident."),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description for the fleet code."),
+    )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Is the fleet code active."),
+    )
+    revenue_goal = models.DecimalField(
+        _("Revenue Goal"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text=_("Revenue goal for the fleet code."),
+    )
+    deadhead_goal = models.DecimalField(
+        _("Deadhead Goal"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text=_("Deadhead goal for the fleet code."),
+    )
+    mileage_goal = models.DecimalField(
+        _("Mileage Goal"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        help_text=_("Mileage goal for the fleet code."),
+    )
+
+    class Meta:
+        """
+        Metaclass for FleetCode
+        """
+
+        verbose_name = _("Fleet Code")
+        verbose_name_plural = _("Fleet Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """Fleet code string representation
+
+        Returns:
+            str: Fleet code string representation
+        """
+        return textwrap.wrap(self.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Fleet code absolute URL
+
+        Returns:
+            str: Fleet code absolute URL
+        """
+        return reverse("dispatch:fleet-code-detail", kwargs={"pk": self.pk})
