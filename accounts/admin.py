@@ -26,19 +26,18 @@ from django.contrib.admin.options import IS_POPUP_VAR, csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.admin import sensitive_post_parameters_m
-from django.contrib.auth.forms import (
-    AdminPasswordChangeForm,
-    UserChangeForm,
-    UserCreationForm,
-)
+from django.contrib.auth.forms import (AdminPasswordChangeForm, UserChangeForm,
+                                       UserCreationForm)
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.forms.models import ModelForm
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import (Http404, HttpRequest, HttpResponse,
+                         HttpResponseRedirect)
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from accounts import models
 
@@ -115,11 +114,11 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         return super().get_fieldsets(request, obj)
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: Optional[Any] = ...,
-            change: bool = True,
-            **kwargs: Any
+        self,
+        request: HttpRequest,
+        obj: Optional[Any] = ...,
+        change: bool = True,
+        **kwargs: Any
     ) -> Type[ModelForm]:
         """Get form for user admin
 
@@ -145,12 +144,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             list[URLPattern]: urls for user admin
         """
         return [
-                   path(
-                       "<id>/password/",
-                       self.admin_site.admin_view(self.user_change_password),
-                       name="auth_user_password_change",
-                   ),
-               ] + super().get_urls()
+            path(
+                "<id>/password/",
+                self.admin_site.admin_view(self.user_change_password),
+                name="auth_user_password_change",
+            ),
+        ] + super().get_urls()
 
     def lookup_allowed(self, lookup: str, value: str) -> bool:
         """Allow lookup for username
@@ -170,7 +169,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m
     @csrf_protect_m
     def add_view(
-            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -215,7 +214,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     @sensitive_post_parameters_m
     def user_change_password(
-            self, request: HttpRequest, id: str, form_url: str = ""
+        self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
