@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import textwrap
 from typing import final
 
@@ -27,7 +28,7 @@ from django_extensions.db.models import TimeStampedModel  # type: ignore
 from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
 from phonenumber_field.modelfields import PhoneNumberField  # type: ignore
 
-from .validators import validate_org_timezone
+from .validators import organization
 
 
 class Organization(TimeStampedModel):
@@ -72,7 +73,7 @@ class Organization(TimeStampedModel):
         max_length=255,
         default="America/New_York",
         help_text=_("The timezone of the organization"),
-        validators=[validate_org_timezone],
+        validators=[organization.validate_org_timezone],
     )
     language = models.CharField(
         _("Language"),
