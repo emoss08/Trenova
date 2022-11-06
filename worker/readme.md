@@ -26,7 +26,7 @@
 
 ### Models.py <a name="models"></a>
 
-- `WorkerProfile` - Worker profile model. <a name="Worker Model"></a>
+- `Worker` - Worker model. <a name="Worker Model"></a>
     - `WorkerType` - Enum of Worker Types. <a name="WorkerType"></a>
         - `EMPLOYEE` - Employee.
         - `CONTRACTOR` - Driver.
