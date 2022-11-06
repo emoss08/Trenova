@@ -7,7 +7,7 @@
 - [Introduction](#introduction)
 - [Files](#files)
 - [Models](#models)
-    - [Worker](#Worker Model)
+    - [Worker](#WorkerModel)
         - [Worker Type Enum](#WorkerType)
 
 ### Introduction <a name="introduction"></a>
@@ -26,7 +26,7 @@
 
 ### Models.py <a name="models"></a>
 
-- `WorkerProfile` - Worker profile model. <a name="Worker Model"></a>
+- `Worker` - Worker model. <a name="WorkerModel"></a>
     - `WorkerType` - Enum of Worker Types. <a name="WorkerType"></a>
         - `EMPLOYEE` - Employee.
         - `CONTRACTOR` - Driver.
