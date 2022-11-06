@@ -32,19 +32,20 @@ class Route(GenericModel):
     """
     Stores route information related to `orders.Orders` model
     """
+
     origin = models.CharField(
         _("Origin"),
         max_length=255,
         blank=True,
         null=True,
-        help_text=_("Origin of the route")
+        help_text=_("Origin of the route"),
     )
     destination = models.CharField(
         _("Destination"),
         max_length=255,
         blank=True,
         null=True,
-        help_text=_("Destination of the route")
+        help_text=_("Destination of the route"),
     )
     total_mileage = models.DecimalField(
         _("Total Mileage"),
@@ -52,19 +53,20 @@ class Route(GenericModel):
         decimal_places=2,
         blank=True,
         null=True,
-        help_text=_("Total Mile from origin to destination")
+        help_text=_("Total Mile from origin to destination"),
     )
     duration = models.PositiveIntegerField(
         _("Duration"),
         null=True,
         blank=True,
-        help_text=_("Duration of route from origin to destination")
+        help_text=_("Duration of route from origin to destination"),
     )
 
     class Meta:
         """
         Metaclass for Route
         """
+
         verbose_name = _("Route")
         verbose_name_plural = _("Routes")
         ordering: tuple[str, ...] = ("origin", "destination")
@@ -123,7 +125,7 @@ class RouteControl(GenericModel):
         related_name="route_control",
         related_query_name="route_control",
         verbose_name=_("Organization"),
-        help_text=_("Organization related to this route control")
+        help_text=_("Organization related to this route control"),
     )
     mileage_unit = models.CharField(
         _("Mileage Unit"),
@@ -142,28 +144,29 @@ class RouteControl(GenericModel):
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
-        help_text=_("Automatically generate routes for orders")
+        help_text=_("Automatically generate routes for orders"),
     )
     avoid_tolls = models.BooleanField(
         _("Avoid Tolls"),
         default=True,
-        help_text=_("Avoid tolls when generating routes")
+        help_text=_("Avoid tolls when generating routes"),
     )
     avoid_highways = models.BooleanField(
         _("Avoid Highways"),
         default=False,
-        help_text=_("Avoid highways when generating routes")
+        help_text=_("Avoid highways when generating routes"),
     )
     avoid_ferries = models.BooleanField(
         _("Avoid Ferries"),
         default=True,
-        help_text=_("Avoid ferries when generating routes")
+        help_text=_("Avoid ferries when generating routes"),
     )
 
     class Meta:
         """
         Metaclass for RouteControl
         """
+
         verbose_name = _("Route Control")
         verbose_name_plural = _("Route Controls")
         ordering: tuple[str, ...] = ("organization",)

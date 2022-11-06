@@ -14,6 +14,12 @@
         - [Endorsement Choices](#EndorsementChoices)
         - [Fields](#WorkerProfileFields)
         - [Methods](#WorkerProfileMethods)
+    - [Worker Contacts](#WorkerContactModel)
+        - [Fields](#WorkerContactFields)
+        - [Methods](#WorkerContactFields)
+    - [Worker Comments](#WorkerCommentModel)
+        - [Fields](#WorkerCommentFields)
+        - [Methods](#WorkerCommentMethods)
 
 ### Introduction <a name="introduction"></a>
 
