@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 import textwrap
-from typing import Any, final
+from typing import final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -27,13 +27,13 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 from localflavor.us.models import USStateField  # type: ignore
 
 from control_file.models import CommentType
 from core.models import GenericModel
 from dispatch.models import DispatchControl
-from dispatch.validators.regulatory import \
-    validate_worker_regulatory_information
+from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
 
 User = settings.AUTH_USER_MODEL
@@ -166,19 +166,6 @@ class Worker(GenericModel):
         new_code: str = f"{code}{Worker.objects.count()}"
 
         return code if not Worker.objects.filter(code=code).exists() else new_code
-
-    # def save(self, **kwargs: Any) -> None:
-    #     """Save the worker
-    #
-    #     Args:
-    #         **kwargs (Any): Keyword arguments
-    #
-    #     Returns:
-    #         None
-    #     """
-    #     if not self.code:
-    #         self.code = self.generate_code()
-    #     super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Worker absolute url

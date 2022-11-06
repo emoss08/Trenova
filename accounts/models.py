@@ -24,8 +24,11 @@ import textwrap
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -233,11 +236,6 @@ class UserProfile(GenericModel):
         null=True,
         blank=True,
         help_text=_("The phone number of the user"),
-    )
-    email_verified = models.BooleanField(
-        _("Email Verified"),
-        default=False,
-        help_text=_("User has verified their email"),
     )
 
     class Meta:
