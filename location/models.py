@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import textwrap
 
 from django.db import models
@@ -53,7 +54,7 @@ class LocationCategory(GenericModel):
 
         verbose_name = _("Location Category")
         verbose_name_plural = _("Location Categories")
-        ordering = ("name",)
+        ordering: tuple[str, ...] = ("name",)
 
     def __str__(self) -> str:
         """Location Category string representation

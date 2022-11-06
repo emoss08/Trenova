@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "dispatch",
     "location",
     "order",
+    "route",
 ]
 
 # Middleware configurations

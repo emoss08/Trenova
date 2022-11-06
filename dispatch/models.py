@@ -115,6 +115,11 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Prevent dispatch of orders on hold for the company."),
     )
+    generate_routes = models.BooleanField(
+        _("Generate Routes"),
+        default=False,
+        help_text=_("Generate routes for the company."),
+    )
 
     class Meta:
         """
@@ -144,10 +149,10 @@ class DispatchControl(GenericModel):
         """
         super().clean()
         if self.distance_method == self.DistanceMethodChoices.GOOGLE and not any(
-            [
-                integration.integration_type == IntegrationChoices.GOOGLE_MAPS
-                for integration in self.organization.integrations.all()
-            ]
+                [
+                    integration.integration_type == IntegrationChoices.GOOGLE_MAPS
+                    for integration in self.organization.integrations.all()
+                ]
         ):
             raise ValidationError(
                 ValidationError(
