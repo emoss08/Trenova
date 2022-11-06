@@ -53,10 +53,10 @@ def create_worker_profile(
     Create a worker profile when a new worker is added.
 
     Args:
-        sender (): Worker
+        sender (Worker): Worker
         instance (Worker): The worker instance.
         created (bool): If the worker was created.
-        **kwargs (Anu): Keyword arguments.
+        **kwargs (Any): Keyword arguments.
 
         Returns:
             None:
