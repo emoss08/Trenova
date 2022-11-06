@@ -32,9 +32,8 @@ from localflavor.us.models import USStateField  # type: ignore
 from control_file.models import CommentType
 from core.models import GenericModel
 from dispatch.models import DispatchControl
-from dispatch.validators.regulatory import (
-    validate_worker_regulatory_information,
-)
+from dispatch.validators.regulatory import \
+    validate_worker_regulatory_information
 from organization.models import Depot
 
 User = settings.AUTH_USER_MODEL
@@ -168,18 +167,18 @@ class Worker(GenericModel):
 
         return code if not Worker.objects.filter(code=code).exists() else new_code
 
-    def save(self, **kwargs: Any) -> None:
-        """Save the worker
-
-        Args:
-            **kwargs (Any): Keyword arguments
-
-        Returns:
-            None
-        """
-        if not self.code:
-            self.code = self.generate_code()
-        super().save(**kwargs)
+    # def save(self, **kwargs: Any) -> None:
+    #     """Save the worker
+    #
+    #     Args:
+    #         **kwargs (Any): Keyword arguments
+    #
+    #     Returns:
+    #         None
+    #     """
+    #     if not self.code:
+    #         self.code = self.generate_code()
+    #     super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Worker absolute url
@@ -370,12 +369,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
@@ -391,7 +390,7 @@ class WorkerProfile(GenericModel):
             driver
             for driver in WorkerProfile.objects.all()
             if self.license_number is not None
-               and driver.license_number == self.license_number
+            and driver.license_number == self.license_number
         ]
         if existing_drivers:
             raise ValidationError(
@@ -456,7 +455,7 @@ class WorkerContact(GenericModel):
         null=True,
         help_text=_("Relationship to the worker."),
     )
-    primary = models.BooleanField(
+    is_primary = models.BooleanField(
         _("Primary"),
         default=False,
         help_text=_("Is this the primary contact?"),
