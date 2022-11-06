@@ -27,13 +27,13 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from localflavor.us.models import USStateField  # type: ignore
 
 from control_file.models import CommentType
 from core.models import GenericModel
 from dispatch.models import DispatchControl
-from dispatch.validators.regulatory import validate_worker_regulatory_information
+from dispatch.validators.regulatory import \
+    validate_worker_regulatory_information
 from organization.models import Depot
 
 User = settings.AUTH_USER_MODEL
