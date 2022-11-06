@@ -25,6 +25,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField  # type: ignore
 
@@ -309,6 +310,7 @@ class WorkerProfile(GenericModel):
         blank=True,
         null=True,
         help_text=_("Date of hire."),
+        default=timezone.now,
     )
     termination_date = models.DateField(
         _("Termination Date"),
@@ -342,8 +344,8 @@ class WorkerProfile(GenericModel):
     )
 
     class Meta:
-        verbose_name = _("worker profile")
-        verbose_name_plural = _("worker profiles")
+        verbose_name = _("Worker profile")
+        verbose_name_plural = _("Worker profiles")
         ordering: list[str] = ["worker"]
 
     def __str__(self) -> str:
@@ -368,12 +370,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
@@ -389,7 +391,7 @@ class WorkerProfile(GenericModel):
             driver
             for driver in WorkerProfile.objects.all()
             if self.license_number is not None
-            and driver.license_number == self.license_number
+               and driver.license_number == self.license_number
         ]
         if existing_drivers:
             raise ValidationError(

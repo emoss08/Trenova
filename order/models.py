@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
-from typing import final
+from typing import Any, final
 
 from django.db import models
 from django.urls import reverse
@@ -284,6 +284,16 @@ class Commodity(GenericModel):
             str: Commodity Name
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    def save(self, **kwargs: Any) -> None:
+        """Save Commodity
+
+        Args:
+            **kwargs (Any): Keyword Arguments
+        """
+        if self.hazmat:
+            self.is_hazmat = True
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Commodity Absolute URL
