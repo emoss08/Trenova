@@ -24,11 +24,8 @@ import textwrap
 from typing import Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -106,6 +103,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     Stores basic user information.
     """
 
+    organization = models.ForeignKey(
+        "organization.Organization",
+        on_delete=models.CASCADE,
+        related_name="user",
+        related_query_name="users",
+        verbose_name=_("Organization"),
+    )
     username = models.CharField(
         _("Username"),
         max_length=30,
