@@ -60,5 +60,17 @@ def validate_worker_regulatory_information(value) -> None:
             errors["endorsements"] = _(
                 "Organization has regulatory check enabled. Please enter endorsements."
             )
+        if not value.physical_due_date:
+            errors["physical_due_date"] = _(
+                "Organization has regulatory check enabled. Please enter a physical due date."
+            )
+        if not value.medical_cert_date:
+            errors["medical_cert_date"] = _(
+                "Organization has regulatory check enabled. Please enter a medical certificate date."
+            )
+        if not value.mvr_due_date:
+            errors["mvr_due_date"] = _(
+                "Organization has regulatory check enabled. Please enter a MVR due date."
+            )
     if errors:
         raise ValidationError(errors)
