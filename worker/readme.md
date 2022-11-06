@@ -9,6 +9,13 @@
 - [Models](#models)
     - [Worker](#WorkerModel)
         - [Worker Type Enum](#WorkerType)
+        - [Fields](#WorkerFields)
+        - [Methods](#WorkerMethods)
+    - [Worker Profile](#WorkerProfileModel)
+        - [Worker Sex/Gender Choices](#WorkerSexChoices)
+        - [Endorsement Choices](#EndorsementChoices)
+        - [Fields](#WorkerProfileFields)
+        - [Methods](#WorkerProfileMethods)
 
 ### Introduction <a name="introduction"></a>
 
@@ -30,7 +37,7 @@
     - `WorkerType` - Enum of Worker Types. <a name="WorkerType"></a>
         - `EMPLOYEE` - Employee.
         - `CONTRACTOR` - Driver.
-    - Fields of `Worker` model.
+    - Fields of `Worker` model. <a name="WorkerFields"></a>
         - code - Primary key.
         - is_active - Boolean field for active status.
         - worker_type - Enum field for Worker type.
@@ -43,25 +50,25 @@
         - zip_code - Zip code of the Worker.
         - depot - Foreign key to `Depot` model.
         - manager - Foreign key to `User` model for Manager.
-    - Methods of `Worker` model.
+    - Methods of `Worker` model. <a name="WorkerMethods"></a>
         - `__str__` - Returns string representation of the Worker.
         - `get_full_name` - Returns full name of the Worker.
         - `get_full_address` - Returns full address of the Worker.
 
 ----
 
-- `WorkerProfile` - Worker profile model.
-    - `WorkerSexChoices` - Enum of Gender/Sex Choices
+- `WorkerProfile` - Worker profile model. <a name="WorkerProfileModel"></a>
+    - `WorkerSexChoices` - Enum of Gender/Sex Choices for Worker. <a name="WorkerSexChoices"></a>
         - MALE
         - FEMALE
         - NON_BINARY
         - OTHER
-    - `EndorsementChoices` - Enum of Endorsements
+    - `EndorsementChoices` - Enum of Endorsements for Worker. <a name="EndorsementChoices"></a>
         - NONE
         - HAZMAT
         - TANKER
         - X
-    - Fields of `WorkerProfile` model.
+    - Fields of `WorkerProfile` model. <a name="WorkerProfileFields"></a>
         - worker - Foreign key to `Worker` model.
         - race - Race/Ethnicity of the worker.
         - sex = Sex/Gender of the worker.
@@ -78,6 +85,6 @@
         - physical_due_date - Physical due date of the worker.
         - mvr_due_date - MVR due date of the worker.
         - medical_cert_date - Medical certification date of the worker.
-    - Methods of `WorkerProfile` model.
+    - Methods of `WorkerProfile` model. <a name="WorkerProfileMethods"></a>
         - `__str__` - Returns string representation of the WorkerProfile.
         - `clean` - Clean method for the WorkerProfile model.
