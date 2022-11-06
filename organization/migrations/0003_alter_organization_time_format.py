@@ -3,7 +3,7 @@
 
 from django.db import migrations, models
 
-import organization.validators
+from organization.validators.organization import validate_org_time_format
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 default="HH:mm",
                 help_text="Time Format",
                 max_length=255,
-                validators=[organization.validators.validate_org_time_format],
+                validators=[validate_org_time_format],
                 verbose_name="Time Format",
             ),
         ),

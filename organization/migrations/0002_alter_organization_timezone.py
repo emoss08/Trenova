@@ -3,7 +3,7 @@
 
 from django.db import migrations, models
 
-import organization.validators
+from organization.validators.organization import validate_org_timezone
 
 
 class Migration(migrations.Migration):
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 default="America/New_York",
                 help_text="The timezone of the organization",
                 max_length=255,
-                validators=[organization.validators.validate_org_timezone],
+                validators=[validate_org_timezone],
                 verbose_name="Timezone",
             ),
         ),
