@@ -33,9 +33,9 @@ def generate_worker_code(sender: Worker, instance: Worker, **kwargs: Any) -> Non
     Generate a worker code when a new worker is added.
 
     Args:
-        sender (): Worker
+        sender (Worker): Worker
         instance (Worker): The worker instance.
-        **kwargs (Anu): Keyword arguments.
+        **kwargs (Any): Keyword arguments.
 
     Returns:
         None

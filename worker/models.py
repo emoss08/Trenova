@@ -27,7 +27,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField  # type: ignore
+from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
 
 from control_file.models import CommentType
 from core.models import GenericModel
@@ -54,7 +54,7 @@ class Worker(GenericModel):
         CONTRACTOR = "CONTRACTOR", _("Contractor")
 
     code = models.CharField(
-        _("code"),
+        _("Code"),
         max_length=10,
         unique=True,
         null=True,
@@ -65,7 +65,7 @@ class Worker(GenericModel):
         ),
     )
     is_active = models.BooleanField(
-        _("active"),
+        _("Active"),
         default=True,
         help_text=_(
             "Designates whether this worker should be treated as active. "
@@ -73,49 +73,45 @@ class Worker(GenericModel):
         ),
     )
     worker_type = models.CharField(
-        _("worker type"),
+        _("Worker type"),
         max_length=10,
         choices=WorkerType.choices,
         default=WorkerType.EMPLOYEE,
         help_text=_("The type of worker."),
     )
     first_name = models.CharField(
-        _("first name"),
+        _("First name"),
         max_length=255,
         help_text=_("The first name of the worker."),
     )
     last_name = models.CharField(
-        _("last name"),
+        _("Last name"),
         max_length=255,
         help_text=_("The last name of the worker."),
     )
     address_line_1 = models.CharField(
-        _("address line 1"),
+        _("Address line 1"),
         max_length=255,
         help_text=_("The address line 1 of the worker."),
     )
     address_line_2 = models.CharField(
-        _("address line 2"),
+        _("Address line 2"),
         max_length=255,
         blank=True,
         null=True,
         help_text=_("The address line 2 of the worker."),
     )
     city = models.CharField(
-        _("city"),
+        _("City"),
         max_length=255,
         help_text=_("The city of the worker."),
     )
     state = USStateField(
-        _("state"),
+        _("State"),
         help_text=_("The state of the worker."),
     )
-    zip_code = models.PositiveIntegerField(
+    zip_code = USZipCodeField(
         _("zip code"),
-        validators=[
-            MinValueValidator(10000),
-            MaxValueValidator(99999),
-        ],
         help_text=_("The zip code of the worker."),
     )
     depot = models.ForeignKey(
@@ -125,7 +121,7 @@ class Worker(GenericModel):
         blank=True,
         related_name="worker",
         related_query_name="workers",
-        verbose_name=_("depot"),
+        verbose_name=_("Depot"),
         help_text=_("The depot of the worker."),
     )
     manager = models.ForeignKey(
@@ -135,7 +131,7 @@ class Worker(GenericModel):
         blank=True,
         related_name="worker",
         related_query_name="workers",
-        verbose_name=_("manager"),
+        verbose_name=_("Manager"),
         help_text=_("The manager of the worker."),
     )
 
@@ -226,7 +222,7 @@ class WorkerProfile(GenericModel):
         primary_key=True,
         related_name="profile",
         related_query_name="profiles",
-        verbose_name=_("worker"),
+        verbose_name=_("Worker"),
         help_text=_("The worker of the profile."),
     )
     race = models.CharField(
@@ -355,12 +351,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
@@ -376,7 +372,7 @@ class WorkerProfile(GenericModel):
             driver
             for driver in WorkerProfile.objects.all()
             if self.license_number is not None
-            and driver.license_number == self.license_number
+               and driver.license_number == self.license_number
         ]
         if existing_drivers:
             raise ValidationError(
@@ -494,11 +490,11 @@ class WorkerComment(GenericModel):
         on_delete=models.CASCADE,
         related_name="comments",
         related_query_name="comments",
-        verbose_name=_("comment type"),
+        verbose_name=_("Comment Type"),
         help_text=_("Related comment type."),
     )
     comment = models.TextField(
-        _("comment"),
+        _("Comment"),
         help_text=_("Comment"),
     )
     entered_by = models.ForeignKey(
@@ -506,7 +502,7 @@ class WorkerComment(GenericModel):
         on_delete=models.CASCADE,
         related_name="worker_comments",
         related_query_name="worker_comments",
-        verbose_name=_("entered by"),
+        verbose_name=_("Entered By"),
         help_text=_("User who entered the comment."),
     )
 
