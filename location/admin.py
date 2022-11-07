@@ -22,9 +22,9 @@ from typing import Type
 
 from django.contrib import admin
 
-from .models import Location, LocationCategory, LocationComment, LocationContact
-
 from core.generics.admin import GenericAdmin
+
+from .models import Location, LocationCategory, LocationComment, LocationContact
 
 
 @admin.register(LocationCategory)

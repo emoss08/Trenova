@@ -23,7 +23,26 @@ from typing import Type
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
-from .models import Customer, DocumentClassification
+from .models import (
+    AccessorialCharge,
+    ChargeType,
+    Customer,
+    CustomerBillingProfile,
+    DocumentClassification,
+)
+
+
+class CustomerBillingProfileAdmin(admin.StackedInline):
+    """
+    Customer Billing Profile
+    """
+
+    model: Type[CustomerBillingProfile] = CustomerBillingProfile
+    extra = 0
+    can_delete = False
+    verbose_name_plural = "Billing Profiles"
+    fk_name = "customer"
+    exclude = ("organization",)
 
 
 @admin.register(Customer)
@@ -38,6 +57,7 @@ class CustomerAdmin(GenericAdmin[Customer]):
         "name",
     )
     search_fields = ("code", "name")
+    inlines = (CustomerBillingProfileAdmin,)
 
 
 @admin.register(DocumentClassification)
@@ -52,3 +72,31 @@ class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
         "description",
     )
     search_fields = ("name",)
+
+
+@admin.register(ChargeType)
+class ChargeTypeAdmin(GenericAdmin[ChargeType]):
+    """
+    Charge Type Admin
+    """
+
+    model: Type[ChargeType] = ChargeType
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = ("name",)
+
+
+@admin.register(AccessorialCharge)
+class AccessorialChargeAdmin(GenericAdmin[AccessorialCharge]):
+    """
+    Accessorial Charge Admin
+    """
+
+    model: Type[AccessorialCharge] = AccessorialCharge
+    list_display = (
+        "code",
+        "is_fuel_surcharge",
+    )
+    search_fields = ("code",)

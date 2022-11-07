@@ -23,6 +23,7 @@ from typing import Type
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
+
 from .models import Worker, WorkerComment, WorkerContact, WorkerProfile
 
 
