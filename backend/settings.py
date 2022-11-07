@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "location",
     "order",
     "route",
+    "billing",
 ]
 
 # Middleware configurations

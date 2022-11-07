@@ -26,9 +26,85 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import GenericModel
+from organization.models import Organization
 
 
 # Configuration Files
+class OrderControl(GenericModel):
+    """
+    Stores the order control information for a related :model:`organization.Organization`.
+    """
+
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="order_control",
+        related_query_name="order_controls",
+    )
+    auto_rate_orders = models.BooleanField(
+        _("Auto Rate"),
+        default=True,
+        help_text=_("Auto rate orders"),
+    )
+    calculate_distance = models.BooleanField(
+        _("Calculate Distance"),
+        default=True,
+        help_text=_("Calculate distance for the order"),
+    )
+    enforce_bill_to = models.BooleanField(
+        _("Enforce Bill To"),
+        default=False,
+        help_text=_("Enforce bill to to being enter when entering an order."),
+    )
+    enforce_rev_code = models.BooleanField(
+        _("Enforce Rev Code"),
+        default=False,
+        help_text=_("Enforce rev code code being entered when entering an order."),
+    )
+    enforce_shipper = models.BooleanField(
+        _("Enforce Shipper"),
+        default=False,
+        help_text=_("Enforce shipper when putting in an order."),
+    )
+    enforce_cancel_comm = models.BooleanField(
+        _("Enforce Voided Comm"),
+        default=False,
+        help_text=_("Enforce comment when cancelling an order."),
+    )
+
+    generate_routes = models.BooleanField(
+        _("Generate Routes"),
+        default=False,
+        help_text=_("Generate routes for the organization"),
+    )
+
+    class Meta:
+        """
+        Metaclass for OrderControl
+        """
+
+        verbose_name: str = _("Order Control")
+        verbose_name_plural: str = _("Order Controls")
+        ordering: list[str] = ["organization"]
+
+    def __str__(self) -> str:
+        """Order control string representation
+
+        Returns:
+            str: Order control string representation
+        """
+        return textwrap.wrap(self.organization.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Order control absolute url
+
+        Returns:
+            str: Order control absolute url
+        """
+        return reverse("order_control:detail", kwargs={"pk": self.pk})
+
+
 class HazardousMaterial(GenericModel):
     """
     Hazardous Class Model Fields

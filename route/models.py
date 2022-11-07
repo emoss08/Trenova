@@ -98,7 +98,9 @@ class RouteControl(GenericModel):
 
     @final
     class RouteAvoidanceChoices(models.TextChoices):
-        """Google Route Avoidance Choices"""
+        """
+        Google Route Avoidance Choices
+        """
 
         TOLLS = "tolls", "Tolls"
         HIGHWAYS = "highways", "Highways"
@@ -106,7 +108,9 @@ class RouteControl(GenericModel):
 
     @final
     class RouteModelChoices(models.TextChoices):
-        """Google Route Model Choices"""
+        """
+        Google Route Model Choices
+        """
 
         BEST_GUESS = "best_guess", "Best Guess"
         OPTIMISTIC = "optimistic", "Optimistic"
@@ -114,7 +118,9 @@ class RouteControl(GenericModel):
 
     @final
     class RouteDistanceUnitChoices(models.TextChoices):
-        """Google Route Distance Unit Choices"""
+        """
+        Google Route Distance Unit Choices
+        """
 
         METRIC = "metric", "Metric"
         IMPERIAL = "imperial", "Imperial"
