@@ -220,7 +220,7 @@ class Customer(GenericModel):
 
 class CustomerBillingProfile(GenericModel):
     """
-    Stores Billing Criteria related to the `Customer` model.
+    Stores Billing Criteria related to the `billing.Customer` model.
     """
 
     customer = models.OneToOneField(

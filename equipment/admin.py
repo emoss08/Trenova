@@ -163,9 +163,7 @@ class EquipmentMaintenancePlanAdmin(GenericAdmin[EquipmentMaintenancePlan]):
         "description",
         "equipment_types",
     )
-    autocomplete_fields: tuple[str, ...] = (
-        "equipment_types",
-    )
+    autocomplete_fields: tuple[str, ...] = ("equipment_types",)
     fieldsets = (
         (None, {"fields": ("id", "equipment_types", "description")}),
         (
