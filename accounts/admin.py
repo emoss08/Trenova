@@ -123,11 +123,11 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         return super().get_fieldsets(request, obj)
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: Optional[Any] = ...,
-            change: bool = True,
-            **kwargs: Any
+        self,
+        request: HttpRequest,
+        obj: Optional[Any] = ...,
+        change: bool = True,
+        **kwargs: Any
     ) -> Type[ModelForm]:
         """Get form for user admin
 
@@ -153,12 +153,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             list[URLPattern]: urls for user admin
         """
         return [
-                   path(
-                       "<id>/password/",
-                       self.admin_site.admin_view(self.user_change_password),
-                       name="auth_user_password_change",
-                   ),
-               ] + super().get_urls()
+            path(
+                "<id>/password/",
+                self.admin_site.admin_view(self.user_change_password),
+                name="auth_user_password_change",
+            ),
+        ] + super().get_urls()
 
     def lookup_allowed(self, lookup: str, value: str) -> bool:
         """Allow lookup for username
@@ -178,7 +178,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m
     @csrf_protect_m
     def add_view(
-            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -223,7 +223,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     @sensitive_post_parameters_m
     def user_change_password(
-            self, request: HttpRequest, id: str, form_url: str = ""
+        self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
@@ -309,8 +309,6 @@ class JobTitleAdmin(GenericAdmin[models.JobTitle]):
     Job title admin
     """
 
-    fieldsets = (
-        (None, {"fields": ("name", "is_active", "description")}),
-    )
+    fieldsets = ((None, {"fields": ("name", "is_active", "description")}),)
     search_fields = ("name",)
     list_display = ("name", "is_active", "description")

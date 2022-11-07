@@ -23,7 +23,7 @@ from typing import Type
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
-from .models import Customer
+from .models import Customer, DocumentClassification
 
 
 @admin.register(Customer)
@@ -38,3 +38,17 @@ class CustomerAdmin(GenericAdmin[Customer]):
         "name",
     )
     search_fields = ("code", "name")
+
+
+@admin.register(DocumentClassification)
+class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
+    """
+    Document Classification Admin
+    """
+
+    model: Type[DocumentClassification] = DocumentClassification
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = ("name",)

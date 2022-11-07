@@ -33,6 +33,7 @@ class GenericModel(Model):
     """
     Generic Model
     """
+
     organization: Organization
 
 
@@ -40,6 +41,7 @@ class AuthHttpRequest(HttpRequest):
     """
     Authenticated HTTP Request
     """
+
     user: User
 
     @property
@@ -49,7 +51,7 @@ class AuthHttpRequest(HttpRequest):
         Returns:
             Optional[UserProfile]: User Profile
         """
-        return self.user.profile if hasattr(self.user, 'profile') else None
+        return self.user.profile if hasattr(self.user, "profile") else None
 
 
 class GenericAdmin(admin.ModelAdmin):
@@ -75,11 +77,11 @@ class GenericAdmin(admin.ModelAdmin):
         )
 
     def save_model(
-            self,
-            request: AuthHttpRequest,
-            obj: GenericModel,
-            form: Type[BaseModelForm],
-            change: bool
+        self,
+        request: AuthHttpRequest,
+        obj: GenericModel,
+        form: Type[BaseModelForm],
+        change: bool,
     ) -> None:
         """Save Model
 
