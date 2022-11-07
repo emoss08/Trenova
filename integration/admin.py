@@ -22,9 +22,11 @@ from django.contrib import admin
 
 from .models import Integration
 
+from core.generics.admin import GenericAdmin
+
 
 @admin.register(Integration)
-class IntegrationAdmin(admin.ModelAdmin[Integration]):
+class IntegrationAdmin(GenericAdmin[Integration]):
     """
     Integration Admin
     """

@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
+from core.generics.admin import GenericAdmin
 from .models import (
     Commodity,
     HazardousMaterial,
@@ -31,7 +32,7 @@ from .models import (
 
 
 @admin.register(OrderType)
-class OrderTypeAdmin(admin.ModelAdmin[OrderType]):
+class OrderTypeAdmin(GenericAdmin[OrderType]):
     """
     Order Type Admin
     """
@@ -45,7 +46,7 @@ class OrderTypeAdmin(admin.ModelAdmin[OrderType]):
 
 
 @admin.register(HazardousMaterial)
-class HazardousMaterialAdmin(admin.ModelAdmin[HazardousMaterial]):
+class HazardousMaterialAdmin(GenericAdmin[HazardousMaterial]):
     """
     Hazardous Material Admin
     """
@@ -59,7 +60,7 @@ class HazardousMaterialAdmin(admin.ModelAdmin[HazardousMaterial]):
 
 
 @admin.register(Commodity)
-class CommodityAdmin(admin.ModelAdmin[Commodity]):
+class CommodityAdmin(GenericAdmin[Commodity]):
     """
     Commodity Admin
     """
@@ -90,7 +91,7 @@ class CommodityAdmin(admin.ModelAdmin[Commodity]):
 
 
 @admin.register(QualifierCode)
-class QualifierCodeAdmin(admin.ModelAdmin[QualifierCode]):
+class QualifierCodeAdmin(GenericAdmin[QualifierCode]):
     """
     Qualifier Code Admin
     """
@@ -104,7 +105,7 @@ class QualifierCodeAdmin(admin.ModelAdmin[QualifierCode]):
 
 
 @admin.register(ReasonCode)
-class ReasonCodeAdmin(admin.ModelAdmin[ReasonCode]):
+class ReasonCodeAdmin(GenericAdmin[ReasonCode]):
     """
     Reason Code Admin
     """
@@ -118,7 +119,7 @@ class ReasonCodeAdmin(admin.ModelAdmin[ReasonCode]):
 
 
 @admin.register(OrderControl)
-class OrderControlAdmin(admin.ModelAdmin[OrderControl]):
+class OrderControlAdmin(GenericAdmin[OrderControl]):
     """
     Order Control Admin
     """

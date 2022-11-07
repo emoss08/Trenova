@@ -22,11 +22,12 @@ from typing import Type
 
 from django.contrib import admin
 
+from core.generics.admin import GenericAdmin
 from .models import Customer
 
 
 @admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin[Customer]):
+class CustomerAdmin(GenericAdmin[Customer]):
     """
     Customer Admin
     """
@@ -38,20 +39,3 @@ class CustomerAdmin(admin.ModelAdmin[Customer]):
     )
     search_fields = ("code", "name")
     autocomplete_fields = ("organization",)
-
-    def get_queryset(self, request):
-        """
-        Get Queryset
-        """
-        return (
-            super()
-            .get_queryset(request)
-            .filter(organization=request.user.profile.organization)
-        )
-
-    def save_model(self, request, obj, form, change):
-        """
-        Save Model
-        """
-        obj.organization = request.user.profile.organization
-        super().save_model(request, obj, form, change)

@@ -18,15 +18,14 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
+from core.generics.admin import GenericAdmin
 from .models import Route, RouteControl
 
 
 @admin.register(Route)
-class RouteAdmin(admin.ModelAdmin[Route]):
+class RouteAdmin(GenericAdmin[Route]):
     """
     Route Admin
     """
@@ -46,7 +45,7 @@ class RouteAdmin(admin.ModelAdmin[Route]):
 
 
 @admin.register(RouteControl)
-class RouteControlAdmin(admin.ModelAdmin[RouteControl]):
+class RouteControlAdmin(GenericAdmin[RouteControl]):
     """
     Route Control Admin
     """

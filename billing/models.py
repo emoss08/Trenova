@@ -17,6 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import textwrap
 from typing import final
 
@@ -39,6 +40,7 @@ class FuelMethodChoices(models.TextChoices):
     """
     Fuel Method Choices
     """
+
     DISTANCE = "D", _("Distance")
     FLAT = "F", _("Flat")
     PERCENTAGE = "P", _("Percentage")
@@ -48,6 +50,7 @@ class ChargeType(GenericModel):
     """
     Stores Other Charge Types
     """
+
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -61,10 +64,10 @@ class ChargeType(GenericModel):
     )
 
     class Meta:
-        verbose_name = _('Charge Type')
-        verbose_name_plural = _('Charge Types')
+        verbose_name = _("Charge Type")
+        verbose_name_plural = _("Charge Types")
         indexes: list[models.Index] = [
-            models.Index(fields=['name']),
+            models.Index(fields=["name"]),
         ]
 
     def __str__(self) -> str:
@@ -81,37 +84,38 @@ class ChargeType(GenericModel):
         Returns:
             str: Charge Type absolute URL
         """
-        return reverse('billing:charge_type_detail', kwargs={'pk': self.pk})
+        return reverse("billing:charge_type_detail", kwargs={"pk": self.pk})
 
 
 class AccessorialCharge(GenericModel):
     """
     Stores Other Charge information
     """
+
     code = models.CharField(
-        _('Code'),
+        _("Code"),
         max_length=50,
         unique=True,
         primary_key=True,
     )
     is_fuel_surcharge = models.BooleanField(
-        _('Is Fuel Surcharge'),
+        _("Is Fuel Surcharge"),
         default=False,
     )
     is_detention = models.BooleanField(
-        _('Is Detention'),
+        _("Is Detention"),
         default=False,
     )
     method = models.CharField(
-        _('Method'),
+        _("Method"),
         max_length=1,
         choices=FuelMethodChoices.choices,
         default=FuelMethodChoices.DISTANCE,
     )
 
     class Meta:
-        verbose_name = _('Other Charge')
-        verbose_name_plural = _('Other Charges')
+        verbose_name = _("Other Charge")
+        verbose_name_plural = _("Other Charges")
 
     def __str__(self) -> str:
         """Other Charge string representation
@@ -127,7 +131,7 @@ class AccessorialCharge(GenericModel):
         Returns:
             str: Other Charge absolute URL
         """
-        return reverse('billing:other_charge_detail', kwargs={'pk': self.pk})
+        return reverse("billing:other_charge_detail", kwargs={"pk": self.pk})
 
 
 class Customer(GenericModel):
@@ -286,6 +290,7 @@ class CustomerFuelTable(GenericModel):
     """
     Stores Customer Fuel Profile Information
     """
+
     id = models.CharField(
         _("ID"),
         max_length=10,
@@ -398,6 +403,7 @@ class CustomerFuelProfile(GenericModel):
         """
         Days to use choices
         """
+
         DELIVERY = "D", _("Delivery Date")
         SHIPMENT = "S", _("Actual Shipment Date")
         SCHED_SHIPMENT = "C", _("Scheduled Shipment Date")
@@ -408,6 +414,7 @@ class CustomerFuelProfile(GenericModel):
         """
         Fuel Region choices
         """
+
         USA = "USA", _("US National Average")
         EAST = "EAST", _("East Coast")
         NEW_ENGLAND = "NE", _("New England")
@@ -425,6 +432,7 @@ class CustomerFuelProfile(GenericModel):
         """
         Table choices
         """
+
         PERCENTAGE = "P", _("Percentage")
         FLAT = "F", _("Flat")
         DISTANCE = "D", _("Distance")
