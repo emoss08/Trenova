@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+"""
+COPYRIGHT 2022 MONTA
+
+This file is part of Monta.
+
+Monta is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Monta is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+from typing import Optional, Type
+
+from django.contrib import admin
+from django.db.models import Model, QuerySet
+from django.forms import BaseModelForm
+from django.http import HttpRequest
+
+from accounts.models import User, UserProfile
+from organization.models import Organization
+
+
+class GenericModel(Model):
+    """
+    Generic Model
+    """
+    organization: Organization
+
+
+class AuthHttpRequest(HttpRequest):
+    """
+    Authenticated HTTP Request
+    """
+    user: User
+
+    @property
+    def profile(self) -> Optional[UserProfile]:
+        """Get User Profile
+
+        Returns:
+            Optional[UserProfile]: User Profile
+        """
+        return self.user.profile if hasattr(self.user, 'profile') else None
+
+
+class GenericAdmin(admin.ModelAdmin):
+    """
+    Generic Admin Class for all models
+    """
+
+    exclude = ("organization",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
+        """
+        Get Queryset
+        """
+        return (
+            super()
+            .get_queryset(request)
+            .filter(organization=request.user.profile.organization)  # type: ignore
+        )
+
+    def save_model(
+            self,
+            request: AuthHttpRequest,
+            obj: GenericModel,
+            form: Type[BaseModelForm],
+            change: bool
+    ) -> None:
+        """Save Model
+
+        Args:
+            request (AuthHttpRequest): Request Object
+            obj (GenericModel): Model Object
+            form (Type[BaseModelForm]): Form Class
+            change (bool): If the model is being changed
+
+        Returns:
+            None
+        """
+        obj.organization = request.user.profile.organization
+        super().save_model(request, obj, form, change)

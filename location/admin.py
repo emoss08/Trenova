@@ -24,9 +24,11 @@ from django.contrib import admin
 
 from .models import Location, LocationCategory, LocationComment, LocationContact
 
+from core.generics.admin import GenericAdmin
+
 
 @admin.register(LocationCategory)
-class LocationCategoryAdmin(admin.ModelAdmin[LocationCategory]):
+class LocationCategoryAdmin(GenericAdmin[LocationCategory]):
     """
     Location Category Admin
     """
@@ -66,7 +68,7 @@ class LocationContactAdmin(admin.StackedInline):
 
 
 @admin.register(Location)
-class LocationAdmin(admin.ModelAdmin[Location]):
+class LocationAdmin(GenericAdmin[Location]):
     """
     Location Admin
     """

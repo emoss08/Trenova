@@ -22,11 +22,13 @@ from typing import Type
 
 from django.contrib import admin
 
+from core.generics.admin import GenericAdmin
+
 from .models import DelayCode, DispatchControl, FleetCode
 
 
 @admin.register(DispatchControl)
-class DispatchControlAdmin(admin.ModelAdmin[DispatchControl]):
+class DispatchControlAdmin(GenericAdmin[DispatchControl]):
     """
     Dispatch Control Admin
     """
@@ -41,7 +43,7 @@ class DispatchControlAdmin(admin.ModelAdmin[DispatchControl]):
 
 
 @admin.register(DelayCode)
-class DelayCodeAdmin(admin.ModelAdmin[DelayCode]):
+class DelayCodeAdmin(GenericAdmin[DelayCode]):
     """
     Delay Code Admin
     """
@@ -56,7 +58,7 @@ class DelayCodeAdmin(admin.ModelAdmin[DelayCode]):
 
 
 @admin.register(FleetCode)
-class FleetCodeAdmin(admin.ModelAdmin[FleetCode]):
+class FleetCodeAdmin(GenericAdmin[FleetCode]):
     """
     Fleet Code Admin
     """

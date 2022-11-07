@@ -22,11 +22,12 @@ from typing import Type
 
 from django.contrib import admin
 
+from core.generics.admin import GenericAdmin
 from .models import Depot, DepotDetail, Organization
 
 
 @admin.register(Organization)
-class OrganizationAdmin(admin.ModelAdmin[Organization]):
+class OrganizationAdmin(GenericAdmin[Organization]):
     """
     Organization Admin
     """
@@ -58,7 +59,7 @@ class DepotDetailInline(admin.StackedInline):
 
 
 @admin.register(Depot)
-class DepotAdmin(admin.ModelAdmin[Depot]):
+class DepotAdmin(GenericAdmin[Depot]):
     """
     Depot Admin
     """

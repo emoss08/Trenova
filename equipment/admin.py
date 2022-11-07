@@ -30,9 +30,12 @@ from .models import (
     EquipmentTypeDetail,
 )
 
+from core.generics.admin import GenericAdmin
+
+
 
 @admin.register(EquipmentManufacturer)
-class EquipmentManufacturerAdmin(admin.ModelAdmin[EquipmentManufacturer]):
+class EquipmentManufacturerAdmin(GenericAdmin[EquipmentManufacturer]):
     """
     Equipment Manufacturer Admin
     """
@@ -63,7 +66,7 @@ class EquipmentTypeDetailAdmin(admin.StackedInline):
 
 
 @admin.register(EquipmentType)
-class EquipmentTypeAdmin(admin.ModelAdmin[EquipmentType]):
+class EquipmentTypeAdmin(GenericAdmin[EquipmentType]):
     """
     Equipment Type Admin
     """
@@ -76,7 +79,7 @@ class EquipmentTypeAdmin(admin.ModelAdmin[EquipmentType]):
 
 
 @admin.register(Equipment)
-class EquipmentAdmin(admin.ModelAdmin[Equipment]):
+class EquipmentAdmin(GenericAdmin[Equipment]):
     """
     Equipment Admin
     """
@@ -149,7 +152,7 @@ class EquipmentAdmin(admin.ModelAdmin[Equipment]):
 
 
 @admin.register(EquipmentMaintenancePlan)
-class EquipmentMaintenancePlanAdmin(admin.ModelAdmin[EquipmentMaintenancePlan]):
+class EquipmentMaintenancePlanAdmin(GenericAdmin[EquipmentMaintenancePlan]):
     """
     Equipment Maintenance Plan Admin
     """
