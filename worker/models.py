@@ -351,12 +351,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 ValidationError(
@@ -372,7 +372,7 @@ class WorkerProfile(GenericModel):
             driver
             for driver in WorkerProfile.objects.all()
             if self.license_number is not None
-               and driver.license_number == self.license_number
+            and driver.license_number == self.license_number
         ]
         if existing_drivers:
             raise ValidationError(

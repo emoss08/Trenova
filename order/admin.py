@@ -20,7 +20,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from .models import Commodity, HazardousMaterial, OrderControl, OrderType, QualifierCode, ReasonCode
+from .models import (
+    Commodity,
+    HazardousMaterial,
+    OrderControl,
+    OrderType,
+    QualifierCode,
+    ReasonCode,
+)
 
 
 @admin.register(OrderType)
