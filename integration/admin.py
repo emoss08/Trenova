@@ -20,9 +20,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from .models import Integration
-
 from core.generics.admin import GenericAdmin
+
+from .models import Integration
 
 
 @admin.register(Integration)

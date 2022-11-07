@@ -26,6 +26,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
+from phonenumber_field.modelfields import PhoneNumberField
 
 from control_file.models import CommentType
 from core.models import GenericModel
@@ -220,7 +221,7 @@ class Customer(GenericModel):
 
 class CustomerBillingProfile(GenericModel):
     """
-    Stores Billing Criteria related to the `billing.Customer` model.
+    Stores Billing Criteria related to the :model:`billing.Customer`. model.
     """
 
     customer = models.OneToOneField(
@@ -246,6 +247,75 @@ class CustomerBillingProfile(GenericModel):
         verbose_name=_("Document Class"),
         help_text=_("Document class"),
     )
+
+
+class CustomerContact(GenericModel):
+    """
+    Stores contract information related to :model:`billing.Customer`.
+    """
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name="contacts",
+        related_query_name="contact",
+        verbose_name=_("Customer"),
+        help_text=_("Customer"),
+    )
+    is_active = models.BooleanField(
+        _("Active"),
+        default=True,
+        help_text=_(
+            "Designates whether this customer contact should be treated as active. "
+            "Unselect this instead of deleting customer contacts."
+        ),
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=150,
+        help_text=_("Contact name"),
+    )
+    email = models.EmailField(
+        _("Email"),
+        max_length=150,
+        help_text=_("Contact email"),
+    )
+    title = models.CharField(
+        _("Title"),
+        max_length=100,
+        help_text=_("Contact title"),
+    )
+    phone = PhoneNumberField(
+        _("Phone Number"),
+        max_length=20,
+        help_text=_("Contact phone"),
+    )
+    is_payable_contact = models.BooleanField(
+        _("Payable Contact"),
+        default=False,
+        help_text=_("Designates whether this contact is the payable contact"),
+    )
+
+    class Meta:
+        verbose_name = _("Customer Contact")
+        verbose_name_plural = _("Customer Contacts")
+        ordering: list[str] = ["customer", "name"]
+
+    def __str__(self) -> str:
+        """Customer Contact string representation
+
+        Returns:
+            str: Customer Contact string representation
+        """
+        return textwrap.wrap(f"{self.customer.code} - {self.name}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer contact instance
+
+        Returns:
+            str: Customer contact url
+        """
+        return reverse("billing:customer-contact-detail", kwargs={"pk": self.pk})
 
 
 class DocumentClassification(GenericModel):
@@ -288,7 +358,7 @@ class DocumentClassification(GenericModel):
 
 class CustomerFuelTable(GenericModel):
     """
-    Stores Customer Fuel Profile Information related to the `billing.Customer` model.
+    Stores Customer Fuel Profile Information related to the :model:`billing.Customer` model.
     """
 
     id = models.CharField(
@@ -395,7 +465,7 @@ class CustomerFuelTableDetail(GenericModel):
 
 class CustomerFuelProfile(GenericModel):
     """
-    Stores Customer Fuel Profile information related to the `billing.Customer` model.
+    Stores Customer Fuel Profile information related to the :model:`billing.Customer`. model.
     """
 
     @final

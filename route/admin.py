@@ -21,6 +21,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
+
 from .models import Route, RouteControl
 
 
