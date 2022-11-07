@@ -28,11 +28,12 @@ from .models import (
     ChargeType,
     Customer,
     CustomerBillingProfile,
+    CustomerContact,
     DocumentClassification,
 )
 
 
-class CustomerBillingProfileAdmin(admin.StackedInline):
+class CustomerBillingProfileInline(admin.StackedInline):
     """
     Customer Billing Profile
     """
@@ -41,6 +42,19 @@ class CustomerBillingProfileAdmin(admin.StackedInline):
     extra = 0
     can_delete = False
     verbose_name_plural = "Billing Profiles"
+    fk_name = "customer"
+    exclude = ("organization",)
+
+
+class CustomerContactInline(admin.StackedInline):
+    """
+    Customer Contact
+    """
+
+    model: Type[CustomerContact] = CustomerContact
+    extra = 0
+    can_delete = False
+    verbose_name_plural = "Contacts"
     fk_name = "customer"
     exclude = ("organization",)
 
@@ -57,7 +71,7 @@ class CustomerAdmin(GenericAdmin[Customer]):
         "name",
     )
     search_fields = ("code", "name")
-    inlines = (CustomerBillingProfileAdmin,)
+    inlines = (CustomerBillingProfileInline, CustomerContactInline)
 
 
 @admin.register(DocumentClassification)
