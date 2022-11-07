@@ -279,16 +279,22 @@ class CustomerContact(GenericModel):
         _("Email"),
         max_length=150,
         help_text=_("Contact email"),
+        null=True,
+        blank=True,
     )
     title = models.CharField(
         _("Title"),
         max_length=100,
         help_text=_("Contact title"),
+        null=True,
+        blank=True,
     )
     phone = PhoneNumberField(
         _("Phone Number"),
         max_length=20,
         help_text=_("Contact phone"),
+        null=True,
+        blank=True,
     )
     is_payable_contact = models.BooleanField(
         _("Payable Contact"),
