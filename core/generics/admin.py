@@ -60,13 +60,18 @@ class GenericAdmin(admin.ModelAdmin):
     exclude = ("organization",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
-        """
-        Get Queryset
+        """Get Queryset
+
+        Args:
+            request (HttpRequest): Request Object
+
+        Returns:
+            QuerySet[Model]: Queryset of Model
         """
         return (
             super()
             .get_queryset(request)
-            .filter(organization=request.user.profile.organization)  # type: ignore
+            .filter(organization=request.user.organization)  # type: ignore
         )
 
     def save_model(
@@ -87,5 +92,5 @@ class GenericAdmin(admin.ModelAdmin):
         Returns:
             None
         """
-        obj.organization = request.user.profile.organization
+        obj.organization = request.user.organization
         super().save_model(request, obj, form, change)

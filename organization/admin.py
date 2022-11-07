@@ -27,7 +27,7 @@ from .models import Depot, DepotDetail, Organization
 
 
 @admin.register(Organization)
-class OrganizationAdmin(GenericAdmin[Organization]):
+class OrganizationAdmin(admin.ModelAdmin[Organization]):
     """
     Organization Admin
     """

@@ -105,12 +105,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     Stores basic user information.
     """
-
     organization = models.ForeignKey(
         "organization.Organization",
         on_delete=models.CASCADE,
-        related_name="user",
-        related_query_name="users",
+        related_name="users",
+        related_query_name="user",
         verbose_name=_("Organization"),
     )
     username = models.CharField(
@@ -180,6 +179,8 @@ class UserProfile(GenericModel):
         related_name="profile",
         related_query_name="profiles",
         verbose_name=_("Job Title"),
+        blank=True,
+        null=True,
     )
     first_name = models.CharField(
         _("First Name"),
@@ -267,7 +268,7 @@ class UserProfile(GenericModel):
         Raises:
             ValidationError: Validation error for the UserProfile Model
         """
-        if self.title.is_active is False:
+        if self.title and self.title.is_active is False:
             raise ValidationError(
                 {"title": ValidationError(_("Title is not active"), code="invalid")}
             )
