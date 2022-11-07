@@ -136,7 +136,7 @@ class AccessorialCharge(GenericModel):
 
 class Customer(GenericModel):
     """
-    Stores customer information
+    Stores customer information for billing and invoicing
     """
 
     is_active = models.BooleanField(
@@ -288,7 +288,7 @@ class DocumentClassification(GenericModel):
 
 class CustomerFuelTable(GenericModel):
     """
-    Stores Customer Fuel Profile Information
+    Stores Customer Fuel Profile Information related to the `billing.Customer` model.
     """
 
     id = models.CharField(
@@ -329,7 +329,7 @@ class CustomerFuelTable(GenericModel):
 
 class CustomerFuelTableDetail(GenericModel):
     """
-    Stores detailed information related to the `CustomerFuelTable` model.
+    Stores detailed information related to the `customer.CustomerFuelTable` model.
     """
 
     customer_fuel_table = models.ForeignKey(
@@ -395,7 +395,7 @@ class CustomerFuelTableDetail(GenericModel):
 
 class CustomerFuelProfile(GenericModel):
     """
-    Stores Customer Fuel Profile information
+    Stores Customer Fuel Profile information related to the `billing.Customer` model.
     """
 
     @final

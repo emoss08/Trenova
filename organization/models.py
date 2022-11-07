@@ -133,7 +133,7 @@ class Organization(TimeStampedModel):
 
 class Depot(TimeStampedModel):
     """
-    Stores information about a specific depot inside an `Organization`.
+    Stores information about a specific depot inside a :model:`organization.Organization`
     Depots are commonly known as terminals or yards.
     """
 
@@ -189,7 +189,7 @@ class Depot(TimeStampedModel):
 
 class DepotDetail(TimeStampedModel):
     """
-    Stores details for the `Depot` model.
+    Stores details for the :model:`organization.Depot` model.
     """
 
     organization = models.ForeignKey(

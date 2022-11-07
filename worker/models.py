@@ -192,7 +192,7 @@ class Worker(GenericModel):
 
 class WorkerProfile(GenericModel):
     """
-    Stores the worker profile information related to the `Worker` model.
+    Stores the worker profile information related to the :model:`worker.Worker`.
     """
 
     @final
@@ -400,7 +400,7 @@ class WorkerProfile(GenericModel):
 
 class WorkerContact(GenericModel):
     """
-    Store contact information related to the associated `Worker`
+    Store contact information related to the associated :model:`worker.Worker`
     Model.
     """
 
@@ -474,7 +474,7 @@ class WorkerContact(GenericModel):
 
 class WorkerComment(GenericModel):
     """
-    Store worker comments related to the associated `Worker`
+    Store worker comments related to the associated :model:`worker.Worker`
     Model.
     """
 
