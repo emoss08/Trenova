@@ -43,7 +43,11 @@ class CustomerAdmin(admin.ModelAdmin[Customer]):
         """
         Get Queryset
         """
-        return super().get_queryset(request).filter(organization=request.user.profile.organization)
+        return (
+            super()
+            .get_queryset(request)
+            .filter(organization=request.user.profile.organization)
+        )
 
     def save_model(self, request, obj, form, change):
         """
