@@ -22,6 +22,7 @@ from typing import Type
 
 from django.contrib import admin
 
+from core.generics.admin import GenericAdmin
 from .models import (
     Equipment,
     EquipmentMaintenancePlan,
@@ -29,9 +30,6 @@ from .models import (
     EquipmentType,
     EquipmentTypeDetail,
 )
-
-from core.generics.admin import GenericAdmin
-
 
 
 @admin.register(EquipmentManufacturer)
@@ -62,7 +60,8 @@ class EquipmentTypeDetailAdmin(admin.StackedInline):
     verbose_name_plural: str = "Equipment Type Details"
     fk_name: str = "equipment_type"
     extra: int = 0
-    autocomplete_fields: tuple[str, ...] = ("equipment_type", "organization")
+    autocomplete_fields: tuple[str, ...] = ("equipment_type",)
+    exclude = ("organization",)
 
 
 @admin.register(EquipmentType)
@@ -75,7 +74,6 @@ class EquipmentTypeAdmin(GenericAdmin[EquipmentType]):
     list_display: tuple[str, ...] = ("name", "description")
     search_fields: tuple[str, ...] = ("name", "description")
     inlines: tuple[Type[EquipmentTypeDetailAdmin], ...] = (EquipmentTypeDetailAdmin,)
-    autocomplete_fields: tuple[str, ...] = ("organization",)
 
 
 @admin.register(Equipment)
@@ -97,7 +95,6 @@ class EquipmentAdmin(GenericAdmin[Equipment]):
     )
     autocomplete_fields: tuple[str, ...] = (
         "equipment_type",
-        "organization",
         "manufacturer",
     )
     fieldsets = (
@@ -106,7 +103,6 @@ class EquipmentAdmin(GenericAdmin[Equipment]):
             {
                 "fields": (
                     "is_active",
-                    "organization",
                     "id",
                     "equipment_type",
                     "description",
@@ -169,10 +165,9 @@ class EquipmentMaintenancePlanAdmin(GenericAdmin[EquipmentMaintenancePlan]):
     )
     autocomplete_fields: tuple[str, ...] = (
         "equipment_types",
-        "organization",
     )
     fieldsets = (
-        (None, {"fields": ("organization", "id", "equipment_types", "description")}),
+        (None, {"fields": ("id", "equipment_types", "description")}),
         (
             "Schedule Details",
             {

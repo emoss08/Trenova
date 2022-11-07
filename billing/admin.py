@@ -38,4 +38,3 @@ class CustomerAdmin(GenericAdmin[Customer]):
         "name",
     )
     search_fields = ("code", "name")
-    autocomplete_fields = ("organization",)
