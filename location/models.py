@@ -180,7 +180,7 @@ class Location(GenericModel):
 
 class LocationContact(GenericModel):
     """
-    Stores location contact information related to :model:`Location`.
+    Stores location contact information related to :model:`location.Location`.
     """
 
     location = models.ForeignKey(
@@ -247,7 +247,7 @@ class LocationContact(GenericModel):
 
 class LocationComment(GenericModel):
     """
-    Stores location contact information related to :model:`Location`.
+    Stores location contact information related to :model:`location.Location`.
     """
 
     location = models.ForeignKey(

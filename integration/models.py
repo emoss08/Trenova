@@ -54,7 +54,7 @@ class IntegrationAuthTypes(models.TextChoices):
 
 class Integration(GenericModel):
     """
-    Integration Model Fields
+    Stores Integration details related to an :model:`organization.Organization`
     """
 
     is_active = models.BooleanField(
