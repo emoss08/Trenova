@@ -153,9 +153,9 @@ class HazardousMaterial(GenericModel):
         Status choices for Order model
         """
 
-        I = "I", _("I")
-        II = "II", _("II")
-        III = "III", _("III")
+        ONE = "I", _("I")
+        TWO = "II", _("II")
+        THREE = "III", _("III")
 
     is_active = models.BooleanField(
         default=True,
@@ -170,7 +170,6 @@ class HazardousMaterial(GenericModel):
     description = models.TextField(
         _("Description"),
         blank=True,
-        null=True,
         help_text=_("Description of the Hazardous Class"),
     )
     hazard_class = models.CharField(
@@ -184,20 +183,16 @@ class HazardousMaterial(GenericModel):
         max_length=255,
         choices=PackingGroupChoices.choices,
         help_text=_("Packing Group of the Hazardous Material"),
-        null=True,
         blank=True,
     )
     erg_number = models.CharField(
         _("ERG Number"),
         max_length=255,
-        help_text=_("ERG Number of the Hazardous Material"),
-        null=True,
         blank=True,
     )
     proper_shipping_name = models.TextField(
         _("Proper Shipping Name"),
         help_text=_("Proper Shipping Name of the Hazardous Material"),
-        null=True,
         blank=True,
     )
 
@@ -241,7 +236,6 @@ class OrderType(GenericModel):
     description = models.TextField(
         _("Description"),
         blank=True,
-        null=True,
         help_text=_("Description of the Order Type"),
     )
 
@@ -299,7 +293,6 @@ class Commodity(GenericModel):
     description = models.TextField(
         _("Description"),
         blank=True,
-        null=True,
         help_text=_("Description of the Commodity"),
     )
     min_temp = models.DecimalField(
@@ -331,7 +324,6 @@ class Commodity(GenericModel):
         max_length=255,
         choices=UnitOfMeasureChoices.choices,
         help_text=_("Unit of Measure of the Commodity"),
-        null=True,
         blank=True,
     )
     hazmat = models.ForeignKey(

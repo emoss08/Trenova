@@ -37,14 +37,12 @@ class Route(GenericModel):
         _("Origin"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_("Origin of the route"),
     )
     destination = models.CharField(
         _("Destination"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_("Destination of the route"),
     )
     total_mileage = models.DecimalField(

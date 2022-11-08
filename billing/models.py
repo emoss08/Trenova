@@ -22,16 +22,14 @@ import textwrap
 from typing import final
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
-from phonenumber_field.modelfields import PhoneNumberField
+from phonenumber_field.modelfields import PhoneNumberField  # type: ignore
 
-from control_file.models import CommentType
 from core.models import GenericModel
-from dispatch.models import DispatchControl
-from organization.models import Depot
 
 User = settings.AUTH_USER_MODEL
 
@@ -61,7 +59,6 @@ class ChargeType(GenericModel):
         _("Description"),
         max_length=100,
         blank=True,
-        null=True,
     )
 
     class Meta:
@@ -248,6 +245,29 @@ class CustomerBillingProfile(GenericModel):
         help_text=_("Document class"),
     )
 
+    class Meta:
+        verbose_name = _("Customer Billing Profile")
+        verbose_name_plural = _("Customer Billing Profiles")
+        ordering: list[str] = ["customer"]
+
+    def __str__(self) -> str:
+        """Customer Billing Profile string representation
+
+        Returns:
+            str: Customer Billing Profile string representation
+        """
+        return textwrap.wrap(f"{self.customer}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer billing profile instance
+
+        Returns:
+            str: Customer Billing Profile url
+        """
+        return reverse(
+            "billing:customer-billing-profile-detail", kwargs={"pk": self.pk}
+        )
+
 
 class CustomerContact(GenericModel):
     """
@@ -274,19 +294,18 @@ class CustomerContact(GenericModel):
         _("Name"),
         max_length=150,
         help_text=_("Contact name"),
+        unique=True,
     )
     email = models.EmailField(
         _("Email"),
         max_length=150,
         help_text=_("Contact email"),
-        null=True,
         blank=True,
     )
     title = models.CharField(
         _("Title"),
         max_length=100,
         help_text=_("Contact title"),
-        null=True,
         blank=True,
     )
     phone = PhoneNumberField(
@@ -314,6 +333,31 @@ class CustomerContact(GenericModel):
             str: Customer Contact string representation
         """
         return textwrap.wrap(f"{self.customer.code} - {self.name}", 50)[0]
+
+    def clean(self) -> None:
+        """Customer Contact clean method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the customer contact is not valid.
+        """
+        if (
+            self.is_payable_contact and CustomerContact.objects.filter(
+                customer=self.customer, is_payable_contact=True
+            )
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(
+                {
+                    "is_payable_contact": ValidationError(
+                        _("There is already a payable contact for this customer"),
+                        code="invalid",
+                    )
+                }
+            )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer contact instance
