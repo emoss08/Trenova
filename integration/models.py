@@ -24,10 +24,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_extensions.db.models import TimeStampedModel  # type: ignore
 
 from core.models import GenericModel
-from organization.models import Organization
 
 
 @final
@@ -78,41 +76,35 @@ class Integration(GenericModel):
         _("Login URL"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_("Login URL for the integration"),
     )
     auth_token = models.CharField(
         _("Auth Token"),
         max_length=255,
         help_text=_("Api or Bearer Token  for the specified integration"),
-        null=True,
         blank=True,
     )
     username = models.CharField(
         _("Username"),
         max_length=255,
         help_text=_("Username for the specified integration"),
-        null=True,
         blank=True,
     )
     password = models.CharField(
         _("Password"),
         max_length=255,
         help_text=_("Password for the specified integration"),
-        null=True,
         blank=True,
     )
     client_id = models.CharField(
         _("Client ID"),
         max_length=255,
-        null=True,
         blank=True,
         help_text=_("Client ID for the specified integration"),
     )
     client_secret = models.CharField(
         _("Client Secret"),
         max_length=255,
-        null=True,
         blank=True,
         help_text=_("Client Secret for the specified integration"),
     )

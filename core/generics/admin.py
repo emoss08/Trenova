@@ -96,3 +96,22 @@ class GenericAdmin(admin.ModelAdmin):
         """
         obj.organization = request.user.organization
         super().save_model(request, obj, form, change)
+
+    def save_formset(self, request, form, formset, change) -> None:
+        """Save Formset
+
+        Args:
+            request (Any): Request Object
+            form (Any): Form Object
+            formset (Any): Formset Object
+            change (Any): If the model is being changed
+
+        Returns:
+            None
+        """
+        instances = formset.save(commit=False)
+        for instance in instances:
+            instance.organization = request.user.organization
+            instance.save()
+        formset.save_m2m()
+        super().save_formset(request, form, formset, change)

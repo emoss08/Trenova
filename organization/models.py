@@ -24,9 +24,9 @@ from typing import final
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_extensions.db.models import TimeStampedModel  # type: ignore
-from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
-from phonenumber_field.modelfields import PhoneNumberField  # type: ignore
+from django_extensions.db.models import TimeStampedModel
+from localflavor.us.models import USStateField, USZipCodeField
+from phonenumber_field.modelfields import PhoneNumberField
 
 from .validators.organization import validate_org_timezone
 
@@ -155,7 +155,6 @@ class Depot(TimeStampedModel):
         max_length=255,
         help_text=_("The description of the depot."),
         blank=True,
-        null=True,
     )
 
     class Meta:
@@ -218,7 +217,6 @@ class DepotDetail(TimeStampedModel):
         max_length=255,
         help_text=_("The address line 2 of the depot."),
         blank=True,
-        null=True,
     )
     city = models.CharField(
         _("City"),

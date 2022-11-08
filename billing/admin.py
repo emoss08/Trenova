@@ -53,7 +53,6 @@ class CustomerContactInline(admin.StackedInline):
 
     model: Type[CustomerContact] = CustomerContact
     extra = 0
-    can_delete = False
     verbose_name_plural = "Contacts"
     fk_name = "customer"
     exclude = ("organization",)

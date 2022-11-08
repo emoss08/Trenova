@@ -281,7 +281,6 @@ class Equipment(GenericModel):
         _("VIN Number"),
         max_length=17,
         blank=True,
-        null=True,
         help_text=_("VIN number of the equipment."),
     )
     odometer = models.PositiveIntegerField(
@@ -312,7 +311,6 @@ class Equipment(GenericModel):
     model = models.CharField(
         _("Model"),
         max_length=50,
-        null=True,
         blank=True,
         help_text=_("Model of the equipment."),
     )
@@ -367,14 +365,12 @@ class Equipment(GenericModel):
         _("Transmission Manufacturer"),
         max_length=50,
         blank=True,
-        null=True,
         help_text=_("Transmission manufacturer of the equipment."),
     )
     transmission_type = models.CharField(
         _("Transmission Type"),
         max_length=50,
         blank=True,
-        null=True,
         help_text=_("Transmission type of the equipment."),
     )
     has_berth = models.BooleanField(

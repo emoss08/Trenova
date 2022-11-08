@@ -27,7 +27,7 @@ from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
 
 from control_file.models import CommentType
 from core.models import GenericModel
-from organization.models import Depot, Organization
+from organization.models import Depot
 
 
 # Configuration Files
@@ -44,7 +44,6 @@ class LocationCategory(GenericModel):
     description = models.TextField(
         _("Description"),
         blank=True,
-        null=True,
     )
 
     class Meta:
@@ -107,7 +106,6 @@ class Location(GenericModel):
     description = models.TextField(
         _("Description"),
         blank=True,
-        null=True,
         help_text=_("Location description"),
     )
     address_line_1 = models.CharField(
@@ -120,7 +118,6 @@ class Location(GenericModel):
         max_length=255,
         help_text=_("Address Line 2"),
         blank=True,
-        null=True,
     )
     city = models.CharField(
         _("City"),
@@ -152,7 +149,6 @@ class Location(GenericModel):
         max_length=255,
         help_text=_("Place ID"),
         blank=True,
-        null=True,
     )
     is_geocoded = models.BooleanField(
         _("Is Geocoded"),
