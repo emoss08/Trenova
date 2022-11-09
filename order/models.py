@@ -29,6 +29,56 @@ from core.models import GenericModel
 from organization.models import Organization
 
 
+def order_documentation_upload_to(instance, filename: str) -> str:
+    """
+    order_documentation_upload_to _summary_
+
+    Args:
+        instance (Order): The instance of the Order.
+        filename (str): file name.
+
+    Returns:
+        str: upload path for the order documentation to be stored.
+    """
+    ...
+
+
+@final
+class StatusChoices(models.TextChoices):
+    """
+    Status Choices for Order, Stop & Movement Statuses.
+    """
+
+    AVAILABLE = "A", _("Available")
+    IN_PROGRESS = "P", _("In Progrsss")
+    COMPLETED = "C", _("Completed")
+    VOIDED = "V", _("Voided")
+
+
+@final
+class StopChoices(models.TextChoices):
+    """
+    Status Choices for the Stop Model
+    """
+
+    PICKUP = "P", _("Pickup")
+    SPLIT_PICKUP = "SP", _("Split Pickup")
+    SPLIT_DROP = "SD", _("Split Drop Off")
+    DELIVERY = "D", _("Delivery")
+    DROP_OFF = "DO", _("Drop Off")
+
+
+class RatingMethodChoices(models.TextChoices):
+    """
+    Rating Method choices for Order Model
+    """
+
+    FLAT = "F", _("Flat Fee")
+    PER_MILE = "PM", _("Per Mile")
+    PER_STOP = "PS", _("Per Stop")
+    POUNDS = "PP", _("Per Pound")
+
+
 # Configuration Files
 class OrderControl(GenericModel):
     """
@@ -463,3 +513,9 @@ class ReasonCode(GenericModel):
             str: Reason Code Absolute URL
         """
         return reverse("order:reasoncode-detail", kwargs={"pk": self.pk})
+
+
+class Order(GenericModel):
+    """
+    Stores order information.
+    """

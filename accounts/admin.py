@@ -42,10 +42,10 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 
 from accounts import models
-from core.generics.admin import GenericAdmin
+from core.generics.admin import GenericAdmin, GenericStackedInline
 
 
-class ProfileInline(admin.StackedInline):
+class ProfileInline(GenericStackedInline):
     """
     Profile inline
     """

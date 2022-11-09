@@ -18,25 +18,29 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.contrib import admin
+from typing import Any
 
-from core.generics.admin import GenericAdmin
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
-from .models import Integration
+from .models import Depot, DepotDetail
 
 
-@admin.register(Integration)
-class IntegrationAdmin(GenericAdmin[Integration]):
+@receiver(post_save, sender=Depot)
+def create_depot_detail(
+    sender: Depot, instance: Depot, created: bool, **kwargs: Any
+) -> None:
+    """Create Depot Detail Information
+
+    Args:
+        sender (Depot): Depot
+        instance (Depot): The Deopot instance.
+        created (bool): if the Depot was created
+        **kwargs (Any): Keyword Arguments
+
+    Returns:
+        None
     """
-    Integration Admin
-    """
-
-    fieldsets = (
-        (None, {"fields": ("name", "auth_type", "is_active")}),
-        ("Basic Credentials", {"fields": ("auth_token", "client_id", "client_secret")}),
-        (
-            "Advanced Credentials",
-            {"classes": ("collapse",), "fields": ("login_url", "username", "password")},
-        ),
-    )
-    search_fields = ("name",)
+    if created:
+        print("This shit better work")
+        DepotDetail.objects.create(depot=instance, organization=instance.organization)
