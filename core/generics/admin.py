@@ -36,6 +36,9 @@ class GenericModel(Model):
 
     organization: Organization
 
+    def __str__(self) -> None:
+        ...
+
 
 class AuthHttpRequest(HttpRequest):
     """
@@ -115,3 +118,36 @@ class GenericAdmin(admin.ModelAdmin):
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
+
+
+class GenericStackedInline(admin.StackedInline):
+    """
+    Generic Admin Stacked for all Models with Organization Exclusion
+    """
+
+    extra = 0
+    exclude: tuple[str, ...] = ("organization",)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
+        """Get Queryset
+
+        Args:
+            request (HttpRequest): Request Object
+
+        Returns:
+            QuerySet[Model]: Queryset of Model
+        """
+        return (
+            super()
+            .get_queryset(request)
+            .filter(organization=request.user.organization)  # type: ignore
+        )
+
+
+class GenericTabularInline(admin.TabularInline):
+    """
+    Generic Admin Tabular Inline with Organizaiton Exclusion
+    """
+
+    extra = 0
+    exclude: tuple[str, ...]

@@ -22,7 +22,7 @@ from typing import Type
 
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
+from core.generics.admin import GenericAdmin, GenericStackedInline
 
 from .models import Location, LocationCategory, LocationComment, LocationContact
 
@@ -43,7 +43,7 @@ class LocationCategoryAdmin(GenericAdmin[LocationCategory]):
     )
 
 
-class LocationCommentAdmin(admin.StackedInline):
+class LocationCommentAdmin(GenericStackedInline):
     """
     Location Comment Admin
     """
@@ -55,7 +55,7 @@ class LocationCommentAdmin(admin.StackedInline):
     autocomplete_fields = ("location",)
 
 
-class LocationContactAdmin(admin.StackedInline):
+class LocationContactAdmin(GenericStackedInline):
     """
     Location Contact Admin
     """

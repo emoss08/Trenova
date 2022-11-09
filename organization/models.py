@@ -148,6 +148,7 @@ class Depot(TimeStampedModel):
     name = models.CharField(
         _("Depot Name"),
         max_length=255,
+        unique=True,
         help_text=_("The name of the depot."),
     )
     description = models.TextField(

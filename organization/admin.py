@@ -22,7 +22,7 @@ from typing import Type
 
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
+from core.generics.admin import GenericAdmin, GenericStackedInline
 
 from .models import Depot, DepotDetail, Organization
 
@@ -46,7 +46,7 @@ class OrganizationAdmin(admin.ModelAdmin[Organization]):
     )
 
 
-class DepotDetailInline(admin.StackedInline):
+class DepotDetailInline(GenericStackedInline):
     """
     Depot Detail Admin
     """
@@ -55,7 +55,6 @@ class DepotDetailInline(admin.StackedInline):
     can_delete = False
     verbose_name_plural = "Depot Details"
     fk_name = "depot"
-    extra = 0
     autocomplete_fields = ("depot", "organization")
 
 

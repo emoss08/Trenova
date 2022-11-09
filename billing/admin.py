@@ -26,51 +26,8 @@ from core.generics.admin import GenericAdmin
 from .models import (
     AccessorialCharge,
     ChargeType,
-    Customer,
-    CustomerBillingProfile,
-    CustomerContact,
     DocumentClassification,
 )
-
-
-class CustomerBillingProfileInline(admin.StackedInline):
-    """
-    Customer Billing Profile
-    """
-
-    model: Type[CustomerBillingProfile] = CustomerBillingProfile
-    extra = 0
-    can_delete = False
-    verbose_name_plural = "Billing Profiles"
-    fk_name = "customer"
-    exclude = ("organization",)
-
-
-class CustomerContactInline(admin.StackedInline):
-    """
-    Customer Contact
-    """
-
-    model: Type[CustomerContact] = CustomerContact
-    extra = 0
-    verbose_name_plural = "Contacts"
-    fk_name = "customer"
-    exclude = ("organization",)
-
-
-@admin.register(Customer)
-class CustomerAdmin(GenericAdmin[Customer]):
-    """
-    Customer Admin
-    """
-
-    model: Type[Customer] = Customer
-    list_display = (
-        "code",
-        "name",
-    )
-    search_fields = ("code", "name")
-    inlines = (CustomerBillingProfileInline, CustomerContactInline)
 
 
 @admin.register(DocumentClassification)
