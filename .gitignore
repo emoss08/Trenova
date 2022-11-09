@@ -12,3 +12,4 @@
 backend.iml
 /scripts/startup.sh
 /design/
+__pycache__
