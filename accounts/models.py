@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -21,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import textwrap
-from typing import Any, Optional
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -82,7 +81,7 @@ class UserManager(BaseUserManager):
         self,
         username: str,
         email: str,
-        password: Optional[str] = None,
+        password: str | None = None,
         **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
@@ -294,7 +293,7 @@ class UserProfile(GenericModel):
         return "/static/media/avatars/blank.avif"
 
     @property
-    def get_user_city_state(self) -> Optional[str]:
+    def get_user_city_state(self) -> str | None:
         """User City and state combination.
 
         Returns:
