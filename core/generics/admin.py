@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Type
+from typing import Any, List, Optional, Type
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
@@ -116,14 +116,14 @@ class GenericAdmin(admin.ModelAdmin):
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
 
-    def get_autocomplete_fields(self, request):
+    def get_autocomplete_fields(self, request: HttpRequest) -> list[str]:
         """Get Autocomplete Fields
 
         Args:
             request (HttpRequest): Request Object
 
         Returns:
-            tuple[str, ...]: Autocomplete Fields
+            tuple[str, ...]: Autocomplete Fieldss
         """
         autocomplete_fields = []
         for field in self.model._meta.get_fields():
@@ -155,7 +155,7 @@ class GenericStackedInline(admin.StackedInline):
             .filter(organization=request.user.organization)  # type: ignore
         )
 
-    def get_autocomplete_fields(self, request):
+    def get_autocomplete_fields(self, request: HttpRequest):
         """Get Autocomplete Fields
 
         Args:

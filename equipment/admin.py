@@ -48,7 +48,6 @@ class EquipmentManufacturerAdmin(GenericAdmin[EquipmentManufacturer]):
         "id",
         "description",
     )
-    autocomplete_fields: tuple[str, ...] = ("organization",)
 
 
 class EquipmentTypeDetailAdmin(GenericStackedInline):
@@ -60,7 +59,6 @@ class EquipmentTypeDetailAdmin(GenericStackedInline):
     can_delete: bool = False
     verbose_name_plural: str = "Equipment Type Details"
     fk_name: str = "equipment_type"
-    autocomplete_fields: tuple[str, ...] = ("equipment_type",)
 
 
 @admin.register(EquipmentType)
@@ -91,10 +89,6 @@ class EquipmentAdmin(GenericAdmin[Equipment]):
         "id",
         "description",
         "license_plate_number",
-    )
-    autocomplete_fields: tuple[str, ...] = (
-        "equipment_type",
-        "manufacturer",
     )
     fieldsets = (
         (
@@ -162,7 +156,6 @@ class EquipmentMaintenancePlanAdmin(GenericAdmin[EquipmentMaintenancePlan]):
         "description",
         "equipment_types",
     )
-    autocomplete_fields: tuple[str, ...] = ("equipment_types",)
     fieldsets = (
         (None, {"fields": ("id", "equipment_types", "description")}),
         (

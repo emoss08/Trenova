@@ -56,6 +56,7 @@ class ProfileInline(GenericStackedInline):
     fk_name: str = "user"
     extra: int = 0
 
+
 @admin.register(models.User)
 class UserAdmin(admin.ModelAdmin[models.User]):
     """

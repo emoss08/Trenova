@@ -39,7 +39,6 @@ class DispatchControlAdmin(GenericAdmin[DispatchControl]):
         "record_service_incident",
     )
     search_fields = ("organization",)
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(DelayCode)
@@ -54,7 +53,6 @@ class DelayCodeAdmin(GenericAdmin[DelayCode]):
         "description",
     )
     search_fields = ("code", "description")
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(FleetCode)
@@ -69,4 +67,3 @@ class FleetCodeAdmin(GenericAdmin[FleetCode]):
         "description",
     )
     search_fields = ("code", "description")
-    autocomplete_fields = ("organization",)
