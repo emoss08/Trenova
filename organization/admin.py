@@ -46,7 +46,7 @@ class OrganizationAdmin(admin.ModelAdmin[Organization]):
     )
 
 
-class DepotDetailInline(GenericStackedInline):
+class DepotDetailInline(GenericStackedInline[DepotDetail]):
     """
     Depot Detail Admin
     """
