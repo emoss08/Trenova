@@ -71,10 +71,6 @@ class CustomerBillingProfileInline(GenericStackedInline[CustomerBillingProfile])
     verbose_name_plural = "Billing Profiles"
     fk_name = "customer"
     exclude = ("organization",)
-    autocomplete_fields = (
-        "email_profile",
-        "rule_profile",
-    )
 
 
 class CustomerFuelTableDetailInline(GenericStackedInline[CustomerFuelTableDetail]):
@@ -115,7 +111,6 @@ class CustomerFuelProfileAdmin(GenericAdmin[CustomerFuelProfile]):
         "customer",
     )
     search_fields: tuple[str, ...] = ("id",)
-    autocomplete_fields = ("customer", "customer_fuel_table")
 
 
 class CustomerContactInline(GenericStackedInline[CustomerContact]):

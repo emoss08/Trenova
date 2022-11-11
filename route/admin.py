@@ -42,7 +42,6 @@ class RouteAdmin(GenericAdmin[Route]):
         "origin",
         "destination",
     )
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(RouteControl)
@@ -57,4 +56,3 @@ class RouteControlAdmin(GenericAdmin[RouteControl]):
         "traffic_model",
         "generate_routes",
     )
-    autocomplete_fields = ("organization",)

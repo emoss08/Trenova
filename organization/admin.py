@@ -55,7 +55,6 @@ class DepotDetailInline(GenericStackedInline[DepotDetail]):
     can_delete = False
     verbose_name_plural = "Depot Details"
     fk_name = "depot"
-    autocomplete_fields = ("depot", "organization")
 
 
 @admin.register(Depot)
@@ -70,5 +69,4 @@ class DepotAdmin(GenericAdmin[Depot]):
     )
     list_filter: tuple[str, ...] = ("name",)
     search_fields: tuple[str, ...] = ("name",)
-    autocomplete_fields = ("organization",)
     inlines: tuple[Type[DepotDetailInline]] = (DepotDetailInline,)

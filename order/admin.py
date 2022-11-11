@@ -43,7 +43,6 @@ class OrderTypeAdmin(GenericAdmin[OrderType]):
         "description",
     )
     search_fields = ("name", "description")
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(HazardousMaterial)
@@ -57,7 +56,6 @@ class HazardousMaterialAdmin(GenericAdmin[HazardousMaterial]):
         "description",
     )
     search_fields = ("name", "description")
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(Commodity)
@@ -71,7 +69,6 @@ class CommodityAdmin(GenericAdmin[Commodity]):
         "description",
     )
     search_fields = ("name", "description")
-    autocomplete_fields = ("organization", "hazmat")
     fieldsets = (
         (None, {"fields": ("organization", "name", "description")}),
         (
@@ -102,7 +99,6 @@ class QualifierCodeAdmin(GenericAdmin[QualifierCode]):
         "description",
     )
     search_fields = ("code", "description")
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(ReasonCode)
@@ -116,7 +112,6 @@ class ReasonCodeAdmin(GenericAdmin[ReasonCode]):
         "description",
     )
     search_fields = ("code", "description")
-    autocomplete_fields = ("organization",)
 
 
 @admin.register(OrderControl)
@@ -129,4 +124,3 @@ class OrderControlAdmin(GenericAdmin[OrderControl]):
         "organization",
         "auto_rate_orders",
     )
-    autocomplete_fields = ("organization",)

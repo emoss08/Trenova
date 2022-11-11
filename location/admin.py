@@ -52,7 +52,6 @@ class LocationCommentAdmin(GenericStackedInline):
     verbose_name_plural = "Location Comments"
     fk_name = "location"
     extra = 0
-    autocomplete_fields = ("location",)
 
 
 class LocationContactAdmin(GenericStackedInline):
@@ -64,7 +63,6 @@ class LocationContactAdmin(GenericStackedInline):
     verbose_name_plural = "Location Contacts"
     fk_name = "location"
     extra = 0
-    autocomplete_fields = ("location",)
 
 
 @admin.register(Location)
@@ -91,7 +89,6 @@ class LocationAdmin(GenericAdmin[Location]):
         "state",
         "zip_code",
     )
-    autocomplete_fields = ("category", "depot", "organization")
     inlines = (
         LocationCommentAdmin,
         LocationContactAdmin,
