@@ -64,7 +64,6 @@ class Customer(GenericModel):
         max_length=10,
         unique=True,
         editable=False,
-        primary_key=True,
         help_text=_("Customer code"),
     )
     name = models.CharField(
@@ -76,6 +75,7 @@ class Customer(GenericModel):
         _("Address Line 1"),
         max_length=150,
         help_text=_("Address line 1"),
+        blank=True,
     )
     address_line_2 = models.CharField(
         _("Address Line 2"),
@@ -87,20 +87,23 @@ class Customer(GenericModel):
         _("City"),
         max_length=150,
         help_text=_("City"),
+        blank=True,
     )
     state = USStateField(
         _("State"),
         help_text=_("State"),
+        blank=True,
     )
     zip_code = USZipCodeField(
         _("Zip Code"),
         help_text=_("Zip code"),
+        blank=True,
     )
 
     class Meta:
         verbose_name = _("Customer")
         verbose_name_plural = _("Customers")
-        ordering: list[str] = ["code"]
+        # ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
         """Customer string representation
@@ -108,7 +111,7 @@ class Customer(GenericModel):
         Returns:
             str: Customer string representation
         """
-        return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
+        return textwrap.wrap(f"{self.name}", 50)[0]
 
     def generate_customer_code(self) -> str:
         """Generate a unique code for the customer
@@ -127,7 +130,7 @@ class Customer(GenericModel):
         Returns:
             str: Customer url
         """
-        return reverse("billing:customer-detail", kwargs={"pk": self.pk})
+        return reverse("customer:customer-detail", kwargs={"pk": self.pk})
 
 
 class CustomerBillingProfile(GenericModel):
@@ -151,15 +154,32 @@ class CustomerBillingProfile(GenericModel):
             "Unselect this instead of deleting customer billing profiles."
         ),
     )
-    document_class = models.ManyToManyField(
-        DocumentClassification,
+    email_profile = models.ForeignKey(
+        "CustomerEmailProfile",
+        on_delete=models.CASCADE,
+        related_name="billing_profiles",
+        related_query_name="billing_profiles",
+        help_text=_("Customer Email Profile"),
+        verbose_name=_("Customer Email Profile"),
+        blank=True,
+        null=True,
+    )
+    rule_profile = models.ForeignKey(
+        "CustomerRuleProfile",
+        on_delete=models.CASCADE,
         related_name="billing_profiles",
         related_query_name="billing_profile",
-        verbose_name=_("Document Class"),
-        help_text=_("Document class"),
+        help_text=_("Rule Profile"),
+        verbose_name=_("Rule Profile"),
+        blank=True,
+        null=True,
     )
 
     class Meta:
+        """
+        Metaclass for CustomerBillingProfile
+        """
+
         verbose_name = _("Customer Billing Profile")
         verbose_name_plural = _("Customer Billing Profiles")
         ordering: list[str] = ["customer"]
@@ -181,6 +201,130 @@ class CustomerBillingProfile(GenericModel):
         return reverse(
             "billing:customer-billing-profile-detail", kwargs={"pk": self.pk}
         )
+
+
+class CustomerEmailProfile(GenericModel):
+    """
+    Stores Customer Email Profile related to the :model:`customer.Customer`. model.
+    """
+
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        help_text=_("Name"),
+        unique=True,
+    )
+    subject = models.CharField(
+        _("Subject"),
+        max_length=100,
+        help_text=_("Subject"),
+        blank=True,
+    )
+    comment = models.CharField(
+        _("Comment"),
+        max_length=100,
+        help_text=_("Comment"),
+        blank=True,
+    )
+    from_address = models.CharField(
+        _("From Address"),
+        max_length=255,
+        help_text=_("From Address"),
+        blank=True,
+    )
+    blind_copy = models.CharField(
+        _("Blind Copy"),
+        max_length=255,
+        help_text=_("Blind Copy"),
+        blank=True,
+    )
+    read_receipt = models.BooleanField(
+        _("Read Receipt"),
+        help_text=_("Read Receipt"),
+        default=False,
+    )
+    read_receipt_to = models.CharField(
+        _("Read Receipt To"),
+        max_length=255,
+        help_text=_("Read Receipt To"),
+        blank=True,
+    )
+    attachment_name = models.CharField(
+        _("Attachment Name"),
+        max_length=255,
+        help_text=_("Attachment Name"),
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for CustomerEmailProfile
+        """
+
+        verbose_name = _("Customer Email Profile")
+        verbose_name_plural = _("Customer Email Profiles")
+        ordering: list[str] = ["-name"]
+
+    def __str__(self) -> str:
+        """CustomerEmailProfile string representation
+
+        Returns:
+            str: Customer Email Profile string representation
+        """
+        return textwrap.wrap(f"{self.name}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer email profile instance
+
+        Returns:
+            str: Customer email profile url
+        """
+        return reverse("billing:customer-email-profile", kwargs={"pk": self.pk})
+
+
+class CustomerRuleProfile(GenericModel):
+    """
+    Stores Customer FTP Profile information related to :model:`customer.Customer`. model.
+    """
+
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        help_text=_("Name"),
+        unique=True,
+    )
+    document_class = models.ManyToManyField(
+        DocumentClassification,
+        related_name="billing_profiles",
+        related_query_name="billing_profile",
+        verbose_name=_("Document Class"),
+        help_text=_("Document class"),
+    )
+
+    class Meta:
+        """
+        Metaclass for CustomerRuleProfile
+        """
+
+        verbose_name = _("Customer Rule Profile")
+        verbose_name_plural = _("Customer Rule Profiles")
+        ordering: list[str] = ["-name"]
+
+    def __str__(self) -> str:
+        """CustomerRuleProfile string representation
+
+        Returns:
+            str: Customer Rule Profile string representation
+        """
+        return textwrap.wrap(f"{self.name}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer rule profile instance
+
+        Returns:
+            str: Customer rule profile url
+        """
+        return reverse("billing:customer-rule-profile", kwargs={"pk": self.pk})
 
 
 class CustomerContact(GenericModel):
@@ -257,22 +401,16 @@ class CustomerContact(GenericModel):
         Raises:
             ValidationError: If the customer contact is not valid.
         """
-        if (
-                self.is_payable_contact
-                and CustomerContact.objects.filter(
-            customer=self.customer, is_payable_contact=True
-        )
-                .exclude(id=self.id)
-                .exists()
-        ):
+        if self.is_payable_contact and not self.email:
             raise ValidationError(
                 {
-                    "is_payable_contact": ValidationError(
-                        _("There is already a payable contact for this customer"),
+                    "email": ValidationError(
+                        _("Payable contact must have an email address"),
                         code="invalid",
                     )
                 }
             )
+        super().clean()
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer contact instance
@@ -281,113 +419,6 @@ class CustomerContact(GenericModel):
             str: Customer contact url
         """
         return reverse("billing:customer-contact-detail", kwargs={"pk": self.pk})
-
-
-class CustomerFuelTable(GenericModel):
-    """
-    Stores Customer Fuel Profile Information related to the :model:`billing.Customer` model.
-    """
-
-    id = models.CharField(
-        _("ID"),
-        max_length=10,
-        unique=True,
-        editable=False,
-        primary_key=True,
-        help_text=_("Customer Fuel Profile ID"),
-    )
-    description = models.CharField(
-        _("Description"),
-        max_length=150,
-        help_text=_("Customer Fuel Profile Description"),
-    )
-
-    class Meta:
-        verbose_name = _("Customer Fuel Table")
-        verbose_name_plural = _("Customer Fuel Table")
-        ordering: list[str] = ["id"]
-
-    def __str__(self) -> str:
-        """Customer Fuel Profile string representation
-
-        Returns:
-            str: Customer Fuel Profile string representation
-        """
-        return textwrap.wrap(f"{self.id} - {self.description}", 50)[0]
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer fuel profile instance
-
-        Returns:
-            str: Customer fuel profile url
-        """
-        return reverse("billing:customer-fuel-profile-detail", kwargs={"pk": self.pk})
-
-
-class CustomerFuelTableDetail(GenericModel):
-    """
-    Stores detailed information related to the `customer.CustomerFuelTable` model.
-    """
-
-    customer_fuel_table = models.ForeignKey(
-        CustomerFuelTable,
-        on_delete=models.CASCADE,
-        related_name="customer_fuel_table_details",
-        related_query_name="customer_fuel_table_detail",
-        help_text=_("Customer Fuel Profile"),
-        verbose_name=_("Customer Fuel Profile"),
-    )
-    amount = models.DecimalField(
-        _("Amount"),
-        max_digits=16,
-        decimal_places=5,
-        help_text=_("Amount"),
-        blank=True,
-        null=True,
-    )
-    method = models.CharField(
-        _("Method"),
-        max_length=1,
-        choices=FuelMethodChoices.choices,
-        help_text=_("Method"),
-    )
-    start_price = models.DecimalField(
-        _("Start Price"),
-        max_digits=5,
-        decimal_places=3,
-        help_text=_("Start Price"),
-        blank=True,
-        null=True,
-    )
-    percentage = models.DecimalField(
-        _("Percentage"),
-        max_digits=6,
-        decimal_places=2,
-        help_text=_("Percentage"),
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        verbose_name = _("Customer Fuel Profile Detail")
-        verbose_name_plural = _("Customer Fuel Profile Details")
-        ordering: list[str] = ["customer_fuel_table"]
-
-    def __str__(self) -> str:
-        """Customer Fuel Profile Detail string representation
-
-        Returns:
-            str: Customer Fuel Profile Detail string representation
-        """
-        return textwrap.wrap(f"{self.customer_fuel_table}", 50)[0]
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer fuel profile detail instance
-
-        Returns:
-            str: Customer fuel profile detail url
-        """
-        return reverse("billing:customer-fuel-profile-detail", kwargs={"pk": self.pk})
 
 
 class CustomerFuelProfile(GenericModel):
@@ -488,7 +519,7 @@ class CustomerFuelProfile(GenericModel):
         help_text=_("FSC Method"),
     )
     customer_fuel_table = models.ForeignKey(
-        CustomerFuelTable,
+        "CustomerFuelTable",
         on_delete=models.CASCADE,
         related_name="customer_fuel_profiles",
         related_query_name="customer_fuel_profile",
@@ -564,6 +595,7 @@ class CustomerFuelProfile(GenericModel):
                     code="required",
                 )
             )
+        super().clean()
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer fuel profile instance
@@ -572,3 +604,117 @@ class CustomerFuelProfile(GenericModel):
             str: Customer fuel profile url
         """
         return reverse("billing:customer-fuel-profile", kwargs={"pk": self.pk})
+
+
+class CustomerFuelTable(GenericModel):
+    """
+    Stores Customer Fuel Profile Information related to the :model:`billing.Customer` model.
+    """
+
+    id = models.CharField(
+        _("ID"),
+        max_length=10,
+        unique=True,
+        editable=False,
+        primary_key=True,
+        help_text=_("Customer Fuel Profile ID"),
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=10,
+        help_text=_("Customer Fuel Profile Name"),
+        unique=True,
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=150,
+        help_text=_("Customer Fuel Profile Description"),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("Customer Fuel Table")
+        verbose_name_plural = _("Customer Fuel Table")
+        ordering: list[str] = ["id"]
+
+    def __str__(self) -> str:
+        """Customer Fuel Profile string representation
+
+        Returns:
+            str: Customer Fuel Profile string representation
+        """
+        return textwrap.wrap(f"{self.id} - {self.description}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer fuel profile instance
+
+        Returns:
+            str: Customer fuel profile url
+        """
+        return reverse("billing:customer-fuel-profile-detail", kwargs={"pk": self.pk})
+
+
+class CustomerFuelTableDetail(GenericModel):
+    """
+    Stores detailed information related to the `customer.CustomerFuelTable` model.
+    """
+
+    customer_fuel_table = models.ForeignKey(
+        CustomerFuelTable,
+        on_delete=models.CASCADE,
+        related_name="customer_fuel_table_details",
+        related_query_name="customer_fuel_table_detail",
+        help_text=_("Customer Fuel Profile"),
+        verbose_name=_("Customer Fuel Profile"),
+    )
+    amount = models.DecimalField(
+        _("Amount"),
+        max_digits=16,
+        decimal_places=5,
+        help_text=_("Amount"),
+        blank=True,
+        null=True,
+    )
+    method = models.CharField(
+        _("Method"),
+        max_length=1,
+        choices=FuelMethodChoices.choices,
+        help_text=_("Method"),
+    )
+    start_price = models.DecimalField(
+        _("Start Price"),
+        max_digits=5,
+        decimal_places=3,
+        help_text=_("Start Price"),
+        blank=True,
+        null=True,
+    )
+    percentage = models.DecimalField(
+        _("Percentage"),
+        max_digits=6,
+        decimal_places=2,
+        help_text=_("Percentage"),
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        verbose_name = _("Customer Fuel Profile Detail")
+        verbose_name_plural = _("Customer Fuel Profile Details")
+        ordering: list[str] = ["customer_fuel_table"]
+
+    def __str__(self) -> str:
+        """Customer Fuel Profile Detail string representation
+
+        Returns:
+            str: Customer Fuel Profile Detail string representation
+        """
+        return textwrap.wrap(f"{self.customer_fuel_table}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer fuel profile detail instance
+
+        Returns:
+            str: Customer fuel profile detail url
+        """
+        return reverse("billing:customer-fuel-profile-detail", kwargs={"pk": self.pk})
