@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -24,6 +23,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from .models import Worker, WorkerProfile
+from worker.services import generation
 
 
 @receiver(pre_save, sender=Worker)
@@ -41,7 +41,7 @@ def generate_worker_code(sender: Worker, instance: Worker, **kwargs: Any) -> Non
         None
     """
     if not instance.code:
-        instance.code = Worker.generate_code(instance)
+        instance.code = generation.WorkerGenerationService.worker_code(instance)
 
 
 @receiver(post_save, sender=Worker)
