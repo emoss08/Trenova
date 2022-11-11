@@ -112,17 +112,6 @@ class Customer(GenericModel):
         """
         return textwrap.wrap(f"{self.name}", 50)[0]
 
-    def generate_customer_code(self) -> str:
-        """Generate a unique code for the customer
-
-        Returns:
-            str: Customer code
-        """
-        code: str = self.name[:8].upper()
-        new_code: str = f"{code}{Customer.objects.count()}"
-
-        return code if not Customer.objects.filter(code=code).exists() else new_code
-
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer instance
 

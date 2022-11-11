@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -25,6 +24,8 @@ from django.dispatch import receiver
 
 from .models import Customer, CustomerBillingProfile
 
+from customer.services import generation
+
 
 @receiver(pre_save, sender=Customer)
 def generate_customer_code(sender: Customer, instance: Customer, **kwargs: Any) -> None:
@@ -41,7 +42,7 @@ def generate_customer_code(sender: Customer, instance: Customer, **kwargs: Any) 
         None
     """
     if not instance.code:
-        instance.code = Customer.generate_customer_code(instance)
+        instance.code = generation.CustomerGenerationService.customer_code(instance)
 
 
 @receiver(post_save, sender=Customer)
