@@ -77,11 +77,11 @@ class GenericAdmin(admin.ModelAdmin):
         )
 
     def save_model(
-        self,
-        request: AuthHttpRequest,
-        obj: GenericModel,
-        form: Type[BaseModelForm],
-        change: bool,
+            self,
+            request: AuthHttpRequest,
+            obj: GenericModel,
+            form: Type[BaseModelForm],
+            change: bool,
     ) -> None:
         """Save Model
 
@@ -115,6 +115,21 @@ class GenericAdmin(admin.ModelAdmin):
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
+
+    def get_autocomplete_fields(self, request):
+        """Get Autocomplete Fields
+
+        Args:
+            request (HttpRequest): Request Object
+
+        Returns:
+            tuple[str, ...]: Autocomplete Fields
+        """
+        autocomplete_fields = []
+        for field in self.model._meta.get_fields():
+            if field.is_relation and field.many_to_one:
+                autocomplete_fields.append(field.name)
+        return autocomplete_fields
 
 
 class GenericStackedInline(admin.StackedInline):
