@@ -55,11 +55,6 @@ class ProfileInline(GenericStackedInline):
     verbose_name_plural: str = "profiles"
     fk_name: str = "user"
     extra: int = 0
-    autocomplete_fields: tuple[str, ...] = (
-        "organization",
-        "title",
-    )
-
 
 @admin.register(models.User)
 class UserAdmin(admin.ModelAdmin[models.User]):

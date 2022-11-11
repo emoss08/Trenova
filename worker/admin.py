@@ -22,12 +22,12 @@ from typing import Type
 
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
+from core.generics.admin import GenericAdmin, GenericStackedInline
 
 from .models import Worker, WorkerComment, WorkerContact, WorkerProfile
 
 
-class WorkerProfileAdmin(admin.StackedInline):
+class WorkerProfileAdmin(GenericStackedInline):
     """
     Worker Profile Admin
     """
@@ -37,10 +37,9 @@ class WorkerProfileAdmin(admin.StackedInline):
     verbose_name_plural: str = "Worker Profile"
     fk_name: str = "worker"
     extra: int = 0
-    autocomplete_fields: tuple[str, ...] = ("worker", "organization")
 
 
-class WorkerContactAdmin(admin.StackedInline):
+class WorkerContactAdmin(GenericStackedInline):
     """
     Worker Contact Admin
     """
@@ -49,10 +48,9 @@ class WorkerContactAdmin(admin.StackedInline):
     verbose_name_plural: str = "Worker Contact"
     fk_name: str = "worker"
     extra: int = 0
-    autocomplete_fields: tuple[str, ...] = ("worker", "organization")
 
 
-class WorkerCommentAdmin(admin.StackedInline):
+class WorkerCommentAdmin(GenericStackedInline):
     """
     Worker Comment Admin
     """
@@ -61,7 +59,6 @@ class WorkerCommentAdmin(admin.StackedInline):
     verbose_name_plural: str = "Worker Comment"
     fk_name: str = "worker"
     extra: int = 0
-    autocomplete_fields: tuple[str, ...] = ("worker", "organization")
 
 
 @admin.register(Worker)
@@ -116,7 +113,3 @@ class WorkerAdmin(GenericAdmin[Worker]):
         WorkerContactAdmin,
         WorkerCommentAdmin,
     )
-    # autocomplete_fields: tuple[str, ...] = (
-    #     "depot",
-    #     "manager",
-    # )
