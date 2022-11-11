@@ -84,13 +84,11 @@ class WorkerAdmin(GenericAdmin[Worker]):
         "first_name",
         "last_name",
     )
-    autocomplete_fields: tuple[str, ...] = ("organization",)
     fieldsets = (
         (
             None,
             {
                 "fields": (
-                    "organization",
                     "is_active",
                     "worker_type",
                     "depot",
@@ -118,3 +116,7 @@ class WorkerAdmin(GenericAdmin[Worker]):
         WorkerContactAdmin,
         WorkerCommentAdmin,
     )
+    # autocomplete_fields: tuple[str, ...] = (
+    #     "depot",
+    #     "manager",
+    # )
