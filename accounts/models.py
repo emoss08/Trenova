@@ -206,7 +206,6 @@ class UserProfile(GenericModel):
     )
     bio = models.TextField(
         _("Bio"),
-        null=True,
         blank=True,
         help_text=_("The bio of the user"),
     )
@@ -218,7 +217,6 @@ class UserProfile(GenericModel):
     address_line_2 = models.CharField(
         _("Address Line 2"),
         max_length=100,
-        null=True,
         blank=True,
         help_text=_("The address line 2 of the user"),
     )
@@ -238,7 +236,6 @@ class UserProfile(GenericModel):
     phone = models.CharField(
         _("Phone Number"),
         max_length=15,
-        null=True,
         blank=True,
         help_text=_("The phone number of the user"),
     )
@@ -330,7 +327,6 @@ class JobTitle(GenericModel):
     )
     description = models.TextField(
         _("Description"),
-        null=True,
         blank=True,
         help_text=_("Description of the job title"),
     )
