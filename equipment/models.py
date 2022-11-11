@@ -530,12 +530,14 @@ class EquipmentMaintenancePlan(GenericModel):
                     ValidationError(
                         {
                             "engine_hours": _(
-                                "Engine hours must be greater than 0 if by engine hours is selected."
+                                "Engine hours must be greater than 0 "
+                                "if by engine hours is selected."
                             )
                         },
                         code="invalid",
                     )
                 )
+        super().clean()
 
     def get_absolute_url(self) -> str:
         """Equipment Maintenance Plan absolute URL
