@@ -155,6 +155,21 @@ class GenericStackedInline(admin.StackedInline):
             .filter(organization=request.user.organization)  # type: ignore
         )
 
+    def get_autocomplete_fields(self, request):
+        """Get Autocomplete Fields
+
+        Args:
+            request (HttpRequest): Request Object
+
+        Returns:
+            tuple[str, ...]: Autocomplete Fields
+        """
+        autocomplete_fields = []
+        for field in self.model._meta.get_fields():
+            if field.is_relation and field.many_to_one:
+                autocomplete_fields.append(field.name)
+        return autocomplete_fields
+
 
 class GenericTabularInline(admin.TabularInline):
     """
