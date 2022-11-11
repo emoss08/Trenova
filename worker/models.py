@@ -149,20 +149,6 @@ class Worker(GenericModel):
         """
         return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
 
-    def generate_code(self) -> str:
-        """Generate a unique code for the worker
-
-        Returns:
-            str: Worker code
-        """
-        first_name: str = self.first_name[0]
-        last_name: str = self.last_name[:9]
-
-        code: str = f"{first_name}{last_name}".upper()
-        new_code: str = f"{code}{Worker.objects.count()}"
-
-        return code if not Worker.objects.filter(code=code).exists() else new_code
-
     def get_absolute_url(self) -> str:
         """Worker absolute url
 
