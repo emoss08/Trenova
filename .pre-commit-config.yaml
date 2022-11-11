@@ -5,5 +5,16 @@ repos:
       - id: trailing-whitespace
       - id: check-yaml
       - id: check-added-large-files
-      - id: fix-encoding-pragma
       - id: requirements-txt-fixer
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.2.2
+    hooks:
+      - id: pyupgrade
+  -   repo: https://github.com/psf/black
+      rev: 22.10.0
+      hooks:
+        - id: black
+  -   repo: https://gitlab.com/pycqa/flake8
+      rev: 3.9.2
+      hooks:
+        - id: flake8
