@@ -80,8 +80,7 @@ class EquipmentSerializer(serializers.ModelSerializer):
             dict: The serialized Equipment object.
         """
         data = super().to_representation(instance)
-        data = {k: v if v is not None else "" for k, v in data.items()}
-        return data
+        return {k: v if v is not None else "" for k, v in data.items()}
 
 
 class EquipmentManufacturerSerializer(serializers.ModelSerializer):
@@ -197,28 +196,26 @@ class EquipmentMaintenancePlanSerializer(serializers.ModelSerializer):
         data["equipment_types"] = [et.name for et in instance.equipment_types.all()]
         return data
 
-    def validate(self, data) -> dict:
+    def validate(self, attrs) -> dict:
         """Validate the data.
 
         Args:
-            data (dict): The data to validate.
+            attrs (dict): The data to validate.
 
         Returns:
             dict: The validated data.
         """
-        if data["by_distance"]:
-            if not data["miles"]:
-                raise serializers.ValidationError(
-                    "The field miles is required when by_distance is checked."
-                )
-        if data["by_time"]:
-            if not data["months"]:
-                raise serializers.ValidationError(
-                    "The field months is required when by_time is checked."
-                )
-        if data["by_engine_hours"]:
-            if not data["engine_hours"]:
-                raise serializers.ValidationError(
-                    "The field engine_hours is required when by_engine_hours is checked."
-                )
-        return data
+
+        if attrs["by_distance"] and not attrs["miles"]:
+            raise serializers.ValidationError(
+                "Miles is required when by distance is checked."
+            )
+        if attrs["by_time"] and not attrs["months"]:
+            raise serializers.ValidationError(
+                "Months is required when by time is checked."
+            )
+        if attrs["by_engine_hours"] and not attrs["engine_hours"]:
+            raise serializers.ValidationError(
+                "Engine hours is required when by engine hours is checked."
+            )
+        return attrs
