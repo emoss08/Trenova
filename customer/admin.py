@@ -26,6 +26,8 @@ from core.generics.admin import GenericAdmin, GenericStackedInline
 from .models import (
     Customer,
     CustomerBillingProfile,
+    CustomerEmailProfile,
+    CustomerRuleProfile,
     CustomerContact,
     CustomerFuelProfile,
     CustomerFuelTable,
@@ -33,7 +35,32 @@ from .models import (
 )
 
 
-class CustomerBillingProfileInline(GenericStackedInline):
+@admin.register(CustomerEmailProfile)
+class CustomerEmailProfileAdmin(GenericAdmin[CustomerEmailProfile]):
+    """
+    Customer Email Profile Admin
+    """
+
+    model: Type[CustomerEmailProfile] = CustomerEmailProfile
+    list_display = (
+        "id",
+        "name",
+    )
+    search_fields = ("id",)
+
+
+@admin.register(CustomerRuleProfile)
+class CustomerRuleProfileAdmin(GenericAdmin[CustomerRuleProfile]):
+    """
+    Customer Rule Profile Admin
+    """
+
+    model: Type[CustomerRuleProfile] = CustomerRuleProfile
+    list_display = ("name",)
+    search_fields = ("name",)
+
+
+class CustomerBillingProfileInline(GenericStackedInline[CustomerBillingProfile]):
     """
     Customer Billing Profile
     """
@@ -44,12 +71,17 @@ class CustomerBillingProfileInline(GenericStackedInline):
     verbose_name_plural = "Billing Profiles"
     fk_name = "customer"
     exclude = ("organization",)
+    autocomplete_fields = (
+        "email_profile",
+        "rule_profile",
+    )
 
 
-class CustomerFuelTableDetailInline(GenericStackedInline):
+class CustomerFuelTableDetailInline(GenericStackedInline[CustomerFuelTableDetail]):
     """
     Customer Fuel Table Detail
     """
+
     model: Type[CustomerFuelTableDetail] = CustomerFuelTableDetail
     extra = 10
     verbose_name_plural = "Customer Fuel Details"
@@ -61,6 +93,7 @@ class CustomerFuelTableAdmin(GenericAdmin[CustomerFuelTable]):
     """
     Customer Fuel Table Admin
     """
+
     model: Type[CustomerFuelTable] = CustomerFuelTable
     list_display = (
         "id",
@@ -75,6 +108,7 @@ class CustomerFuelProfileAdmin(GenericAdmin[CustomerFuelProfile]):
     """
     Customer Fuel Profile Admin
     """
+
     model: Type[CustomerFuelProfile] = CustomerFuelProfile
     list_display = (
         "id",
@@ -84,14 +118,14 @@ class CustomerFuelProfileAdmin(GenericAdmin[CustomerFuelProfile]):
     autocomplete_fields = ("customer", "customer_fuel_table")
 
 
-class CustomerContactInline(admin.StackedInline):
+class CustomerContactInline(GenericStackedInline[CustomerContact]):
     """
     Customer Contact
     """
 
     model: Type[CustomerContact] = CustomerContact
     extra = 0
-    verbose_name_plural = "Contacts"
+    verbose_name_plural = "Customer Contacts"
     fk_name = "customer"
     exclude = ("organization",)
 
@@ -107,5 +141,5 @@ class CustomerAdmin(GenericAdmin[Customer]):
         "code",
         "name",
     )
-    search_fields = ("code", "name")
+    search_fields = ("name",)
     inlines = (CustomerBillingProfileInline, CustomerContactInline)

@@ -54,7 +54,7 @@ class AuthHttpRequest(HttpRequest):
         return self.user.profile if hasattr(self.user, "profile") else None
 
 
-class GenericAdmin(admin.ModelAdmin[GenericModel]):
+class GenericAdmin(admin.ModelAdmin):
     """
     Generic Admin Class for all models
     """
@@ -117,7 +117,7 @@ class GenericAdmin(admin.ModelAdmin[GenericModel]):
         super().save_formset(request, form, formset, change)
 
 
-class GenericStackedInline(admin.StackedInline[GenericModel]):
+class GenericStackedInline(admin.StackedInline):
     """
     Generic Admin Stacked for all Models with Organization Exclusion
     """
