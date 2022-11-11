@@ -36,9 +36,6 @@ class GenericModel(Model):
 
     organization: Organization
 
-    def __str__(self) -> None:
-        ...
-
 
 class AuthHttpRequest(HttpRequest):
     """
@@ -57,12 +54,12 @@ class AuthHttpRequest(HttpRequest):
         return self.user.profile if hasattr(self.user, "profile") else None
 
 
-class GenericAdmin(admin.ModelAdmin):
+class GenericAdmin(admin.ModelAdmin[GenericModel]):
     """
     Generic Admin Class for all models
     """
 
-    exclude = ("organization",)
+    exclude: tuple[str, ...] = ("organization",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
         """Get Queryset
@@ -120,7 +117,7 @@ class GenericAdmin(admin.ModelAdmin):
         super().save_formset(request, form, formset, change)
 
 
-class GenericStackedInline(admin.StackedInline):
+class GenericStackedInline(admin.StackedInline[GenericModel]):
     """
     Generic Admin Stacked for all Models with Organization Exclusion
     """
