@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
                     models.ImageField(
                         blank=True,
                         null=True,
-                        upload_to=billing.models.InvoiceTemplate.invoice_template_upload_to,
+                        upload_to="test",
                         verbose_name="Background Image",
                     ),
                 ),
