@@ -115,7 +115,7 @@ class ReasonCodeAdmin(GenericAdmin[ReasonCode]):
 
 
 @admin.register(OrderControl)
-class OrderControlAdmin(GenericAdmin[OrderControl]):
+class OrderControlAdmin(admin.ModelAdmin[OrderControl]):
     """
     Order Control Admin
     """

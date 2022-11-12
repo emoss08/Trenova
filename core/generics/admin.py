@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, List, Optional, Type
+from typing import Optional, Type
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
@@ -35,6 +35,9 @@ class GenericModel(Model):
     """
 
     organization: Organization
+
+    def __str__(self) -> str:
+        return self.organization.name
 
 
 class AuthHttpRequest(HttpRequest):
