@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -50,7 +49,7 @@ class StatusChoices(models.TextChoices):
     """
 
     AVAILABLE = "A", _("Available")
-    IN_PROGRESS = "P", _("In Progrsss")
+    IN_PROGRESS = "P", _("In Progress")
     COMPLETED = "C", _("Completed")
     VOIDED = "V", _("Voided")
 

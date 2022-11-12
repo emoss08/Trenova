@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 A File full of things that  I wrote for no reason other than I was bored.
 
