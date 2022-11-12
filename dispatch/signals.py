@@ -22,25 +22,24 @@ from typing import Any
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import EquipmentType, EquipmentTypeDetail
+from organization.models import Organization
+from .models import DispatchControl
 
 
-@receiver(post_save, sender=EquipmentType)
-def create_equipment_type_detail(
-    sender: EquipmentType, instance: EquipmentType, created: bool, **kwargs: Any
+@receiver(post_save, sender=Organization)
+def create_dispatch_control(
+    sender: Organization, instance: Organization, created: bool, **kwargs: Any
 ) -> None:
-    """Create Equipment Type detail
+    """Create Dispatch Control Information
 
     Args:
-        sender (EquipmentType): Equipment Type.
-        instance (EquipmentType): The EquipmentType instance.
-        created (bool): if the Equipment Type was created
+        sender (Organization): Organization
+        instance (Organization): The Organization instance.
+        created (bool): if the Organization was created
         **kwargs (Any): Keyword Arguments
 
     Returns:
         None
     """
     if created:
-        EquipmentTypeDetail.objects.create(
-            equipment_type=instance, organization=instance.organization
-        )
+        DispatchControl.objects.create(organization=instance)

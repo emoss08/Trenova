@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -34,7 +33,7 @@ def create_depot_detail(
 
     Args:
         sender (Depot): Depot
-        instance (Depot): The Deopot instance.
+        instance (Depot): The Depot instance.
         created (bool): if the Depot was created
         **kwargs (Any): Keyword Arguments
 
@@ -42,5 +41,4 @@ def create_depot_detail(
         None
     """
     if created:
-        print("This shit better work")
         DepotDetail.objects.create(depot=instance, organization=instance.organization)
