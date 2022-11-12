@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -80,11 +79,11 @@ class GenericAdmin(admin.ModelAdmin):
         )
 
     def save_model(
-            self,
-            request: AuthHttpRequest,
-            obj: GenericModel,
-            form: Type[BaseModelForm],
-            change: bool,
+        self,
+        request: AuthHttpRequest,
+        obj: GenericModel,
+        form: Type[BaseModelForm],
+        change: bool,
     ) -> None:
         """Save Model
 

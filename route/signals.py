@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 COPYRIGHT 2022 MONTA
 
@@ -29,7 +28,7 @@ from .models import RouteControl
 
 @receiver(post_save, sender=Organization)
 def create_route_control(
-        sender: Organization, instance: Organization, created: bool, **kwargs: Any
+    sender: Organization, instance: Organization, created: bool, **kwargs: Any
 ) -> None:
     """Create Route Control Information
 
