@@ -10,16 +10,17 @@ repos:
     rev: v3.2.2
     hooks:
       - id: pyupgrade
-  -   repo: https://github.com/psf/black
-      rev: 22.10.0
-      hooks:
-        - id: black
-  -   repo: https://gitlab.com/pycqa/flake8
-      rev: 3.9.2
-      hooks:
-        - id: flake8
-  -   repo: https://github.com/pycqa/isort
-      rev: 5.9.3
-      hooks:
-        - id: isort
-        - args: [--profile, django]
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+      - id: flake8
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: [--profile, django]
