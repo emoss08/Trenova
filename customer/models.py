@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-import subprocess
 
 import textwrap
 from typing import final
@@ -26,8 +25,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
-from phonenumber_field.modelfields import PhoneNumberField  # type: ignore
+from localflavor.us.models import USStateField, USZipCodeField
+from phonenumber_field.modelfields import PhoneNumberField
 from billing.models import AccessorialCharge, DocumentClassification
 from core.models import GenericModel
 
@@ -100,9 +99,13 @@ class Customer(GenericModel):
     )
 
     class Meta:
+        """
+        Customer Metaclass
+        """
+
         verbose_name = _("Customer")
         verbose_name_plural = _("Customers")
-        # ordering: list[str] = ["code"]
+        ordering: list[str] = ["-code"]
 
     def __str__(self) -> str:
         """Customer string representation
@@ -110,7 +113,7 @@ class Customer(GenericModel):
         Returns:
             str: Customer string representation
         """
-        return textwrap.wrap(f"{self.name}", 50)[0]
+        return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer instance

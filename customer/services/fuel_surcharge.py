@@ -63,7 +63,7 @@ class FuelSurchargeService:
         self.fuel_surcharge_increment = fuel_surcharge_increment
         self.fuel_method = fuel_method
 
-    def generate_fuel_surcharge(self) -> dict:
+    def generate_fuel_surcharge(self) -> dict[float, float]:
         """Generate Fuel Surcharge
 
         Generate fuel surcharge based on the following:

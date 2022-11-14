@@ -129,8 +129,8 @@ class OrderControl(GenericModel):
         Metaclass for OrderControl
         """
 
-        verbose_name: str = _("Order Control")
-        verbose_name_plural: str = _("Order Controls")
+        verbose_name = _("Order Control")
+        verbose_name_plural = _("Order Controls")
         ordering: list[str] = ["organization"]
 
     def __str__(self) -> str:

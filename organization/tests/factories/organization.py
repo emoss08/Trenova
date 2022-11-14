@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from ...models import Organization
+from organization import models
 
 
 class OrganizationFactory(factory.django.DjangoModelFactory):
@@ -28,6 +28,6 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
     """
 
     class Meta:
-        model = Organization
+        model = models.Organization
 
     name = factory.Faker("company")

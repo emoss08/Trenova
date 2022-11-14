@@ -22,7 +22,7 @@ import textwrap
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
+from localflavor.us.models import USStateField, USZipCodeField
 
 from control_file.models import CommentType
 from core.models import GenericModel
