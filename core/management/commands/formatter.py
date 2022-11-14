@@ -52,10 +52,3 @@ class Command(BaseCommand):
             subprocess.run(["isort", ".", "--profile", "django"])
         except subprocess.CalledProcessError as error:
             raise CommandError("isort failed.") from error
-
-        # send a git commit
-        try:
-            subprocess.run(["git", "add", "."])
-            subprocess.run(["git", "commit", "-a", "-m", "Monta auto-formatting"])
-        except subprocess.CalledProcessError as error:
-            raise CommandError("git commit failed.") from error
