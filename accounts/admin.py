@@ -26,18 +26,19 @@ from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.admin import sensitive_post_parameters_m
 from django.contrib.auth.forms import (
-    AdminPasswordChangeForm, UserChangeForm, UserCreationForm,
+    AdminPasswordChangeForm,
+    UserChangeForm,
+    UserCreationForm,
 )
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.forms.models import ModelForm
-from django.http import (
-    Http404, HttpRequest, HttpResponse, HttpResponseRedirect,
-)
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext
+from django.utils.translation import gettext_lazy as _
 
 from accounts import models
 from core.generics.admin import GenericAdmin, GenericStackedInline
@@ -122,7 +123,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         request: HttpRequest,
         obj: Optional[Any] = ...,
         change: bool = True,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> Type[ModelForm]:
         """Get form for user admin
 

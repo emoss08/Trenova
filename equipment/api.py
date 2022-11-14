@@ -23,11 +23,16 @@ from django.db.models import QuerySet
 from rest_framework import viewsets
 
 from .models import (
-    Equipment, EquipmentMaintenancePlan, EquipmentManufacturer, EquipmentType,
+    Equipment,
+    EquipmentMaintenancePlan,
+    EquipmentManufacturer,
+    EquipmentType,
 )
 from .serializers import (
-    EquipmentMaintenancePlanSerializer, EquipmentManufacturerSerializer,
-    EquipmentSerializer, EquipmentTypeSerializer,
+    EquipmentMaintenancePlanSerializer,
+    EquipmentManufacturerSerializer,
+    EquipmentSerializer,
+    EquipmentTypeSerializer,
 )
 
 

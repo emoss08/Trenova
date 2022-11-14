@@ -50,7 +50,7 @@ def create_customer_billing_profile(
     sender: CustomerBillingProfile,
     instance: CustomerBillingProfile,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create Customer Billing Profile
 

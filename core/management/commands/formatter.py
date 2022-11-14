@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import subprocess
+from typing import Any
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -27,9 +28,9 @@ class Command(BaseCommand):
     Command to format Python code using Black, isort, and pyupgrade.
     """
 
-    help = "Format Python code using Black, isort"
+    help = "Format Python code using Black & isort"
 
-    def handle(self, *args, **options) -> None:
+    def handle(self, *args: Any, **options: Any) -> None:
         """
         Handle command.
         """
@@ -41,14 +42,19 @@ class Command(BaseCommand):
                 "Please install black, isort, and pyupgrade to use this command."
             ) from error
 
-        # Black
         try:
-            subprocess.run(["black", "."], check=True)
+            self.stdout.write(
+                self.style.NOTICE("Formatting Python code using black...")
+            )
+            subprocess.run(["black", "--target-version=py311", "."], check=True)
         except subprocess.CalledProcessError as error:
             raise CommandError("Black failed.") from error
 
-        # isort
         try:
-            subprocess.run(["isort", ".", "--profile", "django"])
+            self.stdout.write(
+                self.style.NOTICE("Formatting Python code using isort...")
+            )
+            subprocess.run(["isort", "--profile", "black", "."])
+            self.stdout.write(self.style.SUCCESS("Formatting complete."))
         except subprocess.CalledProcessError as error:
             raise CommandError("isort failed.") from error
