@@ -22,7 +22,11 @@ from django.contrib import admin
 from core.generics.admin import GenericAdmin
 
 from .models import (
-    Commodity, HazardousMaterial, OrderControl, OrderType, QualifierCode,
+    Commodity,
+    HazardousMaterial,
+    OrderControl,
+    OrderType,
+    QualifierCode,
     ReasonCode,
 )
 
