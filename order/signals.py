@@ -19,7 +19,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
+<<<<<<< Updated upstream
 from django.db.models.signals import post_save, pre_save
+=======
+from django.db.models.signals import pre_save
+>>>>>>> Stashed changes
 from django.dispatch import receiver
 
 from .models import Order
@@ -39,4 +43,4 @@ def generate_pro_number(sender: Order, instance: Order, **kwargs: Any) -> None:
         None
     """
     if not instance.pro_number:
-        instance.pro_number = generation.OrderGenerationService.pro_number(instance)
+        instance.pro_number = generation.OrderGenerationService.pro_number()
