@@ -27,6 +27,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
+
 from billing.models import AccessorialCharge, DocumentClassification
 from core.models import GenericModel
 
