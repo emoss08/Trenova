@@ -34,6 +34,4 @@ class OrderGenerationService:
             str: Generated Pro Number
         """
         code = f"ORD{Order.objects.count() + 1:06d}"
-        return (
-            "ORD000001" if Order.objects.filter(pro_number=code).exists() else code
-        )
+        return "ORD000001" if Order.objects.filter(pro_number=code).exists() else code
