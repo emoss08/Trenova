@@ -24,13 +24,8 @@ from django.contrib import admin
 from core.generics.admin import GenericAdmin, GenericStackedInline
 
 from .models import (
-    Customer,
-    CustomerBillingProfile,
-    CustomerContact,
-    CustomerEmailProfile,
-    CustomerFuelProfile,
-    CustomerFuelTable,
-    CustomerFuelTableDetail,
+    Customer, CustomerBillingProfile, CustomerContact, CustomerEmailProfile,
+    CustomerFuelProfile, CustomerFuelTable, CustomerFuelTableDetail,
     CustomerRuleProfile,
 )
 

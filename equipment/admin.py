@@ -24,10 +24,7 @@ from django.contrib import admin
 from core.generics.admin import GenericAdmin, GenericStackedInline
 
 from .models import (
-    Equipment,
-    EquipmentMaintenancePlan,
-    EquipmentManufacturer,
-    EquipmentType,
+    Equipment, EquipmentMaintenancePlan, EquipmentManufacturer, EquipmentType,
     EquipmentTypeDetail,
 )
 

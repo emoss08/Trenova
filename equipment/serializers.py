@@ -22,10 +22,7 @@ from typing import Type
 from rest_framework import serializers
 
 from .models import (
-    Equipment,
-    EquipmentMaintenancePlan,
-    EquipmentManufacturer,
-    EquipmentType,
+    Equipment, EquipmentMaintenancePlan, EquipmentManufacturer, EquipmentType,
 )
 
 
