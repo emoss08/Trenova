@@ -31,10 +31,8 @@ class OrderGenerationService:
         """Generate a unique code for the order
 
         Returns:
-            str: Pro Number
+            str: Generated Pro Number
         """
-        # Write code to generate a unique pro number starting with ORD and digits
-        # Example: ORD000001
         code = f"ORD{Order.objects.count() + 1:06d}"
         return (
             "ORD000001" if not Order.objects.filter(pro_number=code).exists() else code
