@@ -56,6 +56,7 @@ class Command(BaseCommand):
         # send a git commit
         try:
             subprocess.run(["git", "add", "."])
-            subprocess.run(["git", "commit", "-a", "-m", "formatting"])
+            subprocess.run(["git", "commit", "-a", "-m", "Monta auto-formatting"])
+            subprocess.run(["git", "push"])
         except subprocess.CalledProcessError as error:
             raise CommandError("git commit failed.") from error
