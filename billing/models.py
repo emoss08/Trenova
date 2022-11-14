@@ -73,9 +73,7 @@ class ChargeType(GenericModel):
     class Meta:
         verbose_name = _("Charge Type")
         verbose_name_plural = _("Charge Types")
-        indexes: list[models.Index] = [
-            models.Index(fields=["name"]),
-        ]
+        ordering: list[str] = ["name"]
 
     def __str__(self) -> str:
         """Charge Type string representation
@@ -123,6 +121,7 @@ class AccessorialCharge(GenericModel):
     class Meta:
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
+        ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
         """Other Charge string representation
@@ -150,6 +149,7 @@ class DocumentClassification(GenericModel):
         _("Name"),
         max_length=150,
         help_text=_("Document classification name"),
+        unique=True,
     )
     description = models.TextField(
         _("Description"),
@@ -168,7 +168,7 @@ class DocumentClassification(GenericModel):
         Returns:
             str: Document classification string representation
         """
-        return textwrap.wrap(f"{self.name}", 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance

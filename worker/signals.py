@@ -22,8 +22,9 @@ from typing import Any
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import Worker, WorkerProfile
 from worker.services import generation
+
+from .models import Worker, WorkerProfile
 
 
 @receiver(pre_save, sender=Worker)

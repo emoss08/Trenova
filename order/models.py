@@ -157,10 +157,6 @@ class OrderControl(GenericModel):
 class HazardousMaterial(GenericModel):
     """
     Hazardous Class Model Fields
-
-    ----------------------------------------
-    Reference:(https://www.fmcsa.dot.gov/regulations/enforcement/nine-classes-hazardous-materials-yellow-visor-card)
-    ----------------------------------------
     """
 
     @final
@@ -514,7 +510,15 @@ class ReasonCode(GenericModel):
         return reverse("order:reasoncode-detail", kwargs={"pk": self.pk})
 
 
-class Order(GenericModel):
-    """
-    Stores order information.
-    """
+# class Order(GenericModel):
+#     """
+#     Stores order information.
+#     """
+#
+#     pro_number = models.CharField(
+#         _("Pro Number"),
+#         max_length=10,
+#         unique=True,
+#         editable=False,
+#         help_text=_("Pro Number of the Order"),
+#     )
