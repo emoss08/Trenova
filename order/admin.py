@@ -20,7 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
-
 from order import models
 
 

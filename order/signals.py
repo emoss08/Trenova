@@ -19,11 +19,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .services import generation
 from .models import Order
+from .services import generation
 
 
 @receiver(pre_save, sender=Order)
