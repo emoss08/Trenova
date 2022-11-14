@@ -21,6 +21,7 @@ import textwrap
 from typing import Any, final
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -58,6 +59,7 @@ class StatusChoices(models.TextChoices):
     NEW = "N", _("New")
     IN_PROGRESS = "P", _("In Progress")
     COMPLETED = "C", _("Completed")
+    BILLED = "B", _("Billed")
     VOIDED = "V", _("Voided")
 
 
@@ -564,8 +566,6 @@ class Order(GenericModel):
     )
     origin_appointment = models.DateTimeField(
         _("Origin Appointment"),
-        blank=True,
-        null=True,
         help_text=_(
             "The time the equipment is expected to arrive at the origin/pickup."
         ),
@@ -584,8 +584,6 @@ class Order(GenericModel):
     )
     destination_appointment = models.DateTimeField(
         _("Destination Appointment Time"),
-        blank=True,
-        null=True,
         help_text=_(
             "The time the equipment is expected to arrive at the destination/drop-off."
         ),
@@ -690,6 +688,7 @@ class Order(GenericModel):
         related_name="orders",
         related_query_name="order",
         verbose_name=_("Commodity"),
+        help_text=_("Commodity"),
     )
     entered_by = models.ForeignKey(
         User,
@@ -759,6 +758,50 @@ class Order(GenericModel):
             str: String representation of the Order
         """
         return self.pro_number
+
+    def clean(self) -> None:
+        """Order save method
+
+        Returns:
+            None
+
+        """
+        if (
+            self.rate_method == Order.RatingMethodChoices.FLAT
+            and self.freight_charge_amount is None
+        ):
+            raise ValidationError(
+                {
+                    "rate_method": ValidationError(
+                        _("Freight Charge Amount is required for flat rating method."),
+                        code="invalid",
+                    )
+                }
+            )
+
+        if (
+            self.rate_method == Order.RatingMethodChoices.PER_MILE
+            and self.mileage is None
+        ):
+            raise ValidationError(
+                {
+                    "rate_method": ValidationError(
+                        _("Mileage is required for per mile rating method."),
+                        code="invalid",
+                    )
+                }
+            )
+        if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
+            raise ValidationError(
+                {
+                    "ready_to_bill": ValidationError(
+                        _(
+                            "Cannot mark an order ready to bill if the order status is not complete."
+                        ),
+                        code="invalid",
+                    )
+                }
+            )
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order

@@ -27,7 +27,7 @@ class OrderGenerationService:
     """
 
     @staticmethod
-    def pro_number(instance: Order) -> str:
+    def pro_number() -> str:
         """Generate a unique code for the order
 
         Returns:
