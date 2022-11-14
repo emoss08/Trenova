@@ -21,18 +21,11 @@ from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
 
-from .models import (
-    Commodity,
-    HazardousMaterial,
-    OrderControl,
-    OrderType,
-    QualifierCode,
-    ReasonCode,
-)
+from order import models
 
 
-@admin.register(OrderType)
-class OrderTypeAdmin(GenericAdmin[OrderType]):
+@admin.register(models.OrderType)
+class OrderTypeAdmin(GenericAdmin[models.OrderType]):
     """
     Order Type Admin
     """
@@ -44,8 +37,8 @@ class OrderTypeAdmin(GenericAdmin[OrderType]):
     search_fields = ("name", "description")
 
 
-@admin.register(HazardousMaterial)
-class HazardousMaterialAdmin(GenericAdmin[HazardousMaterial]):
+@admin.register(models.HazardousMaterial)
+class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
     """
     Hazardous Material Admin
     """
@@ -57,8 +50,8 @@ class HazardousMaterialAdmin(GenericAdmin[HazardousMaterial]):
     search_fields = ("name", "description")
 
 
-@admin.register(Commodity)
-class CommodityAdmin(GenericAdmin[Commodity]):
+@admin.register(models.Commodity)
+class CommodityAdmin(GenericAdmin[models.Commodity]):
     """
     Commodity Admin
     """
@@ -87,8 +80,8 @@ class CommodityAdmin(GenericAdmin[Commodity]):
     )
 
 
-@admin.register(QualifierCode)
-class QualifierCodeAdmin(GenericAdmin[QualifierCode]):
+@admin.register(models.QualifierCode)
+class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
     """
     Qualifier Code Admin
     """
@@ -100,8 +93,8 @@ class QualifierCodeAdmin(GenericAdmin[QualifierCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(ReasonCode)
-class ReasonCodeAdmin(GenericAdmin[ReasonCode]):
+@admin.register(models.ReasonCode)
+class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
     """
     Reason Code Admin
     """
@@ -113,8 +106,8 @@ class ReasonCodeAdmin(GenericAdmin[ReasonCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(OrderControl)
-class OrderControlAdmin(admin.ModelAdmin[OrderControl]):
+@admin.register(models.OrderControl)
+class OrderControlAdmin(GenericAdmin[models.OrderControl]):
     """
     Order Control Admin
     """
@@ -122,4 +115,68 @@ class OrderControlAdmin(admin.ModelAdmin[OrderControl]):
     list_display = (
         "organization",
         "auto_rate_orders",
+    )
+
+
+@admin.register(models.Order)
+class OrderAdmin(GenericAdmin[models.Order]):
+    """
+    Order Admin
+    """
+
+    list_display = (
+        "pro_number",
+        "status",
+        "origin_location",
+        "destination_location",
+    )
+    fieldsets = (
+        (None, {"fields": ("status", "revenue_code", "entered_by")}),
+        (
+            "Order Information",
+            {
+                "fields": (
+                    "origin_location",
+                    "origin_address",
+                    "origin_appointment",
+                    "destination_location",
+                    "destination_address",
+                    "destination_appointment",
+                )
+            },
+        ),
+        (
+            "Billing Details",
+            {
+                "fields": (
+                    "mileage",
+                    "other_charge_amount",
+                    "freight_charge_amount",
+                    "rate_method",
+                    "customer",
+                    "pieces",
+                    "weight",
+                    "ready_to_bill",
+                    "bill_date",
+                    "billed",
+                    "transferred_to_billing",
+                    "billing_transfer_date",
+                ),
+            },
+        ),
+        (
+            "Dispatch Details",
+            {
+                "fields": (
+                    "equipment_type",
+                    "commodity",
+                    "hazmat_id",
+                    "temperature_min",
+                    "temperature_max",
+                    "bol_number",
+                    "consignee_ref_number",
+                    "comment",
+                )
+            },
+        ),
     )

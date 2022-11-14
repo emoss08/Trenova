@@ -20,12 +20,19 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import textwrap
 from typing import Any, final
 
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from accounting.models import RevenueCode
 from core.models import GenericModel
+from customer.models import Customer
+from equipment.models import EquipmentType
+from location.models import Location
 from organization.models import Organization
+
+User = settings.AUTH_USER_MODEL
 
 
 def order_documentation_upload_to(instance, filename: str) -> str:
@@ -48,7 +55,7 @@ class StatusChoices(models.TextChoices):
     Status Choices for Order, Stop & Movement Statuses.
     """
 
-    AVAILABLE = "A", _("Available")
+    NEW = "N", _("New")
     IN_PROGRESS = "P", _("In Progress")
     COMPLETED = "C", _("Completed")
     VOIDED = "V", _("Voided")
@@ -65,17 +72,6 @@ class StopChoices(models.TextChoices):
     SPLIT_DROP = "SD", _("Split Drop Off")
     DELIVERY = "D", _("Delivery")
     DROP_OFF = "DO", _("Drop Off")
-
-
-class RatingMethodChoices(models.TextChoices):
-    """
-    Rating Method choices for Order Model
-    """
-
-    FLAT = "F", _("Flat Fee")
-    PER_MILE = "PM", _("Per Mile")
-    PER_STOP = "PS", _("Per Stop")
-    POUNDS = "PP", _("Per Pound")
 
 
 # Configuration Files
@@ -101,10 +97,10 @@ class OrderControl(GenericModel):
         default=True,
         help_text=_("Calculate distance for the order"),
     )
-    enforce_bill_to = models.BooleanField(
-        _("Enforce Bill To"),
+    enforce_customer = models.BooleanField(
+        _("Enforce Customer"),
         default=False,
-        help_text=_("Enforce bill to to being enter when entering an order."),
+        help_text=_("Enforce Customer to being enter when entering an order."),
     )
     enforce_rev_code = models.BooleanField(
         _("Enforce Rev Code"),
@@ -386,6 +382,10 @@ class Commodity(GenericModel):
     )
 
     class Meta:
+        """
+        Commodity Metaclass
+        """
+
         verbose_name = _("Commodity")
         verbose_name_plural = _("Commodities")
         ordering: list[str] = ["name"]
@@ -419,7 +419,7 @@ class Commodity(GenericModel):
 
 class QualifierCode(GenericModel):
     """
-    Stores Qualifier Code information that can be used in stop notes
+    Stores Qualifier Code information that can be used in stop notes.
     """
 
     code = models.CharField(
@@ -510,15 +510,260 @@ class ReasonCode(GenericModel):
         return reverse("order:reasoncode-detail", kwargs={"pk": self.pk})
 
 
-# class Order(GenericModel):
-#     """
-#     Stores order information.
-#     """
-#
-#     pro_number = models.CharField(
-#         _("Pro Number"),
-#         max_length=10,
-#         unique=True,
-#         editable=False,
-#         help_text=_("Pro Number of the Order"),
-#     )
+class Order(GenericModel):
+    """
+    Stores order information related to a `organization.Organization`.
+    """
+
+    @final
+    class RatingMethodChoices(models.TextChoices):
+        """
+        Rating Method choices for Order Model
+        """
+
+        FLAT = "F", _("Flat Fee")
+        PER_MILE = "PM", _("Per Mile")
+        PER_STOP = "PS", _("Per Stop")
+        POUNDS = "PP", _("Per Pound")
+
+    # General Information
+    pro_number = models.CharField(
+        _("Pro Number"),
+        max_length=10,
+        unique=True,
+        editable=False,
+        help_text=_("Pro Number of the Order"),
+    )
+    status = models.CharField(
+        _("Status"),
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.NEW,
+    )
+    revenue_code = models.ForeignKey(
+        RevenueCode,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("Revenue Code"),
+        help_text=_("Revenue Code of the Order"),
+    )
+    origin_location = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        related_name="origin_order",
+        related_query_name="origin_orders",
+        verbose_name=_("Origin Location"),
+        help_text=_("Origin Location of the Order"),
+    )
+    origin_address = models.CharField(
+        _("Origin Address"),
+        max_length=255,
+        blank=True,
+        help_text=_("Origin Address of the Order"),
+    )
+    origin_appointment = models.DateTimeField(
+        _("Origin Appointment"),
+        blank=True,
+        null=True,
+        help_text=_(
+            "The time the equipment is expected to arrive at the origin/pickup."
+        ),
+    )
+    destination_location = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        related_name="destination_order",
+        related_query_name="destination_orders",
+        verbose_name=_("Destination Location"),
+    )
+    destination_address = models.CharField(
+        _("Destination Address"),
+        max_length=255,
+        blank=True,
+    )
+    destination_appointment = models.DateTimeField(
+        _("Destination Appointment Time"),
+        blank=True,
+        null=True,
+        help_text=_(
+            "The time the equipment is expected to arrive at the destination/drop-off."
+        ),
+    )
+
+    # Billing Information for the order
+    mileage = models.DecimalField(
+        _("Total Mileage"),
+        max_digits=10,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text=_("Total Mileage"),
+    )
+    other_charge_amount = models.DecimalField(
+        _("Additional Charge Amount"),
+        max_digits=10,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text=_("Additional Charge Amount"),
+    )
+    freight_charge_amount = models.DecimalField(
+        _("Freight Charge Amount"),
+        max_digits=10,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text=_("Freight Charge Amount"),
+    )
+    rate_method = models.CharField(
+        _("Rating Method"),
+        max_length=20,
+        choices=RatingMethodChoices.choices,
+        default=RatingMethodChoices.FLAT,
+        help_text=_("Rating Method"),
+    )
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("Customer"),
+        help_text=_("Customer of the Order"),
+    )
+    pieces = models.PositiveIntegerField(
+        _("Pieces"),
+        help_text=_("Total Piece Count of the Order"),
+        default=0,
+        blank=True,
+        null=True,
+    )
+    weight = models.DecimalField(
+        _("Weight"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Total Weight of the Order"),
+        default=0,
+        blank=True,
+        null=True,
+    )
+    ready_to_bill = models.BooleanField(
+        _("Ready to Bill"),
+        default=False,
+        help_text=_("Ready to Bill"),
+    )
+    bill_date = models.DateField(
+        _("Billed Date"),
+        null=True,
+        blank=True,
+        help_text=_("Billed Date"),
+    )
+    billed = models.BooleanField(
+        _("Billed"),
+        default=False,
+        help_text=_("Billed"),
+    )
+    transferred_to_billing = models.BooleanField(
+        _("Transferred to Billing"),
+        default=False,
+        help_text=_("Transferred to Billing"),
+    )
+    billing_transfer_date = models.DateTimeField(
+        _("Billing Transfer Date"),
+        null=True,
+        blank=True,
+        help_text=_("Billing Transfer Date"),
+    )
+
+    # Dispatch Information
+    equipment_type = models.ForeignKey(
+        EquipmentType,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("Equipment Type"),
+        help_text=_("Equipment Type"),
+    )
+    commodity = models.ForeignKey(
+        Commodity,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("Commodity"),
+    )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("User"),
+        help_text=_("Order entered by User"),
+    )
+    hazmat_id = models.ForeignKey(
+        HazardousMaterial,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("Hazardous Class"),
+        null=True,
+        blank=True,
+        help_text=_("Hazardous Class"),
+    )
+    temperature_min = models.DecimalField(
+        _("Minimum Temperature"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Minimum Temperature"),
+    )
+    temperature_max = models.DecimalField(
+        _("Maximum Temperature"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Maximum Temperature"),
+    )
+    bol_number = models.CharField(
+        _("BOL Number"),
+        max_length=255,
+        help_text=_("BOL Number"),
+    )
+    consignee_ref_number = models.CharField(
+        _("Consignee Reference Number"),
+        max_length=255,
+        blank=True,
+        help_text=_("Consignee Reference Number"),
+    )
+    comment = models.CharField(
+        _("Comment"),
+        max_length=100,
+        blank=True,
+        help_text=_("Planning Comment"),
+    )
+
+    class Meta:
+        """
+        Order Metaclass
+        """
+
+        verbose_name = _("Order")
+        verbose_name_plural = _("Orders")
+        ordering: list[str] = ["-pro_number"]
+
+    def __str__(self) -> str:
+        """String representation of the Order
+
+        Returns:
+            str: String representation of the Order
+        """
+        return self.pro_number
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the Order
+
+        Returns:
+            str: Absolute url for the Order
+        """
+        return reverse("order-detail", kwargs={"pk": self.pk})
