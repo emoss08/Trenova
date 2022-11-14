@@ -17,26 +17,25 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from customer.models import Customer
+from ..models import Order
 
 
-class CustomerGenerationService:
-    """Customer Generation Service
+class OrderGenerationService:
+    """Order Generation Service
 
-    Generate a unique code for the customer.
+    Generate a unique code for the order.
     """
 
     @staticmethod
-    def customer_code(instance: Customer) -> str:
-        """Generate a unique code for the customer
-
-        Args:
-            instance (Customer): Customer instance
+    def pro_number() -> str:
+        """Generate a unique code for the order
 
         Returns:
-            str: Customer code
+            str: Pro Number
         """
-        code = instance.name[:3].upper()
-        new_code = f"{code}{Customer.objects.count() + 1:04d}"
-
-        return code if not Customer.objects.filter(code=code).exists() else new_code
+        # Write code to generate a unique pro number starting with ORD and digits
+        # Example: ORD000001
+        code = f"ORD{Order.objects.count() + 1:06d}"
+        return (
+            "ORD000001" if not Order.objects.filter(pro_number=code).exists() else code
+        )

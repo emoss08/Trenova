@@ -22,11 +22,8 @@ from typing import Type
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin
-from .models import (
-    AccessorialCharge,
-    ChargeType,
-    DocumentClassification,
-)
+
+from .models import AccessorialCharge, ChargeType, DocumentClassification
 
 
 @admin.register(DocumentClassification)

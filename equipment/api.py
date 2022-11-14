@@ -25,16 +25,11 @@ from rest_framework import permissions, viewsets  # type: ignore
 from rest_framework.filters import OrderingFilter, SearchFilter  # type: ignore
 
 from .models import (
-    Equipment,
-    EquipmentMaintenancePlan,
-    EquipmentManufacturer,
-    EquipmentType,
+    Equipment, EquipmentMaintenancePlan, EquipmentManufacturer, EquipmentType,
 )
 from .serializers import (
-    EquipmentMaintenancePlanSerializer,
-    EquipmentManufacturerSerializer,
-    EquipmentSerializer,
-    EquipmentTypeSerializer,
+    EquipmentMaintenancePlanSerializer, EquipmentManufacturerSerializer,
+    EquipmentSerializer, EquipmentTypeSerializer,
 )
 
 
