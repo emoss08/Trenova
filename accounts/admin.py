@@ -66,7 +66,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         password changes.
     """
 
-    change_user_password_template = None
+    change_user_password_template: None = None
     fieldsets = (
         (None, {"fields": ("organization", "username", "email", "password")}),
         (
@@ -171,8 +171,8 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             lookup, value
         )
 
-    @sensitive_post_parameters_m
-    @csrf_protect_m
+    @sensitive_post_parameters_m  # type: ignore
+    @csrf_protect_m  # type: ignore
     def add_view(
         self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
@@ -212,12 +212,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
         defaults = {
             "auto_populated_fields": (),
-            "username_help_text": username_field.help_text,
+            "username_help_text": username_field.help_text,  # type: ignore
         }
         extra_context.update(defaults)
         return super().add_view(request, form_url, extra_context)
 
-    @sensitive_post_parameters_m
+    @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
         self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
@@ -289,12 +289,11 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             **self.admin_site.each_context(request),
         }
 
-        request.current_app = self.admin_site.name  # type: ignore
+        request.current_app = self.admin_site.name
 
         return TemplateResponse(
             request,
-            self.change_user_password_template
-            or "admin/auth/user/change_password.html",
+            "admin/auth/user/change_password.html",
             context,
         )
 

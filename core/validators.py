@@ -50,7 +50,7 @@ class ImageSizeValidator:
         """Validator function to validate image dimensions
 
         Args:
-            image (Any): Image to validate dimensions of.
+            image: Image to validate dimensions of.
 
         Returns:
             None
@@ -67,9 +67,9 @@ class ImageSizeValidator:
             )
 
         if self.less_than:
-            if self.width is not None and image.width > self.width:
+            if self.width is not None:
                 error = True
-            if self.height is not None and image.height > self.height:
+            if self.height is not None:
                 error = True
             if error:
                 raise ValidationError(
@@ -79,9 +79,9 @@ class ImageSizeValidator:
                 )
 
         if self.greater_than:
-            if self.width is not None and image.width < self.width:
+            if self.width is not None:
                 error = True
-            if self.height is not None and image.height < self.height:
+            if self.height is not None:
                 error = True
             if error:
                 raise ValidationError(
@@ -100,10 +100,10 @@ class ImageSizeValidator:
         if not isinstance(other, ImageSizeValidator):
             return NotImplemented
         return (
-            self.width == other.width
-            and self.height == other.height
-            and self.less_than == other.less_than
-            and self.greater_than == other.greater_than
+            self.width == other.width and
+            self.height == other.height and
+            self.less_than == other.less_than and
+            self.greater_than == other.greater_than
         )
 
     def __ne__(self, other: object) -> bool:

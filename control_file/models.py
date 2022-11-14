@@ -23,7 +23,6 @@ from typing import final
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from localflavor.us.models import USStateField  # type: ignore
 
 from core.models import GenericModel
 from organization.models import Organization
@@ -141,8 +140,8 @@ class CommentType(GenericModel):
         Metaclass for CommentType
         """
 
-        verbose_name: str = _("Comment Type")
-        verbose_name_plural: str = _("Comment Types")
+        verbose_name = _("Comment Type")
+        verbose_name_plural = _("Comment Types")
         ordering: list[str] = ["organization"]
 
     def __str__(self) -> str:

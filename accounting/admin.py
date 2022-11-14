@@ -44,7 +44,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     )
 
     def get_form(
-        self, request: Any, obj: Optional[GeneralLedgerAccount] = None, **kwargs: Any
+        self, request, obj: Optional[GeneralLedgerAccount] = None, **kwargs: Any
     ) -> Type[ModelForm[Any]]:
         """Get Form for Model
 
