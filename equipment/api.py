@@ -20,16 +20,19 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Type
 
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend  # type: ignore
-from rest_framework import permissions, viewsets  # type: ignore
-from rest_framework.filters import OrderingFilter, SearchFilter  # type: ignore
+from rest_framework import viewsets
 
 from .models import (
-    Equipment, EquipmentMaintenancePlan, EquipmentManufacturer, EquipmentType,
+    Equipment,
+    EquipmentMaintenancePlan,
+    EquipmentManufacturer,
+    EquipmentType,
 )
 from .serializers import (
-    EquipmentMaintenancePlanSerializer, EquipmentManufacturerSerializer,
-    EquipmentSerializer, EquipmentTypeSerializer,
+    EquipmentMaintenancePlanSerializer,
+    EquipmentManufacturerSerializer,
+    EquipmentSerializer,
+    EquipmentTypeSerializer,
 )
 
 

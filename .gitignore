@@ -6,7 +6,7 @@
 /backend/venv/
 /.idea/
 /backend/backend/
-/venv
+/mvenv
 .env
 .pytest_cache
 backend.iml

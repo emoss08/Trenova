@@ -12,4 +12,4 @@ class RouteConfig(AppConfig):
         Returns:
             None
         """
-        from route import signals
+        import route.signals
