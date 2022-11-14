@@ -17,57 +17,28 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional, Type
+from typing import Any, TypeVar
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm, ModelForm
 from django.http import HttpRequest
 
-from accounts.models import User, UserProfile
-from organization.models import Organization
+_ModelT = TypeVar("_ModelT", bound=Model)
 
 
-class GenericModel(Model):
-    """
-    Generic Model
-    """
-
-    organization: Organization
-
-    def __str__(self) -> str:
-        return self.organization.name
-
-
-class AuthHttpRequest(HttpRequest):
-    """
-    Authenticated HTTP Request
-    """
-
-    user: User
-
-    @property
-    def profile(self) -> Optional[UserProfile]:
-        """Get User Profile
-
-        Returns:
-            Optional[UserProfile]: User Profile
-        """
-        return self.user.profile if hasattr(self.user, "profile") else None
-
-
-class GenericAdmin(admin.ModelAdmin):
+class GenericAdmin(admin.ModelAdmin[_ModelT]):
     """
     Generic Admin Class for all models
     """
 
     exclude: tuple[str, ...] = ("organization",)
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[_ModelT]:
         """Get Queryset for Model
 
         Args:
-            request (HttpRequest): Request Object
+            request (AuthHttpRequest): Request Object
 
         Returns:
             QuerySet[Model]: Queryset of Model
@@ -80,30 +51,32 @@ class GenericAdmin(admin.ModelAdmin):
 
     def save_model(
         self,
-        request: AuthHttpRequest,
-        obj: GenericModel,
-        form: Type[BaseModelForm],
+        request: HttpRequest,
+        obj: _ModelT,
+        form: type[BaseModelForm],
         change: bool,
     ) -> None:
         """Save Model Instance
 
         Args:
             request (AuthHttpRequest): Request Object
-            obj (GenericModel): Model Object
+            obj (_ModelT): Generic Model Object
             form (Type[BaseModelForm]): Form Class
             change (bool): If the model is being changed
 
         Returns:
             None
         """
-        obj.organization = request.user.organization
+        obj.organization = request.user.organization  # type: ignore
         super().save_model(request, obj, form, change)
 
-    def save_formset(self, request, form, formset, change) -> None:
+    def save_formset(
+        self, request: HttpRequest, form: Any, formset: Any, change: Any
+    ) -> None:
         """Save Formset for Inline Models
 
         Args:
-            request (Any): Request Object
+            request (AuthHttpRequest): Request Object
             form (Any): Form Object
             formset (Any): Formset Object
             change (Any): If the model is being changed
@@ -113,7 +86,7 @@ class GenericAdmin(admin.ModelAdmin):
         """
         instances = formset.save(commit=False)
         for instance in instances:
-            instance.organization = request.user.organization
+            instance.organization = request.user.organization  # type: ignore
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
@@ -133,13 +106,17 @@ class GenericAdmin(admin.ModelAdmin):
                 autocomplete_fields.append(field.name)
         return autocomplete_fields
 
-    def get_form(  # type: ignore
-        self, request: HttpRequest, obj: Optional[Model] = None, **kwargs: Any
-    ) -> Type[ModelForm[Any]]:
+    def get_form(
+        self,
+        request: HttpRequest,
+        obj: _ModelT | None = None,
+        change: bool = False,
+        **kwargs: Any
+    ) -> type[ModelForm[_ModelT]]:
         """Get Form for Model
 
         Args:
-            request (HttpRequest): Request Object
+            request (AuthHttpRequest): Request Object
             obj (Optional[Model]): Model Object
             **kwargs (Any): Keyword Arguments
 
