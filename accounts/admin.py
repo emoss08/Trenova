@@ -33,12 +33,16 @@ from django.contrib.auth.forms import (
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.forms.models import ModelForm
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpRequest,
+    HttpResponse,
+    HttpResponseRedirect,
+)
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
-from django.utils.translation import gettext
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 
 from accounts import models
 from core.generics.admin import GenericAdmin, GenericStackedInline

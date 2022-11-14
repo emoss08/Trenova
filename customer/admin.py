@@ -22,15 +22,16 @@ from typing import Type
 from django.contrib import admin
 
 from core.generics.admin import GenericAdmin, GenericStackedInline
+
 from .models import (
     Customer,
     CustomerBillingProfile,
-    CustomerEmailProfile,
-    CustomerRuleProfile,
     CustomerContact,
+    CustomerEmailProfile,
     CustomerFuelProfile,
     CustomerFuelTable,
     CustomerFuelTableDetail,
+    CustomerRuleProfile,
 )
 
 

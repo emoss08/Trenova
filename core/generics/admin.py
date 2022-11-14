@@ -17,11 +17,11 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Type
+from typing import Any, Optional, Type
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
-from django.forms import BaseModelForm
+from django.forms import BaseModelForm, ModelForm
 from django.http import HttpRequest
 
 from accounts.models import User, UserProfile
@@ -64,7 +64,7 @@ class GenericAdmin(admin.ModelAdmin):
     exclude: tuple[str, ...] = ("organization",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
-        """Get Queryset
+        """Get Queryset for Model
 
         Args:
             request (HttpRequest): Request Object
@@ -85,7 +85,7 @@ class GenericAdmin(admin.ModelAdmin):
         form: Type[BaseModelForm],
         change: bool,
     ) -> None:
-        """Save Model
+        """Save Model Instance
 
         Args:
             request (AuthHttpRequest): Request Object
@@ -100,7 +100,7 @@ class GenericAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def save_formset(self, request, form, formset, change) -> None:
-        """Save Formset
+        """Save Formset for Inline Models
 
         Args:
             request (Any): Request Object
@@ -125,13 +125,31 @@ class GenericAdmin(admin.ModelAdmin):
             request (HttpRequest): Request Object
 
         Returns:
-            tuple[str, ...]: Autocomplete Fieldss
+            list[str]: Autocomplete Fields
         """
         autocomplete_fields = []
         for field in self.model._meta.get_fields():
             if field.is_relation and field.many_to_one:
                 autocomplete_fields.append(field.name)
         return autocomplete_fields
+
+    def get_form(  # type: ignore
+        self, request: HttpRequest, obj: Optional[Model] = None, **kwargs: Any
+    ) -> Type[ModelForm[Any]]:
+        """Get Form for Model
+
+        Args:
+            request (HttpRequest): Request Object
+            obj (Optional[Model]): Model Object
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Type[ModelForm[Any]]: Form Class
+        """
+        form = super().get_form(request, obj, **kwargs)
+        for field in form.base_fields:
+            form.base_fields[field].widget.attrs["placeholder"] = field.title()
+        return form
 
 
 class GenericStackedInline(admin.StackedInline):
@@ -157,14 +175,14 @@ class GenericStackedInline(admin.StackedInline):
             .filter(organization=request.user.organization)  # type: ignore
         )
 
-    def get_autocomplete_fields(self, request: HttpRequest):
+    def get_autocomplete_fields(self, request: HttpRequest) -> list[str]:
         """Get Autocomplete Fields
 
         Args:
             request (HttpRequest): Request Object
 
         Returns:
-            tuple[str, ...]: Autocomplete Fields
+            list[str]: Autocomplete Fields
         """
         autocomplete_fields = []
         for field in self.model._meta.get_fields():
@@ -175,7 +193,7 @@ class GenericStackedInline(admin.StackedInline):
 
 class GenericTabularInline(admin.TabularInline):
     """
-    Generic Admin Tabular Inline with Organizaiton Exclusion
+    Generic Admin Tabular Inline with Organization Exclusion
     """
 
     extra = 0
