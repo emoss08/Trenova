@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from ..models import Order
+from order.models import Order
 
 
 class OrderGenerationService:
@@ -27,7 +27,7 @@ class OrderGenerationService:
     """
 
     @staticmethod
-    def pro_number() -> str:
+    def pro_number(instance: Order) -> str:
         """Generate a unique code for the order
 
         Returns:
@@ -35,5 +35,5 @@ class OrderGenerationService:
         """
         code = f"ORD{Order.objects.count() + 1:06d}"
         return (
-            "ORD000001" if not Order.objects.filter(pro_number=code).exists() else code
+            "ORD000001" if Order.objects.filter(pro_number=code).exists() else code
         )

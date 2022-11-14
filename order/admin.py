@@ -62,7 +62,7 @@ class CommodityAdmin(GenericAdmin[models.Commodity]):
     )
     search_fields = ("name", "description")
     fieldsets = (
-        (None, {"fields": ("organization", "name", "description")}),
+        (None, {"fields": ("name", "description")}),
         (
             "Hazmat Information",
             {
