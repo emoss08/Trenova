@@ -27,6 +27,6 @@ sudo service redis-server start
 echo 'Starting postgres...'
 sudo service postgresql start
 echo 'Activating virtual environment...'
-source venv/bin/activate.fish
+source mvenv/bin/activate.fish
 echo 'Starting server'
 py manage.py runserver
