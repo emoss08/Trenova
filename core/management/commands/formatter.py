@@ -25,7 +25,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 class Command(BaseCommand):
     """
-    Command to format Python code using Black, isort, and pyupgrade.
+    Command to format Python code using Black, isort, and autoflake.
     """
 
     help = "Format Python code using Black & isort"
@@ -35,8 +35,7 @@ class Command(BaseCommand):
         Handle command.
         """
         try:
-            import black
-            import isort
+            pass
         except ImportError as error:
             raise CommandError(
                 "Please install black, isort, and pyupgrade to use this command."
@@ -49,12 +48,3 @@ class Command(BaseCommand):
             subprocess.run(["black", "--target-version=py311", "."], check=True)
         except subprocess.CalledProcessError as error:
             raise CommandError("Black failed.") from error
-
-        try:
-            self.stdout.write(
-                self.style.NOTICE("Formatting Python code using isort...")
-            )
-            subprocess.run(["isort", "--profile", "black", "."])
-            self.stdout.write(self.style.SUCCESS("Formatting complete."))
-        except subprocess.CalledProcessError as error:
-            raise CommandError("isort failed.") from error

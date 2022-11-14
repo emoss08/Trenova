@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+import subprocess
 
 import textwrap
 from typing import final
@@ -27,7 +28,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
 from phonenumber_field.modelfields import PhoneNumberField  # type: ignore
-
 from billing.models import AccessorialCharge, DocumentClassification
 from core.models import GenericModel
 

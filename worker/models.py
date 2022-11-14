@@ -31,7 +31,6 @@ from localflavor.us.models import USStateField, USZipCodeField  # type: ignore
 
 from control_file.models import CommentType
 from core.models import GenericModel
-from dispatch.models import DispatchControl
 from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
 
