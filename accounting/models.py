@@ -228,7 +228,7 @@ class RevenueCode(GenericModel):
             raise ValidationError(
                 {"revenue_account": _("Entered account is not a revenue account.")}
             )
-        super(RevenueCode, self).clean()
+        super().clean()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """RevenueCode save method
