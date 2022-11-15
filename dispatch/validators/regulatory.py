@@ -65,8 +65,7 @@ def validate_worker_regulatory_information(value) -> None:
         ),
         "mvr_due_date": _(
             "Organization has regulatory check enabled. Please enter a MVR due date."
-        )
-
+        ),
     }
     if dispatch_control and dispatch_control.regulatory_check:
         for field, error in fields.items():

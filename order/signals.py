@@ -22,7 +22,7 @@ from typing import Any
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from .models import Order
+from .models import Movement, Order
 from .services import generation
 
 
@@ -40,3 +40,21 @@ def generate_pro_number(sender: Order, instance: Order, **kwargs: Any) -> None:
     """
     if not instance.pro_number:
         instance.pro_number = generation.OrderGenerationService.pro_number()
+
+
+@receiver(pre_save, sender=Movement)
+def generate_ref_number(sender: Movement, instance: Movement, **kwargs: Any) -> None:
+    """Generate Reference Number
+
+    Generate a reference number when a new movement is added.
+
+    Args:
+        sender (Movement): Movement
+        instance (Movement): The movement instance.
+        **kwargs (Any): Keyword arguments.
+
+    Returns:
+        None
+    """
+    if not instance.ref_num:
+        instance.ref_num = generation.OrderGenerationService.movement_ref_number()

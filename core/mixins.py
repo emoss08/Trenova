@@ -130,6 +130,10 @@ class MontaAdminMixin(admin.ModelAdmin[_M]):
         Returns:
             list[str]: Autocomplete Fields
         """
+
+        if not self.search_fields:
+            raise ValueError(f"{self.__class__.__name__} must define search_fields")
+
         autocomplete_fields = []
         for field in self.model._meta.get_fields():
             if field.is_relation and field.many_to_one:

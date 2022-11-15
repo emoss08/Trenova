@@ -195,7 +195,6 @@ class LocationContact(GenericModel):
         _("Email"),
         max_length=255,
         help_text=_("Email of the contact."),
-        null=True,
         blank=True,
     )
     phone = models.PositiveIntegerField(

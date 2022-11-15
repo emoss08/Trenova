@@ -215,15 +215,15 @@ class RevenueCode(GenericModel):
             None
         """
         if (
-                self.expense_account.account_type !=
-                GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+            self.expense_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
                 {"expense_account": _("Entered account is not an expense account.")}
             )
         if (
-                self.revenue_account.account_type !=
-                GeneralLedgerAccount.AccountTypeChoices.REVENUE
+            self.revenue_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(
                 {"revenue_account": _("Entered account is not a revenue account.")}
