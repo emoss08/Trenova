@@ -9,6 +9,7 @@
 /mvenv
 /rvenv
 .env
+/media
 .pytest_cache
 backend.iml
 /scripts/startup.sh

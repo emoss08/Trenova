@@ -17,11 +17,15 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    # path("admin/doc/", include("django.contrib.admindocs.urls")),
-    path("admin/", admin.site.urls),
-    path("api/", include("core.urls")),
-]
+                  path("admin/doc/", include("django.contrib.admindocs.urls")),
+                  path("admin/", admin.site.urls),
+                  path("api/", include("core.urls")),
+              ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
