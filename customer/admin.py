@@ -57,7 +57,9 @@ class CustomerRuleProfileAdmin(MontaAdminMixin[CustomerRuleProfile]):
     search_fields = ("name",)
 
 
-class CustomerBillingProfileInline(MontaStackedInlineMixin[Customer, CustomerBillingProfile]):
+class CustomerBillingProfileInline(
+    MontaStackedInlineMixin[Customer, CustomerBillingProfile]
+):
     """
     Customer Billing Profile
     """
@@ -70,7 +72,9 @@ class CustomerBillingProfileInline(MontaStackedInlineMixin[Customer, CustomerBil
     exclude = ("organization",)
 
 
-class CustomerFuelTableDetailInline(MontaStackedInlineMixin[CustomerFuelTable, CustomerFuelTableDetail]):
+class CustomerFuelTableDetailInline(
+    MontaStackedInlineMixin[CustomerFuelTable, CustomerFuelTableDetail]
+):
     """
     Customer Fuel Table Detail
     """

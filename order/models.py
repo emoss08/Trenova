@@ -771,8 +771,8 @@ class Order(GenericModel):
 
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.FLAT
-                and self.freight_charge_amount is None
+            self.rate_method == Order.RatingMethodChoices.FLAT
+            and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -784,8 +784,8 @@ class Order(GenericModel):
             )
 
         if (
-                self.rate_method == Order.RatingMethodChoices.PER_MILE
-                and self.mileage is None
+            self.rate_method == Order.RatingMethodChoices.PER_MILE
+            and self.mileage is None
         ):
             raise ValidationError(
                 {
