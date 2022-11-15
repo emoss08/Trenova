@@ -41,7 +41,7 @@ def validate_worker_regulatory_information(value) -> None:
     dispatch_control: Optional[DispatchControl] = DispatchControl.objects.filter(
         organization=value.organization
     ).first()
-    errors: dict[str, str] = {}
+    errors = {}
     fields = {
         "license_number": _(
             "Organization has regulatory check enabled. Please enter a license number."

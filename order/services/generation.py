@@ -44,8 +44,4 @@ class OrderGenerationService:
             str: Generated Movement Reference Number
         """
         code = f"MOV{Movement.objects.count() + 1:06d}"
-        return (
-            "MOV000001"
-            if Movement.objects.filter(movement_ref_number=code).exists()
-            else code
-        )
+        return "MOV000001" if Movement.objects.filter(ref_num=code).exists() else code

@@ -19,8 +19,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin
+from core.mixins import MontaAdminMixin, MontaTabularInlineMixin
 from order import models
+
+
+class OrderDocumentationInline(MontaTabularInlineMixin):
+    """
+    Order documentation inline
+    """
+
+    model: type[models.OrderDocumentation] = models.OrderDocumentation
+    extra = 0
 
 
 @admin.register(models.OrderType)
@@ -180,6 +189,7 @@ class OrderAdmin(MontaAdminMixin[models.Order]):
             },
         ),
     )
+    inlines = (OrderDocumentationInline,)
 
 
 @admin.register(models.Movement)
@@ -190,8 +200,40 @@ class MovementAdmin(MontaAdminMixin[models.Movement]):
 
     list_display = (
         "status",
+        "ref_num",
         "order",
         "equipment",
         "primary_worker",
     )
     search_fields = ("ref_num",)
+
+
+@admin.register(models.Stop)
+class StopAdmin(MontaAdminMixin[models.Stop]):
+    """
+    Stop Admin
+    """
+
+    list_display = (
+        "status",
+        "movement",
+        "sequence",
+        "location",
+    )
+    search_fields = ("id",)
+
+
+@admin.register(models.ServiceIncident)
+class ServiceIncidentAdmin(MontaAdminMixin[models.ServiceIncident]):
+    """
+    Service Incident Admin
+    """
+
+    list_display = (
+        "movement",
+        "stop",
+        "delay_code",
+        "delay_reason",
+        "delay_time",
+    )
+    search_fields = ("id",)
