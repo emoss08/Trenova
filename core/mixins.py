@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from typing import Any, Optional, Sequence, TypeVar
 
 from django.contrib import admin
@@ -23,8 +24,13 @@ from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm, ModelForm
 from django.http import HttpRequest
 
+# Model Generic Type
 _M = TypeVar("_M", bound=Model)
+
+# Child Model Generic Type
 _C = TypeVar("_C", bound=Model)
+
+# Parent Model Generic Type
 _P = TypeVar("_P", bound=Model)
 
 
