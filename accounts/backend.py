@@ -17,19 +17,20 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Type
+from typing import Optional
 
 from django.contrib.auth.backends import ModelBackend
 
 from .models import User
 
-UserModel: Type[User] = User
+UserModel: type[User] = User
 
 
 class UserBackend(ModelBackend):
     """User Authentication backend
 
-    This class is used to authenticate users using their user id. Returns the user object if the user is authenticated.
+    This class is used to authenticate users using their user id.
+     Returns the user object if the user is authenticated.
     Along with related profile, title and organization objects.
     """
 

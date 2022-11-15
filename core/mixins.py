@@ -57,16 +57,16 @@ class MontaAdminMixin(admin.ModelAdmin[_M]):
         )
 
     def save_model(
-        self,
-        request: HttpRequest,
-        obj: _M,
-        form: type[BaseModelForm],
-        change: bool,
+            self,
+            request: HttpRequest,
+            obj: _M,
+            form: type[BaseModelForm],
+            change: bool,
     ) -> None:
         """Save Model Instance
 
         Args:
-            request (AuthHttpRequest): Request Object
+            request (HttpRequest): Request Object
             obj (_ModelT): Generic Model Object
             form (Type[BaseModelForm]): Form Class
             change (bool): If the model is being changed
@@ -78,12 +78,12 @@ class MontaAdminMixin(admin.ModelAdmin[_M]):
         super().save_model(request, obj, form, change)
 
     def save_formset(
-        self, request: HttpRequest, form: Any, formset: Any, change: Any
+            self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
 
         Args:
-            request (AuthHttpRequest): Request Object
+            request (HttpRequest): Request Object
             form (Any): Form Object
             formset (Any): Formset Object
             change (Any): If the model is being changed
@@ -99,18 +99,18 @@ class MontaAdminMixin(admin.ModelAdmin[_M]):
         super().save_formset(request, form, formset, change)
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: Optional[_M] = None,
-        change: bool = False,
-        **kwargs: Any
+            self,
+            request: HttpRequest,
+            obj: Optional[_M] = None,
+            change: bool = False,
+            **kwargs: Any
     ) -> type[ModelForm[_M]]:
         """Get Form for Model
 
         Args:
             change (bool): If the model is being changed
-            request (AuthHttpRequest): Request Object
-            obj (Optional[Model]): Model Object
+            request (HttpRequest): Request Object
+            obj (Optional[_M]): Model Object
             **kwargs (Any): Keyword Arguments
 
         Returns:
@@ -121,7 +121,7 @@ class MontaAdminMixin(admin.ModelAdmin[_M]):
             form.base_fields[field].widget.attrs["placeholder"] = field.title()
         return form
 
-    def get_autocomplete_fields(self, request: HttpRequest) -> list[str]:
+    def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
 
         Args:
@@ -152,7 +152,7 @@ class MontaStackedInlineMixin(admin.StackedInline[_C, _P]):
             request (HttpRequest): Request Object
 
         Returns:
-            QuerySet[Model]: Queryset of Model
+            QuerySet[_C]: Queryset of Model
         """
         return (
             super()
