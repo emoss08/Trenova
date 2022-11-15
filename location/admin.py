@@ -17,17 +17,14 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin, GenericStackedInline
-
+from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
 from .models import Location, LocationCategory, LocationComment, LocationContact
 
 
 @admin.register(LocationCategory)
-class LocationCategoryAdmin(GenericAdmin[LocationCategory]):
+class LocationCategoryAdmin(MontaAdminMixin[LocationCategory]):
     """
     Location Category Admin
     """
@@ -42,30 +39,30 @@ class LocationCategoryAdmin(GenericAdmin[LocationCategory]):
     )
 
 
-class LocationCommentAdmin(GenericStackedInline):
+class LocationCommentAdmin(MontaStackedInlineMixin[Location, LocationComment]):
     """
     Location Comment Admin
     """
 
-    model: Type[LocationComment] = LocationComment
+    model: type[LocationComment] = LocationComment
     verbose_name_plural = "Location Comments"
     fk_name = "location"
     extra = 0
 
 
-class LocationContactAdmin(GenericStackedInline):
+class LocationContactAdmin(MontaStackedInlineMixin[Location, LocationContact]):
     """
     Location Contact Admin
     """
 
-    model: Type[LocationContact] = LocationContact
+    model: type[LocationContact] = LocationContact
     verbose_name_plural = "Location Contacts"
     fk_name = "location"
     extra = 0
 
 
 @admin.register(Location)
-class LocationAdmin(GenericAdmin[Location]):
+class LocationAdmin(MontaAdminMixin[Location]):
     """
     Location Admin
     """

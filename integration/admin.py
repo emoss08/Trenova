@@ -19,13 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
-
+from core.mixins import MontaAdminMixin
 from .models import Integration
 
 
 @admin.register(Integration)
-class IntegrationAdmin(GenericAdmin[Integration]):
+class IntegrationAdmin(MontaAdminMixin[Integration]):
     """
     Integration Admin
     """

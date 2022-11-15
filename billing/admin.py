@@ -17,22 +17,19 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
-
+from core.mixins import MontaAdminMixin
 from .models import AccessorialCharge, ChargeType, DocumentClassification
 
 
 @admin.register(DocumentClassification)
-class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
+class DocumentClassificationAdmin(MontaAdminMixin[DocumentClassification]):
     """
     Document Classification Admin
     """
 
-    model: Type[DocumentClassification] = DocumentClassification
+    model: type[DocumentClassification] = DocumentClassification
     list_display = (
         "name",
         "description",
@@ -41,12 +38,12 @@ class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
 
 
 @admin.register(ChargeType)
-class ChargeTypeAdmin(GenericAdmin[ChargeType]):
+class ChargeTypeAdmin(MontaAdminMixin[ChargeType]):
     """
     Charge Type Admin
     """
 
-    model: Type[ChargeType] = ChargeType
+    model: type[ChargeType] = ChargeType
     list_display = (
         "name",
         "description",
@@ -55,12 +52,12 @@ class ChargeTypeAdmin(GenericAdmin[ChargeType]):
 
 
 @admin.register(AccessorialCharge)
-class AccessorialChargeAdmin(GenericAdmin[AccessorialCharge]):
+class AccessorialChargeAdmin(MontaAdminMixin[AccessorialCharge]):
     """
     Accessorial Charge Admin
     """
 
-    model: Type[AccessorialCharge] = AccessorialCharge
+    model: type[AccessorialCharge] = AccessorialCharge
     list_display = (
         "code",
         "is_fuel_surcharge",

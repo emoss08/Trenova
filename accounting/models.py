@@ -215,32 +215,37 @@ class RevenueCode(GenericModel):
             None
         """
         if (
-            self.expense_account.account_type
-            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+                self.expense_account.account_type
+                != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
                 {"expense_account": _("Entered account is not an expense account.")}
             )
         if (
-            self.revenue_account.account_type
-            != GeneralLedgerAccount.AccountTypeChoices.REVENUE
+                self.revenue_account.account_type
+                != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(
                 {"revenue_account": _("Entered account is not a revenue account.")}
             )
+        super(RevenueCode, self).clean()
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """RevenueCode save method
 
         Args:
-            **kwargs: Arbitrary keyword arguments
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments
+            
+        Returns:
+            None
         """
         self.full_clean()
 
         if self.code:
             self.code = self.code.upper()
 
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """RevenueCode absolute url

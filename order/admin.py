@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
+from core.mixins import MontaAdminMixin
 from order import models
 
 
 @admin.register(models.OrderType)
-class OrderTypeAdmin(GenericAdmin[models.OrderType]):
+class OrderTypeAdmin(MontaAdminMixin[models.OrderType]):
     """
     Order Type Admin
     """
@@ -37,7 +37,7 @@ class OrderTypeAdmin(GenericAdmin[models.OrderType]):
 
 
 @admin.register(models.HazardousMaterial)
-class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
+class HazardousMaterialAdmin(MontaAdminMixin[models.HazardousMaterial]):
     """
     Hazardous Material Admin
     """
@@ -50,7 +50,7 @@ class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
 
 
 @admin.register(models.Commodity)
-class CommodityAdmin(GenericAdmin[models.Commodity]):
+class CommodityAdmin(MontaAdminMixin[models.Commodity]):
     """
     Commodity Admin
     """
@@ -80,7 +80,7 @@ class CommodityAdmin(GenericAdmin[models.Commodity]):
 
 
 @admin.register(models.QualifierCode)
-class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
+class QualifierCodeAdmin(MontaAdminMixin[models.QualifierCode]):
     """
     Qualifier Code Admin
     """
@@ -93,7 +93,7 @@ class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
 
 
 @admin.register(models.ReasonCode)
-class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
+class ReasonCodeAdmin(MontaAdminMixin[models.ReasonCode]):
     """
     Reason Code Admin
     """
@@ -106,7 +106,7 @@ class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
 
 
 @admin.register(models.OrderControl)
-class OrderControlAdmin(GenericAdmin[models.OrderControl]):
+class OrderControlAdmin(MontaAdminMixin[models.OrderControl]):
     """
     Order Control Admin
     """
@@ -118,7 +118,7 @@ class OrderControlAdmin(GenericAdmin[models.OrderControl]):
 
 
 @admin.register(models.Order)
-class OrderAdmin(GenericAdmin[models.Order]):
+class OrderAdmin(MontaAdminMixin[models.Order]):
     """
     Order Admin
     """

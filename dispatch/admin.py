@@ -17,22 +17,19 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin
-
+from core.mixins import MontaAdminMixin
 from .models import DelayCode, DispatchControl, FleetCode
 
 
 @admin.register(DispatchControl)
-class DispatchControlAdmin(GenericAdmin[DispatchControl]):
+class DispatchControlAdmin(MontaAdminMixin[DispatchControl]):
     """
     Dispatch Control Admin
     """
 
-    model: Type[DispatchControl] = DispatchControl
+    model: type[DispatchControl] = DispatchControl
     list_display = (
         "organization",
         "record_service_incident",
@@ -41,12 +38,12 @@ class DispatchControlAdmin(GenericAdmin[DispatchControl]):
 
 
 @admin.register(DelayCode)
-class DelayCodeAdmin(GenericAdmin[DelayCode]):
+class DelayCodeAdmin(MontaAdminMixin[DelayCode]):
     """
     Delay Code Admin
     """
 
-    model: Type[DelayCode] = DelayCode
+    model: type[DelayCode] = DelayCode
     list_display = (
         "code",
         "description",
@@ -55,12 +52,12 @@ class DelayCodeAdmin(GenericAdmin[DelayCode]):
 
 
 @admin.register(FleetCode)
-class FleetCodeAdmin(GenericAdmin[FleetCode]):
+class FleetCodeAdmin(MontaAdminMixin[FleetCode]):
     """
     Fleet Code Admin
     """
 
-    model: Type[FleetCode] = FleetCode
+    model: type[FleetCode] = FleetCode
     list_display = (
         "code",
         "description",

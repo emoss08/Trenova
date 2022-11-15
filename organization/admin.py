@@ -17,12 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin, GenericStackedInline
-
+from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
 from .models import Depot, DepotDetail, Organization
 
 
@@ -45,19 +42,19 @@ class OrganizationAdmin(admin.ModelAdmin[Organization]):
     )
 
 
-class DepotDetailInline(GenericStackedInline[DepotDetail]):
+class DepotDetailInline(MontaStackedInlineMixin[Depot, DepotDetail]):
     """
     Depot Detail Admin
     """
 
-    model: Type[DepotDetail] = DepotDetail
+    model: type[DepotDetail] = DepotDetail
     can_delete = False
     verbose_name_plural = "Depot Details"
     fk_name = "depot"
 
 
 @admin.register(Depot)
-class DepotAdmin(GenericAdmin[Depot]):
+class DepotAdmin(MontaAdminMixin[Depot]):
     """
     Depot Admin
     """
@@ -68,4 +65,4 @@ class DepotAdmin(GenericAdmin[Depot]):
     )
     list_filter: tuple[str, ...] = ("name",)
     search_fields: tuple[str, ...] = ("name",)
-    inlines: tuple[Type[DepotDetailInline]] = (DepotDetailInline,)
+    inlines: tuple[type[DepotDetailInline]] = (DepotDetailInline,)

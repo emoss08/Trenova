@@ -17,23 +17,23 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 from django.contrib import admin
 from django.forms import ModelForm
+from django.http import HttpRequest
 
-from core.generics.admin import GenericAdmin
-
+from core.mixins import MontaAdminMixin
 from .models import GeneralLedgerAccount, RevenueCode
 
 
 @admin.register(GeneralLedgerAccount)
-class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
+class GeneralLedgerAccountAdmin(MontaAdminMixin[GeneralLedgerAccount]):
     """
     General Ledger Account Admin
     """
 
-    model: Type[GeneralLedgerAccount] = GeneralLedgerAccount
+    model: type[GeneralLedgerAccount] = GeneralLedgerAccount
     list_display: tuple[str, ...] = (
         "id",
         "description",
@@ -44,17 +44,22 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     )
 
     def get_form(
-        self, request, obj: Optional[GeneralLedgerAccount] = None, **kwargs: Any
-    ) -> Type[ModelForm[Any]]:
+            self,
+            request: HttpRequest,
+            obj: Optional[GeneralLedgerAccount] = None,
+            change: bool = False,
+            **kwargs: Any
+    ) -> type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 
         Args:
+            change (bool): If the model is being changed
             request (HttpRequest): Request Object
             obj (Optional[GeneralLedgerAccount]): General Ledger Account Object
             **kwargs (Any): Keyword Arguments
 
         Returns:
-            Type[ModelForm[Any]]: Form Class
+            Type[ModelForm[Any]]: Form Class's
         """
         form = super().get_form(request, obj, **kwargs)
         form.base_fields["account_number"].widget.attrs[
@@ -65,12 +70,12 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
 
 
 @admin.register(RevenueCode)
-class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
+class RevenueCodeAdmin(MontaAdminMixin[RevenueCode]):
     """
     Revenue Code Admin
     """
 
-    model: Type[RevenueCode] = RevenueCode
+    model: type[RevenueCode] = RevenueCode
     list_display: tuple[str, ...] = (
         "id",
         "code",

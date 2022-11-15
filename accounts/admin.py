@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -36,15 +36,15 @@ from django.utils.html import escape
 from django.utils.translation import gettext, gettext_lazy as _
 
 from accounts import models
-from core.generics.admin import GenericAdmin, GenericStackedInline
+from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
 
 
-class ProfileInline(GenericStackedInline):
+class ProfileInline(MontaStackedInlineMixin[models.User, models.UserProfile]):
     """
     Profile inline
     """
 
-    model: Type[models.UserProfile] = models.UserProfile
+    model: type[models.UserProfile] = models.UserProfile
     can_delete: bool = False
     verbose_name_plural: str = "profiles"
     fk_name: str = "user"
@@ -85,9 +85,9 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             },
         ),
     )
-    form: Type[UserChangeForm] = UserChangeForm
-    add_form: Type[UserCreationForm] = UserCreationForm
-    change_password_form: Type[AdminPasswordChangeForm] = AdminPasswordChangeForm
+    form: type[UserChangeForm] = UserChangeForm
+    add_form: type[UserCreationForm] = UserCreationForm
+    change_password_form: type[AdminPasswordChangeForm] = AdminPasswordChangeForm
     list_display = ("username", "email", "is_staff")
     list_filter = ("is_staff", "is_superuser", "groups")
     search_fields = ("username", "first_name", "last_name", "email")
@@ -97,7 +97,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         "user_permissions",
     )
     autocomplete_fields: tuple[str, ...] = ("organization",)
-    inlines: tuple[Type[ProfileInline]] = (ProfileInline,)
+    inlines: tuple[type[ProfileInline]] = (ProfileInline,)
 
     def get_fieldsets(self, request: HttpRequest, obj=None):
         """Return fieldsets for add/change view
@@ -114,12 +114,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         return super().get_fieldsets(request, obj)
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: Optional[Any] = ...,
-        change: bool = True,
-        **kwargs: Any,
-    ) -> Type[ModelForm]:
+            self,
+            request: HttpRequest,
+            obj: Optional[Any] = ...,
+            change: bool = True,
+            **kwargs: Any,
+    ) -> type[ModelForm[models.User]]:
         """Get form for user admin
 
         Args:
@@ -144,12 +144,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             list[URLPattern]: urls for user admin
         """
         return [
-            path(
-                "<id>/password/",
-                self.admin_site.admin_view(self.user_change_password),
-                name="auth_user_password_change",
-            ),
-        ] + super().get_urls()
+                   path(
+                       "<id>/password/",
+                       self.admin_site.admin_view(self.user_change_password),
+                       name="auth_user_password_change",
+                   ),
+               ] + super().get_urls()
 
     def lookup_allowed(self, lookup: str, value: str) -> bool:
         """Allow lookup for username
@@ -169,7 +169,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m  # type: ignore
     @csrf_protect_m  # type: ignore
     def add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -214,7 +214,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
-        self, request: HttpRequest, id: str, form_url: str = ""
+            self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
@@ -294,7 +294,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
 
 @admin.register(models.JobTitle)
-class JobTitleAdmin(GenericAdmin[models.JobTitle]):
+class JobTitleAdmin(MontaAdminMixin[models.JobTitle]):
     """
     Job title admin
     """
