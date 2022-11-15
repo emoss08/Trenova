@@ -56,7 +56,6 @@ class Worker(GenericModel):
         _("Code"),
         max_length=10,
         unique=True,
-        null=True,
         blank=True,
         editable=False,
         help_text=_(
@@ -97,7 +96,6 @@ class Worker(GenericModel):
         _("Address line 2"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_("The address line 2 of the worker."),
     )
     city = models.CharField(
@@ -214,7 +212,6 @@ class WorkerProfile(GenericModel):
         _("Race/Ethnicity"),
         max_length=100,
         blank=True,
-        null=True,
         help_text=_("Race/Ethnicity"),
     )
     sex = models.CharField(
@@ -222,7 +219,6 @@ class WorkerProfile(GenericModel):
         max_length=11,
         choices=WorkerSexChoices.choices,
         blank=True,
-        null=True,
         help_text=_("Sex/Gender of the worker."),
     )
     date_of_birth = models.DateField(
@@ -235,7 +231,6 @@ class WorkerProfile(GenericModel):
         _("License Number"),
         max_length=20,
         help_text=_("License Number."),
-        null=True,
         blank=True,
     )
     license_state = USStateField(
@@ -256,7 +251,6 @@ class WorkerProfile(GenericModel):
         choices=EndorsementChoices.choices,
         default=EndorsementChoices.NONE,
         help_text=_("Endorsements."),
-        null=True,
         blank=True,
     )
     hazmat_expiration_date = models.DateField(
@@ -411,7 +405,6 @@ class WorkerContact(GenericModel):
     email = models.EmailField(
         _("Email Address"),
         blank=True,
-        null=True,
         max_length=255,
         help_text=_("Email address of the contact."),
     )
@@ -419,7 +412,6 @@ class WorkerContact(GenericModel):
         _("Relationship"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_("Relationship to the worker."),
     )
     is_primary = models.BooleanField(

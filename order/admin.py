@@ -129,6 +129,7 @@ class OrderAdmin(MontaAdminMixin[models.Order]):
         "origin_location",
         "destination_location",
     )
+    search_fields = ("pro_number",)
     fieldsets = (
         (None, {"fields": ("status", "revenue_code", "entered_by")}),
         (
@@ -179,3 +180,18 @@ class OrderAdmin(MontaAdminMixin[models.Order]):
             },
         ),
     )
+
+
+@admin.register(models.Movement)
+class MovementAdmin(MontaAdminMixin[models.Movement]):
+    """
+    Movement Admin
+    """
+
+    list_display = (
+        "status",
+        "order",
+        "equipment",
+        "primary_worker",
+    )
+    search_fields = ("ref_num",)

@@ -29,9 +29,10 @@ from django.utils.translation import gettext_lazy as _
 from accounting.models import RevenueCode
 from core.models import GenericModel
 from customer.models import Customer
-from equipment.models import EquipmentType
+from equipment.models import Equipment, EquipmentType
 from location.models import Location
 from organization.models import Organization
+from worker.models import Worker
 
 User = settings.AUTH_USER_MODEL
 
@@ -814,3 +815,84 @@ class Order(GenericModel):
             str: Absolute url for the Order
         """
         return reverse("order-detail", kwargs={"pk": self.pk})
+
+
+class Movement(GenericModel):
+    """
+    Stores movement information related to a `organization.Organization`.
+    """
+
+    ref_num = models.CharField(
+        _("Movement Reference Number"),
+        max_length=10,
+        unique=True,
+        editable=False,
+        help_text=_("Movement Reference Number"),
+    )
+    status = models.CharField(
+        _("Status"),
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.NEW,
+        help_text=_("Status of the Movement"),
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="movements",
+        related_query_name="movement",
+        verbose_name=_("Order"),
+        help_text=_("Order of the Movement"),
+    )
+    equipment = models.ForeignKey(
+        Equipment,
+        on_delete=models.PROTECT,
+        related_name="movements",
+        related_query_name="movement",
+        verbose_name=_("Equipment"),
+        help_text=_("Equipment of the Movement"),
+    )
+    primary_worker = models.ForeignKey(
+        Worker,
+        on_delete=models.PROTECT,
+        related_name="movements",
+        related_query_name="movement",
+        verbose_name=_("Primary Worker"),
+        null=True,
+        blank=True,
+        help_text=_("Primary Worker of the Movement"),
+    )
+    secondary_worker = models.ForeignKey(
+        Worker,
+        on_delete=models.PROTECT,
+        related_name="secondary_movements",
+        related_query_name="secondary_movement",
+        verbose_name=_("Secondary Worker"),
+        null=True,
+        blank=True,
+        help_text=_("Secondary Worker of the Movement"),
+    )
+
+    class Meta:
+        """
+        Movement Metaclass
+        """
+
+        verbose_name = _("Movement")
+        verbose_name_plural = _("Movements")
+
+    def __str__(self) -> str:
+        """String representation of the Movement
+
+        Returns:
+            str: String representation of the Movement
+        """
+        return f"{self.order} - {self.equipment}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the Movement
+
+        Returns:
+            str: Absolute url for the Movement
+        """
+        return reverse("movement-detail", kwargs={"pk": self.pk})
