@@ -22,7 +22,12 @@ from typing import Type
 from django.db.models import QuerySet
 from rest_framework import viewsets
 
-from .models import Equipment, EquipmentMaintenancePlan, EquipmentManufacturer, EquipmentType
+from .models import (
+    Equipment,
+    EquipmentMaintenancePlan,
+    EquipmentManufacturer,
+    EquipmentType,
+)
 from .serializers import (
     EquipmentMaintenancePlanSerializer,
     EquipmentManufacturerSerializer,

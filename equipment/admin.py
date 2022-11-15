@@ -46,7 +46,9 @@ class EquipmentManufacturerAdmin(MontaAdminMixin[EquipmentManufacturer]):
     )
 
 
-class EquipmentTypeDetailAdmin(MontaStackedInlineMixin[EquipmentType, EquipmentTypeDetail]):
+class EquipmentTypeDetailAdmin(
+    MontaStackedInlineMixin[EquipmentType, EquipmentTypeDetail]
+):
     """
     Equipment Type Detail Admin
     """
