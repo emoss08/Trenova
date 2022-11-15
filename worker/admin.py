@@ -17,56 +17,53 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin, GenericStackedInline
-
+from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
 from .models import Worker, WorkerComment, WorkerContact, WorkerProfile
 
 
-class WorkerProfileAdmin(GenericStackedInline):
+class WorkerProfileAdmin(MontaStackedInlineMixin[Worker, WorkerProfile]):
     """
     Worker Profile Admin
     """
 
-    model: Type[WorkerProfile] = WorkerProfile
+    model: type[WorkerProfile] = WorkerProfile
     can_delete: bool = False
     verbose_name_plural: str = "Worker Profile"
     fk_name: str = "worker"
     extra: int = 0
 
 
-class WorkerContactAdmin(GenericStackedInline):
+class WorkerContactAdmin(MontaStackedInlineMixin[Worker, WorkerContact]):
     """
     Worker Contact Admin
     """
 
-    model: Type[WorkerContact] = WorkerContact
+    model: type[WorkerContact] = WorkerContact
     verbose_name_plural: str = "Worker Contact"
     fk_name: str = "worker"
     extra: int = 0
 
 
-class WorkerCommentAdmin(GenericStackedInline):
+class WorkerCommentAdmin(MontaStackedInlineMixin[Worker, WorkerComment]):
     """
     Worker Comment Admin
     """
 
-    model: Type[WorkerComment] = WorkerComment
+    model: type[WorkerComment] = WorkerComment
     verbose_name_plural: str = "Worker Comment"
     fk_name: str = "worker"
     extra: int = 0
 
 
 @admin.register(Worker)
-class WorkerAdmin(GenericAdmin[Worker]):
+class WorkerAdmin(MontaAdminMixin[Worker]):
     """
     Worker Admin
     """
 
-    model: Type[Worker] = Worker
+    model: type[Worker] = Worker
     list_display: tuple[str, ...] = (
         "code",
         "is_active",

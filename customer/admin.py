@@ -17,12 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin, GenericStackedInline
-
+from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
 from .models import (
     Customer,
     CustomerBillingProfile,
@@ -36,12 +33,12 @@ from .models import (
 
 
 @admin.register(CustomerEmailProfile)
-class CustomerEmailProfileAdmin(GenericAdmin[CustomerEmailProfile]):
+class CustomerEmailProfileAdmin(MontaAdminMixin[CustomerEmailProfile]):
     """
     Customer Email Profile Admin
     """
 
-    model: Type[CustomerEmailProfile] = CustomerEmailProfile
+    model: type[CustomerEmailProfile] = CustomerEmailProfile
     list_display = (
         "id",
         "name",
@@ -50,22 +47,22 @@ class CustomerEmailProfileAdmin(GenericAdmin[CustomerEmailProfile]):
 
 
 @admin.register(CustomerRuleProfile)
-class CustomerRuleProfileAdmin(GenericAdmin[CustomerRuleProfile]):
+class CustomerRuleProfileAdmin(MontaAdminMixin[CustomerRuleProfile]):
     """
     Customer Rule Profile Admin
     """
 
-    model: Type[CustomerRuleProfile] = CustomerRuleProfile
+    model: type[CustomerRuleProfile] = CustomerRuleProfile
     list_display = ("name",)
     search_fields = ("name",)
 
 
-class CustomerBillingProfileInline(GenericStackedInline[CustomerBillingProfile]):
+class CustomerBillingProfileInline(MontaStackedInlineMixin[Customer, CustomerBillingProfile]):
     """
     Customer Billing Profile
     """
 
-    model: Type[CustomerBillingProfile] = CustomerBillingProfile
+    model: type[CustomerBillingProfile] = CustomerBillingProfile
     extra = 0
     can_delete = False
     verbose_name_plural = "Billing Profiles"
@@ -73,24 +70,24 @@ class CustomerBillingProfileInline(GenericStackedInline[CustomerBillingProfile])
     exclude = ("organization",)
 
 
-class CustomerFuelTableDetailInline(GenericStackedInline[CustomerFuelTableDetail]):
+class CustomerFuelTableDetailInline(MontaStackedInlineMixin[CustomerFuelTable, CustomerFuelTableDetail]):
     """
     Customer Fuel Table Detail
     """
 
-    model: Type[CustomerFuelTableDetail] = CustomerFuelTableDetail
+    model: type[CustomerFuelTableDetail] = CustomerFuelTableDetail
     extra = 10
     verbose_name_plural = "Customer Fuel Details"
     fk_name = "customer_fuel_table"
 
 
 @admin.register(CustomerFuelTable)
-class CustomerFuelTableAdmin(GenericAdmin[CustomerFuelTable]):
+class CustomerFuelTableAdmin(MontaAdminMixin[CustomerFuelTable]):
     """
     Customer Fuel Table Admin
     """
 
-    model: Type[CustomerFuelTable] = CustomerFuelTable
+    model: type[CustomerFuelTable] = CustomerFuelTable
     list_display = (
         "id",
         "description",
@@ -100,12 +97,12 @@ class CustomerFuelTableAdmin(GenericAdmin[CustomerFuelTable]):
 
 
 @admin.register(CustomerFuelProfile)
-class CustomerFuelProfileAdmin(GenericAdmin[CustomerFuelProfile]):
+class CustomerFuelProfileAdmin(MontaAdminMixin[CustomerFuelProfile]):
     """
     Customer Fuel Profile Admin
     """
 
-    model: Type[CustomerFuelProfile] = CustomerFuelProfile
+    model: type[CustomerFuelProfile] = CustomerFuelProfile
     list_display = (
         "id",
         "customer",
@@ -113,12 +110,12 @@ class CustomerFuelProfileAdmin(GenericAdmin[CustomerFuelProfile]):
     search_fields: tuple[str, ...] = ("id",)
 
 
-class CustomerContactInline(GenericStackedInline[CustomerContact]):
+class CustomerContactInline(MontaStackedInlineMixin[Customer, CustomerContact]):
     """
     Customer Contact
     """
 
-    model: Type[CustomerContact] = CustomerContact
+    model: type[CustomerContact] = CustomerContact
     extra = 0
     verbose_name_plural = "Customer Contacts"
     fk_name = "customer"
@@ -126,12 +123,12 @@ class CustomerContactInline(GenericStackedInline[CustomerContact]):
 
 
 @admin.register(Customer)
-class CustomerAdmin(GenericAdmin[Customer]):
+class CustomerAdmin(MontaAdminMixin[Customer]):
     """
     Customer Admin
     """
 
-    model: Type[Customer] = Customer
+    model: type[Customer] = Customer
     list_display = (
         "code",
         "name",

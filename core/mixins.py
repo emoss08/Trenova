@@ -16,25 +16,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-from typing import Any, TypeVar
+from typing import Any, Optional, Sequence, TypeVar
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm, ModelForm
 from django.http import HttpRequest
 
-_ModelT = TypeVar("_ModelT", bound=Model)
+_M = TypeVar("_M", bound=Model)
+_C = TypeVar("_C", bound=Model)
+_P = TypeVar("_P", bound=Model)
 
 
-class GenericAdmin(admin.ModelAdmin[_ModelT]):
+class MontaAdminMixin(admin.ModelAdmin[_M]):
     """
     Generic Admin Class for all models
     """
 
     exclude: tuple[str, ...] = ("organization",)
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[_ModelT]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
 
         Args:
@@ -50,11 +51,11 @@ class GenericAdmin(admin.ModelAdmin[_ModelT]):
         )
 
     def save_model(
-        self,
-        request: HttpRequest,
-        obj: _ModelT,
-        form: type[BaseModelForm],
-        change: bool,
+            self,
+            request: HttpRequest,
+            obj: _M,
+            form: type[BaseModelForm],
+            change: bool,
     ) -> None:
         """Save Model Instance
 
@@ -71,7 +72,7 @@ class GenericAdmin(admin.ModelAdmin[_ModelT]):
         super().save_model(request, obj, form, change)
 
     def save_formset(
-        self, request: HttpRequest, form: Any, formset: Any, change: Any
+            self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
 
@@ -91,6 +92,29 @@ class GenericAdmin(admin.ModelAdmin[_ModelT]):
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
 
+    def get_form(
+            self,
+            request: HttpRequest,
+            obj: Optional[_M] = None,
+            change: bool = False,
+            **kwargs: Any
+    ) -> type[ModelForm[_M]]:
+        """Get Form for Model
+
+        Args:
+            change (bool): If the model is being changed
+            request (AuthHttpRequest): Request Object
+            obj (Optional[Model]): Model Object
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Type[ModelForm[Any]]: Form Class
+        """
+        form = super().get_form(request, obj, **kwargs)
+        for field in form.base_fields:
+            form.base_fields[field].widget.attrs["placeholder"] = field.title()
+        return form
+
     def get_autocomplete_fields(self, request: HttpRequest) -> list[str]:
         """Get Autocomplete Fields
 
@@ -106,38 +130,16 @@ class GenericAdmin(admin.ModelAdmin[_ModelT]):
                 autocomplete_fields.append(field.name)
         return autocomplete_fields
 
-    def get_form(
-        self,
-        request: HttpRequest,
-        obj: _ModelT | None = None,
-        change: bool = False,
-        **kwargs: Any
-    ) -> type[ModelForm[_ModelT]]:
-        """Get Form for Model
 
-        Args:
-            request (AuthHttpRequest): Request Object
-            obj (Optional[Model]): Model Object
-            **kwargs (Any): Keyword Arguments
-
-        Returns:
-            Type[ModelForm[Any]]: Form Class
-        """
-        form = super().get_form(request, obj, **kwargs)
-        for field in form.base_fields:
-            form.base_fields[field].widget.attrs["placeholder"] = field.title()
-        return form
-
-
-class GenericStackedInline(admin.StackedInline):
+class MontaStackedInlineMixin(admin.StackedInline[_C, _P]):
     """
     Generic Admin Stacked for all Models with Organization Exclusion
     """
 
     extra = 0
-    exclude: tuple[str, ...] = ("organization",)
+    exclude: Sequence[str] | None = ("organization",)
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[Model]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
         """Get Queryset
 
         Args:
@@ -152,7 +154,7 @@ class GenericStackedInline(admin.StackedInline):
             .filter(organization=request.user.organization)  # type: ignore
         )
 
-    def get_autocomplete_fields(self, request: HttpRequest) -> list[str]:
+    def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
 
         Args:
@@ -168,7 +170,7 @@ class GenericStackedInline(admin.StackedInline):
         return autocomplete_fields
 
 
-class GenericTabularInline(admin.TabularInline):
+class MontaTabularInlineMixin(admin.TabularInline):
     """
     Generic Admin Tabular Inline with Organization Exclusion
     """

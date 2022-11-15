@@ -17,12 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Type
-
 from django.contrib import admin
 
-from core.generics.admin import GenericAdmin, GenericStackedInline
-
+from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
 from .models import (
     Equipment,
     EquipmentMaintenancePlan,
@@ -33,12 +30,12 @@ from .models import (
 
 
 @admin.register(EquipmentManufacturer)
-class EquipmentManufacturerAdmin(GenericAdmin[EquipmentManufacturer]):
+class EquipmentManufacturerAdmin(MontaAdminMixin[EquipmentManufacturer]):
     """
     Equipment Manufacturer Admin
     """
 
-    model: Type[EquipmentManufacturer] = EquipmentManufacturer
+    model: type[EquipmentManufacturer] = EquipmentManufacturer
     list_display: tuple[str, ...] = (
         "id",
         "description",
@@ -49,36 +46,36 @@ class EquipmentManufacturerAdmin(GenericAdmin[EquipmentManufacturer]):
     )
 
 
-class EquipmentTypeDetailAdmin(GenericStackedInline):
+class EquipmentTypeDetailAdmin(MontaStackedInlineMixin[EquipmentType, EquipmentTypeDetail]):
     """
     Equipment Type Detail Admin
     """
 
-    model: Type[EquipmentTypeDetail] = EquipmentTypeDetail
+    model: type[EquipmentTypeDetail] = EquipmentTypeDetail
     can_delete: bool = False
     verbose_name_plural: str = "Equipment Type Details"
     fk_name: str = "equipment_type"
 
 
 @admin.register(EquipmentType)
-class EquipmentTypeAdmin(GenericAdmin[EquipmentType]):
+class EquipmentTypeAdmin(MontaAdminMixin[EquipmentType]):
     """
     Equipment Type Admin
     """
 
-    model: Type[EquipmentType] = EquipmentType
+    model: type[EquipmentType] = EquipmentType
     list_display: tuple[str, ...] = ("name", "description")
     search_fields: tuple[str, ...] = ("name", "description")
-    inlines: tuple[Type[EquipmentTypeDetailAdmin], ...] = (EquipmentTypeDetailAdmin,)
+    inlines: tuple[type[EquipmentTypeDetailAdmin], ...] = (EquipmentTypeDetailAdmin,)
 
 
 @admin.register(Equipment)
-class EquipmentAdmin(GenericAdmin[Equipment]):
+class EquipmentAdmin(MontaAdminMixin[Equipment]):
     """
     Equipment Admin
     """
 
-    model: Type[Equipment] = Equipment
+    model: type[Equipment] = Equipment
     list_display: tuple[str, ...] = (
         "id",
         "description",
@@ -140,12 +137,12 @@ class EquipmentAdmin(GenericAdmin[Equipment]):
 
 
 @admin.register(EquipmentMaintenancePlan)
-class EquipmentMaintenancePlanAdmin(GenericAdmin[EquipmentMaintenancePlan]):
+class EquipmentMaintenancePlanAdmin(MontaAdminMixin[EquipmentMaintenancePlan]):
     """
     Equipment Maintenance Plan Admin
     """
 
-    model: Type[EquipmentMaintenancePlan] = EquipmentMaintenancePlan
+    model: type[EquipmentMaintenancePlan] = EquipmentMaintenancePlan
     list_display: tuple[str, ...] = (
         "id",
         "description",

@@ -400,15 +400,19 @@ class Commodity(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save Commodity
 
         Args:
+            *args (Any): Variable length argument list.
             **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None
         """
         if self.hazmat:
             self.is_hazmat = True
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Commodity Absolute URL
@@ -767,8 +771,8 @@ class Order(GenericModel):
 
         """
         if (
-            self.rate_method == Order.RatingMethodChoices.FLAT
-            and self.freight_charge_amount is None
+                self.rate_method == Order.RatingMethodChoices.FLAT
+                and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -780,8 +784,8 @@ class Order(GenericModel):
             )
 
         if (
-            self.rate_method == Order.RatingMethodChoices.PER_MILE
-            and self.mileage is None
+                self.rate_method == Order.RatingMethodChoices.PER_MILE
+                and self.mileage is None
         ):
             raise ValidationError(
                 {
