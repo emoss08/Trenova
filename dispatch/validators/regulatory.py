@@ -27,7 +27,8 @@ from dispatch.models import DispatchControl
 
 def validate_worker_regulatory_information(value) -> None:
     """Validates that if the dispatch control has enforced regulatory validation set to true
-    then require the user to enter license number, state, expiration date and endorsement information in the worker.
+    then require the user to enter license number, state, expiration date
+     and endorsement information in the worker.
 
     Args:
         value (WorkerProfile): Instance of worker profile
@@ -41,35 +42,35 @@ def validate_worker_regulatory_information(value) -> None:
         organization=value.organization
     ).first()
     errors: dict[str, str] = {}
+    fields = {
+        "license_number": _(
+            "Organization has regulatory check enabled. Please enter a license number."
+        ),
+        "license_state": _(
+            "Organization has regulatory check enabled. Please enter a license state."
+        ),
+        "license_expiration_date": _(
+            "Organization has regulatory check enabled."
+            " Please enter a license expiration date."
+        ),
+        "endorsements": _(
+            "Organization has regulatory check enabled. Please enter endorsements."
+        ),
+        "physical_due_date": _(
+            "Organization has regulatory check enabled. Please enter a physical due date."
+        ),
+        "medical_cert_date": _(
+            "Organization has regulatory check enabled. Please enter a medical"
+            " certificate date."
+        ),
+        "mvr_due_date": _(
+            "Organization has regulatory check enabled. Please enter a MVR due date."
+        )
+
+    }
     if dispatch_control and dispatch_control.regulatory_check:
-        if not value.license_number:
-            errors["license_number"] = _(
-                "Organization has regulatory check enabled. Please enter a license number."
-            )
-        if not value.license_state:
-            errors["license_state"] = _(
-                "Organization has regulatory check enabled. Please enter a license state."
-            )
-        if not value.license_expiration_date:
-            errors["license_expiration_date"] = _(
-                "Organization has regulatory check enabled."
-                " Please enter a license expiration date."
-            )
-        if not value.endorsements:
-            errors["endorsements"] = _(
-                "Organization has regulatory check enabled. Please enter endorsements."
-            )
-        if not value.physical_due_date:
-            errors["physical_due_date"] = _(
-                "Organization has regulatory check enabled. Please enter a physical due date."
-            )
-        if not value.medical_cert_date:
-            errors["medical_cert_date"] = _(
-                "Organization has regulatory check enabled. Please enter a medical certificate date."
-            )
-        if not value.mvr_due_date:
-            errors["mvr_due_date"] = _(
-                "Organization has regulatory check enabled. Please enter a MVR due date."
-            )
-    if errors:
-        raise ValidationError(errors)
+        for field, error in fields.items():
+            if not getattr(value, field):
+                errors[field] = error
+        if errors:
+            raise ValidationError(errors)

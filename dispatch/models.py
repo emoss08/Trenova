@@ -147,17 +147,18 @@ class DispatchControl(GenericModel):
         """
         super().clean()
         if self.distance_method == self.DistanceMethodChoices.GOOGLE and not any(
-            [
-                integration.integration_type == IntegrationChoices.GOOGLE_MAPS
-                for integration in self.organization.integrations.all()
-            ]
+                [
+                    integration.integration_type == IntegrationChoices.GOOGLE_MAPS
+                    for integration in self.organization.integrations.all()
+                ]
         ):
             raise ValidationError(
                 ValidationError(
                     {
                         "distance_method": _(
                             "Google Maps integration is not configured for the organization."
-                            " Please configure the integration before selecting Google as the distance method."
+                            " Please configure the integration before selecting Google as "
+                            "the distance method."
                         ),
                     },
                     code="invalid",
