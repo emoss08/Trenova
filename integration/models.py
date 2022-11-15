@@ -121,7 +121,8 @@ class Integration(GenericModel):
         ]
 
     def __str__(self) -> str:
-        """
+        """String representation of the Integration Model
+
         Returns:
             str: String representation of the Integration
         """

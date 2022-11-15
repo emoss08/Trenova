@@ -347,23 +347,7 @@ class WorkerProfile(GenericModel):
                     code="invalid",
                 )
             )
-        existing_drivers = [
-            driver
-            for driver in WorkerProfile.objects.all()
-            if self.license_number is not None
-            and driver.license_number == self.license_number
-        ]
-        if existing_drivers:
-            raise ValidationError(
-                ValidationError(
-                    {
-                        "license_number": _(
-                            f"License number already exists for {existing_drivers[0].worker.code}."
-                        ),
-                    },
-                    code="invalid",
-                )
-            )
+
         # validate worker regulatory information
         validate_worker_regulatory_information(self)
 

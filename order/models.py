@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import textwrap
 from typing import Any, final
 
@@ -27,8 +29,10 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from accounting.models import RevenueCode
+from billing.models import DocumentClassification
 from core.models import GenericModel
 from customer.models import Customer
+from dispatch.models import DelayCode
 from equipment.models import Equipment, EquipmentType
 from location.models import Location
 from organization.models import Organization
@@ -37,7 +41,7 @@ from worker.models import Worker
 User = settings.AUTH_USER_MODEL
 
 
-def order_documentation_upload_to(instance, filename: str) -> str:
+def order_documentation_upload_to(instance: OrderDocumentation, filename: str) -> str:
     """
     order_documentation_upload_to _summary_
 
@@ -48,7 +52,7 @@ def order_documentation_upload_to(instance, filename: str) -> str:
     Returns:
         str: upload path for the order documentation to be stored.
     """
-    ...
+    return f"order_documentation/{instance.order.pro_number}/{filename}"
 
 
 @final
@@ -801,7 +805,8 @@ class Order(GenericModel):
                 {
                     "ready_to_bill": ValidationError(
                         _(
-                            "Cannot mark an order ready to bill if the order status is not complete."
+                            "Cannot mark an order ready to bill if the order status"
+                            " is not complete."
                         ),
                         code="invalid",
                     )
@@ -819,7 +824,7 @@ class Order(GenericModel):
 
 class Movement(GenericModel):
     """
-    Stores movement information related to a `organization.Organization`.
+    Stores movement information related to a `order.Order`.
     """
 
     ref_num = models.CharField(
@@ -896,3 +901,212 @@ class Movement(GenericModel):
             str: Absolute url for the Movement
         """
         return reverse("movement-detail", kwargs={"pk": self.pk})
+
+
+class Stop(GenericModel):
+    """
+    Stores movement information related to a `order.Movement`.
+    """
+
+    status = models.CharField(
+        max_length=20,
+        choices=StatusChoices.choices,
+        default=StatusChoices.NEW,
+        help_text=_("The status of the stop."),
+    )
+    sequence = models.PositiveIntegerField(
+        _("Sequence"),
+        default=1,
+        null=True,
+        blank=True,
+        help_text=_("The sequence of the stop in the movement."),
+    )
+    movement = models.ForeignKey(
+        Movement,
+        on_delete=models.CASCADE,
+        related_name="stops",
+        related_query_name="stop",
+        verbose_name=_("Movement"),
+        help_text=_("The movement that the stop belongs to."),
+    )
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.PROTECT,
+        related_name="stops",
+        related_query_name="stop",
+        verbose_name=_("Location"),
+        help_text=_("The location of the stop."),
+    )
+    pieces = models.PositiveIntegerField(
+        _("Pieces"),
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_("Pieces"),
+    )
+    weight = models.PositiveIntegerField(
+        _("Weight"),
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_("Weight"),
+    )
+    address_line = models.CharField(
+        _("Stop Address"),
+        max_length=255,
+        help_text=_("Stop Address"),
+    )
+    appointment_time = models.DateTimeField(
+        _("Stop Appointment Time"),
+        help_text=_("The time the equipment is expected to arrive at the stop."),
+    )
+    arrival_time = models.DateTimeField(
+        _("Stop Arrival Time"),
+        null=True,
+        blank=True,
+        help_text=_("The time the equipment actually arrived at the stop."),
+    )
+    departure_time = models.DateTimeField(
+        _("Stop Departure Time"),
+        null=True,
+        blank=True,
+        help_text=_("The time the equipment actually departed from the stop."),
+    )
+    stop_type = models.CharField(
+        max_length=20,
+        choices=StopChoices.choices,
+        help_text=_("The type of stop."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the Stop model
+        """
+
+        verbose_name = _("Stop")
+        verbose_name_plural = _("Stops")
+        ordering: list[str] = ["-sequence"]
+
+    def __str__(self) -> str:
+        """String representation of the Stop
+
+        Returns:
+            str: String representation of the Stop
+        """
+        return f"{self.movement} - {self.sequence} - {self.location}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the Stop
+
+        Returns:
+            str: Absolute url for the Stop
+        """
+        return reverse("stop-detail", kwargs={"pk": self.pk})
+
+
+class ServiceIncident(GenericModel):
+    """
+    Stores Service Incident information related to a `order.Order` and `order.Stop`.
+    """
+
+    movement = models.ForeignKey(
+        Movement,
+        on_delete=models.CASCADE,
+        related_name="service_incidents",
+        related_query_name="service_incident",
+        verbose_name=_("Movement"),
+    )
+    stop = models.ForeignKey(
+        "Stop",
+        on_delete=models.CASCADE,
+        related_name="service_incidents",
+        related_query_name="service_incident",
+        verbose_name=_("Stop"),
+    )
+    delay_code = models.ForeignKey(
+        DelayCode,
+        on_delete=models.PROTECT,
+        related_name="service_incidents",
+        related_query_name="service_incident",
+        verbose_name=_("Delay Code"),
+    )
+    delay_reason = models.CharField(
+        _("Delay Reason"),
+        max_length=100,
+        blank=True,
+    )
+    delay_time = models.DurationField(
+        _("Delay Time"),
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the ServiceIncident model
+        """
+
+        verbose_name = _("Service Incident")
+        verbose_name_plural = _("Service Incidents")
+
+    def __str__(self) -> str:
+        """String representation of the ServiceIncident
+
+        Returns:
+            str: String representation of the ServiceIncident
+        """
+        return f"{self.movement} - {self.stop} - {self.delay_code}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the ServiceIncident
+
+        Returns:
+            str: Absolute url for the ServiceIncident
+        """
+        return reverse("service-incident-detail", kwargs={"pk": self.pk})
+
+
+class OrderDocumentation(GenericModel):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="order_documentation",
+        verbose_name=_("Order"),
+    )
+    document = models.FileField(
+        _("Document"),
+        upload_to=order_documentation_upload_to,
+        null=True,
+        blank=True,
+    )
+    document_class = models.ForeignKey(
+        DocumentClassification,
+        on_delete=models.CASCADE,
+        related_name="order_documentation",
+        verbose_name=_("Document Class"),
+        help_text=_("Document Class"),
+    )
+
+    class Meta:
+        """
+        OrderDocumentation Metaclass
+        """
+
+        verbose_name = _("Order Documentation")
+        verbose_name_plural = _("Order Documentation")
+
+    def __str__(self) -> str:
+        """String representation of the OrderDocumentation
+
+        Returns:
+            str: String representation of the OrderDocumentation
+        """
+        return f"{self.order} - {self.document_class}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the OrderDocumentation
+
+        Returns:
+            str: Absolute url for the OrderDocumentation
+        """
+        return reverse("order-documentation-detail", kwargs={"pk": self.pk})
