@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from order.models import Movement, Order, OrderControl, Stop, StopChoices
 
 
@@ -66,7 +67,9 @@ class StopService:
         Returns:
             None
         """
-        order_control: OrderControl = OrderControl.objects.filter(organization=instance.organization).get()
+        order_control: OrderControl = OrderControl.objects.filter(
+            organization=instance.organization
+        ).get()
         if order_control.auto_sequence_stops:
             stop_list = []
             stops = Stop.objects.filter(movement=instance.movement).order_by("created")

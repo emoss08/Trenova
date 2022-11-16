@@ -26,7 +26,6 @@ from .models import Movement, Order, Stop
 from .services import generation, movements, stops
 
 
-# Order Creation Signals
 @receiver(pre_save, sender=Order)
 def generate_pro_number(sender: Order, instance: Order, **kwargs: Any) -> None:
     """Generate Pro Number
@@ -47,7 +46,7 @@ def generate_pro_number(sender: Order, instance: Order, **kwargs: Any) -> None:
 
 @receiver(post_save, sender=Order)
 def generate_order_movement(
-        sender: Order, instance: Order, created: bool, **kwargs: Any
+    sender: Order, instance: Order, created: bool, **kwargs: Any
 ) -> None:
     """Generate the initial movement for the order
 
@@ -66,7 +65,7 @@ def generate_order_movement(
 
 @receiver(post_save, sender=Movement)
 def generate_movement_stops(
-        sender: Movement, instance: Movement, created: bool, **kwargs: Any
+    sender: Movement, instance: Movement, created: bool, **kwargs: Any
 ):
     """Generate the movement stops
 
@@ -83,7 +82,6 @@ def generate_movement_stops(
         stops.StopService.create_initial_stops(instance, instance.order)
 
 
-# Movement Creation Signals
 @receiver(pre_save, sender=Movement)
 def generate_ref_number(sender: Movement, instance: Movement, **kwargs: Any) -> None:
     """Generate Reference Number
@@ -106,6 +104,9 @@ def generate_ref_number(sender: Movement, instance: Movement, **kwargs: Any) -> 
 def sequence_stops(sender: Stop, instance: Stop, created: bool, **kwargs: Any) -> None:
     """Sequence Stops
 
+    Sequence the stops when a new stop is added
+    to a movement.
+
     Args:
         sender (Stop): Stop
         instance (Stop): The stop instance.
@@ -117,3 +118,27 @@ def sequence_stops(sender: Stop, instance: Stop, created: bool, **kwargs: Any) -
     """
     if created:
         stops.StopService.sequence_stops(instance)
+
+
+@receiver(post_save, sender=Order)
+def calculate_order_total(
+    sender: Order, instance: Order, created: bool, **kwargs: Any
+) -> None:
+    """Calculate Order Total
+
+    Calculate the order total when a new order is added.
+
+    Args:
+        sender (Order): Order
+        instance (Order): The order instance.
+        created (bool): if the Order was created.
+        **kwargs (Any): Keyword arguments.
+
+    Returns:
+        None
+    """
+
+    if not created:
+        instance.total = generation.OrderGenerationService.calculate_order_total(
+            instance
+        )
