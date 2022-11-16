@@ -130,6 +130,11 @@ class OrderControl(GenericModel):
         default=False,
         help_text=_("Generate routes for the organization"),
     )
+    auto_sequence_stops = models.BooleanField(
+        _("Auto Sequence Stops"),
+        default=True,
+        help_text=_("Auto sequence stops"),
+    )
 
     class Meta:
         """
@@ -776,8 +781,8 @@ class Order(GenericModel):
 
         """
         if (
-            self.rate_method == Order.RatingMethodChoices.FLAT
-            and self.freight_charge_amount is None
+                self.rate_method == Order.RatingMethodChoices.FLAT
+                and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -789,8 +794,8 @@ class Order(GenericModel):
             )
 
         if (
-            self.rate_method == Order.RatingMethodChoices.PER_MILE
-            and self.mileage is None
+                self.rate_method == Order.RatingMethodChoices.PER_MILE
+                and self.mileage is None
         ):
             raise ValidationError(
                 {
@@ -855,6 +860,8 @@ class Movement(GenericModel):
         related_name="movements",
         related_query_name="movement",
         verbose_name=_("Equipment"),
+        null=True,
+        blank=True,
         help_text=_("Equipment of the Movement"),
     )
     primary_worker = models.ForeignKey(
@@ -995,6 +1002,9 @@ class Stop(GenericModel):
         """
         return f"{self.movement} - {self.sequence} - {self.location}"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Stop
 
@@ -1043,7 +1053,7 @@ class ServiceIncident(GenericModel):
 
     class Meta:
         """
-        Metaclass for the ServiceIncident model
+        ServiceIncident Metaclass
         """
 
         verbose_name = _("Service Incident")
@@ -1067,6 +1077,10 @@ class ServiceIncident(GenericModel):
 
 
 class OrderDocumentation(GenericModel):
+    """
+    Stores documentation related to a `order.Order`.
+    """
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,

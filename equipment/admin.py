@@ -113,6 +113,8 @@ class EquipmentAdmin(MontaAdminMixin[Equipment]):
                     "state",
                     "leased",
                     "leased_date",
+                    "primary_worker",
+                    "secondary_worker",
                 ),
             },
         ),

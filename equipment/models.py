@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import textwrap
 from typing import final
 
@@ -26,6 +27,7 @@ from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField
 
 from core.models import GenericModel
+from worker.models import Worker
 
 
 class EquipmentType(GenericModel):
@@ -233,7 +235,7 @@ class EquipmentManufacturer(GenericModel):
 
 class Equipment(GenericModel):
     """
-    Stores information about a piece of equipment.
+    Stores information about a piece of equipment for a :model:`organization.Organization`.
     """
 
     @final
@@ -335,6 +337,24 @@ class Equipment(GenericModel):
         blank=True,
         null=True,
         help_text=_("Leased date of the equipment."),
+    )
+    primary_worker = models.OneToOneField(
+        Worker,
+        on_delete=models.SET_NULL,
+        related_name="primary_equipment",
+        related_query_name="primary_equipment",
+        verbose_name=_("Primary Worker"),
+        blank=True,
+        null=True,
+    )
+    secondary_worker = models.OneToOneField(
+        Worker,
+        on_delete=models.SET_NULL,
+        related_name="secondary_equipment",
+        related_query_name="secondary_equipment",
+        verbose_name=_("Secondary Worker"),
+        blank=True,
+        null=True,
     )
 
     # Advanced Options for the Equipment
