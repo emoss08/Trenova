@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from order.models import Movement, Order
+from order.models import Order
 
 
 class OrderGenerationService:
@@ -35,13 +35,3 @@ class OrderGenerationService:
         """
         code = f"ORD{Order.objects.count() + 1:06d}"
         return "ORD000001" if Order.objects.filter(pro_number=code).exists() else code
-
-    @staticmethod
-    def movement_ref_number() -> str:
-        """Generate a unique code for the movement
-
-        Returns:
-            str: Generated Movement Reference Number
-        """
-        code = f"MOV{Movement.objects.count() + 1:06d}"
-        return "MOV000001" if Movement.objects.filter(ref_num=code).exists() else code

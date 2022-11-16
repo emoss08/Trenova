@@ -62,7 +62,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         return (
             super()
             .get_queryset()
-            .filter(organization=self.request.user.profile.organization)
+            .filter(organization=self.request.user.organization)
         )
 
 
@@ -90,7 +90,7 @@ class EquipmentManufacturerViewSet(viewsets.ModelViewSet):
         return (
             super()
             .get_queryset()
-            .filter(organization=self.request.user.profile.organization)
+            .filter(organization=self.request.user.organization)
         )
 
 
@@ -116,7 +116,7 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
         return (
             super()
             .get_queryset()
-            .filter(organization=self.request.user.profile.organization)
+            .filter(organization=self.request.user.organization)
         )
 
 
@@ -144,5 +144,5 @@ class EquipmentMaintenancePlanViewSet(viewsets.ModelViewSet):
         return (
             super()
             .get_queryset()
-            .filter(organization=self.request.user.profile.organization)
+            .filter(organization=self.request.user.organization)
         )

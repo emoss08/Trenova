@@ -217,8 +217,10 @@ class StopAdmin(MontaAdminMixin[models.Stop]):
     list_display = (
         "status",
         "movement",
+        "stop_type",
         "sequence",
         "location",
+        "address_line"
     )
     search_fields = ("id",)
 
