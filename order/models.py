@@ -30,7 +30,7 @@ from django.utils.translation import gettext_lazy as _
 
 from accounting.models import RevenueCode
 from billing.models import DocumentClassification
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 from customer.models import Customer
 from dispatch.models import DelayCode
 from equipment.models import Equipment, EquipmentType
@@ -128,12 +128,17 @@ class OrderControl(GenericModel):
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
-        help_text=_("Generate routes for the organization"),
+        help_text=_("Automatically generate routes for order entry."),
     )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
         default=True,
-        help_text=_("Auto sequence stops"),
+        help_text=_("Auto Sequence stops for the order and movements."),
+    )
+    auto_order_total = models.BooleanField(
+        _("Auto Order Total"),
+        default=True,
+        help_text=_("Automate the order total amount calculation."),
     )
 
     class Meta:
@@ -372,9 +377,8 @@ class Commodity(GenericModel):
         null=True,
         blank=True,
     )
-    unit_of_measure = models.CharField(
+    unit_of_measure = ChoiceField(
         _("Unit of Measure"),
-        max_length=255,
         choices=UnitOfMeasureChoices.choices,
         help_text=_("Unit of Measure of the Commodity"),
         blank=True,
@@ -607,7 +611,7 @@ class Order(GenericModel):
     mileage = models.DecimalField(
         _("Total Mileage"),
         max_digits=10,
-        decimal_places=1,
+        decimal_places=2,
         null=True,
         blank=True,
         help_text=_("Total Mileage"),
@@ -615,7 +619,7 @@ class Order(GenericModel):
     other_charge_amount = models.DecimalField(
         _("Additional Charge Amount"),
         max_digits=10,
-        decimal_places=1,
+        decimal_places=2,
         null=True,
         blank=True,
         help_text=_("Additional Charge Amount"),
@@ -623,7 +627,7 @@ class Order(GenericModel):
     freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
         max_digits=10,
-        decimal_places=1,
+        decimal_places=2,
         null=True,
         blank=True,
         help_text=_("Freight Charge Amount"),
@@ -685,6 +689,14 @@ class Order(GenericModel):
         null=True,
         blank=True,
         help_text=_("Billing Transfer Date"),
+    )
+    sub_total = models.DecimalField(
+        _("Sub Total Amount"),
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Sub Total Amount"),
     )
 
     # Dispatch Information
@@ -779,6 +791,8 @@ class Order(GenericModel):
         Returns:
             None
 
+        Raises:
+            ValidationError: If the Order is not valid
         """
         if (
                 self.rate_method == Order.RatingMethodChoices.FLAT
@@ -992,7 +1006,7 @@ class Stop(GenericModel):
 
         verbose_name = _("Stop")
         verbose_name_plural = _("Stops")
-        ordering: list[str] = ["-sequence"]
+        ordering: list[str] = ["movement", "sequence"]
 
     def __str__(self) -> str:
         """String representation of the Stop
@@ -1001,9 +1015,6 @@ class Stop(GenericModel):
             str: String representation of the Stop
         """
         return f"{self.movement} - {self.sequence} - {self.location}"
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Stop

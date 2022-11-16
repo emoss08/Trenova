@@ -161,6 +161,7 @@ class OrderAdmin(MontaAdminMixin[models.Order]):
                     "mileage",
                     "other_charge_amount",
                     "freight_charge_amount",
+                    "sub_total",
                     "rate_method",
                     "customer",
                     "pieces",
@@ -220,7 +221,7 @@ class StopAdmin(MontaAdminMixin[models.Stop]):
         "stop_type",
         "sequence",
         "location",
-        "address_line"
+        "address_line",
     )
     search_fields = ("id",)
 

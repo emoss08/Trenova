@@ -16,8 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+from django.core import validators
 from django.db import models
+from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
@@ -40,3 +41,18 @@ class GenericModel(TimeStampedModel):
 
     class Meta:
         abstract = True
+
+
+class ChoiceField(CharField):
+    """
+    A CharField that lets you use Django choices and provides a nice
+    representation in the admin.
+    """
+    description = _("Choice Field")
+
+    def __init__(self, *args, db_collation=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.db_collation = db_collation
+        self.max_length = max(len(choice[0]) for choice in self.choices)
+        if self.max_length is not None:
+            self.validators.append(validators.MaxLengthValidator(self.max_length))

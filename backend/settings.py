@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     "django_filters",
     "phonenumber_field",
     "compressor",
+    "django_celery_results",
+    "django_celery_beat",
     "backend",
     "core",
     "accounts",
@@ -185,6 +187,19 @@ CACHES = {
             },
         },
     },
+    "celery": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("CELERY_REDIS_LOCATION"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PREFIX": "sessions",
+            "PARSER_CLASS": "redis.connection.HiredisParser",
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 100,
+                "retry_on_timeout": True,
+            },
+        },
+    },
 }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -222,3 +237,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
+
+# Celery Configurations
+CELERY_BROKER_URL = env("CELERY_REDIS_BROKER_URL")
+CELERY_RESULT_BACKEND = env("CELERY_REDIS_BROKER_URL")
+CELERY_CACHE_BACKEND = 'celery'

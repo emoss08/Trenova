@@ -60,9 +60,7 @@ class EquipmentViewSet(viewsets.ModelViewSet):
             QuerySet[Equipment]: The filtered queryset.
         """
         return (
-            super()
-            .get_queryset()
-            .filter(organization=self.request.user.organization)
+            super().get_queryset().filter(organization=self.request.user.organization)
         )
 
 
@@ -88,9 +86,7 @@ class EquipmentManufacturerViewSet(viewsets.ModelViewSet):
             QuerySet[EquipmentManufacturer]: The filtered queryset.
         """
         return (
-            super()
-            .get_queryset()
-            .filter(organization=self.request.user.organization)
+            super().get_queryset().filter(organization=self.request.user.organization)
         )
 
 
@@ -114,9 +110,7 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
             QuerySet[EquipmentType]: The filtered queryset.
         """
         return (
-            super()
-            .get_queryset()
-            .filter(organization=self.request.user.organization)
+            super().get_queryset().filter(organization=self.request.user.organization)
         )
 
 
@@ -142,7 +136,5 @@ class EquipmentMaintenancePlanViewSet(viewsets.ModelViewSet):
             QuerySet[EquipmentMaintenancePlan]: The filtered queryset.
         """
         return (
-            super()
-            .get_queryset()
-            .filter(organization=self.request.user.organization)
+            super().get_queryset().filter(organization=self.request.user.organization)
         )
