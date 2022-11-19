@@ -20,8 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 
 from core.mixins import MontaAdminMixin
-
-
 from .models import Route, RouteControl
 
 
@@ -56,3 +54,4 @@ class RouteControlAdmin(MontaAdminMixin[RouteControl]):
         "traffic_model",
         "generate_routes",
     )
+    search_fields = ("organization",)
