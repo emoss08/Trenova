@@ -38,6 +38,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []  # type: ignore
 
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -56,6 +60,7 @@ INSTALLED_APPS = [
     "compressor",
     "django_celery_results",
     "django_celery_beat",
+    "debug_toolbar",
     "backend",
     "core",
     "accounts",
@@ -75,6 +80,7 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -164,7 +170,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Redis Configurations
+# REDIS Configurations
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
