@@ -25,7 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 from integration.models import IntegrationChoices
 from organization.models import Organization
 
@@ -63,9 +63,8 @@ class DispatchControl(GenericModel):
         related_name="dispatch_control",
         related_query_name="dispatch_controls",
     )
-    record_service_incident = models.CharField(
+    record_service_incident = ChoiceField(
         _("Record Service Incident"),
-        max_length=19,
         choices=ServiceIncidentControlChoices.choices,
         default=ServiceIncidentControlChoices.NEVER,
     )
@@ -91,9 +90,8 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Enforce trailer continuity for the company."),
     )
-    distance_method = models.CharField(
+    distance_method = ChoiceField(
         _("Distance Method"),
-        max_length=20,
         choices=DistanceMethodChoices.choices,
         default=DistanceMethodChoices.MONTA,
         help_text=_("Distance method for the company."),

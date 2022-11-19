@@ -29,7 +29,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
 
@@ -484,9 +484,8 @@ class CustomerFuelProfile(GenericModel):
         null=True,
         blank=True,
     )
-    days_to_use = models.CharField(
+    days_to_use = ChoiceField(
         _("Days to Use"),
-        max_length=1,
         choices=DaysToUseChoices.choices,
         help_text=_("Days to Use"),
     )
@@ -498,15 +497,13 @@ class CustomerFuelProfile(GenericModel):
         help_text=_("Order Type"),
         verbose_name=_("Order Type"),
     )
-    fuel_region = models.CharField(
+    fuel_region = ChoiceField(
         _("Fuel Region"),
-        max_length=4,
         choices=FuelRegionChoices.choices,
         help_text=_("Fuel Region"),
     )
-    fsc_method = models.CharField(
+    fsc_method = ChoiceField(
         _("FSC Method"),
-        max_length=1,
         choices=TableChoices.choices,
         help_text=_("FSC Method"),
     )
@@ -667,9 +664,8 @@ class CustomerFuelTableDetail(GenericModel):
         blank=True,
         null=True,
     )
-    method = models.CharField(
+    method = ChoiceField(
         _("Method"),
-        max_length=1,
         choices=FuelMethodChoices.choices,
         help_text=_("Method"),
     )

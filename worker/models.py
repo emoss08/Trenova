@@ -30,7 +30,7 @@ from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
 from control_file.models import CommentType
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
 
@@ -70,9 +70,8 @@ class Worker(GenericModel):
             "Unselect this instead of deleting workers."
         ),
     )
-    worker_type = models.CharField(
+    worker_type = ChoiceField(
         _("Worker type"),
-        max_length=10,
         choices=WorkerType.choices,
         default=WorkerType.EMPLOYEE,
         help_text=_("The type of worker."),
@@ -214,9 +213,8 @@ class WorkerProfile(GenericModel):
         blank=True,
         help_text=_("Race/Ethnicity"),
     )
-    sex = models.CharField(
+    sex = ChoiceField(
         _("Sex/Gender"),
-        max_length=11,
         choices=WorkerSexChoices.choices,
         blank=True,
         help_text=_("Sex/Gender of the worker."),
@@ -245,9 +243,8 @@ class WorkerProfile(GenericModel):
         null=True,
         blank=True,
     )
-    endorsements = models.CharField(
+    endorsements = ChoiceField(
         _("Endorsements"),
-        max_length=1,
         choices=EndorsementChoices.choices,
         default=EndorsementChoices.NONE,
         help_text=_("Endorsements."),

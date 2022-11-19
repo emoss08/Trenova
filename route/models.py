@@ -24,7 +24,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 
 
 class Route(GenericModel):
@@ -130,16 +130,14 @@ class RouteControl(GenericModel):
         verbose_name=_("Organization"),
         help_text=_("Organization related to this route control"),
     )
-    mileage_unit = models.CharField(
+    mileage_unit = ChoiceField(
         _("Mileage Unit"),
-        max_length=255,
         choices=RouteDistanceUnitChoices.choices,
         default=RouteDistanceUnitChoices.IMPERIAL,
         help_text=_("The mileage unit that the organization uses"),
     )
-    traffic_model = models.CharField(
+    traffic_model = ChoiceField(
         _("Traffic Model"),
-        max_length=255,
         choices=RouteModelChoices.choices,
         default=RouteModelChoices.BEST_GUESS,
         help_text=_("The traffic model that the organization uses"),
