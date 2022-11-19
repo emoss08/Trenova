@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional, Sequence, Type, TypeVar
+from typing import Any, Optional, Sequence, TypeVar
 
 from django.contrib import admin
 from django.db.models import Model, QuerySet
@@ -34,7 +34,7 @@ _C = TypeVar("_C", bound=Model)
 _P = TypeVar("_P", bound=Model)
 
 
-class MontaAdminMixin(admin.ModelAdmin[_M]):
+class GenericAdmin(admin.ModelAdmin[_M]):
     """
     Generic Admin Class for all models
     """
@@ -142,7 +142,7 @@ class MontaAdminMixin(admin.ModelAdmin[_M]):
         return autocomplete_fields
 
 
-class MontaStackedInlineMixin(admin.StackedInline[_C, _P]):
+class GenericStackedInline(admin.StackedInline[_C, _P]):
     """
     Generic Admin Stacked for all Models with Organization Exclusion
     """
@@ -169,9 +169,6 @@ class MontaStackedInlineMixin(admin.StackedInline[_C, _P]):
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
 
-        Args:
-            request (HttpRequest): Request Object
-
         Returns:
             list[str]: Autocomplete Fields
         """
@@ -182,26 +179,8 @@ class MontaStackedInlineMixin(admin.StackedInline[_C, _P]):
         return autocomplete_fields
 
 
-class MontaTabularInlineMixin(admin.TabularInline):
+class GenericTabularInline(GenericStackedInline):
     """
     Generic Admin Tabular Inline with Organization Exclusion
     """
-
-    extra = 0
-    exclude: tuple[str, ...] = ("organization",)
-
-    def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
-        """Get Queryset
-
-        Args:
-            request (HttpRequest): Request Object
-
-        Returns:
-            QuerySet[_C]: Queryset of Model
-        """
-        return (
-            super()
-            .get_queryset(request)
-            .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization=request.user.organization)  # type: ignore
-        )
+    template = "admin/edit_inline/tabular.html"

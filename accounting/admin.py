@@ -23,12 +23,12 @@ from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
 
-from core.mixins import MontaAdminMixin
+from utils.admin import GenericAdmin
 from .models import GeneralLedgerAccount, RevenueCode
 
 
 @admin.register(GeneralLedgerAccount)
-class GeneralLedgerAccountAdmin(MontaAdminMixin[GeneralLedgerAccount]):
+class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     """
     General Ledger Account Admin
     """
@@ -42,13 +42,14 @@ class GeneralLedgerAccountAdmin(MontaAdminMixin[GeneralLedgerAccount]):
         "id",
         "description",
     )
+    exclude: tuple[str, ...] = ("organization",)
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: Optional[GeneralLedgerAccount] = None,
-        change: bool = False,
-        **kwargs: Any
+            self,
+            request: HttpRequest,
+            obj: Optional[GeneralLedgerAccount] = None,
+            change: bool = False,
+            **kwargs: Any
     ) -> type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 
@@ -70,7 +71,7 @@ class GeneralLedgerAccountAdmin(MontaAdminMixin[GeneralLedgerAccount]):
 
 
 @admin.register(RevenueCode)
-class RevenueCodeAdmin(MontaAdminMixin[RevenueCode]):
+class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
     """
     Revenue Code Admin
     """

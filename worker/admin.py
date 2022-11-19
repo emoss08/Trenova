@@ -19,51 +19,48 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
-from .models import Worker, WorkerComment, WorkerContact, WorkerProfile
+from utils.admin import GenericAdmin, GenericStackedInline
+from worker import models
 
 
-class WorkerProfileAdmin(MontaStackedInlineMixin[Worker, WorkerProfile]):
+class WorkerProfileAdmin(GenericStackedInline[models.Worker, models.WorkerProfile]):
     """
     Worker Profile Admin
     """
 
-    model: type[WorkerProfile] = WorkerProfile
-    can_delete: bool = False
-    verbose_name_plural: str = "Worker Profile"
-    fk_name: str = "worker"
-    extra: int = 0
+    model: type[models.WorkerProfile] = models.WorkerProfile
+    can_delete = False
+    verbose_name_plural = "Worker Profile"
+    fk_name = "worker"
 
 
-class WorkerContactAdmin(MontaStackedInlineMixin[Worker, WorkerContact]):
+class WorkerContactAdmin(GenericStackedInline[models.Worker, models.WorkerContact]):
     """
     Worker Contact Admin
     """
 
-    model: type[WorkerContact] = WorkerContact
-    verbose_name_plural: str = "Worker Contact"
-    fk_name: str = "worker"
-    extra: int = 0
+    model: type[models.WorkerContact] = models.WorkerContact
+    verbose_name_plural= "Worker Contact"
+    fk_name = "worker"
 
 
-class WorkerCommentAdmin(MontaStackedInlineMixin[Worker, WorkerComment]):
+class WorkerCommentAdmin(GenericStackedInline[models.Worker, models.WorkerComment]):
     """
     Worker Comment Admin
     """
 
-    model: type[WorkerComment] = WorkerComment
-    verbose_name_plural: str = "Worker Comment"
-    fk_name: str = "worker"
-    extra: int = 0
+    model: type[models.WorkerComment] = models.WorkerComment
+    verbose_name_plural = "Worker Comment"
+    fk_name = "worker"
 
 
-@admin.register(Worker)
-class WorkerAdmin(MontaAdminMixin[Worker]):
+@admin.register(models.Worker)
+class WorkerAdmin(GenericAdmin[models.Worker]):
     """
     Worker Admin
     """
 
-    model: type[Worker] = Worker
+    model: type[models.Worker] = models.Worker
     list_display: tuple[str, ...] = (
         "code",
         "is_active",

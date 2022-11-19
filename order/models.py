@@ -608,24 +608,21 @@ class Order(GenericModel):
         _("Total Mileage"),
         max_digits=10,
         decimal_places=2,
-        null=True,
-        blank=True,
+        default=0,
         help_text=_("Total Mileage"),
     )
     other_charge_amount = models.DecimalField(
         _("Additional Charge Amount"),
         max_digits=10,
         decimal_places=2,
-        null=True,
-        blank=True,
+        default=0,
         help_text=_("Additional Charge Amount"),
     )
     freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
         max_digits=10,
         decimal_places=2,
-        null=True,
-        blank=True,
+        default=0,
         help_text=_("Freight Charge Amount"),
     )
     rate_method = ChoiceField(
@@ -646,8 +643,6 @@ class Order(GenericModel):
         _("Pieces"),
         help_text=_("Total Piece Count of the Order"),
         default=0,
-        blank=True,
-        null=True,
     )
     weight = models.DecimalField(
         _("Weight"),
@@ -655,8 +650,6 @@ class Order(GenericModel):
         decimal_places=2,
         help_text=_("Total Weight of the Order"),
         default=0,
-        blank=True,
-        null=True,
     )
     ready_to_bill = models.BooleanField(
         _("Ready to Bill"),
@@ -689,8 +682,7 @@ class Order(GenericModel):
         _("Sub Total Amount"),
         max_digits=10,
         decimal_places=2,
-        null=True,
-        blank=True,
+        default=0,
         help_text=_("Sub Total Amount"),
     )
 
@@ -732,7 +724,7 @@ class Order(GenericModel):
     temperature_min = models.DecimalField(
         _("Minimum Temperature"),
         max_digits=10,
-        decimal_places=2,
+        decimal_places=1,
         null=True,
         blank=True,
         help_text=_("Minimum Temperature"),
@@ -740,7 +732,7 @@ class Order(GenericModel):
     temperature_max = models.DecimalField(
         _("Maximum Temperature"),
         max_digits=10,
-        decimal_places=2,
+        decimal_places=1,
         null=True,
         blank=True,
         help_text=_("Maximum Temperature"),

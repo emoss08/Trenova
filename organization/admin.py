@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
-from .models import Depot, DepotDetail, Organization
+from organization import models
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
-@admin.register(Organization)
-class OrganizationAdmin(admin.ModelAdmin[Organization]):
+@admin.register(models.Organization)
+class OrganizationAdmin(admin.ModelAdmin[models.Organization]):
     """
     Organization Admin
     """
@@ -42,19 +42,19 @@ class OrganizationAdmin(admin.ModelAdmin[Organization]):
     )
 
 
-class DepotDetailInline(MontaStackedInlineMixin[Depot, DepotDetail]):
+class DepotDetailInline(GenericStackedInline[models.Depot, models.DepotDetail]):
     """
     Depot Detail Admin
     """
 
-    model: type[DepotDetail] = DepotDetail
+    model: type[models.DepotDetail] = models.DepotDetail
     can_delete = False
     verbose_name_plural = "Depot Details"
     fk_name = "depot"
 
 
-@admin.register(Depot)
-class DepotAdmin(MontaAdminMixin[Depot]):
+@admin.register(models.Depot)
+class DepotAdmin(GenericAdmin[models.Depot]):
     """
     Depot Admin
     """

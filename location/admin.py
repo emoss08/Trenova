@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
-from .models import Location, LocationCategory, LocationComment, LocationContact
+from location import models
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
-@admin.register(LocationCategory)
-class LocationCategoryAdmin(MontaAdminMixin[LocationCategory]):
+@admin.register(models.LocationCategory)
+class LocationCategoryAdmin(GenericAdmin[models.LocationCategory]):
     """
     Location Category Admin
     """
@@ -39,30 +39,30 @@ class LocationCategoryAdmin(MontaAdminMixin[LocationCategory]):
     )
 
 
-class LocationCommentAdmin(MontaStackedInlineMixin[Location, LocationComment]):
+class LocationCommentAdmin(GenericStackedInline[models.Location, models.LocationComment]):
     """
     Location Comment Admin
     """
 
-    model: type[LocationComment] = LocationComment
+    model: type[models.LocationComment] = models.LocationComment
     verbose_name_plural = "Location Comments"
     fk_name = "location"
     extra = 0
 
 
-class LocationContactAdmin(MontaStackedInlineMixin[Location, LocationContact]):
+class LocationContactAdmin(GenericStackedInline[models.Location, models.LocationContact]):
     """
     Location Contact Admin
     """
 
-    model: type[LocationContact] = LocationContact
+    model: type[models.LocationContact] = models.LocationContact
     verbose_name_plural = "Location Contacts"
     fk_name = "location"
     extra = 0
 
 
-@admin.register(Location)
-class LocationAdmin(MontaAdminMixin[Location]):
+@admin.register(models.Location)
+class LocationAdmin(GenericAdmin[models.Location]):
     """
     Location Admin
     """

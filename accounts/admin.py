@@ -40,10 +40,10 @@ from django.utils.html import escape
 from django.utils.translation import gettext, gettext_lazy as _
 
 from accounts import models
-from core.mixins import MontaAdminMixin, MontaStackedInlineMixin
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
-class ProfileInline(MontaStackedInlineMixin[models.User, models.UserProfile]):
+class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
     """
     Profile inline
     """
@@ -298,7 +298,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
 
 @admin.register(models.JobTitle)
-class JobTitleAdmin(MontaAdminMixin[models.JobTitle]):
+class JobTitleAdmin(GenericAdmin[models.JobTitle]):
     """
     Job title admin
     """

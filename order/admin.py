@@ -19,21 +19,20 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin, MontaTabularInlineMixin
 from order import models
+from utils.admin import GenericAdmin, GenericTabularInline
 
 
-class OrderDocumentationInline(MontaTabularInlineMixin):
+class OrderDocumentationInline(GenericTabularInline):
     """
     Order documentation inline
     """
 
     model: type[models.OrderDocumentation] = models.OrderDocumentation
-    extra = 0
 
 
 @admin.register(models.OrderType)
-class OrderTypeAdmin(MontaAdminMixin[models.OrderType]):
+class OrderTypeAdmin(GenericAdmin[models.OrderType]):
     """
     Order Type Admin
     """
@@ -46,7 +45,7 @@ class OrderTypeAdmin(MontaAdminMixin[models.OrderType]):
 
 
 @admin.register(models.HazardousMaterial)
-class HazardousMaterialAdmin(MontaAdminMixin[models.HazardousMaterial]):
+class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
     """
     Hazardous Material Admin
     """
@@ -59,7 +58,7 @@ class HazardousMaterialAdmin(MontaAdminMixin[models.HazardousMaterial]):
 
 
 @admin.register(models.Commodity)
-class CommodityAdmin(MontaAdminMixin[models.Commodity]):
+class CommodityAdmin(GenericAdmin[models.Commodity]):
     """
     Commodity Admin
     """
@@ -89,7 +88,7 @@ class CommodityAdmin(MontaAdminMixin[models.Commodity]):
 
 
 @admin.register(models.QualifierCode)
-class QualifierCodeAdmin(MontaAdminMixin[models.QualifierCode]):
+class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
     """
     Qualifier Code Admin
     """
@@ -102,7 +101,7 @@ class QualifierCodeAdmin(MontaAdminMixin[models.QualifierCode]):
 
 
 @admin.register(models.ReasonCode)
-class ReasonCodeAdmin(MontaAdminMixin[models.ReasonCode]):
+class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
     """
     Reason Code Admin
     """
@@ -115,7 +114,7 @@ class ReasonCodeAdmin(MontaAdminMixin[models.ReasonCode]):
 
 
 @admin.register(models.OrderControl)
-class OrderControlAdmin(MontaAdminMixin[models.OrderControl]):
+class OrderControlAdmin(GenericAdmin[models.OrderControl]):
     """
     Order Control Admin
     """
@@ -127,7 +126,7 @@ class OrderControlAdmin(MontaAdminMixin[models.OrderControl]):
 
 
 @admin.register(models.Order)
-class OrderAdmin(MontaAdminMixin[models.Order]):
+class OrderAdmin(GenericAdmin[models.Order]):
     """
     Order Admin
     """
@@ -194,7 +193,7 @@ class OrderAdmin(MontaAdminMixin[models.Order]):
 
 
 @admin.register(models.Movement)
-class MovementAdmin(MontaAdminMixin[models.Movement]):
+class MovementAdmin(GenericAdmin[models.Movement]):
     """
     Movement Admin
     """
@@ -210,7 +209,7 @@ class MovementAdmin(MontaAdminMixin[models.Movement]):
 
 
 @admin.register(models.Stop)
-class StopAdmin(MontaAdminMixin[models.Stop]):
+class StopAdmin(GenericAdmin[models.Stop]):
     """
     Stop Admin
     """
@@ -227,7 +226,7 @@ class StopAdmin(MontaAdminMixin[models.Stop]):
 
 
 @admin.register(models.ServiceIncident)
-class ServiceIncidentAdmin(MontaAdminMixin[models.ServiceIncident]):
+class ServiceIncidentAdmin(GenericAdmin[models.ServiceIncident]):
     """
     Service Incident Admin
     """

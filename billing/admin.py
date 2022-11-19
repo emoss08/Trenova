@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin
-from .models import AccessorialCharge, ChargeType, DocumentClassification
+from billing.models import AccessorialCharge, ChargeType, DocumentClassification
+from utils.admin import GenericAdmin
 
 
 @admin.register(DocumentClassification)
-class DocumentClassificationAdmin(MontaAdminMixin[DocumentClassification]):
+class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
     """
     Document Classification Admin
     """
@@ -38,7 +38,7 @@ class DocumentClassificationAdmin(MontaAdminMixin[DocumentClassification]):
 
 
 @admin.register(ChargeType)
-class ChargeTypeAdmin(MontaAdminMixin[ChargeType]):
+class ChargeTypeAdmin(GenericAdmin[ChargeType]):
     """
     Charge Type Admin
     """
@@ -52,7 +52,7 @@ class ChargeTypeAdmin(MontaAdminMixin[ChargeType]):
 
 
 @admin.register(AccessorialCharge)
-class AccessorialChargeAdmin(MontaAdminMixin[AccessorialCharge]):
+class AccessorialChargeAdmin(GenericAdmin[AccessorialCharge]):
     """
     Accessorial Charge Admin
     """
