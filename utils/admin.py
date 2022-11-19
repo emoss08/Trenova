@@ -34,6 +34,8 @@ _C = TypeVar("_C", bound=Model)
 _P = TypeVar("_P", bound=Model)
 
 
+
+
 class GenericAdmin(admin.ModelAdmin[_M]):
     """
     Generic Admin Class for all models
@@ -133,7 +135,10 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         """
 
         if not self.search_fields:
-            raise ValueError(f"{self.__class__.__name__} must define search_fields")
+            warnings.warn(
+                "You must define search_fields to use "
+                "autocomplete_fields in %s." % self.__class__.__name__
+            )
 
         autocomplete_fields = []
         for field in self.model._meta.get_fields():

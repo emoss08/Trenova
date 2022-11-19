@@ -30,12 +30,12 @@ from django.utils.translation import gettext_lazy as _
 
 from accounting.models import RevenueCode
 from billing.models import DocumentClassification
-from core.models import ChoiceField, GenericModel
 from customer.models import Customer
 from dispatch.models import DelayCode
 from equipment.models import Equipment, EquipmentType
 from location.models import Location
 from organization.models import Organization
+from utils.models import ChoiceField, GenericModel
 from worker.models import Worker
 
 User = settings.AUTH_USER_MODEL

@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-import core.models
+from utils import models
 
 
 class Migration(migrations.Migration):
@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="googleapi",
             name="mileage_unit",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[("metric", "Metric"), ("imperial", "Imperial")],
                 default="imperial",
                 help_text="The mileage unit that the organization uses",
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="googleapi",
             name="traffic_model",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("best_guess", "Best Guess"),
                     ("optimistic", "Optimistic"),

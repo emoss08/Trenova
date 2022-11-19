@@ -26,7 +26,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField
 
-from core.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel
 from worker.models import Worker
 
 

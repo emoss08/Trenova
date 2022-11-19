@@ -29,7 +29,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from core.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
 
