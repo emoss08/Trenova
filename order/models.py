@@ -19,12 +19,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import decimal
 import textwrap
 from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -772,6 +774,45 @@ class Order(GenericModel):
         """
         return self.pro_number
 
+    def total_pieces(self) -> int:
+        """
+        get the pieces for the order.
+        :return: Pieces for the order
+        :rtype: int
+        """
+        return Stop.objects.filter(movement__order__exact=self).aggregate(
+            Sum("pieces")
+        )["pieces__sum"]
+
+    def total_weight(self) -> int:
+        """
+        Get the weight for the order.
+        :return: Weight for the order
+        :rtype: int
+        """
+        return Stop.objects.filter(movement__order__exact=self).aggregate(
+            Sum("weight")
+        )["weight__sum"]
+
+    def calculate_total(self) -> decimal.Decimal:
+        """Calculate the sub_total for an order
+
+        # TODO(emoss): Move this into a service class
+
+        Returns:
+            decimal.Decimal: The total for the order
+        """
+
+        # Handle the flat fee rate calculation
+        if self.rate_method == Order.RatingMethodChoices.FLAT:
+            return self.freight_charge_amount + self.other_charge_amount
+
+        # Handle the mileage rate calculation
+        elif self.rate_method == Order.RatingMethodChoices.PER_MILE:
+            return self.freight_charge_amount * self.mileage + self.other_charge_amount
+
+        return self.freight_charge_amount
+
     def clean(self) -> None:
         """Order save method
 
@@ -818,6 +859,23 @@ class Order(GenericModel):
                     )
                 }
             )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Order save method
+
+        Returns:
+            None
+        """
+        self.full_clean()
+
+        if self.status == StatusChoices.COMPLETED:
+            self.pieces = self.total_pieces()
+            self.weight = self.total_weight()
+
+        if self.ready_to_bill:
+            self.sub_total = self.calculate_total()
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order

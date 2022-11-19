@@ -45,11 +45,11 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     exclude: tuple[str, ...] = ("organization",)
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: Optional[GeneralLedgerAccount] = None,
-            change: bool = False,
-            **kwargs: Any
+        self,
+        request: HttpRequest,
+        obj: Optional[GeneralLedgerAccount] = None,
+        change: bool = False,
+        **kwargs: Any
     ) -> type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 

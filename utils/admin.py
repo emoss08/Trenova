@@ -34,8 +34,6 @@ _C = TypeVar("_C", bound=Model)
 _P = TypeVar("_P", bound=Model)
 
 
-
-
 class GenericAdmin(admin.ModelAdmin[_M]):
     """
     Generic Admin Class for all models
@@ -60,11 +58,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         )
 
     def save_model(
-            self,
-            request: HttpRequest,
-            obj: _M,
-            form: type[BaseModelForm],
-            change: bool,
+        self,
+        request: HttpRequest,
+        obj: _M,
+        form: type[BaseModelForm],
+        change: bool,
     ) -> None:
         """Save Model Instance
 
@@ -81,7 +79,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_model(request, obj, form, change)
 
     def save_formset(
-            self, request: HttpRequest, form: Any, formset: Any, change: Any
+        self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
 
@@ -102,11 +100,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_formset(request, form, formset, change)
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: Optional[_M] = None,
-            change: bool = False,
-            **kwargs: Any,
+        self,
+        request: HttpRequest,
+        obj: Optional[_M] = None,
+        change: bool = False,
+        **kwargs: Any,
     ) -> type[ModelForm[_M]]:
         """Get Form for Model
 
@@ -188,4 +186,5 @@ class GenericTabularInline(GenericStackedInline):
     """
     Generic Admin Tabular Inline with Organization Exclusion
     """
+
     template = "admin/edit_inline/tabular.html"
