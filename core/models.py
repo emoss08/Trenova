@@ -51,9 +51,10 @@ class ChoiceField(CharField):
 
     description = _("Choice Field")
 
-    def __init__(self, *args, db_collation=None, **kwargs):
+    def __init__(self, *args, db_collation=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
-        self.max_length = max(len(choice[0]) for choice in self.choices)
         if self.max_length is not None:
             self.validators.append(validators.MaxLengthValidator(self.max_length))
+        if self.choices:
+            self.max_length = max(len(choice[0]) for choice in self.choices)

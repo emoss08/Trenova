@@ -118,27 +118,3 @@ def sequence_stops(sender: Stop, instance: Stop, created: bool, **kwargs: Any) -
     """
     if created:
         stops.StopService.sequence_stops(instance)
-
-
-@receiver(post_save, sender=Order)
-def calculate_order_total(
-    sender: Order, instance: Order, created: bool, **kwargs: Any
-) -> None:
-    """Calculate Order Total
-
-    Calculate the order total when a new order is added.
-
-    Args:
-        sender (Order): Order
-        instance (Order): The order instance.
-        created (bool): if the Order was created.
-        **kwargs (Any): Keyword arguments.
-
-    Returns:
-        None
-    """
-
-    if not created:
-        instance.total = generation.OrderGenerationService.calculate_order_total(
-            instance
-        )

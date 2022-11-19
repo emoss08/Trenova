@@ -19,17 +19,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin
-from .models import DelayCode, DispatchControl, FleetCode
+from dispatch import models
+from utils.admin import GenericAdmin
 
 
-@admin.register(DispatchControl)
-class DispatchControlAdmin(MontaAdminMixin[DispatchControl]):
+@admin.register(models.DispatchControl)
+class DispatchControlAdmin(GenericAdmin[models.DispatchControl]):
     """
     Dispatch Control Admin
     """
 
-    model: type[DispatchControl] = DispatchControl
+    model: type[models.DispatchControl] = models.DispatchControl
     list_display = (
         "organization",
         "record_service_incident",
@@ -37,13 +37,13 @@ class DispatchControlAdmin(MontaAdminMixin[DispatchControl]):
     search_fields = ("organization",)
 
 
-@admin.register(DelayCode)
-class DelayCodeAdmin(MontaAdminMixin[DelayCode]):
+@admin.register(models.DelayCode)
+class DelayCodeAdmin(GenericAdmin[models.DelayCode]):
     """
     Delay Code Admin
     """
 
-    model: type[DelayCode] = DelayCode
+    model: type[models.DelayCode] = models.DelayCode
     list_display = (
         "code",
         "description",
@@ -51,13 +51,13 @@ class DelayCodeAdmin(MontaAdminMixin[DelayCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(FleetCode)
-class FleetCodeAdmin(MontaAdminMixin[FleetCode]):
+@admin.register(models.FleetCode)
+class FleetCodeAdmin(GenericAdmin[models.FleetCode]):
     """
     Fleet Code Admin
     """
 
-    model: type[FleetCode] = FleetCode
+    model: type[models.FleetCode] = models.FleetCode
     list_display = (
         "code",
         "description",

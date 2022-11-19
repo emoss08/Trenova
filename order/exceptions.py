@@ -16,25 +16,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-from django.contrib import admin
-
-from integration import models
-from utils.admin import GenericAdmin
+from core.exceptions import MontaCoreException
 
 
-@admin.register(models.Integration)
-class IntegrationAdmin(GenericAdmin[models.Integration]):
+class RatingException(MontaCoreException):
     """
-    Integration Admin
+    Base class for all rating exceptions to be raised by Monta.
     """
 
-    fieldsets = (
-        (None, {"fields": ("name", "auth_type", "is_active")}),
-        ("Basic Credentials", {"fields": ("auth_token", "client_id", "client_secret")}),
-        (
-            "Advanced Credentials",
-            {"classes": ("collapse",), "fields": ("login_url", "username", "password")},
-        ),
-    )
-    search_fields = ("name",)
+    def __init__(self, message: str, status_code: int) -> None:
+        """This is the constructor for the RatingException class.
+
+        Args:
+            message (str): The error message
+            status_code (int): The status code of the error
+
+        Returns:
+            None
+        """
+        super().__init__(message, status_code)

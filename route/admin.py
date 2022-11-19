@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from core.mixins import MontaAdminMixin
-from .models import Route, RouteControl
+from route import models
+from utils.admin import GenericAdmin
 
 
-@admin.register(Route)
-class RouteAdmin(MontaAdminMixin[Route]):
+@admin.register(models.Route)
+class RouteAdmin(GenericAdmin[models.Route]):
     """
     Route Admin
     """
@@ -42,8 +42,8 @@ class RouteAdmin(MontaAdminMixin[Route]):
     )
 
 
-@admin.register(RouteControl)
-class RouteControlAdmin(MontaAdminMixin[RouteControl]):
+@admin.register(models.RouteControl)
+class RouteControlAdmin(GenericAdmin[models.RouteControl]):
     """
     Route Control Admin
     """
