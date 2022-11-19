@@ -230,15 +230,13 @@ class HazardousMaterial(GenericModel):
         blank=True,
         help_text=_("Description of the Hazardous Class"),
     )
-    hazard_class = models.CharField(
+    hazard_class = ChoiceField(
         _("Hazard Class"),
-        max_length=255,
         choices=HazardousClassChoices.choices,
         help_text=_("Hazard Class of the Hazardous Material"),
     )
-    packing_group = models.CharField(
+    packing_group = ChoiceField(
         _("Packing Group"),
-        max_length=255,
         choices=PackingGroupChoices.choices,
         help_text=_("Packing Group of the Hazardous Material"),
         blank=True,
@@ -496,9 +494,8 @@ class ReasonCode(GenericModel):
         unique=True,
         help_text=_("Code of the Reason Code"),
     )
-    code_type = models.CharField(
+    code_type = ChoiceField(
         _("Code Type"),
-        max_length=9,
         choices=CodeTypeChoices.choices,
         help_text=_("Code Type of the Reason Code"),
     )
@@ -554,9 +551,8 @@ class Order(GenericModel):
         editable=False,
         help_text=_("Pro Number of the Order"),
     )
-    status = models.CharField(
+    status = ChoiceField(
         _("Status"),
-        max_length=20,
         choices=StatusChoices.choices,
         default=StatusChoices.NEW,
     )
@@ -632,9 +628,8 @@ class Order(GenericModel):
         blank=True,
         help_text=_("Freight Charge Amount"),
     )
-    rate_method = models.CharField(
+    rate_method = ChoiceField(
         _("Rating Method"),
-        max_length=20,
         choices=RatingMethodChoices.choices,
         default=RatingMethodChoices.FLAT,
         help_text=_("Rating Method"),
@@ -795,8 +790,8 @@ class Order(GenericModel):
             ValidationError: If the Order is not valid
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.FLAT
-                and self.freight_charge_amount is None
+            self.rate_method == Order.RatingMethodChoices.FLAT
+            and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -808,8 +803,8 @@ class Order(GenericModel):
             )
 
         if (
-                self.rate_method == Order.RatingMethodChoices.PER_MILE
-                and self.mileage is None
+            self.rate_method == Order.RatingMethodChoices.PER_MILE
+            and self.mileage is None
         ):
             raise ValidationError(
                 {
@@ -853,9 +848,8 @@ class Movement(GenericModel):
         editable=False,
         help_text=_("Movement Reference Number"),
     )
-    status = models.CharField(
+    status = ChoiceField(
         _("Status"),
-        max_length=20,
         choices=StatusChoices.choices,
         default=StatusChoices.NEW,
         help_text=_("Status of the Movement"),
@@ -929,8 +923,7 @@ class Stop(GenericModel):
     Stores movement information related to a `order.Movement`.
     """
 
-    status = models.CharField(
-        max_length=20,
+    status = ChoiceField(
         choices=StatusChoices.choices,
         default=StatusChoices.NEW,
         help_text=_("The status of the stop."),
@@ -993,8 +986,7 @@ class Stop(GenericModel):
         blank=True,
         help_text=_("The time the equipment actually departed from the stop."),
     )
-    stop_type = models.CharField(
-        max_length=20,
+    stop_type = ChoiceField(
         choices=StopChoices.choices,
         help_text=_("The type of stop."),
     )

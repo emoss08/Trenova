@@ -26,7 +26,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 
 
 class GeneralLedgerAccount(GenericModel):
@@ -110,29 +110,25 @@ class GeneralLedgerAccount(GenericModel):
         max_length=100,
         help_text=_("The description of the general ledger account."),
     )
-    account_type = models.CharField(
+    account_type = ChoiceField(
         _("Account Type"),
-        max_length=9,
         choices=AccountTypeChoices.choices,
         help_text=_("The type of the general ledger account."),
     )
-    cash_flow_type = models.CharField(
+    cash_flow_type = ChoiceField(
         _("Cash Flow Type"),
-        max_length=9,
         choices=CashFlowTypeChoices.choices,
         help_text=_("The cash flow type of the general ledger account."),
         blank=True,
     )
-    account_sub_type = models.CharField(
+    account_sub_type = ChoiceField(
         _("Account Sub Type"),
-        max_length=20,
         choices=AccountSubTypeChoices.choices,
         help_text=_("The sub type of the general ledger account."),
         blank=True,
     )
-    account_classification = models.CharField(
+    account_classification = ChoiceField(
         _("Account Classification"),
-        max_length=20,
         choices=AccountClassificationChoices.choices,
         help_text=_("The classification of the general ledger account."),
         blank=True,

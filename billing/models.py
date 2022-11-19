@@ -25,7 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
 
@@ -111,9 +111,8 @@ class AccessorialCharge(GenericModel):
         _("Is Detention"),
         default=False,
     )
-    method = models.CharField(
+    method = ChoiceField(
         _("Method"),
-        max_length=1,
         choices=FuelMethodChoices.choices,
         default=FuelMethodChoices.DISTANCE,
     )

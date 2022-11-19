@@ -26,7 +26,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 from worker.models import Worker
 
 
@@ -101,9 +101,8 @@ class EquipmentTypeDetail(GenericModel):
         related_query_name="equipment_type_detail",
         verbose_name=_("Equipment Type"),
     )
-    equipment_class = models.CharField(
+    equipment_class = ChoiceField(
         _("Equipment Class"),
-        max_length=50,
         choices=EquipmentClassChoices.choices,
         default=EquipmentClassChoices.UNDEFINED,
         help_text=_("Class of the equipment type."),
@@ -363,9 +362,8 @@ class Equipment(GenericModel):
         default=False,
         help_text=_("HOS exempt of the equipment."),
     )
-    aux_power_unit_type = models.CharField(
+    aux_power_unit_type = ChoiceField(
         _("Auxiliary Power Unit Type"),
-        max_length=50,
         choices=AuxiliaryPowerUnitTypeChoices.choices,
         default=AuxiliaryPowerUnitTypeChoices.NONE,
         help_text=_("Auxiliary power unit type of the equipment."),

@@ -48,6 +48,7 @@ class ChoiceField(CharField):
     A CharField that lets you use Django choices and provides a nice
     representation in the admin.
     """
+
     description = _("Choice Field")
 
     def __init__(self, *args, db_collation=None, **kwargs):

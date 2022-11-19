@@ -89,4 +89,6 @@ class OrderGenerationService:
 
         if instance.ready_to_bill and order_control.auto_order_total:
             instance.sub_total = OrderGenerationService._calculate_total(instance)
-            return Order.objects.filter(id=instance.id).update(sub_total=instance.sub_total)
+            return Order.objects.filter(id=instance.id).update(
+                sub_total=instance.sub_total
+            )

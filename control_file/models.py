@@ -24,7 +24,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 from organization.models import Organization
 
 
@@ -68,16 +68,14 @@ class GoogleAPI(GenericModel):
         max_length=255,
         help_text=_("Google API Key for the organization."),
     )
-    mileage_unit = models.CharField(
+    mileage_unit = ChoiceField(
         _("Mileage Unit"),
-        max_length=255,
         choices=GoogleRouteDistanceUnitChoices.choices,
         default=GoogleRouteDistanceUnitChoices.IMPERIAL,
         help_text=_("The mileage unit that the organization uses"),
     )
-    traffic_model = models.CharField(
+    traffic_model = ChoiceField(
         _("Traffic Model"),
-        max_length=255,
         choices=GoogleRouteModelChoices.choices,
         default=GoogleRouteModelChoices.BEST_GUESS,
         help_text=_("The traffic model that the organization uses"),

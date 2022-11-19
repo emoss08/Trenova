@@ -24,7 +24,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import GenericModel
+from core.models import ChoiceField, GenericModel
 
 
 @final
@@ -57,16 +57,14 @@ class Integration(GenericModel):
     is_active = models.BooleanField(
         _("Is Active"), default=True, help_text=_("Is the integration active?")
     )
-    name = models.CharField(
+    name = ChoiceField(
         _("Name"),
-        max_length=100,
         choices=IntegrationChoices.choices,
         unique=True,
         help_text=_("Name of the integration"),
     )
-    auth_type = models.CharField(
+    auth_type = ChoiceField(
         _("Auth Type"),
-        max_length=100,
         choices=IntegrationAuthTypes.choices,
         help_text=_("Authentication type for the integration"),
         default=IntegrationAuthTypes.NO_AUTH,
