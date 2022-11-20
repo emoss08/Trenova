@@ -36,3 +36,21 @@ class RatingException(MontaCoreException):
             None
         """
         super().__init__(message, status_code)
+
+
+class SequenceException(MontaCoreException):
+    """
+    Base class for sequencing exceptions to be raised by Monta.
+    """
+
+    def __init__(self, message: str, status_code: int) -> None:
+        """This is the constructor for the SequenceException class.
+
+        Args:
+            message (str): The error message
+            status_code (int): The status code of the error
+
+        Returns:
+            None
+        """
+        super().__init__(message, status_code)

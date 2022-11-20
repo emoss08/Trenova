@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+from order.exceptions import SequenceException
 from order.models import Movement, Order, OrderControl, Stop, StopChoices
 
 
@@ -77,6 +77,6 @@ class StopService:
             for index, stop in enumerate(stops):
                 stop.sequence = index + 1
                 stop_list.append(stop)
+            stop_list.sort(key=lambda x: x.stop_type, reverse=True)
             Stop.objects.bulk_update(stop_list, ["sequence"])
-        else:
-            pass
+        raise SequenceException("Stops must be sequenced manually.", 500)
