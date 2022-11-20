@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, Optional, Sequence, TypeVar
 
 from django.contrib import admin
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm, ModelForm
 from django.http import HttpRequest
@@ -40,6 +41,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     """
 
     exclude: tuple[str, ...] = ("organization",)
+    autocomplete: bool = True
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
@@ -58,11 +60,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         )
 
     def save_model(
-            self,
-            request: HttpRequest,
-            obj: _M,
-            form: type[BaseModelForm],
-            change: bool,
+        self,
+        request: HttpRequest,
+        obj: _M,
+        form: type[BaseModelForm],
+        change: bool,
     ) -> None:
         """Save Model Instance
 
@@ -79,7 +81,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_model(request, obj, form, change)
 
     def save_formset(
-            self, request: HttpRequest, form: Any, formset: Any, change: Any
+        self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
 
@@ -100,11 +102,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_formset(request, form, formset, change)
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: Optional[_M] = None,
-            change: bool = False,
-            **kwargs: Any,
+        self,
+        request: HttpRequest,
+        obj: Optional[_M] = None,
+        change: bool = False,
+        **kwargs: Any,
     ) -> type[ModelForm[_M]]:
         """Get Form for Model
 
@@ -129,17 +131,21 @@ class GenericAdmin(admin.ModelAdmin[_M]):
             request (HttpRequest): Request Object
 
         Returns:
-            list[str]: Autocomplete Fields
+            Sequence[str]: Autocomplete Fields
         """
+        if self.autocomplete:
+            if not self.search_fields:
+                raise ImproperlyConfigured(
+                    f"{self.__class__.__name__} must define search_fields"
+                    " when self.autocomplete is True"
+                )
 
-        if not self.search_fields:
-            raise ValueError(f"{self.__class__.__name__} must define search_fields")
-
-        autocomplete_fields = []
-        for field in self.model._meta.get_fields():
-            if field.is_relation and field.many_to_one:
-                autocomplete_fields.append(field.name)
-        return autocomplete_fields
+            autocomplete_fields = []
+            for field in self.model._meta.get_fields():
+                if field.is_relation and field.many_to_one:
+                    autocomplete_fields.append(field.name)
+            return autocomplete_fields
+        return []
 
 
 class GenericStackedInline(admin.StackedInline[_C, _P]):
@@ -148,7 +154,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
     """
 
     extra = 0
-    exclude: Sequence[str] | None = ("organization",)
+    exclude = ("organization",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
         """Get Queryset
@@ -170,7 +176,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
         """Get Autocomplete Fields
 
         Returns:
-            list[str]: Autocomplete Fields
+            Sequence[str]: Autocomplete Fields
         """
         autocomplete_fields = []
         for field in self.model._meta.get_fields():
@@ -183,4 +189,5 @@ class GenericTabularInline(GenericStackedInline):
     """
     Generic Admin Tabular Inline with Organization Exclusion
     """
+
     template = "admin/edit_inline/tabular.html"

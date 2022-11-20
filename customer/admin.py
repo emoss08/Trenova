@@ -104,7 +104,9 @@ class CustomerFuelProfileAdmin(GenericAdmin[models.CustomerFuelProfile]):
     search_fields: tuple[str, ...] = ("id",)
 
 
-class CustomerContactInline(GenericStackedInline[models.Customer, models.CustomerContact]):
+class CustomerContactInline(
+    GenericStackedInline[models.Customer, models.CustomerContact]
+):
     """
     Customer Contact
     """

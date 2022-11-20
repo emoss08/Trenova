@@ -40,7 +40,7 @@ class WorkerContactAdmin(GenericStackedInline[models.Worker, models.WorkerContac
     """
 
     model: type[models.WorkerContact] = models.WorkerContact
-    verbose_name_plural= "Worker Contact"
+    verbose_name_plural = "Worker Contact"
     fk_name = "worker"
 
 

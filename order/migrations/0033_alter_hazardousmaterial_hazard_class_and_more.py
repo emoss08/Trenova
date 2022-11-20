@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-import core.models
+from utils import models
 
 
 class Migration(migrations.Migration):
@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="hazardousmaterial",
             name="hazard_class",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("1.1", "Division 1.1: Mass Explosive Hazard"),
                     ("1.2", "Division 1.2: Projection Hazard"),
@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="hazardousmaterial",
             name="packing_group",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 blank=True,
                 choices=[("I", "I"), ("II", "II"), ("III", "III")],
                 help_text="Packing Group of the Hazardous Material",
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="movement",
             name="status",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("N", "New"),
                     ("P", "In Progress"),
@@ -86,7 +86,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="order",
             name="rate_method",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("F", "Flat Fee"),
                     ("PM", "Per Mile"),
@@ -102,7 +102,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="order",
             name="status",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("N", "New"),
                     ("P", "In Progress"),
@@ -118,7 +118,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="reasoncode",
             name="code_type",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[("VOIDED", "Voided"), ("CANCELLED", "Cancelled")],
                 help_text="Code Type of the Reason Code",
                 max_length=9,
@@ -128,7 +128,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="stop",
             name="status",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("N", "New"),
                     ("P", "In Progress"),
@@ -144,7 +144,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="stop",
             name="stop_type",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 choices=[
                     ("P", "Pickup"),
                     ("SP", "Split Pickup"),

@@ -16,7 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from core.exceptions import MontaCoreException
+
+from utils.exceptions import MontaCoreException
 
 
 class RatingException(MontaCoreException):
