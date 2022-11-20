@@ -23,11 +23,7 @@ import textwrap
 from typing import Any
 
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -35,8 +31,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from core.models import GenericModel
 from core.validators import ImageSizeValidator
+from utils.models import GenericModel
 
 
 class UserManager(BaseUserManager):

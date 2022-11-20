@@ -17,9 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import decimal
-
-from order.exceptions import RatingException
 from order.models import Order
 
 
@@ -38,24 +35,3 @@ class OrderGenerationService:
         """
         code = f"ORD{Order.objects.count() + 1:06d}"
         return "ORD000001" if Order.objects.filter(pro_number=code).exists() else code
-
-
-class OrderTotalService:
-    """
-    Generate the total amount of an order.
-    """
-    rating_method: type[Order.RatingMethodChoices] = Order.RatingMethodChoices
-
-    def __init__(self, order: Order):
-        self.order = order
-
-    def _calculate_flat_rate(self) -> decimal.Decimal:
-        try:
-            if self.order.rate_method == self.rating_method.FLAT:
-                if self.order.other_charge_amount and self.order.freight_charge_amount:
-                    return self.order.other_charge_amount + self.order.freight_charge_amount
-                elif self.order.freight_charge_amount:
-                    return decimal.Decimal(self.order.freight_charge_amount)
-            
-        except RatingException as rating_exception:
-            raise rating_exception

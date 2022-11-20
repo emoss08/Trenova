@@ -39,7 +39,9 @@ class LocationCategoryAdmin(GenericAdmin[models.LocationCategory]):
     )
 
 
-class LocationCommentAdmin(GenericStackedInline[models.Location, models.LocationComment]):
+class LocationCommentAdmin(
+    GenericStackedInline[models.Location, models.LocationComment]
+):
     """
     Location Comment Admin
     """
@@ -50,7 +52,9 @@ class LocationCommentAdmin(GenericStackedInline[models.Location, models.Location
     extra = 0
 
 
-class LocationContactAdmin(GenericStackedInline[models.Location, models.LocationContact]):
+class LocationContactAdmin(
+    GenericStackedInline[models.Location, models.LocationContact]
+):
     """
     Location Contact Admin
     """

@@ -24,8 +24,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import ChoiceField, GenericModel
 from organization.models import Organization
+from utils.models import ChoiceField, GenericModel
 
 
 class GoogleAPI(GenericModel):

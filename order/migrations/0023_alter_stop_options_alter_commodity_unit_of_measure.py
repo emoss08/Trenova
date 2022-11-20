@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-import core.models
+from utils import models
 
 
 class Migration(migrations.Migration):
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="commodity",
             name="unit_of_measure",
-            field=core.models.ChoiceField(
+            field=models.ChoiceField(
                 blank=True,
                 choices=[
                     ("PALLET", "Pallet"),

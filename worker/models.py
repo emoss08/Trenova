@@ -30,9 +30,9 @@ from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
 from control_file.models import CommentType
-from core.models import ChoiceField, GenericModel
 from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
+from utils.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
 
