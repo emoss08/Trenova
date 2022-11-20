@@ -36,6 +36,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     model: type[GeneralLedgerAccount] = GeneralLedgerAccount
     list_display: tuple[str, ...] = (
         "id",
+        "account_number",
         "description",
     )
     search_fields: tuple[str, ...] = (

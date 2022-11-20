@@ -171,7 +171,8 @@ class OrderControl(GenericModel):
 
 class HazardousMaterial(GenericModel):
     """
-    Hazardous Class Model Fields
+    Hazardous Class Model Fields that can be used in the
+    :model:`order.Order` & :model:`order.Commodity` model.
     """
 
     @final
@@ -775,20 +776,20 @@ class Order(GenericModel):
         return self.pro_number
 
     def total_pieces(self) -> int:
-        """
-        get the pieces for the order.
-        :return: Pieces for the order
-        :rtype: int
+        """Get the total piece count for the order
+
+        Returns:
+            int: Total piece count for the order
         """
         return Stop.objects.filter(movement__order__exact=self).aggregate(
             Sum("pieces")
         )["pieces__sum"]
 
     def total_weight(self) -> int:
-        """
-        Get the weight for the order.
-        :return: Weight for the order
-        :rtype: int
+        """Get the total weight for the order.
+
+        Returns:
+            int: Total weight for the order
         """
         return Stop.objects.filter(movement__order__exact=self).aggregate(
             Sum("weight")
@@ -823,8 +824,8 @@ class Order(GenericModel):
             ValidationError: If the Order is not valid
         """
         if (
-            self.rate_method == Order.RatingMethodChoices.FLAT
-            and self.freight_charge_amount is None
+                self.rate_method == Order.RatingMethodChoices.FLAT
+                and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -836,8 +837,8 @@ class Order(GenericModel):
             )
 
         if (
-            self.rate_method == Order.RatingMethodChoices.PER_MILE
-            and self.mileage is None
+                self.rate_method == Order.RatingMethodChoices.PER_MILE
+                and self.mileage is None
         ):
             raise ValidationError(
                 {
