@@ -132,6 +132,12 @@ class OrderControl(GenericModel):
         default=False,
         help_text=_("Automatically generate routes for order entry."),
     )
+    auto_pop_address = models.BooleanField(
+        _("Auto Populate Address"),
+        default=True,
+        help_text=_("Auto populate address from location ID "
+                    "when entering an order."),
+    )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
         default=True,

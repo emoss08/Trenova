@@ -66,6 +66,9 @@ class StopService:
 
         Returns:
             None
+
+        Raises:
+            SequenceException: If the stop sequence is not valid.
         """
         order_control: OrderControl = OrderControl.objects.filter(
             organization=instance.organization
@@ -77,6 +80,7 @@ class StopService:
             for index, stop in enumerate(stops):
                 stop.sequence = index + 1
                 stop_list.append(stop)
+
             stop_list.sort(key=lambda x: x.stop_type, reverse=True)
             Stop.objects.bulk_update(stop_list, ["sequence"])
         raise SequenceException("Stops must be sequenced manually.", 500)
