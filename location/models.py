@@ -172,6 +172,23 @@ class Location(GenericModel):
         """
         return textwrap.wrap(self.id, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Location absolute URL
+
+        Returns:
+            str: Location absolute URL
+        """
+        return reverse("location:location_detail", kwargs={"pk": self.pk})
+
+    @property
+    def get_address_combination(self) -> str:
+        """Location address combination
+
+        Returns:
+            str: Location address combination
+        """
+        return f"{self.address_line_1}, {self.city}, {self.state} {self.zip_code}"
+
 
 class LocationContact(GenericModel):
     """
