@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any
-
 from django.core import validators
 from django.db import models
 from django.db.models import CharField
@@ -41,16 +39,6 @@ class GenericModel(TimeStampedModel):
         verbose_name=_("Organization"),
         help_text=_("Organization"),
     )
-
-    def log(self, message: str, level: str = "INFO", **kwargs: Any):
-        """Log model events and sql queries
-
-        Args:
-            message (str): Message to log
-            level (str, optional): Log level. Defaults to "INFO".
-            **kwargs (Any): Additional arguments to pass to logger
-        """
-        logger.log(level, message, **kwargs)
 
     class Meta:
         abstract = True
