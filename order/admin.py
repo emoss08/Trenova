@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 
 from order import models
-from utils.admin import GenericAdmin, GenericTabularInline
+from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
 
 
 class OrderDocumentationInline(GenericTabularInline):
@@ -29,6 +29,14 @@ class OrderDocumentationInline(GenericTabularInline):
     """
 
     model: type[models.OrderDocumentation] = models.OrderDocumentation
+
+
+class OrderComment(GenericStackedInline):
+    """
+    Order comment inline
+    """
+
+    model: type[models.OrderComment] = models.OrderComment
 
 
 @admin.register(models.OrderType)
@@ -189,7 +197,10 @@ class OrderAdmin(GenericAdmin[models.Order]):
             },
         ),
     )
-    inlines = (OrderDocumentationInline,)
+    inlines = (
+        OrderDocumentationInline,
+        OrderComment,
+    )
 
 
 @admin.register(models.Movement)

@@ -32,6 +32,7 @@ from django.utils.translation import gettext_lazy as _
 
 from accounting.models import RevenueCode
 from billing.models import DocumentClassification
+from control_file.models import CommentType
 from customer.models import Customer
 from dispatch.models import DelayCode
 from equipment.models import Equipment, EquipmentType
@@ -136,8 +137,7 @@ class OrderControl(GenericModel):
         _("Auto Populate Address"),
         default=True,
         help_text=_(
-            "Auto populate address from location ID "
-            "when entering an order."
+            "Auto populate address from location ID " "when entering an order."
         ),
     )
     auto_sequence_stops = models.BooleanField(
@@ -467,6 +467,7 @@ class QualifierCode(GenericModel):
         """
         Qualifier Code Metaclass
         """
+
         verbose_name = _("Qualifier Code")
         verbose_name_plural = _("Qualifier Codes")
         ordering: list[str] = ["code"]
@@ -523,6 +524,7 @@ class ReasonCode(GenericModel):
         """
         Reason Code Metaclass
         """
+
         verbose_name = _("Reason Code")
         verbose_name_plural = _("Reason Codes")
         ordering: list[str] = ["code"]
@@ -1255,3 +1257,53 @@ class OrderDocumentation(GenericModel):
             str: Absolute url for the OrderDocumentation
         """
         return reverse("order-documentation-detail", kwargs={"pk": self.pk})
+
+
+class OrderComment(GenericModel):
+    """
+    Stores comments related to a `order.Order`.
+    """
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="order_comments",
+        related_query_name="order_comment",
+        verbose_name=_("Order"),
+    )
+    comment_type = models.ForeignKey(
+        CommentType,
+        on_delete=models.CASCADE,
+        related_name="order_comments",
+        related_query_name="order_comment",
+        verbose_name=_("Comment Type"),
+        help_text=_("Comment Type"),
+    )
+    comment = models.TextField(
+        _("Comment"),
+        help_text=_("Comment"),
+    )
+
+    class Meta:
+        """
+        OrderComment Metaclass
+        """
+
+        verbose_name = _("Order Comment")
+        verbose_name_plural = _("Order Comments")
+
+    def __str__(self) -> str:
+        """String representation of the OrderComment
+
+        Returns:
+            str: String representation of the OrderComment
+        """
+        return f"{self.order} - {self.comment}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the OrderComment
+
+        Returns:
+            str: Absolute url for the OrderComment
+        """
+        return reverse("order-comment-detail", kwargs={"pk": self.pk})
