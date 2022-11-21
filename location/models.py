@@ -82,7 +82,7 @@ class Location(GenericModel):
         primary_key=True,
         help_text=_("Location ID"),
     )
-    category = models.ForeignKey(
+    location_category = models.ForeignKey(
         LocationCategory,
         on_delete=models.PROTECT,
         verbose_name=_("Category"),

@@ -49,7 +49,6 @@ class LocationCommentAdmin(
     model: type[models.LocationComment] = models.LocationComment
     verbose_name_plural = "Location Comments"
     fk_name = "location"
-    extra = 0
 
 
 class LocationContactAdmin(
@@ -62,7 +61,6 @@ class LocationContactAdmin(
     model: type[models.LocationContact] = models.LocationContact
     verbose_name_plural = "Location Contacts"
     fk_name = "location"
-    extra = 0
 
 
 @admin.register(models.Location)
@@ -73,7 +71,7 @@ class LocationAdmin(GenericAdmin[models.Location]):
 
     list_display: tuple[str, ...] = (
         "id",
-        "category",
+        "location_category",
         "address_line_1",
         "city",
         "state",
@@ -81,7 +79,7 @@ class LocationAdmin(GenericAdmin[models.Location]):
     )
     list_filter: tuple[str, ...] = (
         "depot",
-        "category",
+        "location_category",
     )
     search_fields: tuple[str, ...] = (
         "address_line_1",
