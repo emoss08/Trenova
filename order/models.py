@@ -135,8 +135,9 @@ class OrderControl(GenericModel):
     auto_pop_address = models.BooleanField(
         _("Auto Populate Address"),
         default=True,
-        help_text=_("Auto populate address from location ID "
-                    "when entering an order."),
+        help_text=_(
+            "Auto populate address from location ID " "when entering an order."
+        ),
     )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
