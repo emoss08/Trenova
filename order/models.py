@@ -136,7 +136,8 @@ class OrderControl(GenericModel):
         _("Auto Populate Address"),
         default=True,
         help_text=_(
-            "Auto populate address from location ID " "when entering an order."
+            "Auto populate address from location ID "
+            "when entering an order."
         ),
     )
     auto_sequence_stops = models.BooleanField(
@@ -463,6 +464,9 @@ class QualifierCode(GenericModel):
     )
 
     class Meta:
+        """
+        Qualifier Code Metaclass
+        """
         verbose_name = _("Qualifier Code")
         verbose_name_plural = _("Qualifier Codes")
         ordering: list[str] = ["code"]
@@ -516,6 +520,9 @@ class ReasonCode(GenericModel):
     )
 
     class Meta:
+        """
+        Reason Code Metaclass
+        """
         verbose_name = _("Reason Code")
         verbose_name_plural = _("Reason Codes")
         ordering: list[str] = ["code"]
@@ -816,10 +823,22 @@ class Order(GenericModel):
             return self.freight_charge_amount + self.other_charge_amount
 
         # Handle the mileage rate calculation
-        elif self.rate_method == Order.RatingMethodChoices.PER_MILE:
+        if self.rate_method == Order.RatingMethodChoices.PER_MILE:
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
         return self.freight_charge_amount
+
+    def set_address(self) -> None:
+        """Set the address for the order
+
+        Returns:
+            None
+        """
+        order_control = OrderControl.objects.get(organization=self.organization)
+
+        if order_control.auto_pop_address:
+            self.origin_address = self.origin_location.get_address_combination
+            self.destination_address = self.destination_location.get_address_combination
 
     def clean(self) -> None:
         """Order save method
@@ -882,6 +901,8 @@ class Order(GenericModel):
 
         if self.ready_to_bill:
             self.sub_total = self.calculate_total()
+
+        self.set_address()
 
         super().save(*args, **kwargs)
 
@@ -965,7 +986,54 @@ class Movement(GenericModel):
         Returns:
             str: String representation of the Movement
         """
-        return f"{self.order} - {self.equipment}"
+        return f"{self.order} - {self.ref_num}"
+
+    def clean(self) -> None:
+        """Stop clean method
+
+        Returns:
+            None
+        """
+        if self.pk:
+            if self.status == StatusChoices.NEW:
+                old_status = Movement.objects.get(pk=self.pk).status
+
+                if old_status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]:
+                    raise ValidationError(
+                        {
+                            "status": ValidationError(
+                                _(
+                                    "Cannot change status to new if the status was"
+                                    " previously in progress or completed."
+                                ),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+            if self.status is StatusChoices.IN_PROGRESS and not self.primary_worker:
+                raise ValidationError(
+                    {
+                        "primary_worker": ValidationError(
+                            _("Primary worker is required for in progress status."),
+                            code="invalid",
+                        )
+                    }
+                )
+
+        if (
+            self.primary_worker
+            and self.secondary_worker
+            and self.primary_worker == self.secondary_worker
+        ):
+            raise ValidationError(
+                {
+                    "secondary_worker": ValidationError(
+                        _("Primary and secondary workers cannot be the same."),
+                        code="invalid",
+                    )
+                }
+            )
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
