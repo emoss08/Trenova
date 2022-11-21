@@ -1061,8 +1061,6 @@ class Stop(GenericModel):
     sequence = models.PositiveIntegerField(
         _("Sequence"),
         default=1,
-        null=True,
-        blank=True,
         help_text=_("The sequence of the stop in the movement."),
     )
     movement = models.ForeignKey(
@@ -1137,6 +1135,193 @@ class Stop(GenericModel):
             str: String representation of the Stop
         """
         return f"{self.movement} - {self.sequence} - {self.location}"
+
+    def clean(self) -> None:
+        """Stop clean Method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the stop is not valid.
+
+        """
+        super().clean()
+        if self.pk:
+            if self.status == StatusChoices.NEW:
+                old_status = Stop.objects.get(pk=self.pk).status
+
+                if old_status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]:
+                    raise ValidationError(
+                        {
+                            "status": ValidationError(
+                                _(
+                                    "Cannot change status to new if the status was"
+                                    " previously in progress or completed."
+                                ),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+            if self.sequence > 1:
+                previous_stop = self.movement.stops.filter(
+                    sequence=self.sequence - 1
+                ).first()
+
+                if (
+                    previous_stop
+                    and self.appointment_time < previous_stop.appointment_time
+                ):
+                    raise ValidationError(
+                        {
+                            "appointment_time": ValidationError(
+                                _("Appointment time must be after previous stop."),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+                if previous_stop and previous_stop.status != StatusChoices.COMPLETED:
+                    if self.status in [
+                        StatusChoices.IN_PROGRESS,
+                        StatusChoices.COMPLETED,
+                    ]:
+                        raise ValidationError(
+                            {
+                                "status": ValidationError(
+                                    _(
+                                        "Cannot change status to in progress or completed if"
+                                        " previous stop is not completed."
+                                    ),
+                                    code="invalid",
+                                )
+                            }
+                        )
+
+                if self.sequence < self.movement.stops.count():
+                    next_stop = self.movement.stops.filter(
+                        sequence__exact=self.sequence + 1
+                    ).first()
+
+                    if next_stop and self.appointment_time > next_stop.appointment_time:
+                        raise ValidationError(
+                            {
+                                "appointment_time": ValidationError(
+                                    _("Appointment time must be before next stop."),
+                                    code="invalid",
+                                )
+                            }
+                        )
+
+                    # If the next stop is in progress or completed, the current stop cannot be available
+                    if (
+                        next_stop
+                        and self.status != StatusChoices.COMPLETED
+                        and next_stop.status
+                        in [
+                            StatusChoices.COMPLETED,
+                            StatusChoices.IN_PROGRESS,
+                        ]
+                    ):
+                        raise ValidationError(
+                            {
+                                "status": ValidationError(
+                                    _(
+                                        "Previous stop must be completed before this stop can"
+                                        " be in progress or completed."
+                                    ),
+                                    code="invalid",
+                                )
+                            }
+                        )
+
+                    if not self.movement.primary_worker and not self.movement.equipment:
+                        if self.status in [
+                            StatusChoices.IN_PROGRESS,
+                            StatusChoices.COMPLETED,
+                        ]:
+                            raise ValidationError(
+                                {
+                                    "status": ValidationError(
+                                        _(
+                                            "Cannot change status to in progress or completed if"
+                                            " there is no equipment or primary worker."
+                                        ),
+                                        code="invalid",
+                                    )
+                                }
+                            )
+
+                        if self.arrival_time or self.departure_time:
+                            raise ValidationError(
+                                {
+                                    "arrival_time": ValidationError(
+                                        _(
+                                            "Must assign worker or equipment to movement before"
+                                            " setting arrival or departure time."
+                                        ),
+                                        code="invalid",
+                                    )
+                                }
+                            )
+                        if self.departure_time and not self.arrival_time:
+                            raise ValidationError(
+                                {
+                                    "departure_time": ValidationError(
+                                        _(
+                                            "Must set arrival time before setting departure time."
+                                        ),
+                                        code="invalid",
+                                    )
+                                }
+                            )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Stop save method
+
+        Args:
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None
+        """
+        self.full_clean()
+
+        # If the status changes to in progress, change the movement status associated to this stop to in progress.
+        if self.status == StatusChoices.IN_PROGRESS:
+            self.movement.status = StatusChoices.IN_PROGRESS
+            self.movement.save()
+
+        # if the last stop is completed, change the movement status to complete.
+        if self.status == StatusChoices.COMPLETED:
+            if (
+                self.movement.stops.filter(status=StatusChoices.COMPLETED).count()
+                == self.movement.stops.count()
+            ):
+                self.movement.status = StatusChoices.COMPLETED
+                self.movement.save()
+
+        # If the arrival time is set, change the status to in progress.
+        if self.arrival_time:
+            self.status = StatusChoices.IN_PROGRESS
+
+            # If the arrival time of the stop is after the appointment time, create a service incident.
+            if self.arrival_time > self.appointment_time:
+                ServiceIncident.objects.create(
+                    organization=self.movement.order.organization,
+                    movement=self.movement,
+                    stop=self,
+                    delay_code=DelayCode.objects.filter(pk__exact=1).first(),
+                    delay_time=self.arrival_time - self.appointment_time,
+                )
+
+        # If the stop arrival and departure time are set, change the status to complete.
+        if self.arrival_time and self.departure_time:
+            self.status = StatusChoices.COMPLETED
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Stop
