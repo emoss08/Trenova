@@ -1468,6 +1468,14 @@ class OrderComment(GenericModel):
         _("Comment"),
         help_text=_("Comment"),
     )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="order_comments",
+        related_query_name="order_comment",
+        verbose_name=_("Entered By"),
+        help_text=_("Entered By"),
+    )
 
     class Meta:
         """
