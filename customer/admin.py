@@ -112,10 +112,7 @@ class CustomerContactInline(
     """
 
     model: type[models.CustomerContact] = models.CustomerContact
-    extra = 0
-    verbose_name_plural = "Customer Contacts"
     fk_name = "customer"
-    exclude = ("organization",)
 
 
 @admin.register(models.Customer)

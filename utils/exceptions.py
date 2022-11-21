@@ -44,4 +44,3 @@ class MontaCoreException(Exception):
             str: The string representation of the exception
         """
         return f"{self.message} (Status Code: {self.status_code})"
-
