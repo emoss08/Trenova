@@ -43,7 +43,7 @@ class GenericModel(TimeStampedModel):
     )
 
     def log(self, message: str, level: str = "INFO", **kwargs: Any):
-        """ Log model events and sql queries
+        """Log model events and sql queries
 
         Args:
             message (str): Message to log

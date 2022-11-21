@@ -288,9 +288,6 @@ class LocationComment(GenericModel):
         verbose_name = _("Location Comment")
         verbose_name_plural = _("Location Comments")
         ordering: tuple[str] = ("location",)
-        indexes: list[models.Index] = [
-            models.Index(fields=["location"]),
-        ]
 
     def __str__(self) -> str:
         """LocationComment string representation
