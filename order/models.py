@@ -787,8 +787,9 @@ class Order(GenericModel):
         Returns:
             str: String representation of the Order
         """
-        return self.pro_number
+        return textwrap.wrap(self.pro_number, 10)[0]
 
+    @property
     def total_pieces(self) -> int:
         """Get the total piece count for the order
 
@@ -799,6 +800,7 @@ class Order(GenericModel):
             Sum("pieces")
         )["pieces__sum"]
 
+    @property
     def total_weight(self) -> int:
         """Get the total weight for the order.
 
@@ -896,8 +898,8 @@ class Order(GenericModel):
         self.full_clean()
 
         if self.status == StatusChoices.COMPLETED:
-            self.pieces = self.total_pieces()
-            self.weight = self.total_weight()
+            self.pieces = self.total_pieces
+            self.weight = self.total_weight
 
         if self.ready_to_bill:
             self.sub_total = self.calculate_total()
