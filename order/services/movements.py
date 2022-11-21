@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from order.models import Movement, Order
 
 
-class MovementService:
+class MovementService(object):
     """Movement Service
 
     Service to manage all movement actions
