@@ -33,7 +33,9 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
 
         model = "accounts.JobTitle"
 
-    organization = factory.SubFactory("organization.factories.organization.OrganizationFactory")
+    organization = factory.SubFactory(
+        "organization.factories.organization.OrganizationFactory"
+    )
     name = factory.Faker("job")
     description = factory.Faker("text")
 
@@ -50,7 +52,9 @@ class UserFactory(factory.django.DjangoModelFactory):
 
         model = "accounts.User"
 
-    organization = factory.SubFactory("organization.factories.organization.OrganizationFactory")
+    organization = factory.SubFactory(
+        "organization.factories.organization.OrganizationFactory"
+    )
     username = factory.Faker("user_name")
     password = factory.Faker("password")
     email = factory.Faker("email")

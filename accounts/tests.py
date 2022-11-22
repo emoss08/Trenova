@@ -27,9 +27,9 @@ class TestUser(TestCase):
     def setUp(self):
         self.organization = OrganizationFactory()
         self.user = User.objects.create_user(
-            user_name='test_user',
-            email='test@test.com',
-            password='test_password',
+            user_name="test_user",
+            email="test@test.com",
+            password="test_password",
             organization=self.organization,
         )
         self.profile = UserProfile.objects.create(
@@ -41,9 +41,9 @@ class TestUser(TestCase):
         self.assertEqual(User.objects.count(), 1)
 
     def test_user_updated(self):
-        self.user.user_name = 'test_user_updated'
+        self.user.user_name = "test_user_updated"
         self.user.save()
-        self.assertEqual(self.user.user_name, 'test_user_updated')
+        self.assertEqual(self.user.user_name, "test_user_updated")
 
     def test_user_organization(self):
         self.assertEqual(self.user.organization, self.organization)
@@ -52,6 +52,6 @@ class TestUser(TestCase):
         self.assertEqual(UserProfile.objects.count(), 1)
 
     def test_user_profile_updated(self):
-        self.profile.first_name = 'test_first_name'
+        self.profile.first_name = "test_first_name"
         self.profile.save()
-        self.assertEqual(self.profile.first_name, 'test_first_name')
+        self.assertEqual(self.profile.first_name, "test_first_name")

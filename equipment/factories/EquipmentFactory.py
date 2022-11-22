@@ -31,11 +31,14 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for EquipmentTypeFactory
         """
+
         model = models.EquipmentType
 
-    organization = factory.SubFactory("organization.tests.factories.organization.OrganizationFactory")
-    name = factory.Faker('name')
-    description = factory.Faker('text')
+    organization = factory.SubFactory(
+        "organization.factories.organization.OrganizationFactory"
+    )
+    name = "Test Equipment Type"
+    description = "Test Equipment Type Description"
 
 
 class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
@@ -47,9 +50,12 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for EquipmentTypeDetailFactory
         """
+
         model = models.EquipmentTypeDetail
 
-    organization = factory.SubFactory("organization.tests.factories.organization.OrganizationFactory")
+    organization = factory.SubFactory(
+        "organization.factories.organization.OrganizationFactory"
+    )
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     equipment_class = models.EquipmentTypeDetail.EquipmentClassChoices.TRAILER
 
@@ -63,11 +69,14 @@ class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for EquipmentManufacturerFactory
         """
+
         model = models.EquipmentManufacturer
 
-    organization = factory.SubFactory("organization.tests.factories.organization.OrganizationFactory")
-    id = factory.Faker('name')
-    description = factory.Faker('text')
+    organization = factory.SubFactory(
+        "organization.factories.organization.OrganizationFactory"
+    )
+    id = factory.Faker("name")
+    description = factory.Faker("text")
 
 
 class EquipmentFactory(factory.django.DjangoModelFactory):
@@ -79,8 +88,11 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for EquipmentFactory
         """
+
         model = models.Equipment
 
-    organization = factory.SubFactory("organization.tests.factories.organization.OrganizationFactory")
+    organization = factory.SubFactory(
+        "organization.factories.organization.OrganizationFactory"
+    )
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)

@@ -131,6 +131,7 @@ class OrderControlAdmin(GenericAdmin[models.OrderControl]):
         "organization",
         "auto_rate_orders",
     )
+    search_fields = ("organization", "auto_rate_orders")
 
 
 @admin.register(models.Order)
