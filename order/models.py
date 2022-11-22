@@ -1039,6 +1039,42 @@ class Movement(GenericModel):
                 }
             )
 
+        if (
+            self.status in [StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            and self.stops.filter(
+                status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            ).exists()
+        ):
+            raise ValidationError(
+                {
+                    "status": ValidationError(
+                        _(
+                            "Cannot change status to new or in progress if any of the"
+                            " stops are in progress or new."
+                        ),
+                        code="invalid",
+                    )
+                }
+            )
+
+        if (
+            self.status == StatusChoices.COMPLETED
+            and self.stops.filter(
+                status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            ).exists()
+        ):
+            raise ValidationError(
+                {
+                    "status": ValidationError(
+                        _(
+                            "Cannot change status to completed if any of the stops are"
+                            " in progress or new."
+                        ),
+                        code="invalid",
+                    )
+                }
+            )
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
 
