@@ -13,25 +13,19 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
-You should have received a copy of the GNU General Puboooolic License
+You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.test import TestCase
-from rest_framework.test import APIClient
+import pytest
 
-from accounts.tests.factories.user import Userfactory
-
-user = Userfactory()
-client = APIClient()
+from .factories.EquipmentFactory import EquipmentFactory
 
 
-class TestEquipment(TestCase):
-    def setUp(self) -> None:
-        client = APIClient()
-        user = Userfactory()
+@pytest.fixture
+def equipment():
+    """ Equipment Fixture
 
-        client.force_authenticate(user=user)
-
-    def test_user_logged_in(self) -> None:
-        print(client.force_authenticate(user=user))
+    Returns:
+    """
+    return EquipmentFactory.create_batch(1)
