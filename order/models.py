@@ -548,7 +548,7 @@ class ReasonCode(GenericModel):
 
 class Order(GenericModel):
     """
-    Stores order information related to a `organization.Organization`.
+    Stores order information related to a :model:`organization.Organization`.
     """
 
     @final
@@ -921,7 +921,7 @@ class Order(GenericModel):
 
 class Movement(GenericModel):
     """
-    Stores movement information related to a `order.Order`.
+    Stores movement information related to a :model:`order.Order`.
     """
 
     ref_num = models.CharField(
@@ -1050,7 +1050,7 @@ class Movement(GenericModel):
 
 class Stop(GenericModel):
     """
-    Stores movement information related to a `order.Movement`.
+    Stores movement information related to a :model:`order.Movement`.
     """
 
     status = ChoiceField(
@@ -1265,6 +1265,7 @@ class Stop(GenericModel):
                                     )
                                 }
                             )
+
                         if self.departure_time and not self.arrival_time:
                             raise ValidationError(
                                 {
@@ -1272,6 +1273,16 @@ class Stop(GenericModel):
                                         _(
                                             "Must set arrival time before setting departure time."
                                         ),
+                                        code="invalid",
+                                    )
+                                }
+                            )
+
+                        if self.departure_time < self.arrival_time:
+                            raise ValidationError(
+                                {
+                                    "departure_time": ValidationError(
+                                        _("Departure time must be after arrival time."),
                                         code="invalid",
                                     )
                                 }
@@ -1287,6 +1298,7 @@ class Stop(GenericModel):
         Returns:
             None
         """
+
         self.full_clean()
 
         # If the status changes to in progress, change the movement status associated to this stop to in progress.
@@ -1313,7 +1325,6 @@ class Stop(GenericModel):
                     organization=self.movement.order.organization,
                     movement=self.movement,
                     stop=self,
-                    delay_code=DelayCode.objects.filter(pk__exact=1).first(),
                     delay_time=self.arrival_time - self.appointment_time,
                 )
 
@@ -1334,7 +1345,8 @@ class Stop(GenericModel):
 
 class ServiceIncident(GenericModel):
     """
-    Stores Service Incident information related to a `order.Order` and `order.Stop`.
+    Stores Service Incident information related to a
+    :model:`order.Order` and :model:`order.Stop`.
     """
 
     movement = models.ForeignKey(
@@ -1357,6 +1369,8 @@ class ServiceIncident(GenericModel):
         related_name="service_incidents",
         related_query_name="service_incident",
         verbose_name=_("Delay Code"),
+        blank=True,
+        null=True,
     )
     delay_reason = models.CharField(
         _("Delay Reason"),
@@ -1396,7 +1410,7 @@ class ServiceIncident(GenericModel):
 
 class OrderDocumentation(GenericModel):
     """
-    Stores documentation related to a `order.Order`.
+    Stores documentation related to a :model:`order.Order`.
     """
 
     order = models.ForeignKey(
@@ -1446,7 +1460,7 @@ class OrderDocumentation(GenericModel):
 
 class OrderComment(GenericModel):
     """
-    Stores comments related to a `order.Order`.
+    Stores comments related to a :model:`order.Order`.
     """
 
     order = models.ForeignKey(
