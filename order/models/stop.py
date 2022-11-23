@@ -27,6 +27,7 @@ from django.utils.translation import gettext_lazy as _
 
 from order.models.choices import StatusChoices, StopChoices
 from order.models.service_incident import ServiceIncident
+from order.services.stops import StopService
 from utils.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
@@ -318,6 +319,8 @@ class Stop(GenericModel):
         # If the stop arrival and departure time are set, change the status to complete.
         if self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
+
+        StopService.sequence_stops(self)
 
         super().save(*args, **kwargs)
 

@@ -278,6 +278,7 @@ class Movement(GenericModel):
             None
         """
         self.full_clean()
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
