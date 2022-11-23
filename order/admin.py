@@ -19,7 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from order import models
+from order.models import commodity, hazardous_material, movement, order, order_control, qualifier_code, reason_code, \
+    service_incident, stop
 from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
 
 
@@ -28,7 +29,7 @@ class OrderDocumentationInline(GenericTabularInline):
     Order documentation inline
     """
 
-    model: type[models.OrderDocumentation] = models.OrderDocumentation
+    model: type[order.OrderDocumentation] = order.OrderDocumentation
 
 
 class OrderComment(GenericStackedInline):
@@ -36,11 +37,11 @@ class OrderComment(GenericStackedInline):
     Order comment inline
     """
 
-    model: type[models.OrderComment] = models.OrderComment
+    model: type[order.OrderComment] = order.OrderComment
 
 
-@admin.register(models.OrderType)
-class OrderTypeAdmin(GenericAdmin[models.OrderType]):
+@admin.register(order.OrderType)
+class OrderTypeAdmin(GenericAdmin[order.OrderType]):
     """
     Order Type Admin
     """
@@ -52,8 +53,8 @@ class OrderTypeAdmin(GenericAdmin[models.OrderType]):
     search_fields = ("name", "description")
 
 
-@admin.register(models.HazardousMaterial)
-class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
+@admin.register(hazardous_material.HazardousMaterial)
+class HazardousMaterialAdmin(GenericAdmin[hazardous_material.HazardousMaterial]):
     """
     Hazardous Material Admin
     """
@@ -65,8 +66,8 @@ class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
     search_fields = ("name", "description")
 
 
-@admin.register(models.Commodity)
-class CommodityAdmin(GenericAdmin[models.Commodity]):
+@admin.register(commodity.Commodity)
+class CommodityAdmin(GenericAdmin[commodity.Commodity]):
     """
     Commodity Admin
     """
@@ -95,8 +96,8 @@ class CommodityAdmin(GenericAdmin[models.Commodity]):
     )
 
 
-@admin.register(models.QualifierCode)
-class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
+@admin.register(qualifier_code.QualifierCode)
+class QualifierCodeAdmin(GenericAdmin[qualifier_code.QualifierCode]):
     """
     Qualifier Code Admin
     """
@@ -108,8 +109,8 @@ class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(models.ReasonCode)
-class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
+@admin.register(reason_code.ReasonCode)
+class ReasonCodeAdmin(GenericAdmin[reason_code.ReasonCode]):
     """
     Reason Code Admin
     """
@@ -121,8 +122,8 @@ class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(models.OrderControl)
-class OrderControlAdmin(GenericAdmin[models.OrderControl]):
+@admin.register(order_control.OrderControl)
+class OrderControlAdmin(GenericAdmin[order_control.OrderControl]):
     """
     Order Control Admin
     """
@@ -134,8 +135,8 @@ class OrderControlAdmin(GenericAdmin[models.OrderControl]):
     search_fields = ("organization", "auto_rate_orders")
 
 
-@admin.register(models.Order)
-class OrderAdmin(GenericAdmin[models.Order]):
+@admin.register(order.Order)
+class OrderAdmin(GenericAdmin[order.Order]):
     """
     Order Admin
     """
@@ -204,8 +205,8 @@ class OrderAdmin(GenericAdmin[models.Order]):
     )
 
 
-@admin.register(models.Movement)
-class MovementAdmin(GenericAdmin[models.Movement]):
+@admin.register(movement.Movement)
+class MovementAdmin(GenericAdmin[movement.Movement]):
     """
     Movement Admin
     """
@@ -220,8 +221,8 @@ class MovementAdmin(GenericAdmin[models.Movement]):
     search_fields = ("ref_num",)
 
 
-@admin.register(models.Stop)
-class StopAdmin(GenericAdmin[models.Stop]):
+@admin.register(stop.Stop)
+class StopAdmin(GenericAdmin[stop.Stop]):
     """
     Stop Admin
     """
@@ -237,8 +238,8 @@ class StopAdmin(GenericAdmin[models.Stop]):
     search_fields = ("id",)
 
 
-@admin.register(models.ServiceIncident)
-class ServiceIncidentAdmin(GenericAdmin[models.ServiceIncident]):
+@admin.register(service_incident.ServiceIncident)
+class ServiceIncidentAdmin(GenericAdmin[service_incident.ServiceIncident]):
     """
     Service Incident Admin
     """
