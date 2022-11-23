@@ -992,39 +992,77 @@ class Movement(GenericModel):
         """
         return f"{self.order} - {self.ref_num}"
 
-    def clean(self) -> None:
-        """Stop clean method
+    def _validate_movement_statuses(self) -> None:
+        """Validate Movement status
+
+        If the old movement status is in progress, or completed.
+        and the user tries to set it back to NEW, raise an error.
 
         Returns:
             None
+
+        Raises:
+            ValidationError: If the old movement status is in progress, or completed.
         """
-        if self.pk:
-            if self.status == StatusChoices.NEW:
-                old_status = Movement.objects.get(pk=self.pk).status
+        old_status = Movement.objects.get(pk=self.pk).status
 
-                if old_status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]:
-                    raise ValidationError(
-                        {
-                            "status": ValidationError(
-                                _(
-                                    "Cannot change status to new if the status was"
-                                    " previously in progress or completed."
-                                ),
-                                code="invalid",
-                            )
-                        }
+        if self.status == StatusChoices.NEW and old_status in [
+            StatusChoices.IN_PROGRESS,
+            StatusChoices.COMPLETED,
+        ]:
+            raise ValidationError(
+                {
+                    "status": ValidationError(
+                        _(
+                            "Cannot change status to new if the status was"
+                            " previously in progress or completed."
+                        ),
+                        code="invalid",
                     )
+                }
+            )
 
-            if self.status is StatusChoices.IN_PROGRESS and not self.primary_worker:
-                raise ValidationError(
-                    {
-                        "primary_worker": ValidationError(
-                            _("Primary worker is required for in progress status."),
-                            code="invalid",
-                        )
-                    }
-                )
+    def _validate_movement_worker(self) -> None:
+        """Validate Movement worker
 
+        Require a primary worker and equipment to set the
+        movement status to in progress.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the old movement worker is not None and the user tries to change the worker.
+        """
+        if self.status == (
+            StatusChoices.IN_PROGRESS and not self.primary_worker and not self.equipment
+        ):
+            raise ValidationError(
+                {
+                    "primary_worker": ValidationError(
+                        _("Primary worker is required for in progress status."),
+                        code="invalid",
+                    ),
+                    "equipment": ValidationError(
+                        _("Equipment is required for in progress status."),
+                        code="invalid",
+                    ),
+                }
+            )
+
+    def _validate_worker_compare(self) -> None:
+        """Validate Worker Comparison
+
+        Validate that the workers do not match when creating
+        movement.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the workers are the same.
+
+        """
         if (
             self.primary_worker
             and self.secondary_worker
@@ -1032,27 +1070,54 @@ class Movement(GenericModel):
         ):
             raise ValidationError(
                 {
+                    "primary_worker": ValidationError(
+                        _("Primary worker cannot be the same as secondary worker."),
+                        code="invalid",
+                    ),
                     "secondary_worker": ValidationError(
                         _("Primary and secondary workers cannot be the same."),
                         code="invalid",
-                    )
+                    ),
                 }
             )
 
+    def _validate_movement_stop_status(self) -> None:
+        """Validate Movement Stop Status
+
+        Validate that the movement status is in progress
+        before setting the status to stop.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: Movement is not valid.
+        """
         if (
-            self.status in [StatusChoices.NEW, StatusChoices.IN_PROGRESS]
-            and self.stops.filter(
-                status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
-            ).exists()
+            self.status == StatusChoices.IN_PROGRESS
+            and self.stops.filter(status=StatusChoices.NEW).exists()
         ):
             raise ValidationError(
                 {
                     "status": ValidationError(
                         _(
-                            "Cannot change status to new or in progress if any of the"
-                            " stops are in progress or new."
-                        ),
-                        code="invalid",
+                            "Cannot change status to in progress if any of the"
+                            " stops are not in progress."
+                        )
+                    )
+                }
+            )
+        elif (
+            self.status == StatusChoices.NEW
+            and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
+        ):
+            raise ValidationError(
+                {
+                    "status": ValidationError(
+                        _(
+                            "Cannot change status to available if"
+                            " the movement stops are in progress"
+                        )
                     )
                 }
             )
@@ -1074,6 +1139,28 @@ class Movement(GenericModel):
                     )
                 }
             )
+
+    def validate(self) -> None:
+        """Validate the Movement
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the Movement is not valid
+        """
+        self._validate_movement_statuses()
+        self._validate_movement_worker()
+        self._validate_worker_compare()
+        self._validate_movement_stop_status()
+
+    def clean(self) -> None:
+        """Stop clean method
+
+        Returns:
+            None
+        """
+        self.validate()
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
@@ -1182,7 +1269,6 @@ class Stop(GenericModel):
             ValidationError: If the stop is not valid.
 
         """
-        super().clean()
         if self.pk:
             if self.status == StatusChoices.NEW:
                 old_status = Stop.objects.get(pk=self.pk).status
