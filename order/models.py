@@ -992,7 +992,7 @@ class Movement(GenericModel):
         """
         return f"{self.order} - {self.ref_num}"
 
-    def _validate_movement_statuses(self) -> None:
+    def validate_movement_statuses(self) -> None:
         """Validate Movement status
 
         If the old movement status is in progress, or completed.
@@ -1022,7 +1022,7 @@ class Movement(GenericModel):
                 }
             )
 
-    def _validate_movement_worker(self) -> None:
+    def validate_movement_worker(self) -> None:
         """Validate Movement worker
 
         Require a primary worker and equipment to set the
@@ -1050,7 +1050,7 @@ class Movement(GenericModel):
                 }
             )
 
-    def _validate_worker_compare(self) -> None:
+    def validate_worker_compare(self) -> None:
         """Validate Worker Comparison
 
         Validate that the workers do not match when creating
@@ -1081,7 +1081,7 @@ class Movement(GenericModel):
                 }
             )
 
-    def _validate_movement_stop_status(self) -> None:
+    def validate_movement_stop_status(self) -> None:
         """Validate Movement Stop Status
 
         Validate that the movement status is in progress
@@ -1149,10 +1149,10 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the Movement is not valid
         """
-        self._validate_movement_statuses()
-        self._validate_movement_worker()
-        self._validate_worker_compare()
-        self._validate_movement_stop_status()
+        self.validate_movement_statuses()
+        self.validate_movement_worker()
+        self.validate_worker_compare()
+        self.validate_movement_stop_status()
 
     def clean(self) -> None:
         """Stop clean method
