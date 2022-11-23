@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# THIS FILE IS A FUCKING NIGHTMARE BUT PYTHON & FUCKING DJANGO!
+
 from __future__ import annotations
 
 import decimal
