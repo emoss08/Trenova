@@ -17,9 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# THIS FILE IS A FUCKING NIGHTMARE BUT PYTHON & FUCKING DJANGO!
-
-from __future__ import annotations
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -273,6 +271,15 @@ class Movement(GenericModel):
         """
         self.validate()
 
+    def save(self, *args: Any, **kwargs: Any):
+        """Save the Movement
+
+        Returns:
+            None
+        """
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
 
@@ -280,4 +287,3 @@ class Movement(GenericModel):
             str: Absolute url for the Movement
         """
         return reverse("movement-detail", kwargs={"pk": self.pk})
-

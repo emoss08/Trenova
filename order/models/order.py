@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# THIS FILE IS A FUCKING NIGHTMARE BUT PYTHON & FUCKING DJANGO!
-
 from __future__ import annotations
 
 import decimal
@@ -340,28 +338,6 @@ class Order(GenericModel):
             str: String representation of the Order
         """
         return textwrap.wrap(self.pro_number, 10)[0]
-
-    # @property
-    # def total_pieces(self) -> int:
-    #     """Get the total piece count for the order
-    #
-    #     Returns:
-    #         int: Total piece count for the order
-    #     """
-    #     return Stop.objects.filter(movement__order__exact=self).aggregate(
-    #         Sum("pieces")
-    #     )["pieces__sum"]
-    #
-    # @property
-    # def total_weight(self) -> int:
-    #     """Get the total weight for the order.
-    #
-    #     Returns:
-    #         int: Total weight for the order
-    #     """
-    #     return Stop.objects.filter(movement__order__exact=self).aggregate(
-    #         Sum("weight")
-    #     )["weight__sum"]
 
     def calculate_total(self) -> decimal.Decimal:
         """Calculate the sub_total for an order
