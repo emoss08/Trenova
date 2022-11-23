@@ -101,26 +101,6 @@ def generate_ref_number(sender: movement.Movement, instance: movement.Movement, 
         instance.ref_num = movements.MovementService.movement_ref_number()
 
 
-@receiver(post_save, sender=stop.Stop)
-def sequence_stops(sender: stop.Stop, instance: stop.Stop, created: bool, **kwargs: Any) -> None:
-    """Sequence Stops
-
-    Sequence the stops when a new stop is added
-    to a movement.
-
-    Args:
-        sender (Stop): Stop
-        instance (Stop): The stop instance.
-        created (bool): if the Stop was created.
-        **kwargs (Any): Keyword arguments.
-
-    Returns:
-        None
-    """
-    if created:
-        stops.StopService.sequence_stops(instance)
-
-
 @receiver(post_save, sender=order.Order)
 def order_total_count(
         sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
