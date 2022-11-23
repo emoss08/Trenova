@@ -17,10 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# THIS FILE IS A FUCKING NIGHTMARE BUT PYTHON & FUCKING DJANGO!
-
-from __future__ import annotations
-
 import textwrap
 
 from django.db import models
@@ -71,4 +67,3 @@ class QualifierCode(GenericModel):
             str: Qualifier Code Absolute URL
         """
         return reverse("order:qualifiercode-detail", kwargs={"pk": self.pk})
-

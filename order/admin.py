@@ -19,8 +19,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from order.models import commodity, hazardous_material, movement, order, order_control, qualifier_code, reason_code, \
-    service_incident, stop
+from order.models import (
+    commodity,
+    hazardous_material,
+    movement,
+    order,
+    order_control,
+    qualifier_code,
+    reason_code,
+    service_incident,
+    stop,
+)
 from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
 
 

@@ -17,10 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# THIS FILE IS A FUCKING NIGHTMARE BUT PYTHON & FUCKING DJANGO!
-
-from __future__ import annotations
-
 from typing import Any
 
 from django.conf import settings
@@ -265,7 +261,11 @@ class Stop(GenericModel):
                                 }
                             )
 
-                        if self.departure_time < self.arrival_time:
+                        if (
+                                self.departure_time
+                                and self.arrival_time
+                                and self.departure_time < self.arrival_time
+                        ):
                             raise ValidationError(
                                 {
                                     "departure_time": ValidationError(
