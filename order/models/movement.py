@@ -144,7 +144,7 @@ class Movement(GenericModel):
             ValidationError: If the old movement worker is not None and the user tries to change the worker.
         """
         if self.status == (
-                StatusChoices.IN_PROGRESS and not self.primary_worker and not self.equipment
+            StatusChoices.IN_PROGRESS and not self.primary_worker and not self.equipment
         ):
             raise ValidationError(
                 {
@@ -173,9 +173,9 @@ class Movement(GenericModel):
 
         """
         if (
-                self.primary_worker
-                and self.secondary_worker
-                and self.primary_worker == self.secondary_worker
+            self.primary_worker
+            and self.secondary_worker
+            and self.primary_worker == self.secondary_worker
         ):
             raise ValidationError(
                 {
@@ -203,8 +203,8 @@ class Movement(GenericModel):
             ValidationError: Movement is not valid.
         """
         if (
-                self.status == StatusChoices.IN_PROGRESS
-                and self.stops.filter(status=StatusChoices.NEW).exists()
+            self.status == StatusChoices.IN_PROGRESS
+            and self.stops.filter(status=StatusChoices.NEW).exists()
         ):
             raise ValidationError(
                 {
@@ -217,8 +217,8 @@ class Movement(GenericModel):
                 }
             )
         elif (
-                self.status == StatusChoices.NEW
-                and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
+            self.status == StatusChoices.NEW
+            and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
         ):
             raise ValidationError(
                 {
@@ -232,10 +232,10 @@ class Movement(GenericModel):
             )
 
         if (
-                self.status == StatusChoices.COMPLETED
-                and self.stops.filter(
-            status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
-        ).exists()
+            self.status == StatusChoices.COMPLETED
+            and self.stops.filter(
+                status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            ).exists()
         ):
             raise ValidationError(
                 {

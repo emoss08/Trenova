@@ -27,7 +27,6 @@ from django.utils.translation import gettext_lazy as _
 
 from order.models.choices import StatusChoices, StopChoices
 from order.models.service_incident import ServiceIncident
-from order.services.stops import StopService
 from utils.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
@@ -154,8 +153,8 @@ class Stop(GenericModel):
                 ).first()
 
                 if (
-                        previous_stop
-                        and self.appointment_time < previous_stop.appointment_time
+                    previous_stop
+                    and self.appointment_time < previous_stop.appointment_time
                 ):
                     raise ValidationError(
                         {
@@ -200,13 +199,13 @@ class Stop(GenericModel):
 
                     # If the next stop is in progress or completed, the current stop cannot be available
                     if (
-                            next_stop
-                            and self.status != StatusChoices.COMPLETED
-                            and next_stop.status
-                            in [
-                        StatusChoices.COMPLETED,
-                        StatusChoices.IN_PROGRESS,
-                    ]
+                        next_stop
+                        and self.status != StatusChoices.COMPLETED
+                        and next_stop.status
+                        in [
+                            StatusChoices.COMPLETED,
+                            StatusChoices.IN_PROGRESS,
+                        ]
                     ):
                         raise ValidationError(
                             {
@@ -263,9 +262,9 @@ class Stop(GenericModel):
                             )
 
                         if (
-                                self.departure_time
-                                and self.arrival_time
-                                and self.departure_time < self.arrival_time
+                            self.departure_time
+                            and self.arrival_time
+                            and self.departure_time < self.arrival_time
                         ):
                             raise ValidationError(
                                 {
@@ -297,8 +296,8 @@ class Stop(GenericModel):
         # if the last stop is completed, change the movement status to complete.
         if self.status == StatusChoices.COMPLETED:
             if (
-                    self.movement.stops.filter(status=StatusChoices.COMPLETED).count()
-                    == self.movement.stops.count()
+                self.movement.stops.filter(status=StatusChoices.COMPLETED).count()
+                == self.movement.stops.count()
             ):
                 self.movement.status = StatusChoices.COMPLETED
                 self.movement.save()
@@ -319,8 +318,6 @@ class Stop(GenericModel):
         # If the stop arrival and departure time are set, change the status to complete.
         if self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
-
-        StopService.sequence_stops(self)
 
         super().save(*args, **kwargs)
 

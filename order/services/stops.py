@@ -16,11 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 from order.models import Movement, Order, OrderControl, Stop, StopChoices
 
 
-class StopService:
+class StopService(object):
     """Stop Service
 
     Service to manage all stop actions

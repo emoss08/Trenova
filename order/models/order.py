@@ -31,6 +31,7 @@ from django.utils.translation import gettext_lazy as _
 
 from order.models.choices import StatusChoices
 from order.models.order_control import OrderControl
+
 # from order.models.stop import Stop
 from utils.models import ChoiceField, GenericModel
 
@@ -380,8 +381,8 @@ class Order(GenericModel):
             ValidationError: If the Order is not valid
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.FLAT
-                and self.freight_charge_amount is None
+            self.rate_method == Order.RatingMethodChoices.FLAT
+            and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -393,8 +394,8 @@ class Order(GenericModel):
             )
 
         if (
-                self.rate_method == Order.RatingMethodChoices.PER_MILE
-                and self.mileage is None
+            self.rate_method == Order.RatingMethodChoices.PER_MILE
+            and self.mileage is None
         ):
             raise ValidationError(
                 {

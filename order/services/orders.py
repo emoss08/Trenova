@@ -26,7 +26,7 @@ class OrderService:
 
     Service to manage all order actions
     """
-    
+
     @staticmethod
     def total_pieces(order: Order) -> int:
         """Get the total piece count for the order

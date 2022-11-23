@@ -22,13 +22,16 @@ from typing import Any
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import movement, order, stop
-from .services import generation, movements, stops
+from .models import choices, movement, order, stop
+from .services import generation, movements
 from .services.orders import OrderService
+from .services.stops import StopService
 
 
 @receiver(pre_save, sender=order.Order)
-def generate_pro_number(sender: order.Order, instance: order.Order, **kwargs: Any) -> None:
+def generate_pro_number(
+    sender: order.Order, instance: order.Order, **kwargs: Any
+) -> None:
     """Generate Pro Number
 
     Generate a pro number when a new order is added.
@@ -47,7 +50,7 @@ def generate_pro_number(sender: order.Order, instance: order.Order, **kwargs: An
 
 @receiver(post_save, sender=order.Order)
 def generate_order_movement(
-        sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
+    sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
 ) -> None:
     """Generate the initial movement for the order
 
@@ -64,9 +67,28 @@ def generate_order_movement(
         movements.MovementService.create_initial_movement(instance)
 
 
+@receiver(post_save, sender=stop.Stop)
+def sequence_stops(
+    sender: stop.Stop, instance: stop.Stop, created: bool, **kwargs: Any
+) -> None:
+    """Sequence Stops
+    Sequence the stops when a new stop is added
+    to a movement.
+    Args:
+        sender (Stop): Stop
+        instance (Stop): The stop instance.
+        created (bool): if the Stop was created.
+        **kwargs (Any): Keyword arguments.
+    Returns:
+        None
+    """
+    if created:
+        StopService.sequence_stops(instance)
+
+
 @receiver(post_save, sender=movement.Movement)
 def generate_movement_stops(
-        sender: movement.Movement, instance: movement.Movement, created: bool, **kwargs: Any
+    sender: movement.Movement, instance: movement.Movement, created: bool, **kwargs: Any
 ):
     """Generate the movement stops
 
@@ -79,12 +101,14 @@ def generate_movement_stops(
     Returns:
         None
     """
-    if created and not stop.Stop.objects.filter(movement=instance).exists():
-        stops.StopService.create_initial_stops(instance, instance.order)
+    # if created and not stop.Stop.objects.filter(movement=instance).exists():
+    #     stops.StopService.create_initial_stops(instance, instance.order)
 
 
 @receiver(pre_save, sender=movement.Movement)
-def generate_ref_number(sender: movement.Movement, instance: movement.Movement, **kwargs: Any) -> None:
+def generate_ref_number(
+    sender: movement.Movement, instance: movement.Movement, **kwargs: Any
+) -> None:
     """Generate Reference Number
 
     Generate a reference number when a new movement is added.
@@ -103,7 +127,7 @@ def generate_ref_number(sender: movement.Movement, instance: movement.Movement, 
 
 @receiver(post_save, sender=order.Order)
 def order_total_count(
-        sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
+    sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
 ) -> None:
     """Generate the initial movement for the order
 
@@ -116,7 +140,7 @@ def order_total_count(
     Returns:
         None
     """
-    if instance.status == order.StatusChoices.COMPLETED:
+    if instance.status == choices.StatusChoices.COMPLETED:
         instance.pieces = OrderService.total_pieces(instance)
         instance.weight = OrderService.total_weight(instance)
         instance.save()
