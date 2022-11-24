@@ -19,11 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import final
 
-from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-User = settings.AUTH_USER_MODEL
 
 
 @final

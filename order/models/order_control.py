@@ -68,7 +68,6 @@ class OrderControl(GenericModel):
         default=False,
         help_text=_("Enforce comment when cancelling an order."),
     )
-
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
