@@ -22,9 +22,8 @@ from typing import Any
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from .models import choices, movement, order, stop
+from .models import movement, order, stop
 from .services import generation, movements
-from .services.orders import OrderService
 from .services.stops import StopService
 
 
@@ -124,23 +123,3 @@ def generate_ref_number(
     if not instance.ref_num:
         instance.ref_num = movements.MovementService.movement_ref_number()
 
-
-@receiver(post_save, sender=order.Order)
-def order_total_count(
-    sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
-) -> None:
-    """Generate the initial movement for the order
-
-    Args:
-        sender (Order): Order
-        instance (Order): The Order instance.
-        created (bool): if the Order was created
-        **kwargs (Any): Keyword Arguments
-
-    Returns:
-        None
-    """
-    if instance.status == choices.StatusChoices.COMPLETED:
-        instance.pieces = OrderService.total_pieces(instance)
-        instance.weight = OrderService.total_weight(instance)
-        instance.save()
