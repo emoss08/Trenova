@@ -258,10 +258,11 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the Movement is not valid
         """
-        self.validate_movement_statuses()
-        self.validate_movement_worker()
-        self.validate_worker_compare()
-        self.validate_movement_stop_status()
+        if self.pk:
+            self.validate_movement_statuses()
+            self.validate_movement_worker()
+            self.validate_worker_compare()
+            self.validate_movement_stop_status()
 
     def clean(self) -> None:
         """Stop clean method

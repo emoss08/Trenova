@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import decimal
 import textwrap
-from typing import Any, final
+from typing import Any, Optional, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -30,9 +30,8 @@ from django.db.models.aggregates import Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.models import stop
-from order.models.choices import StatusChoices
-from order.models.order_control import OrderControl
+from order.models import choices, hazardous_material, order_control, stop
+
 # from order.models.stop import Stop
 from utils.models import ChoiceField, GenericModel
 
@@ -122,8 +121,8 @@ class Order(GenericModel):
     )
     status = ChoiceField(
         _("Status"),
-        choices=StatusChoices.choices,
-        default=StatusChoices.NEW,
+        choices=choices.StatusChoices.choices,
+        default=choices.StatusChoices.NEW,
     )
     revenue_code = models.ForeignKey(
         "accounting.RevenueCode",
@@ -360,6 +359,20 @@ class Order(GenericModel):
 
         return self.freight_charge_amount
 
+    def set_hazardous_class(self) -> Optional[hazardous_material.HazardousMaterial]:
+        """Set the hazardous class from commodity
+
+        if a commodity is selected automatically set the hazardous
+        class from the relationship between commodity and
+        HazardousMaterial.
+
+        Returns:
+            HazardousMaterial: Instance of the HazardousMaterial
+        """
+        if self.commodity.hazmat:
+            self.hazmat_id = self.commodity.hazmat
+        return self.hazmat_id
+
     def total_piece(self) -> int:
         """Get the total piece count for the order
 
@@ -386,9 +399,11 @@ class Order(GenericModel):
         Returns:
             None
         """
-        order_control = OrderControl.objects.get(organization=self.organization)
+        o_control: order_control.OrderControl = order_control.OrderControl.objects.get(
+            organization=self.organization
+        )
 
-        if order_control.auto_pop_address:
+        if o_control.auto_pop_address:
             self.origin_address = self.origin_location.get_address_combination
             self.destination_address = self.destination_location.get_address_combination
 
@@ -406,8 +421,8 @@ class Order(GenericModel):
 
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.FLAT
-                and self.freight_charge_amount is None
+            self.rate_method == Order.RatingMethodChoices.FLAT
+            and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -430,8 +445,8 @@ class Order(GenericModel):
             ValidationError: If the mileage is not set
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.PER_MILE
-                and self.mileage is None
+            self.rate_method == Order.RatingMethodChoices.PER_MILE
+            and self.mileage is None
         ):
             raise ValidationError(
                 {
@@ -454,7 +469,7 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the order is not completed
         """
-        if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
+        if self.ready_to_bill and self.status != choices.StatusChoices.COMPLETED:
             raise ValidationError(
                 {
                     "ready_to_bill": ValidationError(
@@ -503,8 +518,9 @@ class Order(GenericModel):
             self.sub_total = self.calculate_total()
 
         self.set_address()
+        self.set_hazardous_class()
 
-        if self.status == StatusChoices.COMPLETED:
+        if self.status == choices.StatusChoices.COMPLETED:
             self.pieces = self.total_piece()
             self.weight = self.total_weight()
 
