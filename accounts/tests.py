@@ -41,9 +41,9 @@ class TestUser(TestCase):
         self.assertEqual(User.objects.count(), 1)
 
     def test_user_updated(self):
-        self.user.user_name = "test_user_updated"
+        self.user.username = "test_user_updated"
         self.user.save()
-        self.assertEqual(self.user.user_name, "test_user_updated")
+        self.assertEqual(self.user.username, "test_user_updated")
 
     def test_user_organization(self):
         self.assertEqual(self.user.organization, self.organization)

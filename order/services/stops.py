@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from order.models import Movement, Order, OrderControl, Stop, StopChoices
 
 
-class StopService(object):
+class StopService:
     """Stop Service
 
     Service to manage all stop actions
