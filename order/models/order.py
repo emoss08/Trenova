@@ -31,7 +31,6 @@ from django.utils.translation import gettext_lazy as _
 
 from order.models.choices import StatusChoices
 from order.models.order_control import OrderControl
-
 # from order.models.stop import Stop
 from utils.models import ChoiceField, GenericModel
 
@@ -371,18 +370,22 @@ class Order(GenericModel):
             self.origin_address = self.origin_location.get_address_combination
             self.destination_address = self.destination_location.get_address_combination
 
-    def clean(self) -> None:
-        """Order save method
+    def validate_freight_rate_method(self) -> None:
+        """Validate the freight charge amount
+
+        If the rate method is flat, the freight charge
+        amount must be set.
 
         Returns:
             None
 
         Raises:
-            ValidationError: If the Order is not valid
+            ValidationError: If the freight charge amount is not set
+
         """
         if (
-            self.rate_method == Order.RatingMethodChoices.FLAT
-            and self.freight_charge_amount is None
+                self.rate_method == Order.RatingMethodChoices.FLAT
+                and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -393,9 +396,20 @@ class Order(GenericModel):
                 }
             )
 
+    def validate_per_mile_rate_method(self) -> None:
+        """Validate the per mile rate method
+
+        If the rate method is per mile, the mileage must be set.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the mileage is not set
+        """
         if (
-            self.rate_method == Order.RatingMethodChoices.PER_MILE
-            and self.mileage is None
+                self.rate_method == Order.RatingMethodChoices.PER_MILE
+                and self.mileage is None
         ):
             raise ValidationError(
                 {
@@ -405,6 +419,19 @@ class Order(GenericModel):
                     )
                 }
             )
+
+    def validate_ready_to_bill(self) -> None:
+        """Validate the order is ready to be billed
+
+        Order must be marked completed before it can be marked
+        ready to bill.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the order is not completed
+        """
         if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
             raise ValidationError(
                 {
@@ -418,6 +445,30 @@ class Order(GenericModel):
                 }
             )
 
+    def validate(self) -> None:
+        """Validate the order
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the order is not valid
+        """
+        self.validate_freight_rate_method()
+        self.validate_per_mile_rate_method()
+        self.validate_ready_to_bill()
+
+    def clean(self) -> None:
+        """Order save method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the Order is not valid
+        """
+        self.validate()
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Order save method
 
@@ -425,10 +476,6 @@ class Order(GenericModel):
             None
         """
         self.full_clean()
-
-        # if self.status == StatusChoices.COMPLETED:
-        #     self.pieces = self.total_pieces
-        #     self.weight = self.total_weight
 
         if self.ready_to_bill:
             self.sub_total = self.calculate_total()
