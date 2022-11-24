@@ -31,8 +31,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from order.models import choices, hazardous_material, order_control, stop
-
-# from order.models.stop import Stop
 from utils.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
@@ -421,8 +419,8 @@ class Order(GenericModel):
 
         """
         if (
-            self.rate_method == Order.RatingMethodChoices.FLAT
-            and self.freight_charge_amount is None
+                self.rate_method == Order.RatingMethodChoices.FLAT
+                and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -445,8 +443,8 @@ class Order(GenericModel):
             ValidationError: If the mileage is not set
         """
         if (
-            self.rate_method == Order.RatingMethodChoices.PER_MILE
-            and self.mileage is None
+                self.rate_method == Order.RatingMethodChoices.PER_MILE
+                and self.mileage is None
         ):
             raise ValidationError(
                 {
@@ -641,3 +639,66 @@ class OrderComment(GenericModel):
             str: Absolute url for the OrderComment
         """
         return reverse("order-comment-detail", kwargs={"pk": self.pk})
+
+
+class AdditionalCharges(GenericModel):
+    """
+    Stores Additional Charges related to a :model:`order.Order`.
+    """
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="additional_charges",
+        related_query_name="additional_charge",
+        verbose_name=_("Order"),
+    )
+    charge_type = models.ForeignKey(
+        "billing.ChargeType",
+        on_delete=models.CASCADE,
+        related_name="additional_charges",
+        related_query_name="additional_charge",
+        verbose_name=_("Charge Type"),
+        help_text=_("Charge Type"),
+    )
+    charge = models.DecimalField(
+        _("Charge"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Charge"),
+    )
+    unit = models.PositiveIntegerField(
+        _("Unit"),
+        help_text=_("Number of units to be charged"),
+    )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="additional_charges",
+        related_query_name="additional_charge",
+        verbose_name=_("Entered By"),
+        help_text=_("Entered By"),
+    )
+
+    class Meta:
+        """
+        AdditionalCharges Metaclass
+        """
+
+        verbose_name = _("Additional Charge")
+        verbose_name_plural = _("Additional Charges")
+
+    def __str__(self) -> str:
+        """String representation of the AdditionalCharges
+
+        Returns:
+            str: String representation of the AdditionalCharges
+        """
+        return f"{self.order} - {self.charge_type}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the AdditionalCharges
+
+        Returns:
+            str: Absolute url for the AdditionalCharges
+        """
+        return reverse("additional-charges-detail", kwargs={"pk": self.pk})
