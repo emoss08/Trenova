@@ -33,7 +33,7 @@ from order.models import (
 from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
 
 
-class OrderDocumentationInline(GenericTabularInline):
+class OrderDocumentationInline(GenericTabularInline[order.OrderDocumentation, order.Order]):
     """
     Order documentation inline
     """
@@ -41,12 +41,19 @@ class OrderDocumentationInline(GenericTabularInline):
     model: type[order.OrderDocumentation] = order.OrderDocumentation
 
 
-class OrderComment(GenericStackedInline):
+class OrderComment(GenericStackedInline[order.OrderComment, order.Order]):
     """
     Order comment inline
     """
 
     model: type[order.OrderComment] = order.OrderComment
+
+
+class AdditionalCharge(GenericStackedInline[order.AdditionalCharge, order.Order]):
+    """
+    Order Additional Charge inline
+    """
+    model: type[order.AdditionalCharge] = order.AdditionalCharge
 
 
 @admin.register(order.OrderType)
@@ -211,6 +218,7 @@ class OrderAdmin(GenericAdmin[order.Order]):
     inlines = (
         OrderDocumentationInline,
         OrderComment,
+        AdditionalCharge,
     )
 
 

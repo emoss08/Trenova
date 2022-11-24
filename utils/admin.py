@@ -70,7 +70,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
 
         Args:
             request (HttpRequest): Request Object
-            obj (_ModelT): Generic Model Object
+            obj (_M): Generic Model Object
             form (Type[BaseModelForm]): Form Class
             change (bool): If the model is being changed
 
@@ -185,7 +185,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
         return autocomplete_fields
 
 
-class GenericTabularInline(GenericStackedInline):
+class GenericTabularInline(GenericStackedInline[_C, _P]):
     """
     Generic Admin Tabular Inline with Organization Exclusion
     """
