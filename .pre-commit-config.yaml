@@ -6,8 +6,3 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
       - id: requirements-txt-fixer
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
-    hooks:
-      - id: black
-        args: [--line-length=100]
