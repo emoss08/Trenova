@@ -652,23 +652,33 @@ class AdditionalCharge(GenericModel):
         related_query_name="additional_charge",
         verbose_name=_("Order"),
     )
-    charge_type = models.ForeignKey(
-        "billing.ChargeType",
+    charge = models.ForeignKey(
+        "billing.AccessorialCharge",
         on_delete=models.CASCADE,
         related_name="additional_charges",
         related_query_name="additional_charge",
-        verbose_name=_("Charge Type"),
-        help_text=_("Charge Type"),
+        verbose_name=_("Charge"),
+        help_text=_("Charge")
     )
-    charge = models.DecimalField(
-        _("Charge"),
+    charge_amount = models.DecimalField(
+        _("Charge Amount"),
         max_digits=10,
         decimal_places=2,
-        help_text=_("Charge"),
+        null=True,
+        blank=True,
+        help_text=_("Charge Amount"),
     )
     unit = models.PositiveIntegerField(
         _("Unit"),
+        default=1,
         help_text=_("Number of units to be charged"),
+    )
+    sub_total = models.DecimalField(
+        _("Sub Total Amount"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text=_("Sub Total Amount"),
     )
     entered_by = models.ForeignKey(
         User,
@@ -693,7 +703,7 @@ class AdditionalCharge(GenericModel):
         Returns:
             str: String representation of the AdditionalCharges
         """
-        return f"{self.order} - {self.charge_type}"
+        return f"{self.order} - {self.charge}"
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the AdditionalCharges
