@@ -26,9 +26,11 @@ from typing import Any, final
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.aggregates import Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from order.models import stop
 from order.models.choices import StatusChoices
 from order.models.order_control import OrderControl
 # from order.models.stop import Stop
@@ -358,6 +360,26 @@ class Order(GenericModel):
 
         return self.freight_charge_amount
 
+    def total_piece(self) -> int:
+        """Get the total piece count for the order
+
+        Returns:
+            int: Total piece count for the order
+        """
+        return stop.Stop.objects.filter(movement__order__exact=self).aggregate(
+            Sum("pieces")
+        )["pieces__sum"]
+
+    def total_weight(self) -> int:
+        """Get the total weight for the order.
+
+        Returns:
+            int: Total weight for the order
+        """
+        return stop.Stop.objects.filter(movement__order__exact=self).aggregate(
+            Sum("weight")
+        )["weight__sum"]
+
     def set_address(self) -> None:
         """Set the address for the order
 
@@ -481,6 +503,10 @@ class Order(GenericModel):
             self.sub_total = self.calculate_total()
 
         self.set_address()
+
+        if self.status == StatusChoices.COMPLETED:
+            self.pieces = self.total_piece()
+            self.weight = self.total_weight()
 
         super().save(*args, **kwargs)
 
