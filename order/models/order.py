@@ -641,9 +641,9 @@ class OrderComment(GenericModel):
         return reverse("order-comment-detail", kwargs={"pk": self.pk})
 
 
-class AdditionalCharges(GenericModel):
+class AdditionalCharge(GenericModel):
     """
-    Stores Additional Charges related to a :model:`order.Order`.
+    Stores Additional Charge related to a :model:`order.Order`.
     """
     order = models.ForeignKey(
         Order,
