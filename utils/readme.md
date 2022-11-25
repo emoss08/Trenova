@@ -3,13 +3,12 @@
 ## Table of Contents
 
 - Admin
-  - [GenericAdmin](#GenericAdmin)
-  - [GenericStackedInline](#GenericStackedInline)
-  - [GenericTabularInline](#GenericTabularInline)
+    - [GenericAdmin](#GenericAdmin)
+    - [GenericStackedInline](#GenericStackedInline)
+    - [GenericTabularInline](#GenericTabularInline)
 - Model
-  - [GenericModel](#GenericModel)
-  - [ChoiceField](#ChoiceField)
-
+    - [GenericModel](#GenericModel)
+    - [ChoiceField](#ChoiceField)
 
 ## Django Admin
 
@@ -17,72 +16,86 @@
 
 * Reference utils/admin.py for overriding specific methods
 * Do not override the `get_autocomplete_fields` method! Change variable `autocomplete` to `False`
+
 #### Example Usage
+
 ```python
 @admin.register(movement.Movement)
 class MovementAdmin(GenericAdmin[movement.Movement]):
-  """
-  Movement Admin
-  """
+    """
+    Movement Admin
+    """
 
-  list_display = (
-    "status",
-    "ref_num",
-    "order",
-    "equipment",
-    "primary_worker",
-  )
-  search_fields = ("ref_num",) 
+    list_display = (
+        "status",
+        "ref_num",
+        "order",
+        "equipment",
+        "primary_worker",
+    )
+    search_fields = ("ref_num",) 
 ```
 
 ### GenericStackedInline <a name="GenericStackedInline"></a>
+
 * Reference utils/admin.py for overriding specific methods
+
 #### Example Usage
+
 ```python
 class OrderComment(GenericStackedInline[order.OrderComment, order.Order]):
-  """
-  Order comment inline
-  """
+    """
+    Order comment inline
+    """
 
-  model: type[order.OrderComment] = order.OrderComment
+    model: type[order.OrderComment] = order.OrderComment
 ```
 
 ### GenericTabularInline <a name="GenericTabularInline"></a>
+
 * Reference utils/admin.py for overriding specific methods
+
 #### Example Usage
+
 ```python
 class OrderDocumentationInline(GenericTabularInline[order.OrderDocumentation, order.Order]):
-  """
-  Order documentation inline
-  """
+    """
+    Order documentation inline
+    """
 
-  model: type[order.OrderDocumentation] = order.OrderDocumentation
+    model: type[order.OrderDocumentation] = order.OrderDocumentation
 
 ```
 
 ### Generic Model <a name="GenericModel"></a>
+
 * Reference utils/models.py for overriding specific fields
+
 #### Example Usage
+
 ```python
 class RandomModel(GenericModel):
-  """
-  Random model
-  """
+    """
+    Random model
+    """
 
-  name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
 ```
 
 ### ChoiceField <a name="ChoiceField"></a>
+
 * Reference utils/models.py for overriding specific methods
-  * This is a field that can be used to create a choice field, it will automatically set the max_length 
-  to the length of the longest choice. If a choice is updated it will automatically set a new max_length.
+    * This is a field that can be used to create a choice field, it will automatically set the max_length
+      to the length of the longest choice. If a choice is updated it will automatically set a new max_length.
+
 #### Example Usage
+
 ```python
 class RandomModel(GenericModel):
-  """
-  Random model
-  """
+    """
+    Random model
+    """
 
-  name = models.CharField(max_length=255)
-  status = ChoiceField(choices=Status.choices, default=Status.ACTIVE)
+    name = models.CharField(max_length=255)
+    status = ChoiceField(choices=Status.choices, default=Status.ACTIVE)
 ```
