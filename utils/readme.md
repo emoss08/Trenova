@@ -2,9 +2,13 @@
 
 ## Table of Contents
 
-- [GenericAdmin](#GenericAdmin)
-- [GenericStackedInline](#GenericStackedInline)
-- [GenericTabularInline](#GenericTabularInline)
+- Admin
+  - [GenericAdmin](#GenericAdmin)
+  - [GenericStackedInline](#GenericStackedInline)
+  - [GenericTabularInline](#GenericTabularInline)
+- Model
+  - [GenericModel](#GenericModel)
+  - [ChoiceField](#ChoiceField)
 
 
 ## Django Admin
@@ -54,4 +58,31 @@ class OrderDocumentationInline(GenericTabularInline[order.OrderDocumentation, or
 
   model: type[order.OrderDocumentation] = order.OrderDocumentation
 
+```
+
+### Generic Model <a name="GenericModel"></a>
+* Reference utils/models.py for overriding specific fields
+#### Example Usage
+```python
+class RandomModel(GenericModel):
+  """
+  Random model
+  """
+
+  name = models.CharField(max_length=255)
+```
+
+### ChoiceField <a name="ChoiceField"></a>
+* Reference utils/models.py for overriding specific methods
+  * This is a field that can be used to create a choice field, it will automatically set the max_length 
+  to the length of the longest choice. If a choice is updated it will automatically set a new max_length.
+#### Example Usage
+```python
+class RandomModel(GenericModel):
+  """
+  Random model
+  """
+
+  name = models.CharField(max_length=255)
+  status = ChoiceField(choices=Status.choices, default=Status.ACTIVE)
 ```
