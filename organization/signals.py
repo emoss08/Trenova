@@ -22,12 +22,12 @@ from typing import Any
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import Depot, DepotDetail
+from organization import models
 
 
-@receiver(post_save, sender=Depot)
+@receiver(post_save, sender=models.Depot)
 def create_depot_detail(
-    sender: Depot, instance: Depot, created: bool, **kwargs: Any
+    sender: models.Depot, instance: models.Depot, created: bool, **kwargs: Any
 ) -> None:
     """Create Depot Detail Information
 
@@ -41,4 +41,25 @@ def create_depot_detail(
         None
     """
     if created:
-        DepotDetail.objects.create(depot=instance, organization=instance.organization)
+        models.DepotDetail.objects.create(
+            depot=instance, organization=instance.organization
+        )
+
+
+# @receiver(post_save, sender=models.Organization)
+# def create_dispatch_control(
+#         sender: models.Organization, instance: models.Organization, created: bool, **kwargs: Any
+# ) -> None:
+#     """Create Dispatch Control Information
+#
+#     Args:
+#         sender (Organization): Organization
+#         instance (Organization): The Organization instance.
+#         created (bool): if the Organization was created
+#         **kwargs (Any): Keyword Arguments
+#
+#     Returns:
+#         None
+#     """
+#     if created:
+#         DispatchControl.objects.create(organization=instance)

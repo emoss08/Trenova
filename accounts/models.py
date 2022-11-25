@@ -138,7 +138,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS: list[str] = ["email", "organization"]
+    REQUIRED_FIELDS: list[str] = [
+        "email",
+    ]
 
     class Meta:
         """

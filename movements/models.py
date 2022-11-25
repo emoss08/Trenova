@@ -150,8 +150,10 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement worker is not None and the user tries to change the worker.
         """
-        if self.status == (
-            StatusChoices.IN_PROGRESS and not self.primary_worker and not self.equipment
+        if (
+            self.status == StatusChoices.IN_PROGRESS
+            and not self.primary_worker
+            and not self.equipment
         ):
             raise ValidationError(
                 {
@@ -265,24 +267,25 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the Movement is not valid
         """
-        if self.pk:
-            self.validate_movement_statuses()
-            self.validate_movement_worker()
-            self.validate_worker_compare()
-            self.validate_movement_stop_status()
+        self.validate_movement_statuses()
+        self.validate_movement_worker()
+        self.validate_worker_compare()
+        self.validate_movement_stop_status()
 
-    def clean(self) -> None:
-        """Stop clean method
 
-        Returns:
-            None
-        """
-        self.validate()
+def clean(self) -> None:
+    """Stop clean method
 
-    def get_absolute_url(self) -> str:
-        """Get the absolute url for the Movement
+    Returns:
+        None
+    """
+    self.validate()
 
-        Returns:
-            str: Absolute url for the Movement
-        """
-        return reverse("movement-detail", kwargs={"pk": self.pk})
+
+def get_absolute_url(self) -> str:
+    """Get the absolute url for the Movement
+
+    Returns:
+        str: Absolute url for the Movement
+    """
+    return reverse("movement-detail", kwargs={"pk": self.pk})

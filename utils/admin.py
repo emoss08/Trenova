@@ -40,8 +40,9 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     Generic Admin Class for all models
     """
 
-    exclude: tuple[str, ...] = ("organization",)
     autocomplete: bool = True
+    set_organization: bool = True
+    exclude = ("organization",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
@@ -94,6 +95,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         Returns:
             None
         """
+
         instances = formset.save(commit=False)
         for instance in instances:
             instance.organization = request.user.organization  # type: ignore
@@ -153,8 +155,10 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
     Generic Admin Stacked for all Models with Organization Exclusion
     """
 
-    extra = 0
+    autocomplete: bool = True
+    set_organization: bool = True
     exclude = ("organization",)
+    extra = 0
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
         """Get Queryset

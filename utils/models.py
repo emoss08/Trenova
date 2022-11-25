@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import final
+from typing import Any, final
 
 from django.db import models
 from django.db.models import CharField
@@ -66,6 +66,21 @@ class GenericModel(TimeStampedModel):
         verbose_name=_("Organization"),
         help_text=_("Organization"),
     )
+
+    def save(self, *args: Any, **kwargs: Any):
+        """Save the model
+
+        Args:
+            *args ():
+            **kwargs ():
+
+        Returns:
+
+        """
+        self.update_modified = kwargs.pop(
+            "update_modified", getattr(self, "update_modified", True)
+        )
+        super().save(*args, **kwargs)
 
     class Meta:
         abstract = True

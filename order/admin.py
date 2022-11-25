@@ -142,7 +142,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
                 "fields": (
                     "equipment_type",
                     "commodity",
-                    "hazmat_id",
+                    "hazmat",
                     "temperature_min",
                     "temperature_max",
                     "bol_number",

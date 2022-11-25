@@ -378,7 +378,7 @@ class Order(GenericModel):
         verbose_name=_("User"),
         help_text=_("Order entered by User"),
     )
-    hazmat_id = models.ForeignKey(
+    hazmat = models.ForeignKey(
         "commodities.HazardousMaterial",
         on_delete=models.PROTECT,
         related_name="orders",
@@ -467,8 +467,8 @@ class Order(GenericModel):
             HazardousMaterial: Instance of the HazardousMaterial
         """
         if self.commodity.hazmat:
-            self.hazmat_id = self.commodity.hazmat
-        return self.hazmat_id
+            self.hazmat = self.commodity.hazmat
+        return self.hazmat
 
     def total_piece(self) -> int:
         """Get the total piece count for the order
@@ -497,7 +497,7 @@ class Order(GenericModel):
             None
         """
         o_control: OrderControl = OrderControl.objects.get(
-            organization=self.organization
+            organization=self.entered_by.organization
         )
 
         if o_control.auto_pop_address:
@@ -541,8 +541,9 @@ class Order(GenericModel):
         """
 
         o_control: OrderControl = OrderControl.objects.get(
-            organization=self.organization
+            organization=self.entered_by.organization
         )
+
         if o_control.enforce_rev_code and not self.revenue_code:
             raise ValidationError(
                 {
@@ -563,11 +564,13 @@ class Order(GenericModel):
             ValidationError: If the origin and destination locations are the same
         """
         o_control: OrderControl = OrderControl.objects.get(
-            organization=self.organization
+            organization=self.entered_by.organization
         )
-        
+
         if (
             o_control.enforce_origin_destination
+            and self.origin_location
+            and self.destination_location
             and self.origin_location == self.destination_location
         ):
             raise ValidationError(
@@ -641,10 +644,10 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the order is not valid
         """
+        self.validate_compare_origin_destination()
         self.validate_freight_rate_method()
         self.validate_per_mile_rate_method()
         self.validate_ready_to_bill()
-        self.validate_compare_origin_destination()
         self.validate_revenue_code()
 
     def clean(self) -> None:
