@@ -16,13 +16,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+import datetime
 
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from dispatch.models import DispatchControl
 from utils.models import ChoiceField, GenericModel, StatusChoices
+from worker.models import WorkerProfile
 
 
 class Movement(GenericModel):
@@ -151,9 +154,9 @@ class Movement(GenericModel):
             ValidationError: If the old movement worker is not None and the user tries to change the worker.
         """
         if (
-            self.status == StatusChoices.IN_PROGRESS
-            and not self.primary_worker
-            and not self.equipment
+                self.status == StatusChoices.IN_PROGRESS
+                and not self.primary_worker
+                and not self.equipment
         ):
             raise ValidationError(
                 {
@@ -182,9 +185,9 @@ class Movement(GenericModel):
 
         """
         if (
-            self.primary_worker
-            and self.secondary_worker
-            and self.primary_worker == self.secondary_worker
+                self.primary_worker
+                and self.secondary_worker
+                and self.primary_worker == self.secondary_worker
         ):
             raise ValidationError(
                 {
@@ -199,6 +202,114 @@ class Movement(GenericModel):
                 }
             )
 
+    def validate_worker_commodity(self) -> None:
+        """
+
+        Returns:
+
+        """
+        if self.order.hazmat:
+
+            if self.primary_worker.profile.endorsements not in [
+                WorkerProfile.EndorsementChoices.HAZMAT,
+                WorkerProfile.EndorsementChoices.X,
+            ]:
+                raise ValidationError(
+                    {
+                        "primary_worker": ValidationError(
+                            _(
+                                "Primary worker must be hazmat certified to haul this order."
+                            ),
+                            code="invalid",
+                        ),
+                    }
+                )
+            if self.primary_worker.profile.hazmat_expiration_date < datetime.date.today():
+                raise ValidationError(
+                    {
+                        "primary_worker": ValidationError(
+                            _(
+                                "Primary worker hazmat certification has expired."
+                            ),
+                            code="invalid",
+                        ),
+                    }
+                )
+
+    def validate_primary_worker_regulatory(self) -> None:
+        """Validate Worker Regulatory
+
+        Validate that the workers are regulatory when creating
+        movement.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the workers are not regulatory.
+
+        """
+        if self.primary_worker:
+            dispatch_control = DispatchControl.objects.get(
+                organization=self.primary_worker.organization
+            )
+            if dispatch_control.regulatory_check:
+                if (
+                        self.primary_worker.profile.license_expiration_date
+                        < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker license is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+                if (
+                        self.primary_worker.profile.physical_due_date
+                        < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker physical is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+                if (
+                        self.primary_worker.profile.medical_cert_date
+                        < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker medical certificate is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+                if self.primary_worker.profile.mvr_due_date < datetime.date.today():
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker MVR is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+                if self.primary_worker.profile.termination_date:
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker is terminated."),
+                                code="invalid",
+                            )
+                        }
+                    )
+
     def validate_movement_stop_status(self) -> None:
         """Validate Movement Stop Status
 
@@ -212,8 +323,8 @@ class Movement(GenericModel):
             ValidationError: Movement is not valid.
         """
         if (
-            self.status == StatusChoices.IN_PROGRESS
-            and self.stops.filter(status=StatusChoices.NEW).exists()
+                self.status == StatusChoices.IN_PROGRESS
+                and self.stops.filter(status=StatusChoices.NEW).exists()
         ):
             raise ValidationError(
                 {
@@ -226,8 +337,8 @@ class Movement(GenericModel):
                 }
             )
         elif (
-            self.status == StatusChoices.NEW
-            and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
+                self.status == StatusChoices.NEW
+                and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
         ):
             raise ValidationError(
                 {
@@ -241,10 +352,10 @@ class Movement(GenericModel):
             )
 
         if (
-            self.status == StatusChoices.COMPLETED
-            and self.stops.filter(
-                status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
-            ).exists()
+                self.status == StatusChoices.COMPLETED
+                and self.stops.filter(
+            status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+        ).exists()
         ):
             raise ValidationError(
                 {
@@ -267,25 +378,25 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the Movement is not valid
         """
+        self.validate_primary_worker_regulatory()
         self.validate_movement_statuses()
         self.validate_movement_worker()
         self.validate_worker_compare()
         self.validate_movement_stop_status()
+        self.validate_worker_commodity()
 
+    def clean(self) -> None:
+        """Stop clean method
 
-def clean(self) -> None:
-    """Stop clean method
+        Returns:
+            None
+        """
+        self.validate()
 
-    Returns:
-        None
-    """
-    self.validate()
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the Movement
 
-
-def get_absolute_url(self) -> str:
-    """Get the absolute url for the Movement
-
-    Returns:
-        str: Absolute url for the Movement
-    """
-    return reverse("movement-detail", kwargs={"pk": self.pk})
+        Returns:
+            str: Absolute url for the Movement
+        """
+        return reverse("movement-detail", kwargs={"pk": self.pk})
