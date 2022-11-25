@@ -45,11 +45,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -68,7 +68,7 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError(_("The email must be set"))
 
-        user: User = self.model(
+        user: User = self.model(  # type: ignore
             username=user_name.lower(),
             email=self.normalize_email(email),
             **extra_fields,
@@ -78,11 +78,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 

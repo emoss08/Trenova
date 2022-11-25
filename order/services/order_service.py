@@ -18,7 +18,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from django.db.models import Sum
 
-from order.models import Order, Stop
+from order.models import Order
+from stops.models import Stop
 
 
 class OrderService:

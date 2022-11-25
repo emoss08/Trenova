@@ -23,6 +23,8 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from movements import models
+from movements.services import generation
+from stops.services import generation as stop_generation
 
 
 @receiver(post_save, sender=models.Movement)
@@ -41,7 +43,7 @@ def generate_movement_stops(
         None
     """
     if created and not instance.stops.exists():
-        stop_service.StopService.create_initial_stops(instance, instance.order)
+        stop_generation.StopService.create_initial_stops(instance, instance.order)
 
 
 @receiver(pre_save, sender=models.Movement)
@@ -59,4 +61,4 @@ def set_movement_ref_number(
         None
     """
     if not instance.ref_num:
-        instance.ref_num = movement_service.MovementService.set_ref_number()
+        instance.ref_num = generation.MovementService.set_ref_number()
