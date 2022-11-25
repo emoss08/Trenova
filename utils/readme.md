@@ -20,8 +20,8 @@
 #### Example Usage
 
 ```python
-@admin.register(movement.Movement)
-class MovementAdmin(GenericAdmin[movement.Movement]):
+@admin.register(models.Movement)
+class MovementAdmin(GenericAdmin[models.Movement]):
     """
     Movement Admin
     """
@@ -43,12 +43,12 @@ class MovementAdmin(GenericAdmin[movement.Movement]):
 #### Example Usage
 
 ```python
-class OrderComment(GenericStackedInline[order.OrderComment, order.Order]):
+class OrderComment(GenericStackedInline[models.OrderComment, models.Order]):
     """
     Order comment inline
     """
 
-    model: type[order.OrderComment] = order.OrderComment
+    model: type[models.OrderComment] = models.OrderComment
 ```
 
 ### GenericTabularInline <a name="GenericTabularInline"></a>
@@ -58,12 +58,12 @@ class OrderComment(GenericStackedInline[order.OrderComment, order.Order]):
 #### Example Usage
 
 ```python
-class OrderDocumentationInline(GenericTabularInline[order.OrderDocumentation, order.Order]):
+class OrderDocumentationInline(GenericTabularInline[models.OrderDocumentation, models.Order]):
     """
     Order documentation inline
     """
 
-    model: type[order.OrderDocumentation] = order.OrderDocumentation
+    model: type[models.OrderDocumentation] = models.OrderDocumentation
 
 ```
 
