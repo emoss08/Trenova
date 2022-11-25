@@ -115,6 +115,13 @@ class OrderControl(GenericModel):
         default=True,
         help_text=_("Automate the order total amount calculation."),
     )
+    enforce_origin_destination = models.BooleanField(
+        _("Compare Origin Destination"),
+        default=False,
+        help_text=_(
+            "Compare and validate that origin and destination are not the same."
+        ),
+    )
 
     class Meta:
         """
@@ -221,6 +228,8 @@ class Order(GenericModel):
         related_query_name="order",
         verbose_name=_("Revenue Code"),
         help_text=_("Revenue Code of the Order"),
+        blank=True,
+        null=True,
     )
     origin_location = models.ForeignKey(
         "location.Location",
@@ -521,6 +530,59 @@ class Order(GenericModel):
                 }
             )
 
+    def validate_revenue_code(self) -> None:
+        """Validate the revenue code
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the revenue code is not set
+        """
+
+        o_control: OrderControl = OrderControl.objects.get(
+            organization=self.organization
+        )
+        if o_control.enforce_rev_code and not self.revenue_code:
+            raise ValidationError(
+                {
+                    "revenue_code": ValidationError(
+                        _("Revenue Code is required."),
+                        code="invalid",
+                    )
+                }
+            )
+
+    def validate_compare_origin_destination(self) -> None:
+        """Validate the origin and destination locations
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the origin and destination locations are the same
+        """
+        o_control: OrderControl = OrderControl.objects.get(
+            organization=self.organization
+        )
+        
+        if (
+            o_control.enforce_origin_destination
+            and self.origin_location == self.destination_location
+        ):
+            raise ValidationError(
+                {
+                    "origin_location": ValidationError(
+                        _("Origin and Destination cannot be the same."),
+                        code="invalid",
+                    ),
+                    "destination_location": ValidationError(
+                        _("Origin and Destination cannot be the same."),
+                        code="invalid",
+                    ),
+                }
+            )
+
     def validate_per_mile_rate_method(self) -> None:
         """Validate the per mile rate method
 
@@ -582,6 +644,8 @@ class Order(GenericModel):
         self.validate_freight_rate_method()
         self.validate_per_mile_rate_method()
         self.validate_ready_to_bill()
+        self.validate_compare_origin_destination()
+        self.validate_revenue_code()
 
     def clean(self) -> None:
         """Order save method

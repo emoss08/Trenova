@@ -45,11 +45,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -78,11 +78,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self,
-            username: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -138,7 +138,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS: list[str] = ["email"]
+    REQUIRED_FIELDS: list[str] = ["email", "organization"]
 
     class Meta:
         """
@@ -154,7 +154,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns:
             str: String representation of the User
         """
-        return textwrap.wrap(self.username, 30)[0]
+        return self.username
 
     def get_absolute_url(self) -> str:
         """
