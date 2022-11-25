@@ -19,45 +19,38 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from order.models import (
-    commodity,
-    hazardous_material,
-    movement,
-    order,
-    order_control,
-    qualifier_code,
-    reason_code,
-    service_incident,
-    stop,
-)
+from order import models
 from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
 
 
-class OrderDocumentationInline(GenericTabularInline[order.OrderDocumentation, order.Order]):
+class OrderDocumentationInline(
+    GenericTabularInline[models.OrderDocumentation, models.Order]
+):
     """
     Order documentation inline
     """
 
-    model: type[order.OrderDocumentation] = order.OrderDocumentation
+    model: type[models.OrderDocumentation] = models.OrderDocumentation
 
 
-class OrderComment(GenericStackedInline[order.OrderComment, order.Order]):
+class OrderComment(GenericStackedInline[models.OrderComment, models.Order]):
     """
     Order comment inline
     """
 
-    model: type[order.OrderComment] = order.OrderComment
+    model: type[models.OrderComment] = models.OrderComment
 
 
-class AdditionalCharge(GenericStackedInline[order.AdditionalCharge, order.Order]):
+class AdditionalCharge(GenericStackedInline[models.AdditionalCharge, models.Order]):
     """
     Order Additional Charge inline
     """
-    model: type[order.AdditionalCharge] = order.AdditionalCharge
+
+    model: type[models.AdditionalCharge] = models.AdditionalCharge
 
 
-@admin.register(order.OrderType)
-class OrderTypeAdmin(GenericAdmin[order.OrderType]):
+@admin.register(models.OrderType)
+class OrderTypeAdmin(GenericAdmin[models.OrderType]):
     """
     Order Type Admin
     """
@@ -69,64 +62,8 @@ class OrderTypeAdmin(GenericAdmin[order.OrderType]):
     search_fields = ("name", "description")
 
 
-@admin.register(hazardous_material.HazardousMaterial)
-class HazardousMaterialAdmin(GenericAdmin[hazardous_material.HazardousMaterial]):
-    """
-    Hazardous Material Admin
-    """
-
-    list_display = (
-        "name",
-        "description",
-    )
-    search_fields = ("name", "description")
-
-
-@admin.register(commodity.Commodity)
-class CommodityAdmin(GenericAdmin[commodity.Commodity]):
-    """
-    Commodity Admin
-    """
-
-    list_display = (
-        "name",
-        "description",
-    )
-    search_fields = ("name", "description")
-    fieldsets = (
-        (None, {"fields": ("name", "description")}),
-        (
-            "Hazmat Information",
-            {
-                "classes": ("collapse",),
-                "fields": (
-                    "min_temp",
-                    "max_temp",
-                    "set_point_temp",
-                    "unit_of_measure",
-                    "hazmat",
-                    "is_hazmat",
-                ),
-            },
-        ),
-    )
-
-
-@admin.register(qualifier_code.QualifierCode)
-class QualifierCodeAdmin(GenericAdmin[qualifier_code.QualifierCode]):
-    """
-    Qualifier Code Admin
-    """
-
-    list_display = (
-        "code",
-        "description",
-    )
-    search_fields = ("code", "description")
-
-
-@admin.register(reason_code.ReasonCode)
-class ReasonCodeAdmin(GenericAdmin[reason_code.ReasonCode]):
+@admin.register(models.ReasonCode)
+class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
     """
     Reason Code Admin
     """
@@ -138,8 +75,8 @@ class ReasonCodeAdmin(GenericAdmin[reason_code.ReasonCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(order_control.OrderControl)
-class OrderControlAdmin(GenericAdmin[order_control.OrderControl]):
+@admin.register(models.OrderControl)
+class OrderControlAdmin(GenericAdmin[models.OrderControl]):
     """
     Order Control Admin
     """
@@ -151,8 +88,8 @@ class OrderControlAdmin(GenericAdmin[order_control.OrderControl]):
     search_fields = ("organization", "auto_rate_orders")
 
 
-@admin.register(order.Order)
-class OrderAdmin(GenericAdmin[order.Order]):
+@admin.register(models.Order)
+class OrderAdmin(GenericAdmin[models.Order]):
     """
     Order Admin
     """
@@ -220,52 +157,3 @@ class OrderAdmin(GenericAdmin[order.Order]):
         OrderComment,
         AdditionalCharge,
     )
-
-
-@admin.register(movement.Movement)
-class MovementAdmin(GenericAdmin[movement.Movement]):
-    """
-    Movement Admin
-    """
-
-    list_display = (
-        "status",
-        "ref_num",
-        "order",
-        "equipment",
-        "primary_worker",
-    )
-    search_fields = ("ref_num",)
-
-
-@admin.register(stop.Stop)
-class StopAdmin(GenericAdmin[stop.Stop]):
-    """
-    Stop Admin
-    """
-
-    list_display = (
-        "status",
-        "movement",
-        "stop_type",
-        "sequence",
-        "location",
-        "address_line",
-    )
-    search_fields = ("id",)
-
-
-@admin.register(service_incident.ServiceIncident)
-class ServiceIncidentAdmin(GenericAdmin[service_incident.ServiceIncident]):
-    """
-    Service Incident Admin
-    """
-
-    list_display = (
-        "movement",
-        "stop",
-        "delay_code",
-        "delay_reason",
-        "delay_time",
-    )
-    search_fields = ("id",)

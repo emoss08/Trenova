@@ -19,48 +19,51 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from billing.models import AccessorialCharge, ChargeType, DocumentClassification
+from stops import models
 from utils.admin import GenericAdmin
 
 
-@admin.register(DocumentClassification)
-class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
+@admin.register(models.QualifierCode)
+class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
     """
-    Document Classification Admin
-    """
-
-    model: type[DocumentClassification] = DocumentClassification
-    list_display = (
-        "name",
-        "description",
-    )
-    search_fields = ("name",)
-
-
-@admin.register(ChargeType)
-class ChargeTypeAdmin(GenericAdmin[ChargeType]):
-    """
-    Charge Type Admin
+    Qualifier Code Admin
     """
 
-    model: type[ChargeType] = ChargeType
-    list_display = (
-        "name",
-        "description",
-    )
-    search_fields = ("name",)
-
-
-@admin.register(AccessorialCharge)
-class AccessorialChargeAdmin(GenericAdmin[AccessorialCharge]):
-    """
-    Accessorial Charge Admin
-    """
-
-    model: type[AccessorialCharge] = AccessorialCharge
     list_display = (
         "code",
-        "charge_amount",
-        "method",
+        "description",
     )
-    search_fields = ("code",)
+    search_fields = ("code", "description")
+
+
+@admin.register(models.Stop)
+class StopAdmin(GenericAdmin[models.Stop]):
+    """
+    Stop Admin
+    """
+
+    list_display = (
+        "status",
+        "movement",
+        "stop_type",
+        "sequence",
+        "location",
+        "address_line",
+    )
+    search_fields = ("id",)
+
+
+@admin.register(models.ServiceIncident)
+class ServiceIncidentAdmin(GenericAdmin[models.ServiceIncident]):
+    """
+    Service Incident Admin
+    """
+
+    list_display = (
+        "movement",
+        "stop",
+        "delay_code",
+        "delay_reason",
+        "delay_time",
+    )
+    search_fields = ("id",)

@@ -24,7 +24,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from control_file.models import CommentType
 from organization.models import Depot
 from utils.models import GenericModel
 
@@ -269,7 +268,7 @@ class LocationComment(GenericModel):
         verbose_name=_("Location"),
     )
     comment_type = models.ForeignKey(
-        CommentType,
+        "dispatch.CommentType",
         on_delete=models.PROTECT,
         related_name="location_comments",
         related_query_name="location_comment",

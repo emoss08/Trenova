@@ -17,16 +17,23 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-# This file is used to import all models into the order app
-# Unfortunately, the models.py was getting too big and needed to be split up
+from django.contrib import admin
 
-from .choices import *
-from .commodity import *
-from .hazardous_material import *
-from .movement import *
-from .order import *
-from .order_control import *
-from .qualifier_code import *
-from .reason_code import *
-from .service_incident import *
-from .stop import *
+from movements import models
+from utils.admin import GenericAdmin
+
+
+@admin.register(models.Movement)
+class MovementAdmin(GenericAdmin[models.Movement]):
+    """
+    Movement Admin
+    """
+
+    list_display = (
+        "status",
+        "ref_num",
+        "order",
+        "equipment",
+        "primary_worker",
+    )
+    search_fields = ("ref_num",)

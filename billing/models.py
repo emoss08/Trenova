@@ -100,10 +100,6 @@ class AccessorialCharge(GenericModel):
         unique=True,
         primary_key=True,
     )
-    is_fuel_surcharge = models.BooleanField(
-        _("Is Fuel Surcharge"),
-        default=False,
-    )
     is_detention = models.BooleanField(
         _("Is Detention"),
         default=False,
@@ -112,6 +108,7 @@ class AccessorialCharge(GenericModel):
         _("Charge Amount"),
         max_digits=10,
         decimal_places=2,
+        default=1.00,
         help_text=_("Charge Amount"),
     )
     method = ChoiceField(

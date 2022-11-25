@@ -30,8 +30,9 @@ from django.db.models.aggregates import Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.models import choices, hazardous_material, order_control, stop
-from utils.models import ChoiceField, GenericModel
+from commodities.models import HazardousMaterial
+from stops.models import Stop
+from utils.models import ChoiceField, GenericModel, StatusChoices
 
 User = settings.AUTH_USER_MODEL
 
@@ -48,6 +49,97 @@ def order_documentation_upload_to(instance: OrderDocumentation, filename: str) -
         str: upload path for the order documentation to be stored.
     """
     return f"order_documentation/{instance.order.pro_number}/{filename}"
+
+
+class OrderControl(GenericModel):
+    """
+    Stores the order control information for a related :model:`organization.Organization`.
+    """
+
+    organization = models.OneToOneField(
+        "organization.Organization",
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="order_control",
+        related_query_name="order_controls",
+    )
+    auto_rate_orders = models.BooleanField(
+        _("Auto Rate"),
+        default=True,
+        help_text=_("Auto rate orders"),
+    )
+    calculate_distance = models.BooleanField(
+        _("Calculate Distance"),
+        default=True,
+        help_text=_("Calculate distance for the order"),
+    )
+    enforce_customer = models.BooleanField(
+        _("Enforce Customer"),
+        default=False,
+        help_text=_("Enforce Customer to being enter when entering an order."),
+    )
+    enforce_rev_code = models.BooleanField(
+        _("Enforce Rev Code"),
+        default=False,
+        help_text=_("Enforce rev code code being entered when entering an order."),
+    )
+    enforce_shipper = models.BooleanField(
+        _("Enforce Shipper"),
+        default=False,
+        help_text=_("Enforce shipper when putting in an order."),
+    )
+    enforce_cancel_comm = models.BooleanField(
+        _("Enforce Voided Comm"),
+        default=False,
+        help_text=_("Enforce comment when cancelling an order."),
+    )
+    generate_routes = models.BooleanField(
+        _("Generate Routes"),
+        default=False,
+        help_text=_("Automatically generate routes for order entry."),
+    )
+    auto_pop_address = models.BooleanField(
+        _("Auto Populate Address"),
+        default=True,
+        help_text=_(
+            "Auto populate address from location ID " "when entering an order."
+        ),
+    )
+    auto_sequence_stops = models.BooleanField(
+        _("Auto Sequence Stops"),
+        default=True,
+        help_text=_("Auto Sequence stops for the order and movements."),
+    )
+    auto_order_total = models.BooleanField(
+        _("Auto Order Total"),
+        default=True,
+        help_text=_("Automate the order total amount calculation."),
+    )
+
+    class Meta:
+        """
+        Metaclass for OrderControl
+        """
+
+        verbose_name = _("Order Control")
+        verbose_name_plural = _("Order Controls")
+        ordering: list[str] = ["organization"]
+
+    def __str__(self) -> str:
+        """Order control string representation
+
+        Returns:
+            str: Order control string representation
+        """
+        return textwrap.wrap(self.organization.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Order control absolute url
+
+        Returns:
+            str: Order control absolute url
+        """
+        return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
 class OrderType(GenericModel):
@@ -119,8 +211,8 @@ class Order(GenericModel):
     )
     status = ChoiceField(
         _("Status"),
-        choices=choices.StatusChoices.choices,
-        default=choices.StatusChoices.NEW,
+        choices=StatusChoices.choices,
+        default=StatusChoices.NEW,
     )
     revenue_code = models.ForeignKey(
         "accounting.RevenueCode",
@@ -262,7 +354,7 @@ class Order(GenericModel):
         help_text=_("Equipment Type"),
     )
     commodity = models.ForeignKey(
-        "order.Commodity",
+        "commodities.Commodity",
         on_delete=models.PROTECT,
         related_name="orders",
         related_query_name="order",
@@ -278,7 +370,7 @@ class Order(GenericModel):
         help_text=_("Order entered by User"),
     )
     hazmat_id = models.ForeignKey(
-        "order.HazardousMaterial",
+        "commodities.HazardousMaterial",
         on_delete=models.PROTECT,
         related_name="orders",
         related_query_name="order",
@@ -341,8 +433,6 @@ class Order(GenericModel):
     def calculate_total(self) -> decimal.Decimal:
         """Calculate the sub_total for an order
 
-        # TODO(emoss): Move this into a service class
-
         Returns:
             decimal.Decimal: The total for the order
         """
@@ -357,7 +447,7 @@ class Order(GenericModel):
 
         return self.freight_charge_amount
 
-    def set_hazardous_class(self) -> Optional[hazardous_material.HazardousMaterial]:
+    def set_hazardous_class(self) -> Optional[HazardousMaterial]:
         """Set the hazardous class from commodity
 
         if a commodity is selected automatically set the hazardous
@@ -377,7 +467,7 @@ class Order(GenericModel):
         Returns:
             int: Total piece count for the order
         """
-        return stop.Stop.objects.filter(movement__order__exact=self).aggregate(
+        return Stop.objects.filter(movement__order__exact=self).aggregate(
             Sum("pieces")
         )["pieces__sum"]
 
@@ -387,7 +477,7 @@ class Order(GenericModel):
         Returns:
             int: Total weight for the order
         """
-        return stop.Stop.objects.filter(movement__order__exact=self).aggregate(
+        return Stop.objects.filter(movement__order__exact=self).aggregate(
             Sum("weight")
         )["weight__sum"]
 
@@ -397,7 +487,7 @@ class Order(GenericModel):
         Returns:
             None
         """
-        o_control: order_control.OrderControl = order_control.OrderControl.objects.get(
+        o_control: OrderControl = OrderControl.objects.get(
             organization=self.organization
         )
 
@@ -419,8 +509,8 @@ class Order(GenericModel):
 
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.FLAT
-                and self.freight_charge_amount is None
+            self.rate_method == Order.RatingMethodChoices.FLAT
+            and self.freight_charge_amount is None
         ):
             raise ValidationError(
                 {
@@ -443,8 +533,8 @@ class Order(GenericModel):
             ValidationError: If the mileage is not set
         """
         if (
-                self.rate_method == Order.RatingMethodChoices.PER_MILE
-                and self.mileage is None
+            self.rate_method == Order.RatingMethodChoices.PER_MILE
+            and self.mileage is None
         ):
             raise ValidationError(
                 {
@@ -467,7 +557,7 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the order is not completed
         """
-        if self.ready_to_bill and self.status != choices.StatusChoices.COMPLETED:
+        if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
             raise ValidationError(
                 {
                     "ready_to_bill": ValidationError(
@@ -518,7 +608,7 @@ class Order(GenericModel):
         self.set_address()
         self.set_hazardous_class()
 
-        if self.status == choices.StatusChoices.COMPLETED:
+        if self.status == StatusChoices.COMPLETED:
             self.pieces = self.total_piece()
             self.weight = self.total_weight()
 
@@ -596,7 +686,7 @@ class OrderComment(GenericModel):
         verbose_name=_("Order"),
     )
     comment_type = models.ForeignKey(
-        "control_file.CommentType",
+        "dispatch.CommentType",
         on_delete=models.CASCADE,
         related_name="order_comments",
         related_query_name="order_comment",
@@ -645,6 +735,7 @@ class AdditionalCharge(GenericModel):
     """
     Stores Additional Charge related to a :model:`order.Order`.
     """
+
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -658,7 +749,7 @@ class AdditionalCharge(GenericModel):
         related_name="additional_charges",
         related_query_name="additional_charge",
         verbose_name=_("Charge"),
-        help_text=_("Charge")
+        help_text=_("Charge"),
     )
     charge_amount = models.DecimalField(
         _("Charge Amount"),
@@ -705,6 +796,14 @@ class AdditionalCharge(GenericModel):
         """
         return f"{self.order} - {self.charge}"
 
+    def save(self, *args: Any, **kwargs: Any):
+        """
+        Save the AdditionalCharge
+        """
+        self.charge_amount = self.charge.charge_amount
+        self.sub_total = self.charge_amount * self.unit
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the AdditionalCharges
 
@@ -712,3 +811,60 @@ class AdditionalCharge(GenericModel):
             str: Absolute url for the AdditionalCharges
         """
         return reverse("additional-charges-detail", kwargs={"pk": self.pk})
+
+
+class ReasonCode(GenericModel):
+    """
+    Stores Reason code information for when a load is voided or cancelled.
+    """
+
+    @final
+    class CodeTypeChoices(models.TextChoices):
+        """
+        Code Type choices for Reason Code model
+        """
+
+        VOIDED = "VOIDED", _("Voided")
+        CANCELLED = "CANCELLED", _("Cancelled")
+
+    code = models.CharField(
+        _("Code"),
+        max_length=255,
+        unique=True,
+        help_text=_("Code of the Reason Code"),
+    )
+    code_type = ChoiceField(
+        _("Code Type"),
+        choices=CodeTypeChoices.choices,
+        help_text=_("Code Type of the Reason Code"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description of the Reason Code"),
+    )
+
+    class Meta:
+        """
+        Reason Code Metaclass
+        """
+
+        verbose_name = _("Reason Code")
+        verbose_name_plural = _("Reason Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """Reason Code String Representation
+
+        Returns:
+            str: Code of the Reason
+        """
+        return textwrap.wrap(self.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Reason Code Absolute URL
+
+        Returns:
+            str: Reason Code Absolute URL
+        """
+        return reverse("order:reasoncode-detail", kwargs={"pk": self.pk})

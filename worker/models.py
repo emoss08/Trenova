@@ -29,7 +29,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from control_file.models import CommentType
 from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel
@@ -444,7 +443,7 @@ class WorkerComment(GenericModel):
         help_text=_("Related worker."),
     )
     comment_type = models.ForeignKey(
-        CommentType,
+        "dispatch.CommentType",
         on_delete=models.CASCADE,
         related_name="comments",
         related_query_name="comments",

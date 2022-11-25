@@ -19,48 +19,48 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from billing.models import AccessorialCharge, ChargeType, DocumentClassification
+from commodities import models
 from utils.admin import GenericAdmin
 
 
-@admin.register(DocumentClassification)
-class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):
+@admin.register(models.HazardousMaterial)
+class HazardousMaterialAdmin(GenericAdmin[models.HazardousMaterial]):
     """
-    Document Classification Admin
+    Hazardous Material Admin
     """
 
-    model: type[DocumentClassification] = DocumentClassification
     list_display = (
         "name",
         "description",
     )
-    search_fields = ("name",)
+    search_fields = ("name", "description")
 
 
-@admin.register(ChargeType)
-class ChargeTypeAdmin(GenericAdmin[ChargeType]):
+@admin.register(models.Commodity)
+class CommodityAdmin(GenericAdmin[models.Commodity]):
     """
-    Charge Type Admin
+    Commodity Admin
     """
 
-    model: type[ChargeType] = ChargeType
     list_display = (
         "name",
         "description",
     )
-    search_fields = ("name",)
-
-
-@admin.register(AccessorialCharge)
-class AccessorialChargeAdmin(GenericAdmin[AccessorialCharge]):
-    """
-    Accessorial Charge Admin
-    """
-
-    model: type[AccessorialCharge] = AccessorialCharge
-    list_display = (
-        "code",
-        "charge_amount",
-        "method",
+    search_fields = ("name", "description")
+    fieldsets = (
+        (None, {"fields": ("name", "description")}),
+        (
+            "Hazmat Information",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "min_temp",
+                    "max_temp",
+                    "set_point_temp",
+                    "unit_of_measure",
+                    "hazmat",
+                    "is_hazmat",
+                ),
+            },
+        ),
     )
-    search_fields = ("code",)

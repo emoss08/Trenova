@@ -48,3 +48,13 @@ class OrderService:
         return Stop.objects.filter(movement__order__exact=order).aggregate(
             Sum("weight")
         )["weight__sum"]
+
+    @staticmethod
+    def set_pro_number() -> str:
+        """Set the pro_number for the order
+
+        Returns:
+            str: The pro_number for the order
+        """
+        code = f"ORD{Order.objects.count() + 1:06d}"
+        return "ORD000001" if Order.objects.filter(pro_number=code).exists() else code

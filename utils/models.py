@@ -17,13 +17,40 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.core import validators
+from typing import final
+
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
 from organization.models import Organization
+
+
+@final
+class StatusChoices(models.TextChoices):
+    """
+    Status Choices for Order, Stop & Movement Statuses.
+    """
+
+    NEW = "N", _("New")
+    IN_PROGRESS = "P", _("In Progress")
+    COMPLETED = "C", _("Completed")
+    BILLED = "B", _("Billed")
+    VOIDED = "V", _("Voided")
+
+
+@final
+class StopChoices(models.TextChoices):
+    """
+    Status Choices for the Stop Model
+    """
+
+    PICKUP = "P", _("Pickup")
+    SPLIT_PICKUP = "SP", _("Split Pickup")
+    SPLIT_DROP = "SD", _("Split Drop Off")
+    DELIVERY = "D", _("Delivery")
+    DROP_OFF = "DO", _("Drop Off")
 
 
 class GenericModel(TimeStampedModel):
@@ -55,7 +82,5 @@ class ChoiceField(CharField):
     def __init__(self, *args, db_collation=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
-        if self.max_length is not None:
-            self.validators.append(validators.MaxLengthValidator(self.max_length))
         if self.choices:
             self.max_length = max(len(choice[0]) for choice in self.choices)

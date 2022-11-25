@@ -17,15 +17,12 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any
-
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.models.choices import StatusChoices
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
 class Movement(GenericModel):
@@ -100,6 +97,16 @@ class Movement(GenericModel):
             str: String representation of the Movement
         """
         return f"{self.order} - {self.ref_num}"
+
+    @staticmethod
+    def set_ref_number() -> str:
+        """Set the Movement Reference Number
+
+        Returns:
+            str: Movement Reference Number
+        """
+        code = f"MOV{Movement.objects.count() + 1:06d}"
+        return "MOV000001" if Movement.objects.filter(ref_num=code).exists() else code
 
     def validate_movement_statuses(self) -> None:
         """Validate Movement status
@@ -271,16 +278,6 @@ class Movement(GenericModel):
             None
         """
         self.validate()
-
-    def save(self, *args: Any, **kwargs: Any):
-        """Save the Movement
-
-        Returns:
-            None
-        """
-        self.full_clean()
-
-        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
