@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import textwrap
 from typing import Any
 
 from django.conf import settings
@@ -25,11 +26,52 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.models.choices import StatusChoices, StopChoices
-from order.models.service_incident import ServiceIncident
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
 
 User = settings.AUTH_USER_MODEL
+
+
+class QualifierCode(GenericModel):
+    """
+    Stores Qualifier Code information that can be used in stop notes.
+    """
+
+    code = models.CharField(
+        _("Code"),
+        max_length=255,
+        unique=True,
+        help_text=_("Code of the Qualifier Code"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description of the Qualifier Code"),
+    )
+
+    class Meta:
+        """
+        Qualifier Code Metaclass
+        """
+
+        verbose_name = _("Qualifier Code")
+        verbose_name_plural = _("Qualifier Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """Qualifier Code String Representation
+
+        Returns:
+            str: Code of the Qualifier
+        """
+        return textwrap.wrap(self.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Qualifier Code Absolute URL
+
+        Returns:
+            str: Qualifier Code Absolute URL
+        """
+        return reverse("order:qualifiercode-detail", kwargs={"pk": self.pk})
 
 
 class Stop(GenericModel):
@@ -48,7 +90,7 @@ class Stop(GenericModel):
         help_text=_("The sequence of the stop in the movement."),
     )
     movement = models.ForeignKey(
-        "order.Movement",
+        "movements.Movement",
         on_delete=models.CASCADE,
         related_name="stops",
         related_query_name="stop",
@@ -328,3 +370,91 @@ class Stop(GenericModel):
             str: Absolute url for the Stop
         """
         return reverse("stop-detail", kwargs={"pk": self.pk})
+
+
+class StopComment(GenericModel):
+    """
+    Stores comment  information related to a :model:`order.Stop`.
+    """
+
+    comment_type = models.ForeignKey(
+        "dispatch.CommentType",
+        on_delete=models.PROTECT,
+        related_name="stop_comments",
+        related_query_name="stop_comment",
+        verbose_name=_("Comment Type"),
+        help_text=_("The type of comment."),
+    )
+    qualifier_code = models.ForeignKey(
+        QualifierCode,
+        on_delete=models.PROTECT,
+        related_name="stop_comments",
+        related_query_name="stop_comment",
+        verbose_name=_("Qualifier Code"),
+        help_text=_("Qualifier code for the comment."),
+    )
+
+
+class ServiceIncident(GenericModel):
+    """
+    Stores Service Incident information related to a
+    :model:`order.Order` and :model:`order.Stop`.
+    """
+
+    movement = models.ForeignKey(
+        "movements.Movement",
+        on_delete=models.CASCADE,
+        related_name="service_incidents",
+        related_query_name="service_incident",
+        verbose_name=_("Movement"),
+    )
+    stop = models.ForeignKey(
+        Stop,
+        on_delete=models.CASCADE,
+        related_name="service_incidents",
+        related_query_name="service_incident",
+        verbose_name=_("Stop"),
+    )
+    delay_code = models.ForeignKey(
+        "dispatch.DelayCode",
+        on_delete=models.PROTECT,
+        related_name="service_incidents",
+        related_query_name="service_incident",
+        verbose_name=_("Delay Code"),
+        blank=True,
+        null=True,
+    )
+    delay_reason = models.CharField(
+        _("Delay Reason"),
+        max_length=100,
+        blank=True,
+    )
+    delay_time = models.DurationField(
+        _("Delay Time"),
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        """
+        ServiceIncident Metaclass
+        """
+
+        verbose_name = _("Service Incident")
+        verbose_name_plural = _("Service Incidents")
+
+    def __str__(self) -> str:
+        """String representation of the ServiceIncident
+
+        Returns:
+            str: String representation of the ServiceIncident
+        """
+        return f"{self.movement} - {self.stop} - {self.delay_code}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the ServiceIncident
+
+        Returns:
+            str: Absolute url for the ServiceIncident
+        """
+        return reverse("service-incident-detail", kwargs={"pk": self.pk})

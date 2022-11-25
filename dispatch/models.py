@@ -289,3 +289,45 @@ class FleetCode(GenericModel):
             str: Fleet code absolute URL
         """
         return reverse("dispatch:fleet-code-detail", kwargs={"pk": self.pk})
+
+
+class CommentType(GenericModel):
+    """
+    Stores the comment type information for a related :model:`organization.Organization`.
+    """
+
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("Comment type name"),
+    )
+    description = models.TextField(
+        _("Description"),
+        max_length=255,
+        help_text=_("Comment type description"),
+    )
+
+    class Meta:
+        """
+        Metaclass for CommentType
+        """
+
+        verbose_name = _("Comment Type")
+        verbose_name_plural = _("Comment Types")
+        ordering: list[str] = ["organization"]
+
+    def __str__(self) -> str:
+        """Comment type string representation
+
+        Returns:
+            str: Comment type string representation
+        """
+        return textwrap.wrap(self.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Comment type absolute url
+
+        Returns:
+            str: Comment type absolute url
+        """
+        return reverse("comment_type:detail", kwargs={"pk": self.pk})

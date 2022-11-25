@@ -1,123 +1,68 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
-from typing import Any
-
-from django.db.models.signals import post_save, pre_save
-from django.dispatch import receiver
-
-from .models import movement, order, stop
-from .services import generation, movements, stops
-
-
-@receiver(pre_save, sender=order.Order)
-def generate_pro_number(
-    sender: order.Order, instance: order.Order, **kwargs: Any
-) -> None:
-    """Generate Pro Number
-
-    Generate a pro number when a new order is added.
-
-    Args:
-        sender (Order): Order
-        instance (Order): The order instance.
-        **kwargs (Any): Keyword arguments.
-
-    Returns:
-        None
-    """
-    if not instance.pro_number:
-        instance.pro_number = generation.OrderGenerationService.pro_number()
-
-
-@receiver(post_save, sender=order.Order)
-def generate_order_movement(
-    sender: order.Order, instance: order.Order, created: bool, **kwargs: Any
-) -> None:
-    """Generate the initial movement for the order
-
-    Args:
-        sender (Order): Order
-        instance (Order): The Order instance.
-        created (bool): if the Order was created
-        **kwargs (Any): Keyword Arguments
-
-    Returns:
-        None
-    """
-    if created and not movement.Movement.objects.filter(order=instance).exists():
-        movements.MovementService.create_initial_movement(instance)
-
-
-@receiver(post_save, sender=stop.Stop)
-def sequence_stops(
-    sender: stop.Stop, instance: stop.Stop, created: bool, **kwargs: Any
-) -> None:
-    """Sequence Stops
-    Sequence the stops when a new stop is added
-    to a movement.
-    Args:
-        sender (Stop): Stop
-        instance (Stop): The stop instance.
-        created (bool): if the Stop was created.
-        **kwargs (Any): Keyword arguments.
-    Returns:
-        None
-    """
-    if created:
-        stops.StopService.sequence_stops(instance)
-
-
-@receiver(post_save, sender=movement.Movement)
-def generate_movement_stops(
-    sender: movement.Movement, instance: movement.Movement, created: bool, **kwargs: Any
-):
-    """Generate the movement stops
-
-    Args:
-        sender (Movement): Movement
-        instance (Movement): The Movement instance.
-        created (bool): if the Movement was created
-        **kwargs (Any): Keyword Arguments
-
-    Returns:
-        None
-    """
-    if created and not stop.Stop.objects.filter(movement=instance).exists():
-        stops.StopService.create_initial_stops(instance, instance.order)
-
-
-@receiver(pre_save, sender=movement.Movement)
-def generate_ref_number(
-    sender: movement.Movement, instance: movement.Movement, **kwargs: Any
-) -> None:
-    """Generate Reference Number
-
-    Generate a reference number when a new movement is added.
-
-    Args:
-        sender (Movement): Movement
-        instance (Movement): The movement instance.
-        **kwargs (Any): Keyword arguments.
-
-    Returns:
-        None
-    """
-    if not instance.ref_num:
-        instance.ref_num = movements.MovementService.movement_ref_number()
+# """
+# COPYRIGHT 2022 MONTA
+#
+# This file is part of Monta.
+#
+# Monta is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Monta is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+# """
+#
+# from typing import Any
+#
+# from django.db.models.signals import post_save, pre_save
+# from django.dispatch import receiver
+#
+# from movements.models import Movement
+# from order import models
+#
+#
+# @receiver(pre_save, sender=models.Order)
+# def generate_pro_number(
+#         sender: models.Order, instance: models.Order, **kwargs: Any
+# ) -> None:
+#     """Generate Pro Number
+#
+#     Generate a pro number when a new order is added.
+#
+#     Args:
+#         sender (Order): Order
+#         instance (Order): The order instance.
+#         **kwargs (Any): Keyword arguments.
+#
+#     Returns:
+#         None
+#     """
+#     if not instance.pro_number:
+#         instance.pro_number = order_service.OrderService.set_pro_number()
+#
+#
+# @receiver(post_save, sender=models.Order)
+# def generate_order_movement(
+#         sender: models.Order, instance: models.Order, created: bool, **kwargs: Any
+# ) -> None:
+#     """Generate the initial movement for the order
+#
+#     Args:
+#         sender (Order): Order
+#         instance (Order): The Order instance.
+#         created (bool): if the Order was created
+#         **kwargs (Any): Keyword Arguments
+#
+#     Returns:
+#         None
+#     """
+#     if created and not Movement.objects.filter(order=instance).exists():
+#         movement_service.MovementService.create_initial_movement(instance)
+#
+#
+#

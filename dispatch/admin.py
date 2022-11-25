@@ -63,3 +63,14 @@ class FleetCodeAdmin(GenericAdmin[models.FleetCode]):
         "description",
     )
     search_fields = ("code", "description")
+
+
+@admin.register(models.CommentType)
+class CommentTypeAdmin(GenericAdmin[models.CommentType]):
+    """
+    Comment Type admin
+    """
+
+    model: type[models.CommentType] = models.CommentType
+    list_display = ("name",)
+    search_fields = ("name",)

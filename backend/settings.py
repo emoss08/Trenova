@@ -76,6 +76,9 @@ INSTALLED_APPS = [
     "billing",
     "customer",
     "accounting",
+    "stops",
+    "movements",
+    "commodities",
 ]
 
 # Middleware configurations
