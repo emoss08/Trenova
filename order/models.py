@@ -39,7 +39,7 @@ User = settings.AUTH_USER_MODEL
 
 def order_documentation_upload_to(instance: OrderDocumentation, filename: str) -> str:
     """
-    order_documentation_upload_to _summary_
+    order_documentation_upload_to
 
     Args:
         instance (Order): The instance of the Order.
@@ -563,28 +563,26 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the origin and destination locations are the same
         """
-        pass
-
-        # if self.origin_location and self.destination_location:
-        #     o_control: OrderControl = OrderControl.objects.get(
-        #         organization=self.entered_by.organization
-        #     )
-        #     if (
-        #         o_control.enforce_origin_destination
-        #         and self.origin_location == self.destination_location
-        #     ):
-        #         raise ValidationError(
-        #             {
-        #                 "origin_location": ValidationError(
-        #                     _("Origin and Destination cannot be the same."),
-        #                     code="invalid",
-        #                 ),
-        #                 "destination_location": ValidationError(
-        #                     _("Origin and Destination cannot be the same."),
-        #                     code="invalid",
-        #                 ),
-        #             }
-        #         )
+        if self.origin_location:
+            o_control: OrderControl = OrderControl.objects.get(
+                organization=self.entered_by.organization
+            )
+            if (
+                o_control.enforce_origin_destination
+                and self.origin_location == self.destination_location
+            ):
+                raise ValidationError(
+                    {
+                        "origin_location": ValidationError(
+                            _("Origin and Destination cannot be the same."),
+                            code="invalid",
+                        ),
+                        "destination_location": ValidationError(
+                            _("Origin and Destination cannot be the same."),
+                            code="invalid",
+                        ),
+                    }
+                )
 
     def validate_per_mile_rate_method(self) -> None:
         """Validate the per mile rate method

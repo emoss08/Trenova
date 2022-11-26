@@ -109,6 +109,7 @@ class Movement(GenericModel):
         Returns:
             str: Movement Reference Number
         """
+
         code = f"MOV{Movement.objects.count() + 1:06d}"
         return "MOV000001" if Movement.objects.filter(ref_num=code).exists() else code
 
@@ -124,6 +125,7 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement status is in progress, or completed.
         """
+
         old_status = Movement.objects.get(pk=self.pk).status
 
         if self.status == StatusChoices.NEW and old_status in [
@@ -154,6 +156,7 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement worker is not None and the user tries to change the worker.
         """
+
         if (
             self.status == StatusChoices.IN_PROGRESS
             and not self.primary_worker
@@ -183,8 +186,8 @@ class Movement(GenericModel):
 
         Raises:
             ValidationError: If the workers are the same.
-
         """
+
         if (
             self.primary_worker
             and self.secondary_worker
@@ -204,20 +207,23 @@ class Movement(GenericModel):
             )
 
     def validate_worker_commodity(self) -> None:
-        """
+        """Validate Worker Commodity
+
+        Validate that the assigned worker is allowed to move the commodity.
 
         Returns:
+            None
 
+        Raises:
+            ValidationError: If the worker is not allowed to move the commodity.
         """
+
         if self.order.hazmat and self.primary_worker:
 
-            if (
-                self.primary_worker.profile.endorsements
-                not in [
-                    WorkerProfile.EndorsementChoices.HAZMAT,
-                    WorkerProfile.EndorsementChoices.X,
-                ]
-            ):
+            if self.primary_worker.profile.endorsements not in [
+                WorkerProfile.EndorsementChoices.HAZMAT,
+                WorkerProfile.EndorsementChoices.X,
+            ]:
                 raise ValidationError(
                     {
                         "primary_worker": ValidationError(
@@ -230,6 +236,7 @@ class Movement(GenericModel):
                 )
             if (
                 self.primary_worker.profile.hazmat_expiration_date
+                and self.primary_worker.profile.hazmat_expiration_date
                 < datetime.date.today()
             ):
                 raise ValidationError(
@@ -252,8 +259,8 @@ class Movement(GenericModel):
 
         Raises:
             ValidationError: If the workers are not regulatory.
-
         """
+
         if self.primary_worker:
             dispatch_control = DispatchControl.objects.get(
                 organization=self.primary_worker.organization
@@ -261,6 +268,7 @@ class Movement(GenericModel):
             if dispatch_control.regulatory_check:
                 if (
                     self.primary_worker.profile.license_expiration_date
+                    and self.primary_worker.profile.license_expiration_date
                     < datetime.date.today()
                 ):
                     raise ValidationError(
@@ -274,6 +282,7 @@ class Movement(GenericModel):
 
                 if (
                     self.primary_worker.profile.physical_due_date
+                    and self.primary_worker.profile.physical_due_date
                     < datetime.date.today()
                 ):
                     raise ValidationError(
@@ -284,8 +293,10 @@ class Movement(GenericModel):
                             )
                         }
                     )
+
                 if (
                     self.primary_worker.profile.medical_cert_date
+                    and self.primary_worker.profile.medical_cert_date
                     < datetime.date.today()
                 ):
                     raise ValidationError(
@@ -296,7 +307,11 @@ class Movement(GenericModel):
                             )
                         }
                     )
-                if self.primary_worker.profile.mvr_due_date < datetime.date.today():
+
+                if (
+                    self.primary_worker.profile.mvr_due_date
+                    and self.primary_worker.profile.mvr_due_date < datetime.date.today()
+                ):
                     raise ValidationError(
                         {
                             "primary_worker": ValidationError(
