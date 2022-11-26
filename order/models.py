@@ -541,7 +541,7 @@ class Order(GenericModel):
         """
 
         o_control: OrderControl = OrderControl.objects.get(
-            organization=self.entered_by.organization
+            organization=self.organization
         )
 
         if o_control.enforce_rev_code and not self.revenue_code:
@@ -563,28 +563,28 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the origin and destination locations are the same
         """
-        o_control: OrderControl = OrderControl.objects.get(
-            organization=self.entered_by.organization
-        )
+        pass
 
-        if (
-            o_control.enforce_origin_destination
-            and self.origin_location
-            and self.destination_location
-            and self.origin_location == self.destination_location
-        ):
-            raise ValidationError(
-                {
-                    "origin_location": ValidationError(
-                        _("Origin and Destination cannot be the same."),
-                        code="invalid",
-                    ),
-                    "destination_location": ValidationError(
-                        _("Origin and Destination cannot be the same."),
-                        code="invalid",
-                    ),
-                }
-            )
+        # if self.origin_location and self.destination_location:
+        #     o_control: OrderControl = OrderControl.objects.get(
+        #         organization=self.entered_by.organization
+        #     )
+        #     if (
+        #         o_control.enforce_origin_destination
+        #         and self.origin_location == self.destination_location
+        #     ):
+        #         raise ValidationError(
+        #             {
+        #                 "origin_location": ValidationError(
+        #                     _("Origin and Destination cannot be the same."),
+        #                     code="invalid",
+        #                 ),
+        #                 "destination_location": ValidationError(
+        #                     _("Origin and Destination cannot be the same."),
+        #                     code="invalid",
+        #                 ),
+        #             }
+        #         )
 
     def validate_per_mile_rate_method(self) -> None:
         """Validate the per mile rate method
@@ -597,6 +597,7 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the mileage is not set
         """
+
         if (
             self.rate_method == Order.RatingMethodChoices.PER_MILE
             and self.mileage is None
@@ -622,6 +623,7 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the order is not completed
         """
+
         if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
             raise ValidationError(
                 {
@@ -644,6 +646,7 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the order is not valid
         """
+
         self.validate_compare_origin_destination()
         self.validate_freight_rate_method()
         self.validate_per_mile_rate_method()

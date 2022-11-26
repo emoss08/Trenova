@@ -102,7 +102,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
     )
     search_fields = ("pro_number",)
     fieldsets = (
-        (None, {"fields": ("status", "revenue_code", "entered_by")}),
+        (None, {"fields": ("organization", "status", "revenue_code", "entered_by")}),
         (
             "Order Information",
             {

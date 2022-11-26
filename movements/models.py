@@ -209,12 +209,15 @@ class Movement(GenericModel):
         Returns:
 
         """
-        if self.order.hazmat:
+        if self.order.hazmat and self.primary_worker:
 
-            if self.primary_worker.profile.endorsements not in [
-                WorkerProfile.EndorsementChoices.HAZMAT,
-                WorkerProfile.EndorsementChoices.X,
-            ]:
+            if (
+                self.primary_worker.profile.endorsements
+                not in [
+                    WorkerProfile.EndorsementChoices.HAZMAT,
+                    WorkerProfile.EndorsementChoices.X,
+                ]
+            ):
                 raise ValidationError(
                     {
                         "primary_worker": ValidationError(
