@@ -33,7 +33,7 @@ class MovementAdmin(GenericAdmin[models.Movement]):
         "equipment",
         "primary_worker",
     )
-    search_fields = ("ref_num",) 
+    search_fields = ("ref_num",)
 ```
 
 ### GenericStackedInline <a name="GenericStackedInline"></a>

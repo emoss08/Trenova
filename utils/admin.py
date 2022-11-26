@@ -22,7 +22,8 @@ from typing import Any, Optional, Sequence, TypeVar
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model, QuerySet
-from django.forms import BaseModelForm, ModelForm
+from django.forms import BaseModelForm
+from django.forms.models import ModelForm
 from django.http import HttpRequest
 
 # Model Generic Type
@@ -40,15 +41,12 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     Generic Admin Class for all models
     """
 
-    exclude: tuple[str, ...] = ("organization",)
     autocomplete: bool = True
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
-
         Args:
             request (AuthHttpRequest): Request Object
-
         Returns:
             QuerySet[Model]: Queryset of Model
         """
@@ -67,13 +65,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         change: bool,
     ) -> None:
         """Save Model Instance
-
         Args:
             request (HttpRequest): Request Object
             obj (_M): Generic Model Object
             form (Type[BaseModelForm]): Form Class
             change (bool): If the model is being changed
-
         Returns:
             None
         """
@@ -84,13 +80,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
-
         Args:
             request (HttpRequest): Request Object
             form (Any): Form Object
             formset (Any): Formset Object
             change (Any): If the model is being changed
-
         Returns:
             None
         """
@@ -109,27 +103,26 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         **kwargs: Any,
     ) -> type[ModelForm[_M]]:
         """Get Form for Model
-
         Args:
             change (bool): If the model is being changed
             request (HttpRequest): Request Object
             obj (Optional[_M]): Model Object
             **kwargs (Any): Keyword Arguments
-
         Returns:
             Type[ModelForm[Any]]: Form Class
         """
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields:
+            if field == "organization":
+                form.base_fields[field].initial = request.user.organization  # type: ignore
+                form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             form.base_fields[field].widget.attrs["placeholder"] = field.title()
         return form
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
-
         Args:
             request (HttpRequest): Request Object
-
         Returns:
             Sequence[str]: Autocomplete Fields
         """
@@ -154,14 +147,11 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
     """
 
     extra = 0
-    exclude = ("organization",)
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
         """Get Queryset
-
         Args:
             request (HttpRequest): Request Object
-
         Returns:
             QuerySet[_C]: Queryset of Model
         """
@@ -172,9 +162,26 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
             .filter(organization=request.user.organization)  # type: ignore
         )
 
+    def get_formset(
+        self, request: HttpRequest, obj: Optional[_P] = None, **kwargs: Any
+    ) -> Any:
+        """Get Formset
+        Args:
+            request (HttpRequest): Request Object
+            obj (Optional[_P]): Parent Model Object
+            **kwargs (Any): Keyword Arguments
+        Returns:
+            Any: Formset
+        """
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form.base_fields["organization"].initial = request.user.organization  # type: ignore
+        formset.form.base_fields["organization"].widget = formset.form.base_fields[
+            "organization"
+        ].hidden_widget()
+        return formset
+
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
-
         Returns:
             Sequence[str]: Autocomplete Fields
         """

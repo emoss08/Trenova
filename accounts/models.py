@@ -32,6 +32,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
@@ -138,7 +139,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS: list[str] = ["email", "organization"]
+    REQUIRED_FIELDS: list[str] = [
+        "email",
+    ]
 
     class Meta:
         """
@@ -292,7 +295,7 @@ class UserProfile(GenericModel):
             return self.profile_picture.url
         return "/static/media/avatars/blank.avif"
 
-    @property
+    @cached_property
     def get_user_city_state(self) -> str | None:
         """User City and state combination.
 
@@ -303,7 +306,7 @@ class UserProfile(GenericModel):
             return f"{self.city}, {self.state}"
         return None
 
-    @property
+    @cached_property
     def get_full_name(self) -> str:
         """Full name of the user.
 

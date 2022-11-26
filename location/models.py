@@ -21,6 +21,7 @@ import textwrap
 
 from django.db import models
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
@@ -179,7 +180,7 @@ class Location(GenericModel):
         """
         return reverse("location:location_detail", kwargs={"pk": self.pk})
 
-    @property
+    @cached_property
     def get_address_combination(self) -> str:
         """Location address combination
 

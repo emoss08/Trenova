@@ -39,7 +39,7 @@ def validate_worker_regulatory_information(value) -> None:
     Typical
     """
     dispatch_control: Optional[DispatchControl] = DispatchControl.objects.filter(
-        organization=value.organization
+        organization=value.worker.organization
     ).first()
     errors = {}
     fields = {

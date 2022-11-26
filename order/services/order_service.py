@@ -17,10 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.db.models import Sum
-
 from order.models import Order
-from stops.models import Stop
 
 
 class OrderService:
@@ -28,28 +25,6 @@ class OrderService:
 
     Service to manage all order actions
     """
-
-    @staticmethod
-    def total_pieces(order: Order) -> int:
-        """Get the total piece count for the order
-
-        Returns:
-            int: Total piece count for the order
-        """
-        return Stop.objects.filter(movement__order__exact=order).aggregate(
-            Sum("pieces")
-        )["pieces__sum"]
-
-    @staticmethod
-    def total_weight(order: Order) -> int:
-        """Get the total weight for the order.
-
-        Returns:
-            int: Total weight for the order
-        """
-        return Stop.objects.filter(movement__order__exact=order).aggregate(
-            Sum("weight")
-        )["weight__sum"]
 
     @staticmethod
     def set_pro_number() -> str:
