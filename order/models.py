@@ -24,15 +24,15 @@ import textwrap
 from typing import Any, Optional, final
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from commodities.models import HazardousMaterial
+from order.validation import OrderValidation
 from stops.models import Stop
-from utils.models import ChoiceField, GenericModel, StatusChoices
+from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
 
@@ -196,17 +196,6 @@ class Order(GenericModel):
     """
     Stores order information related to a :model:`organization.Organization`.
     """
-
-    @final
-    class RatingMethodChoices(models.TextChoices):
-        """
-        Rating Method choices for Order Model
-        """
-
-        FLAT = "F", _("Flat Fee")
-        PER_MILE = "PM", _("Per Mile")
-        PER_STOP = "PS", _("Per Stop")
-        POUNDS = "PP", _("Per Pound")
 
     # General Information
     pro_number = models.CharField(
@@ -439,6 +428,49 @@ class Order(GenericModel):
         """
         return textwrap.wrap(self.pro_number, 10)[0]
 
+    def clean(self) -> None:
+        """Order save method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the Order is not valid
+        """
+
+        # Call the OrderValidation class
+        OrderValidation(
+            order=self, organization=self.organization, order_control=OrderControl
+        ).validate()
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Order save method
+
+        Returns:
+            None
+        """
+        self.full_clean()
+
+        if self.ready_to_bill:
+            self.sub_total = self.calculate_total()
+
+        self.set_address()
+        self.set_hazardous_class()
+
+        if self.status == StatusChoices.COMPLETED:
+            self.pieces = self.total_piece()
+            self.weight = self.total_weight()
+
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the Order
+
+        Returns:
+            str: Absolute url for the Order
+        """
+        return reverse("order-detail", kwargs={"pk": self.pk})
+
     def calculate_total(self) -> decimal.Decimal:
         """Calculate the sub_total for an order
 
@@ -447,11 +479,11 @@ class Order(GenericModel):
         """
 
         # Handle the flat fee rate calculation
-        if self.rate_method == Order.RatingMethodChoices.FLAT:
+        if self.rate_method == RatingMethodChoices.FLAT:
             return self.freight_charge_amount + self.other_charge_amount
 
         # Handle the mileage rate calculation
-        if self.rate_method == Order.RatingMethodChoices.PER_MILE:
+        if self.rate_method == RatingMethodChoices.PER_MILE:
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
         return self.freight_charge_amount
@@ -503,189 +535,6 @@ class Order(GenericModel):
         if o_control.auto_pop_address:
             self.origin_address = self.origin_location.get_address_combination
             self.destination_address = self.destination_location.get_address_combination
-
-    def validate_freight_rate_method(self) -> None:
-        """Validate the freight charge amount
-
-        If the rate method is flat, the freight charge
-        amount must be set.
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the freight charge amount is not set
-
-        """
-        if (
-            self.rate_method == Order.RatingMethodChoices.FLAT
-            and self.freight_charge_amount is None
-        ):
-            raise ValidationError(
-                {
-                    "rate_method": ValidationError(
-                        _("Freight Charge Amount is required for flat rating method."),
-                        code="invalid",
-                    )
-                }
-            )
-
-    def validate_revenue_code(self) -> None:
-        """Validate the revenue code
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the revenue code is not set
-        """
-
-        o_control: OrderControl = OrderControl.objects.get(
-            organization=self.organization
-        )
-        if o_control.enforce_rev_code and not self.revenue_code:
-            raise ValidationError(
-                {
-                    "revenue_code": ValidationError(
-                        _("Revenue Code is required."),
-                        code="invalid",
-                    )
-                }
-            )
-
-    def validate_compare_origin_destination(self) -> None:
-        """Validate the origin and destination locations
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the origin and destination locations are the same
-        """
-        o_control: OrderControl = OrderControl.objects.get(
-            organization=self.organization
-        )
-        
-        if (
-            o_control.enforce_origin_destination
-            and self.origin_location == self.destination_location
-        ):
-            raise ValidationError(
-                {
-                    "origin_location": ValidationError(
-                        _("Origin and Destination cannot be the same."),
-                        code="invalid",
-                    ),
-                    "destination_location": ValidationError(
-                        _("Origin and Destination cannot be the same."),
-                        code="invalid",
-                    ),
-                }
-            )
-
-    def validate_per_mile_rate_method(self) -> None:
-        """Validate the per mile rate method
-
-        If the rate method is per mile, the mileage must be set.
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the mileage is not set
-        """
-        if (
-            self.rate_method == Order.RatingMethodChoices.PER_MILE
-            and self.mileage is None
-        ):
-            raise ValidationError(
-                {
-                    "rate_method": ValidationError(
-                        _("Mileage is required for per mile rating method."),
-                        code="invalid",
-                    )
-                }
-            )
-
-    def validate_ready_to_bill(self) -> None:
-        """Validate the order is ready to be billed
-
-        Order must be marked completed before it can be marked
-        ready to bill.
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the order is not completed
-        """
-        if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
-            raise ValidationError(
-                {
-                    "ready_to_bill": ValidationError(
-                        _(
-                            "Cannot mark an order ready to bill if the order status"
-                            " is not complete."
-                        ),
-                        code="invalid",
-                    )
-                }
-            )
-
-    def validate(self) -> None:
-        """Validate the order
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the order is not valid
-        """
-        self.validate_freight_rate_method()
-        self.validate_per_mile_rate_method()
-        self.validate_ready_to_bill()
-        self.validate_compare_origin_destination()
-        self.validate_revenue_code()
-
-    def clean(self) -> None:
-        """Order save method
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the Order is not valid
-        """
-        self.validate()
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """Order save method
-
-        Returns:
-            None
-        """
-        self.full_clean()
-
-        if self.ready_to_bill:
-            self.sub_total = self.calculate_total()
-
-        self.set_address()
-        self.set_hazardous_class()
-
-        if self.status == StatusChoices.COMPLETED:
-            self.pieces = self.total_piece()
-            self.weight = self.total_weight()
-
-        super().save(*args, **kwargs)
-
-    def get_absolute_url(self) -> str:
-        """Get the absolute url for the Order
-
-        Returns:
-            str: Absolute url for the Order
-        """
-        return reverse("order-detail", kwargs={"pk": self.pk})
-
 
 class OrderDocumentation(GenericModel):
     """

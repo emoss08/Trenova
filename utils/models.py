@@ -41,6 +41,18 @@ class StatusChoices(models.TextChoices):
 
 
 @final
+class RatingMethodChoices(models.TextChoices):
+    """
+    Rating Method choices for Order Model
+    """
+
+    FLAT = "F", _("Flat Fee")
+    PER_MILE = "PM", _("Per Mile")
+    PER_STOP = "PS", _("Per Stop")
+    POUNDS = "PP", _("Per Pound")
+
+
+@final
 class StopChoices(models.TextChoices):
     """
     Status Choices for the Stop Model
