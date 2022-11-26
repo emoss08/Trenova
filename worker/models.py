@@ -26,6 +26,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
@@ -151,7 +152,7 @@ class Worker(GenericModel):
         """
         return reverse("worker:detail", kwargs={"pk": self.pk})
 
-    @property
+    @cached_property
     def get_full_name(self) -> str:
         """Worker full name
 
@@ -160,7 +161,7 @@ class Worker(GenericModel):
         """
         return f"{self.first_name} {self.last_name}"
 
-    @property
+    @cached_property
     def get_full_address(self) -> str:
         """Worker full address
 

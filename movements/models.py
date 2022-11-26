@@ -17,12 +17,16 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import datetime
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from dispatch.models import DispatchControl
 from utils.models import ChoiceField, GenericModel, StatusChoices
+from worker.models import WorkerProfile
 
 
 class Movement(GenericModel):
@@ -105,6 +109,7 @@ class Movement(GenericModel):
         Returns:
             str: Movement Reference Number
         """
+
         code = f"MOV{Movement.objects.count() + 1:06d}"
         return "MOV000001" if Movement.objects.filter(ref_num=code).exists() else code
 
@@ -120,6 +125,7 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement status is in progress, or completed.
         """
+
         old_status = Movement.objects.get(pk=self.pk).status
 
         if self.status == StatusChoices.NEW and old_status in [
@@ -150,8 +156,11 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement worker is not None and the user tries to change the worker.
         """
-        if self.status == (
-            StatusChoices.IN_PROGRESS and not self.primary_worker and not self.equipment
+
+        if (
+            self.status == StatusChoices.IN_PROGRESS
+            and not self.primary_worker
+            and not self.equipment
         ):
             raise ValidationError(
                 {
@@ -177,8 +186,8 @@ class Movement(GenericModel):
 
         Raises:
             ValidationError: If the workers are the same.
-
         """
+
         if (
             self.primary_worker
             and self.secondary_worker
@@ -196,6 +205,130 @@ class Movement(GenericModel):
                     ),
                 }
             )
+
+    def validate_worker_commodity(self) -> None:
+        """Validate Worker Commodity
+
+        Validate that the assigned worker is allowed to move the commodity.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the worker is not allowed to move the commodity.
+        """
+
+        if self.order.hazmat and self.primary_worker:
+
+            if self.primary_worker.profile.endorsements not in [
+                WorkerProfile.EndorsementChoices.HAZMAT,
+                WorkerProfile.EndorsementChoices.X,
+            ]:
+                raise ValidationError(
+                    {
+                        "primary_worker": ValidationError(
+                            _(
+                                "Primary worker must be hazmat certified to haul this order."
+                            ),
+                            code="invalid",
+                        ),
+                    }
+                )
+            if (
+                self.primary_worker.profile.hazmat_expiration_date
+                and self.primary_worker.profile.hazmat_expiration_date
+                < datetime.date.today()
+            ):
+                raise ValidationError(
+                    {
+                        "primary_worker": ValidationError(
+                            _("Primary worker hazmat certification has expired."),
+                            code="invalid",
+                        ),
+                    }
+                )
+
+    def validate_primary_worker_regulatory(self) -> None:
+        """Validate Worker Regulatory
+
+        Validate that the workers are regulatory when creating
+        movement.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the workers are not regulatory.
+        """
+
+        if self.primary_worker:
+            dispatch_control = DispatchControl.objects.get(
+                organization=self.primary_worker.organization
+            )
+            if dispatch_control.regulatory_check:
+                if (
+                    self.primary_worker.profile.license_expiration_date
+                    and self.primary_worker.profile.license_expiration_date
+                    < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker license is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+                if (
+                    self.primary_worker.profile.physical_due_date
+                    and self.primary_worker.profile.physical_due_date
+                    < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker physical is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+                if (
+                    self.primary_worker.profile.medical_cert_date
+                    and self.primary_worker.profile.medical_cert_date
+                    < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker medical certificate is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+
+                if (
+                    self.primary_worker.profile.mvr_due_date
+                    and self.primary_worker.profile.mvr_due_date < datetime.date.today()
+                ):
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker MVR is expired."),
+                                code="invalid",
+                            )
+                        }
+                    )
+                if self.primary_worker.profile.termination_date:
+                    raise ValidationError(
+                        {
+                            "primary_worker": ValidationError(
+                                _("Primary worker is terminated."),
+                                code="invalid",
+                            )
+                        }
+                    )
 
     def validate_movement_stop_status(self) -> None:
         """Validate Movement Stop Status
@@ -265,11 +398,12 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the Movement is not valid
         """
-        if self.pk:
-            self.validate_movement_statuses()
-            self.validate_movement_worker()
-            self.validate_worker_compare()
-            self.validate_movement_stop_status()
+        self.validate_primary_worker_regulatory()
+        self.validate_movement_statuses()
+        self.validate_movement_worker()
+        self.validate_worker_compare()
+        self.validate_movement_stop_status()
+        self.validate_worker_commodity()
 
     def clean(self) -> None:
         """Stop clean method
