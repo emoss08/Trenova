@@ -439,7 +439,7 @@ class Order(GenericModel):
         """
 
         # Call the OrderValidation class
-        OrderValidation(
+        OrderValidation(  # type: ignore
             order=self, organization=self.organization, order_control=OrderControl
         ).validate()
 

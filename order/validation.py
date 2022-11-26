@@ -25,7 +25,7 @@ from utils.models import RatingMethodChoices, StatusChoices
 
 class OrderValidation:
     """
-    Validation Class for Validation of Order Model
+    Validation Class for validating Order Model
     """
 
     def __init__(self, order, organization, order_control):
