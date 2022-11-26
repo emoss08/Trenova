@@ -177,6 +177,16 @@ class Stop(GenericModel):
 
         """
         if self.pk:
+            if (
+                self.status == StatusChoices.IN_PROGRESS
+                and not self.movement.equipment
+                and not self.movement.primary_worker
+            ):
+                raise ValidationError(
+                    _(
+                        "Movement must have equipment and driver assigned before stops can be completed."
+                    )
+                )
             if self.status == StatusChoices.NEW:
                 old_status = Stop.objects.get(pk=self.pk).status
 
@@ -412,7 +422,7 @@ class Stop(GenericModel):
         self.full_clean()
 
         # If the status changes to in progress, change the movement status associated to this stop to in progress.
-        if self.status == StatusChoices.IN_PROGRESS:
+        if self.status == StatusChoices.COMPLETED:
             self.movement.status = StatusChoices.IN_PROGRESS
             self.movement.save()
 
@@ -451,6 +461,14 @@ class StopComment(GenericModel):
     Stores comment  information related to a :model:`stop.Stop`.
     """
 
+    stop = models.ForeignKey(
+        Stop,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        related_query_name="comment",
+        verbose_name=_("stop"),
+        help_text=_("Stop related to the comment."),
+    )
     comment_type = models.ForeignKey(
         "dispatch.CommentType",
         on_delete=models.PROTECT,
@@ -467,6 +485,34 @@ class StopComment(GenericModel):
         verbose_name=_("Qualifier Code"),
         help_text=_("Qualifier code for the comment."),
     )
+    comment = models.TextField(
+        _("Comment"),
+        help_text=_("Comment text."),
+    )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="stop_comments",
+        related_query_name="stop_comment",
+        verbose_name=_("Entered By"),
+        help_text=_("User who entered the comment."),
+    )
+
+    class Meta:
+        verbose_name = _("Stop Comment")
+        verbose_name_plural = _("Stop Comments")
+        ordering = ["created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.stop} - {self.comment_type} - {self.qualifier_code}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the StopComment
+
+        Returns:
+            str: Absolute url for the StopComment
+        """
+        return reverse("stop:stopcomment-detail", kwargs={"pk": self.pk})
 
 
 class ServiceIncident(GenericModel):

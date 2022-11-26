@@ -36,6 +36,7 @@ class StatusChoices(models.TextChoices):
     NEW = "N", _("New")
     IN_PROGRESS = "P", _("In Progress")
     COMPLETED = "C", _("Completed")
+    HOLD = "H", _("Hold")
     BILLED = "B", _("Billed")
     VOIDED = "V", _("Voided")
 
