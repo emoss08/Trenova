@@ -49,10 +49,7 @@ class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
     """
 
     model: type[models.UserProfile] = models.UserProfile
-    can_delete: bool = False
-    verbose_name_plural: str = "profiles"
     fk_name: str = "user"
-    extra: int = 0
 
 
 @admin.register(models.User)

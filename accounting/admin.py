@@ -24,7 +24,6 @@ from django.forms import ModelForm
 from django.http import HttpRequest
 
 from utils.admin import GenericAdmin
-
 from .models import GeneralLedgerAccount, RevenueCode
 
 
@@ -44,7 +43,6 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
         "id",
         "description",
     )
-    exclude: tuple[str, ...] = ("organization",)
 
     def get_form(
         self,
