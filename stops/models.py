@@ -330,53 +330,17 @@ class Stop(GenericModel):
 
         self.full_clean()
 
-        # If the status changes to in progress, change the movement status associated to this stop to in progress.
-        if self.status == StatusChoices.IN_PROGRESS:
-            self.movement.status = StatusChoices.IN_PROGRESS
-            self.movement.save()
-
-        # if the last stop is completed, change the movement status to complete.
-        if self.status == StatusChoices.COMPLETED:
-            if (
-                self.movement.stops.filter(status=StatusChoices.COMPLETED).count()
-                == self.movement.stops.count()
-            ):
-                self.movement.status = StatusChoices.COMPLETED
-                self.movement.save()
-
-        # If the arrival time is set, change the status to in progress.
-        if self.arrival_time:
-            self.status = StatusChoices.IN_PROGRESS
-
-            # If the arrival time of the stop is after the appointment time, create a service incident.
-            if self.arrival_time > self.appointment_time:
-                ServiceIncident.objects.create(
-                    organization=self.movement.order.organization,
-                    movement=self.movement,
-                    stop=self,
-                    delay_time=self.arrival_time - self.appointment_time,
-                )
-
-        # If the stop arrival and departure time are set, change the status to complete.
-        if self.arrival_time and self.departure_time:
-            self.status = StatusChoices.COMPLETED
-
-        super().save(*args, **kwargs)
-
-    def get_absolute_url(self) -> str:
-        """Get the absolute url for the Stop
-
-        Returns:
-            str: Absolute url for the Stop
-        """
-        return reverse("stop-detail", kwargs={"pk": self.pk})
-
-
 class StopComment(GenericModel):
     """
     Stores comment  information related to a :model:`order.Stop`.
     """
 
+    stop = models.ForeignKey(
+        Stop,
+        on_delete=models.CASCADE,
+        related_name="comments",
+        verbose_name=_("Stop"),
+    )
     comment_type = models.ForeignKey(
         "dispatch.CommentType",
         on_delete=models.PROTECT,
@@ -393,6 +357,33 @@ class StopComment(GenericModel):
         verbose_name=_("Qualifier Code"),
         help_text=_("Qualifier code for the comment."),
     )
+    comment = models.TextField(
+        _("Comment"),
+        help_text=_("Comment text."),
+    )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="stop_comments",
+        related_query_name="stop_comment",
+        verbose_name=_("Entered By"),
+        help_text=_("User who entered the comment."),
+    )
+
+    class Meta:
+        verbose_name = _("Stop Comment")
+        verbose_name_plural = _("Stop Comments")
+
+    def __str__(self) -> str:
+        return f"{self.stop} - {self.comment_type} - {self.qualifier_code}"
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the StopComment
+
+        Returns:
+            str: Absolute url for the StopComment
+        """
+        return reverse("stop:stopcomment-detail", kwargs={"pk": self.pk})
 
 
 class ServiceIncident(GenericModel):
