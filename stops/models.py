@@ -20,16 +20,16 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import textwrap
-from datetime import timedelta
 from typing import Any
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from dispatch.models import DispatchControl
+from stops.services.create_service_incident import CreateServiceIncident
+from stops.validation import StopValidation
 from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
 
 User = settings.AUTH_USER_MODEL
@@ -176,87 +176,14 @@ class Stop(GenericModel):
             ValidationError: If the stop is not valid.
 
         """
-        pass
 
-    def create_service_incident(self) -> ServiceIncident | None:
-        """Create a service incident
-
-        Based on the DispatchControl settings for the organization,
-        create service incident based on the criteria that is set.
-
-        Returns:
-            ServiceIncident
-        """
-        dispatch_control = DispatchControl.objects.get(organization=self.organization)
-
-        # Record service incident for pickup
-        if self.arrival_time:
-            if (
-                dispatch_control.record_service_incident
-                == DispatchControl.ServiceIncidentControlChoices.PICKUP
-                and self.stop_type == StopChoices.PICKUP
-            ):
-                if self.arrival_time > self.appointment_time + timedelta(
-                    minutes=dispatch_control.grace_period
-                ):
-                    return ServiceIncident.objects.create(
-                        organization=self.movement.order.organization,
-                        movement=self.movement,
-                        stop=self,
-                        delay_time=self.arrival_time - self.appointment_time,
-                    )
-
-            # Record service incident for delivery
-            if (
-                dispatch_control.record_service_incident
-                == DispatchControl.ServiceIncidentControlChoices.DELIVERY
-                and self.stop_type == StopChoices.DELIVERY
-            ):
-                if self.arrival_time > self.appointment_time + timedelta(
-                    minutes=dispatch_control.grace_period
-                ):
-                    return ServiceIncident.objects.create(
-                        organization=self.movement.order.organization,
-                        movement=self.movement,
-                        stop=self,
-                        delay_time=self.arrival_time - self.appointment_time,
-                    )
-
-            # Record Service Incident for both pickup and delivery
-            if (
-                dispatch_control.record_service_incident
-                == DispatchControl.ServiceIncidentControlChoices.PICKUP_DELIVERY
-            ):
-                if self.arrival_time > self.appointment_time + timedelta(
-                    minutes=dispatch_control.grace_period
-                ):
-                    return ServiceIncident.objects.create(
-                        organization=self.movement.order.organization,
-                        movement=self.movement,
-                        stop=self,
-                        delay_time=self.arrival_time - self.appointment_time,
-                    )
-
-            # Record Service Incident for all except pickup
-            if (
-                dispatch_control.record_service_incident
-                == DispatchControl.ServiceIncidentControlChoices.ALL_EX_SHIPPER
-                and self.stop_type != StopChoices.PICKUP
-                and self.sequence != 1
-            ):
-                if self.arrival_time > self.appointment_time + timedelta(
-                    minutes=dispatch_control.grace_period
-                ):
-                    return ServiceIncident.objects.create(
-                        organization=self.movement.order.organization,
-                        movement=self.movement,
-                        stop=self,
-                        delay_time=self.arrival_time - self.appointment_time,
-                    )
-        return None
+        StopValidation(
+            stop=self,
+            stop_object=Stop,
+        ).validate()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Stop save method
+        """Save the stop object
 
         Args:
             *args (Any): Arguments
@@ -265,8 +192,23 @@ class Stop(GenericModel):
         Returns:
             None
         """
-
         self.full_clean()
+
+        CreateServiceIncident(
+            stop=self,
+            dc_object=DispatchControl,
+            si_object=ServiceIncident,
+        ).create()
+
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the stop
+
+        Returns:
+            str: The absolute url for the stop
+        """
+        return reverse("stop-detail", args=[str(self.id)])
 
 
 class StopComment(GenericModel):
