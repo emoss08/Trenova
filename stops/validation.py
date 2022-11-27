@@ -28,14 +28,23 @@ class StopValidation:
     Validation Class for validating Stop Model
     """
 
-    def __init__(self, stop, stop_object, organization, dispatch_control):
+    def __init__(self, stop, stop_object) -> None:
+        """Initialize the StopValidation class
+
+        Args:
+            stop (Stop): The stop to validate
+            stop_object (Stop): Instance of the stop Model
+
+        Returns:
+            None
+        """
         self.stop = stop
-        self.organization = organization
-        self.dispatch_control = dispatch_control
         self.stop_object = stop_object
 
     def validate(self) -> None:
         """Validate the stop
+
+        Validate the stop by calling the validation methods.
 
         Returns:
             None
@@ -43,11 +52,44 @@ class StopValidation:
         Raises:
             ValidationError: If the stop is not valid
         """
+
         self.validate_compare_app_time()
-        self.validate_previous_appt_time()
-        self.validate_next_appt_time()
+        self.validate_previous_app_time()
+        self.validate_next_app_time()
         self.validate_reserve_status_change()
         self.validate_movement_driver_equipment()
+        self.validate_arrival_departure_movement()
+
+    def validate_arrival_departure_movement(self) -> None:
+        """Validate arrival and departure times for movement
+
+        If the movement does not have a primary worker or equipment assigned, and
+        arrival time is set in the stop. Raise a validation error.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the movement does not have a primary worker or
+                equipment assigned, and arrival time is set in the stop.
+        """
+
+        if (
+            not self.stop.movement.primary_worker
+            and not self.stop.movement.equipment
+            and self.stop.arrival_time
+        ):
+            raise ValidationError(
+                ValidationError(
+                    {
+                        "arrival_time": _(
+                            "Must assign worker or equipment to movement before"
+                            " setting arrival time."
+                        ),
+                    },
+                    code="invalid",
+                )
+            )
 
     def validate_movement_driver_equipment(self) -> None:
         """Validate that the movement driver and equipment are valid
@@ -63,6 +105,7 @@ class StopValidation:
             ValidationError: If the movement does not have a primary driver or
                 equipment assigned.
         """
+
         if not self.stop.movement.primary_worker and not self.stop.movement.equipment:
             if self.stop.status in [
                 StatusChoices.IN_PROGRESS,
@@ -74,18 +117,6 @@ class StopValidation:
                             _(
                                 "Cannot change status to in progress or completed if"
                                 " there is no equipment or primary worker."
-                            ),
-                            code="invalid",
-                        )
-                    }
-                )
-            if self.stop.arrival_time or self.stop.departure_time:
-                raise ValidationError(
-                    {
-                        "arrival_time": ValidationError(
-                            _(
-                                "Must assign worker or equipment to movement before"
-                                " setting arrival or departure time."
                             ),
                             code="invalid",
                         )
@@ -141,7 +172,7 @@ class StopValidation:
                         }
                     )
 
-    def validate_next_appt_time(self) -> None:
+    def validate_next_app_time(self) -> None:
         """Validate appointment time for next stop.
 
         If the appointment time on the stop is not after the previous stop time,
@@ -165,15 +196,17 @@ class StopValidation:
                 and self.stop.appointment_time < previous_stop.appointment_time
             ):
                 raise ValidationError(
-                    {
-                        "appointment_time": ValidationError(
-                            _("Appointment time must be after previous stop."),
-                            code="invalid",
-                        )
-                    }
+                    ValidationError(
+                        {
+                            "appointment_time": _(
+                                "Appointment time must be after previous stop."
+                            ),
+                        },
+                        code="invalid",
+                    )
                 )
 
-    def validate_previous_appt_time(self) -> None:
+    def validate_previous_app_time(self) -> None:
         """Validate the stop appointment time is after the previous stop
 
         If the stop appointment time is after the previous stop appointment time,
@@ -193,13 +226,16 @@ class StopValidation:
 
             if next_stop and self.stop.appointment_time > next_stop.appointment_time:
                 raise ValidationError(
-                    {
-                        "appointment_time": ValidationError(
-                            _("Appointment time must be before next stop."),
-                            code="invalid",
-                        )
-                    }
+                    ValidationError(
+                        {
+                            "appointment_time": _(
+                                "Appointment time must be before next stop."
+                            ),
+                        },
+                        code="invalid",
+                    )
                 )
+
             if (
                 next_stop
                 and self.stop.status != StatusChoices.COMPLETED
@@ -210,15 +246,15 @@ class StopValidation:
                 ]
             ):
                 raise ValidationError(
-                    {
-                        "status": ValidationError(
-                            _(
+                    ValidationError(
+                        {
+                            "status": _(
                                 "Previous stop must be completed before this stop can"
                                 " be in progress or completed."
                             ),
-                            code="invalid",
-                        )
-                    }
+                        },
+                        code="invalid",
+                    )
                 )
 
     def validate_compare_app_time(self) -> None:
@@ -236,25 +272,30 @@ class StopValidation:
         """
         if self.stop.departure_time and not self.stop.arrival_time:
             raise ValidationError(
-                {
-                    "departure_time": ValidationError(
-                        _("Must set arrival time before setting departure time."),
-                        code="invalid",
-                    )
-                }
+                ValidationError(
+                    {
+                        "departure_time": _(
+                            "Must set arrival time before setting departure time."
+                        ),
+                    },
+                    code="invalid",
+                )
             )
+
         if (
             self.stop.departure_time
             and self.stop.arrival_time
             and self.stop.departure_time < self.stop.arrival_time
         ):
             raise ValidationError(
-                {
-                    "departure_time": ValidationError(
-                        _("Departure time must be after arrival time."),
-                        code="invalid",
-                    )
-                }
+                ValidationError(
+                    {
+                        "departure_time": _(
+                            "Departure time must be after arrival time."
+                        ),
+                    },
+                    code="invalid",
+                )
             )
         if self.stop.sequence < self.stop.movement.stops.count():
             next_stop = self.stop.movement.stops.filter(
@@ -263,10 +304,12 @@ class StopValidation:
 
             if next_stop and self.stop.appointment_time > next_stop.appointment_time:
                 raise ValidationError(
-                    {
-                        "appointment_time": ValidationError(
-                            _("Appointment time must be before next stop."),
-                            code="invalid",
-                        )
-                    }
+                    ValidationError(
+                        {
+                            "appointment_time": _(
+                                "Appointment time must be before next stop."
+                            ),
+                        },
+                        code="invalid",
+                    )
                 )
