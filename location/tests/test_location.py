@@ -1,3 +1,4 @@
+# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 
@@ -17,15 +18,32 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
+import pytest
 
-urlpatterns = [
-    path("__debug__/", include("debug_toolbar.urls")),
-    path("admin/doc/", include("django.contrib.admindocs.urls")),
-    path("admin/", admin.site.urls),
-]
+from location.factories import LocationFactory
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # type: ignore
+
+@pytest.fixture()
+def location():
+    """
+    Location fixture
+    """
+    return LocationFactory()
+
+
+@pytest.mark.django_db
+def test_location_creation(location):
+    """
+    Test location creation
+    """
+    assert location is not None
+
+
+@pytest.mark.django_db
+def test_location_update(location):
+    """
+    Test location update
+    """
+    location.name = "New name"
+    location.save()
+    assert location.name == "New name"

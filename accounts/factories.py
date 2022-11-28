@@ -33,9 +33,7 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
 
         model = "accounts.JobTitle"
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("job")
     description = factory.Faker("text")
 
@@ -52,9 +50,7 @@ class UserFactory(factory.django.DjangoModelFactory):
 
         model = "accounts.User"
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     username = factory.Faker("user_name")
     password = factory.Faker("password")
     email = factory.Faker("email")
@@ -63,12 +59,16 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def profile(self, create, extracted, **kwargs):
+        """
+        Create profile
+        """
         if not create:
-            return None
+            return
 
         if extracted:
-            for profile in extracted:
-                self.profile.add(profile)
+            self.profile = extracted
+        else:
+            self.profile = ProfileFactory(user=self)
 
 
 class ProfileFactory(factory.django.DjangoModelFactory):
@@ -84,13 +84,10 @@ class ProfileFactory(factory.django.DjangoModelFactory):
         model = "accounts.UserProfile"
 
     user = factory.SubFactory(UserFactory)
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     title = factory.SubFactory(JobTitleFactory)
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
-    phone = factory.Faker("phone_number")
     city = factory.Faker("city")
     state = factory.Faker("state_abbr")
     zip_code = factory.Faker("zipcode")

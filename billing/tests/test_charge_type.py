@@ -17,17 +17,32 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import factory
+import pytest
 
-from organization import models
+from billing.factories import ChargeTypeFactory
 
 
-class OrganizationFactory(factory.django.DjangoModelFactory):
+@pytest.fixture()
+def charge_type():
     """
-    Organization factory class
+    Charge type fixture
     """
+    return ChargeTypeFactory()
 
-    class Meta:
-        model = models.Organization
 
-    name = factory.Faker("company")
+@pytest.mark.django_db
+def test_charge_type_creation(charge_type):
+    """
+    Test charge type creation
+    """
+    assert charge_type is not None
+
+
+@pytest.mark.django_db
+def test_charge_type_update(charge_type):
+    """
+    Test charge type update
+    """
+    charge_type.name = "New name"
+    charge_type.save()
+    assert charge_type.name == "New name"

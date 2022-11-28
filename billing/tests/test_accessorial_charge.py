@@ -17,15 +17,32 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
+import pytest
 
-urlpatterns = [
-    path("__debug__/", include("debug_toolbar.urls")),
-    path("admin/doc/", include("django.contrib.admindocs.urls")),
-    path("admin/", admin.site.urls),
-]
+from billing.factories import AccessorialChargeFactory
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # type: ignore
+
+@pytest.fixture()
+def accessorial_charge():
+    """
+    Accessorial charge fixture
+    """
+    return AccessorialChargeFactory()
+
+
+@pytest.mark.django_db
+def test_accessorial_charge_creation(accessorial_charge):
+    """
+    Test accessorial charge creation
+    """
+    assert accessorial_charge is not None
+
+
+@pytest.mark.django_db
+def test_accessorial_charge_update(accessorial_charge):
+    """
+    Test accessorial charge update
+    """
+    accessorial_charge.name = "New name"
+    accessorial_charge.save()
+    assert accessorial_charge.name == "New name"

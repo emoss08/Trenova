@@ -17,15 +17,32 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
+import pytest
 
-urlpatterns = [
-    path("__debug__/", include("debug_toolbar.urls")),
-    path("admin/doc/", include("django.contrib.admindocs.urls")),
-    path("admin/", admin.site.urls),
-]
+from accounts.factories import JobTitleFactory
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # type: ignore
+
+@pytest.fixture()
+def job_title():
+    """
+    Job title fixture
+    """
+    return JobTitleFactory()
+
+
+@pytest.mark.django_db
+def test_create_job_title(job_title):
+    """
+    Test job title creation
+    """
+    assert job_title is not None
+
+
+@pytest.mark.django_db
+def test_update_job_title(job_title):
+    """
+    Test job title update
+    """
+    job_title.name = "test_update_job_title"
+    job_title.save()
+    assert job_title.name == "test_update_job_title"

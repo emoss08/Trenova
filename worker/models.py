@@ -335,14 +335,11 @@ class WorkerProfile(GenericModel):
             and not self.hazmat_expiration_date
         ):
             raise ValidationError(
-                ValidationError(
-                    {
-                        "hazmat_expiration_date": _(
-                            "Hazmat expiration date is required for this endorsement."
-                        ),
-                    },
-                    code="invalid",
-                )
+                {
+                    "hazmat_expiration_date": _(
+                        "Hazmat expiration date is required for this endorsement."
+                    ),
+                },
             )
 
         # validate worker regulatory information

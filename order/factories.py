@@ -17,15 +17,22 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
+import factory
 
-urlpatterns = [
-    path("__debug__/", include("debug_toolbar.urls")),
-    path("admin/doc/", include("django.contrib.admindocs.urls")),
-    path("admin/", admin.site.urls),
-]
+from order import models
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # type: ignore
+
+class OrderTypeFactory(factory.django.DjangoModelFactory):
+    """
+    OrderType factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")
+
+    class Meta:
+        """
+        Metaclass for OrderTypeFactory
+        """
+
+        model = models.OrderType

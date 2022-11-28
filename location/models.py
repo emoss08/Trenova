@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import textwrap
 
+from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -28,8 +29,9 @@ from localflavor.us.models import USStateField, USZipCodeField
 from organization.models import Depot
 from utils.models import GenericModel
 
+User = settings.AUTH_USER_MODEL
 
-# Configuration Files
+
 class LocationCategory(GenericModel):
     """
     Stores location category information
@@ -278,6 +280,13 @@ class LocationComment(GenericModel):
     comment = models.TextField(
         _("Comment"),
         help_text=_("Comment"),
+    )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="location_comments",
+        related_query_name="location_comment",
+        verbose_name=_("Entered By"),
     )
 
     class Meta:
