@@ -27,6 +27,9 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     Customer factory
     """
 
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("name", locale="en_US")
+
     class Meta:
         """
         Metaclass for CustomerFactory
@@ -34,21 +37,11 @@ class CustomerFactory(factory.django.DjangoModelFactory):
 
         model = models.Customer
 
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("name", locale="en_US")
-
 
 class CustomerContactFactory(factory.django.DjangoModelFactory):
     """
     Customer contact factory
     """
-
-    class Meta:
-        """
-        Metaclass for CustomerContactFactory
-        """
-
-        model = models.CustomerContact
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
@@ -56,3 +49,10 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
     email = factory.Faker("email", locale="en_US")
     title = factory.Faker("word", locale="en_US")
     is_payable_contact = True
+
+    class Meta:
+        """
+        Metaclass for CustomerContactFactory
+        """
+
+        model = models.CustomerContact
