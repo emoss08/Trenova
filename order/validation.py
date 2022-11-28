@@ -28,7 +28,7 @@ class OrderValidation:
     Validation Class for validating Order Model
     """
 
-    def __init__(self, order, organization, order_control):
+    def __init__(self, *, order, organization, order_control):
         self.order = order
         self.organization = organization
         self.order_control = order_control

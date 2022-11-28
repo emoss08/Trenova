@@ -28,7 +28,7 @@ class StopValidation:
     Validation Class for validating Stop Model
     """
 
-    def __init__(self, stop, stop_object) -> None:
+    def __init__(self, *, stop, stop_object) -> None:
         """Initialize the StopValidation class
 
         Args:

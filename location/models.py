@@ -29,7 +29,6 @@ from organization.models import Depot
 from utils.models import GenericModel
 
 
-# Configuration Files
 class LocationCategory(GenericModel):
     """
     Stores location category information
