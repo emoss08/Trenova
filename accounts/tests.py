@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from accounts.factories.user import JobTitleFactory, UserFactory
+from accounts.factories import JobTitleFactory, UserFactory
 
 
 @pytest.fixture()
