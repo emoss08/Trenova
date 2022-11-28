@@ -149,6 +149,7 @@ class OrderValidation:
         Raises:
             ValidationError: If the origin and destination locations are the same
         """
+
         order_control = self.order_control.objects.get(organization=self.organization)
         if (
             self.order.origin_location
