@@ -57,5 +57,7 @@ def test_customer_contact_payable_has_no_email(customer_contact):
     customer_contact.email = ""
     customer_contact.save()
 
-    with pytest.raises(ValidationError, match="Payable contact must have an email address"):
+    with pytest.raises(
+        ValidationError, match="Payable contact must have an email address"
+    ):
         customer_contact.full_clean()

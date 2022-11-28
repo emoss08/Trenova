@@ -20,9 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from location.factories import (
-    LocationCategoryFactory,
-)
+from location.factories import LocationCategoryFactory
 
 
 @pytest.fixture()

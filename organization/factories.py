@@ -19,38 +19,36 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from commodities.models import Commodity, HazardousMaterial
+from organization import models
 
 
-class CommodityFactory(factory.django.DjangoModelFactory):
+class OrganizationFactory(factory.django.DjangoModelFactory):
     """
-    Commodity factory
+    Organization factory class
     """
+
+    name = factory.Faker("company", locale="en_US")
+    scac_code = "RNDM"
 
     class Meta:
         """
-        Metaclass for CommodityFactory
+        Metaclass for OrganizationFactory
         """
 
-        model = Commodity
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-    hazmat = factory.SubFactory("commodities.factories.HazardousMaterialFactory")
+        model = models.Organization
 
 
-class HazardousMaterialFactory(factory.django.DjangoModelFactory):
+class DepotFactory(factory.django.DjangoModelFactory):
     """
-    HazardousMaterial Factory
+    Depot factory class
     """
+
+    name = factory.Faker("company", locale="en_US")
+    organization = factory.SubFactory(OrganizationFactory)
 
     class Meta:
         """
-        Metaclass for HazardousMaterialFactory
+        Metaclass for DepotFactory
         """
 
-        model = HazardousMaterial
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-    hazard_class = "4.1"
+        model = models.Depot

@@ -34,9 +34,7 @@ class CustomerFactory(factory.django.DjangoModelFactory):
 
         model = models.Customer
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("name", locale="en_US")
 
 
@@ -52,9 +50,7 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
 
         model = models.CustomerContact
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
     name = factory.Faker("name", locale="en_US")
     email = factory.Faker("email", locale="en_US")

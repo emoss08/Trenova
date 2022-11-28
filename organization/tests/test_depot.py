@@ -19,48 +19,39 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from customer.factories import CustomerFactory
+from organization.factories import DepotFactory
 
 
 @pytest.fixture()
-def customer():
+def depot():
     """
-    Customer fixture
+    Depot fixture
     """
-    return CustomerFactory()
+    return DepotFactory()
 
 
 @pytest.mark.django_db
-def test_customer_creation(customer):
+def test_depot_creation(depot):
     """
-    Test customer creation
+    Test depot creation
     """
-    assert customer is not None
+    assert depot is not None
 
 
 @pytest.mark.django_db
-def test_customer_update(customer):
+def test_depot_update(depot):
     """
-    Test customer update
+    Test depot update
     """
-    customer.name = "New name"
-    customer.save()
-    assert customer.name == "New name"
+    depot.name = "New Name"
+    depot.save()
+    assert depot.name == "New Name"
 
 
 @pytest.mark.django_db
-def test_customer_code_exists(customer):
+def test_depot_organization(depot):
     """
-    Test customer code is added from
-    generate_customer_code pre_save signal
+    Test dispatch control is created from
+    create_depot_detail post_save signal
     """
-    assert customer.code is not None
-
-
-@pytest.mark.django_db
-def test_customer_billing_profile_creation(customer):
-    """
-    Test customer billing profile is created from
-    create_customer_billing_profile post_save signal
-    """
-    assert customer.billing_profile is not None
+    assert depot.depot_details.organization == depot.organization

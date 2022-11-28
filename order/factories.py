@@ -26,13 +26,13 @@ class OrderTypeFactory(factory.django.DjangoModelFactory):
     """
     OrderType factory
     """
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
 
     class Meta:
         """
         Metaclass for OrderTypeFactory
         """
+
         model = models.OrderType

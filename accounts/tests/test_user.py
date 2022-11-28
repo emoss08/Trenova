@@ -22,7 +22,7 @@ from django.test import Client
 
 from accounts.factories import UserFactory
 from accounts.models import User
-from organization.factories.organization import OrganizationFactory
+from organization.factories import OrganizationFactory
 
 
 @pytest.fixture()
@@ -95,7 +95,7 @@ def test_create_superuser():
     admin_user.save()
 
     client = Client()
-    login_response = client.login(username='test_admin', password='test_admin')
+    login_response = client.login(username="test_admin", password="test_admin")
     assert login_response is True
 
 

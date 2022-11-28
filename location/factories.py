@@ -27,9 +27,7 @@ class LocationCategoryFactory(factory.django.DjangoModelFactory):
     LocationCategory factory
     """
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
 
     class Meta:
@@ -44,9 +42,8 @@ class LocationFactory(factory.django.DjangoModelFactory):
     """
     Location factory
     """
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     id = factory.Faker("word", locale="en_US")
     location_category = factory.SubFactory("location.factories.LocationCategoryFactory")
     address_line_1 = factory.Faker("address", locale="en_US")
@@ -74,11 +71,10 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
 
         model = LocationContact
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
     name = factory.Faker("name", locale="en_US")
     email = factory.Faker("email", locale="en_US")
+
 
 # TODO: Write factory for location comment once factory for Comment Type is written

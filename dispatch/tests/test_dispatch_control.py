@@ -17,17 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import factory
-
-from organization import models
+import pytest
 
 
-class OrganizationFactory(factory.django.DjangoModelFactory):
-    """
-    Organization factory class
-    """
-
-    class Meta:
-        model = models.Organization
-
-    name = factory.Faker("company")
+def test_organization_signal_creates_dispatch_control():
+    pass
