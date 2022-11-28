@@ -17,15 +17,32 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
+import pytest
 
-urlpatterns = [
-    path("__debug__/", include("debug_toolbar.urls")),
-    path("admin/doc/", include("django.contrib.admindocs.urls")),
-    path("admin/", admin.site.urls),
-]
+from order.factories import OrderTypeFactory
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # type: ignore
+
+@pytest.fixture()
+def order_type():
+    """
+    OrderType fixture
+    """
+    return OrderTypeFactory()
+
+
+@pytest.mark.django_db
+def test_order_type_creation(order_type):
+    """
+    Test order type creation
+    """
+    assert order_type is not None
+
+
+@pytest.mark.django_db
+def test_order_type_update(order_type):
+    """
+    Test order type update
+    """
+    order_type.name = "New name"
+    order_type.save()
+    assert order_type.name == "New name"

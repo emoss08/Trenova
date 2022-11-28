@@ -165,9 +165,6 @@ class Depot(TimeStampedModel):
         verbose_name = _("Depot")
         verbose_name_plural = _("Depots")
         ordering: list[str] = ["name"]
-        indexes: list[models.Index] = [
-            models.Index(fields=["name"]),
-        ]
 
     def __str__(self) -> str:
         """Depot string representation.
@@ -262,9 +259,6 @@ class DepotDetail(TimeStampedModel):
         verbose_name = _("Depot Detail")
         verbose_name_plural = _("Depot Details")
         ordering: list[str] = ["depot"]
-        indexes: list[models.Index] = [
-            models.Index(fields=["depot"]),
-        ]
 
     def __str__(self) -> str:
         """DepotDetail string representation.

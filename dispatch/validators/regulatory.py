@@ -35,8 +35,6 @@ def validate_worker_regulatory_information(value) -> None:
 
     Raises:
         ValidationError: Validate the worker regulatory information.
-
-    Typical
     """
     dispatch_control: Optional[DispatchControl] = DispatchControl.objects.filter(
         organization=value.worker.organization

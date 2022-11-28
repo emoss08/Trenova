@@ -34,9 +34,7 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
 
         model = models.EquipmentType
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = "Test Equipment Type"
     description = "Test Equipment Type Description"
 
@@ -53,9 +51,7 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
 
         model = models.EquipmentTypeDetail
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     equipment_class = models.EquipmentTypeDetail.EquipmentClassChoices.TRAILER
 
@@ -72,9 +68,7 @@ class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
 
         model = models.EquipmentManufacturer
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     id = factory.Faker("name")
     description = factory.Faker("text")
 
@@ -91,8 +85,6 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
 
         model = models.Equipment
 
-    organization = factory.SubFactory(
-        "organization.factories.organization.OrganizationFactory"
-    )
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)

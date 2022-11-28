@@ -28,7 +28,7 @@ class OrderValidation:
     Validation Class for validating Order Model
     """
 
-    def __init__(self, order, organization, order_control):
+    def __init__(self, *, order, organization, order_control):
         self.order = order
         self.organization = organization
         self.order_control = order_control
@@ -149,6 +149,7 @@ class OrderValidation:
         Raises:
             ValidationError: If the origin and destination locations are the same
         """
+
         order_control = self.order_control.objects.get(organization=self.organization)
         if (
             self.order.origin_location

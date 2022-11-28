@@ -20,7 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import textwrap
 from typing import final
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -30,8 +29,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
 from utils.models import ChoiceField, GenericModel
-
-User = settings.AUTH_USER_MODEL
 
 
 @final

@@ -194,6 +194,11 @@ class Stop(GenericModel):
         """
         self.full_clean()
 
+        if self.arrival_time and not self.departure_time:
+            self.status = StatusChoices.IN_PROGRESS
+        elif self.arrival_time and self.departure_time:
+            self.status = StatusChoices.COMPLETED
+
         CreateServiceIncident(
             stop=self,
             dc_object=DispatchControl,
