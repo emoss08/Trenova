@@ -19,15 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from commodities.factories import CommodityFactory, HazardousMaterialFactory
-
-
-@pytest.fixture()
-def commodity():
-    """
-    Commodity fixture
-    """
-    return CommodityFactory()
+from commodities.factories import HazardousMaterialFactory
 
 
 @pytest.fixture()
@@ -36,24 +28,6 @@ def hazardous_material():
     Hazardous material fixture
     """
     return HazardousMaterialFactory()
-
-
-@pytest.mark.django_db
-def test_commodity_creation(commodity):
-    """
-    Test commodity creation
-    """
-    assert commodity is not None
-
-
-@pytest.mark.django_db
-def test_commodity_update(commodity):
-    """
-    Test commodity update
-    """
-    commodity.name = "New name"
-    commodity.save()
-    assert commodity.name == "New name"
 
 
 @pytest.mark.django_db
@@ -72,22 +46,3 @@ def test_hazardous_material_update(hazardous_material):
     hazardous_material.name = "New name"
     hazardous_material.save()
     assert hazardous_material.name == "New name"
-
-
-@pytest.mark.django_db
-def test_commodity_is_hazmat_if_hazmat_class(commodity):
-    """
-    Test commodity hazardous material creation
-    """
-    assert commodity.is_hazmat is True
-
-
-@pytest.mark.django_db
-def test_commodity_is_hazmat_and_not_hazmat_class(commodity):
-    """
-    Test if commodity has hazardous material assigned,
-    that it is marked as hazardous material.
-    """
-    if commodity.hazmat and not commodity.is_hazmat:
-        assert False
-    assert True

@@ -18,8 +18,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.test import Client
 
-from accounts.factories import JobTitleFactory, UserFactory
+from accounts.factories import UserFactory
+from accounts.models import User
+from organization.factories.organization import OrganizationFactory
 
 
 @pytest.fixture()
@@ -28,14 +31,6 @@ def user():
     User fixture
     """
     return UserFactory()
-
-
-@pytest.fixture()
-def job_title():
-    """
-    Job title fixture
-    """
-    return JobTitleFactory()
 
 
 @pytest.mark.django_db
@@ -83,18 +78,60 @@ def test_user_updated(user):
 
 
 @pytest.mark.django_db
-def test_create_job_title(job_title):
+def test_create_superuser():
     """
-    Test job title creation
+    Test creating supe user
     """
-    assert job_title is not None
+    organization = OrganizationFactory()
+
+    admin_user = User(
+        organization=organization,
+        username="test_admin",
+        email="test_admin@admin.com",
+        is_staff=True,
+        is_superuser=True,
+    )
+    admin_user.set_password("test_admin")
+    admin_user.save()
+
+    client = Client()
+    login_response = client.login(username='test_admin', password='test_admin')
+    assert login_response is True
 
 
 @pytest.mark.django_db
-def test_update_job_title(job_title):
+def test_create_superuser_is_superuser__error():
     """
-    Test job title update
+    Test creating superuser throws
+    value error
     """
-    job_title.name = "test_update_job_title"
-    job_title.save()
-    assert job_title.name == "test_update_job_title"
+    organization = OrganizationFactory()
+
+    with pytest.raises(ValueError, match="Superuser must have is_superuser=True."):
+        User.objects.create_superuser(
+            organization=organization,
+            username="test_admin",
+            email="test@admin.com",
+            password="test_admin",
+            is_superuser=False,
+            is_staff=True,
+        )
+
+
+@pytest.mark.django_db
+def test_create_superuser_is_staff_error():
+    """
+    Test creating superuser throws
+    value error
+    """
+    organization = OrganizationFactory()
+
+    with pytest.raises(ValueError, match="Superuser must have is_staff=True."):
+        User.objects.create_superuser(
+            organization=organization,
+            username="test_admin",
+            email="test@admin.com",
+            password="test_admin",
+            is_superuser=True,
+            is_staff=False,
+        )

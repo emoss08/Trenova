@@ -1,3 +1,4 @@
+# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 
@@ -16,3 +17,35 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+import pytest
+
+from location.factories import (
+    LocationFactory,
+)
+
+
+@pytest.fixture()
+def location():
+    """
+    Location fixture
+    """
+    return LocationFactory()
+
+
+@pytest.mark.django_db
+def test_location_creation(location):
+    """
+    Test location creation
+    """
+    assert location is not None
+
+
+@pytest.mark.django_db
+def test_location_update(location):
+    """
+    Test location update
+    """
+    location.name = "New name"
+    location.save()
+    assert location.name == "New name"

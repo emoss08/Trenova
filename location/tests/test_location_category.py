@@ -22,8 +22,6 @@ import pytest
 
 from location.factories import (
     LocationCategoryFactory,
-    LocationContactFactory,
-    LocationFactory,
 )
 
 
@@ -33,22 +31,6 @@ def location_category():
     Location category fixture
     """
     return LocationCategoryFactory()
-
-
-@pytest.fixture()
-def location():
-    """
-    Location fixture
-    """
-    return LocationFactory()
-
-
-@pytest.fixture()
-def location_contact():
-    """
-    Location contact fixture
-    """
-    return LocationContactFactory()
 
 
 @pytest.mark.django_db
@@ -70,34 +52,11 @@ def test_location_category_update(location_category):
 
 
 @pytest.mark.django_db
-def test_location_creation(location):
+def test_add_category_to_location(location_category):
     """
-    Test location creation
+    Test add category to location
     """
-    assert location is not None
-
-
-@pytest.mark.django_db
-def test_location_update(location):
-    """
-    Test location update
-    """
-    location.name = "New name"
+    location = LocationCategoryFactory()
+    location.location_category = location_category
     location.save()
-    assert location.name == "New name"
-
-
-@pytest.mark.django_db
-def test_location_category_assigned(location):
-    """
-    Test location category assigned
-    """
-    assert location.location_category is not None
-
-
-@pytest.mark.django_db
-def test_location_contact_creation(location):
-    """
-    Test location contact creation
-    """
-    assert location.location_contact is not None
+    assert location.location_category == location_category

@@ -18,9 +18,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from django.core.exceptions import ValidationError
 
-from customer.factories import CustomerContactFactory, CustomerFactory
+from customer.factories import CustomerFactory
 
 
 @pytest.fixture()
@@ -29,15 +28,6 @@ def customer():
     Customer fixture
     """
     return CustomerFactory()
-
-
-@pytest.fixture()
-def customer_contact():
-    """
-    Customer contact fixture
-    """
-    return CustomerContactFactory()
-
 
 @pytest.mark.django_db
 def test_customer_creation(customer):
@@ -73,33 +63,3 @@ def test_customer_billing_profile_creation(customer):
     create_customer_billing_profile post_save signal
     """
     assert customer.billing_profile is not None
-
-
-@pytest.mark.django_db
-def test_customer_contact_creation(customer_contact):
-    """
-    Test customer contact creation
-    """
-    assert customer_contact is not None
-
-
-@pytest.mark.django_db
-def test_customer_contact_update(customer_contact):
-    """
-    Test customer contact update
-    """
-    customer_contact.name = "New name"
-    customer_contact.save()
-    assert customer_contact.name == "New name"
-
-
-@pytest.mark.django_db
-def test_customer_contact_payable_has_no_email(customer_contact):
-    """
-    Test customer contact payable has no email
-    """
-    customer_contact.email = ""
-    customer_contact.save()
-
-    with pytest.raises(ValidationError, match="Payable contact must have an email address"):
-        customer_contact.full_clean()
