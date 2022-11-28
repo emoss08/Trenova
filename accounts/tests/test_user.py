@@ -100,7 +100,7 @@ def test_create_superuser():
 
 
 @pytest.mark.django_db
-def test_create_superuser_is_superuser__error():
+def test_create_superuser_is_superuser_error():
     """
     Test creating superuser throws
     value error
