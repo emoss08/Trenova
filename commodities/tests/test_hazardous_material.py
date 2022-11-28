@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from commodities.factories import HazardousMaterialFactory
 
@@ -36,6 +37,28 @@ def test_hazardous_material_creation(hazardous_material):
     Test commodity hazardous material creation
     """
     assert hazardous_material is not None
+
+
+@pytest.mark.django_db
+def test_hazardous_class_choices(hazardous_material):
+    """
+    Test Unit of measure choices throws ValidationError
+    when the passed choice is not valid.
+    """
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        hazardous_material.hazard_class = "invalid"
+        hazardous_material.full_clean()
+
+
+@pytest.mark.django_db
+def test_packing_group_choices(hazardous_material):
+    """
+    Test Packing group choice throws ValidationError
+    when the passed choice is not valid.
+    """
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        hazardous_material.packing_group = "invalid"
+        hazardous_material.full_clean()
 
 
 @pytest.mark.django_db

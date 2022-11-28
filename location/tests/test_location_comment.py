@@ -1,3 +1,4 @@
+# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 
@@ -18,45 +19,42 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from django.core.exceptions import ValidationError
 
-from customer.factories import CustomerContactFactory
+from location.factories import LocationCommentFactory
 
 
 @pytest.fixture()
-def customer_contact():
+def location_comment():
     """
-    Customer contact fixture
+    Location comment fixture
     """
-    return CustomerContactFactory()
+    return LocationCommentFactory()
 
 
 @pytest.mark.django_db
-def test_customer_contact_creation(customer_contact):
+def test_location_comment_creation(location_comment):
     """
-    Test customer contact creation
+    Test location comment creation
     """
-    assert customer_contact is not None
+    assert location_comment is not None
 
 
 @pytest.mark.django_db
-def test_customer_contact_update(customer_contact):
+def test_location_comment_update(location_comment):
     """
-    Test customer contact update
+    Test location comment update
     """
-    customer_contact.name = "New name"
-    customer_contact.save()
-    assert customer_contact.name == "New name"
+    location_comment.comment = "New comment"
+    location_comment.save()
+    assert location_comment.comment == "New comment"
 
 
 @pytest.mark.django_db
-def test_customer_contact_payable_has_no_email(customer_contact):
+def test_add_comment_to_location(location_comment):
     """
-    Test customer contact payable has no email
+    Test add comment to location
     """
-
-    with pytest.raises(
-        ValidationError, match="Payable contact must have an email address"
-    ):
-        customer_contact.email = ""
-        customer_contact.full_clean()
+    location = LocationCommentFactory()
+    location.location_comment = location_comment
+    location.save()
+    assert location.location_comment == location_comment

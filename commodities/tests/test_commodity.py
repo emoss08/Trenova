@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from commodities.factories import CommodityFactory
 
@@ -36,6 +37,17 @@ def test_commodity_creation(commodity):
     Test commodity creation
     """
     assert commodity is not None
+
+
+@pytest.mark.django_db
+def test_unit_of_measure_choices(commodity):
+    """
+    Test Unit of measure choices throws ValidationError
+    when the passed choice is not valid.
+    """
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        commodity.unit_of_measure = "invalid"
+        commodity.full_clean()
 
 
 @pytest.mark.django_db

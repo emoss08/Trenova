@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from location.models import Location, LocationCategory, LocationContact
+from location.models import Location, LocationCategory, LocationComment, LocationContact
 
 
 class LocationCategoryFactory(factory.django.DjangoModelFactory):
@@ -77,4 +77,20 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
     email = factory.Faker("email", locale="en_US")
 
 
-# TODO: Write factory for location comment once factory for Comment Type is written
+class LocationCommentFactory(factory.django.DjangoModelFactory):
+    """
+    LocationComment factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    location = factory.SubFactory("location.factories.LocationFactory")
+    comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
+    comment = factory.Faker("text", locale="en_US")
+    entered_by = factory.SubFactory("accounts.factories.UserFactory")
+
+    class Meta:
+        """
+        Metaclass for LocationCommentFactory
+        """
+
+        model = LocationComment

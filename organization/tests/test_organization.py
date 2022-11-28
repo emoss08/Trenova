@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from organization.factories import OrganizationFactory
 
@@ -58,6 +59,44 @@ def test_dispatch_control_creation(organization):
     """
     assert organization.dispatch_control.driver_assign is True
     assert organization.dispatch_control.organization == organization
+
+
+@pytest.mark.django_db
+def test_service_incident_control_choices(organization):
+    """
+    Test Service incident control choices throws ValidationError
+    when the passed choice is not valid.
+    """
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        organization.dispatch_control.record_service_incident = "invalid"
+        organization.dispatch_control.full_clean()
+
+
+@pytest.mark.django_db
+def test_distance_method_choices(organization):
+    """
+    Test Service incident control choices throws ValidationError
+    when the passed choice is not valid.
+    """
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        organization.dispatch_control.distance_method = "invalid"
+        organization.dispatch_control.full_clean()
+
+
+@pytest.mark.django_db
+def test_dispatch_control_google_integration(organization):
+    """
+    Test Service incident control choices throws ValidationError
+    when the passed choice is not valid.
+    """
+    with pytest.raises(
+        ValidationError,
+        match="Google Maps integration is not configured for the organization."
+        " Please configure the integration before selecting Google as "
+        "the distance method.",
+    ):
+        organization.dispatch_control.distance_method = "Google"
+        organization.dispatch_control.full_clean()
 
 
 @pytest.mark.django_db
