@@ -63,12 +63,16 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def profile(self, create, extracted, **kwargs):
+        """
+        Create profile
+        """
         if not create:
-            return None
+            return
 
         if extracted:
-            for profile in extracted:
-                self.profile.add(profile)
+            self.profile = extracted
+        else:
+            self.profile = ProfileFactory(user=self)
 
 
 class ProfileFactory(factory.django.DjangoModelFactory):
@@ -90,7 +94,6 @@ class ProfileFactory(factory.django.DjangoModelFactory):
     title = factory.SubFactory(JobTitleFactory)
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
-    phone = factory.Faker("phone_number")
     city = factory.Faker("city")
     state = factory.Faker("state_abbr")
     zip_code = factory.Faker("zipcode")
