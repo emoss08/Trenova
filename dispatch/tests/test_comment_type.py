@@ -1,4 +1,3 @@
-# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 
@@ -20,30 +19,30 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from location.factories import LocationCommentFactory
+from dispatch import factories
 
 
 @pytest.fixture()
-def location_comment():
+def comment_type():
     """
-    Location comment fixture
+    Comment type fixture
     """
-    return LocationCommentFactory()
+    return factories.CommentTypeFactory()
 
 
 @pytest.mark.django_db
-def test_location_comment_creation(location_comment):
+def test_comment_type_creation(comment_type):
     """
-    Test location comment creation
+    Test comment type creation
     """
-    assert location_comment is not None
+    assert comment_type is not None
 
 
 @pytest.mark.django_db
-def test_location_comment_update(location_comment):
+def test_comment_type_update(comment_type):
     """
-    Test location comment update
+    Test comment type update
     """
-    location_comment.comment = "New comment"
-    location_comment.save()
-    assert location_comment.comment == "New comment"
+    comment_type.code = "NEWC"
+    comment_type.save()
+    assert comment_type.code == "NEWC"

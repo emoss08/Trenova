@@ -1,4 +1,3 @@
-# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 

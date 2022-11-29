@@ -1,4 +1,3 @@
-# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 
@@ -20,30 +19,30 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from location.factories import LocationCommentFactory
+from dispatch import factories
 
 
 @pytest.fixture()
-def location_comment():
+def delay_code():
     """
-    Location comment fixture
+    Delay code fixture
     """
-    return LocationCommentFactory()
+    return factories.DelayCodeFactory()
 
 
 @pytest.mark.django_db
-def test_location_comment_creation(location_comment):
+def test_delay_code_creation(delay_code):
     """
-    Test location comment creation
+    Test delay code creation
     """
-    assert location_comment is not None
+    assert delay_code is not None
 
 
 @pytest.mark.django_db
-def test_location_comment_update(location_comment):
+def test_delay_code_update(delay_code):
     """
-    Test location comment update
+    Test delay code update
     """
-    location_comment.comment = "New comment"
-    location_comment.save()
-    assert location_comment.comment == "New comment"
+    delay_code.code = "NEWC"
+    delay_code.save()
+    assert delay_code.code == "NEWC"

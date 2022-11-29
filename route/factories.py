@@ -1,4 +1,3 @@
-# Create your tests here.
 """
 COPYRIGHT 2022 MONTA
 
@@ -18,32 +17,4 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import pytest
 
-from location.factories import LocationCommentFactory
-
-
-@pytest.fixture()
-def location_comment():
-    """
-    Location comment fixture
-    """
-    return LocationCommentFactory()
-
-
-@pytest.mark.django_db
-def test_location_comment_creation(location_comment):
-    """
-    Test location comment creation
-    """
-    assert location_comment is not None
-
-
-@pytest.mark.django_db
-def test_location_comment_update(location_comment):
-    """
-    Test location comment update
-    """
-    location_comment.comment = "New comment"
-    location_comment.save()
-    assert location_comment.comment == "New comment"

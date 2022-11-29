@@ -18,91 +18,62 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 
-from dispatch import factories
-
-
-@pytest.fixture()
-def delay_code():
-    """
-    Delay code fixture
-    """
-    return factories.DelayCodeFactory()
+from organization.factories import OrganizationFactory
 
 
 @pytest.fixture()
-def fleet_code():
+def organization():
     """
-    Fleet code fixture
+    Organization fixture
     """
-    return factories.FleetCodeFactory()
-
-
-@pytest.fixture()
-def comment_type():
-    """
-    Comment type fixture
-    """
-    return factories.CommentTypeFactory()
-
-
-@pytest.fixture()
-def dispatch_control():
-    """
-    Dispatch control fixture
-    """
-    return factories.DispatchControlFactory()
+    return OrganizationFactory()
 
 
 @pytest.mark.django_db
-def test_delay_code_creation(delay_code):
+def test_dispatch_control_creation(organization):
     """
-    Test delay code creation
+    Test dispatch control is created from
+    create_dispatch_control post_save signal
     """
-    assert delay_code is not None
+    assert organization.dispatch_control.driver_assign is True
+    assert organization.dispatch_control.organization == organization
 
 
 @pytest.mark.django_db
-def test_delay_code_update(delay_code):
+def test_service_incident_control_choices(organization):
     """
-    Test delay code update
+    Test Service incident control choices throws ValidationError
+    when the passed choice is not valid.
     """
-    delay_code.code = "NEWC"
-    delay_code.save()
-    assert delay_code.code == "NEWC"
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        organization.dispatch_control.record_service_incident = "invalid"
+        organization.dispatch_control.full_clean()
 
 
 @pytest.mark.django_db
-def test_fleet_code_creation(fleet_code):
+def test_distance_method_choices(organization):
     """
-    Test fleet code creation
+    Test Service incident control choices throws ValidationError
+    when the passed choice is not valid.
     """
-    assert fleet_code is not None
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+        organization.dispatch_control.distance_method = "invalid"
+        organization.dispatch_control.full_clean()
 
 
 @pytest.mark.django_db
-def test_fleet_code_update(fleet_code):
+def test_dispatch_control_google_integration(organization):
     """
-    Test fleet code update
+    Test Service incident control choices throws ValidationError
+    when the passed choice is not valid.
     """
-    fleet_code.code = "NEWC"
-    fleet_code.save()
-    assert fleet_code.code == "NEWC"
-
-
-@pytest.mark.django_db
-def test_comment_type_creation(comment_type):
-    """
-    Test comment type creation
-    """
-    assert comment_type is not None
-
-
-@pytest.mark.django_db
-def test_comment_type_update(comment_type):
-    """
-    Test comment type update
-    """
-    comment_type.code = "NEWC"
-    comment_type.save()
-    assert comment_type.code == "NEWC"
+    with pytest.raises(
+            ValidationError,
+            match="Google Maps integration is not configured for the organization."
+                  " Please configure the integration before selecting Google as "
+                  "the distance method.",
+    ):
+        organization.dispatch_control.distance_method = "Google"
+        organization.dispatch_control.full_clean()
