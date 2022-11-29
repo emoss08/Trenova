@@ -47,9 +47,7 @@ def test_route_distance_choices(organization):
     Test Route avoidance choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(
-        ValidationError, match="Value 'invalid' is not a valid choice."
-    ):
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
         organization.route_controls.mileage_unit = "invalid"
         organization.route_controls.full_clean()
 
@@ -60,8 +58,6 @@ def test_route_model_choices(organization):
     Test Route model choices throws ValidationError
     when the passed choice is not a valid.
     """
-    with pytest.raises(
-        ValidationError, match="Value 'invalid' is not a valid choice."
-    ):
+    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
         organization.route_controls.traffic_model = "invalid"
         organization.route_controls.full_clean()

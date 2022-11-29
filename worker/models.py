@@ -193,10 +193,10 @@ class WorkerProfile(GenericModel):
         Worker Endorsement Choices
         """
 
-        NONE = "n", _("None")
-        HAZMAT = "h", _("Hazmat")
-        TANKER = "t", _("Tanker")
-        X = "x", _("Tanker and Hazmat")
+        NONE = "N", _("None")
+        HAZMAT = "H", _("Hazmat")
+        TANKER = "T", _("Tanker")
+        X = "X", _("Tanker and Hazmat")
 
     worker = models.OneToOneField(
         Worker,

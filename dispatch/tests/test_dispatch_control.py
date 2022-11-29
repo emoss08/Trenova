@@ -70,10 +70,10 @@ def test_dispatch_control_google_integration(organization):
     when the passed choice is not valid.
     """
     with pytest.raises(
-            ValidationError,
-            match="Google Maps integration is not configured for the organization."
-                  " Please configure the integration before selecting Google as "
-                  "the distance method.",
+        ValidationError,
+        match="Google Maps integration is not configured for the organization."
+        " Please configure the integration before selecting Google as "
+        "the distance method.",
     ):
         organization.dispatch_control.distance_method = "Google"
         organization.dispatch_control.full_clean()

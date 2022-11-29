@@ -28,6 +28,7 @@ class DispatchControlFactory(factory.django.DjangoModelFactory):
     """
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    regulatory_check = True
 
     class Meta:
         """
