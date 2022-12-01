@@ -23,9 +23,7 @@ from django.shortcuts import render
 from django.views import generic
 
 
-class HomeView(
-    mixins.LoginRequiredMixin, generic.View
-):
+class HomeView(mixins.LoginRequiredMixin, generic.View):
     """
     Home View
     """
