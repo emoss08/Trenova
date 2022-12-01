@@ -50,7 +50,7 @@ class RevenueCodeFactory(factory.django.DjangoModelFactory):
     """
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = factory.Faker("numerify", text="####")
+    code = factory.Faker("pystr", max_chars=4)
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
     expense_account = factory.SubFactory(GeneralLedgerAccountFactory)
     revenue_account = factory.SubFactory(GeneralLedgerAccountFactory)

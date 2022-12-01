@@ -19,8 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from dispatch import models
-
 
 class DispatchControlFactory(factory.django.DjangoModelFactory):
     """
@@ -35,7 +33,7 @@ class DispatchControlFactory(factory.django.DjangoModelFactory):
         Metaclass for DispatchControlFactory
         """
 
-        model = models.DispatchControl
+        model = "dispatch.DispatchControl"
 
 
 class DelayCodeFactory(factory.django.DjangoModelFactory):
@@ -44,14 +42,14 @@ class DelayCodeFactory(factory.django.DjangoModelFactory):
     """
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = "TEST"
+    code = factory.Faker("pystr", max_chars=4)
 
     class Meta:
         """
         Metaclass for DelayCodeFactory
         """
 
-        model = models.DelayCode
+        model = "dispatch.DelayCode"
 
 
 class FleetCodeFactory(factory.django.DjangoModelFactory):
@@ -60,14 +58,14 @@ class FleetCodeFactory(factory.django.DjangoModelFactory):
     """
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = "TEST"
+    code = factory.Faker("pystr", max_chars=4)
 
     class Meta:
         """
         Metaclass for FleetCodeFactory
         """
 
-        model = models.FleetCode
+        model = "dispatch.FleetCode"
 
 
 class CommentTypeFactory(factory.django.DjangoModelFactory):
@@ -83,4 +81,4 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
         Metaclass for CommentTypeFactory
         """
 
-        model = models.CommentType
+        model = "dispatch.CommentType"
