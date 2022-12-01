@@ -45,7 +45,7 @@ class UserBackend(ModelBackend):
         """
         try:
             user = UserModel._default_manager.select_related(
-                "profile", "profile__title", "profile__organization"
+                "profile", "profile__title", "profile__organization", "organization"
             ).get(pk__exact=user_id)
         except UserModel.DoesNotExist:
             return None
