@@ -16,3 +16,4 @@ backend.iml
 /design/
 __pycache__
 templates
+static/
