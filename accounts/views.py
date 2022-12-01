@@ -17,3 +17,49 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from django.contrib.auth import authenticate, login as auth_login
+from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views import generic
+from django.views.decorators.debug import sensitive_post_parameters
+
+
+@method_decorator(sensitive_post_parameters("password"))
+class LoginView(generic.View):
+    """
+    Login View
+    """
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Handle Get request
+
+        Render the template for login page
+
+        Args:
+            request (HttpRequest): Request object
+
+        Returns:
+            HttpResponse: Rendered template
+        """
+        return render(request, "accounts/login.html")
+
+    def post(self, request: HttpRequest) -> JsonResponse:
+        """Handle Post request
+
+        Args:
+            request (HttpRequest): Request object
+
+        Returns:
+            JsonResponse: JsonResponse message
+            returned back to user.
+        """
+        username: str = request.POST["username"]
+        password: str = request.POST["password"]
+        user = authenticate(request, username=username, password=password)
+
+        if user and user.is_active:
+            auth_login(request, user)
+            return JsonResponse({"message": "User logged in successfully!"})
+        else:
+            return JsonResponse({"message": "Check your credentials!"})

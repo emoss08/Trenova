@@ -27,6 +27,7 @@ class AuthenticatedHttpRequest(HttpRequest):
     """
     Authenticated Http Request
     """
+
     user: User
     organization: Organization
 

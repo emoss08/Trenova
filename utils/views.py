@@ -28,6 +28,7 @@ class GenericTemplateView(
     """
     Generic Template view with LoginRequiredMixin and PermissionRequiredMixin
     """
+
     pass
 
 
@@ -37,6 +38,7 @@ class GenericListView(
     """
     Generic List view with LoginRequiredMixin and PermissionRequiredMixin
     """
+
     pass
 
 
@@ -46,6 +48,7 @@ class GenericView(
     """
     Generic View with LoginRequiredMixin and PermissionRequiredMixin
     """
+
     pass
 
 
@@ -55,6 +58,7 @@ class GenericCreateView(
     """
     Generic Create view with LoginRequiredMixin and PermissionRequiredMixin
     """
+
     pass
 
 
@@ -64,4 +68,5 @@ class GenericUpdateView(
     """
     Generic Update view with LoginRequiredMixin and PermissionRequiredMixin
     """
+
     pass
