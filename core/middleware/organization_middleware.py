@@ -40,11 +40,6 @@ class OrganizationMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: AuthenticatedHttpRequest) -> HttpResponse:
-
-        if request.user.is_authenticated:
-            request.organization = request.user.organization
-        else:
-            request.organization = None
-
+        request.organization = request.user.organization
         response = self.get_response(request)
         return response

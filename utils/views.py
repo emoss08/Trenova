@@ -65,12 +65,3 @@ class GenericUpdateView(
     Generic Update view with LoginRequiredMixin and PermissionRequiredMixin
     """
     pass
-
-
-class GenericDeleteView(
-    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.DeleteView
-):
-    """
-    Generic Delete view with LoginRequiredMixin and PermissionRequiredMixin
-    """
-    pass
