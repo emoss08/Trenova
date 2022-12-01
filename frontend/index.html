@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Metronic Vue Demo" />
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700">
+  <link rel="stylesheet" href="/splash-screen.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metronic | Vue Demo</title>
+</head>
+
+<body class="page-loading">
+    <!--begin::Theme mode setup on page load-->
+    <script>
+        if (document.documentElement) {
+            var defaultThemeMode = "system";
+
+            var themeMode = localStorage.getItem("kt_theme_mode_value");
+            if (!themeMode) {
+                if (defaultThemeMode === "system") {
+                    themeMode =
+                        window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                } else {
+                    themeMode = defaultThemeMode;
+                }
+            }
+
+            document.documentElement.setAttribute("data-theme", themeMode);
+        }
+    </script>
+    <!--end::Theme mode setup on page load-->
+  <div id="app"></div>
+  <!--begin::Loading markup-->
+  <div id="splash-screen" class="splash-screen">
+    <img src="/media/logos/default-small.svg" alt="Metronic logo" />
+    <span>Loading ...</span>
+  </div>
+  <!--end::Loading markup-->
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>

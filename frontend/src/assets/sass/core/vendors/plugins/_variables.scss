@@ -1,0 +1,35 @@
+//
+// 3rd-party config
+//
+
+
+// Prismjs
+$highlight-bg: #1e1e3f;
+$highlight-bg-dark: #151521;
+
+$highlight-border: rgba($white, 0.1);
+$highlight-border-dark: rgba($white, 0.1);
+
+$highlight-btn-bg: lighten($highlight-bg, 9%);
+$highlight-btn-bg-dark: lighten($highlight-bg-dark, 9%);
+$highlight-btn-bg-hover: lighten($highlight-bg, 9%);
+$highlight-btn-bg-hover-dark: lighten($highlight-bg-dark, 9%);
+
+$highlight-btn-color: rgba($white, 0.75);
+$highlight-btn-color-dark: rgba($white, 0.75);
+$highlight-btn-color-hover: $primary;
+$highlight-btn-color-hover-dark: $primary;
+
+$highlight-scrollbar-color: lighten($highlight-bg, 12%);
+$highlight-scrollbar-color-dark: lighten($highlight-bg-dark, 12%);
+$highlight-scrollbar-color-hover: lighten($highlight-bg, 15%);
+$highlight-scrollbar-color-hover-dark: lighten($highlight-bg-dark, 15%);
+
+// Bootstrap Maxlength
+$bootstrap-maxlength-z-index: 1040;
+
+// Daterangepicker
+$daterangepicker-ranges-list-height: 260px;
+$daterangepicker-ranges-list-width: 150px;
+
+	

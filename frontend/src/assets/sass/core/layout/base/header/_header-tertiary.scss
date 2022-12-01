@@ -1,0 +1,122 @@
+//
+// Header tertiary
+//
+
+// General mode
+.app-header-tertiary {
+    transition: $app-header-tertiary-base-transition;
+    display: flex;
+    align-items: stretch; 
+}
+
+// Desktop mode
+@include media-breakpoint-up(lg) {
+    // Base
+    .app-header-tertiary {
+        @include property( z-index, $app-header-tertiary-base-z-index);
+
+        background-color: var(--kt-app-header-tertiary-base-bg-color);
+        box-shadow: var(--kt-app-header-tertiary-base-box-shadow);
+        border-top: var(--kt-app-header-tertiary-base-border-top);
+        border-bottom: var(--kt-app-header-tertiary-base-border-bottom);
+    }    
+
+    // Vars
+    :root {
+        --kt-app-header-tertiary-height: #{$app-header-tertiary-base-height};
+    }
+
+    [data-kt-app-header-sticky="on"] {
+        --kt-app-header-tertiary-height: #{$app-header-tertiary-sticky-height};
+    }
+
+    [data-kt-app-header-minimize="on"] {
+        --kt-app-header-tertiary-height: #{$app-header-tertiary-minimize-height};
+    } 
+
+    [data-kt-app-header-sticky="on"][data-kt-app-header-tertiary-sticky-hide="true"] {
+        --kt-app-header-tertiary-height: 0;
+    }
+
+    // States
+    .app-header-tertiary {
+        height: var(--kt-app-header-tertiary-height);
+
+        [data-kt-app-header-tertiary-fixed="true"] & {
+            @include property( z-index, $app-header-tertiary-fixed-z-index);
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;            
+        }
+
+        [data-kt-app-header-tertiary-static="true"] & {
+            position: static;
+        }
+
+        [data-kt-app-header-tertiary-sticky="on"] & {
+            transition: $app-header-tertiary-base-transition;
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            @include property( height, $app-header-tertiary-sticky-height);
+            @include property( z-index, $app-header-tertiary-sticky-z-index);
+
+            background-color: var(--kt-app-header-tertiary-sticky-bg-color);
+            box-shadow: var(--kt-app-header-tertiary-sticky-box-shadow);
+            border-bottom: var(--kt-app-header-tertiary-sticky-border-bottom);
+        }
+
+        [data-kt-app-header-tertiary-minimize="on"] & {
+            transition: $app-header-tertiary-base-transition;
+            @include property( height, $app-header-tertiary-minimize-height);
+            @include property( z-index, $app-header-tertiary-minimize-z-index);
+
+            background-color: var(--kt-app-header-tertiary-minimize-bg-color);
+            box-shadow: var(--kt-app-header-tertiary-minimize-box-shadow);
+            border-bottom: var(--kt-app-header-tertiary-minimize-border-bottom);
+        }
+
+        [data-kt-app-header-sticky="on"][data-kt-app-header-tertiary-sticky-hide="true"] & {
+            display: none !important;
+        }
+    }
+
+    // Integration
+    .app-header-tertiary {
+        // Sidebar
+        [data-kt-app-sidebar-fixed="true"][data-kt-app-sidebar-push-header="true"] & {
+            left: calc(
+                var(--kt-app-sidebar-width) + 
+                var(--kt-app-sidebar-gap-start, 0px) + 
+                var(--kt-app-sidebar-gap-end, 0px)
+            );
+        }  
+
+        // Sidebar Panel
+        [data-kt-app-sidebar-panel-fixed="true"][data-kt-app-sidebar-panel-push-header="true"] & {
+            left: calc(
+                var(--kt-app-sidebar-width) + 
+                var(--kt-app-sidebar-gap-start, 0px) + 
+                var(--kt-app-sidebar-gap-end, 0px) +
+                var(--kt-app-sidebar-panel-width) + 
+                var(--kt-app-sidebar-panel-gap-start, 0px) + 
+                var(--kt-app-sidebar-panel-gap-end, 0px)
+            );
+        }
+    } 
+}
+
+// Tablet & mobile modes
+@include media-breakpoint-down(lg) {
+    // Base
+    .app-header-tertiary {
+        flex-grow: 1;
+        background-color: var(--kt-app-header-tertiary-base-bg-color-mobile);
+        box-shadow: var(--kt-app-header-tertiary-base-box-shadow-mobile);
+        border-top: var(--kt-app-header-tertiary-base-border-top-mobile);
+        border-left: var(--kt-app-header-tertiary-base-border-start-mobile);
+        border-right: var(--kt-app-header-tertiary-base-border-end-mobile);
+    }
+}

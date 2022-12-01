@@ -1,0 +1,84 @@
+//
+// Form controls
+//
+
+.form-control {
+  	color: var(--kt-input-color);
+  	background-color: var(--kt-input-bg);
+	border: $input-border-width solid var(--kt-input-border-color);
+  	box-shadow: none !important;
+
+	// Dropdown shown state
+	.dropdown.show > & {
+		color: var(--kt-input-focus-color); 
+		background-color: var(--kt-input-focus-bg);
+  	    border-color: var(--kt-input-focus-border-color);
+	}
+
+  	&:focus {
+		color: var(--kt-input-focus-color);
+		background-color: var(--kt-input-focus-bg);
+		border-color: var(--kt-input-focus-border-color);
+  	}
+
+  	// Placeholder
+  	&::placeholder {
+    	color: var(--kt-input-placeholder-color);
+  	}
+
+  	// Disabled and read-only inputs
+  	&:disabled {
+    	color: var(--kt-input-disabled-color);
+    	background-color: var(--kt-input-disabled-bg);
+    	border-color: var(--kt-input-disabled-border-color);
+  	}
+
+  	// File input buttons theming
+  	&::file-selector-button {
+    	color: var(--kt-form-file-button-color);
+    	@include gradient-bg(var(--kt-form-file-button-bg));
+  	}
+
+  	&:hover:not(:disabled)::file-selector-button {
+    	background-color: var(--kt-form-file-button-hover-bg);
+  	}
+
+	// Transparent style
+	&.form-control-transparent {
+		background-color: transparent;
+		border-color: transparent;
+
+		.dropdown.show > &,
+		&:active,
+		&.active,
+		&:focus,
+		&.focus {
+			background-color: transparent;
+			border-color: transparent;
+		}
+	}
+
+	// Flush
+	&.form-control-flush {
+		@include input-reset();
+	}
+}
+
+// Readonly controls as plain text
+.form-control-plaintext {
+  	color: var(--kt-input-plaintext-color);
+}
+
+// Placeholder colors
+.placeholder-gray-500 {
+	@include placeholder(var(--kt-gray-500));
+}
+
+.placeholder-white {
+	@include placeholder($white);
+}
+
+// Textarea reset resize
+.resize-none {
+	resize: none;
+}

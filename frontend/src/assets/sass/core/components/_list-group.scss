@@ -1,0 +1,19 @@
+//
+// List group
+//
+
+.list-group {
+	--#{$prefix}list-group-color: var(--kt-list-group-color);
+	--#{$prefix}list-group-bg: var(--kt-list-group-bg);
+	--#{$prefix}list-group-border-color: var(--kt-list-group-border-color);
+	--#{$prefix}list-group-action-color: var(--kt-list-group-action-color);
+	--#{$prefix}list-group-action-hover-color: var(--kt-list-group-action-hover-color);
+	--#{$prefix}list-group-action-hover-bg: var(--kt-list-group-hover-bg);
+	--#{$prefix}list-group-action-active-color: var(--kt-list-group-action-active-color);
+	--#{$prefix}list-group-action-active-bg: var(--kt-list-group-action-active-bg);
+	--#{$prefix}list-group-disabled-color: var(--kt-list-group-disabled-color);
+	--#{$prefix}list-group-disabled-bg: var(--kt-list-group-disabled-bg);
+	--#{$prefix}list-group-active-color: var(--kt-list-group-active-color);
+	--#{$prefix}list-group-active-bg: var(--kt-list-group-active-bg);
+	--#{$prefix}list-group-active-border-color: var(--kt-list-group-active-border-color);
+}

@@ -1,0 +1,15 @@
+//
+// Theme Mode
+//
+
+@mixin theme-light() {
+	html:not([data-theme="dark"]) {
+		@content;
+	}
+}
+
+@mixin theme-dark() {
+	[data-theme="dark"] {
+		@content;
+	}
+}

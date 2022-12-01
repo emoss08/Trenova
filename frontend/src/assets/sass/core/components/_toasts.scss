@@ -1,0 +1,15 @@
+.toast {
+	--#{$prefix}toast-color: var(--kt-toast-color);
+	--#{$prefix}toast-bg: var(--kt-toast-background-color);
+	--#{$prefix}toast-border-color: var(--kt-toast-border-color);
+	--#{$prefix}toast-box-shadow: var(--kt-toast-box-shadow);
+	--#{$prefix}toast-header-color: var(--kt-toast-header-color);
+	--#{$prefix}toast-header-bg: var(--kt-toast-header-background-color);
+	--#{$prefix}toast-header-border-color: var(--kt-toast-header-border-color);
+
+	.toast-header {
+		.btn-close {
+			margin-right: 0;	
+		}	
+	}
+}

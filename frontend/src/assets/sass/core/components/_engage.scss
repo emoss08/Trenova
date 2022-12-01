@@ -1,0 +1,20 @@
+//
+// Engage panel(used for demo product demo)
+//
+
+.engage-btn {
+	display: flex;
+	align-items: center;
+	height: 35px !important;
+
+	@include button-custom-variant(
+		$color: var(--kt-engage-btn-color), 
+		$icon-color: var(--kt-engage-btn-color), 
+		$border-color: var(--kt-engage-btn-bg), 
+		$bg-color: var(--kt-engage-btn-bg), 
+		$color-active: var(--kt-engage-btn-color-active), 
+		$icon-color-active: var(--kt-engage-btn-color-active), 
+		$border-color-active: var(--kt-engage-btn-bg),
+		$bg-color-active: var(--kt-engage-btn-bg)
+	);
+}

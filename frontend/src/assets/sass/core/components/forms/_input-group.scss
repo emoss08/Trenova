@@ -1,0 +1,9 @@
+//
+// Input group
+//
+
+.input-group-text {
+	color: var(--kt-input-group-addon-color);
+	background-color: var(--kt-input-group-addon-bg);
+	border: $input-border-width solid var(--kt-input-group-addon-border-color);
+}
