@@ -1,0 +1,283 @@
+//
+// sidebar
+//
+
+// General mode
+.app-sidebar-panel {    
+    transition: $app-sidebar-panel-base-transition;
+}
+
+// Utilities
+.app-sidebar-panel-minimize-d-flex,
+.app-sidebar-panel-sticky-d-flex,
+.app-sidebar-panel-collapse-d-flex,
+.app-sidebar-panel-minimize-mobile-d-flex,
+.app-sidebar-panel-collapse-mobile-d-flex {
+    display: none;    
+}
+
+// Desktop mode
+@include media-breakpoint-up(lg) {
+    // Base
+    .app-sidebar-panel {        
+        display: flex;    
+        flex-shrink: 0;
+        width: var(--kt-app-sidebar-panel-width);
+        background-color: var(--kt-app-sidebar-panel-base-bg-color);
+        box-shadow: var(--kt-app-sidebar-panel-base-box-shadow);
+        border-left: var(--kt-app-sidebar-panel-base-border-start);
+        border-right: var(--kt-app-sidebar-panel-base-border-end);
+
+        @include property( z-index, $app-sidebar-panel-base-z-index);
+        @include property( margin-left, $app-sidebar-panel-base-gap-start);
+        @include property( margin-right, $app-sidebar-panel-base-gap-end);
+        @include property( margin-top, $app-sidebar-panel-base-gap-top);
+        @include property( margin-bottom, $app-sidebar-panel-base-gap-bottom);
+    }    
+
+    // Vars
+    :root {
+        --kt-app-sidebar-panel-width: #{$app-sidebar-panel-base-width};
+        --kt-app-sidebar-panel-width-actual: #{$app-sidebar-panel-base-width};
+
+        --kt-app-sidebar-panel-gap-start: #{$app-sidebar-panel-base-gap-start};
+        --kt-app-sidebar-panel-gap-end: #{$app-sidebar-panel-base-gap-end};
+        --kt-app-sidebar-panel-gap-top: #{$app-sidebar-panel-base-gap-top};
+        --kt-app-sidebar-panel-gap-bottom: #{$app-sidebar-panel-base-gap-bottom};
+    }
+
+    [data-kt-app-sidebar-panel-minimize="on"] {
+        --kt-app-sidebar-panel-width: #{$app-sidebar-panel-minimize-width};
+
+        --kt-app-sidebar-panel-gap-start: #{$app-sidebar-panel-minimize-gap-start};
+        --kt-app-sidebar-panel-gap-end: #{$app-sidebar-panel-minimize-gap-end};
+        --kt-app-sidebar-panel-gap-top: #{$app-sidebar-panel-minimize-gap-top};
+        --kt-app-sidebar-panel-gap-bottom: #{$app-sidebar-panel-minimize-gap-bottom};
+    }    
+
+    [data-kt-app-sidebar-panel-sticky="on"] {
+        --kt-app-sidebar-panel-width: #{$app-sidebar-panel-sticky-width};
+
+        --kt-app-sidebar-panel-gap-start: #{$app-sidebar-panel-sticky-gap-start};
+        --kt-app-sidebar-panel-gap-end: #{$app-sidebar-panel-sticky-gap-end};
+        --kt-app-sidebar-panel-gap-top: #{$app-sidebar-panel-sticky-gap-top};
+        --kt-app-sidebar-panel-gap-bottom: #{$app-sidebar-panel-sticky-gap-bottom};
+    }
+
+    [data-kt-app-sidebar-panel-collapse="on"] {
+        --kt-app-sidebar-panel-width-actual: #{$app-sidebar-panel-base-width};
+        --kt-app-sidebar-panel-width: 0px;        
+    }
+
+    // States
+    .app-sidebar-panel {
+        [data-kt-app-sidebar-panel-static="true"] & {
+            position: relative;
+        }
+
+        [data-kt-app-sidebar-panel-offcanvas="true"] & {
+            display: none;
+        }
+
+        [data-kt-app-sidebar-panel-fixed="true"] & {
+            @include property( z-index, $app-sidebar-panel-fixed-z-index);
+            position: fixed;
+            left: calc(var(--kt-app-sidebar-width) + var(--kt-app-sidebar-gap-start, 0px) + var(--kt-app-sidebar-gap-end, 0px));
+            top: 0;
+            bottom: 0;
+        }  
+
+        [data-kt-app-sidebar-panel-sticky="on"] & {
+            position: fixed;
+            left: calc(var(--kt-app-sidebar-width) + var(--kt-app-sidebar-gap-start, 0px) + var(--kt-app-sidebar-gap-end, 0px));
+            top: 0;
+            bottom: 0;
+            transition: $app-sidebar-panel-base-transition;
+
+            box-shadow: var(--kt-app-sidebar-panel-sticky-box-shadow);
+            border-left: var(--kt-app-sidebar-panel-sticky-border-start);
+            border-right: var(--kt-app-sidebar-panel-sticky-border-end);
+
+            @include property( z-index, $app-sidebar-panel-sticky-z-index);
+            @include property( margin-left, $app-sidebar-panel-sticky-gap-start);
+            @include property( margin-right, $app-sidebar-panel-sticky-gap-end);
+            @include property( margin-top, $app-sidebar-panel-sticky-gap-top);
+            @include property( margin-bottom, $app-sidebar-panel-sticky-gap-bottom);
+        }
+
+        [data-kt-app-sidebar-panel-minimize="on"] & {
+            transition: $app-sidebar-panel-base-transition;
+            background-color: var(--kt-app-sidebar-panel-minimize-bg-color);
+            box-shadow: var(--kt-app-sidebar-panel-minimize-box-shadow);
+            border-left: var(--kt-app-sidebar-panel-minimize-border-start);
+            border-right: var(--kt-app-sidebar-panel-minimize-border-end);
+
+
+            @include property( margin-left, $app-sidebar-panel-minimize-gap-start);
+            @include property( margin-right, $app-sidebar-panel-minimize-gap-end);
+            @include property( margin-top, $app-sidebar-panel-minimize-gap-top);
+            @include property( margin-bottom, $app-sidebar-panel-minimize-gap-bottom);
+        }
+
+        [data-kt-app-sidebar-panel-hoverable="true"] & {
+            .app-sidebar-panel-hoverable {
+                width: var(--kt-app-sidebar-panel-width-actual); 
+            }
+        }
+
+        [data-kt-app-sidebar-panel-hoverable="true"][data-kt-app-sidebar-panel-minimize="on"] &:hover:not(.animating) {
+            transition: $app-sidebar-panel-base-transition;
+			width: var(--kt-app-sidebar-panel-width-actual);
+            box-shadow: var(--kt-app-sidebar-panel-minimize-hover-box-shadow);
+        }
+
+        [data-kt-app-sidebar-panel-collapse="on"] & {
+            transition: $app-sidebar-panel-base-transition;
+            width: var(--kt-app-sidebar-panel-width-actual);
+            margin-left: calc( -1 * (var(--kt-app-sidebar-panel-width-actual) + var(--kt-app-sidebar-gap-start, 0px) + var(--kt-app-sidebar-gap-end, 0px)));
+        }
+    }
+
+    // Integration
+    .app-sidebar-panel {
+        // Header
+        [data-kt-app-sidebar-panel-fixed="true"][data-kt-app-header-fixed="true"]:not([data-kt-app-sidebar-panel-push-header="true"]) & {
+            top: var(--kt-app-header-height);
+        }
+
+        // Toolbar
+        [data-kt-app-sidebar-panel-fixed="true"][data-kt-app-header-fixed="true"][data-kt-app-toolbar-fixed="true"]:not([data-kt-app-sidebar-panel-push-toolbar="true"]) & {
+            top: calc(var(--kt-app-header-height) + var(--kt-app-toolbar-height, 0));
+        }
+    }
+
+    // Utilities
+    [data-kt-app-sidebar-panel-minimize="on"] {
+        .app-sidebar-panel-minimize-d-none {
+            display: none !important;    
+        }
+
+        .app-sidebar-panel-minimize-d-flex {
+            display: flex !important;    
+        }
+    }
+
+    [data-kt-app-sidebar-panel-sticky="on"] {
+        .app-sidebar-panel-sticky-d-none {
+            display: none !important;    
+        }
+
+        .app-sidebar-panel-sticky-d-flex {
+            display: flex !important;    
+        }
+    }  
+
+    [data-kt-app-sidebar-panel-collapse="on"] {
+        .app-sidebar-panel-collapse-d-none {
+            display: none !important;    
+        }
+
+        .app-sidebar-panel-collapse-d-flex {
+            display: flex !important;    
+        }
+    }
+}
+
+// Tablet & mobile modes
+@include media-breakpoint-down(lg) {
+    // Base
+    .app-sidebar-panel {
+        display: none;
+        width: var(--kt-app-sidebar-panel-width);
+        
+        background-color: var(--kt-app-sidebar-panel-base-bg-color-mobile);
+        box-shadow: var(--kt-app-sidebar-panel-base-box-shadow-mobile);
+        border-left: var(--kt-app-sidebar-panel-base-border-start-mobile);
+        border-right: var(--kt-app-sidebar-panel-base-border-end-mobile);
+
+        @include property( z-index, $app-sidebar-panel-base-z-index-mobile);
+        @include property( margin-left, $app-sidebar-panel-base-gap-start-mobile);
+        @include property( margin-right, $app-sidebar-panel-base-gap-end-mobile);
+        @include property( margin-top, $app-sidebar-panel-base-gap-top-mobile);
+        @include property( margin-bottom, $app-sidebar-panel-base-gap-bottom-mobile);
+    }
+
+    // Vars
+    :root {
+        --kt-app-sidebar-panel-gap-start: #{$app-sidebar-panel-base-gap-start-mobile};
+        --kt-app-sidebar-panel-gap-end: #{$app-sidebar-panel-base-gap-end-mobile};
+        --kt-app-sidebar-panel-gap-top: #{$app-sidebar-panel-base-gap-top-mobile};
+        --kt-app-sidebar-panel-gap-bottom: #{$app-sidebar-panel-base-gap-bottom-mobile};
+    }
+
+    [data-kt-app-sidebar-panel-minimize-mobile="on"] {
+        --kt-app-sidebar-panel-width: #{$app-sidebar-panel-minimize-width-mobile};
+
+        --kt-app-sidebar-panel-gap-start: #{$app-sidebar-panel-minimize-gap-start-mobile};
+        --kt-app-sidebar-panel-gap-end: #{$app-sidebar-panel-minimize-gap-end-mobile};
+        --kt-app-sidebar-panel-gap-top: #{$app-sidebar-panel-minimize-gap-top-mobile};
+        --kt-app-sidebar-panel-gap-bottom: #{$app-sidebar-panel-minimize-gap-bottom-mobile};
+    }
+
+    [data-kt-app-sidebar-panel-collapse-mobile="on"] {
+        --kt-app-sidebar-panel-width-actual: #{$app-sidebar-panel-base-width-mobile};
+        --kt-app-sidebar-panel-width: 0px;
+    }
+
+    // States
+    .app-sidebar-panel {            
+        [data-kt-app-sidebar-panel-minimize-mobile="on"] & {
+            transition: $app-sidebar-panel-base-transition;
+
+            background-color: var(--kt-app-sidebar-panel-minimize-bg-color-mobile);
+            box-shadow: var(--kt-app-sidebar-panel-minimize-box-shadow-mobile);
+            border-left: var(--kt-app-sidebar-panel-minimize-border-start-mobile);
+            border-right: var(--kt-app-sidebar-panel-minimize-border-end-mobile);
+
+            @include property( margin-left, $app-sidebar-panel-minimize-gap-start-mobile);
+            @include property( margin-right, $app-sidebar-panel-minimize-gap-end-mobile);
+            @include property( margin-top, $app-sidebar-panel-minimize-gap-top-mobile);
+            @include property( margin-bottom, $app-sidebar-panel-minimize-gap-bottom-mobile);
+        }
+
+        [data-kt-app-sidebar-panel-hoverable-mobile="true"] & {
+            .app-sidebar-panel-hoverable {
+                width: var(--kt-app-sidebar-panel-width-actual); 
+            }
+        }
+
+        [data-kt-app-sidebar-panel-hoverable-mobile="true"][data-kt-app-sidebar-panel-minimize-mobile="on"] &:hover:not(.animating) {
+            transition: $app-sidebar-panel-base-transition;
+			width: var(--kt-app-sidebar-panel-width-actual);
+
+            box-shadow: var(--kt-app-sidebar-panel-minimize-hover-box-shadow-mobile);
+        }
+
+        [data-kt-app-sidebar-panel-collapse-mobile="on"] & {
+            transition: $app-sidebar-panel-base-transition;
+            width: var(--kt-app-sidebar-panel-width-actual);
+            margin-left: calc( -1 * var(--kt-app-sidebar-panel-width-actual));
+        }
+    }
+
+    // Utilities
+    [data-kt-app-sidebar-panel-minimize-mobile="on"] {
+        .app-sidebar-panel-minimize-mobile-d-none {
+            display: none !important;    
+        }
+
+        .app-sidebar-panel-minimize-mobile-d-flex {
+            display: flex !important;    
+        }
+    }  
+
+    [data-kt-app-sidebar-panel-collapse-mobile="on"] {
+        .app-sidebar-panel-collapse-mobile-d-none {
+            display: none !important;    
+        }
+
+        .app-sidebar-panel-collapse-mobile-d-flex {
+            display: flex !important;    
+        }
+    }
+}

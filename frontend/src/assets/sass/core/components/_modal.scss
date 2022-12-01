@@ -1,0 +1,65 @@
+//
+// Modal
+//
+
+.modal {
+  	--#{$prefix}modal-color: var(--kt-modal-content-color);
+  	--#{$prefix}modal-bg: var(--kt-modal-content-bg);
+  	--#{$prefix}modal-border-color: var(--kt-modal-content-border-color);
+  	--#{$prefix}modal-box-shadow: var(--kt-modal-content-box-shadow-xs);
+  	--#{$prefix}modal-header-border-color: var(--kt-modal-header-border-color);
+  	--#{$prefix}modal-footer-bg: var(--kt-modal-footer-bg);
+  	--#{$prefix}modal-footer-border-color: var(--kt-modal-footer-border-color);
+}
+
+ // Mobile dialog
+.modal-dialog {
+	outline: none !important;
+}
+
+// Modal header
+.modal-header {
+	align-items: center;
+	justify-content: space-between;
+	@include border-top-radius($modal-content-border-radius);
+	border-bottom: $modal-header-border-width solid var(--kt-modal-header-border-color);
+
+	// Headings
+	h1,h2,h3,h4,h5,h6 {
+		margin-bottom: 0;
+	}
+}
+
+// Modal content
+.modal-content {
+	color: var(--kt-modal-color);    
+	background-color: var(--kt-modal-bg);
+	border: $modal-content-border-width solid var(--kt-modal-border-color);
+	@include box-shadow(var(--kt-modal-box-shadow));
+}
+
+// Modal footer
+.modal-footer {
+	background-color: var(--kt-modal-footer-bg);
+	border-top: $modal-footer-border-width solid var(--#{$prefix}modal-footer-border-color);
+}
+
+// Modal background
+.modal-backdrop {
+  	--#{$prefix}backdrop-bg: var(--kt-modal-backdrop-bg);
+  	--#{$prefix}backdrop-opacity: var(--kt-modal-backdrop-opacity);
+}
+
+// Scale up the modal
+@include media-breakpoint-up(sm) {
+	.modal-content {
+		@include box-shadow(var(--kt-modal-box-shadow-sm-up));
+	}
+}
+
+// Utilities
+.modal-rounded {
+	@if $enable-rounded {
+		border-radius: $modal-content-border-radius !important;
+	}
+}

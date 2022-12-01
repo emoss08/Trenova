@@ -1,0 +1,114 @@
+//
+// Text
+//
+
+// Text colors
+@each $name, $color in $theme-text-colors {
+    // Base color
+    .text-#{$name} {
+        color: var(--kt-text-#{$name}) !important;
+    }
+
+    // Inverse color
+    @if (theme-inverse-color($name)) {
+        .text-inverse-#{$name} {
+            color: var(--kt-#{$name}-inverse) !important;
+        }
+    }
+
+    @if (theme-light-color($name)) {
+        // Light colors
+        .text-light-#{$name} {
+            color: var(--kt-#{$name}-light) !important;
+        }
+    }
+
+    // Hover
+    .text-hover-#{$name} {
+        transition: $transition-link;
+
+        i {
+            transition: $transition-link;
+        }
+
+        &:hover {
+            transition: $transition-link;
+            color: var(--kt-text-#{$name}) !important;
+
+            i {
+                transition: $transition-link;
+				color: var(--kt-text-#{$name}) !important;
+			}
+
+			.svg-icon {
+				color: var(--kt-text-#{$name}) !important;
+			}
+        }
+    }
+
+    // Active
+    .text-active-#{$name} {
+        transition: $transition-link;        
+
+        i {
+            transition: $transition-link;
+        }
+
+        &.active {
+            transition: $transition-link;
+            color: var(--kt-text-#{$name}) !important;
+            
+            i {
+                transition: $transition-link;
+                color: var(--kt-text-#{$name}) !important;
+            }
+    
+            .svg-icon {
+                color: var(--kt-text-#{$name}) !important;
+            }
+        }
+    }
+}
+
+// Text transparent
+.text-transparent {
+    color: transparent;
+}
+
+// Cursor pointer
+.cursor-pointer {
+    cursor: pointer;
+}
+
+// Cursor default
+.cursor-default {
+    cursor: default;
+}
+// Cursor move
+.cursor-move {
+    cursor: move;
+}
+
+// Icons
+i {
+    &.bi,
+    &[class^="fonticon-"],
+    &[class*=" fonticon-"],
+    &[class^="fa-"],
+    &[class*=" fa-"],
+    &[class^="la-"],
+    &[class*=" la-"] {
+        line-height: 1;
+        font-size: 1rem;
+        color: var(--kt-text-muted);        
+    }   
+}
+
+// Link transition
+a {
+    transition: $transition-link;
+
+    &:hover {
+        transition:$transition-link;
+    }
+}

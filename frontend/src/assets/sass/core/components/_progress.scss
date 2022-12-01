@@ -1,0 +1,35 @@
+//
+// Progress
+//
+
+// Base
+.progress {
+  --#{$prefix}progress-bg: var(--kt-progress-bg);
+  --#{$prefix}progress-box-shadow: var(--kt-progress-box-shadow);
+  --#{$prefix}progress-bar-color: var(--kt-progress-bar-color);
+  --#{$prefix}progress-bar-bg: var(--kt-progress-bar-bg);
+}
+
+// Vertical Position
+.progress-vertical {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+
+    .progress {
+        height: 100%;
+        @include border-radius($border-radius);
+        display: flex;
+        align-items: flex-end;
+        margin-right: 1rem;
+
+        &:last-child {
+            margin-right: 0;
+        }
+
+        .progress-bar {
+            width: 8px;
+            @include border-radius($border-radius);
+        }
+    }
+}

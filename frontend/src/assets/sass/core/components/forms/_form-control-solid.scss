@@ -1,0 +1,29 @@
+//
+// Form Control
+//
+
+
+// Solid form control
+.form-control.form-control-solid {
+	background-color: var(--kt-input-solid-bg);
+	border-color: var(--kt-input-solid-bg);
+	color: var(--kt-input-solid-color);
+	@include placeholder(var(--kt-input-solid-placeholder-color));
+	transition: $transition-input;
+
+	.dropdown.show > &,
+	&:active,
+	&.active,
+	&:focus,
+	&.focus {
+		background-color: var(--kt-input-solid-bg-focus);
+		border-color: var(--kt-input-solid-bg-focus);
+		color: var(--kt-input-solid-color);
+		transition: $transition-input;
+	}
+}
+
+// Form control solid bg
+.form-control-solid-bg {
+	background-color: var(--kt-input-solid-bg);
+}

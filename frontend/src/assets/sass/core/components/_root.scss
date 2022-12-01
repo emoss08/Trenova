@@ -1,0 +1,868 @@
+//
+// CSS Variables
+//
+
+:root,
+[data-theme="light"] {
+    // Breakpoints
+    @each $breakpoint, $value in $grid-breakpoints {
+        --kt-#{$breakpoint}:#{$value};
+    }
+
+    // Bootstrap color system
+    --kt-white: #{$white};
+    --kt-white-bg-rgb: #{to-rgb($white)};
+    --kt-black: #{$black};
+    --kt-black-bg-rgb: #{to-rgb($black)};
+
+    // Bootstrap muted color
+    --kt-text-muted: #{$text-muted};
+
+    // Grey colors
+    @each $name, $value in $grays {
+        --kt-gray-#{$name}: #{$value};
+    }
+
+    // Grey rgba colors
+    @each $name, $value in $grays {
+        --kt-gray-#{$name}-rgb: #{to-rgb($value)};
+    }
+
+    // Contextual colors
+    @each $name, $value in $theme-colors {
+        --kt-#{$name}: #{$value};
+    }
+
+    // Contextual active state colors
+    @each $name, $value in $theme-active-colors {
+        --kt-#{$name}-active: #{$value};
+    }
+
+    // Contextual light state colors
+    @each $name, $value in $theme-light-colors {
+        --kt-#{$name}-light: #{$value};
+    }
+
+    // Contextual inverse state colors
+    @each $name, $value in $theme-inverse-colors {
+        --kt-#{$name}-inverse: #{$value};
+    }
+
+    // Contextual rbg colors
+    @each $name, $value in $theme-colors {
+        --kt-#{$name}-rgb: #{to-rgb($value)};
+    }
+
+    // Text colors
+    @each $name, $value in $theme-text-colors {
+        --kt-text-#{$name}: #{$value};
+    }
+
+    // Body
+    --kt-body-bg: #{$body-bg};
+    --kt-body-bg-rgb: #{to-rgb($body-bg)};
+    --kt-body-color: #{$body-color};
+
+    // Links
+    --kt-link-color: #{$link-color};
+    --kt-link-hover-color: #{$link-hover-color};
+
+    // Components
+    --kt-border-color: #{$border-color};
+    --kt-border-dashed-color: #{$border-dashed-color};
+
+    --kt-component-active-color: #{$component-active-color};
+    --kt-component-active-bg: #{$component-active-bg};
+    --kt-component-hover-color: #{$component-hover-color};
+    --kt-component-hover-bg: #{$component-hover-bg};
+    --kt-component-checked-color: #{$component-checked-color};
+    --kt-component-checked-bg: #{$component-checked-bg};
+
+    // Box shadow
+    --kt-box-shadow-xs: #{$box-shadow-xs};
+    --kt-box-shadow-sm: #{$box-shadow-sm};
+    --kt-box-shadow: #{$box-shadow};
+    --kt-box-shadow-lg: #{$box-shadow-lg};
+
+    // Typography
+    --kt-headings-color: #{$headings-color};
+
+    // Tables
+    --kt-table-color: #{$table-color};
+    --kt-table-bg: #{$table-bg};
+    --kt-table-striped-color: #{$table-striped-color};
+    --kt-table-striped-bg: #{$table-striped-bg};
+    --kt-table-accent-bg: #{$table-accent-bg};
+    --kt-table-active-color: #{$table-active-color};
+    --kt-table-active-bg: #{$table-active-bg};
+    --kt-table-hover-colorr: #{$table-hover-color};
+    --kt-table-hover-bg: #{$table-hover-bg};
+    --kt-table-border-color: #{$table-border-color};
+    --kt-table-caption-color: #{$table-caption-color};
+
+    --kt-table-loading-message-box-shadow: #{$table-loading-message-box-shadow};
+    --kt-table-loading-message-bg: #{$table-loading-message-bg};
+    --kt-table-loading-message-color: #{$table-loading-message-color};
+
+    // Buttons + Forms
+    --kt-input-btn-focus-color: #{$input-btn-focus-color};
+    --kt-input-btn-focus-box-shadow: #{$input-btn-focus-box-shadow};
+    --kt-input-btn-focus-color-opacity: #{$input-btn-focus-color-opacity};
+
+    --kt-input-color: #{$input-color};
+    --kt-input-placeholder-color: #{$input-placeholder-color};
+    --kt-input-plaintext-color: #{$input-plaintext-color};
+
+    // Buttons
+    --kt-btn-box-shadow: #{$btn-box-shadow};
+    --kt-btn-focus-box-shadow: #{$btn-focus-box-shadow};
+    --kt-btn-active-box-shadow: #{$btn-active-box-shadow};
+    --kt-btn-disabled-opacity: #{$btn-disabled-opacity};
+
+    --kt-btn-link-color: #{$btn-link-color};
+    --kt-btn-link-hover-color: #{$btn-link-hover-color};
+    --kt-btn-link-disabled-color: #{$btn-link-disabled-color};
+
+    // Forms
+    --kt-form-label-color: #{$form-label-color};
+    --kt-form-text-color: #{$form-text-color};
+
+    --kt-input-bg: #{$input-bg};
+    --kt-input-disabled-bg: #{$input-disabled-bg};
+    --kt-input-disabled-color: #{$input-disabled-color};
+    --kt-input-disabled-border-color: #{$input-disabled-border-color};
+
+    --kt-input-color: #{$input-color};
+    --kt-input-border-color: #{$input-border-color};
+
+    --kt-input-focus-bg: #{$input-focus-bg};
+    --kt-input-focus-border-color: #{$input-focus-border-color};
+    --kt-input-focus-color: #{$input-focus-color};
+
+    // Keenthemes solid input style
+    --kt-input-solid-bg: #{$input-solid-bg};
+    --kt-input-solid-bg-focus: #{$input-solid-bg-focus};
+    --kt-input-solid-placeholder-color: #{$input-solid-placeholder-color};
+    --kt-input-solid-color: #{$input-solid-color};
+
+    // Form checks
+    --kt-form-check-label-color: #{$form-check-label-color};
+    --kt-form-check-label-color-checked: #{$form-check-label-color-checked};
+    --kt-form-check-input-active-filter: #{$form-check-input-active-filter};
+
+    --kt-form-check-input-bg: #{$form-check-input-bg};
+    --kt-form-check-input-bg-solid: #{$form-check-input-bg-solid};
+    --kt-form-check-input-border: #{$form-check-input-border};
+    --kt-form-check-input-focus-border: #{$form-check-input-focus-border};
+    --kt-form-check-input-focus-box-shadow: #{$form-check-input-focus-box-shadow};
+
+    --kt-form-check-input-checked-color: #{$form-check-input-checked-color};
+    --kt-form-check-input-checked-bg-color: #{$form-check-input-checked-bg-color};
+    --kt-form-check-input-checked-bg-color-solid: #{$form-check-input-checked-bg-color-solid};
+    --kt-form-check-input-checked-border-color: #{$form-check-input-checked-border-color};
+    --kt-form-check-input-checked-bg-image: #{escape-svg($form-check-input-checked-bg-image)};
+    --kt-form-check-radio-checked-bg-image: #{escape-svg($form-check-radio-checked-bg-image)};
+    
+    --kt-form-check-input-indeterminate-color: #{$form-check-input-indeterminate-color};
+    --kt-form-check-input-indeterminate-bg-color: #{$form-check-input-indeterminate-bg-color};
+    --kt-form-check-input-indeterminate-border-color: #{$form-check-input-indeterminate-border-color};
+    --kt-form-check-input-indeterminate-bg-image: #{escape-svg($form-check-input-indeterminate-bg-image)};
+
+    --kt-form-check-input-disabled-opacity: #{$form-check-input-disabled-opacity};
+    --kt-form-check-label-disabled-opacity: #{$form-check-label-disabled-opacity};
+    --kt-form-check-btn-check-disabled-opacity: #{$form-check-btn-check-disabled-opacity};
+
+    --kt-form-switch-color: #{$form-switch-color};
+    --kt-form-switch-color-solid: #{$form-switch-color-solid};
+    --kt-form-switch-bg-image: #{escape-svg($form-switch-bg-image)};
+    --kt-form-switch-bg-image-solid: #{escape-svg($form-switch-bg-image-solid)};
+    --kt-form-switch-focus-color: #{$form-switch-focus-color};
+    --kt-form-switch-focus-bg-image: #{escape-svg($form-switch-focus-bg-image)};
+    --kt-form-switch-checked-color: #{$form-switch-checked-color};
+    --kt-form-switch-checked-bg-image: #{escape-svg($form-switch-checked-bg-image)};
+
+    // Input groups
+    --kt-input-group-addon-color: #{$input-group-addon-color};
+    --kt-input-group-addon-bg: #{$input-group-addon-bg};
+    --kt-input-group-addon-border-color: #{$input-group-addon-border-color};
+
+    // Form select
+    --kt-form-select-color: #{$form-select-color};
+    --kt-form-select-bg: #{$form-select-bg};
+    --kt-form-select-disabled-color: #{$form-select-disabled-color};
+    --kt-form-select-disabled-bg: #{$form-select-disabled-bg};
+    --kt-form-select-disabled-border-color: #{$form-select-disabled-border-color};
+    --kt-form-select-indicator-color: #{$form-select-indicator-color};
+    --kt-form-select-indicator: #{escape-svg($form-select-indicator)};
+    --kt-form-select-border-color: #{$form-select-border-color};
+    --kt-form-select-box-shadow: #{$form-select-box-shadow};
+    --kt-form-select-focus-border-color: #{$form-select-focus-border-color};
+    --kt-form-select-focus-box-shadow: #{$form-select-focus-box-shadow};
+
+    // Form file button
+    --kt-form-file-button-color: #{$form-file-button-color};
+    --kt-form-file-button-bg: #{$form-file-button-bg};
+    --kt-form-file-button-hover-bg: #{$form-file-button-hover-bg};
+
+    // Navs
+    --kt-nav-tabs-border-color: #{$nav-tabs-border-color};
+    --kt-nav-tabs-link-hover-border-color: #{$nav-tabs-link-hover-border-color};
+    --kt-nav-tabs-link-active-color: #{$nav-tabs-link-active-color};
+    --kt-nav-tabs-link-active-bg: #{$nav-tabs-link-active-bg};
+    --kt-nav-tabs-link-active-border-color: #{$nav-tabs-link-active-border-color};
+
+    --kt-nav-pills-link-active-color: #{$nav-pills-link-active-color};
+    --kt-nav-pills-link-active-bg: #{$nav-pills-link-active-bg};
+
+    // Dropdowns        
+    --kt-dropdown-color: #{$dropdown-color};
+    --kt-dropdown-bg: #{$dropdown-bg};
+    --kt-dropdown-divider-bg: #{$dropdown-divider-bg};
+    --kt-dropdown-box-shadow: #{$dropdown-box-shadow};
+    --kt-dropdown-link-color: #{$dropdown-link-color};
+    --kt-dropdown-link-hover-color: #{$dropdown-link-hover-color};
+    --kt-dropdown-link-hover-bg: #{$dropdown-link-hover-bg};
+    --kt-dropdown-link-active-color: #{$dropdown-link-active-color};
+    --kt-dropdown-link-active-bg: #{$dropdown-link-active-bg};
+    --kt-dropdown-link-disabled-color: #{$dropdown-link-disabled-color};
+    --kt-dropdown-header-color: #{$dropdown-header-color};
+
+    // Pagination
+    --kt-pagination-item-bg: #{$pagination-item-bg};
+    --kt-pagination-color: #{$pagination-color};
+    --kt-pagination-bg: #{$pagination-bg};
+    --kt-pagination-border-color: #{$pagination-border-color};
+    --kt-pagination-focus-color: #{$pagination-focus-color};
+    --kt-pagination-focus-bg: #{$pagination-focus-bg};
+    --kt-pagination-focus-box-shadow: #{$pagination-focus-box-shadow};
+    --kt-pagination-focus-outline: #{$pagination-focus-outline};
+    --kt-pagination-hover-color: #{$pagination-hover-color};
+    --kt-pagination-hover-bg: #{$pagination-hover-bg};
+    --kt-pagination-hover-border-color: #{$pagination-hover-border-color};
+    --kt-pagination-active-color: #{$pagination-active-color};
+    --kt-pagination-active-bg: #{$pagination-active-bg};
+    --kt-pagination-active-border-color: #{$pagination-active-border-color};
+    --kt-pagination-disabled-color: #{$pagination-disabled-color};
+    --kt-pagination-disabled-bg: #{$pagination-disabled-bg};
+
+    // Card
+    --kt-card-color: #{$card-color-dark};
+    --kt-card-bg: #{$card-bg};
+    --kt-card-box-shadow: #{$card-box-shadow};
+    --kt-card-border-color: #{$card-border-color};
+    --kt-card-border-dashed-color: #{$card-border-dashed-color};
+    --kt-card-cap-bg: #{$card-cap-bg};
+
+    // Accordion
+    --kt-accordion-color: #{$accordion-color};
+    --kt-accordion-bg: #{$accordion-bg};
+    --kt-accordion-border-color: #{$accordion-border-color}; 
+    --kt-accordion-button-bg: #{$accordion-button-bg};   
+    --kt-accordion-button-color: #{$accordion-button-color};
+    --kt-accordion-button-active-bg: #{$accordion-button-active-bg};   
+    --kt-accordion-button-active-color: #{$accordion-button-active-color};
+    --kt-accordion-button-focus-border-color: #{$accordion-button-focus-border-color};
+    --kt-accordion-button-focus-box-shadow: #{$accordion-button-focus-box-shadow};
+
+    --kt-accordion-icon-color: #{$accordion-icon-color};
+    --kt-accordion-icon-active-color: #{$accordion-icon-active-color};
+    --kt-accordion-button-icon: #{escape-svg($accordion-button-icon)};
+    --kt-accordion-button-active-icon: #{escape-svg($accordion-button-active-icon)};
+
+    // Tooltips
+    --kt-tooltip-color: #{$tooltip-color};
+    --kt-tooltip-bg: #{$tooltip-bg};
+    --kt-tooltip-opacity: #{$tooltip-opacity};
+    --kt-tooltip-box-shadow: #{$tooltip-box-shadow};
+   
+    // Popovers
+    --kt-popover-bg: #{$popover-bg};
+    --kt-popover-border-color: #{$popover-border-color};
+    --kt-popover-box-shadow: #{$popover-box-shadow};
+    --kt-popover-header-bg: #{$popover-header-bg};
+    --kt-popover-header-color: #{$popover-header-color};
+    --kt-popover-header-border-color: #{$popover-header-border-color};
+    --kt-popover-body-color: #{$popover-body-color};
+    
+    // Dropdowns
+    --kt-dropdown-box-shadow: #{$dropdown-box-shadow};
+    --kt-dropdown-bg: #{$dropdown-bg};
+
+    // Toasts
+    --kt-toast-color: #{$toast-color};
+    --kt-toast-background-color: #{$toast-background-color};
+    --kt-toast-box-shadow: #{$toast-box-shadow};
+    --kt-toast-header-color: #{$toast-header-color};
+    --kt-toast-header-background-color: #{$toast-header-background-color};
+    --kt-toast-header-border-color: #{$toast-header-border-color};  
+
+    // Badges
+    --kt-badge-color: #{$badge-color};
+
+    // Modals    
+    --kt-modal-bg: #{$modal-content-bg};
+    --kt-modal-color: #{$modal-content-color};
+    --kt-modal-border-color: #{$modal-content-border-color};
+    --kt-modal-box-shadow: #{$modal-content-box-shadow};    
+    --kt-modal-content-color: #{$modal-content-color};
+    --kt-modal-content-bg: #{$modal-content-bg};
+    --kt-modal-content-border-color: #{$modal-content-border-color};
+    --kt-modal-content-box-shadow: #{$modal-content-box-shadow};
+    --kt-modal-content-box-shadow-xs: #{$modal-content-box-shadow-xs};
+    --kt-modal-content-box-shadow-sm-up: #{$modal-content-box-shadow-sm-up};
+    --kt-modal-header-border-color: #{$modal-header-border-color};
+    --kt-modal-footer-border-color: #{$modal-footer-border-color};
+    --kt-modal-backdrop-bg: #{$modal-backdrop-bg};
+    --kt-modal-backdrop-opacity: #{$modal-backdrop-opacity};
+
+    // Progress bars
+    --kt-progress-bg: #{$progress-bg};
+    --kt-progress-box-shadow: #{$progress-box-shadow};
+
+    // List group
+    --kt-list-group-color: #{$list-group-color};
+    --kt-list-group-bg: #{$list-group-bg};
+    --kt-list-group-border-color: #{$list-group-border-color};
+    --kt-list-group-hover-bg: #{$list-group-hover-bg};
+    --kt-list-group-active-color: #{$list-group-active-color};
+    --kt-list-group-active-bg: #{$list-group-active-bg};
+    --kt-list-group-active-border-colorg: #{$list-group-active-border-color};
+    --kt-list-group-disabled-color: #{$list-group-disabled-color};
+    --kt-list-group-disabled-bg: #{$list-group-disabled-bg};
+    --kt-list-group-action-colorg: #{$list-group-action-color};
+    --kt-list-group-action-hover-color: #{$list-group-action-hover-color};
+    --kt-list-group-action-active-color: #{$list-group-action-active-color};
+    --kt-list-group-action-active-bg: #{$list-group-action-active-bg};
+
+    // Image thumbnails
+    --kt-thumbnail-bg: #{$thumbnail-bg};
+    --kt-thumbnail-border-color: #{$thumbnail-border-color};
+    --kt-thumbnail-box-shadow: #{$thumbnail-box-shadow};
+
+    // Figures
+    --kt-figure-caption-color: #{$figure-caption-color};
+
+    // Breadcrumbs
+    --kt-breadcrumb-bg: #{$breadcrumb-bg};
+    --kt-breadcrumb-divider-color: #{$breadcrumb-divider-color};
+    --kt-breadcrumb-active-color: #{$breadcrumb-active-color};
+
+    // Carousel
+    --kt-carousel-custom-indicator-default-bg-color: #{$carousel-custom-indicator-default-bg-color};
+    --kt-carousel-custom-indicator-active-bg-color: #{$carousel-custom-indicator-active-bg-color};
+    --kt-carousel-custom-bullet-indicator-default-bg-color: #{$carousel-custom-bullet-indicator-default-bg-color};
+    --kt-carousel-custom-bullet-indicator-active-bg-color: #{$carousel-custom-bullet-indicator-active-bg-color};
+
+    // Code
+    --kt-code-bg: #{$code-bg};
+    --kt-code-box-shadow: #{$code-box-shadow};
+    --kt-code-color: #{$code-color};
+
+    // Close
+    --kt-btn-close-color: #{$btn-close-color};
+    --kt-btn-close-bg: #{escape-svg($btn-close-bg)};
+
+    // Offcanvas
+    --kt-offcanvas-border-color: #{$offcanvas-border-color};
+    --kt-offcanvas-bg-color: #{$offcanvas-bg-color};
+    --kt-offcanvas-color: #{$offcanvas-color};
+    --kt-offcanvas-box-shadow: #{$offcanvas-box-shadow};
+    --kt-offcanvas-backdrop-bg: #{$offcanvas-backdrop-bg};
+    --kt-offcanvas-backdrop-opacity: #{$offcanvas-backdrop-opacity};
+
+    // Symbol
+    --kt-symbol-label-color: #{$symbol-label-color};
+    --kt-symbol-label-bg: #{$symbol-label-bg};
+    --kt-symbol-border-color: #{$symbol-border-color};   
+
+    // Bullet
+    --kt-bullet-bg-color: #{$bullet-bg-color};
+
+    // Scrolltop
+    --kt-scrolltop-opacity: #{$scrolltop-opacity};
+    --kt-scrolltop-opacity-on: #{$scrolltop-opacity-on};
+    --kt-scrolltop-opacity-hover: #{$scrolltop-opacity-hover};
+    --kt-scrolltop-box-shadow: #{$scrolltop-box-shadow};
+    --kt-scrolltop-bg-color: #{$scrolltop-bg-color};
+    --kt-scrolltop-bg-color-hover: #{$scrolltop-bg-color-hover};
+    --kt-scrolltop-icon-color: #{$scrolltop-icon-color};
+    --kt-scrolltop-icon-color-hover: #{$scrolltop-icon-color-hover};
+
+    // Keenthemes drawer component
+    --kt-drawer-box-shadow: #{$drawer-box-shadow};
+    --kt-drawer-bg-color: #{$drawer-bg-color};
+    --kt-drawer-overlay-bg-color: #{$drawer-overlay-bg-color};
+
+    // Keenthemes menu component
+    --kt-menu-dropdown-box-shadow: #{$menu-dropdown-box-shadow};
+    --kt-menu-dropdown-bg-color: #{$menu-dropdown-bg-color};
+    --kt-menu-heading-color: #{$menu-heading-color};
+    --kt-menu-link-color-hover: #{$menu-link-color-hover};
+    --kt-menu-link-color-show: #{$menu-link-color-show};
+    --kt-menu-link-color-here: #{$menu-link-color-here};
+    --kt-menu-link-color-active: #{$menu-link-color-active};
+    --kt-menu-link-bg-color-hover: #{$menu-link-bg-color-hover};
+    --kt-menu-link-bg-color-show: #{$menu-link-bg-color-show};
+    --kt-menu-link-bg-color-here: #{$menu-link-bg-color-here};
+    --kt-menu-link-bg-color-active: #{$menu-link-bg-color-active};    
+
+    // Keenthemes feedback component
+    --kt-feedback-popup-box-shadow: #{$feedback-popup-box-shadow};
+    --kt-feedback-popup-background-color: #{$feedback-popup-background-color};
+
+    // Keenthemes scrollbar component 
+    --kt-scrollbar-color: #{$scrollbar-color};
+    --kt-scrollbar-hover-color: #{$scrollbar-hover-color};
+    --kt-scrollbar-size: #{$scrollbar-size};
+    --kt-scrollbar-overlay-size: #{$scrollbar-overlay-size};
+    --kt-scrollbar-overlay-space: #{$scrollbar-overlay-space};
+
+    // Keenthemes overlay component 
+    --kt-overlay-bg: #{$overlay-bg};
+
+    // Keenthemes blockui component
+    --kt-blockui-overlay-bg: #{$blockui-overlay-bg};
+
+    // Keenthemes rating component
+    --kt-rating-color-default: #{$rating-color-default};
+    --kt-rating-color-active: #{$rating-color-active};
+
+    // Keenthemes ribbon component 
+    --kt-ribbon-label-box-shadow: #{$ribbon-label-box-shadow};
+    --kt-ribbon-label-bg: #{$ribbon-label-bg};
+    --kt-ribbon-label-border-color: #{$ribbon-label-border-color};
+    --kt-ribbon-clip-bg: #{$ribbon-clip-bg}; 
+
+    // Engage panel
+    --kt-engage-btn-bg: #{$engage-btn-bg};
+    --kt-engage-btn-color: #{$engage-btn-color};
+    --kt-engage-btn-color-active: #{$engage-btn-color-active};
+}
+
+[data-theme="dark"] {
+    // Bootstrap muted color
+    --kt-text-muted: #{$text-muted-dark};
+
+    // Grey colors
+    @each $name, $value in $grays-dark {
+        --kt-gray-#{$name}: #{$value};
+    }
+
+    // Grey rgba colors
+    @each $name, $value in $grays-dark {
+        --kt-gray-#{$name}-rgb: #{to-rgb($value)};
+    }
+
+    // Contextual colors
+    @each $name, $value in $theme-colors-dark {
+        --kt-#{$name}: #{$value};
+    }
+
+    // Contextual active state colors
+    @each $name, $value in $theme-active-colors-dark {
+        --kt-#{$name}-active: #{$value};
+    }
+
+    // Contextual light state colors
+    @each $name, $value in $theme-light-colors-dark {
+        --kt-#{$name}-light: #{$value};
+    }
+
+    // Contextual inverse state colors
+    @each $name, $value in $theme-inverse-colors-dark {
+        --kt-#{$name}-inverse: #{$value};
+    }
+
+    // Contextual rbg colors
+    @each $name, $value in $theme-colors-dark {
+        --kt-#{$name}-rgb: #{to-rgb($value)};
+    }
+
+    // Text colors
+    @each $name, $value in $theme-text-colors-dark {
+        --kt-text-#{$name}: #{$value};
+    }
+
+    // Body
+    --kt-body-bg: #{$body-bg-dark};
+    --kt-body-bg-rgb: #{to-rgb($body-bg-dark)};
+    --kt-body-color: #{$body-color-dark};
+
+    // Links
+    --kt-link-color: #{$link-color-dark};
+    --kt-link-hover-color: #{$link-hover-color-dark};
+
+    // Components
+    --kt-border-color: #{$border-color-dark};
+    --kt-border-dashed-color: #{$border-dashed-color-dark};
+
+    --kt-component-active-color: #{$component-active-color-dark};
+    --kt-component-active-bg: #{$component-active-bg-dark};
+    --kt-component-hover-color: #{$component-hover-color-dark};
+    --kt-component-hover-bg: #{$component-hover-bg-dark};
+    --kt-component-checked-color: #{$component-checked-color-dark};
+    --kt-component-checked-bg: #{$component-checked-bg-dark};
+
+    // Box shadow
+    --kt-box-shadow-xs: #{$box-shadow-xs-dark};
+    --kt-box-shadow-sm: #{$box-shadow-sm-dark};
+    --kt-box-shadow: #{$box-shadow-dark};
+    --kt-box-shadow-lg: #{$box-shadow-lg-dark};
+
+    // Typography
+    --kt-headings-color: #{$headings-color-dark};
+
+    // Tables
+    --kt-table-color: #{$table-color-dark};
+    --kt-table-bg: #{$table-bg-dark};
+    --kt-table-striped-color: #{$table-striped-color-dark};
+    --kt-table-striped-bg: #{$table-striped-bg-dark};
+    --kt-table-accent-bg: #{$table-accent-bg-dark};
+    --kt-table-active-color: #{$table-active-color-dark};
+    --kt-table-active-bg: #{$table-active-bg-dark};
+    --kt-table-hover-colorr: #{$table-hover-color-dark};
+    --kt-table-hover-bg: #{$table-hover-bg-dark};
+    --kt-table-border-color: #{$table-border-color-dark};
+    --kt-table-caption-color: #{$table-caption-color-dark};
+
+    --kt-table-loading-message-box-shadow: #{$table-loading-message-box-shadow-dark};
+    --kt-table-loading-message-bg: #{$table-loading-message-bg-dark};
+    --kt-table-loading-message-color: #{$table-loading-message-color-dark};
+
+    // Buttons + Forms
+    --kt-input-btn-focus-color: #{$input-btn-focus-color-dark};
+    --kt-input-btn-focus-box-shadow: #{$input-btn-focus-box-shadow-dark};
+    --kt-input-btn-focus-color-opacity: #{$input-btn-focus-color-opacity-dark};
+
+    --kt-input-color: #{$input-color-dark};
+    --kt-input-placeholder-color: #{$input-placeholder-color-dark};
+    --kt-input-plaintext-color: #{$input-plaintext-color-dark};
+
+    // Buttons
+    --kt-btn-box-shadow: #{$btn-box-shadow-dark};
+    --kt-btn-focus-box-shadow: #{$btn-focus-box-shadow-dark};
+    --kt-btn-active-box-shadow: #{$btn-active-box-shadow-dark};
+    --kt-btn-disabled-opacity: #{$btn-disabled-opacity-dark};
+
+    --kt-btn-link-color: #{$btn-link-color-dark};
+    --kt-btn-link-hover-color: #{$btn-link-hover-color-dark};
+    --kt-btn-link-disabled-color: #{$btn-link-disabled-color-dark};
+
+    // Forms
+    --kt-form-label-color: #{$form-label-color-dark};
+    --kt-form-text-color: #{$form-text-color-dark};
+
+    --kt-input-bg: #{$input-bg-dark};
+    --kt-input-disabled-bg: #{$input-disabled-bg-dark};
+    --kt-input-disabled-color: #{$input-disabled-color-dark};
+    --kt-input-disabled-border-color: #{$input-disabled-border-color-dark};
+
+    --kt-input-color: #{$input-color-dark};
+    --kt-input-border-color: #{$input-border-color-dark};
+    
+    --kt-input-focus-bg: #{$input-focus-bg-dark};
+    --kt-input-focus-border-color: #{$input-focus-border-color-dark};
+    --kt-input-focus-color: #{$input-focus-color-dark};
+
+    // Keenthemes solid input style
+    --kt-input-solid-bg: #{$input-solid-bg-dark};
+    --kt-input-solid-bg-focus: #{$input-solid-bg-focus-dark};
+    --kt-input-solid-placeholder-color: #{$input-solid-placeholder-color-dark};
+    --kt-input-solid-color: #{$input-solid-color-dark};
+
+    // Form checks
+    --kt-form-check-label-color: #{$form-check-label-color-dark};
+    --kt-form-check-label-color-checked: #{$form-check-label-color-checked-dark};
+    --kt-form-check-input-active-filter: #{$form-check-input-active-filter-dark};
+
+    --kt-form-check-input-bg: #{$form-check-input-bg-dark};
+    --kt-form-check-input-bg-solid: #{$form-check-input-bg-solid-dark};
+    --kt-form-check-input-border: #{$form-check-input-border-dark};
+    --kt-form-check-input-focus-border: #{$form-check-input-focus-border-dark};
+    --kt-form-check-input-focus-box-shadow: #{$form-check-input-focus-box-shadow-dark};
+
+    --kt-form-check-input-checked-color: #{$form-check-input-checked-color-dark};
+    --kt-form-check-input-checked-bg-color: #{$form-check-input-checked-bg-color-dark};
+    --kt-form-check-input-checked-border-color: #{$form-check-input-checked-border-color-dark};
+    --kt-form-check-input-checked-bg-image: #{escape-svg($form-check-input-checked-bg-image-dark)};
+    --kt-form-check-radio-checked-bg-image: #{escape-svg($form-check-radio-checked-bg-image-dark)};
+    
+    --kt-form-check-input-indeterminate-color: #{$form-check-input-indeterminate-color-dark};
+    --kt-form-check-input-indeterminate-bg-color: #{$form-check-input-indeterminate-bg-color-dark};
+    --kt-form-check-input-indeterminate-border-color: #{$form-check-input-indeterminate-border-color-dark};
+    --kt-form-check-input-indeterminate-bg-image: #{escape-svg($form-check-input-indeterminate-bg-image-dark)};
+
+    --kt-form-check-input-disabled-opacity: #{$form-check-input-disabled-opacity-dark};
+    --kt-form-check-label-disabled-opacity: #{$form-check-label-disabled-opacity-dark};
+    --kt-form-check-btn-check-disabled-opacity: #{$form-check-btn-check-disabled-opacity-dark};
+
+    --kt-form-switch-color: #{$form-switch-color-dark};
+    --kt-form-switch-color-solid: #{$form-switch-color-solid-dark};
+    --kt-form-switch-bg-image: #{escape-svg($form-switch-bg-image-dark)};
+    --kt-form-switch-bg-image-solid: #{escape-svg($form-switch-bg-image-solid-dark)};
+    --kt-form-switch-focus-color: #{$form-switch-focus-color-dark};
+    --kt-form-switch-focus-bg-image: #{escape-svg($form-switch-focus-bg-image-dark)};
+    --kt-form-switch-checked-color: #{$form-switch-checked-color-dark};
+    --kt-form-switch-checked-bg-image: #{escape-svg($form-switch-checked-bg-image-dark)};
+
+    // Input groups
+    --kt-input-group-addon-color: #{$input-group-addon-color-dark};
+    --kt-input-group-addon-bg: #{$input-group-addon-bg-dark};
+    --kt-input-group-addon-border-color: #{$input-group-addon-border-color-dark};
+
+    // Form select
+    --kt-form-select-color: #{$form-select-color-dark};
+    --kt-form-select-bg: #{$form-select-bg-dark};
+    --kt-form-select-disabled-color: #{$form-select-disabled-color-dark};
+    --kt-form-select-disabled-bg: #{$form-select-disabled-bg-dark};
+    --kt-form-select-disabled-border-color: #{$form-select-disabled-border-color-dark};
+    --kt-form-select-indicator-color: #{$form-select-indicator-color-dark};
+    --kt-form-select-indicator: #{escape-svg($form-select-indicator-dark)};
+    --kt-form-select-border-color: #{$form-select-border-color-dark};
+    --kt-form-select-box-shadow: #{$form-select-box-shadow-dark};
+    --kt-form-select-focus-border-color: #{$form-select-focus-border-color-dark};
+    --kt-form-select-focus-box-shadow: #{$form-select-focus-box-shadow-dark};
+
+    // Form file button
+    --kt-form-file-button-color: #{$form-file-button-color-dark};
+    --kt-form-file-button-bg: #{$form-file-button-bg-dark};
+    --kt-form-file-button-hover-bg: #{$form-file-button-hover-bg-dark};
+
+    // Navs
+    --kt-nav-tabs-border-color: #{$nav-tabs-border-color-dark};
+    --kt-nav-tabs-link-hover-border-color: #{$nav-tabs-link-hover-border-color-dark};
+    --kt-nav-tabs-link-active-color: #{$nav-tabs-link-active-color-dark};
+    --kt-nav-tabs-link-active-bg: #{$nav-tabs-link-active-bg-dark};
+    --kt-nav-tabs-link-active-border-color: #{$nav-tabs-link-active-border-color-dark};
+
+    --kt-nav-pills-link-active-color: #{$nav-pills-link-active-color-dark};
+    --kt-nav-pills-link-active-bg: #{$nav-pills-link-active-bg-dark};
+
+    // Dropdowns        
+    --kt-dropdown-color: #{$dropdown-color-dark};
+    --kt-dropdown-bg: #{$dropdown-bg-dark};
+    --kt-dropdown-divider-bg: #{$dropdown-divider-bg-dark};
+    --kt-dropdown-box-shadow: #{$dropdown-box-shadow-dark};
+    --kt-dropdown-link-color: #{$dropdown-link-color-dark};
+    --kt-dropdown-link-hover-color: #{$dropdown-link-hover-color-dark};
+    --kt-dropdown-link-hover-bg: #{$dropdown-link-hover-bg-dark};
+    --kt-dropdown-link-active-color: #{$dropdown-link-active-color-dark};
+    --kt-dropdown-link-active-bg: #{$dropdown-link-active-bg-dark};
+    --kt-dropdown-link-disabled-color: #{$dropdown-link-disabled-color-dark};
+    --kt-dropdown-header-color: #{$dropdown-header-color-dark};
+
+    // Pagination
+    --kt-pagination-item-bg: #{$pagination-item-bg-dark};
+    --kt-pagination-color: #{$pagination-color-dark};
+    --kt-pagination-bg: #{$pagination-bg-dark};
+    --kt-pagination-border-color: #{$pagination-border-color-dark};
+    --kt-pagination-focus-color: #{$pagination-focus-color-dark};
+    --kt-pagination-focus-bg: #{$pagination-focus-bg-dark};
+    --kt-pagination-focus-box-shadow: #{$pagination-focus-box-shadow-dark};
+    --kt-pagination-focus-outline: #{$pagination-focus-outline-dark};
+    --kt-pagination-hover-color: #{$pagination-hover-color-dark};
+    --kt-pagination-hover-bg: #{$pagination-hover-bg-dark};
+    --kt-pagination-hover-border-color: #{$pagination-hover-border-color-dark};
+    --kt-pagination-active-color: #{$pagination-active-color-dark};
+    --kt-pagination-active-bg: #{$pagination-active-bg-dark};
+    --kt-pagination-active-border-color: #{$pagination-active-border-color-dark};
+    --kt-pagination-disabled-color: #{$pagination-disabled-color-dark};
+    --kt-pagination-disabled-bg: #{$pagination-disabled-bg-dark};
+
+    // Card
+    --kt-card-bg: #{$card-bg-dark};
+    --kt-card-color: #{$card-color-dark};
+    --kt-card-box-shadow: #{$card-box-shadow-dark};
+    --kt-card-border-color: #{$card-border-color-dark};
+    --kt-card-border-dashed-color: #{$card-border-dashed-color-dark};
+    --kt-card-cap-bg: #{$card-cap-bg-dark};
+
+    // Accordion
+    --kt-accordion-color: #{$accordion-color-dark};
+    --kt-accordion-bg: #{$accordion-bg-dark};    
+    --kt-accordion-border-color: #{$accordion-border-color-dark}; 
+    --kt-accordion-button-color: #{$accordion-button-color-dark};
+    --kt-accordion-button-bg: #{$accordion-button-bg-dark};   
+    --kt-accordion-button-active-bg: #{$accordion-button-active-bg-dark};   
+    --kt-accordion-button-active-color: #{$accordion-button-active-color-dark};
+    --kt-accordion-button-focus-border-color: #{$accordion-button-focus-border-color-dark};
+    --kt-accordion-button-focus-box-shadow: #{$accordion-button-focus-box-shadow-dark};
+
+    --kt-accordion-icon-color: #{$accordion-icon-color-dark};
+    --kt-accordion-icon-active-color: #{$accordion-icon-active-color-dark};
+    --kt-accordion-button-icon: #{escape-svg($accordion-button-icon-dark)};
+    --kt-accordion-button-active-icon: #{escape-svg($accordion-button-active-icon-dark)};
+
+    // Tooltips
+    --kt-tooltip-color: #{$tooltip-color-dark};
+    --kt-tooltip-bg: #{$tooltip-bg-dark};
+    --kt-tooltip-opacity: #{$tooltip-opacity-dark};
+    --kt-tooltip-box-shadow: #{$tooltip-box-shadow-dark};
+   
+    // Popovers
+    --kt-popover-bg: #{$popover-bg-dark};
+    --kt-popover-border-color: #{$popover-border-color-dark};
+    --kt-popover-box-shadow: #{$popover-box-shadow-dark};
+    --kt-popover-header-bg: #{$popover-header-bg-dark};
+    --kt-popover-header-color: #{$popover-header-color-dark};
+    --kt-popover-header-border-color: #{$popover-header-border-color-dark};
+    --kt-popover-body-color: #{$popover-body-color-dark};
+    
+    // Dropdowns
+    --kt-dropdown-box-shadow: #{$dropdown-box-shadow-dark};
+    --kt-dropdown-bg: #{$dropdown-bg-dark};
+
+    // Toasts
+    --kt-toast-color: #{$toast-color-dark};
+    --kt-toast-background-color: #{$toast-background-color-dark};
+    --kt-toast-box-shadow: #{$toast-box-shadow-dark};
+    --kt-toast-header-color: #{$toast-header-color-dark};
+    --kt-toast-header-background-color: #{$toast-header-background-color-dark};
+    --kt-toast-header-border-color: #{$toast-header-border-color-dark};  
+
+    // Badges
+    --kt-badge-color: #{$badge-color-dark};
+
+    // Modals    
+    --kt-modal-bg: #{$modal-content-bg-dark};
+    --kt-modal-color: #{$modal-content-color-dark};
+    --kt-modal-border-color: #{$modal-content-border-color-dark};
+    --kt-modal-box-shadow: #{$modal-content-box-shadow-dark};
+    --kt-modal-content-color: #{$modal-content-color-dark};
+    --kt-modal-content-bg: #{$modal-content-bg-dark};
+    --kt-modal-content-border-color: #{$modal-content-border-color-dark};
+    --kt-modal-content-box-shadow: #{$modal-content-box-shadow-dark};
+    --kt-modal-content-box-shadow-xs: #{$modal-content-box-shadow-xs-dark};
+    --kt-modal-content-box-shadow-sm-up: #{$modal-content-box-shadow-sm-up-dark};
+    --kt-modal-header-border-color: #{$modal-header-border-color-dark};
+    --kt-modal-footer-border-color: #{$modal-footer-border-color-dark};
+    --kt-modal-backdrop-bg: #{$modal-backdrop-bg-dark};
+    --kt-modal-backdrop-opacity: #{$modal-backdrop-opacity-dark};
+
+    // Progress bars
+    --kt-progress-bg: #{$progress-bg-dark};
+    --kt-progress-box-shadow: #{$progress-box-shadow-dark};
+
+    // List group
+    --kt-list-group-color: #{$list-group-color-dark};
+    --kt-list-group-bg: #{$list-group-bg-dark};
+    --kt-list-group-border-color: #{$list-group-border-color-dark};
+    --kt-list-group-hover-bg: #{$list-group-hover-bg-dark};
+    --kt-list-group-active-color: #{$list-group-active-color-dark};
+    --kt-list-group-active-bg: #{$list-group-active-bg-dark};
+    --kt-list-group-active-border-colorg: #{$list-group-active-border-color-dark};
+    --kt-list-group-disabled-color: #{$list-group-disabled-color-dark};
+    --kt-list-group-disabled-bg: #{$list-group-disabled-bg-dark};
+    --kt-list-group-action-colorg: #{$list-group-action-color-dark};
+    --kt-list-group-action-hover-color: #{$list-group-action-hover-color-dark};
+    --kt-list-group-action-active-color: #{$list-group-action-active-color-dark};
+    --kt-list-group-action-active-bg: #{$list-group-action-active-bg-dark};
+
+    // Image thumbnails
+    --kt-thumbnail-bg: #{$thumbnail-bg-dark};
+    --kt-thumbnail-border-color: #{$thumbnail-border-color-dark};
+    --kt-thumbnail-box-shadow: #{$thumbnail-box-shadow-dark};
+
+    // Figures
+    --kt-figure-caption-color: #{$figure-caption-color-dark};
+
+    // Breadcrumbs
+    --kt-breadcrumb-bg: #{$breadcrumb-bg-dark};
+    --kt-breadcrumb-divider-color: #{$breadcrumb-divider-color-dark};
+    --kt-breadcrumb-active-color: #{$breadcrumb-active-color-dark};
+
+    // Carousel
+    --kt-carousel-custom-indicator-default-bg-color: #{$carousel-custom-indicator-default-bg-color-dark};
+    --kt-carousel-custom-indicator-active-bg-color: #{$carousel-custom-indicator-active-bg-color-dark};
+    --kt-arousel-custom-bullet-indicator-default-bg-color: #{$carousel-custom-bullet-indicator-default-bg-color-dark};
+    --kt-carousel-custom-bullet-indicator-active-bg-color: #{$carousel-custom-bullet-indicator-active-bg-color-dark};
+
+    // Close
+    --kt-btn-close-color: #{$btn-close-color-dark};
+    --kt-btn-close-bg: #{escape-svg($btn-close-bg-dark)};
+
+    // Offcanvas
+    --kt-code-bg: #{$code-bg-dark};
+    --kt-code-box-shadow: #{$code-box-shadow-dark};
+    --kt-code-color: #{$code-color-dark};
+
+    // Offcanvas
+    --kt-offcanvas-border-color: #{$offcanvas-border-color-dark};
+    --kt-offcanvas-bg-color: #{$offcanvas-bg-color-dark};
+    --kt-offcanvas-color: #{$offcanvas-color-dark};
+    --kt-offcanvas-box-shadow: #{$offcanvas-box-shadow-dark};
+    --kt-offcanvas-backdrop-bg: #{$offcanvas-backdrop-bg-dark};
+    --kt-offcanvas-backdrop-opacity: #{$offcanvas-backdrop-opacity-dark};
+
+    // Code
+    --kt-code-bg: #{$code-bg-dark};
+    --kt-code-box-shadow: #{$code-box-shadow-dark};
+    --kt-code-color: #{$code-color-dark};  
+
+    // Symbol
+    --kt-symbol-label-color: #{$symbol-label-color-dark};
+    --kt-symbol-label-bg: #{$symbol-label-bg-dark};
+    --kt-symbol-border-color: #{$symbol-border-color-dark};   
+
+    // Bullet
+    --kt-bullet-bg-color: #{$bullet-bg-color-dark};
+
+    // Scrolltop
+    --kt-scrolltop-opacity: #{$scrolltop-opacity-dark};
+    --kt-scrolltop-opacity-on: #{$scrolltop-opacity-on-dark};
+    --kt-scrolltop-opacity-hover: #{$scrolltop-opacity-hover-dark};
+    --kt-scrolltop-box-shadow: #{$scrolltop-box-shadow-dark};
+    --kt-scrolltop-bg-color: #{$scrolltop-bg-color-dark};
+    --kt-scrolltop-bg-color-hover: #{$scrolltop-bg-color-hover-dark};
+    --kt-scrolltop-icon-color: #{$scrolltop-icon-color-dark};
+    --kt-scrolltop-icon-color-hover: #{$scrolltop-icon-color-hover-dark};
+
+    // Keenthemes drawer component
+    --kt-drawer-box-shadow: #{$drawer-box-shadow-dark};
+    --kt-drawer-bg-color: #{$drawer-bg-color-dark};
+    --kt-drawer-overlay-bg-color: #{$drawer-overlay-bg-color-dark};
+
+    // Keenthemes menu component
+    --kt-menu-dropdown-box-shadow: #{$menu-dropdown-box-shadow-dark};
+    --kt-menu-dropdown-bg-color: #{$menu-dropdown-bg-color-dark};
+    --kt-menu-heading-color: #{$menu-heading-color-dark};
+    
+    --kt-menu-link-color-hover: #{$menu-link-color-hover-dark};
+    --kt-menu-link-color-show: #{$menu-link-color-show-dark};
+    --kt-menu-link-color-here: #{$menu-link-color-here-dark};
+    --kt-menu-link-color-active: #{$menu-link-color-active-dark};
+    --kt-menu-link-bg-color-hover: #{$menu-link-bg-color-hover-dark};
+    --kt-menu-link-bg-color-show: #{$menu-link-bg-color-show-dark};
+    --kt-menu-link-bg-color-here: #{$menu-link-bg-color-here-dark};
+    --kt-menu-link-bg-color-active: #{$menu-link-bg-color-active-dark};
+    
+
+    // Keenthemes feedback component
+    --kt-feedback-popup-box-shadow: #{$feedback-popup-box-shadow-dark};
+    --kt-feedback-popup-background-color: #{$feedback-popup-background-color-dark};
+
+    // Keenthemes scrollbar component 
+    --kt-scrollbar-color: #{$scrollbar-color-dark};
+    --kt-scrollbar-hover-color: #{$scrollbar-hover-color-dark};
+
+    // Keenthemes overlay component 
+    --kt-overlay-bg: #{$overlay-bg-dark};
+
+    // Keenthemes blockui component
+    --kt-blockui-overlay-bg: #{$blockui-overlay-bg-dark};
+
+    // Keenthemes rating component
+    --kt-rating-color-default: #{$rating-color-default-dark};
+    --kt-rating-color-active: #{$rating-color-active-dark};
+
+    // Keenthemes ribbon component 
+    --kt-ribbon-label-box-shadow: #{$ribbon-label-box-shadow-dark};
+    --kt-ribbon-label-bg: #{$ribbon-label-bg-dark};
+    --kt-ribbon-label-border-color: #{$ribbon-label-border-color-dark};
+    --kt-ribbon-clip-bg: #{$ribbon-clip-bg-dark};  
+
+    // Engage panel
+    --kt-engage-btn-bg: #{$engage-btn-bg-dark};
+    --kt-engage-btn-color: #{$engage-btn-color-dark};
+    --kt-engage-btn-color-active: #{$engage-btn-color-active-dark};
+}
