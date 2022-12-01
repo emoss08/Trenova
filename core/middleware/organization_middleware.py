@@ -16,7 +16,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from django.http import HttpRequest, HttpResponse
+
+from accounts.models import User
+from organization.models import Organization
+
+
+class AuthenticatedHttpRequest(HttpRequest):
+    """
+    Authenticated Http Request
+    """
+    user: User
+    organization: Organization
 
 
 class OrganizationMiddleware:
@@ -27,10 +39,10 @@ class OrganizationMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
-    def __call__(self, request: HttpRequest) -> HttpResponse:
+    def __call__(self, request: AuthenticatedHttpRequest) -> HttpResponse:
 
         if request.user.is_authenticated:
-            request.organization = request.user.organization  # type: ignore
+            request.organization = request.user.organization
         else:
             request.organization = None
 
