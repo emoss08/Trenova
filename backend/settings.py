@@ -57,9 +57,7 @@ INSTALLED_APPS = [
     "cacheops",
     "rest_framework",
     "rest_framework.authtoken",
-    "djoser",
     "django_filters",
-    "corsheaders",
     "phonenumber_field",
     "compressor",
     "django_celery_results",
@@ -246,22 +244,9 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        'rest_framework.authentication.TokenAuthentication',
-    ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-}
-
-DJOSER = {
-    "SERIALIZERS": {
-        "user_create": "accounts.serializers.UserCreateSerializer",
-        "user": "accounts.serializers.UserSerializer",
-        "current_user": "accounts.serializers.UserSerializer",
-    },
-    "LOGIN_FIELD": "username",
-    "PASSWORD_RESET_CONFIRM_URL": "auth/password/reset/{uid}/{token}",
 }
 
 SIMPLE_JWT = {
