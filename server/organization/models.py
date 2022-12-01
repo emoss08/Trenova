@@ -59,6 +59,7 @@ class Organization(TimeStampedModel):
         """
         Choices for Authentication Template
         """
+
         DEFAULT = "default", _("Default")
         CORPORATE = "corporate", _("Corporate")
         CREATIVE = "creative", _("Creative")
