@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.urls import path
+from accounts import views
 
-from core import views
-
-app_name = "core"
+app_name = "accounts"
 urlpatterns = [
-    path("", views.HomeView.as_view(), name="home"),
+    path("login/", views.LoginView.as_view(), name="login"),
+    # path("logout/", views.LogoutView.as_view(), name="logout"),
 ]

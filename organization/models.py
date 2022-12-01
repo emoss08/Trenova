@@ -54,6 +54,16 @@ class Organization(TimeStampedModel):
         ENGLISH = "en", _("English")
         SPANISH = "es", _("Spanish")
 
+    @final
+    class AuthTemplateChoices(models.TextChoices):
+        """
+        Choices for Authentication Template
+        """
+        DEFAULT = "default", _("Default")
+        CORPORATE = "corporate", _("Corporate")
+        CREATIVE = "creative", _("Creative")
+        FANCY = "fancy", _("Fancy")
+
     name = models.CharField(_("Organization Name"), max_length=255, unique=True)
     scac_code = models.CharField(
         max_length=4,
@@ -99,8 +109,21 @@ class Organization(TimeStampedModel):
         default="HH:mm",
         help_text=_("Time Format"),
     )
-    profile_picture = models.ImageField(
-        _("Profile Picture"), upload_to="organizations/", null=True, blank=True
+    logo = models.ImageField(
+        _("Logo"), upload_to="organizations/logo/", null=True, blank=True
+    )
+    authentication_bg = models.ImageField(
+        _("Authentication Background"),
+        upload_to="organizations/authentication_bg/",
+        null=True,
+        blank=True,
+    )
+    authentication_template = models.CharField(
+        _("Authentication Template"),
+        choices=AuthTemplateChoices.choices,
+        default=AuthTemplateChoices.DEFAULT,
+        help_text=_("The authentication template for the organization."),
+        max_length=10,
     )
 
     class Meta:
@@ -111,9 +134,6 @@ class Organization(TimeStampedModel):
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
         ordering: list[str] = ["name"]
-        indexes: list[models.Index] = [
-            models.Index(fields=["name"]),
-        ]
 
     def __str__(self) -> str:
         """

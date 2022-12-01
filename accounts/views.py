@@ -20,12 +20,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib.auth import authenticate, login as auth_login
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.views import generic
 from django.views.decorators.debug import sensitive_post_parameters
 
 
-@method_decorator(sensitive_post_parameters("password"))
 class LoginView(generic.View):
     """
     Login View
@@ -44,6 +42,7 @@ class LoginView(generic.View):
         """
         return render(request, "accounts/login.html")
 
+    @sensitive_post_parameters("password")
     def post(self, request: HttpRequest) -> JsonResponse:
         """Handle Post request
 

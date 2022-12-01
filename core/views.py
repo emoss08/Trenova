@@ -17,11 +17,28 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.urls import path
+from django.contrib.auth import mixins
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+from django.views import generic
 
-from core import views
 
-app_name = "core"
-urlpatterns = [
-    path("", views.HomeView.as_view(), name="home"),
-]
+class HomeView(
+    mixins.LoginRequiredMixin, generic.View
+):
+    """
+    Home View
+    """
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Handle Get request
+
+        Render the template for home page
+
+        Args:
+            request (HttpRequest): Request object
+
+        Returns:
+            HttpResponse: Rendered template
+        """
+        return render(request, "core/home.html")
