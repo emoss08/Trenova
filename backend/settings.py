@@ -37,7 +37,8 @@ SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]  # type: ignore
+ALLOWED_HOSTS = []  # type: ignore
+CORS_ORIGIN_ALLOW_ALL = True
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
     "localflavor",
     "cacheops",
     "rest_framework",
+    "rest_framework.authtoken",
     "djoser",
     "corsheaders",
     "django_filters",
@@ -119,16 +121,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
-
-CORS_ORIGIN_ALLOW_ALL = True
-
-# CORS_ALLOWED_ORIGINS = [
-#     "http://127.0.0.1:3000",
-#     "http://localhost:8000",
-#     "http://localhost:8080",
-#     "http://localhost:5173",
-#     "http://localhost:8082",
-# ]
 
 # Databases
 DATABASES = {
@@ -246,13 +238,15 @@ CACHEOPS = {
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ]
 }
 
 SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT',),
+    "AUTH_HEADER_TYPES": ("JWT",),
 }
 
 # Celery Configurations
