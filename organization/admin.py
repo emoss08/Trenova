@@ -59,10 +59,24 @@ class DepotAdmin(GenericAdmin[models.Depot]):
     Depot Admin
     """
 
-    list_display: tuple[str, ...] = (
+    list_display = (
         "name",
         "description",
     )
-    list_filter: tuple[str, ...] = ("name",)
-    search_fields: tuple[str, ...] = ("name",)
+    list_filter = ("name",)
+    search_fields = ("name",)
     inlines: tuple[type[DepotDetailInline]] = (DepotDetailInline,)
+
+
+@admin.register(models.Department)
+class DepartmentAdmin(GenericAdmin[models.Department]):
+    """
+    Department Admin
+    """
+
+    list_display = (
+        "name",
+        "description",
+    )
+    list_filter = ("name",)
+    search_fields = ("name",)
