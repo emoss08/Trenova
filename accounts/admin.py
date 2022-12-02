@@ -37,8 +37,7 @@ from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
-from django.utils.translation import gettext
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _
 
 from accounts import models
 from utils.admin import GenericAdmin, GenericStackedInline
@@ -65,7 +64,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     change_user_password_template: None = None
     fieldsets = (
-        (None, {"fields": ("organization", "username", "email", "password")}),
+        (None, {"fields": ("organization", "department", "username", "email", "password")}),
         (
             "Permissions",
             {"fields": ("is_staff", "is_superuser", "groups", "user_permissions")},
@@ -79,6 +78,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
                 "classes": ("wide",),
                 "fields": (
                     "organization",
+                    "department",
                     "username",
                     "email",
                     "password1",
@@ -98,7 +98,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         "groups",
         "user_permissions",
     )
-    autocomplete_fields: tuple[str, ...] = ("organization",)
+    autocomplete_fields: tuple[str, ...] = ("organization", "department")
     inlines: tuple[type[ProfileInline]] = (ProfileInline,)
 
     def get_fieldsets(self, request: HttpRequest, obj=None):
@@ -116,11 +116,11 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         return super().get_fieldsets(request, obj)
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: Optional[Any] = ...,
-        change: bool = True,
-        **kwargs: Any,
+            self,
+            request: HttpRequest,
+            obj: Optional[Any] = ...,
+            change: bool = True,
+            **kwargs: Any,
     ) -> type[ModelForm[models.User]]:
         """Get form for user admin
 
@@ -146,12 +146,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             list[URLPattern]: urls for user admin
         """
         return [
-            path(
-                "<id>/password/",
-                self.admin_site.admin_view(self.user_change_password),
-                name="auth_user_password_change",
-            ),
-        ] + super().get_urls()
+                   path(
+                       "<id>/password/",
+                       self.admin_site.admin_view(self.user_change_password),
+                       name="auth_user_password_change",
+                   ),
+               ] + super().get_urls()
 
     def lookup_allowed(self, lookup: str, value: str) -> bool:
         """Allow lookup for username
@@ -171,7 +171,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m  # type: ignore
     @csrf_protect_m  # type: ignore
     def add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -216,7 +216,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
-        self, request: HttpRequest, id: str, form_url: str = ""
+            self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
