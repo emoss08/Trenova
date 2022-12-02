@@ -147,7 +147,6 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
     Generic Admin Stacked for all Models with Organization Exclusion
     """
 
-    exclude: tuple[str, ...] = ("organization",)
     extra = 0
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:

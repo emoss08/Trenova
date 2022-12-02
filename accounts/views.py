@@ -19,9 +19,50 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
+from rest_framework.authtoken.models import Token
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenVerifyView
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenVerifyView, TokenViewBase
+
+from accounts import serializers
+
+
+class UserView(APIView):
+    """
+    User Information View
+    """
+
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+        Take token as input and return user information
+        """
+        user = Token.objects.get(key=request.headers["Authorization"][6:]).user
+        user_instance = serializers.UserSerializer(user)
+        return Response(user_instance.data)
+        # user_information = serializers.UserProfileSerializer(user).data
+        # return Response(user_information)
+
+
+class UserProfileView(APIView):
+    """
+    User Profile View
+    """
+
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+        Take token as input and return user profile information
+        """
+        user = Token.objects.get(key=request.headers["Authorization"][6:]).user
+        user_profile = serializers.UserProfileSerializer(user).data
+        return Response(user_profile)
+
+
+class TokenObtainView(TokenViewBase):
+    """
+    Token Obtain View
+    """
+    serializer_class = serializers.CreateTokenSerializer
 
 
 class GenericTokenVerifyView(TokenVerifyView):
@@ -29,20 +70,4 @@ class GenericTokenVerifyView(TokenVerifyView):
     If the token is valid return it back in the response
     """
 
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Handle POST request
-
-        Override the post method to return the token back in the response
-
-        Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword arguments
-
-        Returns:
-            Response: Token if valid
-        """
-
-        response: Response = super().post(request, *args, **kwargs)
-        response.data["token"] = request.data["token"]
-        return response
+    serializer_class = serializers.VerifyTokenSerializer
