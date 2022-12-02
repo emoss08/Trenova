@@ -43,19 +43,19 @@ class UserFactory(factory.django.DjangoModelFactory):
     User factory
     """
 
-    class Meta:
-        """
-        Meta class
-        """
-
-        model = "accounts.User"
-
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     username = factory.Faker("user_name")
     password = factory.Faker("password")
     email = factory.Faker("email")
     is_staff = True
     date_joined = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
+
+    class Meta:
+        """
+        Meta class
+        """
+
+        model = "accounts.User"
 
     @factory.post_generation
     def profile(self, create, extracted, **kwargs):

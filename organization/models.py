@@ -300,8 +300,8 @@ class DepotDetail(TimeStampedModel):
 
 class Department(models.Model):
     """
-        Stores information about a department
-        """
+    Stores information about a department
+    """
 
     organization = models.ForeignKey(
         Organization,

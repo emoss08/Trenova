@@ -18,17 +18,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainSlidingView,
-    TokenRefreshSlidingView,
-)
+from rest_framework_simplejwt.views import TokenObtainSlidingView, TokenRefreshSlidingView
 
 from accounts.views import GenericTokenVerifyView
 
 urlpatterns = [
-    path('token/', TokenObtainSlidingView.as_view(), name='token_obtain'),
-    path('token/refresh/', TokenRefreshSlidingView.as_view(), name='token_refresh'),
-    path('token/verify/', GenericTokenVerifyView.as_view(), name='token_verify'),
+    path("token/", TokenObtainSlidingView.as_view(), name="token_obtain"),
+    path("token/refresh/", TokenRefreshSlidingView.as_view(), name="token_refresh"),
+    path("token/verify/", GenericTokenVerifyView.as_view(), name="token_verify"),
 ]
 
 # urlpatterns = [

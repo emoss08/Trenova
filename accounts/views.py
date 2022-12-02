@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from typing import Any
 
 from rest_framework.request import Request
@@ -41,7 +42,7 @@ class GenericTokenVerifyView(TokenVerifyView):
         Returns:
             Response: Token if valid
         """
+
         response: Response = super().post(request, *args, **kwargs)
         response.data["token"] = request.data["token"]
-        print(type(response))
         return response
