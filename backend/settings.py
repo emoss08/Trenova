@@ -37,7 +37,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 DEBUG = True
 
-ALLOWED_HOSTS = []  # type: ignore
+ALLOWED_HOSTS = ["*"]  # type: ignore
 
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     "localflavor",
     "cacheops",
     "rest_framework",
+    "djoser",
+    "corsheaders",
     "django_filters",
     "phonenumber_field",
     "compressor",
@@ -117,6 +119,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "backend.wsgi.application"
+
+CORS_ORIGIN_ALLOW_ALL = True
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://127.0.0.1:3000",
+#     "http://localhost:8000",
+#     "http://localhost:8080",
+#     "http://localhost:5173",
+#     "http://localhost:8082",
+# ]
 
 # Databases
 DATABASES = {
@@ -234,23 +246,13 @@ CACHEOPS = {
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
-    "PAGE_SIZE": 100,
-    "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.SearchFilter",
-        "rest_framework.filters.OrderingFilter",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 SIMPLE_JWT = {
-    'JWT_ALLOW_REFRESH': True,
     'AUTH_HEADER_TYPES': ('JWT',),
-    'JWT_EXPIRATION_DELTA': timedelta(minutes=2),
-    'JWT_REFRESH_EXPIRATION_DELTA': timedelta(days=7),
 }
 
 # Celery Configurations
