@@ -46,11 +46,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -79,11 +79,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -115,6 +115,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
+    )
+    department = models.ForeignKey(
+        "organization.Department",
+        on_delete=models.CASCADE,
+        related_name="users",
+        related_query_name="user",
+        verbose_name=_("Department"),
+        null=True,
+        blank=True,
     )
     username = models.CharField(
         _("Username"),
@@ -314,7 +323,6 @@ class UserProfile(GenericModel):
             str: Get the full name of the user
         """
         return f"{self.first_name} {self.last_name}"
-
 
 class JobTitle(GenericModel):
     """

@@ -296,3 +296,62 @@ class DepotDetail(TimeStampedModel):
             str: The absolute url for the depot detail.
         """
         return reverse("organization:depot:view", kwargs={"pk": self.depot.pk})
+
+
+class Department(models.Model):
+    """
+        Stores information about a department
+        """
+
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="departments",
+        related_query_name="department",
+        verbose_name=_("Organization"),
+        help_text=_("The organization that the department belongs to."),
+    )
+    depot = models.ForeignKey(
+        Depot,
+        on_delete=models.CASCADE,
+        related_name="departments",
+        related_query_name="department",
+        verbose_name=_("Depot"),
+        help_text=_("The depot that the department belongs to."),
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("The name of the department"),
+    )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("The description of the department"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the Department model
+        """
+
+        verbose_name = _("Department")
+        verbose_name_plural = _("Departments")
+
+    def __str__(self) -> str:
+        """Department string representation
+
+        Returns:
+            str: String representation of the Department
+        """
+        return textwrap.wrap(self.name, 30)[0]
+
+    def get_absolute_url(self) -> str:
+        """Absolute URL for the Department.
+
+        Returns:
+            str: Get the absolute url of the Department
+        """
+        return reverse("user:department-view", kwargs={"pk": self.pk})

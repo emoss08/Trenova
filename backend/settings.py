@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     "localflavor",
     "cacheops",
     "rest_framework",
-    "rest_framework.authtoken",
     "django_filters",
     "phonenumber_field",
     "compressor",
@@ -116,8 +115,6 @@ TEMPLATES = [
         },
     },
 ]
-
-CORS_ALLOW_ALL_ORIGINS = True
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
