@@ -16,59 +16,91 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 from typing import Any
 
+from rest_framework import generics, permissions, status, viewsets
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenVerifyView, TokenViewBase
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
-from accounts import serializers
+from accounts import models, serializers
 
 
-class UserView(APIView):
+class UserViewSet(viewsets.ModelViewSet):
     """
-    User Information View
-    """
-
-    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """
-        Take token as input and return user information
-        """
-        user = Token.objects.get(key=request.headers["Authorization"][6:]).user
-        user_instance = serializers.UserSerializer(user)
-        return Response(user_instance.data)
-        # user_information = serializers.UserProfileSerializer(user).data
-        # return Response(user_information)
-
-
-class UserProfileView(APIView):
-    """
-    User Profile View
+    User ViewSet to manage requests to the user endpoint
     """
 
-    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """
-        Take token as input and return user profile information
-        """
-        user = Token.objects.get(key=request.headers["Authorization"][6:]).user
-        user_profile = serializers.UserProfileSerializer(user).data
-        return Response(user_profile)
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
+    queryset = models.User.objects.all()
 
 
-class TokenObtainView(TokenViewBase):
+class UserProfileViewSet(viewsets.ModelViewSet):
+    """
+    User ViewSet to manage requests to the user endpoint
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class: type[
+        serializers.UserProfileSerializer
+    ] = serializers.UserProfileSerializer
+    queryset = models.UserProfile.objects.all()
+
+
+class TokenObtainView(ObtainAuthToken):
     """
     Token Obtain View
     """
 
-    serializer_class = serializers.CreateTokenSerializer
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Handle Post requests
+
+        Args:
+            request (Request): Request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Response: Response of token and user id
+        """
+        serializer: AuthTokenSerializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key, "user_id": user.id})
 
 
-class GenericTokenVerifyView(TokenVerifyView):
+class TokenVerifyView(generics.GenericAPIView):
     """
     If the token is valid return it back in the response
     """
 
-    serializer_class = serializers.VerifyTokenSerializer
+    serializer_class: type[
+        serializers.VerifyTokenSerializer
+    ] = serializers.VerifyTokenSerializer
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Verify the token and return it back
+
+        Args:
+            request (Request): Request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Response: Response of token and user id
+        """
+
+        serializer = self.get_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+
+        except TokenError as token_e:
+            raise InvalidToken(token_e.args[0])
+
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)

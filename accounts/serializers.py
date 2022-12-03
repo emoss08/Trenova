@@ -18,56 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from typing import Any, OrderedDict
 
-from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from accounts import models
-
-
-class CreateTokenSerializer(serializers.Serializer):
-    """
-    Create Token Serializer
-    """
-
-    username = serializers.CharField()
-    password = serializers.CharField()
-
-    def validate(self, attrs: OrderedDict[str, Any]) -> dict[str, Any]:
-        """Validate the username and password
-
-        Get the username and password from the
-        request and authenticate the user.
-        If the user is authenticated, create a
-        token for the user and return it.
-
-
-        Args:
-            attrs (OrderedDict[str, Any]): The request data
-
-        Returns:
-
-        """
-        username = attrs.get("username")
-        password = attrs.get("password")
-
-        user = authenticate(
-            request=self.context.get("request"),
-            username=username,
-            password=password,
-        )
-
-        if not user:
-            msg = "Unable to authenticate with provided credentials."
-            raise serializers.ValidationError(msg, code="authentication")
-
-        token = Token.objects.get(user=user).key
-
-        if token:
-            return {"token": token}
-        else:
-            new_token = Token.objects.create(user=user)
-            return {"token": new_token.key}
 
 
 class VerifyTokenSerializer(serializers.Serializer):
@@ -89,9 +43,10 @@ class VerifyTokenSerializer(serializers.Serializer):
         token = attrs.get("token")
 
         if Token.objects.filter(key=token).exists():
-            return {"token": token}
+            # Query the user from the token and return the ID of the user
+            return {"token": token, "user_id": Token.objects.get(key=token).user.id}
         else:
-            msg = "Unable to authenticate with provided credentials."
+            msg = "Unable to validate given token"
             raise serializers.ValidationError(msg, code="authentication")
 
 
