@@ -62,6 +62,7 @@ class TokenObtainView(TokenViewBase):
     """
     Token Obtain View
     """
+
     serializer_class = serializers.CreateTokenSerializer
 
 

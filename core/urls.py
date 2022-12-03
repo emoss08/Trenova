@@ -24,7 +24,7 @@ from accounts.views import GenericTokenVerifyView, TokenObtainView
 
 urlpatterns = [
     path("user/", include("accounts.urls")),
-    path("auth/", include('djoser.urls')),
+    path("auth/", include("djoser.urls")),
     path("token/", TokenObtainView.as_view(), name="token_obtain"),
     path("token/refresh/", TokenRefreshSlidingView.as_view(), name="token_refresh"),
     path("token/verify/", GenericTokenVerifyView.as_view(), name="token_verify"),

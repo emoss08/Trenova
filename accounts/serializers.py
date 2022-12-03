@@ -34,7 +34,7 @@ class CreateTokenSerializer(serializers.Serializer):
     password = serializers.CharField()
 
     def validate(self, attrs: OrderedDict[str, Any]) -> dict[str, Any]:
-        """ Validate the username and password
+        """Validate the username and password
 
         Get the username and password from the
         request and authenticate the user.
@@ -100,6 +100,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
     User Profile Serializer
     """
 
+    address = serializers.SerializerMethodField("get_address")
+
+    def get_address(self, obj: models.UserProfile) -> str:
+        """Get the address
+
+        Args:
+            obj (models.User): The user
+
+        Returns:
+            str: The address
+        """
+        return obj.get_full_address_combo
+
     class Meta:
         model = models.UserProfile
         fields = [
@@ -107,12 +120,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "title",
+            "address",
             "address_line_1",
             "address_line_2",
             "city",
             "state",
             "zip_code",
-            "phone"
+            "phone",
         ]
 
 
@@ -122,11 +136,24 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     profile = UserProfileSerializer()
+    organization = serializers.SerializerMethodField("get_organization")
+
+    def get_organization(self, obj: models.User) -> str:
+        """Get the organization of the user
+
+        Args:
+            obj (models.User): The user
+
+        Returns:
+            str: The organization
+        """
+        return obj.organization.name
 
     class Meta:
         """
         Metaclass for UserSerializer
         """
+
         model: type[models.User] = models.User
         fields = (
             "id",
