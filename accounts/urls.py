@@ -16,12 +16,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-from django.urls import path
-
-from accounts import views
-
-urlpatterns = [
-    path("", views.UserView.as_view(), name="user"),
-    path("profile/", views.UserProfileView.as_view(), name="user_profile"),
-]

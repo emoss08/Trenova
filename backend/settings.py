@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     "cacheops",
     "rest_framework",
     "rest_framework.authtoken",
-    "djoser",
     "corsheaders",
     "django_filters",
     "phonenumber_field",
