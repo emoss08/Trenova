@@ -304,6 +304,15 @@ class UserProfile(GenericModel):
             return self.profile_picture.url
         return "/static/media/avatars/blank.avif"
 
+    @property
+    def get_full_address_combo(self) -> str:
+        """get the full address combo
+
+        Returns:
+            str: Get the full address combo
+        """
+        return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
+
     @cached_property
     def get_user_city_state(self) -> str | None:
         """User City and state combination.
@@ -311,9 +320,7 @@ class UserProfile(GenericModel):
         Returns:
             str: Get the city and state of the user
         """
-        if self.city and self.state:
-            return f"{self.city}, {self.state}"
-        return None
+        return f"{self.city}, {self.state}"
 
     @cached_property
     def get_full_name(self) -> str:
