@@ -16,11 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 from __future__ import annotations
 
 import decimal
 import textwrap
+import uuid
 from typing import Any, Optional, final
 
 from django.conf import settings
@@ -56,6 +56,12 @@ class OrderControl(GenericModel):
     Stores the order control information for a related :model:`organization.Organization`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.OneToOneField(
         "organization.Organization",
         on_delete=models.CASCADE,
@@ -154,6 +160,12 @@ class OrderType(GenericModel):
     Order Type Model Fields
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Is Active"),
@@ -197,6 +209,12 @@ class Order(GenericModel):
     Stores order information related to a :model:`organization.Organization`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     # General Information
     pro_number = models.CharField(
         _("Pro Number"),
@@ -543,6 +561,12 @@ class OrderDocumentation(GenericModel):
     Stores documentation related to a :model:`order.Order`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -593,6 +617,12 @@ class OrderComment(GenericModel):
     Stores comments related to a :model:`order.Order`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -651,6 +681,12 @@ class AdditionalCharge(GenericModel):
     Stores Additional Charge related to a :model:`order.Order`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     order = models.ForeignKey(
         Order,
         on_delete=models.CASCADE,
@@ -742,6 +778,12 @@ class ReasonCode(GenericModel):
         VOIDED = "VOIDED", _("Voided")
         CANCELLED = "CANCELLED", _("Cancelled")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     code = models.CharField(
         _("Code"),
         max_length=255,

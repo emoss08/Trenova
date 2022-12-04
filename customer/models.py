@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
+import uuid
 from typing import final
 
 from django.core.exceptions import ValidationError
@@ -47,6 +48,12 @@ class Customer(GenericModel):
     Stores customer information for billing and invoicing
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     is_active = models.BooleanField(
         _("Active"),
         default=True,
@@ -127,6 +134,12 @@ class CustomerBillingProfile(GenericModel):
     Stores Billing Criteria related to the :model:`billing.Customer`. model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     customer = models.OneToOneField(
         Customer,
         on_delete=models.CASCADE,
@@ -197,6 +210,12 @@ class CustomerEmailProfile(GenericModel):
     Stores Customer Email Profile related to the :model:`customer.Customer`. model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -276,6 +295,12 @@ class CustomerRuleProfile(GenericModel):
     Stores Customer FTP Profile information related to :model:`customer.Customer`. model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -321,6 +346,12 @@ class CustomerContact(GenericModel):
     Stores contract information related to :model:`billing.Customer`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -455,6 +486,12 @@ class CustomerFuelProfile(GenericModel):
         DISTANCE = "D", _("Distance")
         TABLE = "T", _("Table")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
@@ -597,13 +634,11 @@ class CustomerFuelTable(GenericModel):
     Stores Customer Fuel Profile Information related to the :model:`billing.Customer` model.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=10,
-        unique=True,
-        editable=False,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("Customer Fuel Profile ID"),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
     )
     name = models.CharField(
         _("Name"),
@@ -645,6 +680,12 @@ class CustomerFuelTableDetail(GenericModel):
     Stores detailed information related to the `customer.CustomerFuelTable` model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     customer_fuel_table = models.ForeignKey(
         CustomerFuelTable,
         on_delete=models.CASCADE,

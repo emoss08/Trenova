@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import textwrap
+import uuid
 from typing import Any
 
 from django.conf import settings
@@ -46,11 +47,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -79,11 +80,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -108,6 +109,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     Stores basic user information.
     """
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text=_("Unique ID for the user."),
+    )
 
     organization = models.ForeignKey(
         "organization.Organization",
@@ -180,7 +188,12 @@ class UserProfile(GenericModel):
     """
     Stores additional information for a related :model:`accounts.User`.
     """
-
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -337,6 +350,12 @@ class JobTitle(GenericModel):
     Stores the job title of a :model:`accounts.User`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=100,
@@ -362,9 +381,6 @@ class JobTitle(GenericModel):
         verbose_name = _("Job Title")
         verbose_name_plural = _("Job Titles")
         ordering: list[str] = ["name"]
-        indexes: list[models.Index] = [
-            models.Index(fields=["name"]),
-        ]
 
     def __str__(self) -> str:
         """Job Title string representation.
