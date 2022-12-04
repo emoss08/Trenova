@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
+import uuid
 from typing import final
 
 from django.core.exceptions import ValidationError
@@ -56,6 +57,12 @@ class DispatchControl(GenericModel):
         GOOGLE = "Google", _("Google")
         MONTA = "Monta", _("Monta")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.OneToOneField(
         Organization,
         on_delete=models.CASCADE,
@@ -145,10 +152,10 @@ class DispatchControl(GenericModel):
         """
         super().clean()
         if self.distance_method == self.DistanceMethodChoices.GOOGLE and not any(
-            [
-                integration.integration_type == IntegrationChoices.GOOGLE_MAPS
-                for integration in self.organization.integrations.all()
-            ]
+                [
+                    integration.integration_type == IntegrationChoices.GOOGLE_MAPS
+                    for integration in self.organization.integrations.all()
+                ]
         ):
             raise ValidationError(
                 ValidationError(
@@ -296,6 +303,12 @@ class CommentType(GenericModel):
     Stores the comment type information for a related :model:`organization.Organization`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=255,

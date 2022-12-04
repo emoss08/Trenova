@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import uuid
 import textwrap
 from typing import Any
 
@@ -40,6 +41,12 @@ class QualifierCode(GenericModel):
     Stores Qualifier Code information that can be used in stop notes.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     code = models.CharField(
         _("Code"),
         max_length=255,
@@ -83,6 +90,12 @@ class Stop(GenericModel):
     Stores movement information related to a :model:`movements.Movement`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     status = ChoiceField(
         choices=StatusChoices.choices,
         default=StatusChoices.NEW,
@@ -221,6 +234,12 @@ class StopComment(GenericModel):
     Stores comment  information related to a :model:`stop.Stop`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     stop = models.ForeignKey(
         Stop,
         on_delete=models.CASCADE,
@@ -278,6 +297,12 @@ class ServiceIncident(GenericModel):
     :model:`order.Order` and :model:`stop.Stop`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     movement = models.ForeignKey(
         "movements.Movement",
         on_delete=models.CASCADE,

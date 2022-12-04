@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
 import textwrap
 from typing import final
 
@@ -32,6 +33,12 @@ class Route(GenericModel):
     Stores route information related to `orders.Orders` model
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     origin = models.CharField(
         _("Origin"),
         max_length=255,
@@ -122,6 +129,12 @@ class RouteControl(GenericModel):
         METRIC = "metric", "Metric"
         IMPERIAL = "imperial", "Imperial"
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.OneToOneField(
         "organization.Organization",
         on_delete=models.CASCADE,

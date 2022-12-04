@@ -24,7 +24,7 @@ from accounts import views as user_views
 
 router = routers.SimpleRouter()
 
-router.register(r"users", user_views.UserViewSet)
+router.register(r'users', user_views.UserViewSet)
 
 urlpatterns = [
     path("token/", user_views.TokenObtainView.as_view(), name="token_obtain"),

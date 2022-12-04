@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
 import datetime
 
 from django.core.exceptions import ValidationError
@@ -34,6 +35,12 @@ class Movement(GenericModel):
     Stores movement information related to a :model:`order.Order`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     ref_num = models.CharField(
         _("Movement Reference Number"),
         max_length=10,

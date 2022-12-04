@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
+import uuid
 from typing import Any, final
 
 from django.core import validators
@@ -88,6 +89,12 @@ class GeneralLedgerAccount(GenericModel):
         OTHER_CURRENT_ASSET = "OTHER_CURRENT_ASSET", _("Other Current Asset")
         FIXED_ASSET = "FIXED_ASSET", _("Fixed Asset")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     is_active = models.BooleanField(
         _("Active"),
         default=True,
@@ -162,7 +169,12 @@ class RevenueCode(GenericModel):
     """
     Stores revenue code information for related :model:`organization.Organization`.
     """
-
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     code = models.CharField(
         _("Code"),
         max_length=4,

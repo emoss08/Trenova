@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
+import uuid
 
 from django.conf import settings
 from django.db import models
@@ -37,6 +38,12 @@ class LocationCategory(GenericModel):
     Stores location category information
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=100,
@@ -78,11 +85,11 @@ class Location(GenericModel):
     Stores location information for a related :model:`organization.Organization`.
     """
 
-    id = models.CharField(
-        _("Location ID"),
-        max_length=255,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("Location ID"),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
     )
     location_category = models.ForeignKey(
         LocationCategory,
@@ -197,6 +204,12 @@ class LocationContact(GenericModel):
     Stores location contact information related to :model:`location.Location`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     location = models.ForeignKey(
         Location,
         on_delete=models.PROTECT,
@@ -263,6 +276,12 @@ class LocationComment(GenericModel):
     Stores location contact information related to :model:`location.Location`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     location = models.ForeignKey(
         Location,
         on_delete=models.CASCADE,

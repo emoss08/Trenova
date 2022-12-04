@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
 import textwrap
 from typing import final
 
@@ -65,6 +66,12 @@ class Organization(TimeStampedModel):
         CREATIVE = "creative", _("Creative")
         FANCY = "fancy", _("Fancy")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(_("Organization Name"), max_length=255, unique=True)
     scac_code = models.CharField(
         max_length=4,
@@ -157,6 +164,12 @@ class Depot(TimeStampedModel):
     Depots are commonly known as terminals or yards.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
@@ -209,6 +222,12 @@ class DepotDetail(TimeStampedModel):
     Stores details for the :model:`organization.Depot` model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
@@ -303,6 +322,12 @@ class Department(models.Model):
     Stores information about a department
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,

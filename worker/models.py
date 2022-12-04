@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
 import textwrap
 from typing import final
 
@@ -52,6 +53,12 @@ class Worker(GenericModel):
         EMPLOYEE = "EMPLOYEE", _("Employee")
         CONTRACTOR = "CONTRACTOR", _("Contractor")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     code = models.CharField(
         _("Code"),
         max_length=10,
@@ -197,7 +204,6 @@ class WorkerProfile(GenericModel):
         HAZMAT = "H", _("Hazmat")
         TANKER = "T", _("Tanker")
         X = "X", _("Tanker and Hazmat")
-
     worker = models.OneToOneField(
         Worker,
         on_delete=models.CASCADE,
@@ -327,12 +333,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
@@ -360,6 +366,12 @@ class WorkerContact(GenericModel):
     Model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     worker = models.ForeignKey(
         Worker,
         on_delete=models.CASCADE,
@@ -432,6 +444,12 @@ class WorkerComment(GenericModel):
     Model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     worker = models.ForeignKey(
         Worker,
         on_delete=models.CASCADE,

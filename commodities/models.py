@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
 import textwrap
 from typing import Any, final
 
@@ -76,6 +77,12 @@ class HazardousMaterial(GenericModel):
         TWO = "II", _("II")
         THREE = "III", _("III")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Is Active"),
@@ -158,6 +165,12 @@ class Commodity(GenericModel):
         PIECES = "PIECES", _("Pieces")
         ISO_TANK = "ISO_TANK", _("ISO Tank")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=255,

@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
+import uuid
 from typing import final
 
 from django.db import models
@@ -56,6 +57,12 @@ class ChargeType(GenericModel):
     Stores Other Charge Types
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -144,6 +151,12 @@ class DocumentClassification(GenericModel):
     Stores Document Classification information.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     name = models.CharField(
         _("Name"),
         max_length=150,

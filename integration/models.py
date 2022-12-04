@@ -16,6 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+import uuid
 import textwrap
 from typing import final
 
@@ -54,6 +56,12 @@ class Integration(GenericModel):
     Stores Integration details related to an :model:`organization.Organization`
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     is_active = models.BooleanField(
         _("Is Active"), default=True, help_text=_("Is the integration active?")
     )
@@ -114,9 +122,6 @@ class Integration(GenericModel):
         verbose_name = _("Integration")
         verbose_name_plural = _("Integrations")
         ordering: list[str] = ["name"]
-        indexes: list[models.Index] = [
-            models.Index(fields=["name"]),
-        ]
 
     def __str__(self) -> str:
         """String representation of the Integration Model
