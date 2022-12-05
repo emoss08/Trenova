@@ -17,19 +17,16 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.urls import path
-from rest_framework import routers
-
-from accounts import views as user_views
-
-router = routers.SimpleRouter()
-
-router.register(r'users', user_views.UserViewSet)
-router.register(r'profiles', user_views.UserProfileViewSet)
+from django.urls import include, path
+from rest_framework.schemas import get_schema_view
 
 urlpatterns = [
-    path("token/", user_views.TokenObtainView.as_view(), name="token_obtain"),
-    path("token/verify/", user_views.TokenVerifyView.as_view(), name="token_verify"),
+    path(
+        "openapi",
+        get_schema_view(
+            title="Monta", description="API for all things …", version="1.0.0"
+        ),
+        name="openapi-schema",
+    ),
+    path("users/", include("accounts.urls")),
 ]
-
-urlpatterns += router.urls

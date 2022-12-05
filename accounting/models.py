@@ -169,6 +169,7 @@ class RevenueCode(GenericModel):
     """
     Stores revenue code information for related :model:`organization.Organization`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
