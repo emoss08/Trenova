@@ -69,6 +69,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return obj.get_full_address_combo
 
     class Meta:
+        """
+        Metaclass for UserProfileSerializer
+        """
         model = models.UserProfile
         fields = [
             "user",
