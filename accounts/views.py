@@ -38,6 +38,30 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
     queryset = models.User.objects.all()
 
+    def update(self, request, *args, **kwargs):
+        """Update the user
+
+        Args:
+            request (Request): Request
+            *args: Arguments
+            **kwargs: Keyword arguments
+
+        Returns:
+            Response: Response
+        """
+        user = request.user
+        profile = request.data.pop("profile", None)
+
+        for field in profile:
+            if field != "user":
+                setattr(user.profile, field, profile[field])
+        user.profile.save()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     """
