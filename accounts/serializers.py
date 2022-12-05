@@ -19,9 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, OrderedDict
 
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
 
 from accounts import models
+from utils.serailizers import ValidatedSerializers
 
 
 class VerifyTokenSerializer(serializers.Serializer):
@@ -40,11 +40,15 @@ class VerifyTokenSerializer(serializers.Serializer):
         Returns:
             dict[str, Any]: Validated attributes
         """
+
         token = attrs.get("token")
 
-        if Token.objects.filter(key=token).exists():
+        if models.Token.objects.filter(key=token).exists():
             # Query the user from the token and return the ID of the user
-            return {"token": token, "user_id": Token.objects.get(key=token).user.id}
+            return {
+                "token": token,
+                "user_id": models.Token.objects.get(key=token).user.id,
+            }
         else:
             msg = "Unable to validate given token"
             raise serializers.ValidationError(msg, code="authentication")
@@ -55,6 +59,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     User Profile Serializer
     """
 
+    user = serializers.PrimaryKeyRelatedField(queryset=models.User.objects.all())
     address = serializers.SerializerMethodField("get_address")
 
     def get_address(self, obj: models.UserProfile) -> str:
@@ -66,12 +71,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
         Returns:
             str: The address
         """
+
         return obj.get_full_address_combo
 
     class Meta:
         """
         Metaclass for UserProfileSerializer
         """
+
         model = models.UserProfile
         fields = [
             "user",
@@ -94,18 +101,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     profile = UserProfileSerializer()
-    organization = serializers.SerializerMethodField("get_organization")
-
-    def get_organization(self, obj: models.User) -> str:
-        """Get the organization of the user
-
-        Args:
-            obj (models.User): The user
-
-        Returns:
-            str: The organization
-        """
-        return obj.organization.name
+    # organization = serializers.SerializerMethodField("get_organization")
 
     class Meta:
         """
@@ -124,3 +120,69 @@ class UserSerializer(serializers.ModelSerializer):
             "date_joined",
             "profile",
         )
+
+    # def get_organization(self, obj: models.User) -> str:
+    #     """Get the organization of the user
+    #
+    #     Args:
+    #         obj (models.User): The user
+    #
+    #     Returns:
+    #         str: The organization
+    #     """
+    #
+    #     return obj.organization.name
+
+    def update(self, instance: models.User, validated_data: dict) -> models.User:
+        """Update the user
+
+        Args:
+            instance (models.User): The user
+            validated_data (dict): The validated data
+
+        Returns:
+            models.User: The updated user
+        """
+
+        profile = validated_data.pop("profile")
+        profile_instance = instance.profile
+        profile_instance.first_name = profile.get("first_name")
+        profile_instance.last_name = profile.get("last_name")
+        profile_instance.title = profile.get("title")
+        profile_instance.address_line_1 = profile.get("address_line_1")
+        profile_instance.address_line_2 = profile.get("address_line_2")
+        profile_instance.city = profile.get("city")
+        profile_instance.state = profile.get("state")
+        profile_instance.zip_code = profile.get("zip_code")
+        profile_instance.phone = profile.get("phone")
+        profile_instance.save()
+
+        return super().update(instance, validated_data)
+
+
+class TokenSerializer(ValidatedSerializers):
+    """
+    Serializer for Token model
+    """
+
+    key = serializers.CharField(
+        min_length=40, max_length=40, allow_blank=True, required=False
+    )
+    user = UserSerializer()
+
+    class Meta:
+        """
+        Metaclass for TokenSerializer
+        """
+
+        model: type[models.Token] = models.Token
+        fields = ("id", "user", "created", "expires", "last_used", "key", "description")
+
+
+class TokenProvisionSerializer(serializers.Serializer):
+    """
+    Token Provision Serializer
+    """
+
+    username = serializers.CharField()
+    password = serializers.CharField()

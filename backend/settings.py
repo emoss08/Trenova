@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "debug_toolbar",
     "pgtrigger",
-
     "backend",
     "core",
     "accounts",
@@ -239,15 +238,19 @@ CACHEOPS = {
 # Rest Framework Configurations
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+        "accounts.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-}
-
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": ("JWT",),
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {"user": "100/second"},
 }
 
 # Celery Configurations

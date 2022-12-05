@@ -17,21 +17,27 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.urls import include, path
-from rest_framework import routers
+from typing import Any, OrderedDict
 
-from accounts import views
+from rest_framework import serializers
 
-router = routers.SimpleRouter()
 
-router.register(r"", views.UserViewSet)
-router.register(r"profiles", views.UserProfileViewSet)
+class ValidatedSerializers(serializers.ModelSerializer):
+    """
+    Serializer to enforce calling full_clean() on the serializer
+    """
 
-app_name = "accounts"
-urlpatterns = [
-    path(
-        "token/provision/", views.TokenProvisionView.as_view(), name="token-provision"
-    ),
-    path("token/verify/", views.TokenVerifyView.as_view(), name="token-verify"),
-    path("", include(router.urls)),
-]
+    def validate(self, attrs: OrderedDict[str, Any]) -> dict[str, Any]:
+        """
+        Validate the serializer
+        """
+
+        if self.instance is None:
+            instance = self.Meta.model(**attrs)
+        else:
+            instance = self.instance
+            for k, v in attrs.items():
+                setattr(self.instance, k, v)
+        instance.full_clean()
+
+        return attrs

@@ -21,18 +21,17 @@ from __future__ import annotations
 
 import textwrap
 import uuid
+from hashlib import sha1
 from typing import Any
 
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
@@ -47,11 +46,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -80,11 +79,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self,
-            username: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -109,6 +108,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     Stores basic user information.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -188,6 +188,7 @@ class UserProfile(GenericModel):
     """
     Stores additional information for a related :model:`accounts.User`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -397,3 +398,91 @@ class JobTitle(GenericModel):
             str: Get the absolute url of the job title
         """
         return reverse("user:job-title-view", kwargs={"pk": self.pk})
+
+
+class Token(models.Model):
+    """
+    Stores the token for a :model:`accounts.User
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="tokens",
+        related_query_name="token",
+        help_text=_("The user that the token belongs to"),
+    )
+    created = models.DateTimeField(
+        _("Created"),
+        auto_now_add=True,
+        help_text=_("The date and time the token was created"),
+    )
+    expires = models.DateTimeField(
+        _("Expires"),
+        blank=True,
+        null=True,
+        help_text=_("The date and time the token expires"),
+    )
+    last_used = models.DateTimeField(
+        _("Last Used"),
+        null=True,
+        blank=True,
+        help_text=_("The date and time the token was last used"),
+    )
+    key = models.CharField(
+        max_length=40,
+        unique=True,
+        validators=[MinLengthValidator(40)],
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        blank=True,
+        help_text=_("Description of the token"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the Token model
+        """
+
+        verbose_name = _("Token")
+        verbose_name_plural = _("Tokens")
+
+    def __str__(self) -> str:
+        """Token string representation.
+
+        Returns:
+            str: String representation of the Token Model.
+        """
+        return f"{self.key[-10:]}({self.user.username})"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save the model
+
+        Returns:
+            None
+        """
+        if not self.key:
+            self.key = self.generate_key()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_key() -> str:
+        """
+        Generates a new key for a token.
+        """
+        return sha1(get_random_string(40).encode("utf-8")).hexdigest()
+
+    @property
+    def is_expired(self) -> bool:
+        """
+        Checks if the token is expired.
+        """
+        return self.expires < timezone.now()

@@ -44,3 +44,28 @@ class MontaCoreException(Exception):
             str: The string representation of the exception
         """
         return f"{self.message} (Status Code: {self.status_code})"
+
+
+class TokenException(MontaCoreException):
+    """
+    Exception for token errors
+    """
+
+    def __init__(self, message: str) -> None:
+        """This is the constructor for the AuthenticationError class.
+
+        Args:
+            message (str): The error message
+
+        Returns:
+            None
+        """
+        super().__init__(message, 401)
+
+
+class InvalidTokenException(TokenException):
+    """
+    Exception for invalid token errors
+    """
+
+    pass

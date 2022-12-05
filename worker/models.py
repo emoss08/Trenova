@@ -204,6 +204,7 @@ class WorkerProfile(GenericModel):
         HAZMAT = "H", _("Hazmat")
         TANKER = "T", _("Tanker")
         X = "X", _("Tanker and Hazmat")
+
     worker = models.OneToOneField(
         Worker,
         on_delete=models.CASCADE,
@@ -333,12 +334,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
