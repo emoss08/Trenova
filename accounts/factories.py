@@ -26,16 +26,16 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
     Job title factory
     """
 
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("job")
+    description = factory.Faker("text")
+
     class Meta:
         """
         Metaclass for JobTitleFactory
         """
 
         model = "accounts.JobTitle"
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("job")
-    description = factory.Faker("text")
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -76,13 +76,6 @@ class ProfileFactory(factory.django.DjangoModelFactory):
     Profile Factory
     """
 
-    class Meta:
-        """
-        Meta class
-        """
-
-        model = "accounts.UserProfile"
-
     user = factory.SubFactory(UserFactory)
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     title = factory.SubFactory(JobTitleFactory)
@@ -91,3 +84,25 @@ class ProfileFactory(factory.django.DjangoModelFactory):
     city = factory.Faker("city")
     state = factory.Faker("state_abbr")
     zip_code = factory.Faker("zipcode")
+
+    class Meta:
+        """
+        Meta class
+        """
+
+        model = "accounts.UserProfile"
+
+
+class TokenFactory(factory.django.DjangoModelFactory):
+    """
+    Token factory
+    """
+
+    user = factory.SubFactory(UserFactory)
+
+    class Meta:
+        """
+        Meta class
+        """
+
+        model = "accounts.Token"

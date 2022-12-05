@@ -56,9 +56,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class: type[
-        serializers.UserProfileSerializer
-    ] = serializers.UserProfileSerializer
+    serializer_class = serializers.UserProfileSerializer
     queryset = models.UserProfile.objects.all()
 
     def get_queryset(self) -> QuerySet[models.UserProfile]:

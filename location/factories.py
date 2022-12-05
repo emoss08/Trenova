@@ -44,7 +44,7 @@ class LocationFactory(factory.django.DjangoModelFactory):
     """
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("word", locale="en_US")
+    code = factory.Faker("word", locale="en_US")
     location_category = factory.SubFactory("location.factories.LocationCategoryFactory")
     address_line_1 = factory.Faker("address", locale="en_US")
     city = factory.Faker("city", locale="en_US")

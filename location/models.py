@@ -91,6 +91,11 @@ class Location(GenericModel):
         editable=False,
         unique=True,
     )
+    code = models.CharField(
+        _("Code"),
+        max_length=100,
+        unique=True,
+    )
     location_category = models.ForeignKey(
         LocationCategory,
         on_delete=models.PROTECT,
