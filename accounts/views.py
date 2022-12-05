@@ -21,7 +21,7 @@ from typing import Any
 
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, viewsets
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -102,9 +102,18 @@ class TokenProvisionView(APIView):
 
         token = models.Token(user=user)  # type: ignore
         token.save()
-        data = {"token": token.key, "user_id": user.id}  # type: ignore
 
-        return Response(data, status=status.HTTP_200_OK)
+        # Return the token and full user details
+        return Response(
+            {
+                "token": token.key,
+                "user": serializers.UserSerializer(user).data,
+            },
+        )
+
+
+
+
 
 
 class TokenVerifyView(APIView):
@@ -136,6 +145,9 @@ class TokenVerifyView(APIView):
         except models.Token.DoesNotExist:
             raise InvalidTokenException("Token is invalid")
 
-        data = {"token": token.key, "user_id": token.user.id}
-
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "token": token.key,
+                "user": serializers.UserSerializer(token.user).data,
+            },
+        )
