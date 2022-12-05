@@ -179,7 +179,7 @@ class Location(GenericModel):
         Returns:
             str: Location ID
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return str(self.id)
 
     def get_absolute_url(self) -> str:
         """Location absolute URL

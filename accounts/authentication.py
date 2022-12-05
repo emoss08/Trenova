@@ -25,7 +25,7 @@ from rest_framework.request import Request
 from accounts import models
 
 
-def get_authorization_header(request):
+def get_authorization_header(request: Request) -> bytes:
     """
     Return request's 'Authorization:' header, as a bytestring.
 
@@ -46,7 +46,15 @@ class TokenAuthentication(authentication.TokenAuthentication):
     model = models.Token
 
     def authenticate(self, request: Request) -> None | tuple:
-        auth = get_authorization_header(request).split()
+        """
+
+        Args:
+            request ():
+
+        Returns:
+
+        """
+        auth: list[bytes] = get_authorization_header(request).split()
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
@@ -94,8 +102,8 @@ class TokenAuthentication(authentication.TokenAuthentication):
         ):
             models.Token.objects.filter(pk=token.pk).update(last_used=timezone.now())
 
-        # if token.is_expired:
-        #     raise exceptions.AuthenticationFailed("Token has expired")
+        if token.is_expired:
+            raise exceptions.AuthenticationFailed("Token has expired")
 
         user = token.user
 
