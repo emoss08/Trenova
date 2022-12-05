@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any
 
 from django.contrib.auth import authenticate
+from django.db.models import QuerySet
 from rest_framework import permissions, status, viewsets
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
@@ -39,6 +40,15 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
     queryset = models.User.objects.all()
 
+    def get_queryset(self) -> QuerySet[models.User]:
+        """Filter the queryset to only include the current user
+
+        Returns:
+
+        """
+
+        return self.queryset.filter(organization=self.request.user.organization)
+
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     """
@@ -51,13 +61,21 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     ] = serializers.UserProfileSerializer
     queryset = models.UserProfile.objects.all()
 
+    def get_queryset(self) -> QuerySet[models.UserProfile]:
+        """Filter the queryset to only include the current user
+
+        Returns:
+
+        """
+        return self.queryset.filter(organization=self.request.user.organization)
+
 
 class TokenProvisionView(APIView):
     """
     Rest API endpoint for users can create a token
     """
 
-    permission_classes = []
+    permission_classes: list[Any] = []
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Handle Post requests
@@ -84,9 +102,9 @@ class TokenProvisionView(APIView):
         if not user:
             raise AuthenticationFailed("Invalid username or password")
 
-        token = models.Token(user=user)
+        token = models.Token(user=user)  # type: ignore
         token.save()
-        data = {"token": token.key, "user_id": user.id}
+        data = {"token": token.key, "user_id": user.id}  # type: ignore
 
         return Response(data, status=status.HTTP_200_OK)
 
