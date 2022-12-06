@@ -17,56 +17,22 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from braces import views
-from django.contrib.auth import mixins
-from django.views import generic
+from rest_framework import viewsets
 
 
-class GenericTemplateView(
-    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.TemplateView
-):
+class OrganizationViewSet(viewsets.ModelViewSet):
     """
-    Generic Template view with LoginRequiredMixin and PermissionRequiredMixin
+    Organization ViewSet to manage requests to the organization endpoint
     """
 
-    pass
 
+    def get_queryset(self):
+        """Filter the queryset to only include the current user's organization
 
-class GenericListView(
-    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.ListView
-):
-    """
-    Generic List view with LoginRequiredMixin and PermissionRequiredMixin
-    """
+        Returns:
 
-    pass
+        """
 
-
-class GenericView(
-    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.View
-):
-    """
-    Generic View with LoginRequiredMixin and PermissionRequiredMixin
-    """
-
-    pass
-
-
-class GenericCreateView(
-    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.CreateView
-):
-    """
-    Generic Create view with LoginRequiredMixin and PermissionRequiredMixin
-    """
-
-    pass
-
-
-class GenericUpdateView(
-    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.UpdateView
-):
-    """
-    Generic Update view with LoginRequiredMixin and PermissionRequiredMixin
-    """
-
-    pass
+        return self.queryset.filter(id=self.request.user.organization).prefetch_related(  # type: ignore
+            "organization",
+        )

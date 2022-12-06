@@ -21,7 +21,7 @@ from typing import Any
 
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
-from rest_framework import permissions, viewsets
+from rest_framework import permissions
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -29,9 +29,10 @@ from rest_framework.views import APIView
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
+from utils.views import OrganizationViewSet
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(OrganizationViewSet):
     """
     User ViewSet to manage requests to the user endpoint
     """
@@ -44,13 +45,16 @@ class UserViewSet(viewsets.ModelViewSet):
         """Filter the queryset to only include the current user
 
         Returns:
-
+            QuerySet[models.User]: Filtered queryset
         """
 
-        return self.queryset.filter(organization=self.request.user.organization)
+        return self.queryset.filter(organization=self.request.user.organization.id).prefetch_related(  # type: ignore
+            "organization",
+            "profile",
+        )
 
 
-class UserProfileViewSet(viewsets.ModelViewSet):
+class UserProfileViewSet(OrganizationViewSet):
     """
     User ViewSet to manage requests to the user endpoint
     """
@@ -63,9 +67,13 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         """Filter the queryset to only include the current user
 
         Returns:
-
+            QuerySet[models.User]: Filtered queryset
         """
-        return self.queryset.filter(organization=self.request.user.organization)
+
+        return self.queryset.filter(organization=self.request.user.organization.id).prefetch_related(  # type: ignore
+            "organization",
+            "user",
+        )
 
 
 class TokenProvisionView(APIView):

@@ -22,7 +22,7 @@ from typing import Any, OrderedDict
 from rest_framework import serializers
 
 
-class ValidatedSerializers(serializers.ModelSerializer):
+class ValidatedSerializer(serializers.ModelSerializer):
     """
     Serializer to enforce calling full_clean() on the serializer
     """
@@ -33,7 +33,7 @@ class ValidatedSerializers(serializers.ModelSerializer):
         """
 
         if self.instance is None:
-            instance = self.Meta.model(**attrs)
+            instance = self.Meta.model(**attrs)  # type: ignore
         else:
             instance = self.instance
             for k, v in attrs.items():
