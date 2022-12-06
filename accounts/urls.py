@@ -29,9 +29,5 @@ router.register(r"profiles", views.UserProfileViewSet)
 
 app_name = "accounts"
 urlpatterns = [
-    path(
-        "token/provision/", views.TokenProvisionView.as_view(), name="token-provision"
-    ),
-    path("token/verify/", views.TokenVerifyView.as_view(), name="token-verify"),
     path("", include(router.urls)),
 ]

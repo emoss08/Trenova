@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import Optional
 
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -46,7 +47,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
     model = models.Token
 
-    def authenticate(self, request: Request) -> None | tuple:
+    def authenticate(self, request: Request) -> Optional[tuple[models.User, str]]:
         """
 
         Args:
@@ -63,10 +64,10 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         if len(auth) == 1:
             msg = _("Invalid token header. No credentials provided.")
-            raise exceptions.AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)  # type: ignore
         elif len(auth) > 2:
             msg = _("Invalid token header. Token string should not contain spaces.")
-            raise exceptions.AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)  # type: ignore
 
         try:
             token = auth[1].decode()
@@ -74,11 +75,11 @@ class TokenAuthentication(authentication.TokenAuthentication):
             msg = _(
                 "Invalid token header. Token string should not contain invalid characters."
             )
-            raise exceptions.AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(msg)  # type: ignore
 
         return self.authenticate_credentials(token)
 
-    def authenticate_credentials(self, key: str) -> tuple:
+    def authenticate_credentials(self, key: str) -> tuple[models.User, str]:
         """Authenticate the token
 
         Authenticate the given credentials. If authentication is successful,
@@ -91,7 +92,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
             tuple: User and token
         """
 
-        model: type[models.Token] = self.get_model()
+        model = self.get_model()
 
         try:
             token = model.objects.prefetch_related("user").get(key=key)

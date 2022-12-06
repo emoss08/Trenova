@@ -21,7 +21,7 @@ from typing import Any, OrderedDict
 from rest_framework import serializers
 
 from accounts import models
-from utils.serailizers import ValidatedSerializers
+from utils.serailizers import ValidatedSerializer
 
 
 class VerifyTokenSerializer(serializers.Serializer):
@@ -54,7 +54,7 @@ class VerifyTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code="authentication")
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(ValidatedSerializer):
     """
     User Profile Serializer
     """
@@ -95,20 +95,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ]
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(ValidatedSerializer):
     """
     User Serializer
     """
 
     profile = UserProfileSerializer()
-    # organization = serializers.SerializerMethodField("get_organization")
 
     class Meta:
         """
         Metaclass for UserSerializer
         """
 
-        model: type[models.User] = models.User
+        model = models.User
         fields = (
             "id",
             "organization",
@@ -121,17 +120,6 @@ class UserSerializer(serializers.ModelSerializer):
             "profile",
         )
 
-    # def get_organization(self, obj: models.User) -> str:
-    #     """Get the organization of the user
-    #
-    #     Args:
-    #         obj (models.User): The user
-    #
-    #     Returns:
-    #         str: The organization
-    #     """
-    #
-    #     return obj.organization.name
 
     def update(self, instance: models.User, validated_data: dict) -> models.User:
         """Update the user
@@ -160,7 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
-class TokenSerializer(ValidatedSerializers):
+class TokenSerializer(ValidatedSerializer):
     """
     Serializer for Token model
     """

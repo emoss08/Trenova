@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.urls import include, path
 from rest_framework.schemas import get_schema_view
+from accounts import views as accounts_views
 
 urlpatterns = [
     path(
@@ -28,5 +29,9 @@ urlpatterns = [
         ),
         name="openapi-schema",
     ),
+    path(
+        "token/provision/", accounts_views.TokenProvisionView.as_view(), name="token-provision"
+    ),
+    path("token/verify/", accounts_views.TokenVerifyView.as_view(), name="token-verify"),
     path("users/", include("accounts.urls")),
 ]
