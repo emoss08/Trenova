@@ -1,0 +1,89 @@
+//
+// Root
+//
+
+// Light mode
+@include theme-light() {
+    // Reboot
+    --kt-app-bg-color: #{$app-bg-color};
+    --kt-app-blank-bg-color: #{$app-blank-bg-color};
+
+    // Header base
+    --kt-app-header-base-bg-color: #{$app-header-base-bg-color};
+    --kt-app-header-base-bg-color-mobile: #{$app-header-base-bg-color-mobile};
+    --kt-app-header-base-box-shadow: #{$app-header-base-box-shadow};
+    --kt-app-header-base-box-shadow-mobile: #{$app-header-base-box-shadow-mobile};
+    --kt-app-header-base-menu-link-bg-color-active: #{$app-header-base-menu-link-bg-color-active};
+
+    // Header light
+    --kt-app-header-light-separator-color: #{$app-header-light-separator-color};
+
+    // Sidebar base
+    --kt-app-sidebar-base-toggle-btn-box-shadow: #{$app-sidebar-base-toggle-btn-box-shadow};
+    --kt-app-sidebar-base-toggle-btn-bg-color: #{$app-sidebar-base-toggle-btn-bg-color};
+
+    // Sidebar light
+    --kt-app-sidebar-light-bg-color: #{$app-sidebar-light-bg-color};
+    --kt-app-sidebar-light-box-shadow: #{$app-sidebar-light-box-shadow};
+    --kt-app-sidebar-light-separator-color: #{$app-sidebar-light-separator-color};
+    --kt-app-sidebar-light-scrollbar-color: #{$app-sidebar-light-scrollbar-color};
+    --kt-app-sidebar-light-scrollbar-color-hover: #{$app-sidebar-light-scrollbar-color-hover};
+    --kt-app-sidebar-light-menu-heading-color: #{$app-sidebar-light-menu-heading-color};
+    --kt-app-sidebar-light-menu-link-bg-color-active: #{$app-sidebar-light-menu-link-bg-color-active};
+    --kt-app-sidebar-light-header-menu-link-bg-color-active: #{$app-sidebar-light-header-menu-link-bg-color-active};
+ 
+    // Toolbar base
+    --kt-app-toolbar-base-bg-color: #{$app-toolbar-base-bg-color};
+    --kt-app-toolbar-base-bg-color-mobile: #{$app-toolbar-base-bg-color-mobile};
+    --kt-app-toolbar-base-box-shadow: #{$app-toolbar-base-box-shadow};
+    --kt-app-toolbar-base-box-shadow-mobile: #{$app-toolbar-base-box-shadow-mobile};
+    --kt-app-toolbar-base-border-top: #{$app-toolbar-base-border-top};
+    --kt-app-toolbar-base-border-top-mobile: #{$app-toolbar-base-border-top-mobile};
+
+    // Footer
+    --kt-app-footer-bg-color: #{$app-footer-bg-color};
+    --kt-app-footer-bg-color-mobile: #{$app-footer-bg-color-mobile};
+}
+
+// Dark mode
+@include theme-dark() {
+	// Reboot
+    --kt-app-bg-color: #{$app-bg-color-dark};
+    --kt-app-blank-bg-color: #{$app-blank-bg-color-dark};
+
+    // Header base
+    --kt-app-header-base-bg-color: #{$app-header-base-bg-color-dark};
+    --kt-app-header-base-bg-color-mobile: #{$app-header-base-bg-color-mobile-dark};
+    --kt-app-header-base-box-shadow: #{$app-header-base-box-shadow-dark};
+    --kt-app-header-base-box-shadow-mobile: #{$app-header-base-box-shadow-mobile-dark};
+    --kt-app-header-base-menu-link-bg-color-active: #{$app-header-base-menu-link-bg-color-active-dark};
+
+    // Header light
+    --kt-app-header-light-separator-color: #{$app-header-light-separator-color-dark};
+
+    // Sidebar base
+    --kt-app-sidebar-base-toggle-btn-box-shadow: #{$app-sidebar-base-toggle-btn-box-shadow-dark};
+    --kt-app-sidebar-base-toggle-btn-bg-color: #{$app-sidebar-base-toggle-btn-bg-color-dark};
+
+    // Sidebar light
+    --kt-app-sidebar-light-bg-color: #{$app-sidebar-light-bg-color-dark};
+    --kt-app-sidebar-light-box-shadow: #{$app-sidebar-light-box-shadow-dark};
+    --kt-app-sidebar-light-separator-color: #{$app-sidebar-light-separator-color-dark};
+    --kt-app-sidebar-light-scrollbar-color: #{$app-sidebar-light-scrollbar-color-dark};
+    --kt-app-sidebar-light-scrollbar-color-hover: #{$app-sidebar-light-scrollbar-color-hover-dark};
+    --kt-app-sidebar-light-menu-heading-color: #{$app-sidebar-light-menu-heading-color-dark};
+    --kt-app-sidebar-light-menu-link-bg-color-active: #{$app-sidebar-light-menu-link-bg-color-active-dark};
+    --kt-app-sidebar-light-header-menu-link-bg-color-active: #{$app-sidebar-light-header-menu-link-bg-color-active-dark};
+ 
+    // Toolbar base
+    --kt-app-toolbar-base-bg-color: #{$app-toolbar-base-bg-color-dark};
+    --kt-app-toolbar-base-bg-color-mobile: #{$app-toolbar-base-bg-color-mobile-dark};
+    --kt-app-toolbar-base-box-shadow: #{$app-toolbar-base-box-shadow-dark};
+    --kt-app-toolbar-base-box-shadow-mobile: #{$app-toolbar-base-box-shadow-mobile-dark};
+    --kt-app-toolbar-base-border-top: #{$app-toolbar-base-border-top-dark};
+    --kt-app-toolbar-base-border-top-mobile: #{$app-toolbar-base-border-top-mobile-dark};
+
+    // Footer
+    --kt-app-footer-bg-color: #{$app-footer-bg-color-dark};
+    --kt-app-footer-bg-color-mobile: #{$app-footer-bg-color-mobile-dark};
+}

@@ -1,0 +1,76 @@
+//
+// Light Sidebar(used by Light Sidebar layout only)
+//
+
+[data-kt-app-layout="light-sidebar"] {
+    .app-sidebar {
+        background-color: var(--kt-app-sidebar-light-bg-color);
+        border-right: 0 !important;
+
+        .hover-scroll-overlay-y {        
+            @include scrollbar-color(var(--kt-app-sidebar-light-scrollbar-color), var(--kt-app-sidebar-light-scrollbar-color-hover));
+        }
+
+        .app-sidebar-logo {
+            border-bottom: 1px solid var(--kt-app-sidebar-light-separator-color);
+        }
+
+        .menu {
+            font-weight: $font-weight-semibold;
+
+            .menu-item {                    
+                .menu-heading {
+                    color: var(--kt-app-sidebar-light-menu-heading-color) !important;
+                }
+
+                @include menu-link-default-state( 
+                    $title-color: var(--kt-gray-700), 
+                    $icon-color: var(--kt-gray-500), 
+                    $bullet-color: var(--kt-gray-500), 
+                    $arrow-color: var(--kt-gray-500),
+                    $bg-color: null  
+                );
+                
+                @include menu-link-hover-state( 
+                    $title-color: var(--kt-gray-900), 
+                    $icon-color: var(--kt-gray-700), 
+                    $bullet-color: var(--kt-gray-700), 
+                    $arrow-color: var(--kt-gray-700), 
+                    $bg-color: null
+                );
+                
+                @include menu-link-show-state( 
+                    $title-color: var(--kt-gray-900), 
+                    $icon-color: var(--kt-gray-700), 
+                    $bullet-color: var(--kt-gray-700), 
+                    $arrow-color: var(--kt-gray-700), 
+                    $bg-color: null
+                );
+                
+                @include menu-link-here-state( 
+                    $title-color: var(--kt-gray-900), 
+                    $icon-color: var(--kt-gray-700), 
+                    $bullet-color: var(--kt-gray-700), 
+                    $arrow-color: var(--kt-gray-700), 
+                    $bg-color: null
+                );
+
+                @include menu-link-active-state( 
+                    $title-color: var(--kt-primary), 
+                    $icon-color: var(--kt-primary), 
+                    $bullet-color: var(--kt-primary), 
+                    $arrow-color: var(--kt-primary), 
+                    $bg-color: var(--kt-app-sidebar-light-menu-link-bg-color-active)
+                );
+            }
+        }
+    } 
+}
+
+[data-kt-app-layout="light-sidebar"][data-kt-app-header-fixed="true"] {
+    .app-sidebar {
+        .app-sidebar-logo {
+            border-bottom: 1px dashed var(--kt-app-sidebar-light-separator-color);
+        }
+    }
+}

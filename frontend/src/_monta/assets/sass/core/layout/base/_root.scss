@@ -1,0 +1,496 @@
+//
+// Root
+//
+
+:root,
+[data-theme="light"] {
+    // Layouts
+    @include property(--kt-app-bg-color, $app-bg-color);
+    @include property(--kt-app-blank-bg-color, $app-blank-bg-color);    
+
+    // Header base
+    @include property(--kt-app-header-base-bg-color, $app-header-base-bg-color);
+    @include property(--kt-app-header-base-bg-color-mobile, $app-header-base-bg-color-mobile);
+    @include property(--kt-app-header-base-box-shadow, $app-header-base-box-shadow);
+    @include property(--kt-app-header-base-box-shadow-mobile, $app-header-base-box-shadow-mobile);
+    @include property(--kt-app-header-base-border-bottom, $app-header-base-border-bottom);
+    @include property(--kt-app-header-base-border-bottom-mobile, $app-header-base-border-bottom-mobile);
+
+    // Header minimize
+    @include property(--kt-app-header-minimize-bg-color, $app-header-minimize-bg-color);
+    @include property(--kt-app-header-minimize-bg-color-mobile, $app-header-minimize-bg-color-mobile);
+    @include property(--kt-app-header-minimize-box-shadow, $app-header-minimize-box-shadow);
+    @include property(--kt-app-header-minimize-box-shadow-mobile, $app-header-minimize-box-shadow-mobile);
+    @include property(--kt-app-header-minimize-border-bottom, $app-header-minimize-border-bottom);
+    @include property(--kt-app-header-minimize-border-bottom-mobile, $app-header-minimize-border-bottom-mobile);
+
+    // Header sticky
+    @include property(--kt-app-header-sticky-bg-color, $app-header-sticky-bg-color);
+    @include property(--kt-app-header-sticky-bg-color-mobile, $app-header-sticky-bg-color-mobile);
+    @include property(--kt-app-header-sticky-box-shadow, $app-header-sticky-box-shadow);
+    @include property(--kt-app-header-sticky-box-shadow-mobile, $app-header-sticky-box-shadow-mobile);
+    @include property(--kt-app-header-sticky-border-bottom, $app-header-sticky-border-bottom);
+    @include property(--kt-app-header-sticky-border-bottom-mobile, $app-header-sticky-border-bottom-mobile);
+
+    // Header primary
+    @include property(--kt-app-header-primary-base-bg-color, $app-header-primary-base-bg-color);
+    @include property(--kt-app-header-primary-base-bg-color-mobile, $app-header-primary-base-bg-color-mobile);
+    @include property(--kt-app-header-primary-base-box-shadow, $app-header-primary-base-box-shadow);
+    @include property(--kt-app-header-primary-base-box-shadow-mobile, $app-header-primary-base-box-shadow-mobile);
+    @include property(--kt-app-header-primary-base-border-bottom, $app-header-primary-base-border-bottom);
+    @include property(--kt-app-header-primary-base-border-bottom-mobile, $app-header-primary-base-border-bottom-mobile);
+
+    @include property(--kt-app-header-primary-minimize-bg-color, $app-header-primary-minimize-bg-color);
+    @include property(--kt-app-header-primary-minimize-box-shadow, $app-header-primary-minimize-box-shadow);
+    @include property(--kt-app-header-primary-minimize-border-top, $app-header-primary-minimize-border-top);
+    @include property(--kt-app-header-primary-minimize-border-bottom, $app-header-primary-minimize-border-bottom);
+
+    @include property(--kt-app-header-primary-sticky-bg-color, $app-header-primary-sticky-bg-color);
+    @include property(--kt-app-header-primary-sticky-box-shadow, $app-header-primary-sticky-box-shadow);
+    @include property(--kt-app-header-primary-sticky-border-top, $app-header-primary-sticky-border-top);
+    @include property(--kt-app-header-primary-sticky-border-bottom, $app-header-primary-sticky-border-bottom);
+
+    // Header secondary
+    @include property(--kt-app-header-secondary-base-bg-color, $app-header-secondary-base-bg-color);
+    @include property(--kt-app-header-secondary-base-bg-color-mobile, $app-header-secondary-base-bg-color-mobile);
+    @include property(--kt-app-header-secondary-base-box-shadow, $app-header-secondary-base-box-shadow);
+    @include property(--kt-app-header-secondary-base-box-shadow-mobile, $app-header-secondary-base-box-shadow-mobile);
+    @include property(--kt-app-header-secondary-base-border-top, $app-header-secondary-base-border-top);
+    @include property(--kt-app-header-secondary-base-border-bottom, $app-header-secondary-base-border-bottom);
+    @include property(--kt-app-header-secondary-base-border-start-mobile, $app-header-secondary-base-border-bottom);
+    @include property(--kt-app-header-secondary-base-border-end-mobile, $app-header-secondary-base-border-end-mobile);
+
+    // Header secondary minimize
+    @include property(--kt-app-header-secondary-minimize-bg-color, $app-header-secondary-minimize-bg-color);
+    @include property(--kt-app-header-secondary-minimize-box-shadow, $app-header-secondary-minimize-box-shadow);
+    @include property(--kt-app-header-secondary-minimize-border-top, $app-header-secondary-minimize-border-top);
+    @include property(--kt-app-header-secondary-minimize-border-bottom, $app-header-secondary-minimize-border-bottom);
+
+    // Header secondary sticky
+    @include property(--kt-app-header-secondary-sticky-bg-color, $app-header-secondary-sticky-bg-color);
+    @include property(--kt-app-header-secondary-sticky-box-shadow, $app-header-secondary-sticky-box-shadow);
+    @include property(--kt-app-header-secondary-sticky-border-top, $app-header-secondary-sticky-border-top);
+    @include property(--kt-app-header-secondary-sticky-border-bottom, $app-header-secondary-sticky-border-bottom);
+
+    // Toolbar base
+    @include property(--kt-app-toolbar-base-bg-color, $app-toolbar-base-bg-color);
+    @include property(--kt-app-toolbar-base-bg-color-mobile, $app-toolbar-base-bg-color-mobile);
+    @include property(--kt-app-toolbar-base-box-shadow, $app-toolbar-base-box-shadow);
+    @include property(--kt-app-toolbar-base-box-shadow-mobile, $app-toolbar-base-box-shadow-mobile);
+    @include property(--kt-app-toolbar-base-border-top, $app-toolbar-base-border-top);
+    @include property(--kt-app-toolbar-base-border-top-mobile, $app-toolbar-base-border-top-mobile);
+    @include property(--kt-app-toolbar-base-border-bottom, $app-toolbar-base-border-bottom);
+    @include property(--kt-app-toolbar-base-border-bottom-mobile, $app-toolbar-base-border-bottom);
+
+    // Toolbar minimize
+    @include property(--kt-app-toolbar-minimize-bg-color, $app-toolbar-minimize-bg-color);
+    @include property(--kt-app-toolbar-minimize-bg-color-mobile, $app-toolbar-minimize-bg-color-mobile);
+    @include property(--kt-app-toolbar-minimize-box-shadow, $app-toolbar-minimize-box-shadow);
+    @include property(--kt-app-toolbar-minimize-box-shadow-mobile, $app-toolbar-minimize-box-shadow-mobile);
+    @include property(--kt-app-toolbar-minimize-border-top, $app-toolbar-minimize-border-top);
+    @include property(--kt-app-toolbar-minimize-border-top-mobile, $app-toolbar-minimize-border-top-mobile);
+    @include property(--kt-app-toolbar-minimize-border-bottom, $app-toolbar-minimize-border-bottom);
+    @include property(--kt-app-toolbar-minimize-border-bottom-mobile, $app-toolbar-minimize-border-bottom-mobile);
+
+    // Toolbar sticky
+    @include property(--kt-app-toolbar-sticky-bg-color, $app-toolbar-sticky-bg-color);
+    @include property(--kt-app-toolbar-sticky-bg-color-mobile, $app-toolbar-sticky-bg-color-mobile);
+    @include property(--kt-app-toolbar-sticky-box-shadow, $app-toolbar-sticky-box-shadow);
+    @include property(--kt-app-toolbar-sticky-box-shadow-mobile, $app-toolbar-sticky-box-shadow-mobile);
+    @include property(--kt-app-toolbar-sticky-border-top, $app-toolbar-sticky-border-top);
+    @include property(--kt-app-toolbar-sticky-border-top-mobile, $app-toolbar-sticky-border-top-mobile);
+    @include property(--kt-app-toolbar-sticky-border-bottom, $app-toolbar-sticky-border-bottom);
+    @include property(--kt-app-toolbar-sticky-border-bottom-mobile, $app-toolbar-sticky-border-bottom-mobile);
+
+    // Sidebar base
+    @include property(--kt-app-sidebar-base-bg-color, $app-sidebar-base-bg-color);
+    @include property(--kt-app-sidebar-base-bg-color-mobile, $app-sidebar-base-bg-color-mobile);
+    @include property(--kt-app-sidebar-base-box-shadow, $app-sidebar-base-box-shadow);
+    @include property(--kt-app-sidebar-base-box-shadow-mobile, $app-sidebar-base-box-shadow-mobile);
+    @include property(--kt-app-sidebar-base-border-start, $app-sidebar-base-border-start);
+    @include property(--kt-app-sidebar-base-border-start-mobile, $app-sidebar-base-border-start-mobile);
+    @include property(--kt-app-sidebar-base-border-end, $app-sidebar-base-border-end);
+    @include property(--kt-app-sidebar-base-border-end-mobile, $app-sidebar-base-border-end-mobile);
+
+    // Hero
+    @include property(--kt-app-hero-bg-color, $app-hero-bg-color);
+    @include property(--kt-app-hero-box-shadow, $app-hero-box-shadow);
+    @include property(--kt-app-hero-border-top, $app-hero-border-top);
+    @include property(--kt-app-hero-border-bottom, $app-hero-border-bottom);
+
+    // Sidebar sticky
+    @include property(--kt-app-sidebar-sticky-bg-color, $app-sidebar-sticky-bg-color);
+    @include property(--kt-app-sidebar-sticky-box-shadow, $app-sidebar-sticky-box-shadow);
+    @include property(--kt-app-sidebar-sticky-border-start, $app-sidebar-sticky-border-start);
+    @include property(--kt-app-sidebar-sticky-border-end, $app-sidebar-sticky-border-end);
+
+    // Sidebar minimize
+    @include property(--kt-app-sidebar-minimize-bg-color, $app-sidebar-minimize-bg-color);
+    @include property(--kt-app-sidebar-minimize-bg-color-mobile, $app-sidebar-minimize-bg-color-mobile);
+    @include property(--kt-app-sidebar-minimize-box-shadow, $app-sidebar-minimize-box-shadow);
+    @include property(--kt-app-sidebar-minimize-box-shadow-mobile, $app-sidebar-minimize-box-shadow-mobile);
+    @include property(--kt-app-sidebar-minimize-hover-box-shadow, $app-sidebar-minimize-hover-box-shadow);
+    @include property(--kt-app-sidebar-minimize-hover-box-shadow-mobile, $app-sidebar-minimize-hover-box-shadow-mobile);
+    @include property(--kt-app-sidebar-minimize-border-start, $app-sidebar-minimize-border-start);
+    @include property(--kt-app-sidebar-minimize-border-start-mobile, $app-sidebar-minimize-border-start-mobile);
+    @include property(--kt-app-sidebar-minimize-border-end, $app-sidebar-minimize-border-end);
+    @include property(--kt-app-sidebar-minimize-border-end-mobile, $app-sidebar-minimize-border-end-mobile);
+
+    // Sidebar primary
+    @include property(--kt-app-sidebar-primary-base-bg-color, $app-sidebar-primary-base-bg-color);
+    @include property(--kt-app-sidebar-primary-base-bg-color-mobile, $app-sidebar-primary-base-bg-color-mobile);
+    @include property(--kt-app-sidebar-primary-base-box-shadow, $app-sidebar-primary-base-box-shadow);
+    @include property(--kt-app-sidebar-primary-base-box-shadow-mobile, $app-sidebar-primary-base-box-shadow-mobile);
+    @include property(--kt-app-sidebar-primary-base-border-start, $app-sidebar-primary-base-border-start);
+    @include property(--kt-app-sidebar-primary-base-border-start-mobile, $app-sidebar-primary-base-border-start-mobile);
+    @include property(--kt-app-sidebar-primary-base-border-end, $app-sidebar-primary-base-border-end);
+    @include property(--kt-app-sidebar-primary-base-border-end-mobile, $app-sidebar-primary-base-border-end-mobile);
+
+    // Sidebar primary minimize
+    @include property(--kt-app-sidebar-primary-minimize-bg-color, $app-sidebar-primary-base-border-end-mobile);
+    @include property(--kt-app-sidebar-primary-minimize-bg-color-mobile, $app-sidebar-primary-minimize-bg-color-mobile);
+    @include property(--kt-app-sidebar-primary-minimize-box-shadow, $app-sidebar-primary-minimize-box-shadow);
+    @include property(--kt-app-sidebar-primary-minimize-box-shadow-mobile, $app-sidebar-primary-minimize-box-shadow-mobile);
+    @include property(--kt-app-sidebar-primary-minimize-hover-box-shadow, $app-sidebar-primary-minimize-hover-box-shadow);
+    @include property(--kt-app-sidebar-primary-minimize-hover-box-shadow-mobile, $app-sidebar-primary-minimize-hover-box-shadow-mobile);
+    @include property(--kt-app-sidebar-primary-minimize-border-start, $app-sidebar-primary-minimize-border-start);
+    @include property(--kt-app-sidebar-primary-minimize-border-start-mobile, $app-sidebar-primary-minimize-border-start-mobile);
+    @include property(--kt-app-sidebar-primary-minimize-border-end, $app-sidebar-primary-minimize-border-end);
+    @include property(--kt-app-sidebar-primary-minimize-border-end-mobile, $app-sidebar-primary-minimize-border-end-mobile);
+
+    // Sidebar secondary base
+    @include property(--kt-app-sidebar-secondary-base-bg-color, $app-sidebar-secondary-base-bg-color);
+    @include property(--kt-app-sidebar-secondary-base-bg-color-mobile, $app-sidebar-secondary-base-bg-color-mobile);
+    @include property(--kt-app-sidebar-secondary-base-box-shadow, $app-sidebar-secondary-base-box-shadow);
+    @include property(--kt-app-sidebar-secondary-base-box-shadow-mobile, $app-sidebar-secondary-base-box-shadow-mobile);
+    @include property(--kt-app-sidebar-secondary-base-border-start, $app-sidebar-secondary-base-border-start);
+    @include property(--kt-app-sidebar-secondary-base-border-start-mobile, $app-sidebar-secondary-base-border-start-mobile);
+    @include property(--kt-app-sidebar-secondary-base-border-end, $app-sidebar-secondary-base-border-end);
+    @include property(--kt-app-sidebar-secondary-base-border-end-mobile, $app-sidebar-secondary-base-border-end-mobile);
+
+    // Sidebar secondary minimize
+    @include property(--kt-app-sidebar-secondary-minimize-bg-color, $app-sidebar-secondary-minimize-bg-color);
+    @include property(--kt-app-sidebar-secondary-minimize-bg-color-mobile, $app-sidebar-secondary-minimize-bg-color-mobile);
+    @include property(--kt-app-sidebar-secondary-minimize-box-shadow, $app-sidebar-secondary-minimize-box-shadow);
+    @include property(--kt-app-sidebar-secondary-minimize-box-shadow-mobile, $app-sidebar-secondary-minimize-box-shadow-mobile);
+    @include property(--kt-app-sidebar-secondary-minimize-hover-box-shadow, $app-sidebar-secondary-minimize-hover-box-shadow);
+    @include property(--kt-app-sidebar-secondary-minimize-hover-box-shadow-mobile, $app-sidebar-secondary-minimize-hover-box-shadow-mobile);
+    @include property(--kt-app-sidebar-secondary-minimize-border-start, $app-sidebar-secondary-minimize-border-start);
+    @include property(--kt-app-sidebar-secondary-minimize-border-start-mobile, $app-sidebar-secondary-minimize-border-start-mobile);
+    @include property(--kt-app-sidebar-secondary-minimize-border-end, $app-sidebar-secondary-minimize-border-end);
+    @include property(--kt-app-sidebar-secondary-minimize-border-end-mobile, $app-sidebar-secondary-minimize-border-end-mobile);
+
+    // Sidebar panel base
+    @include property(--kt-app-sidebar-panel-base-bg-color, $app-sidebar-panel-base-bg-color);
+    @include property(--kt-app-sidebar-panel-base-bg-color-mobile, $app-sidebar-panel-base-bg-color-mobile);
+    @include property(--kt-app-sidebar-panel-base-box-shadow, $app-sidebar-panel-base-box-shadow);
+    @include property(--kt-app-sidebar-panel-base-box-shadow-mobile, $app-sidebar-panel-base-box-shadow-mobile);
+    @include property(--kt-app-sidebar-panel-base-border-start, $app-sidebar-panel-base-border-start);
+    @include property(--kt-app-sidebar-panel-base-border-start-mobile, $app-sidebar-panel-base-border-start-mobile);
+    @include property(--kt-app-sidebar-panel-base-border-end, $app-sidebar-panel-base-border-end);
+    @include property(--kt-app-sidebar-panel-base-border-end-mobile, $app-sidebar-panel-base-border-end-mobile);
+
+    // Sidebar panel sticky
+    @include property(--kt-app-sidebar-panel-sticky-bg-color, $app-sidebar-panel-sticky-bg-color);
+    @include property(--kt-app-sidebar-panel-sticky-box-shadow, $app-sidebar-panel-sticky-box-shadow);
+    @include property(--kt-app-sidebar-panel-sticky-border-start, $app-sidebar-panel-sticky-border-start);
+    @include property(--kt-app-sidebar-panel-sticky-border-end, $app-sidebar-panel-sticky-border-end);
+
+    // Sidebar panel minimize
+    @include property(--kt-app-sidebar-panel-minimize-bg-color, $app-sidebar-panel-minimize-bg-color);
+    @include property(--kt-app-sidebar-panel-minimize-bg-color-mobile, $app-sidebar-panel-minimize-bg-color-mobile);
+    @include property(--kt-app-sidebar-panel-minimize-box-shadow, $app-sidebar-panel-minimize-box-shadow);
+    @include property(--kt-app-sidebar-panel-minimize-box-shadow-mobile, $app-sidebar-panel-minimize-box-shadow-mobile);
+    @include property(--kt-app-sidebar-panel-minimize-hover-box-shadow, $app-sidebar-panel-minimize-hover-box-shadow);
+    @include property(--kt-app-sidebar-panel-minimize-hover-box-shadow-mobile, $app-sidebar-panel-minimize-hover-box-shadow-mobile);
+    @include property(--kt-app-sidebar-panel-minimize-border-start, $app-sidebar-panel-minimize-border-start);
+    @include property(--kt-app-sidebar-panel-minimize-border-start-mobile, $app-sidebar-panel-minimize-border-start-mobile);
+    @include property(--kt-app-sidebar-panel-minimize-border-end, $app-sidebar-panel-minimize-border-end);
+    @include property(--kt-app-sidebar-panel-minimize-border-end-mobile, $app-sidebar-panel-minimize-border-end-mobile);
+
+    // Aside base
+    @include property(--kt-app-aside-base-bg-color, $app-aside-base-bg-color);
+    @include property(--kt-app-aside-base-bg-color-mobile, $app-aside-base-bg-color-mobile);
+    @include property(--kt-app-aside-base-box-shadow, $app-aside-base-box-shadow);
+    @include property(--kt-app-aside-base-box-shadow-mobile, $app-aside-base-box-shadow-mobile);
+    @include property(--kt-app-aside-base-border-start, $app-aside-base-border-start);
+    @include property(--kt-app-aside-base-border-start-mobile, $app-aside-base-border-start-mobile);
+    @include property(--kt-app-aside-base-border-end, $app-aside-base-border-end);
+    @include property(--kt-app-aside-base-border-end-mobile, $app-aside-base-border-end-mobile);
+
+    // Aside sticky
+    @include property(--kt-app-aside-sticky-bg-color, $app-aside-sticky-bg-color);
+    @include property(--kt-app-aside-sticky-box-shadow, $app-aside-sticky-box-shadow);
+    @include property(--kt-app-aside-sticky-border-start, $app-aside-sticky-border-start);
+    @include property(--kt-app-aside-sticky-border-end, $app-aside-sticky-border-end);
+
+    // Aside minimize
+    @include property(--kt-app-aside-minimize-bg-color, $app-aside-minimize-bg-color);
+    @include property(--kt-app-aside-minimize-bg-color-mobile, $app-aside-minimize-bg-color-mobile);
+    @include property(--kt-app-aside-minimize-box-shadow, $app-aside-minimize-box-shadow);
+    @include property(--kt-app-aside-minimize-box-shadow-mobile, $app-aside-minimize-box-shadow-mobile);
+    @include property(--kt-app-aside-minimize-hover-box-shadow, $app-aside-minimize-hover-box-shadow);
+    @include property(--kt-app-aside-minimize-hover-box-shadow-mobile, $app-aside-minimize-hover-box-shadow-mobile);
+    @include property(--kt-app-aside-minimize-border-start, $app-aside-minimize-border-start);
+    @include property(--kt-app-aside-minimize-border-start-mobile, $app-aside-minimize-border-start-mobile);
+    @include property(--kt-app-aside-minimize-border-end, $app-aside-minimize-border-end);
+    @include property(--kt-app-aside-minimize-border-end-mobile, $app-aside-minimize-border-end-mobile);
+
+    // Page
+    @include property(--kt-app-page-bg-color, $app-page-bg-color);
+
+    // Wrapper
+    @include property(--kt-app-wrapper-bg-color, $app-wrapper-bg-color);
+
+    // Footer
+    @include property(--kt-app-footer-bg-color, $app-footer-bg-color);
+    @include property(--kt-app-footer-bg-color-mobile, $app-footer-bg-color-mobile);
+    @include property(--kt-app-footer-box-shadow, $app-footer-box-shadow);
+    @include property(--kt-app-footer-box-shadow-mobile, $app-footer-box-shadow-mobile);
+    @include property(--kt-app-footer-border-top, $app-footer-border-top);
+    @include property(--kt-app-footer-border-top-mobile, $app-footer-border-top-mobile);
+}
+
+[data-theme="dark"] {
+    // Layouts
+    @include property(--kt-app-bg-color, $app-bg-color-dark);
+    @include property(--kt-app-blank-bg-color, $app-blank-bg-color-dark);
+
+    // Header base
+    @include property(--kt-app-header-base-bg-color, $app-header-base-bg-color-dark);
+    @include property(--kt-app-header-base-bg-color-mobile, $app-header-base-bg-color-mobile-dark);
+    @include property(--kt-app-header-base-box-shadow, $app-header-base-box-shadow-dark);
+    @include property(--kt-app-header-base-box-shadow-mobile, $app-header-base-box-shadow-mobile-dark);
+    @include property(--kt-app-header-base-border-bottom, $app-header-base-border-bottom-dark);
+    @include property(--kt-app-header-base-border-bottom-mobile, $app-header-base-border-bottom-mobile-dark);
+
+    // Header minimize
+    @include property(--kt-app-header-minimize-bg-color, $app-header-minimize-bg-color-dark);
+    @include property(--kt-app-header-minimize-bg-color-mobile, $app-header-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-header-minimize-box-shadow, $app-header-minimize-box-shadow-dark);
+    @include property(--kt-app-header-minimize-box-shadow-mobile, $app-header-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-header-minimize-border-bottom, $app-header-minimize-border-bottom-dark);
+    @include property(--kt-app-header-minimize-border-bottom-mobile, $app-header-minimize-border-bottom-mobile-dark);
+
+    // Header sticky
+    @include property(--kt-app-header-sticky-bg-color, $app-header-sticky-bg-color-dark);
+    @include property(--kt-app-header-sticky-bg-color-mobile, $app-header-sticky-bg-color-mobile-dark);
+    @include property(--kt-app-header-sticky-box-shadow, $app-header-sticky-box-shadow-dark);
+    @include property(--kt-app-header-sticky-box-shadow-mobile, $app-header-sticky-box-shadow-mobile-dark);
+    @include property(--kt-app-header-sticky-border-bottom, $app-header-sticky-border-bottom-dark);
+    @include property(--kt-app-header-sticky-border-bottom-mobile, $app-header-sticky-border-bottom-mobile-dark);
+
+    // Header primary
+    @include property(--kt-app-header-primary-base-bg-color, $app-header-primary-base-bg-color-dark);
+    @include property(--kt-app-header-primary-base-bg-color-mobile, $app-header-primary-base-bg-color-mobile-dark);
+    @include property(--kt-app-header-primary-base-box-shadow, $app-header-primary-base-box-shadow-dark);
+    @include property(--kt-app-header-primary-base-box-shadow-mobile, $app-header-primary-base-box-shadow-mobile-dark);
+    @include property(--kt-app-header-primary-base-border-bottom, $app-header-primary-base-border-bottom-dark);
+    @include property(--kt-app-header-primary-base-border-bottom-mobile, $app-header-primary-base-border-bottom-mobile-dark);
+
+    @include property(--kt-app-header-primary-minimize-bg-color, $app-header-primary-minimize-bg-color-dark);
+    @include property(--kt-app-header-primary-minimize-box-shadow, $app-header-primary-minimize-box-shadow-dark);
+    @include property(--kt-app-header-primary-minimize-border-top, $app-header-primary-minimize-border-top-dark);
+    @include property(--kt-app-header-primary-minimize-border-bottom, $app-header-primary-minimize-border-bottom-dark);
+
+    @include property(--kt-app-header-primary-sticky-bg-color, $app-header-primary-sticky-bg-color-dark);
+    @include property(--kt-app-header-primary-sticky-box-shadow, $app-header-primary-sticky-box-shadow-dark);
+    @include property(--kt-app-header-primary-sticky-border-top, $app-header-primary-sticky-border-top-dark);
+    @include property(--kt-app-header-primary-sticky-border-bottom, $app-header-primary-sticky-border-bottom-dark);
+
+    // Header secondary
+    @include property(--kt-app-header-secondary-base-bg-color, $app-header-secondary-base-bg-color-dark);
+    @include property(--kt-app-header-secondary-base-bg-color-mobile, $app-header-secondary-base-bg-color-mobile-dark);
+    @include property(--kt-app-header-secondary-base-box-shadow, $app-header-secondary-base-box-shadow-dark);
+    @include property(--kt-app-header-secondary-base-box-shadow-mobile, $app-header-secondary-base-box-shadow-mobile-dark);
+    @include property(--kt-app-header-secondary-base-border-top, $app-header-secondary-base-border-top-dark);
+    @include property(--kt-app-header-secondary-base-border-bottom, $app-header-secondary-base-border-bottom-dark);
+    @include property(--kt-app-header-secondary-base-border-start-mobile, $app-header-secondary-base-border-bottom-dark);
+    @include property(--kt-app-header-secondary-base-border-end-mobile, $app-header-secondary-base-border-end-mobile-dark);
+
+    @include property(--kt-app-header-secondary-minimize-bg-color, $app-header-secondary-minimize-bg-color-dark);
+    @include property(--kt-app-header-secondary-minimize-box-shadow, $app-header-secondary-minimize-box-shadow-dark);
+    @include property(--kt-app-header-secondary-minimize-border-top, $app-header-secondary-minimize-border-top-dark);
+    @include property(--kt-app-header-secondary-minimize-border-bottom, $app-header-secondary-minimize-border-bottom-dark);
+
+    @include property(--kt-app-header-secondary-sticky-bg-color, $app-header-secondary-sticky-bg-color-dark);
+    @include property(--kt-app-header-secondary-sticky-box-shadow, $app-header-secondary-sticky-box-shadow-dark);
+    @include property(--kt-app-header-secondary-sticky-border-top, $app-header-secondary-sticky-border-top-dark);
+    @include property(--kt-app-header-secondary-sticky-border-bottom, $app-header-secondary-sticky-border-bottom-dark);
+
+    // Toolbar base
+    @include property(--kt-app-toolbar-base-bg-color, $app-toolbar-base-bg-color-dark);
+    @include property(--kt-app-toolbar-base-bg-color-mobile, $app-toolbar-base-bg-color-mobile-dark);
+    @include property(--kt-app-toolbar-base-box-shadow, $app-toolbar-base-box-shadow-dark);
+    @include property(--kt-app-toolbar-base-box-shadow-mobile, $app-toolbar-base-box-shadow-mobile-dark);
+    @include property(--kt-app-toolbar-base-border-top, $app-toolbar-base-border-top-dark);
+    @include property(--kt-app-toolbar-base-border-top-mobile, $app-toolbar-base-border-top-mobile-dark);
+    @include property(--kt-app-toolbar-base-border-bottom, $app-toolbar-base-border-bottom-dark);
+    @include property(--kt-app-toolbar-base-border-bottom-mobile, $app-toolbar-base-border-bottom-dark);
+
+    // Toolbar minimize
+    @include property(--kt-app-toolbar-minimize-bg-color, $app-toolbar-minimize-bg-color-dark);
+    @include property(--kt-app-toolbar-minimize-bg-color-mobile, $app-toolbar-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-toolbar-minimize-box-shadow, $app-toolbar-minimize-box-shadow-dark);
+    @include property(--kt-app-toolbar-minimize-box-shadow-mobile, $app-toolbar-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-toolbar-minimize-border-top, $app-toolbar-minimize-border-top-dark);
+    @include property(--kt-app-toolbar-minimize-border-top-mobile, $app-toolbar-minimize-border-top-mobile-dark);
+    @include property(--kt-app-toolbar-minimize-border-bottom, $app-toolbar-minimize-border-bottom-dark);
+    @include property(--kt-app-toolbar-minimize-border-bottom-mobile, $app-toolbar-minimize-border-bottom-mobile-dark);
+
+    // Toolbar sticky
+    @include property(--kt-app-toolbar-sticky-bg-color, $app-toolbar-sticky-bg-color-dark);
+    @include property(--kt-app-toolbar-sticky-bg-color-mobile, $app-toolbar-sticky-bg-color-mobile-dark);
+    @include property(--kt-app-toolbar-sticky-box-shadow, $app-toolbar-sticky-box-shadow-dark);
+    @include property(--kt-app-toolbar-sticky-box-shadow-mobile, $app-toolbar-sticky-box-shadow-mobile-dark);
+    @include property(--kt-app-toolbar-sticky-border-top, $app-toolbar-sticky-border-top-dark);
+    @include property(--kt-app-toolbar-sticky-border-top-mobile, $app-toolbar-sticky-border-top-mobile-dark);
+    @include property(--kt-app-toolbar-sticky-border-bottom, $app-toolbar-sticky-border-bottom-dark);
+    @include property(--kt-app-toolbar-sticky-border-bottom-mobile, $app-toolbar-sticky-border-bottom-mobile-dark);
+
+    // Hero
+    @include property(--kt-app-hero-bg-color, $app-hero-bg-color-dark);
+    @include property(--kt-app-hero-box-shadow, $app-hero-box-shadow-dark);
+    @include property(--kt-app-hero-border-top, $app-hero-border-top-dark);
+    @include property(--kt-app-hero-border-bottom, $app-hero-border-bottom-dark);
+
+    // Sidebar base
+    @include property(--kt-app-sidebar-base-bg-color, $app-sidebar-base-bg-color-dark);
+    @include property(--kt-app-sidebar-base-bg-color-mobile, $app-sidebar-base-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-base-box-shadow, $app-sidebar-base-box-shadow-dark);
+    @include property(--kt-app-sidebar-base-box-shadow-mobile, $app-sidebar-base-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-base-border-start, $app-sidebar-base-border-start-dark);
+    @include property(--kt-app-sidebar-base-border-start-mobile, $app-sidebar-base-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-base-border-end, $app-sidebar-base-border-end-dark);
+    @include property(--kt-app-sidebar-base-border-end-mobile, $app-sidebar-base-border-end-mobile-dark);
+
+    // Sidebar sticky
+    @include property(--kt-app-sidebar-sticky-bg-color, $app-sidebar-sticky-bg-color-dark);
+    @include property(--kt-app-sidebar-sticky-box-shadow, $app-sidebar-sticky-box-shadow-dark);
+    @include property(--kt-app-sidebar-sticky-border-start, $app-sidebar-sticky-border-start-dark);
+    @include property(--kt-app-sidebar-sticky-border-end, $app-sidebar-sticky-border-end-dark);
+
+    // Sidebar minimize
+    @include property(--kt-app-sidebar-minimize-bg-color, $app-sidebar-minimize-bg-color-dark);
+    @include property(--kt-app-sidebar-minimize-bg-color-mobile, $app-sidebar-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-minimize-box-shadow, $app-sidebar-minimize-box-shadow-dark);
+    @include property(--kt-app-sidebar-minimize-box-shadow-mobile, $app-sidebar-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-minimize-hover-box-shadow, $app-sidebar-minimize-hover-box-shadow-dark);
+    @include property(--kt-app-sidebar-minimize-hover-box-shadow-mobile, $app-sidebar-minimize-hover-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-minimize-border-start, $app-sidebar-minimize-border-start-dark);
+    @include property(--kt-app-sidebar-minimize-border-start-mobile, $app-sidebar-minimize-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-minimize-border-end, $app-sidebar-minimize-border-end-dark);
+    @include property(--kt-app-sidebar-minimize-border-end-mobile, $app-sidebar-minimize-border-end-mobile-dark);
+
+    // Sidebar primary
+    @include property(--kt-app-sidebar-primary-base-bg-color, $app-sidebar-primary-base-bg-color-dark);
+    @include property(--kt-app-sidebar-primary-base-bg-color-mobile, $app-sidebar-primary-base-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-primary-base-box-shadow, $app-sidebar-primary-base-box-shadow-dark);
+    @include property(--kt-app-sidebar-primary-base-box-shadow-mobile, $app-sidebar-primary-base-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-primary-base-border-start, $app-sidebar-primary-base-border-start-dark);
+    @include property(--kt-app-sidebar-primary-base-border-start-mobile, $app-sidebar-primary-base-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-primary-base-border-end, $app-sidebar-primary-base-border-end-dark);
+    @include property(--kt-app-sidebar-primary-base-border-end-mobile, $app-sidebar-primary-base-border-end-mobile-dark);
+
+    @include property(--kt-app-sidebar-primary-minimize-bg-color, $app-sidebar-primary-base-border-end-mobile-dark);
+    @include property(--kt-app-sidebar-primary-minimize-bg-color-mobile, $app-sidebar-primary-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-primary-minimize-box-shadow, $app-sidebar-primary-minimize-box-shadow-dark);
+    @include property(--kt-app-sidebar-primary-minimize-box-shadow-mobile, $app-sidebar-primary-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-primary-minimize-hover-box-shadow, $app-sidebar-primary-minimize-hover-box-shadow-dark);
+    @include property(--kt-app-sidebar-primary-minimize-hover-box-shadow-mobile, $app-sidebar-primary-minimize-hover-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-primary-minimize-border-start, $app-sidebar-primary-minimize-border-start-dark);
+    @include property(--kt-app-sidebar-primary-minimize-border-start-mobile, $app-sidebar-primary-minimize-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-primary-minimize-border-end, $app-sidebar-primary-minimize-border-end-dark);
+    @include property(--kt-app-sidebar-primary-minimize-border-end-mobile, $app-sidebar-primary-minimize-border-end-mobile-dark);
+
+    // Sidebar secondary
+    @include property(--kt-app-sidebar-secondary-base-bg-color, $app-sidebar-secondary-base-bg-color-dark);
+    @include property(--kt-app-sidebar-secondary-base-bg-color-mobile, $app-sidebar-secondary-base-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-base-box-shadow, $app-sidebar-secondary-base-box-shadow-dark);
+    @include property(--kt-app-sidebar-secondary-base-box-shadow-mobile, $app-sidebar-secondary-base-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-base-border-start, $app-sidebar-secondary-base-border-start-dark);
+    @include property(--kt-app-sidebar-secondary-base-border-start-mobile, $app-sidebar-secondary-base-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-base-border-end, $app-sidebar-secondary-base-border-end-dark);
+    @include property(--kt-app-sidebar-secondary-base-border-end-mobile, $app-sidebar-secondary-base-border-end-mobile-dark);
+
+    @include property(--kt-app-sidebar-secondary-minimize-bg-color, $app-sidebar-secondary-minimize-bg-color-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-bg-color-mobile, $app-sidebar-secondary-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-box-shadow, $app-sidebar-secondary-minimize-box-shadow-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-box-shadow-mobile, $app-sidebar-secondary-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-hover-box-shadow, $app-sidebar-secondary-minimize-hover-box-shadow-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-hover-box-shadow-mobile, $app-sidebar-secondary-minimize-hover-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-border-start, $app-sidebar-secondary-minimize-border-start-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-border-start-mobile, $app-sidebar-secondary-minimize-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-border-end, $app-sidebar-secondary-minimize-border-end-dark);
+    @include property(--kt-app-sidebar-secondary-minimize-border-end-mobile, $app-sidebar-secondary-minimize-border-end-mobile-dark);
+
+    // Sidebar panel base
+    @include property(--kt-app-sidebar-panel-base-bg-color, $app-sidebar-panel-base-bg-color-dark);
+    @include property(--kt-app-sidebar-panel-base-bg-color-mobile, $app-sidebar-panel-base-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-panel-base-box-shadow, $app-sidebar-panel-base-box-shadow-dark);
+    @include property(--kt-app-sidebar-panel-base-box-shadow-mobile, $app-sidebar-panel-base-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-panel-base-border-start, $app-sidebar-panel-base-border-start-dark);
+    @include property(--kt-app-sidebar-panel-base-border-start-mobile, $app-sidebar-panel-base-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-panel-base-border-end, $app-sidebar-panel-base-border-end-dark);
+    @include property(--kt-app-sidebar-panel-base-border-end-mobile, $app-sidebar-panel-base-border-end-mobile-dark);
+
+    // Sidebar panel sticky
+    @include property(--kt-app-sidebar-panel-sticky-bg-color, $app-sidebar-panel-sticky-bg-color-dark);
+    @include property(--kt-app-sidebar-panel-sticky-box-shadow, $app-sidebar-panel-sticky-box-shadow-dark);
+    @include property(--kt-app-sidebar-panel-sticky-border-start, $app-sidebar-panel-sticky-border-start-dark);
+    @include property(--kt-app-sidebar-panel-sticky-border-end, $app-sidebar-panel-sticky-border-end-dark);
+
+    // Sidebar panel minimize
+    @include property(--kt-app-sidebar-panel-minimize-bg-color, $app-sidebar-panel-minimize-bg-color-dark);
+    @include property(--kt-app-sidebar-panel-minimize-bg-color-mobile, $app-sidebar-panel-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-sidebar-panel-minimize-box-shadow, $app-sidebar-panel-minimize-box-shadow-dark);
+    @include property(--kt-app-sidebar-panel-minimize-box-shadow-mobile, $app-sidebar-panel-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-panel-minimize-hover-box-shadow, $app-sidebar-panel-minimize-hover-box-shadow-dark);
+    @include property(--kt-app-sidebar-panel-minimize-hover-box-shadow-mobile, $app-sidebar-panel-minimize-hover-box-shadow-mobile-dark);
+    @include property(--kt-app-sidebar-panel-minimize-border-start, $app-sidebar-panel-minimize-border-start-dark);
+    @include property(--kt-app-sidebar-panel-minimize-border-start-mobile, $app-sidebar-panel-minimize-border-start-mobile-dark);
+    @include property(--kt-app-sidebar-panel-minimize-border-end, $app-sidebar-panel-minimize-border-end-dark);
+    @include property(--kt-app-sidebar-panel-minimize-border-end-mobile, $app-sidebar-panel-minimize-border-end-mobile-dark);
+
+    // Aside base
+    @include property(--kt-app-aside-base-bg-color, $app-aside-base-bg-color-dark);
+    @include property(--kt-app-aside-base-bg-color-mobile, $app-aside-base-bg-color-mobile-dark);
+    @include property(--kt-app-aside-base-box-shadow, $app-aside-base-box-shadow-dark);
+    @include property(--kt-app-aside-base-box-shadow-mobile, $app-aside-base-box-shadow-mobile-dark);
+    @include property(--kt-app-aside-base-border-start, $app-aside-base-border-start-dark);
+    @include property(--kt-app-aside-base-border-start-mobile, $app-aside-base-border-start-mobile-dark);
+    @include property(--kt-app-aside-base-border-end, $app-aside-base-border-end-dark);
+    @include property(--kt-app-aside-base-border-end-mobile, $app-aside-base-border-end-mobile-dark);
+
+    // Aside sticky
+    @include property(--kt-app-aside-sticky-bg-color, $app-aside-sticky-bg-color-dark);
+    @include property(--kt-app-aside-sticky-box-shadow, $app-aside-sticky-box-shadow-dark);
+    @include property(--kt-app-aside-sticky-border-start, $app-aside-sticky-border-start-dark);
+    @include property(--kt-app-aside-sticky-border-end, $app-aside-sticky-border-end-dark);
+
+    // Aside minimize
+    @include property(--kt-app-aside-minimize-bg-color, $app-aside-minimize-bg-color-dark);
+    @include property(--kt-app-aside-minimize-bg-color-mobile, $app-aside-minimize-bg-color-mobile-dark);
+    @include property(--kt-app-aside-minimize-box-shadow, $app-aside-minimize-box-shadow-dark);
+    @include property(--kt-app-aside-minimize-box-shadow-mobile, $app-aside-minimize-box-shadow-mobile-dark);
+    @include property(--kt-app-aside-minimize-hover-box-shadow, $app-aside-minimize-hover-box-shadow-dark);
+    @include property(--kt-app-aside-minimize-hover-box-shadow-mobile, $app-aside-minimize-hover-box-shadow-mobile-dark);
+    @include property(--kt-app-aside-minimize-border-start, $app-aside-minimize-border-start-dark);
+    @include property(--kt-app-aside-minimize-border-start-mobile, $app-aside-minimize-border-start-mobile-dark);
+    @include property(--kt-app-aside-minimize-border-end, $app-aside-minimize-border-end-dark);
+    @include property(--kt-app-aside-minimize-border-end-mobile, $app-aside-minimize-border-end-mobile-dark);
+
+    // Page
+    @include property(--kt-app-page-bg-color, $app-page-bg-color-dark);
+
+    // Wrapper
+    @include property(--kt-app-wrapper-bg-color, $app-wrapper-bg-color-dark);
+
+    // Footer
+    @include property(--kt-app-footer-bg-color, $app-footer-bg-color-dark);
+    @include property(--kt-app-footer-bg-color-mobile, $app-footer-bg-color-mobile-dark);
+    @include property(--kt-app-footer-box-shadow, $app-footer-box-shadow-dark);
+    @include property(--kt-app-footer-box-shadow-mobile, $app-footer-box-shadow-mobile-dark);
+    @include property(--kt-app-footer-border-top, $app-footer-border-top-dark);
+    @include property(--kt-app-footer-border-top-mobile, $app-footer-border-top-mobile-dark);
+}

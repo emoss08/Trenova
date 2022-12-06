@@ -1,0 +1,111 @@
+//
+// Variables
+//
+
+// Reboot
+$app-bg-color: #f5f8fa;
+$app-bg-color-dark: #151521;
+$app-blank-bg-color: $white;
+$app-blank-bg-color-dark: $app-bg-color-dark;
+
+// Header base
+$app-header-base-height: 70px;
+$app-header-base-height-mobile: 60px;
+$app-header-base-bg-color: $body-bg;
+$app-header-base-bg-color-dark: #1e1e2d;
+$app-header-base-bg-color-mobile: $app-header-base-bg-color;
+$app-header-base-bg-color-mobile-dark: $app-header-base-bg-color-dark;
+$app-header-base-box-shadow: 0px 10px 30px 0px rgba(82,63,105,0.05);
+$app-header-base-box-shadow-dark: none;
+$app-header-base-box-shadow-mobile: $app-header-base-box-shadow;
+$app-header-base-box-shadow-mobile-dark: $app-header-base-box-shadow-dark;
+$app-header-base-menu-link-bg-color-active: $menu-link-bg-color-active;
+$app-header-base-menu-link-bg-color-active-dark: #2A2A3C;
+
+// Header light
+$app-header-light-separator-color: #E4E6EF;
+$app-header-light-separator-color-dark: $border-color-dark;
+
+// Header dark
+$app-header-dark-bg-color: #1e1e2d;
+$app-header-dark-separator-color: #282a3d;
+$app-header-dark-scrollbar-color: #3b3b64;
+$app-header-dark-scrollbar-color-hover: lighten($app-header-dark-scrollbar-color, 3%);
+
+// Sidebar base
+$app-sidebar-base-width: 265px;
+$app-sidebar-base-width-mobile: 250px; 
+
+$app-sidebar-base-toggle-btn-box-shadow: 0px 0px 10px rgba(113, 121, 136, 0.1);
+$app-sidebar-base-toggle-btn-box-shadow-dark: none;
+$app-sidebar-base-toggle-btn-bg-color: $body-bg;
+$app-sidebar-base-toggle-btn-bg-color-dark: $app-header-base-menu-link-bg-color-active-dark;
+
+// Sidebar minimize
+$app-sidebar-minimize-width: 75px;
+
+// Sidebar light
+$app-sidebar-light-bg-color: $body-bg;
+$app-sidebar-light-bg-color-dark: #1e1e2d;
+
+$app-sidebar-light-box-shadow: 0 0 28px 0 rgba(82,63,105,.05);
+$app-sidebar-light-box-shadow-dark: none;
+
+$app-sidebar-light-separator-color: $app-header-light-separator-color;
+$app-sidebar-light-separator-color-dark: $app-header-light-separator-color-dark;
+
+$app-sidebar-light-scrollbar-color: $gray-200;
+$app-sidebar-light-scrollbar-color-dark: $gray-200-dark;
+$app-sidebar-light-scrollbar-color-hover: $gray-200;
+$app-sidebar-light-scrollbar-color-hover-dark: $gray-200-dark;
+$app-sidebar-light-menu-heading-color: #B5B5C3;
+$app-sidebar-light-menu-heading-color-dark: $gray-500-dark;
+$app-sidebar-light-menu-link-bg-color-active: #F4F6FA;
+$app-sidebar-light-menu-link-bg-color-active-dark: #2A2A3C;
+$app-sidebar-light-header-menu-link-bg-color-active: #EAEEF2;
+$app-sidebar-light-header-menu-link-bg-color-active-dark: $gray-100-dark;
+    
+// Sidebar dark
+$app-sidebar-dark-bg-color: #1e1e2d;
+$app-sidebar-dark-separator-color: #393945;
+$app-sidebar-dark-scrollbar-color: $gray-300-dark;
+$app-sidebar-dark-scrollbar-color-hover: $gray-300-dark;
+$app-sidebar-dark-menu-heading-color: #646477;
+$app-sidebar-dark-menu-link-bg-color-active: #2A2A3C;
+
+// Toolbar base
+$app-toolbar-base-height: 55px;
+$app-toolbar-base-bg-color:$body-bg;
+$app-toolbar-base-bg-color-dark: darken(#1e1e2d, 2%);
+$app-toolbar-base-bg-color-mobile: $app-toolbar-base-bg-color;
+$app-toolbar-base-bg-color-mobile-dark: $app-toolbar-base-bg-color-dark;
+$app-toolbar-base-box-shadow: 0px 10px 30px 0px rgba(82,63,105,0.05);
+$app-toolbar-base-box-shadow-dark: none;
+$app-toolbar-base-box-shadow-mobile: $app-toolbar-base-box-shadow;
+$app-toolbar-base-box-shadow-mobile-dark: $app-toolbar-base-box-shadow-mobile;
+$app-toolbar-base-border-top: 1px solid $border-color;
+$app-toolbar-base-border-top-dark: 0;
+$app-toolbar-base-border-top-mobile: $app-toolbar-base-border-top;
+$app-toolbar-base-border-top-mobile-dark: $app-toolbar-base-border-top-mobile;
+
+// Footer
+$app-footer-height: 60px;
+$app-footer-height-mobile: auto;
+$app-footer-bg-color: $body-bg;
+$app-footer-bg-color-dark: #1e1e2d;
+$app-footer-bg-color-mobile: $app-footer-bg-color;
+$app-footer-bg-color-mobile-dark: $app-footer-bg-color-dark;
+
+// Scrolltop
+$scrolltop-bottom: 43px;
+$scrolltop-bottom-mobile: 23px;
+$scrolltop-end: 7px;
+$scrolltop-end-mobile: 5px;
+
+// Layout builder toggle(used for Demo purposes only)
+$app-layout-builder-toggle-end: 50px;
+$app-layout-builder-toggle-end-mobile: 40px;
+$app-layout-builder-toggle-bottom: 40px;
+$app-layout-builder-toggle-bottom-mobile: 20px;
+
+

@@ -1,0 +1,79 @@
+//
+// Dark Sidebar(used by Dark Sidebar layout only)
+//
+
+[data-kt-app-layout="dark-sidebar"] {
+    .app-sidebar {
+        background-color: $app-sidebar-dark-bg-color;
+        border-right: 0 !important;
+
+        .hover-scroll-overlay-y {        
+            @include scrollbar-color($app-sidebar-dark-scrollbar-color, $app-sidebar-dark-scrollbar-color-hover);
+        }
+
+        .app-sidebar-logo {
+            border-bottom: 1px dashed $app-sidebar-dark-separator-color;
+        }
+
+        .btn-custom {
+            @include button-custom-variant(
+                $color:#B5B5C3, 
+                $icon-color: #B5B5C3, 
+                $border-color: null, 
+                $bg-color: rgba(63, 66, 84, 0.35), 
+                $color-active: #B5B5C3, 
+                $icon-color-active: null, 
+                $border-color-active: null, 
+                $bg-color-active: rgba(63, 66, 84, 0.35)
+            );
+        }
+
+        .menu {
+            .menu-item {                    
+                .menu-heading {
+                    color: $app-sidebar-dark-menu-heading-color !important;
+                }
+
+                @include menu-link-default-state( 
+                    $title-color: #9D9DA6, 
+                    $icon-color:#C5C5D8, 
+                    $bullet-color:#787887, 
+                    $arrow-color: #787887, 
+                    $bg-color: null  
+                );
+                
+                @include menu-link-hover-state( 
+                    $title-color: var(--kt-primary-inverse), 
+                    $icon-color: var(--kt-primary-inverse), 
+                    $bullet-color: var(--kt-primary-inverse), 
+                    $arrow-color: var(--kt-primary-inverse), 
+                    $bg-color: null
+                );
+                
+                @include menu-link-here-state( 
+                    $title-color: var(--kt-primary-inverse), 
+                    $icon-color: var(--kt-primary-inverse), 
+                    $bullet-color: var(--kt-primary-inverse), 
+                    $arrow-color: var(--kt-primary-inverse), 
+                    $bg-color: null
+                );
+                
+                @include menu-link-show-state( 
+                    $title-color: var(--kt-primary-inverse), 
+                    $icon-color: var(--kt-primary-inverse), 
+                    $bullet-color: var(--kt-primary-inverse), 
+                    $arrow-color: var(--kt-primary-inverse), 
+                    $bg-color: null
+                );
+                
+                @include menu-link-active-state( 
+                    $title-color: var(--kt-primary-inverse), 
+                    $icon-color: var(--kt-primary-inverse), 
+                    $bullet-color: var(--kt-primary-inverse), 
+                    $arrow-color: var(--kt-primary-inverse), 
+                    $bg-color: $app-sidebar-dark-menu-link-bg-color-active
+                );
+            }
+        }
+    } 
+}

@@ -1,0 +1,104 @@
+//
+// Header
+//
+
+// General mode
+.app-header-menu {
+    .menu {
+        .menu-item {
+            @include menu-link-default-state( 
+                $title-color: var(--kt-gray-700), 
+                $icon-color: var(--kt-gray-500), 
+                $bullet-color: var(--kt-gray-500), 
+                $arrow-color: var(--kt-gray-500),
+                $bg-color: null,
+            );
+            
+            @include menu-link-hover-state( 
+                $title-color: var(--kt-primary), 
+                $icon-color: var(--kt-primary), 
+                $bullet-color: var(--kt-primary), 
+                $arrow-color: var(--kt-primary), 
+                $bg-color: var(--kt-menu-link-bg-color-active)
+            );
+            
+            @include menu-link-show-state( 
+                $title-color: var(--kt-primary), 
+                $icon-color: var(--kt-primary), 
+                $bullet-color: var(--kt-primary), 
+                $arrow-color: var(--kt-primary), 
+                $bg-color: null,
+            );
+
+            @include menu-link-here-state( 
+                $title-color: var(--kt-primary), 
+                $icon-color: var(--kt-primary),
+                $bullet-color: var(--kt-primary), 
+                $arrow-color: var(--kt-primary),
+                $bg-color: var(--kt-menu-link-bg-color-active)
+            );
+
+            @include menu-link-active-state( 
+                $title-color: var(--kt-primary), 
+                $icon-color: var(--kt-primary), 
+                $bullet-color: var(--kt-primary), 
+                $arrow-color: var(--kt-primary), 
+                $bg-color: var(--kt-menu-link-bg-color-active)
+            );                
+        }
+    }
+
+    .menu-extended {
+        --kt-menu-link-bg-color-active: rgba(var(--kt-gray-100-rgb), 0.7);
+        --kt-menu-link-bg-color-hover: rgba(var(--kt-gray-100-rgb), 0.7);
+        
+
+        .menu-custom-icon {
+            background-color: var(--kt-gray-100);    
+        }
+
+        .menu-link {
+            &.active,
+            &:hover {
+                .menu-custom-icon {
+                    background-color: var(--kt-gray-200);    
+                }
+            }    
+        }
+    }
+}
+
+// Desktop mode
+@include media-breakpoint-up(lg) {
+    .app-header-menu {
+        .menu {
+            // Menu root item
+            > .menu-item {
+                margin-right: 0.5rem;
+
+                > .menu-link {
+                    padding-top: 0.775rem;
+                    padding-bottom: 0.775rem;    
+                    font-weight: $font-weight-semibold;
+                }
+
+                @include menu-link-here-state( 
+                    $title-color: var(--kt-primary), 
+                    $icon-color: var(--kt-primary), 
+                    $bullet-color: var(--kt-primary), 
+                    $arrow-color: var(--kt-primary), 
+                    $bg-color: var(--kt-app-header-base-menu-link-bg-color-active)
+                );
+            }
+        }
+    } 
+}
+
+// Tablet & mobile modes
+@include media-breakpoint-down(lg) {
+	.app-header { 
+		.page-title {
+            display: none !important;    
+        }
+	}
+}

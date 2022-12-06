@@ -1,0 +1,106 @@
+//
+// Check/radio
+//
+
+.form-check-input {
+	background-color: var(--kt-form-check-input-bg);
+	border: var(--kt-form-check-input-border);
+
+	&:active {
+		filter: var(--kt-form-check-input-active-filter);
+	}
+
+	&:focus {
+		border-color: var(--kt-form-check-input-focus-border);
+		box-shadow: var(--kt-form-check-input-focus-box-shadow);
+	}
+
+	&:checked {
+		background-color: var(--kt-form-check-input-checked-bg-color);
+		border-color: var(--kt-form-check-input-checked-border-color);
+
+		&[type="checkbox"] {
+			@if $enable-gradients {
+				background-image: var(--kt-form-check-input-checked-bg-image), var(--#{$prefix}gradient);
+			} @else {
+				background-image: var(--kt-form-check-input-checked-bg-image);
+			}
+		}
+
+		&[type="radio"] {
+			@if $enable-gradients {
+				background-image: var(--kt-form-check-radio-checked-bg-image), var(--#{$prefix}gradient);
+			} @else {
+				background-image: var(--kt-form-check-radio-checked-bg-image);
+			}
+		}
+	}
+
+	&[type="checkbox"]:indeterminate {
+		background-color: var(--kt-form-check-input-indeterminate-bg-color);
+		border-color: var(--kt-form-check-input-indeterminate-border-color);
+
+		@if $enable-gradients {
+			background-image: var(--kt-form-check-input-indeterminate-bg-image), var(--#{$prefix}gradient);
+		} @else {
+			background-image:var(--kt-form-check-input-indeterminate-bg-image);
+		}
+	}
+
+	&:disabled {
+		opacity: var(--kt-form-check-input-disabled-opacity);
+	}
+
+	// Use disabled attribute in addition of :disabled pseudo-class
+	// See: https://github.com/twbs/bootstrap/issues/28247
+	&[disabled],
+	&:disabled {
+		~ .form-check-label {
+			opacity: var(--kt-form-check-label-disabled-opacity);
+		}
+	}
+}
+
+.form-check-label {
+	color: var(--kt-form-check-label-color);
+}
+
+.form-check-input {
+	&:checked {
+		& + span,
+		& + label {
+			color: var(--kt-form-check-label-color-checked);
+		}
+	}
+}
+
+//
+// Switch
+//
+
+.form-switch {
+	.form-check-input {
+		background-image: var(--kt-form-switch-bg-image);
+
+		&:focus {
+			background-image: var(--kt-form-switch-focus-bg-image);
+		}
+
+		&:checked {
+			@if $enable-gradients {
+				background-image: var(--kt-form-switch-checked-bg-image), var(--#{$prefix}gradient);
+			} @else {
+				background-image: var(--kt-form-switch-checked-bg-image);
+			}
+		}
+	}
+}
+
+.btn-check {
+	&[disabled],
+	&:disabled {
+		+ .btn {
+			opacity: var(--kt-form-check-btn-check-disabled-opacity);
+		}
+	}
+}
