@@ -1,0 +1,27 @@
+//
+// CSS Variables
+//
+
+[data-theme="dark"] {
+	@each $color, $value in $grays-dark {
+		--#{$prefix}gray-#{$color}: #{$value};
+	}
+
+	@each $color, $value in $theme-colors-dark {
+		--#{$prefix}#{$color}: #{$value};
+	}
+
+	--#{$prefix}body-color-rgb: #{to-rgb($body-color-dark)};
+	--#{$prefix}body-bg-rgb: #{to-rgb($body-bg-dark)};
+
+	--#{$prefix}body-color: #{$body-color-dark};
+	--#{$prefix}body-bg: #{$body-bg-dark};
+
+	--#{$prefix}border-color: #{$border-color-dark};
+
+	--#{$prefix}heading-color: #{$headings-color-dark};
+	--#{$prefix}link-color: #{$link-color-dark};
+	--#{$prefix}link-hover-color: #{$link-hover-color-dark};
+
+	--#{$prefix}code-color: #{$code-color-dark};
+}

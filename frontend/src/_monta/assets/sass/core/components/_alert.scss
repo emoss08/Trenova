@@ -1,0 +1,15 @@
+//
+// Alert
+//
+	
+@each $name, $value in $theme-colors {
+	.alert-#{$name} {
+		color: var(--kt-#{$name});
+		border-color: var(--kt-#{$name});
+		background-color: var(--kt-#{$name}-light);
+
+		.alert-link {
+    		color: var(--kt-#{$name});
+  		}
+	}
+}

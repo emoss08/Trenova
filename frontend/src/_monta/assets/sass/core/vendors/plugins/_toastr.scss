@@ -1,0 +1,87 @@
+//
+// Toastr
+//
+
+// Base
+.toastr {
+    // this is for RTL
+    background-position: calc(100% - 1.5rem) center !important;
+    /*rtl:ignore*/
+    background-position: 1.5rem center !important;
+    box-shadow: var(--kt-dropdown-box-shadow) !important;
+	border-radius: $dropdown-border-radius !important;
+	border: 0 !important;
+    background-color: var(--kt-gray-100);
+    color: var(--kt-gray-700);
+    padding: 1.25rem 1.25rem 1.25rem 4.5rem !important;
+
+	.toastr-close-button {
+   		outline: none !important;
+        font-size: 0;
+        width: 0.85rem;
+        height: 0.85rem;
+	}
+
+	// Title
+	.toastr-title {
+		font-size: 1.15rem;
+		font-weight: $font-weight-semibold;
+        
+        & + .toastr-message {
+            margin-top: 0.25rem;
+        }
+	}
+
+	// Message
+	.toastr-message {
+        font-size: 1rem;
+        font-weight: $font-weight-normal;
+	}
+
+    // States
+    &.toastr-success {
+        background-color: var(--kt-success);
+        color: var(--kt-success-inverse);
+
+        .toastr-close-button {
+            @include svg-bg-icon(close, var(--kt-success-inverse));
+        }    
+    }
+
+    &.toastr-info {
+        background-color: var(--kt-info);
+        color: var(--kt-info-inverse);
+
+        .toastr-close-button {
+            @include svg-bg-icon(close, var(--kt-info-inverse));
+        } 
+    }
+
+    &.toastr-warning {
+        background-color: var(--kt-warning);
+        color: var(--kt-warning-inverse);
+
+        .toastr-close-button {
+            @include svg-bg-icon(close, var(--kt-warning-inverse));
+        } 
+    }
+
+    &.toastr-error {
+        background-color: var(--kt-danger);
+        color: var(--kt-danger-inverse);
+
+        .toastr-close-button {
+            @include svg-bg-icon(close, var(--kt-danger-inverse));
+        } 
+    }
+}
+
+
+// Placements
+.toastr-top-center {
+    top: 12px;
+}
+
+.toastr-bottom-center {
+    bottom: 12px;
+}

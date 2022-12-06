@@ -1,0 +1,78 @@
+//
+// Form Control
+//
+
+
+// Form control
+.form-control {
+	// Dropdown shown state
+	.dropdown.show > & {
+		color: var(--kt-input-focus-color); 
+		background-color: var(--kt-input-focus-bg);
+  	    border-color: var(--kt-input-focus-border-color);
+	}
+
+	// Readonly state
+	&[readonly] {
+		background-color: var(--kt-input-readonly-bg);
+	}
+
+	// Solid style
+	&.form-control-solid {
+		background-color: var(--kt-input-solid-bg);
+		border-color: var(--kt-input-solid-bg);
+		color: var(--kt-input-solid-color);
+		@include placeholder(var(--kt-input-solid-placeholder-color));
+		transition: $transition-input;
+
+		.dropdown.show > &,
+		&:active,
+		&.active,
+		&:focus,
+		&.focus {
+			background-color: var(--kt-input-solid-bg-focus);
+			border-color: var(--kt-input-solid-bg-focus);
+			color: var(--kt-input-solid-color);
+			transition: $transition-input;
+		}
+	}
+
+	// Transparent style
+	&.form-control-transparent {
+		background-color: transparent;
+		border-color: transparent;
+
+		.dropdown.show > &,
+		&:active,
+		&.active,
+		&:focus,
+		&.focus {
+			background-color: transparent;
+			border-color: transparent;
+		}
+	}
+
+	// Flush
+	&.form-control-flush {
+		@include input-reset();
+	}
+}
+
+// Placeholder colors
+.placeholder-gray-500 {
+	@include placeholder(var(--kt-gray-500));
+}
+
+.placeholder-white {
+	@include placeholder($white);
+}
+
+// Textarea reset resize
+.resize-none {
+	resize: none;
+}
+
+// Form control solid bg
+.form-control-solid-bg {
+	background-color: var(--kt-input-solid-bg);
+}

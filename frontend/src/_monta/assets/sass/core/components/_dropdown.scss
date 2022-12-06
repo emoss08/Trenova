@@ -1,0 +1,16 @@
+
+// The dropdown menu
+.dropdown-menu {
+	--#{$prefix}dropdown-color: var(--kt-dropdown-color);
+	--#{$prefix}dropdown-bg: var(--kt-dropdown-bg);
+	--#{$prefix}dropdown-border-color: var(--kt-dropdown-border-color);
+	--#{$prefix}dropdown-divider-bg: var(--kt-dropdown-divider-bg);
+	--#{$prefix}dropdown-box-shadow: var(--kt-dropdown-box-shadow);
+	--#{$prefix}dropdown-link-color: var(--kt-dropdown-link-color);
+	--#{$prefix}dropdown-link-hover-color: var(--kt-dropdown-link-hover-color);
+	--#{$prefix}dropdown-link-hover-bg: var(--kt-dropdown-link-hover-bg);
+	--#{$prefix}dropdown-link-active-color: var(--kt-dropdown-link-active-color);
+	--#{$prefix}dropdown-link-active-bg: var(--kt-dropdown-link-active-bg);
+	--#{$prefix}dropdown-link-disabled-color: var(--kt-dropdown-link-disabled-color);
+	--#{$prefix}dropdown-header-color: var(--kt-dropdown-header-color);
+}

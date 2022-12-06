@@ -1,0 +1,51 @@
+//
+// Sidebar
+//
+
+// Desktop mode
+@include media-breakpoint-up(lg) {
+    .app-sidebar-toggle {
+        box-shadow: var(--kt-app-sidebar-base-toggle-btn-box-shadow) !important; 
+        background-color: var(--kt-app-sidebar-base-toggle-btn-bg-color) !important; 
+
+        .active .svg-icon {
+            transform: rotateZ(0deg) !important;
+        }        
+    }
+
+    [dir="rtl"] {
+        .app-sidebar-toggle {
+            .svg-icon {
+                transform: rotateZ(180deg);
+            }
+
+            &.active .svg-icon {
+                transform: rotateZ(0deg) !important;
+            }
+        }
+    }
+        
+    .app-sidebar-logo {
+        height: var(--kt-app-header-height); 
+        display: flex;
+        align-items: center;
+        justify-content: space-between;        
+        position: relative;
+        flex-shrink: 0;
+    }
+        
+    .app-sidebar-menu {
+        .menu  {
+            & > .menu-item {
+                margin-left: 0.115rem;  
+            }    
+        }    
+    }
+}
+
+// Tablet & mobile modes
+@include media-breakpoint-down(lg) {
+    .app-sidebar-logo {
+        display: none;
+    }
+}
