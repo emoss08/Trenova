@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from typing import Any, OrderedDict
 
 from rest_framework import serializers
@@ -59,21 +60,6 @@ class UserProfileSerializer(ValidatedSerializer):
     User Profile Serializer
     """
 
-    user = serializers.PrimaryKeyRelatedField(queryset=models.User.objects.all())
-    address = serializers.SerializerMethodField("get_address")
-
-    def get_address(self, obj: models.UserProfile) -> str:
-        """Get the address
-
-        Args:
-            obj (models.User): The user
-
-        Returns:
-            str: The address
-        """
-
-        return obj.get_full_address_combo
-
     class Meta:
         """
         Metaclass for UserProfileSerializer
@@ -85,7 +71,6 @@ class UserProfileSerializer(ValidatedSerializer):
             "first_name",
             "last_name",
             "title",
-            "address",
             "address_line_1",
             "address_line_2",
             "city",
@@ -121,33 +106,6 @@ class UserSerializer(ValidatedSerializer):
         )
 
 
-    def update(self, instance: models.User, validated_data: dict) -> models.User:
-        """Update the user
-
-        Args:
-            instance (models.User): The user
-            validated_data (dict): The validated data
-
-        Returns:
-            models.User: The updated user
-        """
-
-        profile = validated_data.pop("profile")
-        profile_instance = instance.profile
-        profile_instance.first_name = profile.get("first_name")
-        profile_instance.last_name = profile.get("last_name")
-        profile_instance.title = profile.get("title")
-        profile_instance.address_line_1 = profile.get("address_line_1")
-        profile_instance.address_line_2 = profile.get("address_line_2")
-        profile_instance.city = profile.get("city")
-        profile_instance.state = profile.get("state")
-        profile_instance.zip_code = profile.get("zip_code")
-        profile_instance.phone = profile.get("phone")
-        profile_instance.save()
-
-        return super().update(instance, validated_data)
-
-
 class TokenSerializer(ValidatedSerializer):
     """
     Serializer for Token model
@@ -164,7 +122,7 @@ class TokenSerializer(ValidatedSerializer):
         """
 
         model: type[models.Token] = models.Token
-        fields = ("id", "user", "created", "expires", "last_used", "key", "description")
+        fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
 
 
 class TokenProvisionSerializer(serializers.Serializer):

@@ -25,7 +25,6 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     Organization ViewSet to manage requests to the organization endpoint
     """
 
-
     def get_queryset(self):
         """Filter the queryset to only include the current user's organization
 
