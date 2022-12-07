@@ -26,9 +26,5 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-frontend/.DS_Store
-frontend/dist
-frontend/dist-ssr
-frontend/coverage
-frontend/package-lock.json
+frontend
 
