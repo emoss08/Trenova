@@ -16,18 +16,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-from django.urls import include, path
-from rest_framework import routers
-
-from accounts import views
-
-router = routers.SimpleRouter()
-
-router.register(r"", views.UserViewSet)
-router.register(r"profiles", views.UserProfileViewSet)
-
-app_name = "accounts"
-urlpatterns = [
-    path("", include(router.urls)),
-]

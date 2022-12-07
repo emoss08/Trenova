@@ -18,20 +18,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.urls import include, path
-from rest_framework.schemas import get_schema_view
-from accounts import views as accounts_views
+from accounts import api as accounts_api
 
 urlpatterns = [
     path(
-        "openapi",
-        get_schema_view(
-            title="Monta", description="API for all things …", version="1.0.0"
-        ),
-        name="openapi-schema",
+        "token/provision/",
+        accounts_api.TokenProvisionView.as_view(),
+        name="token-provision",
     ),
-    path(
-        "token/provision/", accounts_views.TokenProvisionView.as_view(), name="token-provision"
-    ),
-    path("token/verify/", accounts_views.TokenVerifyView.as_view(), name="token-verify"),
+    path("token/verify/", accounts_api.TokenVerifyView.as_view(), name="token-verify"),
     path("users/", include("accounts.urls")),
 ]
