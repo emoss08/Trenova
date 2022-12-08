@@ -27,9 +27,7 @@ class OrgViewSet(viewsets.ModelViewSet):
     """
 
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class: type[
-        serializers.OrganizationSerializer
-    ] = serializers.OrganizationSerializer
+    serializer_class = serializers.OrganizationSerializer
     queryset = models.Organization.objects.all()
 
     def get_queryset(self) -> QuerySet[models.Organization]:
@@ -40,3 +38,21 @@ class OrgViewSet(viewsets.ModelViewSet):
         """
 
         return self.queryset.filter(id=self.request.user.organization.id)
+
+class DepotViewSet(viewsets.ModelViewSet):
+    """
+    Depot ViewSet to manage requests to the depot endpoint
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.DepotSerializer
+    queryset = models.Depot.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.Depot]:
+        """Filter the queryset to only include the current user
+
+        Returns:
+            QuerySet[models.Depot]: Filtered queryset
+        """
+
+        return self.queryset.filter(organization=self.request.user.organization.id)

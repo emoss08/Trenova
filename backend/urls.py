@@ -24,11 +24,14 @@ from django.urls import include, path
 
 from rest_framework import routers
 
-from accounts import api
+from accounts import api as accounts_api
+from organization import api as org_api
 
 router = routers.DefaultRouter()
 
-router.register(r"users", api.UserViewSet, basename="user")
+router.register(r"users", accounts_api.UserViewSet, basename="user")
+router.register(r"organization", org_api.OrgViewSet, basename="organization")
+router.register(r"depot", org_api.DepotViewSet, basename="depot")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

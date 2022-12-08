@@ -22,10 +22,22 @@ from rest_framework import serializers
 from organization import models
 
 
+class DepotSerializer(serializers.ModelSerializer):
+    """Serializer for the Depot model"""
+
+    class Meta:
+        """
+        Metaclass for the DepotSerializer
+        """
+        model = models.Depot
+        fields = "__all__"
+
+
 class OrganizationSerializer(serializers.ModelSerializer):
     """
     Organization Serializer
     """
+    depots = DepotSerializer(many=True, read_only=True)
 
     class Meta:
         """
@@ -33,4 +45,18 @@ class OrganizationSerializer(serializers.ModelSerializer):
         """
 
         model: type[models.Organization] = models.Organization
-        fields = "__all__"
+        fields: list[str] = [
+            "id",
+            "name",
+            "scac_code",
+            "org_type",
+            "timezone",
+            "language",
+            "currency",
+            "date_format",
+            "time_format",
+            "logo",
+            "authentication_bg",
+            "authentication_template",
+            "depots",
+        ]
