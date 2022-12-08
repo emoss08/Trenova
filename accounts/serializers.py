@@ -24,6 +24,8 @@ from rest_framework import serializers
 from accounts import models
 from utils.serailizers import ValidatedSerializer
 
+from drf_writable_nested.serializers import WritableNestedModelSerializer
+
 
 class VerifyTokenSerializer(serializers.Serializer):
     """
@@ -55,7 +57,22 @@ class VerifyTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code="authentication")
 
 
-class UserProfileSerializer(ValidatedSerializer):
+class JobTitleSerializer(ValidatedSerializer):
+    """
+    Job Title Serializer
+    """
+
+    is_active = serializers.BooleanField(required=False, default=True)
+
+    class Meta:
+        """
+        Metaclass for JobTitleSerializer
+        """
+        model = models.JobTitle
+        fields = ["id", "organization", "name", "description", "is_active"]
+
+
+class UserProfileSerializer(WritableNestedModelSerializer):
     """
     User Profile Serializer
     """
@@ -67,7 +84,7 @@ class UserProfileSerializer(ValidatedSerializer):
 
         model = models.UserProfile
         fields = [
-            "user",
+            "pk",
             "first_name",
             "last_name",
             "title",
@@ -80,13 +97,20 @@ class UserProfileSerializer(ValidatedSerializer):
         ]
 
 
-class UserSerializer(ValidatedSerializer):
+class UserSerializer(WritableNestedModelSerializer):
     """
     User Serializer
     """
 
-    password = serializers.CharField(write_only=True)
-    profile = UserProfileSerializer(required=False)
+    profile = UserProfileSerializer()
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile')
+        profile = instance.profile
+        for attr, value in profile_data.items():
+            setattr(profile, attr, value)
+        profile.save()
+        return super().update(instance, validated_data)
 
     class Meta:
         """
@@ -95,7 +119,7 @@ class UserSerializer(ValidatedSerializer):
 
         model = models.User
         fields = (
-            "id",
+            "pk",
             "organization",
             "department",
             "username",
@@ -106,6 +130,22 @@ class UserSerializer(ValidatedSerializer):
             "date_joined",
             "profile",
         )
+        extra_kwargs = {
+            "password": {"write_only": True, "required": False},
+            "is_staff": {"read_only": True},
+            "is_active": {"read_only": True},
+            "date_joined": {"read_only": True},
+        }
+        extra_validators = {
+            "username": [
+                lambda value: models.User.objects.filter(username=value).count() == 0,
+                "Username already exists",
+            ],
+            "email": [
+                lambda value: models.User.objects.filter(email=value).count() == 0,
+                "Email already exists",
+            ],
+        }
 
 
 class TokenSerializer(ValidatedSerializer):
@@ -124,7 +164,7 @@ class TokenSerializer(ValidatedSerializer):
         """
 
         model: type[models.Token] = models.Token
-        fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
+        fields = ["pk", "user", "created", "expires", "last_used", "key", "description"]
 
 
 class TokenProvisionSerializer(serializers.Serializer):
