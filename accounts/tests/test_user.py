@@ -18,9 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.test import Client
 
-from accounts.factories import UserFactory
+from accounts.factories import UserFactory, JobTitleFactory
 from accounts.models import User
 from organization.factories import OrganizationFactory
 
@@ -31,6 +32,14 @@ def user():
     User fixture
     """
     return UserFactory()
+
+
+@pytest.fixture()
+def job_title(user):
+    """
+    Job title fixture
+    """
+    return JobTitleFactory(organization=user.organization)
 
 
 @pytest.mark.django_db
@@ -75,6 +84,19 @@ def test_user_updated(user):
     user.username = "test_user_updated"
     user.save()
     assert user.username == "test_user_updated"
+
+
+@pytest.mark.django_db
+def test_job_title_not_active(user, job_title):
+    """
+    Test if the job title is not active,
+    that validation error is raised
+    """
+    job_title.is_active = False
+    job_title.save()
+    user.profile.title = job_title
+    with pytest.raises(ValidationError, match="Title is not active"):
+        user.profile.save()
 
 
 @pytest.mark.django_db

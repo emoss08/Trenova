@@ -25,8 +25,8 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
     """
     Job title factory
     """
-
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    is_active = True
     name = factory.Faker("job")
     description = factory.Faker("text")
 

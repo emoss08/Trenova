@@ -17,26 +17,20 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, OrderedDict
-
 from rest_framework import serializers
 
+from organization import models
 
-class ValidatedSerializer(serializers.ModelSerializer):
+
+class OrganizationSerializer(serializers.ModelSerializer):
     """
-    Serializer to enforce calling full_clean() on the serializer
+    Organization Serializer
     """
 
-    def validate(self, attrs: OrderedDict[str, Any]) -> dict[str, Any]:
+    class Meta:
         """
-        Validate the serializer
+        Metaclass for OrganizationSerializer
         """
 
-        if self.instance is None:
-            instance = self.Meta.model(**attrs)  # type: ignore
-        else:
-            instance = self.instance
-            for k, v in attrs.items():
-                setattr(self.instance, k, v)
-        instance.full_clean()
-        return attrs
+        model: type[models.Organization] = models.Organization
+        fields = "__all__"
