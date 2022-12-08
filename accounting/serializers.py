@@ -17,22 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.db.models import QuerySet
-from rest_framework import viewsets
+from rest_framework import serializers
 
-
-class OrganizationViewSet(viewsets.ModelViewSet):
-    """
-    Organization ViewSet to manage requests to the organization endpoint
-    """
-
-    def get_queryset(self) -> QuerySet:
-        """Filter the queryset to only include the current user's organization
-
-        Returns:
-
-        """
-
-        return self.queryset.filter(organization=self.request.user.organization.id).prefetch_related(  # type: ignore
-            "organization",
-        )
+from accounting import models

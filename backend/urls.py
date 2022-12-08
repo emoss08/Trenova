@@ -30,6 +30,7 @@ from organization import api as org_api
 router = routers.DefaultRouter()
 
 router.register(r"users", accounts_api.UserViewSet, basename="user")
+router.register(r"job_title", accounts_api.JobTitleViewSet, basename="job_title")
 router.register(r"organizations", org_api.OrgViewSet, basename="organization")
 router.register(r"depots", org_api.DepotViewSet, basename="depot")
 router.register(r"departments", org_api.DepartmentViewSet, basename="department")

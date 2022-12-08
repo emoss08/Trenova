@@ -44,6 +44,20 @@ class UserViewSet(OrganizationViewSet):
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
     queryset = models.User.objects.all()
 
+
+
+    # def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    #     """Update a user
+    #
+    #     Args:
+    #         request (Request): Request
+    #
+    #     Returns:
+    #         Response: Response
+    #     """
+    #
+    #     # Fix issue where update is stating profile
+
     def get_queryset(self) -> QuerySet[models.User]:
         """Filter the queryset to only include the current user
 
@@ -102,6 +116,15 @@ class TokenProvisionView(APIView):
             },
         )
 
+class JobTitleViewSet(OrganizationViewSet):
+    """
+    Job Title ViewSet to manage requests to the job title endpoint
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class: type[serializers.JobTitleSerializer] = serializers.JobTitleSerializer
+    queryset = models.JobTitle.objects.all()
+
 
 class TokenVerifyView(APIView):
     """
@@ -139,3 +162,4 @@ class TokenVerifyView(APIView):
                 "user": serializers.UserSerializer(token.user).data,
             },
         )
+
