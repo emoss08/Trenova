@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from django.db.models import QuerySet
 from rest_framework import viewsets, permissions
 from organization import models, serializers
@@ -37,7 +38,7 @@ class OrgViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        return self.queryset.filter(id=self.request.user.organization.id)
+        return self.queryset.filter(id=self.request.user.organization.id)  # type: ignore
 
 class DepotViewSet(viewsets.ModelViewSet):
     """
@@ -55,4 +56,23 @@ class DepotViewSet(viewsets.ModelViewSet):
             QuerySet[models.Depot]: Filtered queryset
         """
 
-        return self.queryset.filter(organization=self.request.user.organization.id)
+        return self.queryset.filter(organization=self.request.user.organization.id)  # type: ignore
+
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    """
+    Department ViewSet to manage requests to the department endpoint
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.DepartmentSerializer
+    queryset = models.Department.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.Department]:
+        """Filter the queryset to only include the current user
+
+        Returns:
+            QuerySet[models.Depot]: Filtered queryset
+        """
+
+        return self.queryset.filter(organization=self.request.user.organization.id)  # type: ignore
