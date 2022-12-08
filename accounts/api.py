@@ -26,6 +26,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django_filters.rest_framework import DjangoFilterBackend
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
@@ -38,8 +39,10 @@ class UserViewSet(OrganizationViewSet):
     """
 
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["organization", "department", "profiles"]
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
-    queryset = models.User.objects.all().select_related("organization")
+    queryset = models.User.objects.all()
 
     def get_queryset(self) -> QuerySet[models.User]:
         """Filter the queryset to only include the current user
