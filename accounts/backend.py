@@ -44,9 +44,11 @@ class UserBackend(ModelBackend):
             Optional[User]: Returns a user object if the user is authenticated.
         """
         try:
-            user = UserModel._default_manager.select_related(
-                "profile", "profile__title", "profile__organization", "organization"
-            ).get(pk__exact=user_id)
+            user = (
+                UserModel._default_manager.only("id")
+                .select_related("profile", "organization")
+                .get(pk__exact=user_id)
+            )
         except UserModel.DoesNotExist:
             return None
         return user if self.user_can_authenticate(user) else None

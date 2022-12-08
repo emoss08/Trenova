@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     "compressor",
     "django_celery_results",
     "django_celery_beat",
-    "debug_toolbar",
+    "silk",
     "pgtrigger",
     "backend",
     "core",
@@ -87,7 +87,7 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

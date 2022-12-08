@@ -85,7 +85,8 @@ class UserSerializer(ValidatedSerializer):
     User Serializer
     """
 
-    profile = UserProfileSerializer()
+    password = serializers.CharField(write_only=True)
+    profile = UserProfileSerializer(required=False)
 
     class Meta:
         """
@@ -98,6 +99,7 @@ class UserSerializer(ValidatedSerializer):
             "organization",
             "department",
             "username",
+            "password",
             "email",
             "is_staff",
             "is_active",

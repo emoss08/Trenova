@@ -39,7 +39,7 @@ class UserViewSet(OrganizationViewSet):
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
-    queryset = models.User.objects.all()
+    queryset = models.User.objects.all().select_related("organization")
 
     def get_queryset(self) -> QuerySet[models.User]:
         """Filter the queryset to only include the current user
@@ -48,9 +48,11 @@ class UserViewSet(OrganizationViewSet):
             QuerySet[models.User]: Filtered queryset
         """
 
-        return self.queryset.filter(organization=self.request.user.organization.id).prefetch_related(  # type: ignore
+        return self.queryset.filter(organization=self.request.user.organization.id).select_related(  # type: ignore
             "organization",
-            "profile",
+            "profiles",
+            "profiles__title",
+            "department",
         )
 
 

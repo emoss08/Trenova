@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.
@@ -204,7 +204,7 @@ class UserProfile(GenericModel):
     )
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name="profile",
         related_query_name="profiles",
         verbose_name=_("User"),
@@ -305,6 +305,15 @@ class UserProfile(GenericModel):
             raise ValidationError(
                 {"title": ValidationError(_("Title is not active"), code="invalid")}
             )
+
+    def save(self, **kwargs: Any):
+        """Save the model
+
+        Returns:
+            None
+        """
+        self.clean()
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Absolute URL for the Profile.
