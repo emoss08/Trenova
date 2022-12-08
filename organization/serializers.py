@@ -21,16 +21,36 @@ from rest_framework import serializers
 
 from organization import models
 
+class DepotDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Depot model
+    """
+
+    class Meta:
+        """
+        Metaclass for the DepotDetailSerializer
+        """
+        model = models.DepotDetail
+        fields = "__all__"
+
 
 class DepotSerializer(serializers.ModelSerializer):
     """Serializer for the Depot model"""
+
+    depot_details = DepotDetailSerializer()
 
     class Meta:
         """
         Metaclass for the DepotSerializer
         """
         model = models.Depot
-        fields = "__all__"
+        fields = [
+            "id",
+            "organization",
+            "name",
+            "description",
+            "depot_details",
+        ]
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -59,4 +79,23 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "authentication_bg",
             "authentication_template",
             "depots",
+        ]
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    """
+    Department Serializer
+    """
+
+    class Meta:
+        """
+        Metaclass for Department
+        """
+
+        model: type[models.Department] = models.Department
+        fields: list[str] = [
+            "id",
+            "organization",
+            "depot",
+            "name",
+            "description",
         ]
