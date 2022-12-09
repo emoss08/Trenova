@@ -19,12 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any, OrderedDict
 
+from django.contrib.auth import password_validation
+from django.utils.translation import gettext_lazy as _
+from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from accounts import models
 from utils.serailizers import ValidatedSerializer
-
-from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 
 class VerifyTokenSerializer(serializers.Serializer):
@@ -68,6 +69,7 @@ class JobTitleSerializer(ValidatedSerializer):
         """
         Metaclass for JobTitleSerializer
         """
+
         model = models.JobTitle
         fields = ["id", "organization", "name", "description", "is_active"]
 
@@ -97,20 +99,36 @@ class UserProfileSerializer(WritableNestedModelSerializer):
         ]
 
 
-class UserSerializer(WritableNestedModelSerializer):
+class UserSerializer(WritableNestedModelSerializer, ValidatedSerializer):
     """
     User Serializer
     """
 
     profile = UserProfileSerializer()
 
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile')
+    def update(self, instance: models.User, validated_data: dict[str, Any]) -> None:
+        """Update a user
+
+        From validated_data, pop the profile, and update the user profile
+        with the profile data. Then, update the user with the remaining
+        data. Finally, save the user. DRF does not support nested
+        serializers, so this is a workaround.
+
+        Args:
+            instance (models.User): User instance
+            validated_data (dict[str, Any]): Validated data
+
+        Returns:
+            None
+        """
+        profile_data = validated_data.pop("profile")
         profile = instance.profile
+
         for attr, value in profile_data.items():
             setattr(profile, attr, value)
         profile.save()
-        return super().update(instance, validated_data)
+
+        return super().update(instance, validated_data) # type: ignore
 
     class Meta:
         """
@@ -146,6 +164,64 @@ class UserSerializer(WritableNestedModelSerializer):
                 "Email already exists",
             ],
         }
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Change Password Serializer
+    """
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value: str) -> str:
+        """Validate the new password
+
+        Args:
+            value (str): New password
+
+        Returns:
+            str: Validated new password
+        """
+
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError(_("Old password is incorrect"))  # type: ignore
+        return value
+
+    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+
+        Args:
+            data (dict[str, Any]): Data to validate
+
+        Returns:
+            dict[str, Any]: Validated data
+        """
+
+        if data["new_password"] != data["confirm_password"]:
+            raise serializers.ValidationError(_("Passwords do not match"))  # type: ignore
+        password_validation.validate_password(
+            data["new_password"], self.context["request"].user
+        )
+        return data
+
+    def save(self, **kwargs: Any) -> models.User:
+        """Save the new password
+
+        Args:
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            models.User: User instance
+        """
+
+        password = self.validated_data["new_password"]
+        user = self.context["request"].user
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class TokenSerializer(ValidatedSerializer):
