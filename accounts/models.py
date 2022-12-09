@@ -25,11 +25,7 @@ from hashlib import sha1
 from typing import Any
 
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
@@ -479,7 +475,7 @@ class Token(models.Model):
         """
         return f"{self.key[-10:]}({self.user.username})"
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, **kwargs: Any) -> None:
         """Save the model
 
         Returns:
@@ -487,7 +483,7 @@ class Token(models.Model):
         """
         if not self.key:
             self.key = self.generate_key()
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
     @staticmethod
     def generate_key() -> str:

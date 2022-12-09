@@ -21,12 +21,13 @@ from typing import Any
 
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
-from rest_framework import permissions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import permissions, status
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django_filters.rest_framework import DjangoFilterBackend
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
@@ -44,20 +45,6 @@ class UserViewSet(OrganizationViewSet):
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
     queryset = models.User.objects.all()
 
-
-
-    # def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-    #     """Update a user
-    #
-    #     Args:
-    #         request (Request): Request
-    #
-    #     Returns:
-    #         Response: Response
-    #     """
-    #
-    #     # Fix issue where update is stating profile
-
     def get_queryset(self) -> QuerySet[models.User]:
         """Filter the queryset to only include the current user
 
@@ -70,6 +57,41 @@ class UserViewSet(OrganizationViewSet):
             "profiles",
             "profiles__title",
             "department",
+        )
+
+
+class UpdatePasswordView(UpdateAPIView):
+    """
+    An endpoint for changing password.
+    """
+
+    serializer_class = serializers.ChangePasswordSerializer
+
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """
+
+        Args:
+            request (Request): The request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            Response: The response object
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        if hasattr(user, "token"):
+            user.token.delete()
+
+        token, created = models.Token.objects.get_or_create(user=user)
+        return Response(
+            {
+                "token": token.key,
+            },
+            status=status.HTTP_200_OK,
         )
 
 
@@ -116,13 +138,16 @@ class TokenProvisionView(APIView):
             },
         )
 
+
 class JobTitleViewSet(OrganizationViewSet):
     """
     Job Title ViewSet to manage requests to the job title endpoint
     """
 
     permission_classes = [permissions.IsAuthenticated]
-    serializer_class: type[serializers.JobTitleSerializer] = serializers.JobTitleSerializer
+    serializer_class: type[
+        serializers.JobTitleSerializer
+    ] = serializers.JobTitleSerializer
     queryset = models.JobTitle.objects.all()
 
 
@@ -162,4 +187,3 @@ class TokenVerifyView(APIView):
                 "user": serializers.UserSerializer(token.user).data,
             },
         )
-

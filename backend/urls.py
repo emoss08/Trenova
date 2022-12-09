@@ -40,10 +40,13 @@ urlpatterns = [
     path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
-    path("api/token/provision/", accounts_api.TokenProvisionView.as_view(), name="token"),
+    path(
+        "api/token/provision/", accounts_api.TokenProvisionView.as_view(), name="token"
+    ),
     path("api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="token"),
+    path("api/user/change_password/", accounts_api.UpdatePasswordView.as_view(), name="change_password"),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # type: ignore
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)  # type: ignore
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]

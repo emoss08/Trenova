@@ -21,7 +21,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.test import Client
 
-from accounts.factories import UserFactory, JobTitleFactory
+from accounts.factories import JobTitleFactory, UserFactory
 from accounts.models import User
 from organization.factories import OrganizationFactory
 

@@ -19,8 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from accounts.factories import TokenFactory
-from accounts.factories import UserFactory
+from accounts.factories import TokenFactory, UserFactory
 
 
 @pytest.fixture()

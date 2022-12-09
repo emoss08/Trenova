@@ -32,6 +32,7 @@ class DepotDetailSerializer(ValidatedSerializer):
         """
         Metaclass for the DepotDetailSerializer
         """
+
         model = models.DepotDetail
         fields = "__all__"
 
@@ -45,6 +46,7 @@ class DepotSerializer(ValidatedSerializer):
         """
         Metaclass for the DepotSerializer
         """
+
         model = models.Depot
         fields = [
             "id",
@@ -59,6 +61,7 @@ class OrganizationSerializer(ValidatedSerializer):
     """
     Organization Serializer
     """
+
     depots = DepotSerializer(many=True, read_only=True)
 
     class Meta:
@@ -82,6 +85,7 @@ class OrganizationSerializer(ValidatedSerializer):
             "authentication_template",
             "depots",
         ]
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     """
