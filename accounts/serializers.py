@@ -124,8 +124,8 @@ class UserSerializer(WritableNestedModelSerializer, ValidatedSerializer):
         profile_data = validated_data.pop("profile")
         profile = instance.profile
 
-        for attr, value in profile_data.items():
-            setattr(profile, attr, value)
+        for key, value in profile_data.items():
+            setattr(profile, key, value)
         profile.save()
 
         return super().update(instance, validated_data) # type: ignore

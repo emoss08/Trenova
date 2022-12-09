@@ -31,12 +31,5 @@ class ValidatedSerializer(serializers.ModelSerializer):
         """
         Validate the serializer
         """
-
-        if self.instance is None:
-            instance = self.Meta.model(**attrs)  # type: ignore
-        else:
-            instance = self.instance
-            for k, v in attrs.items():
-                setattr(self.instance, k, v)
-        instance.full_clean()
+        self.instance.full_clean()
         return attrs
