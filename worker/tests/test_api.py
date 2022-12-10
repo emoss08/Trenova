@@ -71,7 +71,7 @@ def test_create_worker(token):
             "city": "TEST",
             "state": "NC",
             "zip_code": "12345",
-        },
+        }, format="json",
     )
     assert response.status_code == 201
 
@@ -93,7 +93,14 @@ def test_create_worker_with_profile(token):
             "city": "TEST",
             "state": "NC",
             "zip_code": "12345",
-            "profile": {},
-        },
+            "profile": {
+                "race": "TEST",
+                "sex": "male",
+                "date_of_birth": "2022-12-10",
+                "license_number": "1234567890",
+                "license_state": "NC",
+                "endorsements": "N",
+            },
+        }, format="json",
     )
     assert response.status_code == 201

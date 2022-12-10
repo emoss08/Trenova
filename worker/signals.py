@@ -45,24 +45,26 @@ def generate_worker_code(sender: Worker, instance: Worker, **kwargs: Any) -> Non
         instance.code = generation.WorkerGenerationService.worker_code(instance)
 
 
-# @receiver(post_save, sender=Worker)
-# def create_worker_profile(
-#     sender: Worker, instance: Worker, created: bool, **kwargs: Any
-# ) -> None:
-#     """Create Worker Profile
-#
-#     Create a worker profile when a new worker is added.
-#
-#     Args:
-#         sender (Worker): Worker
-#         instance (Worker): The worker instance.
-#         created (bool): If the worker was created.
-#         **kwargs (Any): Keyword arguments.
-#
-#         Returns:
-#             None:
-#     """
-#     if created:
-#         WorkerProfile.objects.create(
-#             worker=instance, organization=instance.organization
-#         )
+@receiver(post_save, sender=Worker)
+def create_worker_profile(
+    sender: Worker, instance: Worker, created: bool, **kwargs: Any
+) -> None:
+    """Create Worker Profile
+
+# TODO: DECIDE IF THIS IS NEEDED, THE WORKER PROFILE IS CREATED FROM THE API
+
+    Create a worker profile when a new worker is added.
+
+    Args:
+        sender (Worker): Worker
+        instance (Worker): The worker instance.
+        created (bool): If the worker was created.
+        **kwargs (Any): Keyword arguments.
+
+        Returns:
+            None:
+    """
+    if created:
+        WorkerProfile.objects.create(
+            worker=instance, organization=instance.organization
+        )
