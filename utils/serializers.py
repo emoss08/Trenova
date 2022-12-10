@@ -25,14 +25,13 @@ from rest_framework import serializers
 _MT = TypeVar("_MT", bound=Model)
 _M = TypeVar("_M", Model, Any)
 
-
 class GenericSerializer(serializers.ModelSerializer):
     """
     Generic Serializer
     """
 
     def create(self, validated_data: Any) -> _M:
-        """Create the object
+        """ Create the object
 
         Args:
             validated_data (dict[str, Any]): Validated data
