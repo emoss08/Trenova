@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import final, Any
+from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -370,12 +370,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
@@ -546,6 +546,7 @@ class WorkerComment(GenericModel):
         """
         Metaclass for WorkerComment
         """
+
         verbose_name = _("worker comment")
         verbose_name_plural = _("worker comments")
         ordering: list[str] = ["worker"]

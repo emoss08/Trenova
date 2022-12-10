@@ -24,7 +24,7 @@ from rest_framework.views import exception_handler
 from rest_framework.response import Response
 
 
-def django_error_handler(exc: Any, context: Any) -> Response:
+def django_error_handler(exc: Any, context: Any) -> Response | None:
     """Django error handler
 
     Args:
@@ -35,7 +35,7 @@ def django_error_handler(exc: Any, context: Any) -> Response:
         Response: Response
     """
 
-    response: Response = exception_handler(exc, context)
+    response: Response | None = exception_handler(exc, context)
     if response is None and isinstance(exc, ValidationError):
         return Response(status=400, data=exc.message_dict)
     return response
