@@ -25,7 +25,6 @@ from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from accounts import models
-from utils.serailizers import ValidatedSerializer
 
 
 class VerifyTokenSerializer(serializers.Serializer):
@@ -58,7 +57,7 @@ class VerifyTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError(msg, code="authentication")
 
 
-class JobTitleSerializer(ValidatedSerializer):
+class JobTitleSerializer(serializers.ModelSerializer):
     """
     Job Title Serializer
     """
@@ -99,7 +98,7 @@ class UserProfileSerializer(WritableNestedModelSerializer):
         ]
 
 
-class UserSerializer(WritableNestedModelSerializer, ValidatedSerializer):
+class UserSerializer(WritableNestedModelSerializer):
     """
     User Serializer
     """
@@ -128,7 +127,7 @@ class UserSerializer(WritableNestedModelSerializer, ValidatedSerializer):
             setattr(profile, key, value)
         profile.save()
 
-        return super().update(instance, validated_data)  # type: ignore
+        return super().update(instance, validated_data)
 
     class Meta:
         """
@@ -223,7 +222,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         return user
 
 
-class TokenSerializer(ValidatedSerializer):
+class TokenSerializer(serializers.ModelSerializer):
     """
     Serializer for Token model
     """
