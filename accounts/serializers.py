@@ -73,7 +73,7 @@ class JobTitleSerializer(serializers.ModelSerializer):
         fields = ["id", "organization", "name", "description", "is_active"]
 
 
-class UserProfileSerializer(WritableNestedModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
     """
     User Profile Serializer
     """
@@ -98,36 +98,12 @@ class UserProfileSerializer(WritableNestedModelSerializer):
         ]
 
 
-class UserSerializer(WritableNestedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """
     User Serializer
     """
 
-    profile = UserProfileSerializer()
-
-    def update(self, instance: models.User, validated_data: dict[str, Any]) -> None:
-        """Update a user
-
-        From validated_data, pop the profile, and update the user profile
-        with the profile data. Then, update the user with the remaining
-        data. Finally, save the user. DRF does not support nested
-        serializers, so this is a workaround.
-
-        Args:
-            instance (models.User): User instance
-            validated_data (dict[str, Any]): Validated data
-
-        Returns:
-            None
-        """
-        profile_data = validated_data.pop("profile")
-        profile = instance.profile
-
-        for key, value in profile_data.items():
-            setattr(profile, key, value)
-        profile.save()
-
-        return super().update(instance, validated_data)
+    profile = UserProfileSerializer(required=False, allow_null=True)
 
     class Meta:
         """
@@ -152,16 +128,68 @@ class UserSerializer(WritableNestedModelSerializer):
             "is_active": {"read_only": True},
             "date_joined": {"read_only": True},
         }
-        extra_validators = {
-            "username": [
-                lambda value: models.User.objects.filter(username=value).count() == 0,
-                "Username already exists",
-            ],
-            "email": [
-                lambda value: models.User.objects.filter(email=value).count() == 0,
-                "Email already exists",
-            ],
-        }
+
+    def create(self, validated_data: Any) -> models.User:
+        """Create a user
+
+        Args:
+            validated_data (Any): Validated data
+
+        Returns:
+            models.User: User instance
+        """
+
+        # Get the token from the requests.
+        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+
+        # Get the organization of the user from the request.
+        organization = models.Token.objects.get(key=token).user.organization
+
+        # Popped data (profile)
+        profile_data = validated_data.pop("profile", None)
+
+        # Create the user
+        validated_data["organization"] = organization
+        user: models.User = models.User.objects.create(**validated_data)
+
+        # Create the user profile
+        if profile_data:
+            models.UserProfile.objects.create(user=user, **profile_data)
+
+        return user
+
+    def update(self, instance: models.User, validated_data: Any) -> models.User:
+        """Update a user
+
+        From validated_data, pop the profile, and update the user profile
+        with the profile data. Then, update the user with the remaining
+        data. Finally, save the user. DRF does not support nested
+        serializers, so this is a workaround.
+
+        Args:
+            instance (models.User): User instance
+            validated_data (dict[str, Any]): Validated data
+
+        Returns:
+            None
+        """
+
+        # Get the token from the requests.
+        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+
+        # Get the organization of the user from the request.
+        organization = models.Token.objects.get(key=token).user.organization
+
+        profile_data = validated_data.pop("profile", None)
+
+        validated_data["organization"] = organization
+        models.User.objects.filter(pk=instance.pk).update(**validated_data)
+
+        if profile_data:
+            profile_data["organization"] = organization
+            models.UserProfile.objects.filter(user=instance).update(**profile_data)
+
+        return instance
 
 
 class ChangePasswordSerializer(serializers.Serializer):

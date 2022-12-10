@@ -32,15 +32,6 @@ class GenericSerializer(serializers.ModelSerializer):
     doesn't have nested serializers.
     """
 
-    class Meta:
-        """
-        Metaclass for GenericSerializer
-        """
-
-        model: _MT = None
-        fields: list[str] = []
-        read_only_fields: list[str] = []
-
     def create(self, validated_data: Any) -> _M:
         """Create the object
 
