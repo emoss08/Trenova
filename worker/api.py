@@ -16,8 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-from django.db.models import F, Func
+from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 
@@ -36,12 +35,12 @@ class WorkerViewSet(OrganizationViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "first_name", "code", "last_name"]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[models.Worker]:
         """
         Get queryset
         """
         return (
-            self.queryset.filter(organization=self.request.user.organization)
+            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
             .select_related(
                 "profiles",
                 "manager",

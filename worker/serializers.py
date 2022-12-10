@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
@@ -159,7 +160,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
             setattr(profile, key, value)
         profile.save()
 
-        return super().update(instance, validated_data)
+        return super().update(instance, validated_data)  # type: ignore
 
     class Meta:
         """
