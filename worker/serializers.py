@@ -118,26 +118,77 @@ class WorkerProfileSerializer(GenericSerializer):
             "hire_date",
         ]
 
+    def create(self, validated_data: dict) -> models.WorkerProfile:
+        """
+        Create Worker Profile
 
-class WorkerSerializer(WritableNestedModelSerializer, GenericSerializer):
+        Create a worker profile.
+
+        Args:
+            validated_data (dict): The validated data.
+
+        Returns:
+            models.WorkerProfile: The worker profile.
+        """
+        return models.WorkerProfile.objects.create(**validated_data)
+
+
+class WorkerSerializer(WritableNestedModelSerializer):
     """
     Worker Serializer
     """
+
     organization = serializers.CharField(source="organization.name", read_only=True)
-    profile = WorkerProfileSerializer(required=False)
+    profile = WorkerProfileSerializer(required=False, allow_null=True)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
+
+    class Meta:
+        """
+        Metaclass for WorkerSerializer
+        """
+
+        model = models.Worker
+        fields = [
+            "organization",
+            "id",
+            "code",
+            "is_active",
+            "worker_type",
+            "first_name",
+            "last_name",
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "state",
+            "zip_code",
+            "depot",
+            "manager",
+            "created",
+            "modified",
+            "profile",
+            "contacts",
+            "comments",
+        ]
+        read_only_fields = [
+            "organization",
+            "id",
+            "code",
+            "created",
+            "modified",
+        ]
 
     def create(self, validated_data: Any) -> models.Worker:
         """
         Create the worker
         """
-        super().create(validated_data)
 
         profile_data = validated_data.pop("profile", [])
         contacts_data = validated_data.pop("contacts", [])
         comments_data = validated_data.pop("comments", [])
 
+        validated_data["organization"] = self.context["request"].user.organization
+        profile_data["organization"] = self.context["request"].user.organization
 
         worker = models.Worker.objects.create(**validated_data)
 
@@ -151,7 +202,6 @@ class WorkerSerializer(WritableNestedModelSerializer, GenericSerializer):
         if comments_data:
             for comment_data in comments_data:
                 models.WorkerComment.objects.create(worker=worker, **comment_data)
-
 
         return worker
 
@@ -192,39 +242,3 @@ class WorkerSerializer(WritableNestedModelSerializer, GenericSerializer):
                 models.WorkerComment.objects.create(worker=instance, **comment_data)
 
         return instance
-
-    class Meta:
-        """
-        Metaclass for WorkerSerializer
-        """
-
-        model = models.Worker
-        fields = [
-            "organization",
-            "id",
-            "code",
-            "is_active",
-            "worker_type",
-            "first_name",
-            "last_name",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "state",
-            "zip_code",
-            "depot",
-            "manager",
-            "created",
-            "modified",
-            "profile",
-            "contacts",
-            "comments",
-        ]
-
-        read_only_fields = [
-            "organization",
-            "id",
-            "code",
-            "created",
-            "modified",
-        ]
