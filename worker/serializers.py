@@ -17,13 +17,16 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Any
+
 from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
+from utils.serializers import GenericSerializer
 from worker import models
 
 
-class WorkerCommentSerializer(serializers.ModelSerializer):
+class WorkerCommentSerializer(GenericSerializer):
     """
     Worker Comment Serializer
     """
@@ -35,7 +38,6 @@ class WorkerCommentSerializer(serializers.ModelSerializer):
 
         model = models.WorkerComment
         fields = [
-            "organization",
             "id",
             "worker",
             "comment_type",
@@ -47,7 +49,7 @@ class WorkerCommentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created", "modified"]
 
 
-class WorkerContactSerializer(serializers.ModelSerializer):
+class WorkerContactSerializer(GenericSerializer):
     """
     Worker Contact Serializer
     """
@@ -59,7 +61,6 @@ class WorkerContactSerializer(serializers.ModelSerializer):
 
         model = models.WorkerContact
         fields = [
-            "organization",
             "id",
             "name",
             "phone",
@@ -78,7 +79,7 @@ class WorkerContactSerializer(serializers.ModelSerializer):
         ]
 
 
-class WorkerProfileSerializer(serializers.ModelSerializer):
+class WorkerProfileSerializer(GenericSerializer):
     """
     Worker Profile Serializer
     """
@@ -92,7 +93,6 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
 
         model = models.WorkerProfile
         fields = [
-            "organization",
             "race",
             "sex",
             "date_of_birth",
@@ -119,17 +119,16 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         ]
 
 
-class WorkerSerializer(WritableNestedModelSerializer):
+class WorkerSerializer(WritableNestedModelSerializer, GenericSerializer):
     """
     Worker Serializer
     """
-
     organization = serializers.CharField(source="organization.name", read_only=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
 
-    def create(self, validated_data):
+    def create(self, validated_data: Any) -> models.Worker:
         """
         Create the worker
         """
@@ -138,6 +137,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
         profile_data = validated_data.pop("profile", [])
         contacts_data = validated_data.pop("contacts", [])
         comments_data = validated_data.pop("comments", [])
+
 
         worker = models.Worker.objects.create(**validated_data)
 
@@ -152,12 +152,14 @@ class WorkerSerializer(WritableNestedModelSerializer):
             for comment_data in comments_data:
                 models.WorkerComment.objects.create(worker=worker, **comment_data)
 
+
         return worker
 
-    def update(self, instance, validated_data) -> None:
+    def update(self, instance, validated_data: Any) -> models.Worker:
         """
         Update the worker
         """
+        super().update(instance, validated_data)
 
         profile_data = validated_data.pop("profile", [])
         profile = instance.profile
