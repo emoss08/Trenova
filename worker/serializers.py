@@ -237,37 +237,30 @@ class WorkerSerializer(WritableNestedModelSerializer):
         """
         Update the worker
         """
-        super().update(instance, validated_data)
 
-        profile_data = validated_data.pop("profile", [])
-        comments_data = validated_data.pop("comments", [])
-        contacts_data = validated_data.pop("contacts", [])
+        # Get the token from the requests.
+        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
 
-        profile = instance.profile
+        # Get the organization of the user from the request.
+        organization = Token.objects.get(key=token).user.organization
+
+        profile_data = validated_data.pop("profile", None)
+        comments_data = validated_data.pop("comments", None)
+        contacts_data = validated_data.pop("contacts", None)
+
 
         if profile_data:
-            for key, value in profile_data.items():
-                setattr(profile, key, value)
-            profile.save()
-
-        contacts = instance.contacts.all()
-
-        if contacts_data:
-            for contact in contacts:
-                contact.delete()
-
-            for contact_data in contacts_data:
-                models.WorkerContact.objects.create(worker=instance, **contact_data)
-
-        for contact_data in contacts_data:
-            models.WorkerContact.objects.create(worker=instance, **contact_data)
-
+            profile_data["organization"] = organization
+            models.WorkerProfile.objects.filter(worker=instance).update(**profile_data)
 
         if comments_data:
-            for comment in instance.comments.all():
-                comment.delete()
-
             for comment_data in comments_data:
+                comment_data["organization"] = organization
                 models.WorkerComment.objects.create(worker=instance, **comment_data)
+
+        if contacts_data:
+            for contact_data in contacts_data:
+                contact_data["organization"] = organization
+                models.WorkerContact.objects.create(worker=instance, **contact_data)
 
         return instance
