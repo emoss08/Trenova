@@ -71,7 +71,6 @@ def test_create_user(token, organization):
     response = client.post(
         "/api/users/",
         {
-            "organization": organization.id,
             "username": "test",
             "password": "test12345",
             "email": "test@test.com",

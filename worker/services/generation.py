@@ -32,6 +32,6 @@ class WorkerGenerationService:
         Returns:
             str: Worker code
         """
-        code = f"{instance.first_name[0]}{instance.last_name[:9]}".upper()
+        code = f"{instance.first_name[0]}{instance.last_name[:5]}".upper()
         new_code = f"{code}{Worker.objects.count() + 1:04d}"
         return code if not Worker.objects.filter(code=code).exists() else new_code

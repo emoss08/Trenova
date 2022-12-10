@@ -17,6 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import textwrap
 import uuid
 from typing import final
@@ -139,6 +141,9 @@ class Worker(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for Worker.
+        """
         verbose_name = _("worker")
         verbose_name_plural = _("workers")
         ordering: list[str] = ["code"]

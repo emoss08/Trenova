@@ -25,7 +25,7 @@ from rest_framework.response import Response
 
 
 def django_error_handler(exc: Any, context: Any) -> Response:
-    """ Django error handler
+    """Django error handler
 
     Args:
         exc (Exception): Exception
