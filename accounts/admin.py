@@ -25,7 +25,11 @@ from django.contrib.admin.options import IS_POPUP_VAR, csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.admin import sensitive_post_parameters_m
-from django.contrib.auth.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AdminPasswordChangeForm,
+    UserChangeForm,
+    UserCreationForm,
+)
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.forms.models import ModelForm
@@ -311,5 +315,6 @@ class TokenAdmin(admin.ModelAdmin[models.Token]):
     """
     Token admin
     """
+
     list_display = ("key", "user", "created")
     search_fields = ("key",)

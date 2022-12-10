@@ -128,7 +128,7 @@ class UserSerializer(WritableNestedModelSerializer, ValidatedSerializer):
             setattr(profile, key, value)
         profile.save()
 
-        return super().update(instance, validated_data) # type: ignore
+        return super().update(instance, validated_data)  # type: ignore
 
     class Meta:
         """
@@ -141,7 +141,6 @@ class UserSerializer(WritableNestedModelSerializer, ValidatedSerializer):
             "organization",
             "department",
             "username",
-            "password",
             "email",
             "is_staff",
             "is_active",
