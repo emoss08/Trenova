@@ -22,6 +22,7 @@ from rest_framework.test import APIClient
 
 from accounts.factories import TokenFactory, UserFactory
 from organization.factories import OrganizationFactory
+from worker.factories import WorkerFactory
 
 client = APIClient()
 
@@ -52,6 +53,14 @@ def organization(user):
 
     return OrganizationFactory()
 
+@pytest.fixture()
+def worker():
+    """
+    Worker Fixture
+    """
+
+    return WorkerFactory()
+
 
 @pytest.mark.django_db
 def test_create_worker(token):
@@ -71,9 +80,11 @@ def test_create_worker(token):
             "city": "TEST",
             "state": "NC",
             "zip_code": "12345",
-        }, format="json",
+        },
+        format="json",
     )
     assert response.status_code == 201
+
 
 @pytest.mark.django_db
 def test_create_worker_with_profile(token):
@@ -101,6 +112,7 @@ def test_create_worker_with_profile(token):
                 "license_state": "NC",
                 "endorsements": "N",
             },
-        }, format="json",
+        },
+        format="json",
     )
     assert response.status_code == 201
