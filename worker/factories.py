@@ -29,10 +29,11 @@ class WorkerFactory(factory.django.DjangoModelFactory):
     code = factory.Faker("text", locale="en_US", max_nb_chars=10)
     first_name = factory.Faker("name")
     last_name = factory.Faker("name")
+    worker_type = "EMPLOYEE"
     address_line_1 = factory.Faker("street_address")
     address_line_2 = factory.Faker("secondary_address")
     city = factory.Faker("city")
-    state = factory.Faker("state_abbr")
+    state = "CA"
     zip_code = factory.Faker("zipcode")
 
     class Meta:
