@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import json
-
 import pytest
 from rest_framework.test import APIClient
 
@@ -77,47 +75,7 @@ def test_create_user(token, organization):
             "email": "test@test.com",
         },
     )
-    print(response.data)
-
     assert response.status_code == 201
-
-
-@pytest.mark.django_db
-def test_update_user(user, token):
-    """
-    Test update user
-    """
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-    response = client.put(
-        f"/api/users/{str(user.id)}/",
-        {
-            "organization": user.organization.id,
-            "username": "test33",
-            "password": user.password,
-            "email": user.email,
-        },
-    )
-    assert json.loads(response.content)["username"] == "test33"
-    assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_patch_user(user, token):
-    """
-    Test patch user
-    """
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-    response = client.patch(
-        f"/api/users/{str(user.id)}/",
-        {
-            "organization": user.organization.id,
-            "username": "test33",
-            "password": user.password,
-            "email": user.email,
-        },
-    )
-    assert json.loads(response.content)["username"] == "test33"
-    assert response.status_code == 200
 
 
 @pytest.mark.django_db

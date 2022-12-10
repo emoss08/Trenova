@@ -122,8 +122,6 @@ class WorkerProfileSerializer(GenericSerializer):
         """
         Create Worker Profile
 
-        Create a worker profile.
-
         Args:
             validated_data (dict): The validated data.
 
@@ -213,9 +211,7 @@ class WorkerSerializer(serializers.ModelSerializer):
             # a new one from the requests.
 
             worker_profile = models.WorkerProfile.objects.get(worker=worker)
-
-            if worker_profile:
-                worker_profile.delete()
+            worker_profile.delete()
 
             profile_data["organization"] = organization
             models.WorkerProfile.objects.create(worker=worker, **profile_data)
@@ -254,6 +250,9 @@ class WorkerSerializer(serializers.ModelSerializer):
         profile_data = validated_data.pop("profile", None)
         comments_data = validated_data.pop("comments", None)
         contacts_data = validated_data.pop("contacts", None)
+
+        # Update the worker.
+        models.Worker.objects.filter(id=instance.id).update(**validated_data)
 
         if profile_data:
             profile_data["organization"] = organization

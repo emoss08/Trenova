@@ -53,6 +53,7 @@ def organization(user):
 
     return OrganizationFactory()
 
+
 @pytest.fixture()
 def worker():
     """
