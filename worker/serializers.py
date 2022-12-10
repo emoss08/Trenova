@@ -44,6 +44,7 @@ class WorkerCommentSerializer(serializers.ModelSerializer):
             "modified",
         ]
 
+
 class WorkerContactSerializer(serializers.ModelSerializer):
     """
     Worker Contact Serializer
@@ -79,7 +80,6 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
     """
 
     # hire_date = serializers.DateField(format="%Y-%m-%d", read_only=True)
-
 
     class Meta:
         """
