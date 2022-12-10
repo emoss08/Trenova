@@ -28,8 +28,18 @@ _M = TypeVar("_M", Model, Any)
 
 class GenericSerializer(serializers.ModelSerializer):
     """
-    Generic Serializer
+    Generic Serializer. This works when the serializer
+    doesn't have nested serializers.
     """
+
+    class Meta:
+        """
+        Metaclass for GenericSerializer
+        """
+
+        model: _MT = None
+        fields: list[str] = []
+        read_only_fields: list[str] = []
 
     def create(self, validated_data: Any) -> _M:
         """Create the object
@@ -49,11 +59,3 @@ class GenericSerializer(serializers.ModelSerializer):
         """
         validated_data["organization"] = self.context["request"].user.organization
         return super().update(instance, validated_data)
-
-    def to_representation(self, instance: _MT) -> dict[str, Any]:
-        """
-        To representation
-        """
-        representation = super().to_representation(instance)
-        representation["organization"] = instance.organization.name
-        return super().to_representation(instance)

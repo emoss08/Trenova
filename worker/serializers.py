@@ -19,7 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from accounts.models import Token
@@ -135,7 +134,7 @@ class WorkerProfileSerializer(GenericSerializer):
         return models.WorkerProfile.objects.create(**validated_data)
 
 
-class WorkerSerializer(WritableNestedModelSerializer):
+class WorkerSerializer(serializers.ModelSerializer):
     """
     Worker Serializer
     """
@@ -166,6 +165,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
             "zip_code",
             "depot",
             "manager",
+            "entered_by",
             "created",
             "modified",
             "profile",
@@ -181,7 +181,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
         ]
 
     def create(self, validated_data: Any) -> models.Worker:
-        """ Create the worker.
+        """Create the worker.
 
         Args:
             validated_data (Any): Validated data.
@@ -203,6 +203,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
 
         # Create the Worker.
         validated_data["organization"] = organization
+        validated_data["entered_by"] = Token.objects.get(key=token).user
         worker = models.Worker.objects.create(**validated_data)
 
         # Create the Worker Profile
@@ -233,9 +234,15 @@ class WorkerSerializer(WritableNestedModelSerializer):
 
         return worker
 
-    def update(self, instance, validated_data: Any) -> models.Worker:
-        """
-        Update the worker
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:
+        """Update the worker
+
+        Args:
+            instance (models.Worker): Worker instance.
+            validated_data (Any): Validated data.
+
+        Returns:
+            models.Worker: Worker instance.
         """
 
         # Get the token from the requests.
@@ -247,7 +254,6 @@ class WorkerSerializer(WritableNestedModelSerializer):
         profile_data = validated_data.pop("profile", None)
         comments_data = validated_data.pop("comments", None)
         contacts_data = validated_data.pop("contacts", None)
-
 
         if profile_data:
             profile_data["organization"] = organization

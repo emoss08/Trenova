@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -139,11 +139,22 @@ class Worker(GenericModel):
         verbose_name=_("Manager"),
         help_text=_("The manager of the worker."),
     )
+    entered_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="worker_entered",
+        related_query_name="workers_entered",
+        verbose_name=_("Entered by"),
+        help_text=_("The user who entered the worker."),
+    )
 
     class Meta:
         """
         Metaclass for Worker.
         """
+
         verbose_name = _("worker")
         verbose_name_plural = _("workers")
         ordering: list[str] = ["code"]
@@ -154,7 +165,18 @@ class Worker(GenericModel):
         Returns:
             str: Worker string representation
         """
+
         return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
+
+    def save(self, **kwargs) -> None:
+        """Worker save method
+
+        Returns:
+            None
+        """
+
+        self.full_clean()
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Worker absolute url
@@ -162,6 +184,7 @@ class Worker(GenericModel):
         Returns:
             str: Worker absolute url
         """
+
         return reverse("worker:detail", kwargs={"pk": self.pk})
 
     @cached_property
@@ -171,6 +194,7 @@ class Worker(GenericModel):
         Returns:
             str: Worker full name
         """
+
         return f"{self.first_name} {self.last_name}"
 
     @cached_property
@@ -180,6 +204,7 @@ class Worker(GenericModel):
         Returns:
             str: Worker full address
         """
+
         return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
 
 
@@ -313,6 +338,10 @@ class WorkerProfile(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for WorkerProfile.
+        """
+
         verbose_name = _("Worker profile")
         verbose_name_plural = _("Worker profiles")
         ordering: list[str] = ["worker"]
@@ -323,6 +352,7 @@ class WorkerProfile(GenericModel):
         Returns:
             str: Worker Profile string representation
         """
+
         return textwrap.wrap(
             f"{self.worker.first_name} {self.worker.last_name} Profile", 50
         )[0]
@@ -336,15 +366,16 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
+
         super().clean()
 
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
@@ -357,12 +388,23 @@ class WorkerProfile(GenericModel):
         # validate worker regulatory information
         validate_worker_regulatory_information(self)
 
+    def save(self, **kwargs) -> None:
+        """Worker Profile save method
+
+        Returns:
+            None
+        """
+
+        self.full_clean()
+        super().save(**kwargs)
+
     def get_absolute_url(self) -> str:
         """Worker Profile absolute url
 
         Returns:
             str: Worker Profile absolute url
         """
+
         return reverse("worker:profile-detail", kwargs={"pk": self.pk})
 
 
@@ -423,6 +465,10 @@ class WorkerContact(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for WorkerContact
+        """
+
         verbose_name = _("worker contact")
         verbose_name_plural = _("worker contacts")
         ordering: list[str] = ["worker"]
@@ -435,12 +481,23 @@ class WorkerContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def save(self, **kwargs: Any):
+        """Worker Contact save method
+
+        Returns:
+            None
+        """
+
+        self.full_clean()
+        super().save(**kwargs)
+
     def get_absolute_url(self) -> str:
         """Worker Contact absolute url
 
         Returns:
             str: Worker Contact absolute url
         """
+
         return reverse("worker:contact-detail", kwargs={"pk": self.pk})
 
 
@@ -486,6 +543,9 @@ class WorkerComment(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for WorkerComment
+        """
         verbose_name = _("worker comment")
         verbose_name_plural = _("worker comments")
         ordering: list[str] = ["worker"]
@@ -496,7 +556,18 @@ class WorkerComment(GenericModel):
         Returns:
             str: Worker Comment string representation
         """
+
         return textwrap.wrap(self.comment, 50)[0]
+
+    def save(self, **kwargs: Any):
+        """Worker Comment save method
+
+        Returns:
+            None
+        """
+
+        self.full_clean()
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Worker Comment absolute url
@@ -504,4 +575,5 @@ class WorkerComment(GenericModel):
         Returns:
             str: Worker Comment absolute url
         """
+
         return reverse("worker:comment-detail", kwargs={"pk": self.pk})

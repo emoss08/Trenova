@@ -110,6 +110,7 @@ class UserManager(BaseUserManager):
 
         return self.create_user(username, email, password, **extra_fields)
 
+
 class User(AbstractBaseUser, PermissionsMixin):
     """
     Stores basic user information.

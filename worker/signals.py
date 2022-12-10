@@ -51,18 +51,18 @@ def create_worker_profile(
 ) -> None:
     """Create Worker Profile
 
-# TODO: DECIDE IF THIS IS NEEDED, THE WORKER PROFILE IS CREATED FROM THE API
+    # TODO: DECIDE IF THIS IS NEEDED, THE WORKER PROFILE IS CREATED FROM THE API
 
-    Create a worker profile when a new worker is added.
+        Create a worker profile when a new worker is added.
 
-    Args:
-        sender (Worker): Worker
-        instance (Worker): The worker instance.
-        created (bool): If the worker was created.
-        **kwargs (Any): Keyword arguments.
+        Args:
+            sender (Worker): Worker
+            instance (Worker): The worker instance.
+            created (bool): If the worker was created.
+            **kwargs (Any): Keyword arguments.
 
-        Returns:
-            None:
+            Returns:
+                None:
     """
     if created:
         WorkerProfile.objects.create(
