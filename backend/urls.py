@@ -22,29 +22,42 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from rest_framework import routers
+from rest_framework_nested import routers
 
 from accounts import api as accounts_api
 from organization import api as org_api
+from worker import api as worker_api
 
 router = routers.DefaultRouter()
 
+# Accounts Routing
 router.register(r"users", accounts_api.UserViewSet, basename="user")
 router.register(r"job_title", accounts_api.JobTitleViewSet, basename="job_title")
+
+# Organization Routing
 router.register(r"organizations", org_api.OrgViewSet, basename="organization")
-router.register(r"depots", org_api.DepotViewSet, basename="depot")
-router.register(r"departments", org_api.DepartmentViewSet, basename="department")
+organization_router = routers.NestedSimpleRouter(router, r'organizations', lookup='organization')
+organization_router.register(r'depots', org_api.DepotViewSet, basename='organization-depots')
+organization_router.register(r'departments', org_api.DepartmentViewSet, basename='organization-departments')
+
+# Worker Routing
+router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
+    path("api/", include(organization_router.urls)),
     path(
         "api/token/provision/", accounts_api.TokenProvisionView.as_view(), name="token"
     ),
     path("api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="token"),
-    path("api/user/change_password/", accounts_api.UpdatePasswordView.as_view(), name="change_password"),
+    path(
+        "api/user/change_password/",
+        accounts_api.UpdatePasswordView.as_view(),
+        name="change_password",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

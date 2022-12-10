@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import uuid
 import textwrap
+import uuid
 from typing import final
 
 from django.conf import settings
@@ -26,7 +26,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
+from django.utils.timezone import datetime
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
@@ -274,7 +274,7 @@ class WorkerProfile(GenericModel):
         blank=True,
         null=True,
         help_text=_("Date of hire."),
-        default=timezone.now,
+        default=datetime.today,
     )
     termination_date = models.DateField(
         _("Termination Date"),
