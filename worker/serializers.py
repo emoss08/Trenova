@@ -22,6 +22,7 @@ from typing import Any
 from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
+from accounts.models import Token
 from utils.serializers import GenericSerializer
 from worker import models
 
@@ -130,6 +131,7 @@ class WorkerProfileSerializer(GenericSerializer):
         Returns:
             models.WorkerProfile: The worker profile.
         """
+
         return models.WorkerProfile.objects.create(**validated_data)
 
 
@@ -179,28 +181,54 @@ class WorkerSerializer(WritableNestedModelSerializer):
         ]
 
     def create(self, validated_data: Any) -> models.Worker:
+        """ Create the worker.
+
+        Args:
+            validated_data (Any): Validated data.
+
+        Returns:
+            Models.Worker: Worker Instance
         """
-        Create the worker
-        """
 
-        profile_data = validated_data.pop("profile", [])
-        contacts_data = validated_data.pop("contacts", [])
-        comments_data = validated_data.pop("comments", [])
+        # Get the token from the requests.
+        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
 
-        validated_data["organization"] = self.context["request"].user.organization
-        profile_data["organization"] = self.context["request"].user.organization
+        # Get the organization of the user from the request.
+        organization = Token.objects.get(key=token).user.organization
 
+        # Popped data (profile, contacts, comments)
+        profile_data = validated_data.pop("profile", None)
+        contacts_data = validated_data.pop("contacts", None)
+        comments_data = validated_data.pop("comments", None)
+
+        # Create the Worker.
+        validated_data["organization"] = organization
         worker = models.Worker.objects.create(**validated_data)
 
+        # Create the Worker Profile
         if profile_data:
+            # Due to the worker profile signal being a thing, we need to
+            # delete the worker profile if it exists. Then we can create
+            # a new one from the requests.
+
+            worker_profile = models.WorkerProfile.objects.get(worker=worker)
+
+            if worker_profile:
+                worker_profile.delete()
+
+            profile_data["organization"] = organization
             models.WorkerProfile.objects.create(worker=worker, **profile_data)
 
+        # Create the Worker Contacts
         if contacts_data:
             for contact_data in contacts_data:
+                contact_data["organization"] = organization
                 models.WorkerContact.objects.create(worker=worker, **contact_data)
 
+        # Create the Worker Comments
         if comments_data:
             for comment_data in comments_data:
+                comment_data["organization"] = organization
                 models.WorkerComment.objects.create(worker=worker, **comment_data)
 
         return worker
@@ -212,6 +240,9 @@ class WorkerSerializer(WritableNestedModelSerializer):
         super().update(instance, validated_data)
 
         profile_data = validated_data.pop("profile", [])
+        comments_data = validated_data.pop("comments", [])
+        contacts_data = validated_data.pop("contacts", [])
+
         profile = instance.profile
 
         if profile_data:
@@ -219,7 +250,6 @@ class WorkerSerializer(WritableNestedModelSerializer):
                 setattr(profile, key, value)
             profile.save()
 
-        contacts_data = validated_data.pop("contacts", [])
         contacts = instance.contacts.all()
 
         if contacts_data:
@@ -232,7 +262,6 @@ class WorkerSerializer(WritableNestedModelSerializer):
         for contact_data in contacts_data:
             models.WorkerContact.objects.create(worker=instance, **contact_data)
 
-        comments_data = validated_data.pop("comments", [])
 
         if comments_data:
             for comment in instance.comments.all():
