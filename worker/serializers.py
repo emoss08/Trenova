@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
@@ -43,6 +44,7 @@ class WorkerCommentSerializer(serializers.ModelSerializer):
             "created",
             "modified",
         ]
+        read_only_fields = ["id", "created", "modified"]
 
 
 class WorkerContactSerializer(serializers.ModelSerializer):
@@ -69,6 +71,8 @@ class WorkerContactSerializer(serializers.ModelSerializer):
             "modified",
         ]
         read_only_fields = [
+            "organization",
+            "id",
             "created",
             "modified",
         ]
@@ -108,6 +112,7 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         ]
 
         read_only_fields = [
+            "organization",
             "created",
             "modified",
             "hire_date",
@@ -119,6 +124,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
     Worker Serializer
     """
 
+    organization = serializers.CharField(source="organization.name", read_only=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
@@ -127,6 +133,7 @@ class WorkerSerializer(WritableNestedModelSerializer):
         """
         Create the worker
         """
+        super().create(validated_data)
 
         profile_data = validated_data.pop("profile", [])
         contacts_data = validated_data.pop("contacts", [])
@@ -152,14 +159,37 @@ class WorkerSerializer(WritableNestedModelSerializer):
         Update the worker
         """
 
-        profile_data = validated_data.pop("profile")
+        profile_data = validated_data.pop("profile", [])
         profile = instance.profile
 
-        for key, value in profile_data.items():
-            setattr(profile, key, value)
-        profile.save()
+        if profile_data:
+            for key, value in profile_data.items():
+                setattr(profile, key, value)
+            profile.save()
 
-        return super().update(instance, validated_data)
+        contacts_data = validated_data.pop("contacts", [])
+        contacts = instance.contacts.all()
+
+        if contacts_data:
+            for contact in contacts:
+                contact.delete()
+
+            for contact_data in contacts_data:
+                models.WorkerContact.objects.create(worker=instance, **contact_data)
+
+        for contact_data in contacts_data:
+            models.WorkerContact.objects.create(worker=instance, **contact_data)
+
+        comments_data = validated_data.pop("comments", [])
+
+        if comments_data:
+            for comment in instance.comments.all():
+                comment.delete()
+
+            for comment_data in comments_data:
+                models.WorkerComment.objects.create(worker=instance, **comment_data)
+
+        return instance
 
     class Meta:
         """
@@ -190,6 +220,9 @@ class WorkerSerializer(WritableNestedModelSerializer):
         ]
 
         read_only_fields = [
+            "organization",
+            "id",
+            "code",
             "created",
             "modified",
         ]
