@@ -28,10 +28,17 @@ class OrderService:
 
     @staticmethod
     def set_pro_number() -> str:
-        """Set the pro_number for the order
+        """Generate a unique pro number for an order.
 
         Returns:
-            str: The pro_number for the order
+            str: The pro number for the order.
         """
-        code = f"ORD{Order.objects.count() + 1:06d}"
-        return "ORD000001" if Order.objects.filter(pro_number=code).exists() else code
+        count = Order.objects.count() + 1
+        pro_number = f"ORD{count:06d}"
+
+        # Check if pro number already exists and generate a new one if it does.
+        while Order.objects.filter(pro_number=pro_number).exists():
+            count += 1
+            pro_number = f"ORD{count:06d}"
+
+        return pro_number

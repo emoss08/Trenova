@@ -22,38 +22,26 @@ from order.models import Order
 
 
 class MovementService:
-    """Movement Service
-
-    Service to manage all movement actions
-    """
+    """Service to manage all movement actions"""
 
     @staticmethod
-    def create_initial_movement(instance: Order) -> None:
-        """Create Initial Movements
-
-        Create the initial movements for the order.
+    def create_initial_movement(order: Order) -> None:
+        """Create the initial movement for the given order.
 
         Args:
-            instance (Order): The order instance.
+            order (Order): The order instance.
 
         Returns:
             None
         """
-        models.Movement.objects.create(
-            organization=instance.organization,
-            order=instance,
-        )
+        models.Movement.objects.create(organization=order.organization, order=order)
 
     @staticmethod
     def set_ref_number() -> str:
-        """Set the Movement Reference Number
+        """Generate a unique movement reference number.
 
         Returns:
-            str: Movement Reference Number
+            str: The generated reference number.
         """
         code = f"MOV{models.Movement.objects.count() + 1:06d}"
-        return (
-            "MOV000001"
-            if models.Movement.objects.filter(ref_num=code).exists()
-            else code
-        )
+        return "MOV000001" if models.Movement.objects.filter(ref_num=code).exists() else code

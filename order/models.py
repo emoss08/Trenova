@@ -462,7 +462,7 @@ class Order(GenericModel):
             order=self, organization=self.organization, order_control=OrderControl
         ).validate()
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, **kwargs: Any) -> None:
         """Order save method
 
         Returns:
@@ -480,7 +480,7 @@ class Order(GenericModel):
             self.pieces = self.total_piece()
             self.weight = self.total_weight()
 
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order
@@ -747,13 +747,13 @@ class AdditionalCharge(GenericModel):
         """
         return f"{self.order} - {self.charge}"
 
-    def save(self, *args: Any, **kwargs: Any):
+    def save(self, **kwargs: Any):
         """
         Save the AdditionalCharge
         """
         self.charge_amount = self.charge.charge_amount
         self.sub_total = self.charge_amount * self.unit
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the AdditionalCharges
