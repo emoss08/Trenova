@@ -31,7 +31,12 @@ from utils.models import ChoiceField, GenericModel
 @final
 class FuelMethodChoices(models.TextChoices):
     """
-    Fuel Method Choices
+    A class representing the possible fuel method choices.
+
+    This class inherits from the `models.TextChoices` class and defines three constants:
+    - DISTANCE: representing a fuel method based on distance
+    - FLAT: representing a flat rate fuel method
+    - PERCENTAGE: representing a fuel method based on a percentage
     """
 
     DISTANCE = "D", _("Distance")
@@ -42,7 +47,14 @@ class FuelMethodChoices(models.TextChoices):
 @final
 class BillingExceptionChoices(models.TextChoices):
     """
-    Billing Exception Choices
+    A class representing the possible billing exception choices.
+
+    This class inherits from the `models.TextChoices` class and defines five constants:
+    - PAPERWORK: representing a billing exception related to paperwork
+    - CHARGE: representing a billing exception resulting in a charge
+    - CREDIT: representing a billing exception resulting in a credit
+    - DEBIT: representing a billing exception resulting in a debit
+    - OTHER: representing any other type of billing exception
     """
 
     PAPERWORK = "PAPERWORK", _("Paperwork")

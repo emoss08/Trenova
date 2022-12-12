@@ -47,7 +47,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
         Args:
-            request (AuthHttpRequest): Request Object
+            request (HttpRequest): Request Object
         Returns:
             QuerySet[Model]: Queryset of Model
         """
@@ -99,7 +99,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Optional[_M] = None,
+        obj: _M | None = None,
         change: bool = False,
         **kwargs: Any,
     ) -> type[ModelForm[_M]]:

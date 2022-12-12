@@ -21,7 +21,6 @@ from typing import Any, OrderedDict
 
 from django.contrib.auth import password_validation
 from django.utils.translation import gettext_lazy as _
-from drf_writable_nested.serializers import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from accounts import models

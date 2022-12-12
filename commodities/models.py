@@ -30,14 +30,22 @@ from utils.models import ChoiceField, GenericModel
 
 class HazardousMaterial(GenericModel):
     """
-    Hazardous Class Model Fields that can be used in the
-    :model:`order.Order` & :model:`order.Commodity` model.
+    A class representing a hazardous material.
+
+    This class stores information about a hazardous material, including its name, description, hazard
+    class, packing group, ERG number, proper shipping name, and UN number. It also defines two
+    subclasses, `HazardousClassChoices` and `PackingGroupChoices`, which define the possible values
+    for the `hazard_class` and `packing_group` fields.
     """
 
     @final
     class HazardousClassChoices(models.TextChoices):
         """
-        Status choices for Order model
+        A class representing the possible hazardous class choices.
+
+        This class inherits from the `models.TextChoices` class and defines several constants
+        representing the different hazardous classes defined in the United Nations' Recommendations
+        on the Transport of Dangerous Goods.
         """
 
         CLASS_1_1 = "1.1", _("Division 1.1: Mass Explosive Hazard")
@@ -70,7 +78,11 @@ class HazardousMaterial(GenericModel):
     @final
     class PackingGroupChoices(models.TextChoices):
         """
-        Status choices for Order model
+        A class representing the possible packing group choices.
+
+        This class inherits from the `models.TextChoices` class and defines several constants representing
+        the three possible packing groups defined in the United Nations' Recommendations on the Transport
+        of Dangerous Goods.
         """
 
         ONE = "I", _("I")
@@ -143,16 +155,36 @@ class HazardousMaterial(GenericModel):
 
 
 class Commodity(GenericModel):
-    """
-    Commodity Model Fields
+    """A class representing a commodity.
+
+    This class inherits from the `GenericModel` class and defines several fields that are used to store
+    information about a commodity. It also contains a nested `UnitOfMeasureChoices` class that defines
+    the possible unit of measure choices for the `Commodity` model.
+
+    Args:
+        GenericModel: The base model class from which this class inherits.
+
+    Attributes:
+        id: A UUIDField that represents the unique identifier of a commodity.
+        name: A CharField that stores the name of a commodity.
+        description: A TextField that stores the description of a commodity.
+        min_temp: A DecimalField that stores the minimum temperature of a commodity.
+        max_temp: A DecimalField that stores the maximum temperature of a commodity.
+        set_point_temp: A DecimalField that stores the set point temperature of a commodity.
+        unit_of_measure: A ChoiceField that stores the unit of measure of a commodity.
+        hazmat: A ForeignKey that links a commodity to its hazardous material.
+        is_hazmat: A BooleanField that indicates whether a commodity is hazardous.
     """
 
     @final
     class UnitOfMeasureChoices(models.TextChoices):
-        """
-        Unit of Measure choices for Commodity model
+        """A class representing the possible unit of measure choices.
+
+        This class inherits from the `models.TextChoices` class and defines several constants
+        representing the different units of measure that can be used in the `Commodity` model.
         """
 
+        # Constants representing the different units of measure
         PALLET = "PALLET", _("Pallet")
         TOTE = "TOTE", _("Tote")
         DRUM = "DRUM", _("Drum")
@@ -255,7 +287,7 @@ class Commodity(GenericModel):
         """
         if self.hazmat:
             self.is_hazmat = True
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Commodity Absolute URL
