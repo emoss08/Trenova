@@ -48,7 +48,7 @@ class LocationFactory(factory.django.DjangoModelFactory):
     location_category = factory.SubFactory("location.factories.LocationCategoryFactory")
     address_line_1 = factory.Faker("address", locale="en_US")
     city = factory.Faker("city", locale="en_US")
-    state = factory.Faker("state_abbr", locale="en_US")
+    state = "NC"
     zip_code = factory.Faker("zipcode", locale="en_US")
 
     class Meta:

@@ -168,16 +168,6 @@ class Worker(GenericModel):
 
         return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
 
-    def save(self, **kwargs) -> None:
-        """Worker save method
-
-        Returns:
-            None
-        """
-
-        self.full_clean()
-        super().save(**kwargs)
-
     def get_absolute_url(self) -> str:
         """Worker absolute url
 

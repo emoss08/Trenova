@@ -79,11 +79,13 @@ class ChargeType(GenericModel):
         _("Name"),
         max_length=50,
         unique=True,
+        help_text=_("The name of the charge type."),
     )
     description = models.CharField(
         _("Description"),
         max_length=100,
         blank=True,
+        help_text=_("The description of the charge type."),
     )
 
     class Meta:

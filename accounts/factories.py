@@ -82,8 +82,9 @@ class ProfileFactory(factory.django.DjangoModelFactory):
     title = factory.SubFactory(JobTitleFactory)
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
+    address_line_1 = factory.Faker("street_address", locale="en_US")
     city = factory.Faker("city")
-    state = factory.Faker("state_abbr")
+    state = "NC"
     zip_code = factory.Faker("zipcode")
 
     class Meta:

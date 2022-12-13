@@ -27,27 +27,44 @@ from rest_framework_nested import routers
 from accounts import api as accounts_api
 from organization import api as org_api
 from worker import api as worker_api
+from accounting import api as accounting_api
+from billing import api as billing_api
 
 router = routers.DefaultRouter()
 
 # Accounts Routing
-router.register(r"users", accounts_api.UserViewSet, basename="user")
-router.register(r"job_title", accounts_api.JobTitleViewSet, basename="job_title")
+router.register(r"users", accounts_api.UserViewSet, basename="users")
+router.register(r"job_titles", accounts_api.JobTitleViewSet, basename="job_titles")
+
+# Accounting Routes
+router.register(
+    r"gl_accounts",
+    accounting_api.GeneralLedgerAccountViewSet,
+    basename="general_ledger_accounts",
+)
+router.register(
+    r"revenue_codes", accounting_api.RevenueCodeViewSet, basename="revenue_codes"
+)
 
 # Organization Routing
-router.register(r"organizations", org_api.OrgViewSet, basename="organization")
+router.register(r"organizations", org_api.OrgViewSet, basename="organizations")
 organization_router = routers.NestedSimpleRouter(
-    router, r"organizations", lookup="organization"
+    router, r"organizations", lookup="organizations"
 )
+# organization/<str:pk>/depots
 organization_router.register(
     r"depots", org_api.DepotViewSet, basename="organization-depots"
 )
+# organization/<str:pk>/departments
 organization_router.register(
     r"departments", org_api.DepartmentViewSet, basename="organization-departments"
 )
 
 # Worker Routing
-router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
+router.register(r"workers", worker_api.WorkerViewSet, basename="workers")
+
+# Billing Routing
+router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge_types")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

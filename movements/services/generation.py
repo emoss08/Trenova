@@ -44,4 +44,8 @@ class MovementService:
             str: The generated reference number.
         """
         code = f"MOV{models.Movement.objects.count() + 1:06d}"
-        return "MOV000001" if models.Movement.objects.filter(ref_num=code).exists() else code
+        return (
+            "MOV000001"
+            if models.Movement.objects.filter(ref_num=code).exists()
+            else code
+        )

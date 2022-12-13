@@ -43,6 +43,8 @@ class DelayCodeFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=10)
+
 
     class Meta:
         """
@@ -59,6 +61,7 @@ class FleetCodeFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=10)
 
     class Meta:
         """
@@ -75,6 +78,7 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
+    description = factory.Faker("text", locale="en_US", max_nb_chars=10)
 
     class Meta:
         """
