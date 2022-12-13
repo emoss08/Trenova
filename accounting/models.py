@@ -154,6 +154,15 @@ class GeneralLedgerAccount(GenericModel):
         """
         return textwrap.wrap(self.account_number, 20)[0]
 
+    def save(self, **kwargs: Any) -> None:
+        """Saves GeneralLedgerAccount instance
+
+        Args:
+            **kwargs (Any): Keyword arguments
+        """
+        self.full_clean()
+        super().save(**kwargs)
+
     def get_absolute_url(self) -> str:
         """GeneralLedgerAccount absolute url
 
@@ -223,6 +232,9 @@ class RevenueCode(GenericModel):
         Returns:
             None
         """
+
+        super().clean()
+
         if (
             self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
@@ -237,7 +249,6 @@ class RevenueCode(GenericModel):
             raise ValidationError(
                 {"revenue_account": _("Entered account is not a revenue account.")}
             )
-        super().clean()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """RevenueCode save method

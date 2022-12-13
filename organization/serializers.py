@@ -33,7 +33,21 @@ class DepotDetailSerializer(serializers.ModelSerializer):
         """
 
         model = models.DepotDetail
-        fields = "__all__"
+        fields = [
+            "id",
+            "organization",
+            "depot",
+            "address_line_1",
+            "address_line_2",
+            "city",
+            "state",
+            "zip_code",
+            "phone_number",
+            "alternate_phone_number",
+            "fax_number",
+            "created",
+            "modified",
+        ]
 
 
 class DepotSerializer(serializers.ModelSerializer):

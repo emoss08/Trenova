@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from worker.models import Worker
 
+
 class WorkerGenerationService:
     """Worker Generation Service
 

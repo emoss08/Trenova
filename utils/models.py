@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import final
+from typing import final, Any
 
 from django.db import models
 from django.db.models import CharField
@@ -82,6 +82,19 @@ class GenericModel(TimeStampedModel):
 
     class Meta:
         abstract = True
+
+    def save(self, **kwargs: Any) -> None:
+        """Save the model instance
+
+        Args:
+            **kwargs (Any):
+
+        Returns:
+            None
+        """
+
+        self.full_clean()
+        super().save(**kwargs)
 
 
 class ChoiceField(CharField):

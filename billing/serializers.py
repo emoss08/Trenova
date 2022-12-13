@@ -1,7 +1,26 @@
+"""
+COPYRIGHT 2022 MONTA
 
+This file is part of Monta.
+
+Monta is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Monta is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+from rest_framework import serializers
 
 from billing import models
-from rest_framework import serializers
+
 
 class ChargeTypeSerializer(serializers.ModelSerializer):
     """
@@ -20,6 +39,7 @@ class ChargeTypeSerializer(serializers.ModelSerializer):
         model = models.ChargeType
         fields = ("id", "name", "description")
 
+
 class AccessorialChargeSerializer(serializers.ModelSerializer):
     """
     A serializer for the `AccessorialCharge` model.
@@ -29,10 +49,13 @@ class AccessorialChargeSerializer(serializers.ModelSerializer):
     create the serialized representation of the `AccessorialCharge` model.
     """
 
+    method = serializers.ChoiceField(choices=models.FuelMethodChoices.choices)
+
     class Meta:
         """
         A class representing the metadata for the `AccessorialChargeSerializer` class.
         """
+
         model = models.AccessorialCharge
         fields = ("code", "is_detention", "charge_amount", "method")
 
@@ -50,5 +73,6 @@ class DocumentClassificationSerializer(serializers.ModelSerializer):
         """
         A class representing the metadata for the `DocumentClassificationSerializer` class.
         """
+
         model = models.DocumentClassification
         fields = ("id", "name", "description")
