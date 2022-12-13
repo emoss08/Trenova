@@ -140,7 +140,9 @@ class CommoditySerializer(GenericSerializer):
         )
         return commodity
 
-    def update(self, instance: models.Commodity, validated_data: Any) -> models.Commodity:
+    def update(  # type: ignore
+        self, instance: models.Commodity, validated_data: Any
+    ) -> models.Commodity:
         """Update an existing commodity.
 
         Args:
@@ -157,7 +159,7 @@ class CommoditySerializer(GenericSerializer):
             hazmat = instance.hazmat
             for key, value in hazmat_data.items():
                 setattr(hazmat, key, value)
-            hazmat.save()
+            hazmat.save()  # type: ignore
 
         for key, value in validated_data.items():
             setattr(instance, key, value)

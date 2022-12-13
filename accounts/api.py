@@ -52,7 +52,7 @@ class UserViewSet(OrganizationViewSet):
             QuerySet[models.User]: Filtered queryset
         """
 
-        return self.queryset.select_related(
+        return self.queryset.filter(organization=self.request.user.organization).select_related(  # type: ignore
             "organization",
             "profiles",
             "profiles__title",
@@ -159,7 +159,7 @@ class JobTitleViewSet(OrganizationViewSet):
         """
 
         return self.queryset.filter(
-            organization=self.request.user.organization
+            organization=self.request.user.organization  # type: ignore
         ).select_related("organization")
 
 

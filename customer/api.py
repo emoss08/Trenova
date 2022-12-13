@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 
@@ -63,3 +64,19 @@ class CustomerFuelTableViewSet(OrganizationViewSet):
         "id",
         "name",
     )
+
+    def get_queryset(self) -> QuerySet[models.CustomerFuelTable]:
+        """Get the queryset for the viewset.
+
+        The queryset is filtered by the organization of the user making the request.
+
+        Returns:
+            The filtered queryset.
+        """
+        return (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+            .prefetch_related("customer_fuel_table_details")
+        )

@@ -33,6 +33,6 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
         """
 
-        return self.queryset.filter(organization=self.request.user.organization.id).prefetch_related(  # type: ignore
+        return self.queryset.filter(organization=self.request.user.organization.id).select_related(  # type: ignore
             "organization",
         )

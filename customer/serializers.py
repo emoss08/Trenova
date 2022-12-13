@@ -101,7 +101,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         )
 
     @transaction.atomic
-    def update(
+    def update(  # type: ignore
         self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.

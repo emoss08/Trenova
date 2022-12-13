@@ -96,10 +96,10 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         try:
             token = (
-                model.objects.select_related("user")
+                model.objects.select_related("user", "user__organization")
                 .only(
                     "user__id",
-                    "user__organization_id",
+                    "user__organization",
                     "key",
                     "expires",
                     "id",
