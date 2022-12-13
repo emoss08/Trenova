@@ -35,6 +35,12 @@ class GenericSerializer(serializers.ModelSerializer):
     doesn't have nested serializers.
     """
 
+    read_only_fields = [
+        "organization",
+        "id",
+        "created",
+        "modified",
+    ]
 
     def _get_organization(self) -> Organization:
         """Get the organization from the request

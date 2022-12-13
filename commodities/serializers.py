@@ -57,6 +57,12 @@ class HazardousMaterialSerializer(GenericSerializer):
             "created",
             "modified"
         )
+        read_only_fields = [
+            "organization",
+            "id",
+            "created",
+            "modified",
+        ]
 
 
 class CommoditySerializer(GenericSerializer):

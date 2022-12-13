@@ -30,6 +30,7 @@ from worker import api as worker_api
 from accounting import api as accounting_api
 from billing import api as billing_api
 from commodities import api as commodities_api
+from control_file import api as control_file_api
 
 router = routers.DefaultRouter()
 
@@ -80,6 +81,9 @@ router.register(
 # Commodity Routing
 router.register(r"hazardous_materials", commodities_api.HazardousMaterialViewSet, basename="hazardous_materials")
 router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodities")
+
+# Control File Routing
+router.register(r"google_api", control_file_api.GoogleAPIViewSet, basename="control_files")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
