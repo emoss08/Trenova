@@ -71,12 +71,12 @@ class WorkerContactSerializer(GenericSerializer):
             "created",
             "modified",
         ]
-        read_only_fields = [
+        read_only_fields = (
             "organization",
             "id",
             "created",
             "modified",
-        ]
+        )
 
 
 class WorkerProfileSerializer(GenericSerializer):
@@ -149,8 +149,8 @@ class WorkerSerializer(serializers.ModelSerializer):
 
         model = models.Worker
         fields = [
-            "organization",
             "id",
+            "organization",
             "code",
             "is_active",
             "worker_type",

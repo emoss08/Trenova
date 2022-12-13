@@ -21,16 +21,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
 from rest_framework_nested import routers
 
-from accounts import api as accounts_api
-from organization import api as org_api
-from worker import api as worker_api
 from accounting import api as accounting_api
+from accounts import api as accounts_api
 from billing import api as billing_api
 from commodities import api as commodities_api
 from control_file import api as control_file_api
+from customer import api as customer_api
+from organization import api as org_api
+from worker import api as worker_api
 
 router = routers.DefaultRouter()
 
@@ -79,11 +79,28 @@ router.register(
 )
 
 # Commodity Routing
-router.register(r"hazardous_materials", commodities_api.HazardousMaterialViewSet, basename="hazardous_materials")
-router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodities")
+router.register(
+    r"hazardous_materials",
+    commodities_api.HazardousMaterialViewSet,
+    basename="hazardous_materials",
+)
+router.register(
+    r"commodities", commodities_api.CommodityViewSet, basename="commodities"
+)
 
 # Control File Routing
-router.register(r"google_api", control_file_api.GoogleAPIViewSet, basename="control_files")
+router.register(
+    r"google_api", control_file_api.GoogleAPIViewSet, basename="control_files"
+)
+
+# Customer Routing
+router.register(r"customers", customer_api.CustomerViewSet, basename="customers")
+router.register(
+    r"customer_fuel_tables",
+    customer_api.CustomerFuelTableViewSet,
+    basename="customer_fuel_tables",
+)
+
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

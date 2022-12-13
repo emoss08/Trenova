@@ -52,7 +52,9 @@ class GenericSerializer(serializers.ModelSerializer):
         if self.context["request"].user.is_authenticated:
             return self.context["request"].user.organization
         else:
-            token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            token = (
+                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            )
             return Token.objects.get(key=token).user.organization
 
     def create(self, validated_data: Any) -> _M:
@@ -71,7 +73,7 @@ class GenericSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     def update(self, instance: _MT, validated_data: Any) -> _MT:
-        """ Update the object
+        """Update the object
 
         Args:
             instance (_MT): Instance of the model

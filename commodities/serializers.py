@@ -36,8 +36,12 @@ class HazardousMaterialSerializer(GenericSerializer):
     """
 
     is_active = serializers.BooleanField(default=True)
-    hazard_class = serializers.ChoiceField(choices=models.HazardousMaterial.HazardousClassChoices.choices)
-    packing_group = serializers.ChoiceField(choices=models.HazardousMaterial.PackingGroupChoices.choices)
+    hazard_class = serializers.ChoiceField(
+        choices=models.HazardousMaterial.HazardousClassChoices.choices
+    )
+    packing_group = serializers.ChoiceField(
+        choices=models.HazardousMaterial.PackingGroupChoices.choices
+    )
 
     class Meta:
         """
@@ -55,7 +59,7 @@ class HazardousMaterialSerializer(GenericSerializer):
             "erg_number",
             "proper_shipping_name",
             "created",
-            "modified"
+            "modified",
         )
         read_only_fields = [
             "organization",
@@ -94,7 +98,7 @@ class CommoditySerializer(GenericSerializer):
             "is_hazmat",
             "hazmat",
             "created",
-            "modified"
+            "modified",
         )
         read_only_fields = [
             "organization",
@@ -103,9 +107,8 @@ class CommoditySerializer(GenericSerializer):
             "modified",
         ]
 
-
     def create(self, validated_data: Any) -> models.Commodity:
-        """ Create a new commodity.
+        """Create a new commodity.
 
         Args:
             validated_data (Any): The validated data.
@@ -119,15 +122,45 @@ class CommoditySerializer(GenericSerializer):
             organization = self.context["request"].user.organization
         else:
             # Get the organization from the token if they are using token auth.
-            token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            token = (
+                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            )
             organization = Token.objects.get(key=token).user.organization
 
-
-        hazmat_data = validated_data.pop("hazmat")
+        hazmat_data = validated_data.pop("hazmat", None)
 
         if hazmat_data:
-            hazmat = models.HazardousMaterial.objects.create(organization=organization, **hazmat_data)
+            hazmat = models.HazardousMaterial.objects.create(
+                organization=organization, **hazmat_data
+            )
             validated_data["hazmat"] = hazmat
 
-        commodity = models.Commodity.objects.create(organization=organization, **validated_data)
+        commodity = models.Commodity.objects.create(
+            organization=organization, **validated_data
+        )
         return commodity
+
+    def update(self, instance: models.Commodity, validated_data: Any) -> models.Commodity:
+        """Update an existing commodity.
+
+        Args:
+            instance (models.Commodity): The commodity to update.
+            validated_data (Any): The validated data.
+
+        Returns:
+            models.Commodity: The updated commodity.
+        """
+
+        hazmat_data = validated_data.pop("hazmat", None)
+
+        if hazmat_data:
+            hazmat = instance.hazmat
+            for key, value in hazmat_data.items():
+                setattr(hazmat, key, value)
+            hazmat.save()
+
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+
+        return instance

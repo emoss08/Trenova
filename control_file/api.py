@@ -30,11 +30,9 @@ class GoogleAPIViewSet(OrganizationViewSet):
     as well as listing and retrieving Google API keys. It uses the `GoogleAPISerializer`
     class to convert the Google API key instances to and from JSON-formatted data.
 
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by Google API key ID, name, and
-    description.
+    Only authenticated users and admins are allowed to access the views provided by this viewset.
     """
 
     queryset = models.GoogleAPI.objects.all()
     serializer_class = serializers.GoogleAPISerializer
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+    permission_classes = (permissions.IsAdminUser,)
