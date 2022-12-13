@@ -239,8 +239,8 @@ class DepotDetail(TimeStampedModel):
     depot = models.OneToOneField(
         Depot,
         on_delete=models.CASCADE,
-        related_name="depot_details",
-        related_query_name="depot_detail",
+        related_name="details",
+        related_query_name="detail",
         verbose_name=_("Depot"),
         help_text=_("The depot that the depot detail belongs to."),
     )
