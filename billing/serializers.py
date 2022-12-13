@@ -20,9 +20,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from rest_framework import serializers
 
 from billing import models
+from utils.serializers import GenericSerializer
 
 
-class ChargeTypeSerializer(serializers.ModelSerializer):
+class ChargeTypeSerializer(GenericSerializer):
     """
     A serializer for the `ChargeType` model.
 
@@ -37,10 +38,10 @@ class ChargeTypeSerializer(serializers.ModelSerializer):
         """
 
         model = models.ChargeType
-        fields = ("id", "name", "description")
+        fields = ("id", "name", "description", "created", "modified")
 
 
-class AccessorialChargeSerializer(serializers.ModelSerializer):
+class AccessorialChargeSerializer(GenericSerializer):
     """
     A serializer for the `AccessorialCharge` model.
 
@@ -57,10 +58,10 @@ class AccessorialChargeSerializer(serializers.ModelSerializer):
         """
 
         model = models.AccessorialCharge
-        fields = ("code", "is_detention", "charge_amount", "method")
+        fields = ("code", "is_detention", "charge_amount", "method", "created", "modified")
 
 
-class DocumentClassificationSerializer(serializers.ModelSerializer):
+class DocumentClassificationSerializer(GenericSerializer):
     """
     A serializer for the `DocumentClassification` model.
 
@@ -75,4 +76,4 @@ class DocumentClassificationSerializer(serializers.ModelSerializer):
         """
 
         model = models.DocumentClassification
-        fields = ("id", "name", "description")
+        fields = ("id", "name", "description", "created", "modified")

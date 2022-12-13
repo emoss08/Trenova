@@ -45,7 +45,6 @@ class DelayCodeFactory(factory.django.DjangoModelFactory):
     code = factory.Faker("pystr", max_chars=4)
     description = factory.Faker("text", locale="en_US", max_nb_chars=10)
 
-
     class Meta:
         """
         Metaclass for DelayCodeFactory
