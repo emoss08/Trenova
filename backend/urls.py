@@ -65,6 +65,12 @@ router.register(r"workers", worker_api.WorkerViewSet, basename="workers")
 
 # Billing Routing
 router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge_types")
+router.register(
+    r"accessorial_charges", billing_api.AccessorialChargeViewSet, basename="accessorial_charges"
+)
+router.register(
+    r"document_classifications", billing_api.DocumentClassificationViewSet, basename="document_classifications"
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
