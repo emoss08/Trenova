@@ -58,7 +58,14 @@ class AccessorialChargeSerializer(GenericSerializer):
         """
 
         model = models.AccessorialCharge
-        fields = ("code", "is_detention", "charge_amount", "method", "created", "modified")
+        fields = (
+            "code",
+            "is_detention",
+            "charge_amount",
+            "method",
+            "created",
+            "modified",
+        )
 
 
 class DocumentClassificationSerializer(GenericSerializer):

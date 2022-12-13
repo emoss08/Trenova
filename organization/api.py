@@ -23,9 +23,17 @@ from rest_framework import permissions, viewsets
 from organization import models, serializers
 
 
-class OrgViewSet(viewsets.ModelViewSet):
+class OrganizationViewSet(viewsets.ModelViewSet):
     """
-    Organization ViewSet to manage requests to the organization endpoint
+    A viewset for viewing and editing organization instances.
+
+    The viewset provides default operations for creating, updating, and deleting organizations,
+    as well as listing and retrieving organizations. It uses the `OrganizationSerializer`
+    class to convert the organization instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by organization ID, name, and
+    description.
     """
 
     permission_classes = [permissions.IsAuthenticated]

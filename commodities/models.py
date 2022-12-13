@@ -98,6 +98,7 @@ class HazardousMaterial(GenericModel):
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("Is Active"),
+        help_text=_("Whether or not the hazardous material is active."),
     )
     name = models.CharField(
         _("Name"),
@@ -285,6 +286,9 @@ class Commodity(GenericModel):
         Returns:
             None
         """
+
+        self.full_clean()
+
         if self.hazmat:
             self.is_hazmat = True
         super().save(**kwargs)

@@ -53,7 +53,7 @@ class DepotDetailSerializer(serializers.ModelSerializer):
 class DepotSerializer(serializers.ModelSerializer):
     """Serializer for the Depot model"""
 
-    depot_details = DepotDetailSerializer()
+    details = DepotDetailSerializer()
 
     class Meta:
         """
@@ -66,7 +66,7 @@ class DepotSerializer(serializers.ModelSerializer):
             "organization",
             "name",
             "description",
-            "depot_details",
+            "details",
         ]
 
 
