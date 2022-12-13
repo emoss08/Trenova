@@ -29,6 +29,7 @@ from organization import api as org_api
 from worker import api as worker_api
 from accounting import api as accounting_api
 from billing import api as billing_api
+from commodities import api as commodities_api
 
 router = routers.DefaultRouter()
 
@@ -47,7 +48,7 @@ router.register(
 )
 
 # Organization Routing
-router.register(r"organizations", org_api.OrgViewSet, basename="organizations")
+router.register(r"organizations", org_api.OrganizationViewSet, basename="organizations")
 organization_router = routers.NestedSimpleRouter(
     router, r"organizations", lookup="organizations"
 )
@@ -66,11 +67,19 @@ router.register(r"workers", worker_api.WorkerViewSet, basename="workers")
 # Billing Routing
 router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge_types")
 router.register(
-    r"accessorial_charges", billing_api.AccessorialChargeViewSet, basename="accessorial_charges"
+    r"accessorial_charges",
+    billing_api.AccessorialChargeViewSet,
+    basename="accessorial_charges",
 )
 router.register(
-    r"document_classifications", billing_api.DocumentClassificationViewSet, basename="document_classifications"
+    r"document_classifications",
+    billing_api.DocumentClassificationViewSet,
+    basename="document_classifications",
 )
+
+# Commodity Routing
+router.register(r"hazardous_materials", commodities_api.HazardousMaterialViewSet, basename="hazardous_materials")
+router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodities")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
