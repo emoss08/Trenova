@@ -52,10 +52,11 @@ class UserViewSet(OrganizationViewSet):
             QuerySet[models.User]: Filtered queryset
         """
 
-        return self.queryset.filter(organization=self.request.user.organization.id).select_related(  # type: ignore
+        return self.queryset.select_related(
             "organization",
             "profiles",
             "profiles__title",
+            "profiles__user",
             "department",
         )
 
@@ -149,6 +150,17 @@ class JobTitleViewSet(OrganizationViewSet):
         serializers.JobTitleSerializer
     ] = serializers.JobTitleSerializer
     queryset = models.JobTitle.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.JobTitle]:
+        """Filter the queryset to only include the current user
+
+        Returns:
+            QuerySet[models.JobTitle]: Filtered queryset
+        """
+
+        return self.queryset.filter(
+            organization=self.request.user.organization
+        ).select_related("organization")
 
 
 class TokenVerifyView(APIView):
