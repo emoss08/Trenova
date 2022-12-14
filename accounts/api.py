@@ -145,10 +145,8 @@ class JobTitleViewSet(OrganizationViewSet):
     Job Title ViewSet to manage requests to the job title endpoint
     """
 
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class: type[
-        serializers.JobTitleSerializer
-    ] = serializers.JobTitleSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.JobTitleSerializer
     queryset = models.JobTitle.objects.all()
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
@@ -160,7 +158,9 @@ class JobTitleViewSet(OrganizationViewSet):
 
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
-        ).select_related("organization")
+        ).select_related(
+            "organization"
+        )
 
 
 class TokenVerifyView(APIView):
