@@ -27,5 +27,4 @@ urlpatterns = [
         name="token-provision",
     ),
     path("token/verify/", accounts_api.TokenVerifyView.as_view(), name="token-verify"),
-    path("users/", include("accounts.urls")),
 ]

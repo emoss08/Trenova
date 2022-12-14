@@ -23,6 +23,8 @@ from django.db import transaction
 from rest_framework import serializers
 
 from accounts.models import Token
+from billing.models import DocumentClassification
+from billing.serializers import DocumentClassificationSerializer
 from customer import models
 from utils.serializers import GenericSerializer
 
@@ -152,6 +154,85 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
         return instance
 
+
+class CustomerRuleProfileSerializer(GenericSerializer):
+    """A serializer for the CustomerRuleProfile model.
+
+    The serializer provides default operations for creating, updating, and deleting
+    customer rule profiles, as well as listing and retrieving customer rule profiles.
+    It uses the `CustomerRuleProfile` model to convert the customer rule profile
+    instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this serializer.
+    Filtering is also available, with the ability to filter by customer ID, name, and
+    code.
+    """
+
+    document_class = serializers.StringRelatedField(many=True, read_only=True)
+
+    class Meta:
+        """
+        A class representing the metadata for the `CustomerRuleProfileSerializer` class.
+        """
+
+        model = models.CustomerRuleProfile
+        fields = (
+            "id",
+            "organization",
+            "name",
+            "document_class",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "id",
+            "created",
+            "modified",
+        )
+
+        def create(self, validated_data: Any) -> models.CustomerRuleProfile:
+            """ Create a new CustomerRuleProfile instance.
+
+            Args:
+                validated_data (dict): A dictionary of validated data for the new
+                    CustomerRuleProfile instance. This data should include the
+                    'document_class' field, which is a list of IDs for the
+                    DocumentClassification objects associated with the new
+                    CustomerRuleProfile.
+
+            Returns:
+                CustomerRuleProfile: The newly created CustomerRuleProfile instance.
+            """
+
+            document_class_ids = validated_data.pop("document_class")
+
+            customer_rule_profile = models.CustomerRuleProfile.objects.create(**validated_data)
+            customer_rule_profile.document_class.set(document_class_ids)
+
+            return customer_rule_profile
+
+        def update(self, instance: models.CustomerRuleProfile, validated_data: Any) -> models.CustomerRuleProfile:
+            """Update an existing CustomerRuleProfile instance.
+
+            Args:
+                instance (CustomerRuleProfile): The CustomerRuleProfile instance to update.
+                validated_data (dict): A dictionary of validated data for the updated
+                    CustomerRuleProfile instance. This data should include the
+                    'name' and 'document_class' fields, which are the updated values
+                    for the name and document classifications of the CustomerRuleProfile.
+
+            Returns:
+                CustomerRuleProfile: The updated CustomerRuleProfile instance.
+            """
+
+            # Update the name of the CustomerRuleProfile instance
+            instance.name = validated_data['name']
+            # Update the document classifications of the profile
+            instance.document_class.set(validated_data['document_class'])
+            instance.save()
+
+            return instance
 
 class CustomerSerializer(GenericSerializer):
     """A serializer for the `Customer` model.

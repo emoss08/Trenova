@@ -80,3 +80,41 @@ class CustomerFuelTableViewSet(OrganizationViewSet):
             .select_related("organization")
             .prefetch_related("customer_fuel_table_details")
         )
+
+
+class CustomerRuleProfileViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing customer rule profile information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting customer
+    rule profiles, as well as listing and retrieving customer rule profiles. It uses the
+    `CustomerRuleProfileSerializer` class to convert the customer rule profile instances
+    to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by customer rule profile ID,
+    customer ID, and customer name.
+    """
+
+    queryset = models.CustomerRuleProfile.objects.all()
+    serializer_class = serializers.CustomerRuleProfileSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = (
+        "id",
+        "name",
+    )
+
+    def get_queryset(self) -> QuerySet[models.CustomerRuleProfile]:
+        """Get the queryset for the viewset.
+
+        The queryset is filtered by the organization of the user making the request.
+
+        Returns:
+            The filtered queryset.
+        """
+        return (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+        )

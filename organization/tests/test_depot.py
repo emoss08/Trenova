@@ -54,4 +54,4 @@ def test_depot_organization(depot):
     Test dispatch control is created from
     create_depot_detail post_save signal
     """
-    assert depot.depot_details.organization == depot.organization
+    assert depot.details.organization == depot.organization
