@@ -158,9 +158,7 @@ class JobTitleViewSet(OrganizationViewSet):
 
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
-        ).select_related(
-            "organization"
-        )
+        ).select_related("organization")
 
 
 class TokenVerifyView(APIView):

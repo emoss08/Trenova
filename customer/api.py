@@ -112,9 +112,6 @@ class CustomerRuleProfileViewSet(OrganizationViewSet):
         Returns:
             The filtered queryset.
         """
-        return (
-            self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
-            )
-            .select_related("organization")
-        )
+        return self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).select_related("organization")

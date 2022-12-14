@@ -180,9 +180,9 @@ class CustomerRuleProfileSerializer(GenericSerializer):
             "id",
             "organization",
             "name",
-            "document_class",
             "created",
             "modified",
+            "document_class",
         )
         read_only_fields = (
             "organization",
@@ -191,48 +191,62 @@ class CustomerRuleProfileSerializer(GenericSerializer):
             "modified",
         )
 
-        def create(self, validated_data: Any) -> models.CustomerRuleProfile:
-            """ Create a new CustomerRuleProfile instance.
+    def create(self, validated_data: Any) -> models.CustomerRuleProfile:
+        """Create a new CustomerRuleProfile instance.
 
-            Args:
-                validated_data (dict): A dictionary of validated data for the new
-                    CustomerRuleProfile instance. This data should include the
-                    'document_class' field, which is a list of IDs for the
-                    DocumentClassification objects associated with the new
-                    CustomerRuleProfile.
+        Args:
+            validated_data (dict): A dictionary of validated data for the new
+                CustomerRuleProfile instance. This data should include the
+                'document_class' field, which is a list of IDs for the
+                DocumentClassification objects associated with the new
+                CustomerRuleProfile.
 
-            Returns:
-                CustomerRuleProfile: The newly created CustomerRuleProfile instance.
-            """
+        Returns:
+            CustomerRuleProfile: The newly created CustomerRuleProfile instance.
+        """
 
-            document_class_ids = validated_data.pop("document_class")
+        document_class_ids = validated_data.pop("document_class")
 
-            customer_rule_profile = models.CustomerRuleProfile.objects.create(**validated_data)
-            customer_rule_profile.document_class.set(document_class_ids)
+        customer_rule_profile = models.CustomerRuleProfile.objects.create(
+            **validated_data
+        )
+        customer_rule_profile.document_class.set(document_class_ids)
 
-            return customer_rule_profile
+        return customer_rule_profile
 
-        def update(self, instance: models.CustomerRuleProfile, validated_data: Any) -> models.CustomerRuleProfile:
-            """Update an existing CustomerRuleProfile instance.
+    def update(self, instance, validated_data: Any) -> models.CustomerRuleProfile:
+        """Update an existing CustomerRuleProfile instance.
 
-            Args:
-                instance (CustomerRuleProfile): The CustomerRuleProfile instance to update.
-                validated_data (dict): A dictionary of validated data for the updated
-                    CustomerRuleProfile instance. This data should include the
-                    'name' and 'document_class' fields, which are the updated values
-                    for the name and document classifications of the CustomerRuleProfile.
+        Args:
+            instance (CustomerRuleProfile): The CustomerRuleProfile instance to update.
+            validated_data (dict): A dictionary of validated data for the updated
+                CustomerRuleProfile instance. This data should include the
+                'name' and 'document_class' fields, which are the updated values
+                for the name and document classifications of the CustomerRuleProfile.
 
-            Returns:
-                CustomerRuleProfile: The updated CustomerRuleProfile instance.
-            """
+        Returns:
+            CustomerRuleProfile: The updated CustomerRuleProfile instance.
+        """
 
-            # Update the name of the CustomerRuleProfile instance
-            instance.name = validated_data['name']
-            # Update the document classifications of the profile
-            instance.document_class.set(validated_data['document_class'])
+        if self.context["request"].user.is_authenticated:
+            organization = self.context["request"].user.organization
+        else:
+            token = (
+                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            )
+            organization = Token.objects.get(key=token).user.organization
+
+        document_class = validated_data.pop("document_class", None)
+
+        instance.name = validated_data.get("name", instance.name)
+        instance.save()
+
+        if document_class:
+            instance.document_class.set(document_class)
             instance.save()
 
-            return instance
+        return instance
+
 
 class CustomerSerializer(GenericSerializer):
     """A serializer for the `Customer` model.

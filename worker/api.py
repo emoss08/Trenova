@@ -26,8 +26,7 @@ from worker import models, serializers
 
 
 class WorkerViewSet(OrganizationViewSet):
-    """
-    A viewset for viewing and editing workers in the system.
+    """A viewset for viewing and editing workers in the system.
 
     The viewset provides default operations for creating, updating, and deleting workers,
     as well as listing and retrieving workers. It uses the `WorkerSerializer` class to
@@ -45,8 +44,7 @@ class WorkerViewSet(OrganizationViewSet):
     filterset_fields = ["id", "first_name", "code", "last_name"]
 
     def get_queryset(self) -> QuerySet[models.Worker]:
-        """
-        Returns a queryset of workers for the current user's organization.
+        """Returns a queryset of workers for the current user's organization.
 
         The queryset includes related fields such as profiles, manager(user), depot, organization,
         entered_by(user). It also prefetches related comments and contacts.

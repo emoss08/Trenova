@@ -22,6 +22,7 @@ from typing import Any
 from rest_framework import serializers
 
 from accounts.models import Token
+from organization.serializers import DepotSerializer
 from utils.serializers import GenericSerializer
 from worker import models
 
@@ -138,6 +139,9 @@ class WorkerSerializer(serializers.ModelSerializer):
     """
 
     organization = serializers.CharField(source="organization.name", read_only=True)
+    worker_type = serializers.ChoiceField(choices=models.Worker.WorkerType.choices)
+
+    # Relationships
     profile = WorkerProfileSerializer(required=False, allow_null=True)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
@@ -241,18 +245,36 @@ class WorkerSerializer(serializers.ModelSerializer):
             models.Worker: Worker instance.
         """
 
-        # Get the token from the requests.
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-
-        # Get the organization of the user from the request.
-        organization = Token.objects.get(key=token).user.organization
+        if self.context["request"].user.is_authenticated:
+            organization = self.context["request"].user.organization
+        else:
+            token = (
+                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            )
+            organization = Token.objects.get(key=token).user.organization
 
         profile_data = validated_data.pop("profile", None)
         comments_data = validated_data.pop("comments", None)
         contacts_data = validated_data.pop("contacts", None)
 
         # Update the worker.
-        models.Worker.objects.filter(id=instance.id).update(**validated_data)
+        instance.is_active = validated_data.get("is_active", instance.is_active)
+        instance.worker_type = validated_data.get("worker_type", instance.worker_type)
+        instance.first_name = validated_data.get("first_name", instance.first_name)
+        instance.last_name = validated_data.get("last_name", instance.last_name)
+        instance.address_line_1 = validated_data.get(
+            "address_line_1", instance.address_line_1
+        )
+        instance.address_line_2 = validated_data.get(
+            "address_line_2", instance.address_line_2
+        )
+        instance.city = validated_data.get("city", instance.city)
+        instance.state = validated_data.get("state", instance.state)
+        instance.zip_code = validated_data.get("zip_code", instance.zip_code)
+        instance.depot = validated_data.get("depot", instance.depot)
+        instance.manager = validated_data.get("manager", instance.manager)
+        instance.entered_by = validated_data.get("entered_by", instance.entered_by)
+        instance.save()
 
         if profile_data:
             profile_data["organization"] = organization

@@ -100,7 +100,11 @@ router.register(
     customer_api.CustomerFuelTableViewSet,
     basename="customer_fuel_tables",
 )
-router.register(r"customer_rule_profiles", customer_api.CustomerRuleProfileViewSet, basename="customer_rule_profiles")
+router.register(
+    r"customer_rule_profiles",
+    customer_api.CustomerRuleProfileViewSet,
+    basename="customer_rule_profiles",
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
