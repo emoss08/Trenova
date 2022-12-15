@@ -29,6 +29,82 @@ from customer import models
 from utils.serializers import GenericSerializer
 
 
+class CustomerContactSerializer(GenericSerializer):
+    """A serializer for the CustomerContact model.
+
+    The serializer provides default operations for creating, updating, and deleting
+    customer contacts, as well as listing and retrieving customer contacts.
+    It uses the `CustomerContact` model to convert the customer contact instances to
+    and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this serializer.
+    Filtering is also available, with the ability to filter by customer ID, name, and
+    code.
+    """
+
+    is_active = serializers.BooleanField(default=True)
+    is_payable_contact = serializers.BooleanField(default=True)
+
+    class Meta:
+        """
+        A class representing the metadata for the `CustomerContactSerializer` class.
+        """
+
+        model = models.CustomerContact
+        fields = (
+            "id",
+            "organization",
+            "is_active",
+            "name",
+            "email",
+            "title",
+            "phone",
+            "is_payable_contact",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "id",
+            "created",
+            "modified",
+        )
+
+
+class CustomerEmailProfileSerializer(serializers.ModelSerializer):
+    """Serializer for the CustomerEmailProfile model.
+
+    This serializer converts the CustomerEmailProfile model into a format that
+    can be easily converted to and from JSON, and allows for easy validation
+    of the data.
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `CustomerEmailProfileSerializer` class.
+        """
+        model = models.CustomerEmailProfile
+        fields = (
+            "id",
+            "name",
+            "subject",
+            "comment",
+            "from_address",
+            "blind_copy",
+            "read_receipt",
+            "read_receipt_to",
+            "attachment_name",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "id",
+            "created",
+            "modified",
+        )
+
+
 class CustomerFuelTableDetailSerializer(GenericSerializer):
     """A serializer for the CustomerFuelTableDetail model.
 
@@ -105,7 +181,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-        self, instance: models.CustomerFuelTable, validated_data: Any
+            self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -228,14 +304,6 @@ class CustomerRuleProfileSerializer(GenericSerializer):
             CustomerRuleProfile: The updated CustomerRuleProfile instance.
         """
 
-        if self.context["request"].user.is_authenticated:
-            organization = self.context["request"].user.organization
-        else:
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
-            organization = Token.objects.get(key=token).user.organization
-
         document_class = validated_data.pop("document_class", None)
 
         instance.name = validated_data.get("name", instance.name)
@@ -255,6 +323,8 @@ class CustomerSerializer(GenericSerializer):
     and vice versa. It uses the specified fields (name, description, and code) to create the serialized
     representation of the `Customer` model.
     """
+
+    contacts = CustomerContactSerializer(many=True, required=False)
 
     class Meta:
         """
