@@ -84,6 +84,7 @@ class CustomerEmailProfileSerializer(serializers.ModelSerializer):
         """
         A class representing the metadata for the `CustomerEmailProfileSerializer` class.
         """
+
         model = models.CustomerEmailProfile
         fields = (
             "id",
@@ -182,7 +183,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -291,7 +292,9 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
         return customer_rule_profile
 
-    def update(self, instance, validated_data: Any) -> models.CustomerRuleProfile:
+    def update(
+        self, instance: models.CustomerRuleProfile, validated_data: Any
+    ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
         Args:
@@ -335,7 +338,6 @@ class CustomerBillingProfileSerializer(GenericSerializer):
     email_profile = CustomerEmailProfileSerializer(required=False)
     rule_profile = CustomerRuleProfileSerializer(required=False)
 
-
     class Meta:
         """
         A class representing the metadata for the `CustomerBillingProfileSerializer` class.
@@ -357,6 +359,15 @@ class CustomerBillingProfileSerializer(GenericSerializer):
             "created",
             "modified",
         )
+
+    def create(self, validated_data: Any):
+        # TODO: Write Method
+        pass
+
+    def update(self, validated_data: Any):
+        # TODO: Write Method
+        pass
+
 
 class CustomerSerializer(GenericSerializer):
     """A serializer for the `Customer` model.
@@ -397,3 +408,11 @@ class CustomerSerializer(GenericSerializer):
             "created",
             "modified",
         )
+
+    def create(self, validated_data: Any):
+        # TODO: Write Method
+        pass
+
+    def update(self, validated_data: Any):
+        # TODO: Write Method
+        pass
