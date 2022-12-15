@@ -23,8 +23,6 @@ from django.db import transaction
 from rest_framework import serializers
 
 from accounts.models import Token
-from billing.models import DocumentClassification
-from billing.serializers import DocumentClassificationSerializer
 from customer import models
 from utils.serializers import GenericSerializer
 
@@ -78,6 +76,9 @@ class CustomerEmailProfileSerializer(serializers.ModelSerializer):
     can be easily converted to and from JSON, and allows for easy validation
     of the data.
     """
+
+    read_receipt_to = serializers.EmailField(required=False)
+    read_receipt = serializers.BooleanField(default=False)
 
     class Meta:
         """
@@ -316,14 +317,56 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return instance
 
 
+class CustomerBillingProfileSerializer(GenericSerializer):
+    """A serializer for the CustomerBillingProfile model.
+
+    The serializer provides default operations for creating, updating, and deleting
+    customer billing profiles, as well as listing and retrieving customer billing
+    profiles.
+    It uses the `CustomerBillingProfile` model to convert the customer billing profile
+    instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this serializer.
+    Filtering is also available, with the ability to filter by customer ID, name, and
+    code.
+    """
+
+    is_active = serializers.BooleanField(default=True)
+    email_profile = CustomerEmailProfileSerializer(required=False)
+    rule_profile = CustomerRuleProfileSerializer(required=False)
+
+
+    class Meta:
+        """
+        A class representing the metadata for the `CustomerBillingProfileSerializer` class.
+        """
+
+        model = models.CustomerBillingProfile
+        fields = (
+            "id",
+            "organization",
+            "is_active",
+            "email_profile",
+            "rule_profile",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "id",
+            "created",
+            "modified",
+        )
+
 class CustomerSerializer(GenericSerializer):
     """A serializer for the `Customer` model.
 
     This serializer converts instances of the `Customer` model into JSON or other data formats,
-    and vice versa. It uses the specified fields (name, description, and code) to create the serialized
-    representation of the `Customer` model.
+    and vice versa. It uses the specified fields (name, description, and code) to
+    create the serialized representation of the `Customer` model.
     """
 
+    billing_profile = CustomerBillingProfileSerializer(required=False)
     contacts = CustomerContactSerializer(many=True, required=False)
 
     class Meta:
@@ -345,6 +388,8 @@ class CustomerSerializer(GenericSerializer):
             "zip_code",
             "created",
             "modified",
+            "billing_profile",
+            "contacts",
         )
         read_only_fields = (
             "id",
