@@ -572,57 +572,31 @@ class CustomerSerializer(GenericSerializer):
             Customer: The updated Customer instance.
         """
 
-        request = self.context["request"]
-        if request.user.is_authenticated:
-            organization = request.user.organization
-        else:
-            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            organization = Token.objects.get(key=token).user.organization
-
-        billing_profile = validated_data.pop("billing_profile", None)
+        billing_profile_data = validated_data.pop("billing_profile", None)
         contacts_data = validated_data.pop("contacts", None)
 
-        instance.is_active = validated_data.get("is_active", instance.is_active)
-        instance.code = validated_data.get("code", instance.code)
-        instance.name = validated_data.get("name", instance.name)
-        instance.address_line_1 = validated_data.get(
-            "address_line_1", instance.address_line_1
-        )
-        instance.address_line_2 = validated_data.get(
-            "address_line_2", instance.address_line_2
-        )
-        instance.city = validated_data.get("city", instance.city)
-        instance.state = validated_data.get("state", instance.state)
-        instance.zip_code = validated_data.get("zip_code", instance.zip_code)
-        instance.save()
+        # Use the update() method to update the instance with the validated data
+        instance.update_customer(**validated_data)
 
-        if billing_profile:
-            rule_profile = billing_profile.pop("rule_profile", {})
-            email_profile = billing_profile.pop("email_profile", {})
+        if billing_profile_data:
+            rule_profile_data = billing_profile_data.pop("rule_profile", {})
+            email_profile_data = billing_profile_data.pop("email_profile", {})
 
-            if email_profile:
-                email_profile["organization"] = organization
-                models.CustomerEmailProfile.objects.get(
-                    id=instance.billing_profile.email_profile.id
-                ).update(**email_profile)
+            if email_profile_data:
+                # Use the update() method to update the email_profile instance with the data
+                instance.billing_profile.email_profile.update_customer_email_profile(**email_profile_data)
 
-            if rule_profile:
-                instance.billing_profile.rule_profile = (
-                    CustomerRuleProfileSerializer(data=rule_profile)
-                )
-                instance.billing_profile.rule_profile.save()
+            if rule_profile_data:
+                # Use the update() method to update the rule_profile instance with the data
+                instance.billing_profile.rule_profile.update_customer_rule_profile(**rule_profile_data)
 
-            instance.billing_profile.save()
+                document_class = rule_profile_data.pop("document_class", [])
+
+                if document_class:
+                    instance.billing_profile.rule_profile.document_class = document_class
+                    instance.billing_profile.rule_profile.save()
 
         if contacts_data:
-            instance.contacts.all().delete()
-            contacts_data = [
-                {**contact, "organization": organization} for contact in contacts_data
-            ]
-            contacts = [
-                models.CustomerContact(customer=instance, **contact)
-                for contact in contacts_data
-            ]
-            models.CustomerContact.objects.bulk_create(contacts)
+            [contact.update_customer_contact(**contact_data) for contact, contact_data in zip(instance.contacts.all(), contacts_data)]
 
         return instance

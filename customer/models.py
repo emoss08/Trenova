@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -128,6 +128,16 @@ class Customer(GenericModel):
         """
         return reverse("customer:customer-detail", kwargs={"pk": self.pk})
 
+    def update_customer(self, **kwargs: Any) -> None:
+        """Updates customer information
+
+        Args:
+            **kwargs (Any): Customer information to update
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
 
 class CustomerBillingProfile(GenericModel):
     """
@@ -220,7 +230,6 @@ class CustomerEmailProfile(GenericModel):
         _("Name"),
         max_length=50,
         help_text=_("Name"),
-        unique=True,
     )
     subject = models.CharField(
         _("Subject"),
@@ -281,6 +290,17 @@ class CustomerEmailProfile(GenericModel):
         """
         return textwrap.wrap(f"{self.name}", 50)[0]
 
+
+    def update_customer_email_profile(self, **kwargs: Any) -> None:
+        """Updates customer email profile information
+
+        Args:
+            **kwargs (Any): Customer email profile information to update
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer email profile instance
 
@@ -305,7 +325,6 @@ class CustomerRuleProfile(GenericModel):
         _("Name"),
         max_length=50,
         help_text=_("Name"),
-        unique=True,
     )
     document_class = models.ManyToManyField(
         DocumentClassification,
@@ -331,6 +350,16 @@ class CustomerRuleProfile(GenericModel):
             str: Customer Rule Profile string representation
         """
         return textwrap.wrap(f"{self.name}", 50)[0]
+
+    def update_customer_rule_profile(self, **kwargs: Any) -> None:
+        """Updates customer rule profile information
+
+        Args:
+            **kwargs (Any): Customer rule profile information to update
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer rule profile instance
@@ -410,6 +439,16 @@ class CustomerContact(GenericModel):
             str: Customer Contact string representation
         """
         return textwrap.wrap(f"{self.customer.code} - {self.name}", 50)[0]
+
+    def update_customer_contact(self, **kwargs: Any) -> None:
+        """Updates customer contact information
+
+        Args:
+            **kwargs (Any): Customer contact information to update
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def clean(self) -> None:
         """Customer Contact clean method
