@@ -95,7 +95,18 @@ class TokenAuthentication(authentication.TokenAuthentication):
         model = self.get_model()
 
         try:
-            token = model.objects.prefetch_related("user").get(key=key)
+            token = (
+                model.objects.select_related("user", "user__organization")
+                .only(
+                    "user__id",
+                    "user__organization",
+                    "key",
+                    "expires",
+                    "id",
+                    "last_used",
+                )
+                .get(key=key)
+            )
         except model.DoesNotExist:
             raise exceptions.AuthenticationFailed("Invalid token")
 

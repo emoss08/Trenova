@@ -372,7 +372,6 @@ class CustomerContact(GenericModel):
         _("Name"),
         max_length=150,
         help_text=_("Contact name"),
-        unique=True,
     )
     email = models.EmailField(
         _("Email"),
