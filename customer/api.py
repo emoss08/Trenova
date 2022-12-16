@@ -43,6 +43,26 @@ class CustomerViewSet(OrganizationViewSet):
     filterset_fields = ("id", "code", "name")
 
 
+class CustomerBillingProfileViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing customer billing profile information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting customer
+    billing profiles, as well as listing and retrieving customer billing profiles. It uses
+    the `CustomerBillingProfileSerializer` class to convert the customer billing profile
+    instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by customer billing profile ID,
+    customer ID, and billing profile ID.
+    """
+
+    queryset = models.CustomerBillingProfile.objects.all()
+    serializer_class = serializers.CustomerBillingProfileSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ("id", "customer", "rule_profile")
+
+
 class CustomerFuelTableViewSet(OrganizationViewSet):
     """A viewset for viewing and editing customer fuel table information in the system.
 

@@ -55,55 +55,60 @@ organization_router = routers.NestedSimpleRouter(
 )
 # organization/<str:pk>/depots
 organization_router.register(
-    r"depots", org_api.DepotViewSet, basename="organization-depots"
+    r"depots", org_api.DepotViewSet, basename="organization-depot"
 )
 # organization/<str:pk>/departments
 organization_router.register(
-    r"departments", org_api.DepartmentViewSet, basename="organization-departments"
+    r"departments", org_api.DepartmentViewSet, basename="organization-department"
 )
 
 # Worker Routing
-router.register(r"workers", worker_api.WorkerViewSet, basename="workers")
+router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
 
 # Billing Routing
-router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge_types")
+router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")
 router.register(
     r"accessorial_charges",
     billing_api.AccessorialChargeViewSet,
-    basename="accessorial_charges",
+    basename="accessorial-charges",
 )
 router.register(
     r"document_classifications",
     billing_api.DocumentClassificationViewSet,
-    basename="document_classifications",
+    basename="document-classifications",
 )
 
 # Commodity Routing
 router.register(
     r"hazardous_materials",
     commodities_api.HazardousMaterialViewSet,
-    basename="hazardous_materials",
+    basename="hazardous-materials",
 )
 router.register(
-    r"commodities", commodities_api.CommodityViewSet, basename="commodities"
+    r"commodities", commodities_api.CommodityViewSet, basename="commodity"
 )
 
 # Control File Routing
 router.register(
-    r"google_api", control_file_api.GoogleAPIViewSet, basename="control_files"
+    r"google_api", control_file_api.GoogleAPIViewSet, basename="control_file"
 )
 
 # Customer Routing
-router.register(r"customers", customer_api.CustomerViewSet, basename="customers")
+router.register(r"customers", customer_api.CustomerViewSet, basename="customer")
 router.register(
     r"customer_fuel_tables",
     customer_api.CustomerFuelTableViewSet,
-    basename="customer_fuel_tables",
+    basename="customer-fuel-table",
 )
 router.register(
     r"customer_rule_profiles",
     customer_api.CustomerRuleProfileViewSet,
-    basename="customer_rule_profiles",
+    basename="customer-rule-profile",
+)
+router.register(
+    r"customer_billing_profiles",
+    customer_api.CustomerBillingProfileViewSet,
+    basename="customer-billing-profile",
 )
 
 urlpatterns = [

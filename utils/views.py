@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from django.db.models import QuerySet
 from django.http import HttpRequest, JsonResponse
@@ -72,7 +72,7 @@ class GenericTemplateView(
         model_name = self.model_lookup._meta.model_name
         return f"{app_label}.{model_name}.view_{model_name}"
 
-    def get_context_data(self, **kwargs) -> Dict[str, Any]:
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
         context = self.context_data or {}
         context.update(kwargs)
         return super().get_context_data(**context)

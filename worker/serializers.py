@@ -22,7 +22,6 @@ from typing import Any
 from rest_framework import serializers
 
 from accounts.models import Token
-from organization.serializers import DepotSerializer
 from utils.serializers import GenericSerializer
 from worker import models
 

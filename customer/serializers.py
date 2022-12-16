@@ -183,7 +183,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-        self, instance: models.CustomerFuelTable, validated_data: Any
+            self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -293,7 +293,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return customer_rule_profile
 
     def update(
-        self, instance: models.CustomerRuleProfile, validated_data: Any
+            self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -361,12 +361,85 @@ class CustomerBillingProfileSerializer(GenericSerializer):
         )
 
     def create(self, validated_data: Any):
-        # TODO: Write Method
-        pass
+        """Create a new CustomerBillingProfile instance.
+
+        Args:
+            validated_data (dict): A dictionary of validated data for the new
+                CustomerBillingProfile instance. This data should include the
+                'email_profile' and 'rule_profile' fields, which are the
+                CustomerEmailProfile and CustomerRuleProfile instances
+                associated with the new CustomerBillingProfile.
+
+        Returns:
+            CustomerBillingProfile: The newly created CustomerBillingProfile instance.
+        """
+
+        email_profile = validated_data.pop("email_profile", None)
+        rule_profile = validated_data.pop("rule_profile", None)
+
+        customer_billing_profile = models.CustomerBillingProfile.objects.create(
+            **validated_data
+        )
+
+        if email_profile:
+            customer_billing_profile.email_profile = (
+                CustomerEmailProfileSerializer(data=email_profile)
+                .is_valid(raise_exception=True)
+                .save()
+            )
+
+        if rule_profile:
+            customer_billing_profile.rule_profile = (
+                CustomerRuleProfileSerializer(data=rule_profile)
+                .is_valid(raise_exception=True)
+                .save()
+            )
+
+        customer_billing_profile.save()
+
+        return customer_billing_profile
 
     def update(self, validated_data: Any):
-        # TODO: Write Method
-        pass
+        """Update an existing CustomerBillingProfile instance.
+
+        Args:
+            validated_data (dict): A dictionary of validated data for the updated
+                CustomerBillingProfile instance. This data should include the
+                'email_profile' and 'rule_profile' fields, which are the
+                updated values for the CustomerEmailProfile and CustomerRuleProfile
+                instances associated with the CustomerBillingProfile.
+
+        Returns:
+            CustomerBillingProfile: The updated CustomerBillingProfile instance.
+        """
+
+        email_profile = validated_data.pop("email_profile", None)
+        rule_profile = validated_data.pop("rule_profile", None)
+
+        instance = models.CustomerBillingProfile.objects.get(
+            id=validated_data["id"], organization=validated_data["organization"]
+        )
+
+        instance.is_active = validated_data.get("is_active", instance.is_active)
+        instance.save()
+
+        if email_profile:
+            instance.email_profile = (
+                CustomerEmailProfileSerializer(data=email_profile)
+                .is_valid(raise_exception=True)
+                .save()
+            )
+
+        if rule_profile:
+            instance.rule_profile = (
+                CustomerRuleProfileSerializer(data=rule_profile)
+                .is_valid(raise_exception=True)
+                .save()
+            )
+
+        instance.save()
+
+        return instance
 
 
 class CustomerSerializer(GenericSerializer):
@@ -409,10 +482,126 @@ class CustomerSerializer(GenericSerializer):
             "modified",
         )
 
-    def create(self, validated_data: Any):
-        # TODO: Write Method
-        pass
+    def create(self, validated_data: Any) -> models.Customer:
+        """Create a new Customer instance.
+
+        Args:
+            validated_data (dict): A dictionary of validated data for the new
+                Customer instance. This data should include the 'billing_profile'
+                and 'contacts' fields, which are the CustomerBillingProfile and
+                CustomerContact instances associated with the new Customer.
+
+        Returns:
+            Customer: The newly created Customer instance.
+        """
+
+        if self.context["request"].user.is_authenticated:
+            organization = self.context["request"].user.organization
+        else:
+            token = (
+                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            )
+            organization = Token.objects.get(key=token).user.organization
+
+        # Pop the billing profile and contacts from the validated data
+        billing_profile_data = validated_data.pop("billing_profile", None)
+        contacts_data = validated_data.pop("contacts", None)
+        email_profile_data = billing_profile_data.pop("email_profile", None)
+        rule_profile_data = billing_profile_data.pop("rule_profile", None)
+
+        # Create the customer
+        validated_data["organization"] = organization
+        customer = models.Customer.objects.create(**validated_data)
+
+        # Create the customer billing profile
+        if email_profile_data:
+            email_profile_data["organization"] = organization
+            email_profile_data = models.CustomerEmailProfile.objects.create(
+                **email_profile_data
+            )
+
+        # Create the billing profile
+        if rule_profile_data:
+            rule_profile_data["organization"] = organization
+            rule_profile_data = models.CustomerRuleProfile.objects.create(
+                **rule_profile_data
+            )
+
+        # Create the billing profile
+        if billing_profile_data:
+            # Billing profiles are automatically created from signals. However,
+            # If passed, we have to delete the one that was created.
+            customer_billing_profile = models.CustomerBillingProfile.objects.get(
+                customer=customer
+            )
+            customer_billing_profile.delete()
+
+            billing_profile_data["organization"] = organization
+            models.CustomerBillingProfile.objects.create(
+                customer=customer,
+                email_profile=email_profile_data,
+                rule_profile=rule_profile_data,
+                **billing_profile_data,
+            )
+
+        # Create the contacts
+        if contacts_data:
+            for contact in contacts_data:
+                contact["organization"] = organization
+                models.CustomerContact.objects.create(customer=customer, **contact)
+
+        return customer
 
     def update(self, validated_data: Any):
-        # TODO: Write Method
-        pass
+        """Update an existing Customer instance.
+
+        Args:
+            validated_data (dict): A dictionary of validated data for the updated
+                Customer instance. This data should include the 'billing_profile'
+                and 'contacts' fields, which are the updated values for the
+                CustomerBillingProfile and CustomerContact instances associated
+                with the Customer.
+
+        Returns:
+            Customer: The updated Customer instance.
+        """
+
+        billing_profile = validated_data.pop("billing_profile", None)
+        contacts = validated_data.pop("contacts", None)
+
+        instance = models.Customer.objects.get(
+            id=validated_data["id"], organization=validated_data["organization"]
+        )
+
+        instance.is_active = validated_data.get("is_active", instance.is_active)
+        instance.code = validated_data.get("code", instance.code)
+        instance.name = validated_data.get("name", instance.name)
+        instance.address_line_1 = validated_data.get(
+            "address_line_1", instance.address_line_1
+        )
+        instance.address_line_2 = validated_data.get(
+            "address_line_2", instance.address_line_2
+        )
+        instance.city = validated_data.get("city", instance.city)
+        instance.state = validated_data.get("state", instance.state)
+        instance.zip_code = validated_data.get("zip_code", instance.zip_code)
+        instance.save()
+
+        if billing_profile:
+            instance.billing_profile = (
+                CustomerBillingProfileSerializer(data=billing_profile)
+                .is_valid(raise_exception=True)
+                .save()
+            )
+
+        if contacts:
+            for contact in contacts:
+                instance.contacts.add(
+                    CustomerContactSerializer(data=contact)
+                    .is_valid(raise_exception=True)
+                    .save()
+                )
+
+        instance.save()
+
+        return instance
