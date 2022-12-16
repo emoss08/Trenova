@@ -51,9 +51,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 @method_decorator(require_safe, name="dispatch")
 @method_decorator(vary_on_cookie, name="dispatch")
 class GenericTemplateView(
-    mixins.LoginRequiredMixin,
-    views.PermissionRequiredMixin,
-    generic.TemplateView
+    mixins.LoginRequiredMixin, views.PermissionRequiredMixin, generic.TemplateView
 ):
     model_lookup = None
     permission_required = None

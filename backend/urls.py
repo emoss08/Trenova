@@ -84,9 +84,7 @@ router.register(
     commodities_api.HazardousMaterialViewSet,
     basename="hazardous-materials",
 )
-router.register(
-    r"commodities", commodities_api.CommodityViewSet, basename="commodity"
-)
+router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodity")
 
 # Control File Routing
 router.register(
@@ -105,11 +103,6 @@ router.register(
     customer_api.CustomerRuleProfileViewSet,
     basename="customer-rule-profile",
 )
-router.register(
-    r"customer_billing_profiles",
-    customer_api.CustomerBillingProfileViewSet,
-    basename="customer-billing-profile",
-)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
@@ -118,13 +111,17 @@ urlpatterns = [
     path("api/", include(router.urls)),
     path("api/", include(organization_router.urls)),
     path(
-        "api/token/provision/", accounts_api.TokenProvisionView.as_view(), name="token"
+        "api/token/provision/",
+        accounts_api.TokenProvisionView.as_view(),
+        name="provision-token",
     ),
-    path("api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="token"),
+    path(
+        "api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="verify-token"
+    ),
     path(
         "api/user/change_password/",
         accounts_api.UpdatePasswordView.as_view(),
-        name="change_password",
+        name="change-password",
     ),
 ]
 

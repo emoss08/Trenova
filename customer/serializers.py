@@ -183,7 +183,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -293,7 +293,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return customer_rule_profile
 
     def update(
-            self, instance: models.CustomerRuleProfile, validated_data: Any
+        self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -486,7 +486,7 @@ class CustomerSerializer(GenericSerializer):
         """Create a new Customer instance.
 
         Args:
-            validated_data (dict): A dictionary of validated data for the new
+            validated_data (Any): A dictionary of validated data for the new
                 Customer instance. This data should include the 'billing_profile'
                 and 'contacts' fields, which are the CustomerBillingProfile and
                 CustomerContact instances associated with the new Customer.
@@ -495,40 +495,40 @@ class CustomerSerializer(GenericSerializer):
             Customer: The newly created Customer instance.
         """
 
-        if self.context["request"].user.is_authenticated:
-            organization = self.context["request"].user.organization
+        request = self.context["request"]
+        if request.user.is_authenticated:
+            organization = request.user.organization
         else:
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
+            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
             organization = Token.objects.get(key=token).user.organization
 
         # Pop the billing profile and contacts from the validated data
-        billing_profile_data = validated_data.pop("billing_profile", None)
-        contacts_data = validated_data.pop("contacts", None)
-        email_profile_data = billing_profile_data.pop("email_profile", None)
-        rule_profile_data = billing_profile_data.pop("rule_profile", None)
+        billing_profile_data = validated_data.pop("billing_profile", {})
+        contacts_data = validated_data.pop("contacts", [])
 
         # Create the customer
         validated_data["organization"] = organization
         customer = models.Customer.objects.create(**validated_data)
 
-        # Create the customer billing profile
-        if email_profile_data:
-            email_profile_data["organization"] = organization
-            email_profile_data = models.CustomerEmailProfile.objects.create(
-                **email_profile_data
-            )
-
-        # Create the billing profile
-        if rule_profile_data:
-            rule_profile_data["organization"] = organization
-            rule_profile_data = models.CustomerRuleProfile.objects.create(
-                **rule_profile_data
-            )
-
         # Create the billing profile
         if billing_profile_data:
+            email_profile_data = billing_profile_data.pop("email_profile", {})
+            rule_profile_data = billing_profile_data.pop("rule_profile", {})
+
+            # Create the customer billing profile
+            if email_profile_data:
+                email_profile_data["organization"] = organization
+                email_profile_data = models.CustomerEmailProfile.objects.create(
+                    **email_profile_data
+                )
+
+            # Create the billing profile
+            if rule_profile_data:
+                rule_profile_data["organization"] = organization
+                rule_profile_data = models.CustomerRuleProfile.objects.create(
+                    **rule_profile_data
+                )
+
             # Billing profiles are automatically created from signals. However,
             # If passed, we have to delete the one that was created.
             customer_billing_profile = models.CustomerBillingProfile.objects.get(
@@ -546,9 +546,14 @@ class CustomerSerializer(GenericSerializer):
 
         # Create the contacts
         if contacts_data:
-            for contact in contacts_data:
-                contact["organization"] = organization
-                models.CustomerContact.objects.create(customer=customer, **contact)
+            contacts_data = [
+                {**contact, "organization": organization} for contact in contacts_data
+            ]
+            contacts = [
+                models.CustomerContact(customer=customer, **contact)
+                for contact in contacts_data
+            ]
+            models.CustomerContact.objects.bulk_create(contacts)
 
         return customer
 
