@@ -21,16 +21,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
-
 from rest_framework_nested import routers
 
-from accounts import api as accounts_api
-from organization import api as org_api
-from worker import api as worker_api
 from accounting import api as accounting_api
+from accounts import api as accounts_api
 from billing import api as billing_api
 from commodities import api as commodities_api
 from control_file import api as control_file_api
+from customer import api as customer_api
+from organization import api as org_api
+from worker import api as worker_api
 
 router = routers.DefaultRouter()
 
@@ -55,35 +55,54 @@ organization_router = routers.NestedSimpleRouter(
 )
 # organization/<str:pk>/depots
 organization_router.register(
-    r"depots", org_api.DepotViewSet, basename="organization-depots"
+    r"depots", org_api.DepotViewSet, basename="organization-depot"
 )
 # organization/<str:pk>/departments
 organization_router.register(
-    r"departments", org_api.DepartmentViewSet, basename="organization-departments"
+    r"departments", org_api.DepartmentViewSet, basename="organization-department"
 )
 
 # Worker Routing
-router.register(r"workers", worker_api.WorkerViewSet, basename="workers")
+router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
 
 # Billing Routing
-router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge_types")
+router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")
 router.register(
     r"accessorial_charges",
     billing_api.AccessorialChargeViewSet,
-    basename="accessorial_charges",
+    basename="accessorial-charges",
 )
 router.register(
     r"document_classifications",
     billing_api.DocumentClassificationViewSet,
-    basename="document_classifications",
+    basename="document-classifications",
 )
 
 # Commodity Routing
-router.register(r"hazardous_materials", commodities_api.HazardousMaterialViewSet, basename="hazardous_materials")
-router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodities")
+router.register(
+    r"hazardous_materials",
+    commodities_api.HazardousMaterialViewSet,
+    basename="hazardous-materials",
+)
+router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodity")
 
 # Control File Routing
-router.register(r"google_api", control_file_api.GoogleAPIViewSet, basename="control_files")
+router.register(
+    r"google_api", control_file_api.GoogleAPIViewSet, basename="control_file"
+)
+
+# Customer Routing
+router.register(r"customers", customer_api.CustomerViewSet, basename="customer")
+router.register(
+    r"customer_fuel_tables",
+    customer_api.CustomerFuelTableViewSet,
+    basename="customer-fuel-table",
+)
+router.register(
+    r"customer_rule_profiles",
+    customer_api.CustomerRuleProfileViewSet,
+    basename="customer-rule-profile",
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
@@ -92,13 +111,17 @@ urlpatterns = [
     path("api/", include(router.urls)),
     path("api/", include(organization_router.urls)),
     path(
-        "api/token/provision/", accounts_api.TokenProvisionView.as_view(), name="token"
+        "api/token/provision/",
+        accounts_api.TokenProvisionView.as_view(),
+        name="provision-token",
     ),
-    path("api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="token"),
+    path(
+        "api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="verify-token"
+    ),
     path(
         "api/user/change_password/",
         accounts_api.UpdatePasswordView.as_view(),
-        name="change_password",
+        name="change-password",
     ),
 ]
 

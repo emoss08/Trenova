@@ -47,7 +47,10 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        return self.queryset.filter(id=self.request.user.organization.id)  # type: ignore
+        return self.queryset.prefetch_related(
+            "depots",
+            "depots__details",
+        )
 
 
 class DepotViewSet(viewsets.ModelViewSet):

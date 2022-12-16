@@ -33,7 +33,7 @@ class VerifyTokenSerializer(serializers.Serializer):
 
     token = serializers.CharField()
 
-    def validate(self, attrs: OrderedDict[str, Any]) -> dict[str, Any]:
+    def validate(self, attrs: Any) -> Any:
         """Validate the token
 
         Args:
@@ -215,22 +215,22 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError(_("Old password is incorrect"))  # type: ignore
         return value
 
-    def validate(self, data: dict[str, Any]) -> dict[str, Any]:
-        """
+    def validate(self, attrs: Any) -> Any:
+        """Validate the new password
 
         Args:
-            data (dict[str, Any]): Data to validate
+            attrs (Any): Data to validate
 
         Returns:
             dict[str, Any]: Validated data
         """
 
-        if data["new_password"] != data["confirm_password"]:
+        if attrs["new_password"] != attrs["confirm_password"]:
             raise serializers.ValidationError(_("Passwords do not match"))  # type: ignore
         password_validation.validate_password(
-            data["new_password"], self.context["request"].user
+            attrs["new_password"], self.context["request"].user
         )
-        return data
+        return attrs
 
     def save(self, **kwargs: Any) -> models.User:
         """Save the new password

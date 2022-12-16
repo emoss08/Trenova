@@ -48,18 +48,15 @@ class CustomerRuleProfileAdmin(GenericAdmin[models.CustomerRuleProfile]):
     search_fields = ("name",)
 
 
-class CustomerBillingProfileInline(
-    GenericStackedInline[models.Customer, models.CustomerBillingProfile]
-):
+@admin.register(models.CustomerBillingProfile)
+class CustomerBillingProfileAdmin(GenericAdmin[models.CustomerBillingProfile]):
     """
-    Customer Billing Profile
+    Customer Billing Profile Admin
     """
 
     model: type[models.CustomerBillingProfile] = models.CustomerBillingProfile
-    can_delete = False
-    verbose_name_plural = "Billing Profiles"
-    fk_name = "customer"
-    exclude = ("organization",)
+    list_display = ("customer",)
+    search_fields = ("customer",)
 
 
 class CustomerFuelTableDetailInline(
@@ -127,4 +124,4 @@ class CustomerAdmin(GenericAdmin[models.Customer]):
         "name",
     )
     search_fields = ("name",)
-    inlines = (CustomerBillingProfileInline, CustomerContactInline)
+    inlines = (CustomerContactInline,)

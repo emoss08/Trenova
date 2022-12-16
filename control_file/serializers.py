@@ -55,7 +55,7 @@ class GoogleAPISerializer(GenericSerializer):
             "add_customer_location",
             "add_location",
             "created",
-            "modified"
+            "modified",
         )
         read_only_fields = [
             "organization",
