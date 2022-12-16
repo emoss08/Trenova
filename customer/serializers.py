@@ -575,7 +575,6 @@ class CustomerSerializer(GenericSerializer):
         billing_profile_data = validated_data.pop("billing_profile", None)
         contacts_data = validated_data.pop("contacts", None)
 
-        # Use the update() method to update the instance with the validated data
         instance.update_customer(**validated_data)
 
         if billing_profile_data:
@@ -583,11 +582,9 @@ class CustomerSerializer(GenericSerializer):
             email_profile_data = billing_profile_data.pop("email_profile", {})
 
             if email_profile_data:
-                # Use the update() method to update the email_profile instance with the data
                 instance.billing_profile.email_profile.update_customer_email_profile(**email_profile_data)
 
             if rule_profile_data:
-                # Use the update() method to update the rule_profile instance with the data
                 instance.billing_profile.rule_profile.update_customer_rule_profile(**rule_profile_data)
 
                 document_class = rule_profile_data.pop("document_class", [])
