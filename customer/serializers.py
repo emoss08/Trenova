@@ -183,7 +183,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-        self, instance: models.CustomerFuelTable, validated_data: Any
+            self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -293,7 +293,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return customer_rule_profile
 
     def update(
-        self, instance: models.CustomerRuleProfile, validated_data: Any
+            self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -557,10 +557,11 @@ class CustomerSerializer(GenericSerializer):
 
         return customer
 
-    def update(self, validated_data: Any):
+    def update(self, instance: models.Customer, validated_data: Any):
         """Update an existing Customer instance.
 
         Args:
+            instance (Customer): The existing Customer instance to update.
             validated_data (dict): A dictionary of validated data for the updated
                 Customer instance. This data should include the 'billing_profile'
                 and 'contacts' fields, which are the updated values for the
@@ -571,12 +572,15 @@ class CustomerSerializer(GenericSerializer):
             Customer: The updated Customer instance.
         """
 
-        billing_profile = validated_data.pop("billing_profile", None)
-        contacts = validated_data.pop("contacts", None)
+        request = self.context["request"]
+        if request.user.is_authenticated:
+            organization = request.user.organization
+        else:
+            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            organization = Token.objects.get(key=token).user.organization
 
-        instance = models.Customer.objects.get(
-            id=validated_data["id"], organization=validated_data["organization"]
-        )
+        billing_profile = validated_data.pop("billing_profile", None)
+        contacts_data = validated_data.pop("contacts", None)
 
         instance.is_active = validated_data.get("is_active", instance.is_active)
         instance.code = validated_data.get("code", instance.code)
@@ -593,20 +597,32 @@ class CustomerSerializer(GenericSerializer):
         instance.save()
 
         if billing_profile:
-            instance.billing_profile = (
-                CustomerBillingProfileSerializer(data=billing_profile)
-                .is_valid(raise_exception=True)
-                .save()
-            )
+            rule_profile = billing_profile.pop("rule_profile", {})
+            email_profile = billing_profile.pop("email_profile", {})
 
-        if contacts:
-            for contact in contacts:
-                instance.contacts.add(
-                    CustomerContactSerializer(data=contact)
-                    .is_valid(raise_exception=True)
-                    .save()
+            if email_profile:
+                email_profile["organization"] = organization
+                models.CustomerEmailProfile.objects.get(
+                    id=instance.billing_profile.email_profile.id
+                ).update(**email_profile)
+
+            if rule_profile:
+                instance.billing_profile.rule_profile = (
+                    CustomerRuleProfileSerializer(data=rule_profile)
                 )
+                instance.billing_profile.rule_profile.save()
 
-        instance.save()
+            instance.billing_profile.save()
+
+        if contacts_data:
+            instance.contacts.all().delete()
+            contacts_data = [
+                {**contact, "organization": organization} for contact in contacts_data
+            ]
+            contacts = [
+                models.CustomerContact(customer=instance, **contact)
+                for contact in contacts_data
+            ]
+            models.CustomerContact.objects.bulk_create(contacts)
 
         return instance
