@@ -25,8 +25,7 @@ from rest_framework import serializers
 from accounts.models import Token
 from organization.models import Organization
 
-_MT = TypeVar("_MT", bound=Model)
-_M = TypeVar("_M", Model, Any)
+_MT = TypeVar("_MT", bound=Model)  # Model Type
 
 
 class GenericSerializer(serializers.ModelSerializer):
@@ -57,7 +56,7 @@ class GenericSerializer(serializers.ModelSerializer):
             )
             return Token.objects.get(key=token).user.organization
 
-    def create(self, validated_data: Any) -> _M:
+    def create(self, validated_data: Any) -> _MT:  # type: ignore[override]
         """Create the object
 
         Args:
@@ -72,15 +71,15 @@ class GenericSerializer(serializers.ModelSerializer):
 
         return super().create(validated_data)
 
-    def update(self, instance: _MT, validated_data: Any) -> _MT:
+    def update(self, instance: _MT, validated_data: Any) -> _MT:  # type: ignore[override]
         """Update the object
 
         Args:
-            instance (_MT): Instance of the model
+            instance (_M): Instance of the model
             validated_data (Any): Validated data
 
         Returns:
-            _MT: Updated instance
+            _M: Updated instance
         """
 
         organization: Organization = self._get_organization()

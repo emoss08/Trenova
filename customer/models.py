@@ -23,6 +23,7 @@ from typing import final, Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.transaction import atomic
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
@@ -290,7 +291,6 @@ class CustomerEmailProfile(GenericModel):
         """
         return textwrap.wrap(f"{self.name}", 50)[0]
 
-
     def update_customer_email_profile(self, **kwargs: Any) -> None:
         """Updates customer email profile information
 
@@ -351,6 +351,7 @@ class CustomerRuleProfile(GenericModel):
         """
         return textwrap.wrap(f"{self.name}", 50)[0]
 
+    @atomic
     def update_customer_rule_profile(self, **kwargs: Any) -> None:
         """Updates customer rule profile information
 

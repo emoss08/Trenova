@@ -183,7 +183,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -205,7 +205,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
         customer_fuel_table_details = validated_data.pop(
             "customer_fuel_table_details",
-            None,
+            {},
         )
 
         models.CustomerFuelTable.objects.filter(
@@ -293,7 +293,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return customer_rule_profile
 
     def update(
-            self, instance: models.CustomerRuleProfile, validated_data: Any
+        self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -308,7 +308,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
             CustomerRuleProfile: The updated CustomerRuleProfile instance.
         """
 
-        document_class = validated_data.pop("document_class", None)
+        document_class = validated_data.pop("document_class", [])
 
         instance.name = validated_data.get("name", instance.name)
         instance.save()
@@ -374,8 +374,8 @@ class CustomerBillingProfileSerializer(GenericSerializer):
             CustomerBillingProfile: The newly created CustomerBillingProfile instance.
         """
 
-        email_profile = validated_data.pop("email_profile", None)
-        rule_profile = validated_data.pop("rule_profile", None)
+        email_profile = validated_data.pop("email_profile", {})
+        rule_profile = validated_data.pop("rule_profile", {})
 
         customer_billing_profile = models.CustomerBillingProfile.objects.create(
             **validated_data
@@ -399,7 +399,9 @@ class CustomerBillingProfileSerializer(GenericSerializer):
 
         return customer_billing_profile
 
-    def update(self, validated_data: Any):
+    def update(
+        self, instance: models.CustomerBillingProfile, validated_data: Any
+    ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.
 
         Args:
@@ -413,8 +415,8 @@ class CustomerBillingProfileSerializer(GenericSerializer):
             CustomerBillingProfile: The updated CustomerBillingProfile instance.
         """
 
-        email_profile = validated_data.pop("email_profile", None)
-        rule_profile = validated_data.pop("rule_profile", None)
+        email_profile = validated_data.pop("email_profile", {})
+        rule_profile = validated_data.pop("rule_profile", {})
 
         instance = models.CustomerBillingProfile.objects.get(
             id=validated_data["id"], organization=validated_data["organization"]
@@ -442,7 +444,7 @@ class CustomerBillingProfileSerializer(GenericSerializer):
         return instance
 
 
-class CustomerSerializer(GenericSerializer):
+class CustomerSerializer(serializers.ModelSerializer):
     """A serializer for the `Customer` model.
 
     This serializer converts instances of the `Customer` model into JSON or other data formats,
@@ -557,7 +559,7 @@ class CustomerSerializer(GenericSerializer):
 
         return customer
 
-    def update(self, instance: models.Customer, validated_data: Any):
+    def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:
         """Update an existing Customer instance.
 
         Args:
@@ -572,8 +574,8 @@ class CustomerSerializer(GenericSerializer):
             Customer: The updated Customer instance.
         """
 
-        billing_profile_data = validated_data.pop("billing_profile", None)
-        contacts_data = validated_data.pop("contacts", None)
+        billing_profile_data = validated_data.pop("billing_profile", {})
+        contacts_data = validated_data.pop("contacts", {})
 
         instance.update_customer(**validated_data)
 
@@ -582,18 +584,27 @@ class CustomerSerializer(GenericSerializer):
             email_profile_data = billing_profile_data.pop("email_profile", {})
 
             if email_profile_data:
-                instance.billing_profile.email_profile.update_customer_email_profile(**email_profile_data)
+                instance.billing_profile.email_profile.update_customer_email_profile(  # type: ignore
+                    **email_profile_data
+                )
 
             if rule_profile_data:
-                instance.billing_profile.rule_profile.update_customer_rule_profile(**rule_profile_data)
+                instance.billing_profile.rule_profile.update_customer_rule_profile(  # type: ignore
+                    **rule_profile_data
+                )
 
                 document_class = rule_profile_data.pop("document_class", [])
 
                 if document_class:
-                    instance.billing_profile.rule_profile.document_class = document_class
-                    instance.billing_profile.rule_profile.save()
+                    instance.billing_profile.rule_profile.document_class = (  # type: ignore
+                        document_class
+                    )
+                    instance.billing_profile.rule_profile.save()  # type: ignore
 
         if contacts_data:
-            [contact.update_customer_contact(**contact_data) for contact, contact_data in zip(instance.contacts.all(), contacts_data)]
+            [
+                contact.update_customer_contact(**contact_data)  # type: ignore
+                for contact, contact_data in zip(instance.contacts.all(), contacts_data)
+            ]
 
         return instance
