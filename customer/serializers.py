@@ -17,14 +17,19 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any
+from typing import Any, TypeAlias
+from uuid import UUID
 
 from django.db import transaction
+from django.utils.functional import cached_property
 from rest_framework import serializers
 
 from accounts.models import Token
+from billing.serializers import DocumentClassificationSerializer
 from customer import models
 from utils.serializers import GenericSerializer
+
+Documents: TypeAlias = list[dict[str, Any]]
 
 
 class CustomerContactSerializer(GenericSerializer):
@@ -183,7 +188,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -205,7 +210,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
         customer_fuel_table_details = validated_data.pop(
             "customer_fuel_table_details",
-            None,
+            {},
         )
 
         models.CustomerFuelTable.objects.filter(
@@ -233,7 +238,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         return instance
 
 
-class CustomerRuleProfileSerializer(GenericSerializer):
+class CustomerRuleProfileSerializer(serializers.ModelSerializer):
     """A serializer for the CustomerRuleProfile model.
 
     The serializer provides default operations for creating, updating, and deleting
@@ -246,7 +251,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
     code.
     """
 
-    document_class = serializers.StringRelatedField(many=True, read_only=True)
+    document_class = DocumentClassificationSerializer(many=True, required=False)
 
     class Meta:
         """
@@ -293,7 +298,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return customer_rule_profile
 
     def update(
-            self, instance: models.CustomerRuleProfile, validated_data: Any
+        self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -308,7 +313,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
             CustomerRuleProfile: The updated CustomerRuleProfile instance.
         """
 
-        document_class = validated_data.pop("document_class", None)
+        document_class = validated_data.pop("document_class", [])
 
         instance.name = validated_data.get("name", instance.name)
         instance.save()
@@ -320,7 +325,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         return instance
 
 
-class CustomerBillingProfileSerializer(GenericSerializer):
+class CustomerBillingProfileSerializer(serializers.ModelSerializer):
     """A serializer for the CustomerBillingProfile model.
 
     The serializer provides default operations for creating, updating, and deleting
@@ -374,35 +379,38 @@ class CustomerBillingProfileSerializer(GenericSerializer):
             CustomerBillingProfile: The newly created CustomerBillingProfile instance.
         """
 
-        email_profile = validated_data.pop("email_profile", None)
-        rule_profile = validated_data.pop("rule_profile", None)
+        email_profile_data = validated_data.pop("email_profile", {})
+        rule_profile_data = validated_data.pop("rule_profile", {})
 
         customer_billing_profile = models.CustomerBillingProfile.objects.create(
             **validated_data
         )
 
-        if email_profile:
-            customer_billing_profile.email_profile = (
-                CustomerEmailProfileSerializer(data=email_profile)
-                .is_valid(raise_exception=True)
-                .save()
+        if email_profile_data:
+            email_profile = models.CustomerEmailProfile.objects.create(
+                **email_profile_data
             )
+            customer_billing_profile.email_profile = email_profile
 
-        if rule_profile:
-            customer_billing_profile.rule_profile = (
-                CustomerRuleProfileSerializer(data=rule_profile)
-                .is_valid(raise_exception=True)
-                .save()
+        if rule_profile_data:
+            rule_profile = models.CustomerRuleProfile.objects.create(
+                **rule_profile_data
             )
+            customer_billing_profile.rule_profile = rule_profile
 
         customer_billing_profile.save()
 
         return customer_billing_profile
 
-    def update(self, validated_data: Any):
+    def update(
+        self, instance: models.CustomerBillingProfile, validated_data: Any
+    ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.
 
         Args:
+            instance (CustomerBillingProfile): The CustomerBillingProfile instance to
+                update.
+
             validated_data (dict): A dictionary of validated data for the updated
                 CustomerBillingProfile instance. This data should include the
                 'email_profile' and 'rule_profile' fields, which are the
@@ -413,8 +421,8 @@ class CustomerBillingProfileSerializer(GenericSerializer):
             CustomerBillingProfile: The updated CustomerBillingProfile instance.
         """
 
-        email_profile = validated_data.pop("email_profile", None)
-        rule_profile = validated_data.pop("rule_profile", None)
+        email_profile = validated_data.pop("email_profile", {})
+        rule_profile = validated_data.pop("rule_profile", {})
 
         instance = models.CustomerBillingProfile.objects.get(
             id=validated_data["id"], organization=validated_data["organization"]
@@ -424,25 +432,33 @@ class CustomerBillingProfileSerializer(GenericSerializer):
         instance.save()
 
         if email_profile:
-            instance.email_profile = (
-                CustomerEmailProfileSerializer(data=email_profile)
-                .is_valid(raise_exception=True)
-                .save()
+            email_profile_instance = models.CustomerEmailProfile.objects.get(
+                id=email_profile["id"], organization=email_profile["organization"]
             )
+
+            email_profile_instance.email = email_profile.get(
+                "email", email_profile_instance.email
+            )
+            email_profile_instance.save()
+
+            instance.email_profile = email_profile_instance
 
         if rule_profile:
-            instance.rule_profile = (
-                CustomerRuleProfileSerializer(data=rule_profile)
-                .is_valid(raise_exception=True)
-                .save()
+            rule_profile_instance = models.CustomerRuleProfile.objects.get(
+                id=rule_profile["id"], organization=rule_profile["organization"]
             )
 
-        instance.save()
+            rule_profile_instance.name = rule_profile.get(
+                "name", rule_profile_instance.name
+            )
+            rule_profile_instance.save()
+
+            instance.rule_profile = rule_profile_instance
 
         return instance
 
 
-class CustomerSerializer(GenericSerializer):
+class CustomerSerializer(serializers.ModelSerializer):
     """A serializer for the `Customer` model.
 
     This serializer converts instances of the `Customer` model into JSON or other data formats,
@@ -482,6 +498,72 @@ class CustomerSerializer(GenericSerializer):
             "modified",
         )
 
+    @cached_property
+    def get_user_organization(self):
+        """Get the organization of the current user.
+
+        Returns:
+            The organization of the current user.
+
+        """
+
+        request = self.context["request"]
+        if request.user.is_authenticated:
+            organization = request.user.organization
+        else:
+            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+            organization = Token.objects.get(key=token).user.organization
+
+        return organization
+
+    def get_or_create_document_classifications(self, documents: Documents) -> list[UUID]:
+        """Get or create document classifications with the given data.
+
+        Args:
+            documents: A list of dictionaries, each representing a document classification with the keys 'name' and 'organization'.
+
+        Returns:
+            A list of the IDs of the retrieved or created document classifications.
+
+        """
+
+        document_ids = []
+        for document in documents:
+            document["organization"] = self.get_user_organization
+            (
+                document_instance,
+                created,
+            ) = models.DocumentClassification.objects.get_or_create(
+                name=document.get("name"), defaults=document
+            )
+            document_ids.append(document_instance.id)
+        return document_ids
+
+    def create_or_update_document_classifications(
+        self, documents: Documents
+    ) -> list[UUID]:
+        """Create or update document classifications with the given data.
+
+        Args:
+            documents: A list of dictionaries, each representing a document classification with the keys 'name' and 'organization'.
+
+        Returns:
+            A list of the IDs of the created or updated document classifications.
+
+        """
+
+        document_ids = []
+        for document in documents:
+            document["organization"] = self.get_user_organization
+            (
+                document_instance,
+                created,
+            ) = models.DocumentClassification.objects.update_or_create(
+                name=document.get("name"), defaults=document
+            )
+            document_ids.append(document_instance.id)
+        return document_ids
+
     def create(self, validated_data: Any) -> models.Customer:
         """Create a new Customer instance.
 
@@ -495,39 +577,18 @@ class CustomerSerializer(GenericSerializer):
             Customer: The newly created Customer instance.
         """
 
-        request = self.context["request"]
-        if request.user.is_authenticated:
-            organization = request.user.organization
-        else:
-            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            organization = Token.objects.get(key=token).user.organization
-
         # Pop the billing profile and contacts from the validated data
         billing_profile_data = validated_data.pop("billing_profile", {})
         contacts_data = validated_data.pop("contacts", [])
 
         # Create the customer
-        validated_data["organization"] = organization
+        validated_data["organization"] = self.get_user_organization
         customer = models.Customer.objects.create(**validated_data)
 
         # Create the billing profile
         if billing_profile_data:
-            email_profile_data = billing_profile_data.pop("email_profile", {})
             rule_profile_data = billing_profile_data.pop("rule_profile", {})
-
-            # Create the customer billing profile
-            if email_profile_data:
-                email_profile_data["organization"] = organization
-                email_profile_data = models.CustomerEmailProfile.objects.create(
-                    **email_profile_data
-                )
-
-            # Create the billing profile
-            if rule_profile_data:
-                rule_profile_data["organization"] = organization
-                rule_profile_data = models.CustomerRuleProfile.objects.create(
-                    **rule_profile_data
-                )
+            email_profile_data = billing_profile_data.pop("email_profile", {})
 
             # Billing profiles are automatically created from signals. However,
             # If passed, we have to delete the one that was created.
@@ -536,18 +597,43 @@ class CustomerSerializer(GenericSerializer):
             )
             customer_billing_profile.delete()
 
-            billing_profile_data["organization"] = organization
-            models.CustomerBillingProfile.objects.create(
+            billing_profile_data["organization"] = self.get_user_organization
+            billing_profile = models.CustomerBillingProfile.objects.create(
                 customer=customer,
-                email_profile=email_profile_data,
-                rule_profile=rule_profile_data,
                 **billing_profile_data,
             )
+
+            # Create the customer billing profile
+            if email_profile_data:
+                email_profile_data["organization"] = self.get_user_organization
+                email_profile = models.CustomerEmailProfile.objects.create(
+                    **email_profile_data
+                )
+                billing_profile.email_profile = email_profile
+
+            # Create the billing profile
+            if rule_profile_data:
+                # Pop document classifications from the rule profile data
+                document_class = rule_profile_data.pop("document_class", [])
+
+                # Create the rule profile
+                rule_profile_data["organization"] = self.get_user_organization
+                rule_profile = models.CustomerRuleProfile.objects.create(
+                    **rule_profile_data
+                )
+                billing_profile.rule_profile = rule_profile
+
+                # Create the document classifications
+                if document_class:
+                    rule_profile.document_class.set(
+                        self.get_or_create_document_classifications(document_class)  # type: ignore
+                    )
 
         # Create the contacts
         if contacts_data:
             contacts_data = [
-                {**contact, "organization": organization} for contact in contacts_data
+                {**contact, "organization": self.get_user_organization}
+                for contact in contacts_data
             ]
             contacts = [
                 models.CustomerContact(customer=customer, **contact)
@@ -557,7 +643,7 @@ class CustomerSerializer(GenericSerializer):
 
         return customer
 
-    def update(self, instance: models.Customer, validated_data: Any):
+    def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:
         """Update an existing Customer instance.
 
         Args:
@@ -572,8 +658,8 @@ class CustomerSerializer(GenericSerializer):
             Customer: The updated Customer instance.
         """
 
-        billing_profile_data = validated_data.pop("billing_profile", None)
-        contacts_data = validated_data.pop("contacts", None)
+        billing_profile_data = validated_data.pop("billing_profile", {})
+        contacts_data = validated_data.pop("contacts", {})
 
         instance.update_customer(**validated_data)
 
@@ -582,18 +668,21 @@ class CustomerSerializer(GenericSerializer):
             email_profile_data = billing_profile_data.pop("email_profile", {})
 
             if email_profile_data:
-                instance.billing_profile.email_profile.update_customer_email_profile(**email_profile_data)
+                instance.billing_profile.email_profile.update_customer_email_profile(  # type: ignore
+                    **email_profile_data
+                )
 
             if rule_profile_data:
-                instance.billing_profile.rule_profile.update_customer_rule_profile(**rule_profile_data)
-
-                document_class = rule_profile_data.pop("document_class", [])
-
-                if document_class:
-                    instance.billing_profile.rule_profile.document_class = document_class
-                    instance.billing_profile.rule_profile.save()
+                document_class_data = rule_profile_data.pop("document_class", [])
+                instance.billing_profile.rule_profile.update_customer_rule_profile(  # type: ignore
+                    **rule_profile_data
+                )
+                instance.billing_profile.rule_profile.document_class.set(  # type: ignore
+                    self.create_or_update_document_classifications(document_class_data)
+                )
 
         if contacts_data:
-            [contact.update_customer_contact(**contact_data) for contact, contact_data in zip(instance.contacts.all(), contacts_data)]
+            for contact, contact_data in zip(instance.contacts.all(), contacts_data):
+                contact.update_customer_contact(**contact_data)
 
         return instance
