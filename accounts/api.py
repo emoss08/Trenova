@@ -45,7 +45,7 @@ class UserViewSet(OrganizationViewSet):
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
     queryset = models.User.objects.all()
 
-    def get_queryset(self) -> QuerySet[models.User]:
+    def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
         """Filter the queryset to only include the current user
 
         Returns:

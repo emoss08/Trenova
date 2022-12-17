@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
@@ -41,6 +42,29 @@ class CustomerViewSet(OrganizationViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ("id", "code", "name")
+
+    def get_queryset(self) -> QuerySet[models.Customer]:
+        """Returns a queryset of customers for the current organization.
+
+        Returns:
+            A queryset of customers for the current organization.
+        """
+        return (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related(
+                "organization",
+                "billing_profiles",
+            )
+            .prefetch_related(
+                "contacts",
+                "billing_profile",
+                "billing_profile__email_profile",
+                "billing_profile__rule_profile",
+                "billing_profile__rule_profile__document_class",
+            )
+        )
 
 
 class CustomerBillingProfileViewSet(OrganizationViewSet):
