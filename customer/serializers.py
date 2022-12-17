@@ -425,21 +425,25 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         instance.is_active = validated_data.get("is_active", instance.is_active)
         instance.save()
 
-        # if email_profile:
-        #     instance.email_profile = (
-        #         CustomerEmailProfileSerializer(data=email_profile)
-        #         .is_valid(raise_exception=True)
-        #         .save()
-        #     )
-        #
-        # if rule_profile:
-        #     instance.rule_profile = (
-        #         CustomerRuleProfileSerializer(data=rule_profile)
-        #         .is_valid(raise_exception=True)
-        #         .save()
-        #     )
-        #
-        # instance.save()
+        if email_profile:
+            email_profile_instance = models.CustomerEmailProfile.objects.get(
+                id=email_profile["id"], organization=email_profile["organization"]
+            )
+
+            email_profile_instance.email = email_profile.get("email", email_profile_instance.email)
+            email_profile_instance.save()
+
+            instance.email_profile = email_profile_instance
+
+        if rule_profile:
+            rule_profile_instance = models.CustomerRuleProfile.objects.get(
+                id=rule_profile["id"], organization=rule_profile["organization"]
+            )
+
+            rule_profile_instance.name = rule_profile.get("name", rule_profile_instance.name)
+            rule_profile_instance.save()
+
+            instance.rule_profile = rule_profile_instance
 
         return instance
 
@@ -553,20 +557,12 @@ class CustomerSerializer(serializers.ModelSerializer):
             Customer: The newly created Customer instance.
         """
 
-        request = self.context["request"]
-        if request.user.is_authenticated:
-            organization = request.user.organization
-        else:
-            token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            organization = Token.objects.get(key=token).user.organization
-
-
         # Pop the billing profile and contacts from the validated data
         billing_profile_data = validated_data.pop("billing_profile", {})
         contacts_data = validated_data.pop("contacts", [])
 
         # Create the customer
-        validated_data["organization"] = organization
+        validated_data["organization"] = self.get_user_organization
         customer = models.Customer.objects.create(**validated_data)
 
         # Create the billing profile
@@ -582,7 +578,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             )
             customer_billing_profile.delete()
 
-            billing_profile_data["organization"] = organization
+            billing_profile_data["organization"] = self.get_user_organization
             billing_profile = models.CustomerBillingProfile.objects.create(
                 customer=customer,
                 **billing_profile_data,
@@ -590,7 +586,7 @@ class CustomerSerializer(serializers.ModelSerializer):
 
             # Create the customer billing profile
             if email_profile_data:
-                email_profile_data["organization"] = organization
+                email_profile_data["organization"] = self.get_user_organization
                 email_profile = models.CustomerEmailProfile.objects.create(
                     **email_profile_data
                 )
@@ -602,7 +598,7 @@ class CustomerSerializer(serializers.ModelSerializer):
                 document_class = rule_profile_data.pop("document_class", [])
 
                 # Create the rule profile
-                rule_profile_data["organization"] = organization
+                rule_profile_data["organization"] = self.get_user_organization
                 rule_profile = models.CustomerRuleProfile.objects.create(
                     **rule_profile_data
                 )
@@ -617,7 +613,7 @@ class CustomerSerializer(serializers.ModelSerializer):
         # Create the contacts
         if contacts_data:
             contacts_data = [
-                {**contact, "organization": organization} for contact in contacts_data
+                {**contact, "organization": self.get_user_organization} for contact in contacts_data
             ]
             contacts = [
                 models.CustomerContact(customer=customer, **contact)
