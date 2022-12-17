@@ -197,18 +197,12 @@ class DocumentClassification(GenericModel):
         return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
-        
+
         super().clean()
-        if (
-                self.__class__.objects.filter(name=self.name)
-                        .exclude(pk=self.pk)
-                        .exists()
-        ):
+        if self.__class__.objects.filter(name=self.name).exclude(pk=self.pk).exists():
             raise ValidationError(
                 {
-                    "name": _(
-                        "Document classification with this name already exists."
-                    ),
+                    "name": _("Document classification with this name already exists."),
                 },
             )
 

@@ -38,8 +38,8 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
         """
 
-        return self.queryset.filter(
+        return self.queryset.filter(  # type: ignore
             organization=self.request.user.organization  # type: ignore
-        ).select_related(  # type: ignore
+        ).select_related(
             "organization",
         )
