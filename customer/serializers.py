@@ -608,9 +608,11 @@ class CustomerSerializer(serializers.ModelSerializer):
                 )
                 billing_profile.rule_profile = rule_profile
 
-                rule_profile.document_class.set(
-                    self.get_or_create_document_classifications(document_class)
-                )
+                # Create the document classifications
+                if document_class:
+                    rule_profile.document_class.set(
+                        self.get_or_create_document_classifications(document_class)
+                    )
 
         # Create the contacts
         if contacts_data:
