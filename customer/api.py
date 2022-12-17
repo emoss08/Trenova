@@ -42,6 +42,29 @@ class CustomerViewSet(OrganizationViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ("id", "code", "name")
 
+    def get_queryset(self) -> QuerySet[models.Customer]:
+        """Returns a queryset of customers for the current organization.
+
+        Returns:
+            A queryset of customers for the current organization.
+        """
+        return (
+            self
+            .queryset
+            .filter(organization=self.request.user.organization)  # type: ignore
+            .select_related(
+                "organization",
+                "billing_profiles",
+            )
+            .prefetch_related(
+                "contacts",
+                "billing_profile",
+                "billing_profile__email_profile",
+                "billing_profile__rule_profile",
+                "billing_profile__rule_profile__document_class",
+            )
+        )
+
 
 class CustomerBillingProfileViewSet(OrganizationViewSet):
     """A viewset for viewing and editing customer billing profile information in the system.
