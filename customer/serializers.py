@@ -236,7 +236,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         return instance
 
 
-class CustomerRuleProfileSerializer(serializers.Serializer):
+class CustomerRuleProfileSerializer(serializers.ModelSerializer):
     """A serializer for the CustomerRuleProfile model.
 
     The serializer provides default operations for creating, updating, and deleting
@@ -323,7 +323,7 @@ class CustomerRuleProfileSerializer(serializers.Serializer):
         return instance
 
 
-class CustomerBillingProfileSerializer(serializers.Serializer):
+class CustomerBillingProfileSerializer(serializers.ModelSerializer):
     """A serializer for the CustomerBillingProfile model.
 
     The serializer provides default operations for creating, updating, and deleting
@@ -560,6 +560,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             token = request.META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
             organization = Token.objects.get(key=token).user.organization
 
+
         # Pop the billing profile and contacts from the validated data
         billing_profile_data = validated_data.pop("billing_profile", {})
         contacts_data = validated_data.pop("contacts", [])
@@ -570,22 +571,9 @@ class CustomerSerializer(serializers.ModelSerializer):
 
         # Create the billing profile
         if billing_profile_data:
-            email_profile_data = billing_profile_data.pop("email_profile", {})
             rule_profile_data = billing_profile_data.pop("rule_profile", {})
+            email_profile_data = billing_profile_data.pop("email_profile", {})
 
-            # Create the customer billing profile
-            if email_profile_data:
-                email_profile_data["organization"] = organization
-                email_profile_data = models.CustomerEmailProfile.objects.create(
-                    **email_profile_data
-                )
-
-            # Create the billing profile
-            if rule_profile_data:
-                rule_profile_data["organization"] = organization
-                rule_profile_data = models.CustomerRuleProfile.objects.create(
-                    **rule_profile_data
-                )
 
             # Billing profiles are automatically created from signals. However,
             # If passed, we have to delete the one that was created.
@@ -595,12 +583,34 @@ class CustomerSerializer(serializers.ModelSerializer):
             customer_billing_profile.delete()
 
             billing_profile_data["organization"] = organization
-            models.CustomerBillingProfile.objects.create(
+            billing_profile = models.CustomerBillingProfile.objects.create(
                 customer=customer,
-                email_profile=email_profile_data,
-                rule_profile=rule_profile_data,
                 **billing_profile_data,
             )
+
+            # Create the customer billing profile
+            if email_profile_data:
+                email_profile_data["organization"] = organization
+                email_profile = models.CustomerEmailProfile.objects.create(
+                    **email_profile_data
+                )
+                billing_profile.email_profile = email_profile
+
+            # Create the billing profile
+            if rule_profile_data:
+                # Pop document classifications from the rule profile data
+                document_class = rule_profile_data.pop("document_class", [])
+
+                # Create the rule profile
+                rule_profile_data["organization"] = organization
+                rule_profile = models.CustomerRuleProfile.objects.create(
+                    **rule_profile_data
+                )
+                billing_profile.rule_profile = rule_profile
+
+                rule_profile.document_class.set(
+                    self.get_or_create_document_classifications(document_class)
+                )
 
         # Create the contacts
         if contacts_data:
