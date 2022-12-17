@@ -21,6 +21,7 @@ import textwrap
 import uuid
 from typing import final
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -175,7 +176,6 @@ class DocumentClassification(GenericModel):
         _("Name"),
         max_length=150,
         help_text=_("Document classification name"),
-        unique=True,
     )
     description = models.TextField(
         _("Description"),
@@ -195,6 +195,22 @@ class DocumentClassification(GenericModel):
             str: Document classification string representation
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    def clean(self) -> None:
+        
+        super().clean()
+        if (
+                self.__class__.objects.filter(name=self.name)
+                        .exclude(pk=self.pk)
+                        .exists()
+        ):
+            raise ValidationError(
+                {
+                    "name": _(
+                        "Document classification with this name already exists."
+                    ),
+                },
+            )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance
