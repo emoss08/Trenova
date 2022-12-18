@@ -6,11 +6,8 @@ jobs:
       - image: cimg/python:3.11.1
 
       - image: cimg/postgres:14.1
-        auth:
-          username: mydockerhub-user
-          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
         environment:
-          POSTGRES_USER: testuser
+          POSTGRES_USER: postgres
           POSTGRES_DB: circle-test_test
 
       - image: cimg/redis:6.2.6
