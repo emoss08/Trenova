@@ -19,6 +19,7 @@ django-stubs-ext==0.7.0
 django-timezone-field~=5.0
 django_compressor==4.1
 djangorestframework~=3.14.0
+djangorestframework-stubs[compatible-mypy]
 factory_boy==3.2.1
 hiredis==2.0.0
 isort==5.10.1
