@@ -13,10 +13,10 @@ django-stubs==1.13.0
 django-stubs-ext==0.7.0
 django-timezone-field~=5.0
 djangorestframework~=3.14.0
+factory_boy==3.2.1
 hiredis==2.0.0
 isort==5.10.1
 phonenumbers==8.13.0
 Pillow==9.3.0
 pytest~=7.2.0
 redis==4.3.4
-factory_boy==3.2.1
