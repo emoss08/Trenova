@@ -7,8 +7,12 @@ jobs:
 
       - image: cimg/postgres:14.1
         environment:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: circle-test_test
+          DATABASE_NAME: circle_test
+          DATABASE_USER: root
+          DATABASE_URL: postgresql://root@localhost/circle_test?sslmode=disable
+          DATABASE_PASSWORD: ''
+          DATABASE_PORT: 5432
+          DATABASE_HOST: localhost
 
       - image: cimg/redis:6.2.6
     steps:
