@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
   python: circleci/python@1.5.0
-  heroku: circleci/heroku@1.2.6
 jobs:
   build_and_test: # this can be any name you choose
     docker:
