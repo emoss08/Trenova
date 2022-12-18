@@ -25,7 +25,7 @@ jobs:
           path: test-results
           destination: tr1
       - persist_to_workspace:
-          root: ~/project
+          root: ~/monta
           paths:
             - .
 
