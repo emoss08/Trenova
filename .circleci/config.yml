@@ -1,44 +1,22 @@
 version: 2.1
-orbs:
-  python: circleci/python@1.5.0
+
 jobs:
-  build_and_test: # this can be any name you choose
+  test-and-lint:
     docker:
       - image: cimg/python:3.10.1
+      - image: cimg/postgres:14.1
         environment:
-          DATABASE_URL: postgresql://root@localhost/circle_test?sslmode=disable
-      - image: circleci/postgres:9.6.2
-        environment:
-          POSTGRES_USER: root
-          POSTGRES_DB: circle_test
+          POSTGRES_USER: example
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
       - run:
-          name: Run tests
-          command: python -m pytest
-      - store_test_results:
-          path: test-results
-      - store_artifacts:
-          path: test-results
-          destination: tr1
-      - persist_to_workspace:
-          root: ~/monta
-          paths:
-            - .
+          name: install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: run tests
+          command: python manage.py test
 
 workflows:
-  on_commit:
+  build-and-test-workflow:
     jobs:
-      - build_and_test
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 0 * * *"
-          filters:
-            branches:
-              only:
-                - main
-    jobs:
-      - build_and_test
+      - test-and-lint
