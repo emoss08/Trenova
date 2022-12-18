@@ -22,12 +22,21 @@ from equipment import models
 from utils.serializers import GenericSerializer
 
 
+class EquipmentTypeDetailSerializer(GenericSerializer):
+    class Meta:
+        model = models.EquipmentType
+        fields = "__all__"
+
+
 class EquipmentTypeSerializer(GenericSerializer):
     """A serializer for the EquipmentType model.
 
     The serializer provides default operations for creating, updating, and deleting
     Equipment Types, as well as listing and retrieving them.
     """
+
+    details = EquipmentTypeDetailSerializer()
+
     class Meta:
         """
         A class representing the metadata for the `EquipmentTypeSerializer` class.
