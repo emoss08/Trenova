@@ -28,3 +28,18 @@ jobs:
           root: ~/project
           paths:
             - .
+
+workflows:
+  on_commit:
+    jobs:
+      - build_and_test
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - build_and_test
