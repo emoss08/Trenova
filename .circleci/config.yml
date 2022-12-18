@@ -7,7 +7,7 @@ jobs:
       - image: cimg/postgres:14.1
       - image: cimg/redis:6.2.6
         environment:
-          POSTGRES_USER: root
+          POSTGRES_USER: postgres
           POSTGRES_DB: circle_test
     steps:
       - checkout
