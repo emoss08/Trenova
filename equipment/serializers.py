@@ -16,14 +16,31 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import Any
+
+from rest_framework import serializers
 
 from equipment import models
-
 from utils.serializers import GenericSerializer
 
 
 class EquipmentTypeDetailSerializer(GenericSerializer):
+    """A serializer for the EquipmentTypeDetail model
+
+    The serializer provides default operations for creating, update and deleting
+    Equipment Type Detail, as well as listing and retrieving them.
+    """
+
+    equipment_class = serializers.ChoiceField(
+        choices=models.EquipmentTypeDetail.EquipmentClassChoices.choices
+    )
+
     class Meta:
+        """
+        A class representing the metadata for the `EquipmentTypeDetailSerializer`
+        class.
+        """
+
         model = models.EquipmentType
         fields = "__all__"
 
@@ -41,6 +58,7 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
         A class representing the metadata for the `EquipmentTypeSerializer` class.
         """
+
         model = models.EquipmentType
         fields = "__all__"
         read_only_fields = (
@@ -49,3 +67,43 @@ class EquipmentTypeSerializer(GenericSerializer):
             "created",
             "modified",
         )
+
+    def create(self, validated_data: Any) -> models.EquipmentType:
+        """Create new Equipment Type
+
+        Args:
+            validated_data (Any): Validated data
+
+        Returns:
+            models.EquipmentType: Created EquipmentType
+        """
+
+        organization = super().get_organization
+
+        equipment_type = models.EquipmentType.objects.create(
+            organization=organization, **validated_data
+        )
+
+        detail_data = validated_data.pop("details")
+        models.EquipmentTypeDetail.objects.create(
+            equipment_type=equipment_type, **detail_data
+        )
+
+        return equipment_type
+
+
+class EquipmentManufacturerSerializer(GenericSerializer):
+    """A serializer for the EquipmentManufacturer Model
+
+    The serializer provides default operations for creating, update and deleting
+    Equipment Manufacturer, as well as listing and retrieving them.
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `EquipmentManufacturerSerializer`
+        class.
+        """
+
+        model = models.EquipmentManufacturer
+        fields = "__all_"

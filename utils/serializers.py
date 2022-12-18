@@ -58,7 +58,7 @@ class GenericSerializer(serializers.ModelSerializer):
             )
             return Token.objects.get(key=token).user.organization
 
-    def create(self, validated_data: Any):
+    def create(self, validated_data: Any) -> _MT:  # type: ignore
         """Create the object
 
         Args:
@@ -68,12 +68,12 @@ class GenericSerializer(serializers.ModelSerializer):
             _M: Created object
         """
 
-        organization: Organization = self._get_organization()
+        organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
-        super().create(validated_data)
+        return super().create(validated_data)
 
-    def update(self, instance: _MT, validated_data: Any):
+    def update(self, instance: _MT, validated_data: Any) -> _MT:
         """Update the object
 
         Args:
@@ -84,7 +84,7 @@ class GenericSerializer(serializers.ModelSerializer):
             _M: Updated instance
         """
 
-        organization: Organization = self._get_organization()
+        organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
-        super().update(instance, validated_data)
+        return super().update(instance, validated_data)
