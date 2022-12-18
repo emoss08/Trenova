@@ -8,13 +8,6 @@ jobs:
         environment:
           POSTGRES_USER: root
           POSTGRES_DB: circle_test
-          DB_NAME: circle_test
-          DATABASE_URL: postgresql://root@localhost/circle_test?sslmode=disable
-          DB_USER: root
-          DB_PASSWORD: ''
-          DB_PORT: 5432
-          DB_HOST: localhost
-          SECRET_KEY: django-insecure-_)41k#h&0%edazs-r#bzb!1b*k0hw-c^!y=bjlfw%h49!x3fd#
     steps:
       - checkout
       - run:
