@@ -5,6 +5,7 @@ jobs:
     docker:
       - image: cimg/python:3.11.1
       - image: cimg/postgres:14.1
+      - image: cimg/redis:6.2.6
         environment:
           POSTGRES_USER: root
           POSTGRES_DB: circle_test
