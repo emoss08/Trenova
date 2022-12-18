@@ -188,7 +188,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -298,7 +298,7 @@ class CustomerRuleProfileSerializer(serializers.ModelSerializer):
         return customer_rule_profile
 
     def update(
-            self, instance: models.CustomerRuleProfile, validated_data: Any
+        self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -403,7 +403,7 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         return customer_billing_profile
 
     def update(
-            self, instance: models.CustomerBillingProfile, validated_data: Any
+        self, instance: models.CustomerBillingProfile, validated_data: Any
     ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.
 
@@ -423,10 +423,6 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
 
         email_profile = validated_data.pop("email_profile", {})
         rule_profile = validated_data.pop("rule_profile", {})
-
-        instance = models.CustomerBillingProfile.objects.get(
-            id=validated_data["id"], organization=validated_data["organization"]
-        )
 
         instance.is_active = validated_data.get("is_active", instance.is_active)
         instance.save()
@@ -498,7 +494,9 @@ class CustomerSerializer(GenericSerializer):
             "modified",
         )
 
-    def _get_or_create_document_classifications(self, documents: Documents) -> list[UUID]:
+    def _get_or_create_document_classifications(
+        self, documents: Documents
+    ) -> list[UUID]:
         """Get or create document classifications with the given data.
 
         Args:
@@ -511,7 +509,7 @@ class CustomerSerializer(GenericSerializer):
 
         document_ids = []
         for document in documents:
-            document["organization"] = super().get_organization()
+            document["organization"] = super().get_organization
             (
                 document_instance,
                 created,
@@ -522,7 +520,7 @@ class CustomerSerializer(GenericSerializer):
         return document_ids
 
     def _create_or_update_document_classifications(
-            self, documents: Documents
+        self, documents: Documents
     ) -> list[UUID]:
         """Create or update document classifications with the given data.
 
@@ -536,7 +534,7 @@ class CustomerSerializer(GenericSerializer):
 
         document_ids = []
         for document in documents:
-            document["organization"] = super().get_organization()
+            document["organization"] = super().get_organization
             (
                 document_instance,
                 created,
@@ -560,7 +558,7 @@ class CustomerSerializer(GenericSerializer):
         """
 
         # Get user organization
-        organization = super().get_organization()
+        organization = super().get_organization
 
         # Pop the billing profile and contacts from the validated data
         billing_profile_data = validated_data.pop("billing_profile", {})
@@ -617,8 +615,7 @@ class CustomerSerializer(GenericSerializer):
         # Create the contacts
         if contacts_data:
             contacts_data = [
-                {**contact, "organization": organization}
-                for contact in contacts_data
+                {**contact, "organization": organization} for contact in contacts_data
             ]
             contacts = [
                 models.CustomerContact(customer=customer, **contact)
@@ -628,7 +625,7 @@ class CustomerSerializer(GenericSerializer):
 
         return customer
 
-    def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:
+    def update(self, instance: models.Customer, validated_data: Any):  # type: ignore
         """Update an existing Customer instance.
 
         Args:
