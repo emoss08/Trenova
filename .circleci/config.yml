@@ -22,7 +22,6 @@ jobs:
       - checkout
       - run: sudo apt-get update
       - run: sudo apt-get install postgresql-client
-      - run: whoami
       - run:
           name: install dependencies
           command: pip install -r requirements.txt
