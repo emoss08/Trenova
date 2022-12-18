@@ -15,10 +15,10 @@ jobs:
     steps:
       - checkout
       - python/install-packages:
-          pkg-manager: pip
+          pkg-manager: pipenv
       - run:
           name: Run tests
-          command: python -m pytest # alternatively run `python -m pytest` if you are running vanilla pytest
+          command: pipenv run python manage.py test # alternatively run `python -m pytest` if you are running vanilla pytest
       - store_test_results:
           path: test-results
       - store_artifacts:
@@ -28,3 +28,18 @@ jobs:
           root: ~/project
           paths:
             - .
+
+workflows:
+  on_commit:
+    jobs:
+      - build_and_test
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - build_and_test
