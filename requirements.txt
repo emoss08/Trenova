@@ -2,6 +2,7 @@ celery~=5.2.7
 django==4.1.4
 django-braces==1.15.0
 django-cacheops==6.1
+django-cors-headers==3.13.0
 django-debug-toolbar~=3.7.0
 django-environ==0.9.0
 django-extensions==3.2.1
