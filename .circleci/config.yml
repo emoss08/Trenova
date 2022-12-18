@@ -4,7 +4,7 @@ jobs:
   test-and-lint:
     docker:
       - image: cimg/python:3.11.1
-      
+
       - image: cimg/postgres:14.1
         auth:
           username: mydockerhub-user
