@@ -4,6 +4,7 @@ django-braces==1.15.0
 django-cacheops==6.1
 django-celery-results==2.4.0
 django-cors-headers==3.13.0
+django-cors-headers==3.13.0
 django-debug-toolbar~=3.7.0
 django-environ==0.9.0
 django-extensions==3.2.1
@@ -14,6 +15,7 @@ django-redis==5.2.0
 django-stubs==1.13.0
 django-stubs-ext==0.7.0
 django-timezone-field~=5.0
+django_compressor==4.1
 djangorestframework~=3.14.0
 factory_boy==3.2.1
 hiredis==2.0.0
@@ -22,5 +24,3 @@ phonenumbers==8.13.0
 Pillow==9.3.0
 pytest~=7.2.0
 redis==4.3.4
-django-cors-headers==3.13.0
-django_compressor==4.1
