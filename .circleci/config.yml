@@ -16,6 +16,11 @@ jobs:
       - run:
           name: run lint
           command: mypy .
+      - run:
+          name: run tests
+          command: pytest
+      - store_test_results:
+          path: test_results
 workflows:
   build-and-test-workflow:
     jobs:
