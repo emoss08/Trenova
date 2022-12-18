@@ -13,10 +13,8 @@ jobs:
           name: install dependencies
           command: pip install -r requirements.txt
       - run:
-          name: run tests
-          command: python manage.py test
-      - store_test_results:
-          path: test_results
+          name: run lint
+          command: mypy .
 workflows:
   build-and-test-workflow:
     jobs:
