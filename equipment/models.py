@@ -89,7 +89,7 @@ class EquipmentTypeDetail(GenericModel):
         CAR = "car", _("Car")
         VAN = "van", _("Van")
         PICKUP = "pickup", _("Pickup")
-        WALKIN = "walk-in", _("Walk-In")
+        WALK_IN = "walk-in", _("Walk-In")
         STRAIGHT = "straight", _("Straight Truck")
         TRACTOR = "tractor", _("Tractor")
         TRAILER = "trailer", _("Trailer")
