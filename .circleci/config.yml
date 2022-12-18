@@ -17,7 +17,7 @@ jobs:
           pkg-manager: pip
       - run:
           name: Run tests
-          command: python -m pytest # alternatively run `python -m pytest` if you are running vanilla pytest
+          command: python -m pytest
       - store_test_results:
           path: test-results
       - store_artifacts:
