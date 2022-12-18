@@ -18,7 +18,7 @@ jobs:
           command: mypy .
       - run:
           name: run tests
-          command: pytest
+          command: python -m pytest -s
       - store_test_results:
           path: test_results
 workflows:
