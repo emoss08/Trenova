@@ -4,11 +4,16 @@ jobs:
   test-and-lint:
     docker:
       - image: cimg/python:3.11.1
+      
       - image: cimg/postgres:14.1
-      - image: cimg/redis:6.2.6
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
         environment:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: circle_test
+          POSTGRES_USER: testuser
+          POSTGRES_DB: circle-test_test
+
+      - image: cimg/redis:6.2.6
     steps:
       - checkout
       - run:
