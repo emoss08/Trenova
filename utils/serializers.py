@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, TypeVar
 
 from django.db.models import Model
+from django.utils.functional import cached_property
 from rest_framework import serializers
 
 from accounts.models import Token
@@ -41,7 +42,8 @@ class GenericSerializer(serializers.ModelSerializer):
         "modified",
     ]
 
-    def _get_organization(self) -> Organization:
+    @cached_property
+    def get_organization(self) -> Organization:
         """Get the organization from the request
 
         Returns:
