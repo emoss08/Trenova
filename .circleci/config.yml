@@ -10,10 +10,9 @@ jobs:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
 
-
       - image: cimg/postgres:14.1
         environment:
-          TEST_DATABASE_URL: postgresql://postgres@localhost/circle_test
+          POSTGRES_USER: postgres
         auth:
           username: mydockerhub-user
           password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
@@ -21,6 +20,9 @@ jobs:
       - image: cimg/redis:6.2.6
     steps:
       - checkout
+      - run: sudo apt-get update
+      - run: sudo apt-get install postgresql-client
+      - run: whoami
       - run:
           name: install dependencies
           command: pip install -r requirements.txt
