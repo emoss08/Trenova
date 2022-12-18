@@ -3,7 +3,7 @@ django==4.1.4
 django-braces==1.15.0
 django-cacheops==6.1
 django-celery-results==2.4.0
-django-celery-results==2.4.0
+django-celery-beat==2.4.0
 django-cors-headers==3.13.0
 django-debug-toolbar~=3.7.0
 django-environ==0.9.0
