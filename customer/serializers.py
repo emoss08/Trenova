@@ -21,10 +21,8 @@ from typing import Any, TypeAlias
 from uuid import UUID
 
 from django.db import transaction
-from django.utils.functional import cached_property
 from rest_framework import serializers
 
-from accounts.models import Token
 from billing.serializers import DocumentClassificationSerializer
 from customer import models
 from utils.serializers import GenericSerializer
@@ -200,13 +198,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
             models.CustomerFuelTable: The updated customer fuel table.
         """
 
-        if self.context["request"].user.is_authenticated:
-            organization = self.context["request"].user.organization
-        else:
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
-            organization = Token.objects.get(key=token).user.organization
+        organization = super().get_organization
 
         customer_fuel_table_details = validated_data.pop(
             "customer_fuel_table_details",
