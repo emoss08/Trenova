@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import textwrap
+import uuid
 from typing import final
 
 from django.core.exceptions import ValidationError
@@ -36,11 +37,11 @@ class EquipmentType(GenericModel):
     create :model:`equipment.Equipment` objects.
     """
 
-    name = models.CharField(
-        _("Name"),
+    id = models.CharField(
+        _("ID"),
         max_length=50,
-        unique=True,
-        help_text=_("Name of the equipment type."),
+        primary_key=True,
+        help_text=_("ID of the equipment type"),
     )
     description = models.TextField(
         _("Description"),
@@ -55,7 +56,7 @@ class EquipmentType(GenericModel):
 
         verbose_name = _("Equipment Type")
         verbose_name_plural = _("Equipment Types")
-        ordering: list[str] = ["-name"]
+        ordering: list[str] = ["-id"]
 
     def __str__(self) -> str:
         """Equipment Type string representation
@@ -63,7 +64,7 @@ class EquipmentType(GenericModel):
         Returns:
             str: String representation of the Equipment Type Model
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.wrap(self.id, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Type absolute URL
@@ -85,15 +86,21 @@ class EquipmentTypeDetail(GenericModel):
         Equipment Class Choices
         """
 
-        UNDEFINED = "undefined", _("UNDEFINED")
-        CAR = "car", _("Car")
-        VAN = "van", _("Van")
-        PICKUP = "pickup", _("Pickup")
-        WALKIN = "walk-in", _("Walk-In")
-        STRAIGHT = "straight", _("Straight Truck")
-        TRACTOR = "tractor", _("Tractor")
-        TRAILER = "trailer", _("Trailer")
+        UNDEFINED = "UNDEFINED", _("UNDEFINED")
+        CAR = "CAR", _("Car")
+        VAN = "VAN", _("Van")
+        PICKUP = "PICKUP", _("Pickup")
+        WALK_IN = "WALK-IN", _("Walk-In")
+        STRAIGHT = "STRAIGHT", _("Straight Truck")
+        TRACTOR = "TRACTOR", _("Tractor")
+        TRAILER = "TRAILER", _("Trailer")
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     equipment_type = models.OneToOneField(
         EquipmentType,
         on_delete=models.CASCADE,
@@ -178,6 +185,16 @@ class EquipmentTypeDetail(GenericModel):
             str: String representation of the Equipment Type Detail Model
         """
         return textwrap.wrap(self.equipment_type.name, 50)[0]
+
+    def update_details(self, **kwargs) -> None:
+        """Updates the Equipment Type Detail Model
+
+        Args:
+            **kwargs: Keyword arguments to update the model
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def get_absolute_url(self) -> str:
         """Equipment Type Detail absolute URL

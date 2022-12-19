@@ -60,8 +60,8 @@ class EquipmentTypeAdmin(GenericAdmin[models.EquipmentType]):
     """
 
     model: type[models.EquipmentType] = models.EquipmentType
-    list_display: tuple[str, ...] = ("name", "description")
-    search_fields: tuple[str, ...] = ("name", "description")
+    list_display: tuple[str, ...] = ("id", "description")
+    search_fields: tuple[str, ...] = ("id", "description")
     inlines = (EquipmentTypeDetailAdmin,)
 
 

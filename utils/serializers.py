@@ -20,12 +20,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any, TypeVar
 
 from django.db.models import Model
+from django.utils.functional import cached_property
 from rest_framework import serializers
 
 from accounts.models import Token
 from organization.models import Organization
 
-_MT = TypeVar("_MT", bound=Model)  # Model Type
+_MT = TypeVar("_MT", bound=Model)
 
 
 class GenericSerializer(serializers.ModelSerializer):
@@ -41,7 +42,8 @@ class GenericSerializer(serializers.ModelSerializer):
         "modified",
     ]
 
-    def _get_organization(self) -> Organization:
+    @cached_property
+    def get_organization(self) -> Organization:
         """Get the organization from the request
 
         Returns:
@@ -56,7 +58,7 @@ class GenericSerializer(serializers.ModelSerializer):
             )
             return Token.objects.get(key=token).user.organization
 
-    def create(self, validated_data: Any):
+    def create(self, validated_data: Any) -> _MT:  # type: ignore
         """Create the object
 
         Args:
@@ -66,12 +68,12 @@ class GenericSerializer(serializers.ModelSerializer):
             _M: Created object
         """
 
-        organization: Organization = self._get_organization()
+        organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
-        super().create(validated_data)
+        return super().create(validated_data)
 
-    def update(self, instance: _MT, validated_data: Any):
+    def update(self, instance: _MT, validated_data: Any) -> _MT:
         """Update the object
 
         Args:
@@ -82,7 +84,7 @@ class GenericSerializer(serializers.ModelSerializer):
             _M: Updated instance
         """
 
-        organization: Organization = self._get_organization()
+        organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
-        super().update(instance, validated_data)
+        return super().update(instance, validated_data)
