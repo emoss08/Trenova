@@ -43,8 +43,6 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
 
         model = models.EquipmentTypeDetail
         fields = (
-            "organization",
-            "id",
             "equipment_class",
             "fixed_cost",
             "variable_cost",
@@ -103,7 +101,7 @@ class EquipmentTypeSerializer(GenericSerializer):
         Returns:
             models.EquipmentType: Created EquipmentType
         """
-        detail_data = validated_data.pop("equipment_type_details")
+        detail_data = validated_data.pop("equipment_type_details", {})
         organization = super().get_organization
 
         equipment_type = models.EquipmentType.objects.create(
@@ -118,12 +116,32 @@ class EquipmentTypeSerializer(GenericSerializer):
                 _details.delete()
 
             models.EquipmentTypeDetail.objects.create(
-                organization=organization,
-                equipment_type=equipment_type, **detail_data
+                organization=organization, equipment_type=equipment_type, **detail_data
             )
 
         return equipment_type
 
+    def update(self, instance: models.EquipmentType, validated_data: Any) -> models.EquipmentType:
+        """Update Equipment Type
+
+        Args:
+            instance (models.EquipmentType): EquipmentType instance
+            validated_data (Any): Validated data
+
+        Returns:
+            models.EquipmentType: Updated EquipmentType
+        """
+
+        detail_data = validated_data.pop("equipment_type_details", {})
+
+        instance.id = validated_data.get("id", instance.id)
+        instance.description = validated_data.get("description", instance.description)
+        instance.save()
+
+        if detail_data:
+            instance.equipment_type_details.update_details(**detail_data)
+
+        return instance
 
 class EquipmentManufacturerSerializer(GenericSerializer):
     """A serializer for the EquipmentManufacturer Model

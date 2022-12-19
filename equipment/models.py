@@ -186,6 +186,16 @@ class EquipmentTypeDetail(GenericModel):
         """
         return textwrap.wrap(self.equipment_type.name, 50)[0]
 
+    def update_details(self, **kwargs) -> None:
+        """Updates the Equipment Type Detail Model
+
+        Args:
+            **kwargs: Keyword arguments to update the model
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
     def get_absolute_url(self) -> str:
         """Equipment Type Detail absolute URL
 
