@@ -112,7 +112,7 @@ class EquipmentTypeSerializer(GenericSerializer):
             _details = models.EquipmentTypeDetail.objects.get(
                 organization=organization, equipment_type=equipment_type
             )
-            if _details:
+            if _details:  # type: ignore
                 _details.delete()
 
             models.EquipmentTypeDetail.objects.create(
@@ -121,7 +121,9 @@ class EquipmentTypeSerializer(GenericSerializer):
 
         return equipment_type
 
-    def update(self, instance: models.EquipmentType, validated_data: Any) -> models.EquipmentType:
+    def update(  # type: ignore
+        self, instance: models.EquipmentType, validated_data: Any
+    ) -> models.EquipmentType:
         """Update Equipment Type
 
         Args:
@@ -142,6 +144,7 @@ class EquipmentTypeSerializer(GenericSerializer):
             instance.equipment_type_details.update_details(**detail_data)
 
         return instance
+
 
 class EquipmentManufacturerSerializer(GenericSerializer):
     """A serializer for the EquipmentManufacturer Model

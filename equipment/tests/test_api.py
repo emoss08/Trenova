@@ -198,4 +198,3 @@ def test_update_equipment_details(api_client):
     assert response.data["description"] == "Test Equipment Updated"
     assert response.data["equipment_type_details"]["equipment_class"] == "TRAILER"
     assert response.data["equipment_type_details"]["exempt_from_tolls"] is True
-
