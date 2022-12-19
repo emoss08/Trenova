@@ -31,6 +31,7 @@ from control_file import api as control_file_api
 from customer import api as customer_api
 from organization import api as org_api
 from worker import api as worker_api
+from equipment import api as equipment_api
 
 router = routers.DefaultRouter()
 
@@ -96,12 +97,17 @@ router.register(r"customers", customer_api.CustomerViewSet, basename="customer")
 router.register(
     r"customer_fuel_tables",
     customer_api.CustomerFuelTableViewSet,
-    basename="customer-fuel-table",
+    basename="customer-fuel-tables",
 )
 router.register(
     r"customer_rule_profiles",
     customer_api.CustomerRuleProfileViewSet,
-    basename="customer-rule-profile",
+    basename="customer-rule-profiles",
+)
+
+# Equipment Routing
+router.register(
+    r"equipment_types", equipment_api.EquipmentTypeViewSet, basename="equipment-types"
 )
 
 urlpatterns = [
