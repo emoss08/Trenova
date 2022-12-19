@@ -41,8 +41,28 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
         class.
         """
 
-        model = models.EquipmentType
-        fields = "__all__"
+        model = models.EquipmentTypeDetail
+        fields = (
+            "organization",
+            "id",
+            "equipment_class",
+            "fixed_cost",
+            "variable_cost",
+            "height",
+            "length",
+            "width",
+            "weight",
+            "idling_fuel_usage",
+            "exempt_from_tolls",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "id",
+            "created",
+            "modified",
+        )
 
 
 class EquipmentTypeSerializer(GenericSerializer):
@@ -52,7 +72,7 @@ class EquipmentTypeSerializer(GenericSerializer):
     Equipment Types, as well as listing and retrieving them.
     """
 
-    details = EquipmentTypeDetailSerializer()
+    equipment_type_details = EquipmentTypeDetailSerializer(required=False)
 
     class Meta:
         """
@@ -60,10 +80,16 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
 
         model = models.EquipmentType
-        fields = "__all__"
-        read_only_fields = (
+        fields = (
             "organization",
             "id",
+            "description",
+            "created",
+            "modified",
+            "equipment_type_details",
+        )
+        read_only_fields = (
+            "organization",
             "created",
             "modified",
         )
@@ -77,17 +103,24 @@ class EquipmentTypeSerializer(GenericSerializer):
         Returns:
             models.EquipmentType: Created EquipmentType
         """
-
+        detail_data = validated_data.pop("equipment_type_details")
         organization = super().get_organization
 
         equipment_type = models.EquipmentType.objects.create(
             organization=organization, **validated_data
         )
 
-        detail_data = validated_data.pop("details")
-        models.EquipmentTypeDetail.objects.create(
-            equipment_type=equipment_type, **detail_data
-        )
+        if detail_data:
+            _details = models.EquipmentTypeDetail.objects.get(
+                organization=organization, equipment_type=equipment_type
+            )
+            if _details:
+                _details.delete()
+
+            models.EquipmentTypeDetail.objects.create(
+                organization=organization,
+                equipment_type=equipment_type, **detail_data
+            )
 
         return equipment_type
 

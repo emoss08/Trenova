@@ -26,7 +26,7 @@ from rest_framework import serializers
 from accounts.models import Token
 from organization.models import Organization
 
-_MT = TypeVar("_MT", bound=Model)  # Model Type
+_MT = TypeVar("_MT", bound=Model)
 
 
 class GenericSerializer(serializers.ModelSerializer):
