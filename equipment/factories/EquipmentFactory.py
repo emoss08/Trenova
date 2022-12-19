@@ -35,7 +35,7 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
         model = models.EquipmentType
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("word", locale="en_US")
+    name = "Test Equipment Type"
     description = "Test Equipment Type Description"
 
 
