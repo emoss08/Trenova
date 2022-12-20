@@ -184,7 +184,7 @@ class EquipmentTypeDetail(GenericModel):
         Returns:
             str: String representation of the Equipment Type Detail Model
         """
-        return textwrap.wrap(self.equipment_type.name, 50)[0]
+        return textwrap.wrap(self.equipment_type.id, 50)[0]
 
     def update_details(self, **kwargs) -> None:
         """Updates the Equipment Type Detail Model
@@ -449,6 +449,32 @@ class Equipment(GenericModel):
             str: String representation of the Equipment Model
         """
         return textwrap.wrap(self.id, 50)[0]
+
+
+    def clean(self) -> None:
+        """Equipment Model clean method
+
+        Raises:
+            ValidationError: If the Equipment is leased and the leased date is not set
+        """
+        if self.leased and not self.leased_date:
+            raise ValidationError(
+                {
+                    "leased_date": _(
+                        "Leased date must be set if the equipment is leased."
+                    )
+                }
+            )
+
+        if self.primary_worker and self.secondary_worker:
+            if self.primary_worker == self.secondary_worker:
+                raise ValidationError(
+                    {
+                        "primary_worker": _(
+                            "Primary worker and secondary worker cannot be the same."
+                        )
+                    }
+                )
 
     def get_absolute_url(self) -> str:
         """Equipment absolute URL

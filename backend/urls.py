@@ -109,6 +109,9 @@ router.register(
 router.register(
     r"equipment_types", equipment_api.EquipmentTypeViewSet, basename="equipment-types"
 )
+router.register(
+    r"equipment", equipment_api.EquipmentViewSet, basename="equipment"
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
