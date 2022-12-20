@@ -24,6 +24,7 @@ from rest_framework import serializers
 from accounts.models import Token
 from utils.serializers import GenericSerializer
 from worker import models
+from django.utils.translation import gettext_lazy as _
 
 
 class WorkerCommentSerializer(GenericSerializer):
@@ -277,8 +278,23 @@ class WorkerSerializer(serializers.ModelSerializer):
             for comment_data in comments_data:
                 comment_id = comment_data.get("id", None)
                 if comment_id:
-                    worker_comment = models.WorkerComment.objects.get(id=comment_id, worker=instance)
-                    worker_comment.comment = comment_data.get("comment", worker_comment.comment)
+                    try:
+                        worker_comment = models.WorkerComment.objects.get(
+                            id=comment_id, worker=instance
+                        )
+                    except models.WorkerComment.DoesNotExist as e:
+                        raise serializers.ValidationError(
+                            {
+                                "comments": (
+                                    f"Worker comment with id '{comment_id}' does not exist. "
+                                    f"Delete the ID and try again."
+                                )
+                            }
+                        )
+
+                    worker_comment.comment = comment_data.get(
+                        "comment", worker_comment.comment
+                    )
                     worker_comment.save()
                 else:
                     comment_data["organization"] = instance.organization
@@ -289,8 +305,12 @@ class WorkerSerializer(serializers.ModelSerializer):
             for contact_data in contacts_data:
                 contact_id = contact_data.get("id", None)
                 if contact_id:
-                    worker_contact = models.WorkerContact.objects.get(id=contact_id, worker=instance)
-                    worker_contact.contact = contact_data.get("contact", worker_contact.contact)
+                    worker_contact = models.WorkerContact.objects.get(
+                        id=contact_id, worker=instance
+                    )
+                    worker_contact.contact = contact_data.get(
+                        "contact", worker_contact.contact
+                    )
                     worker_contact.save()
                 else:
                     contact_data["organization"] = instance.organization
