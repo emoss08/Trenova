@@ -482,15 +482,16 @@ class WorkerContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def save(self, **kwargs: Any):
-        """Worker Contact save method
+    def update_location_contact(self, **kwargs):
+        """Update the location contact
 
-        Returns:
-            None
+        Args:
+            **kwargs: Keyword arguments
         """
 
-        self.full_clean()
-        super().save(**kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def get_absolute_url(self) -> str:
         """Worker Contact absolute url
@@ -561,7 +562,7 @@ class WorkerComment(GenericModel):
 
         return textwrap.wrap(self.comment, 50)[0]
 
-    def update_comments(self, **kwargs):
+    def update_location_comments(self, **kwargs):
         """Update the worker comment
 
         Args:

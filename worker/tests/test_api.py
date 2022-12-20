@@ -22,9 +22,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from accounts.factories import TokenFactory, UserFactory
+from dispatch.factories import CommentTypeFactory
 from organization.factories import OrganizationFactory
 from worker.factories import WorkerFactory
-from dispatch.factories import CommentTypeFactory
 
 client = APIClient()
 
@@ -128,6 +128,7 @@ def test_create_worker_with_profile(token):
         format="json",
     )
     assert response.status_code == 201
+
 
 @pytest.mark.django_db
 def test_create_worker_with_comments(token, comment_type):
