@@ -284,6 +284,13 @@ class WorkerSerializer(serializers.ModelSerializer):
 
         if contacts_data:
             for contact_data in contacts_data:
-                models.WorkerContact.objects.update_or_create(worker=instance, **contact_data)
+                contact_id = contact_data.get("id", None)
+                if contact_id:
+                    worker_contact = models.WorkerContact.objects.get(id=contact_id, worker=instance)
+                    worker_contact.contact = contact_data.get("contact", worker_contact.contact)
+                    worker_contact.save()
+                else:
+                    contact_data["organization"] = instance.organization
+                    instance.contacts.create(**contact_data)
 
         return instance

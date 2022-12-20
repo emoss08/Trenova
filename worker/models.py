@@ -188,17 +188,6 @@ class Worker(GenericModel):
 
         return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
 
-    def update_comments(self, *args, **kwargs) -> None:
-        """Update the comments of the worker
-
-        Args:
-            comments (list[dict[str, Any]]): The comments to update
-        """
-        print(args)
-        print(kwargs)
-
-
-
     def get_absolute_url(self) -> str:
         """Worker absolute url
 
