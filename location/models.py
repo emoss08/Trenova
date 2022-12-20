@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import textwrap
 import uuid
+from typing import Any
 
 from django.conf import settings
 from django.db import models
@@ -184,7 +185,7 @@ class Location(GenericModel):
         Returns:
             str: Location ID
         """
-        return str(self.id)
+        return textwrap.wrap(f"{self.id}: {self.code}", 50)[0]
 
     def get_absolute_url(self) -> str:
         """Location absolute URL
@@ -219,8 +220,8 @@ class LocationContact(GenericModel):
         Location,
         on_delete=models.PROTECT,
         verbose_name=_("Location"),
-        related_name="location_contact",
-        related_query_name="location_contacts",
+        related_name="location_contacts",
+        related_query_name="location_contact",
         help_text=_("Location"),
     )
     name = models.CharField(
@@ -266,6 +267,16 @@ class LocationContact(GenericModel):
             str: LocationContact name
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    def update_location_contact(self, **kwargs: Any) -> None:
+        """Update LocationContact
+
+        Args:
+            **kwargs (Any): LocationContact attributes
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def get_absolute_url(self) -> str:
         """LocationContact absolute URL
@@ -329,6 +340,16 @@ class LocationComment(GenericModel):
             str: LocationComment name
         """
         return textwrap.wrap(self.comment, 50)[0]
+
+    def update_location_comment(self, **kwargs: Any) -> None:
+        """Update LocationComment
+
+        Args:
+            **kwargs (Any): LocationComment attributes
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def get_absolute_url(self) -> str:
         """LocationComment absolute URL

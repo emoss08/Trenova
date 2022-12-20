@@ -450,7 +450,6 @@ class Equipment(GenericModel):
         """
         return textwrap.wrap(self.id, 50)[0]
 
-
     def clean(self) -> None:
         """Equipment Model clean method
 
