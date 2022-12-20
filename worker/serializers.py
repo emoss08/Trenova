@@ -268,9 +268,11 @@ class WorkerSerializer(serializers.ModelSerializer):
         instance.entered_by = validated_data.get("entered_by", instance.entered_by)
         instance.save()
 
+        # Update the worker profile.
         if profile_data:
             instance.profile.update_profile(**profile_data)
 
+        # Update the worker comments.
         if comments_data:
             for comment_data in comments_data:
                 comment_id = comment_data.get("id", None)
@@ -282,6 +284,7 @@ class WorkerSerializer(serializers.ModelSerializer):
                     comment_data["organization"] = instance.organization
                     instance.comments.create(**comment_data)
 
+        # Update the worker contacts.
         if contacts_data:
             for contact_data in contacts_data:
                 contact_id = contact_data.get("id", None)
