@@ -162,3 +162,25 @@ class EquipmentManufacturerSerializer(GenericSerializer):
 
         model = models.EquipmentManufacturer
         fields = "__all_"
+
+class EquipmentSerializer(GenericSerializer):
+    """A serializer for the Equipment model
+
+    The serializer provides default operations for creating, update and deleting
+    Equipment, as well as listing and retrieving them.
+    """
+
+    is_active = serializers.BooleanField(default=True)
+
+    class Meta:
+        """
+        A class representing the metadata for the `EquipmentSerializer` class.
+        """
+
+        model = models.Equipment
+        fields = "__all__"
+        read_only_fields = (
+            "organization",
+            "created",
+            "modified",
+        )
