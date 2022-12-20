@@ -33,6 +33,7 @@ from organization import api as org_api
 from worker import api as worker_api
 from equipment import api as equipment_api
 from location import api as location_api
+from dispatch import api as dispatch_api
 
 router = routers.DefaultRouter()
 
@@ -119,6 +120,13 @@ router.register(
     basename="location-categories",
 )
 router.register(r"locations", location_api.LocationViewSet, basename="locations")
+
+# Dispatch Routing
+router.register(r"comment_types", dispatch_api.CommentTypeViewSet, basename="comment-types")
+router.register(r"delay_codes", dispatch_api.DelayCodeViewSet, basename="delay-codes")
+router.register(r"fleet_codes", dispatch_api.FleetCodeViewSet, basename="fleet-codes")
+router.register(r"dispatch_control", dispatch_api.DispatchControlViewSet, basename="dispatch-control")
+
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
