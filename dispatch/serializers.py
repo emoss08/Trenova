@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Any
 
 from rest_framework import serializers
 
@@ -57,6 +56,7 @@ class CommentTypeSerializer(GenericSerializer):
             "modified",
         )
 
+
 class DelayCodeSerializer(GenericSerializer):
     """A serializer for the DelayCode model.
 
@@ -76,20 +76,19 @@ class DelayCodeSerializer(GenericSerializer):
 
         model = models.DelayCode
         fields = (
-            "id",
-            "organization",
             "code",
+            "organization",
             "description",
             "f_carrier_or_driver",
             "created",
             "modified",
         )
         read_only_fields = (
-            "id",
             "organization",
             "created",
             "modified",
         )
+
 
 class FleetCodeSerializer(GenericSerializer):
     """A serializer for the FleetCode model.
@@ -112,9 +111,10 @@ class FleetCodeSerializer(GenericSerializer):
 
         model = models.FleetCode
         fields = (
-            "id",
-            "code",
             "organization",
+            "is_active",
+            "code",
+            "description",
             "revenue_goal",
             "deadhead_goal",
             "mileage_goal",
@@ -123,11 +123,11 @@ class FleetCodeSerializer(GenericSerializer):
             "modified",
         )
         read_only_fields = (
-            "id",
             "organization",
             "created",
             "modified",
         )
+
 
 class DispatchControlSerializer(GenericSerializer):
     """A serializer for the DispatchControl model.
@@ -143,11 +143,11 @@ class DispatchControlSerializer(GenericSerializer):
 
     record_service_incident = serializers.ChoiceField(
         choices=models.DispatchControl.ServiceIncidentControlChoices.choices,
-        default=models.DispatchControl.ServiceIncidentControlChoices.NEVER
+        default=models.DispatchControl.ServiceIncidentControlChoices.NEVER,
     )
     distance_method = serializers.ChoiceField(
         choices=models.DispatchControl.DistanceMethodChoices.choices,
-        default=models.DispatchControl.DistanceMethodChoices.MONTA
+        default=models.DispatchControl.DistanceMethodChoices.MONTA,
     )
 
     class Meta:
