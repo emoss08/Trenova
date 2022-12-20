@@ -24,12 +24,15 @@ from rest_framework import serializers
 from accounts.models import Token
 from utils.serializers import GenericSerializer
 from worker import models
+from django.utils.translation import gettext_lazy as _
 
 
 class WorkerCommentSerializer(GenericSerializer):
     """
     Worker Comment Serializer
     """
+
+    id = serializers.UUIDField(required=False)
 
     class Meta:
         """
@@ -39,14 +42,13 @@ class WorkerCommentSerializer(GenericSerializer):
         model = models.WorkerComment
         fields = [
             "id",
-            "worker",
             "comment_type",
             "comment",
             "entered_by",
             "created",
             "modified",
         ]
-        read_only_fields = ["id", "created", "modified"]
+        read_only_fields = ["created", "modified"]
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -244,14 +246,6 @@ class WorkerSerializer(serializers.ModelSerializer):
             models.Worker: Worker instance.
         """
 
-        if self.context["request"].user.is_authenticated:
-            organization = self.context["request"].user.organization
-        else:
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
-            organization = Token.objects.get(key=token).user.organization
-
         profile_data = validated_data.pop("profile", None)
         comments_data = validated_data.pop("comments", None)
         contacts_data = validated_data.pop("contacts", None)
@@ -275,18 +269,51 @@ class WorkerSerializer(serializers.ModelSerializer):
         instance.entered_by = validated_data.get("entered_by", instance.entered_by)
         instance.save()
 
+        # Update the worker profile.
         if profile_data:
-            profile_data["organization"] = organization
-            models.WorkerProfile.objects.filter(worker=instance).update(**profile_data)
+            instance.profile.update_profile(**profile_data)
 
+        # Update the worker comments.
         if comments_data:
             for comment_data in comments_data:
-                comment_data["organization"] = organization
-                models.WorkerComment.objects.create(worker=instance, **comment_data)
+                comment_id = comment_data.get("id", None)
+                if comment_id:
+                    try:
+                        worker_comment = models.WorkerComment.objects.get(
+                            id=comment_id, worker=instance
+                        )
+                    except models.WorkerComment.DoesNotExist as e:
+                        raise serializers.ValidationError(
+                            {
+                                "comments": (
+                                    f"Worker comment with id '{comment_id}' does not exist. "
+                                    f"Delete the ID and try again."
+                                )
+                            }
+                        )
 
+                    worker_comment.comment = comment_data.get(
+                        "comment", worker_comment.comment
+                    )
+                    worker_comment.save()
+                else:
+                    comment_data["organization"] = instance.organization
+                    instance.comments.create(**comment_data)
+
+        # Update the worker contacts.
         if contacts_data:
             for contact_data in contacts_data:
-                contact_data["organization"] = organization
-                models.WorkerContact.objects.create(worker=instance, **contact_data)
+                contact_id = contact_data.get("id", None)
+                if contact_id:
+                    worker_contact = models.WorkerContact.objects.get(
+                        id=contact_id, worker=instance
+                    )
+                    worker_contact.contact = contact_data.get(
+                        "contact", worker_contact.contact
+                    )
+                    worker_contact.save()
+                else:
+                    contact_data["organization"] = instance.organization
+                    instance.contacts.create(**contact_data)
 
         return instance
