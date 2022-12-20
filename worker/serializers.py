@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from accounts.models import Token
 from utils.serializers import GenericSerializer
 from worker import models
-from django.utils.translation import gettext_lazy as _
 
 
 class WorkerCommentSerializer(GenericSerializer):
@@ -56,6 +56,8 @@ class WorkerContactSerializer(GenericSerializer):
     Worker Contact Serializer
     """
 
+    id = serializers.UUIDField(required=False)
+
     class Meta:
         """
         Metaclass for WorkerContactSerializer
@@ -74,8 +76,6 @@ class WorkerContactSerializer(GenericSerializer):
             "modified",
         ]
         read_only_fields = (
-            "organization",
-            "id",
             "created",
             "modified",
         )
@@ -223,9 +223,9 @@ class WorkerSerializer(serializers.ModelSerializer):
 
         # Create the Worker Contacts
         if contacts_data:
-            for contact_data in contacts_data:
-                contact_data["organization"] = organization
-                models.WorkerContact.objects.create(worker=worker, **contact_data)
+            for contact in contacts_data:
+                contact["organization"] = organization
+                models.WorkerContact.objects.create(worker=worker, **contact)
 
         # Create the Worker Comments
         if comments_data:
@@ -282,20 +282,19 @@ class WorkerSerializer(serializers.ModelSerializer):
                         worker_comment = models.WorkerComment.objects.get(
                             id=comment_id, worker=instance
                         )
-                    except models.WorkerComment.DoesNotExist as e:
+                    except models.WorkerComment.DoesNotExist:
                         raise serializers.ValidationError(
                             {
                                 "comments": (
-                                    f"Worker comment with id '{comment_id}' does not exist. "
-                                    f"Delete the ID and try again."
+                                    _(
+                                        f"Worker comment with id '{comment_id}' does not exist. "
+                                        f"Delete the ID and try again."
+                                    )
                                 )
                             }
                         )
 
-                    worker_comment.comment = comment_data.get(
-                        "comment", worker_comment.comment
-                    )
-                    worker_comment.save()
+                    worker_comment.update_location_comments(**comment_data)
                 else:
                     comment_data["organization"] = instance.organization
                     instance.comments.create(**comment_data)
@@ -304,14 +303,25 @@ class WorkerSerializer(serializers.ModelSerializer):
         if contacts_data:
             for contact_data in contacts_data:
                 contact_id = contact_data.get("id", None)
+
                 if contact_id:
-                    worker_contact = models.WorkerContact.objects.get(
-                        id=contact_id, worker=instance
-                    )
-                    worker_contact.contact = contact_data.get(
-                        "contact", worker_contact.contact
-                    )
-                    worker_contact.save()
+                    try:
+                        worker_contact = models.WorkerContact.objects.get(
+                            id=contact_id, worker=instance
+                        )
+                    except models.WorkerContact.DoesNotExist:
+                        raise serializers.ValidationError(
+                            {
+                                "comments": (
+                                    _(
+                                        f"Worker contact with id '{contact_id}' does not exist. "
+                                        f"Delete the ID and try again."
+                                    )
+                                )
+                            }
+                        )
+
+                    worker_contact.update_location_contact(**contact_data)
                 else:
                     contact_data["organization"] = instance.organization
                     instance.contacts.create(**contact_data)

@@ -32,6 +32,7 @@ from customer import api as customer_api
 from organization import api as org_api
 from worker import api as worker_api
 from equipment import api as equipment_api
+from location import api as location_api
 
 router = routers.DefaultRouter()
 
@@ -109,9 +110,15 @@ router.register(
 router.register(
     r"equipment_types", equipment_api.EquipmentTypeViewSet, basename="equipment-types"
 )
+router.register(r"equipment", equipment_api.EquipmentViewSet, basename="equipment")
+
+# Location Routing
 router.register(
-    r"equipment", equipment_api.EquipmentViewSet, basename="equipment"
+    r"locations_categories",
+    location_api.LocationCategoryViewSet,
+    basename="location-categories",
 )
+router.register(r"locations", location_api.LocationViewSet, basename="locations")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

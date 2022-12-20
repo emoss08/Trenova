@@ -163,6 +163,7 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         model = models.EquipmentManufacturer
         fields = "__all_"
 
+
 class EquipmentSerializer(GenericSerializer):
     """A serializer for the Equipment model
 
