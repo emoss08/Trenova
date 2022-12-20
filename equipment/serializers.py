@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from typing import Any
 
 from rest_framework import serializers
@@ -109,11 +110,11 @@ class EquipmentTypeSerializer(GenericSerializer):
         )
 
         if detail_data:
-            _details = models.EquipmentTypeDetail.objects.get(
+            details = models.EquipmentTypeDetail.objects.get(
                 organization=organization, equipment_type=equipment_type
             )
-            if _details:  # type: ignore
-                _details.delete()
+            if details:  # type: ignore
+                details.delete()
 
             models.EquipmentTypeDetail.objects.create(
                 organization=organization, equipment_type=equipment_type, **detail_data

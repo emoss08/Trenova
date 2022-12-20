@@ -31,6 +31,8 @@ class WorkerCommentSerializer(GenericSerializer):
     Worker Comment Serializer
     """
 
+    id = serializers.UUIDField(required=False)
+
     class Meta:
         """
         Metaclass for WorkerCommentSerializer
@@ -45,7 +47,7 @@ class WorkerCommentSerializer(GenericSerializer):
             "created",
             "modified",
         ]
-        read_only_fields = ["id", "created", "modified"]
+        read_only_fields = ["created", "modified"]
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -271,8 +273,14 @@ class WorkerSerializer(serializers.ModelSerializer):
 
         if comments_data:
             for comment_data in comments_data:
-                comment_data["organization"] = instance.organization
-                instance.comments.create(**comment_data)
+                comment_id = comment_data.get("id", None)
+                if comment_id:
+                    worker_comment = models.WorkerComment.objects.get(id=comment_id, worker=instance)
+                    worker_comment.comment = comment_data.get("comment", worker_comment.comment)
+                    worker_comment.save()
+                else:
+                    comment_data["organization"] = instance.organization
+                    instance.comments.create(**comment_data)
 
         if contacts_data:
             for contact_data in contacts_data:

@@ -63,7 +63,7 @@ class GenericSerializer(serializers.ModelSerializer):
             validated_data (dict[str, Any]): Validated data
 
         Returns:
-            _M: Created object
+            _MT: Created object
         """
 
         organization: Organization = self.get_organization
@@ -79,7 +79,7 @@ class GenericSerializer(serializers.ModelSerializer):
             validated_data (Any): Validated data
 
         Returns:
-            _M: Updated instance
+            _MT: Updated instance
         """
 
         organization: Organization = self.get_organization
