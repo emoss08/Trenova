@@ -168,15 +168,6 @@ class Worker(GenericModel):
 
         return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
 
-    def get_absolute_url(self) -> str:
-        """Worker absolute url
-
-        Returns:
-            str: Worker absolute url
-        """
-
-        return reverse("worker:detail", kwargs={"pk": self.pk})
-
     @cached_property
     def get_full_name(self) -> str:
         """Worker full name
@@ -196,6 +187,26 @@ class Worker(GenericModel):
         """
 
         return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
+
+    def update_comments(self, *args, **kwargs) -> None:
+        """Update the comments of the worker
+
+        Args:
+            comments (list[dict[str, Any]]): The comments to update
+        """
+        print(args)
+        print(kwargs)
+
+
+
+    def get_absolute_url(self) -> str:
+        """Worker absolute url
+
+        Returns:
+            str: Worker absolute url
+        """
+
+        return reverse("worker:detail", kwargs={"pk": self.pk})
 
 
 class WorkerProfile(GenericModel):
@@ -347,6 +358,17 @@ class WorkerProfile(GenericModel):
             f"{self.worker.first_name} {self.worker.last_name} Profile", 50
         )[0]
 
+    def update_profile(self, **kwargs):
+        """Update the worker profile
+
+        Args:
+            **kwargs: Keyword arguments
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
     def clean(self) -> None:
         """Worker Profile clean method
 
@@ -360,12 +382,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
@@ -507,7 +529,7 @@ class WorkerComment(GenericModel):
         Worker,
         on_delete=models.CASCADE,
         related_name="comments",
-        related_query_name="comments",
+        related_query_name="comment",
         verbose_name=_("worker"),
         help_text=_("Related worker."),
     )
@@ -550,15 +572,16 @@ class WorkerComment(GenericModel):
 
         return textwrap.wrap(self.comment, 50)[0]
 
-    def save(self, **kwargs: Any):
-        """Worker Comment save method
+    def update_comments(self, **kwargs):
+        """Update the worker comment
 
-        Returns:
-            None
+        Args:
+            **kwargs: Keyword arguments
         """
 
-        self.full_clean()
-        super().save(**kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def get_absolute_url(self) -> str:
         """Worker Comment absolute url

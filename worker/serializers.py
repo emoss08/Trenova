@@ -39,7 +39,6 @@ class WorkerCommentSerializer(GenericSerializer):
         model = models.WorkerComment
         fields = [
             "id",
-            "worker",
             "comment_type",
             "comment",
             "entered_by",
@@ -244,14 +243,6 @@ class WorkerSerializer(serializers.ModelSerializer):
             models.Worker: Worker instance.
         """
 
-        if self.context["request"].user.is_authenticated:
-            organization = self.context["request"].user.organization
-        else:
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
-            organization = Token.objects.get(key=token).user.organization
-
         profile_data = validated_data.pop("profile", None)
         comments_data = validated_data.pop("comments", None)
         contacts_data = validated_data.pop("contacts", None)
@@ -276,17 +267,15 @@ class WorkerSerializer(serializers.ModelSerializer):
         instance.save()
 
         if profile_data:
-            profile_data["organization"] = organization
-            models.WorkerProfile.objects.filter(worker=instance).update(**profile_data)
+            instance.profile.update_profile(**profile_data)
 
         if comments_data:
             for comment_data in comments_data:
-                comment_data["organization"] = organization
-                models.WorkerComment.objects.create(worker=instance, **comment_data)
+                comment_data["organization"] = instance.organization
+                instance.comments.create(**comment_data)
 
         if contacts_data:
             for contact_data in contacts_data:
-                contact_data["organization"] = organization
-                models.WorkerContact.objects.create(worker=instance, **contact_data)
+                models.WorkerContact.objects.update_or_create(worker=instance, **contact_data)
 
         return instance

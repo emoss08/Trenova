@@ -36,8 +36,6 @@ class GenericSerializer(serializers.ModelSerializer):
     """
 
     read_only_fields = [
-        "organization",
-        "id",
         "created",
         "modified",
     ]
