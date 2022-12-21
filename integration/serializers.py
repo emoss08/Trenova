@@ -18,42 +18,45 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from rest_framework import serializers
-from control_file import models
+
+from integration import models
 from utils.serializers import GenericSerializer
 
 
-class GoogleAPISerializer(GenericSerializer):
-    """
-    A serializer for the `GoogleAPI` model.
+class IntegrationSerializer(GenericSerializer):
+    """A serializer class for the Integration model
 
-    This serializer converts instances of the `GoogleAPI` model into JSON or other data formats,
-    and vice versa. It uses the specified fields (name, description, and code) to create the serialized
-    representation of the `GoogleAPI` model.
+    The `IntegrationSerializer` class provides default operations
+    for creating, update and deleting Integration, as well as
+    listing and retrieving them.
     """
 
-    mileage_unit = serializers.ChoiceField(
-        choices=models.GoogleAPI.GoogleRouteDistanceUnitChoices.choices,
-        default=models.GoogleAPI.GoogleRouteDistanceUnitChoices.IMPERIAL,
-    )
-    traffic_model = serializers.ChoiceField(
-        choices=models.GoogleAPI.GoogleRouteModelChoices.choices,
-        default=models.GoogleAPI.GoogleRouteModelChoices.BEST_GUESS,
+    is_active = serializers.BooleanField(default=True)
+    name = serializers.ChoiceField(choices=models.IntegrationChoices.choices)
+    auth_type = serializers.ChoiceField(
+        choices=models.IntegrationAuthTypes.choices,
+        default=models.IntegrationAuthTypes.NO_AUTH,
     )
 
     class Meta:
         """
-        A class representing the metadata for the `GoogleAPISerializer` class.
+        A class representing the metadata for the `EquipmentTypeDetailSerializer`
+        class.
         """
 
-        model = models.GoogleAPI
+        model = models.Integration
         fields = (
             "id",
             "organization",
-            "api_key",
-            "mileage_unit",
-            "traffic_model",
-            "add_customer_location",
-            "add_location",
+            "is_active",
+            "name",
+            "auth_type",
+            "login_url",
+            "auth_token",
+            "username",
+            "password",
+            "client_id",
+            "client_secret",
             "created",
             "modified",
         )

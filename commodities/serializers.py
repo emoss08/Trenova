@@ -51,6 +51,7 @@ class HazardousMaterialSerializer(GenericSerializer):
         model = models.HazardousMaterial
         fields = (
             "id",
+            "organization",
             "is_active",
             "name",
             "description",
@@ -77,6 +78,8 @@ class CommoditySerializer(GenericSerializer):
     and vice versa. It uses the specified fields (name, description, and code) to create the serialized
     representation of the `Commodity` model.
     """
+
+    # TODO: REWRITE THIS TO BE BETTER.
 
     hazmat = HazardousMaterialSerializer()
 

@@ -34,6 +34,9 @@ from worker import api as worker_api
 from equipment import api as equipment_api
 from location import api as location_api
 from dispatch import api as dispatch_api
+from integration import api as integration_api
+from route import api as route_api
+
 
 router = routers.DefaultRouter()
 
@@ -122,11 +125,25 @@ router.register(
 router.register(r"locations", location_api.LocationViewSet, basename="locations")
 
 # Dispatch Routing
-router.register(r"comment_types", dispatch_api.CommentTypeViewSet, basename="comment-types")
+router.register(
+    r"comment_types", dispatch_api.CommentTypeViewSet, basename="comment-types"
+)
 router.register(r"delay_codes", dispatch_api.DelayCodeViewSet, basename="delay-codes")
 router.register(r"fleet_codes", dispatch_api.FleetCodeViewSet, basename="fleet-codes")
-router.register(r"dispatch_control", dispatch_api.DispatchControlViewSet, basename="dispatch-control")
+router.register(
+    r"dispatch_control",
+    dispatch_api.DispatchControlViewSet,
+    basename="dispatch-control",
+)
 
+# Integration Routing
+router.register(
+    r"integrations", integration_api.IntegrationViewSet, basename="integrations"
+)
+
+# Route Routing
+router.register(r"routes", route_api.RouteViewSet, basename="routes")
+router.register(r"route_control", route_api.RouteControlViewSet, basename="route-control")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
