@@ -306,6 +306,7 @@ class DepotDetail(TimeStampedModel):
         Returns:
             str: String representation of the depot detail.
         """
+
         return textwrap.wrap(self.depot.name, 50)[0]
 
     def get_absolute_url(self) -> str:
@@ -314,6 +315,7 @@ class DepotDetail(TimeStampedModel):
         Returns:
             str: The absolute url for the depot detail.
         """
+
         return reverse("organization:depot:view", kwargs={"pk": self.depot.pk})
 
 
@@ -371,6 +373,7 @@ class Department(models.Model):
         Returns:
             str: String representation of the Department
         """
+
         return textwrap.wrap(self.name, 30)[0]
 
     def get_absolute_url(self) -> str:
@@ -379,4 +382,5 @@ class Department(models.Model):
         Returns:
             str: Get the absolute url of the Department
         """
+
         return reverse("user:department-view", kwargs={"pk": self.pk})

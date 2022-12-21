@@ -62,12 +62,12 @@ class HazardousMaterialSerializer(GenericSerializer):
             "created",
             "modified",
         )
-        read_only_fields = [
+        read_only_fields = (
             "organization",
             "id",
             "created",
             "modified",
-        ]
+        )
 
 
 class CommoditySerializer(GenericSerializer):
@@ -103,12 +103,12 @@ class CommoditySerializer(GenericSerializer):
             "created",
             "modified",
         )
-        read_only_fields = [
+        read_only_fields = (
             "organization",
             "id",
             "created",
             "modified",
-        ]
+        )
 
     def create(self, validated_data: Any) -> models.Commodity:
         """Create a new commodity.
@@ -130,7 +130,7 @@ class CommoditySerializer(GenericSerializer):
             )
             organization = Token.objects.get(key=token).user.organization
 
-        hazmat_data = validated_data.pop("hazmat", None)
+        hazmat_data = validated_data.pop("hazmat", {})
 
         if hazmat_data:
             hazmat = models.HazardousMaterial.objects.create(
@@ -156,7 +156,7 @@ class CommoditySerializer(GenericSerializer):
             models.Commodity: The updated commodity.
         """
 
-        hazmat_data = validated_data.pop("hazmat", None)
+        hazmat_data = validated_data.pop("hazmat", {})
 
         if hazmat_data:
             hazmat = instance.hazmat

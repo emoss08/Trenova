@@ -27,8 +27,43 @@ from utils.serializers import GenericSerializer
 
 
 class GeneralLedgerAccountSerializer(GenericSerializer):
-    """
-    General Ledger Account Serializer
+    """GeneralLedgerAccountSerializer
+
+        A serializer class for the GeneralLedgerAccount model. This serializer is used
+        to convert the GeneralLedgerAccount model instance into a Python dictionary
+        format that can be rendered into a JSON response. It also defines the fields
+        that should be included in the serialized representation of the model.
+
+    Attributes:
+        is_active (serializers.BooleanField): A boolean field representing the
+        active status of the account. Defaults to True.
+
+        account_type (serializers.ChoiceField): A choice field representing the
+        type of the account. The choices are taken from the AccountTypeChoices
+        model field.
+
+        cash_flow_type (serializers.ChoiceField): A choice field representing the
+        cash flow type of the account. The choices are taken from the
+        CashFlowTypeChoices model field.
+
+        account_sub_type (serializers.ChoiceField): A choice field representing the
+        sub_type of the account. The choices are taken from the
+        AccountSubTypeChoices model field.
+
+        account_classification (serializers.ChoiceField): A choice field representing
+        the classification of the account. The choices are taken from the
+        AccountClassificationChoices model field.
+
+    Metaclass Attributes:
+        model (models.GeneralLedgerAccount): The GeneralLedgerAccount model that
+        this serializer is associated with.
+
+        fields (tuple of str): A tuple of field names that should be included in the
+        serialized representation of the model.
+
+        read_only_fields (tuple of str): A tuple of field names that should be
+        included in the serialized representation of the model, but should be
+        treated as read-only and not modifiable by the client.
     """
 
     is_active = serializers.BooleanField(default=True)
@@ -74,8 +109,30 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
 
 
 class RevenueCodeSerializer(serializers.ModelSerializer):
-    """
-    Revenue Code Serializer
+    """RevenueCodeSerializer
+
+    A serializer class for the RevenueCode model. This serializer is used to
+    convert the RevenueCode model instance into a Python dictionary format that
+    can be rendered into a JSON response. It also defines the fields that should be
+    included in the serialized representation of the model.
+
+    Attributes:
+        expense_account (serializers.PrimaryKeyRelatedField): A primary key related
+        field representing the expense account associated with the revenue code.
+        The queryset is filtered to only include accounts with an
+        AccountTypeChoices value of EXPENSE.
+
+        revenue_account (serializers.PrimaryKeyRelatedField): A primary key related
+        field representing the revenue account associated with the revenue code.
+        The queryset is filtered to only include accounts with an
+        AccountTypeChoices value of REVENUE.
+
+    Metaclass Attributes:
+        model (models.RevenueCode): The RevenueCode model that this serializer is
+        associated with.
+
+        fields (tuple of str): A tuple of field names that should be included in the
+        serialized representation of the model.
     """
 
     expense_account = serializers.PrimaryKeyRelatedField(
@@ -105,34 +162,3 @@ class RevenueCodeSerializer(serializers.ModelSerializer):
             "created",
             "modified",
         )
-
-    def validate(self, data: Any) -> dict:
-        """Validate the data
-
-        Args:
-            data (Any): The data to validate
-
-        Returns:
-            dict: The validated data
-        """
-        expense_account = data.get("expense_account")
-        revenue_account = data.get("revenue_account")
-
-        if (
-            expense_account
-            and expense_account.account_type
-            != models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
-        ):
-            raise ValidationError(
-                {"expense_account": "Entered account is not an expense account."}
-            )
-        if (
-            revenue_account
-            and revenue_account.account_type
-            != models.GeneralLedgerAccount.AccountTypeChoices.REVENUE
-        ):
-            raise ValidationError(
-                {"revenue_account": "Entered account is not a revenue account."}
-            )
-
-        return data

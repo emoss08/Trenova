@@ -33,7 +33,7 @@ class DepotDetailSerializer(serializers.ModelSerializer):
         """
 
         model = models.DepotDetail
-        fields = [
+        fields = (
             "id",
             "organization",
             "depot",
@@ -47,7 +47,7 @@ class DepotDetailSerializer(serializers.ModelSerializer):
             "fax_number",
             "created",
             "modified",
-        ]
+        )
 
 
 class DepotSerializer(serializers.ModelSerializer):
