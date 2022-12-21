@@ -134,16 +134,18 @@ class WorkerProfileSerializer(GenericSerializer):
         return models.WorkerProfile.objects.create(**validated_data)
 
 
-class WorkerSerializer(serializers.ModelSerializer):
+class WorkerSerializer(GenericSerializer):
     """
     Worker Serializer
     """
 
+    is_active = serializers.BooleanField(default=True)
     organization = serializers.CharField(source="organization.name", read_only=True)
-    worker_type = serializers.ChoiceField(choices=models.Worker.WorkerType.choices)
-
-    # Relationships
-    profile = WorkerProfileSerializer(required=False, allow_null=True)
+    worker_type = serializers.ChoiceField(
+        choices=models.Worker.WorkerType.choices,
+        default=models.Worker.WorkerType.EMPLOYEE
+    )
+    profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
 
@@ -193,11 +195,11 @@ class WorkerSerializer(serializers.ModelSerializer):
             Models.Worker: Worker Instance
         """
 
-        # Get the token from the requests.
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-
         # Get the organization of the user from the request.
-        organization = Token.objects.get(key=token).user.organization
+        organization = super().get_organization
+
+        # Get the user from the request.
+        user = self.context["request"].user
 
         # Popped data (profile, contacts, comments)
         profile_data = validated_data.pop("profile", None)
@@ -206,7 +208,7 @@ class WorkerSerializer(serializers.ModelSerializer):
 
         # Create the Worker.
         validated_data["organization"] = organization
-        validated_data["entered_by"] = Token.objects.get(key=token).user
+        validated_data["entered_by"] = user
         worker = models.Worker.objects.create(**validated_data)
 
         # Create the Worker Profile
