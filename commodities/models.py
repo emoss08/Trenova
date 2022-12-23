@@ -103,7 +103,6 @@ class HazardousMaterial(GenericModel):
     name = models.CharField(
         _("Name"),
         max_length=255,
-        unique=True,
         help_text=_("Name of the Hazardous Class"),
     )
     description = models.TextField(
@@ -146,6 +145,16 @@ class HazardousMaterial(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def update_hazmat(self, **kwargs: Any) -> None:
+        """Update Hazardous Material
+
+        Args:
+            **kwargs (Any): Hazardous Material Fields
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
     def get_absolute_url(self) -> str:
         """Hazardous Material Absolute URL
 
@@ -161,9 +170,6 @@ class Commodity(GenericModel):
     This class inherits from the `GenericModel` class and defines several fields that are used to store
     information about a commodity. It also contains a nested `UnitOfMeasureChoices` class that defines
     the possible unit of measure choices for the `Commodity` model.
-
-    Args:
-        GenericModel: The base model class from which this class inherits.
 
     Attributes:
         id: A UUIDField that represents the unique identifier of a commodity.
@@ -275,6 +281,17 @@ class Commodity(GenericModel):
             str: Commodity Name
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    def update_commodity(self, **kwargs: Any) -> None:
+        """Update Commodity
+
+        Args:
+            **kwargs: Keyword arguments that are used to update the commodity.
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save Commodity

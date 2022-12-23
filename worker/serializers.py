@@ -112,7 +112,6 @@ class WorkerProfileSerializer(GenericSerializer):
             "created",
             "modified",
         ]
-
         read_only_fields = [
             "organization",
             "created",
@@ -120,30 +119,19 @@ class WorkerProfileSerializer(GenericSerializer):
             "hire_date",
         ]
 
-    def create(self, validated_data: dict) -> models.WorkerProfile:
-        """
-        Create Worker Profile
 
-        Args:
-            validated_data (dict): The validated data.
-
-        Returns:
-            models.WorkerProfile: The worker profile.
-        """
-
-        return models.WorkerProfile.objects.create(**validated_data)
-
-
-class WorkerSerializer(serializers.ModelSerializer):
+class WorkerSerializer(GenericSerializer):
     """
     Worker Serializer
     """
 
+    is_active = serializers.BooleanField(default=True)
     organization = serializers.CharField(source="organization.name", read_only=True)
-    worker_type = serializers.ChoiceField(choices=models.Worker.WorkerType.choices)
-
-    # Relationships
-    profile = WorkerProfileSerializer(required=False, allow_null=True)
+    worker_type = serializers.ChoiceField(
+        choices=models.Worker.WorkerType.choices,
+        default=models.Worker.WorkerType.EMPLOYEE
+    )
+    profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
 
@@ -193,20 +181,20 @@ class WorkerSerializer(serializers.ModelSerializer):
             Models.Worker: Worker Instance
         """
 
-        # Get the token from the requests.
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-
         # Get the organization of the user from the request.
-        organization = Token.objects.get(key=token).user.organization
+        organization = super().get_organization
+
+        # Get the user from the request.
+        user = self.context["request"].user
 
         # Popped data (profile, contacts, comments)
-        profile_data = validated_data.pop("profile", None)
-        contacts_data = validated_data.pop("contacts", None)
-        comments_data = validated_data.pop("comments", None)
+        profile_data = validated_data.pop("profile", {})
+        contacts_data = validated_data.pop("contacts", [])
+        comments_data = validated_data.pop("comments", [])
 
         # Create the Worker.
         validated_data["organization"] = organization
-        validated_data["entered_by"] = Token.objects.get(key=token).user
+        validated_data["entered_by"] = user
         worker = models.Worker.objects.create(**validated_data)
 
         # Create the Worker Profile
@@ -246,9 +234,9 @@ class WorkerSerializer(serializers.ModelSerializer):
             models.Worker: Worker instance.
         """
 
-        profile_data = validated_data.pop("profile", None)
-        comments_data = validated_data.pop("comments", None)
-        contacts_data = validated_data.pop("contacts", None)
+        profile_data = validated_data.pop("profile", {})
+        comments_data = validated_data.pop("comments", [])
+        contacts_data = validated_data.pop("contacts", [])
 
         # Update the worker.
         instance.is_active = validated_data.get("is_active", instance.is_active)

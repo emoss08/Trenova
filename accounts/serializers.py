@@ -24,6 +24,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from accounts import models
+from utils.serializers import GenericSerializer
 
 
 class VerifyTokenSerializer(serializers.Serializer):
@@ -97,7 +98,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ]
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(GenericSerializer):
     """
     User Serializer
     """
@@ -138,14 +139,11 @@ class UserSerializer(serializers.ModelSerializer):
             models.User: User instance
         """
 
-        # Get the token from the requests.
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-
         # Get the organization of the user from the request.
-        organization = models.Token.objects.get(key=token).user.organization
+        organization = super().get_organization
 
         # Popped data (profile)
-        profile_data = validated_data.pop("profile", None)
+        profile_data = validated_data.pop("profile", {})
 
         # Create the user
         validated_data["organization"] = organization
@@ -173,11 +171,8 @@ class UserSerializer(serializers.ModelSerializer):
             None
         """
 
-        # Get the token from the requests.
-        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-
         # Get the organization of the user from the request.
-        organization = models.Token.objects.get(key=token).user.organization
+        organization = super().get_organization
 
         profile_data = validated_data.pop("profile", None)
 
@@ -186,7 +181,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         if profile_data:
             profile_data["organization"] = organization
-            models.UserProfile.objects.filter(user=instance).update(**profile_data)
+            instance.profile.update_profile(**profile_data)
 
         return instance
 

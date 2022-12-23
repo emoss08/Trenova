@@ -292,6 +292,15 @@ class UserProfile(GenericModel):
         """
         return textwrap.wrap(self.user.username, 30)[0]
 
+
+    def update_profile(self, **kwargs) -> None:
+        """
+        Updates the profile with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
     def clean(self) -> None:
         """Clean the model
 

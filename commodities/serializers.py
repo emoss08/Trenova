@@ -51,6 +51,7 @@ class HazardousMaterialSerializer(GenericSerializer):
         model = models.HazardousMaterial
         fields = (
             "id",
+            "organization",
             "is_active",
             "name",
             "description",
@@ -61,12 +62,12 @@ class HazardousMaterialSerializer(GenericSerializer):
             "created",
             "modified",
         )
-        read_only_fields = [
+        read_only_fields = (
             "organization",
             "id",
             "created",
             "modified",
-        ]
+        )
 
 
 class CommoditySerializer(GenericSerializer):
@@ -78,7 +79,10 @@ class CommoditySerializer(GenericSerializer):
     representation of the `Commodity` model.
     """
 
-    hazmat = HazardousMaterialSerializer()
+    hazmat = HazardousMaterialSerializer(required=False)
+    unit_of_measure = serializers.ChoiceField(
+        models.Commodity.UnitOfMeasureChoices.choices
+    )
 
     class Meta:
         """
@@ -100,12 +104,12 @@ class CommoditySerializer(GenericSerializer):
             "created",
             "modified",
         )
-        read_only_fields = [
+        read_only_fields = (
             "organization",
             "id",
             "created",
             "modified",
-        ]
+        )
 
     def create(self, validated_data: Any) -> models.Commodity:
         """Create a new commodity.
@@ -118,16 +122,9 @@ class CommoditySerializer(GenericSerializer):
         """
 
         # Get the organization from the user if they are using basic auth.
-        if self.context["request"].user.is_authenticated:
-            organization = self.context["request"].user.organization
-        else:
-            # Get the organization from the token if they are using token auth.
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
-            organization = Token.objects.get(key=token).user.organization
+        organization = super().get_organization
 
-        hazmat_data = validated_data.pop("hazmat", None)
+        hazmat_data = validated_data.pop("hazmat", {})
 
         if hazmat_data:
             hazmat = models.HazardousMaterial.objects.create(
@@ -153,16 +150,11 @@ class CommoditySerializer(GenericSerializer):
             models.Commodity: The updated commodity.
         """
 
-        hazmat_data = validated_data.pop("hazmat", None)
+        hazmat_data = validated_data.pop("hazmat", {})
 
         if hazmat_data:
-            hazmat = instance.hazmat
-            for key, value in hazmat_data.items():
-                setattr(hazmat, key, value)
-            hazmat.save()  # type: ignore
+            instance.hazmat.update_hazmat(**hazmat_data)
 
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-        instance.save()
+        instance.update_commodity(**validated_data)
 
         return instance
