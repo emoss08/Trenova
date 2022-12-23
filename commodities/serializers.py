@@ -79,9 +79,10 @@ class CommoditySerializer(GenericSerializer):
     representation of the `Commodity` model.
     """
 
-    # TODO: REWRITE THIS TO BE BETTER.
-
-    hazmat = HazardousMaterialSerializer()
+    hazmat = HazardousMaterialSerializer(required=False)
+    unit_of_measure = serializers.ChoiceField(
+        models.Commodity.UnitOfMeasureChoices.choices
+    )
 
     class Meta:
         """

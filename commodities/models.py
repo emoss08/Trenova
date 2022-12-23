@@ -103,7 +103,6 @@ class HazardousMaterial(GenericModel):
     name = models.CharField(
         _("Name"),
         max_length=255,
-        unique=True,
         help_text=_("Name of the Hazardous Class"),
     )
     description = models.TextField(
