@@ -66,8 +66,21 @@ class BillingExceptionChoices(models.TextChoices):
 
 
 class ChargeType(GenericModel):
-    """
-    Stores Other Charge Types
+    """Class for storing other charge types.
+
+    Attributes:
+        id (models.UUIDField): Primary key for the charge type. It has a default value of a new UUID, is not editable, and is unique.
+        name (models.CharField): The name of the charge type. It has a max length of 50 and must be unique.
+        description (models.CharField): The description of the charge type. It has a max length of 100 and is optional.
+
+    Methods:
+        str(self) -> str: Returns the string representation of the charge type, which is the first 50 characters of the name.
+        get_absolute_url(self) -> str: Returns the absolute URL for the charge type.
+
+    Meta:
+        verbose_name (str): The singular form of the name for the charge type model.
+        verbose_name_plural (str): The plural form of the name for the charge type model.
+        ordering (List[str]): The default ordering for instances of the charge type m
     """
 
     id = models.UUIDField(
@@ -112,8 +125,22 @@ class ChargeType(GenericModel):
 
 
 class AccessorialCharge(GenericModel):
-    """
-    Stores Other Charge information
+    """Class for storing information about other charges.
+
+    Attributes:
+        code (models.CharField): The code for the other charge. It has a max length of 50 and must be unique. It is also the primary key for the model.
+        is_detention (models.BooleanField): A boolean field indicating whether the other charge is a detention charge. It has a default value of False.
+        charge_amount (models.DecimalField): The amount of the other charge. It has a max of 10 digits, with 2 decimal places, and a default value of 1.00.
+        method (ChoiceField): The method for calculating the other charge. It has a set of choices defined in the FuelMethodChoices class and a default value of FuelMethodChoices.DISTANCE.
+
+    Methods:
+        str(self) -> str: Returns the string representation of the other charge, which is the first 50 characters of the code.
+        get_absolute_url(self) -> str: Returns the absolute URL for the other charge.
+
+    Meta:
+        verbose_name (str): The singular form of the name for the other charge model.
+        verbose_name_plural (str): The plural form of the name for the other charge model.
+        ordering (List[str]): The default ordering for instances of the other charge model.
     """
 
     code = models.CharField(

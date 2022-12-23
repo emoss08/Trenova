@@ -25,8 +25,7 @@ from utils.views import OrganizationViewSet
 
 
 class HazardousMaterialViewSet(OrganizationViewSet):
-    """
-    A viewset for viewing and editing hazardous materials in the system.
+    """A viewset for viewing and editing hazardous materials in the system.
 
     The viewset provides default operations for creating, updating, and deleting hazardous materials,
     as well as listing and retrieving hazardous materials. It uses the `HazardousMaterialSerializer`
@@ -41,12 +40,11 @@ class HazardousMaterialViewSet(OrganizationViewSet):
     serializer_class = serializers.HazardousMaterialSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("id", "name", "description")
+    filterset_fields = ("id", "name", "description",)
 
 
 class CommodityViewSet(OrganizationViewSet):
-    """
-    A viewset for viewing and editing commodities in the system.
+    """A viewset for viewing and editing commodities in the system.
 
     The viewset provides default operations for creating, updating, and deleting commodities,
     as well as listing and retrieving commodities. It uses the `CommoditySerializer`
@@ -61,7 +59,7 @@ class CommodityViewSet(OrganizationViewSet):
     serializer_class = serializers.CommoditySerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("id", "name", "description")
+    filterset_fields = ("id", "name", "description",)
 
     def get_queryset(self) -> QuerySet[models.Commodity]:
         """

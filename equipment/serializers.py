@@ -161,7 +161,18 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         """
 
         model = models.EquipmentManufacturer
-        fields = "__all_"
+        fields = (
+            "organization",
+            "id",
+            "description",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "created",
+            "modified",
+        )
 
 
 class EquipmentSerializer(GenericSerializer):
@@ -179,7 +190,39 @@ class EquipmentSerializer(GenericSerializer):
         """
 
         model = models.Equipment
-        fields = "__all__"
+        fields = (
+            "organization",
+            "is_active",
+            "id",
+            "equipment_type",
+            "description",
+            "license_plate_number",
+            "vin_number",
+            "odometer",
+            "engine_hours",
+            "manufacturer",
+            "manufactured_date",
+            "model",
+            "model_year",
+            "state",
+            "leased",
+            "leased_date",
+            "primary_worker",
+            "secondary_worker",
+            "hos_exempt",
+            "aux_power_unit_type",
+            "fuel_draw_capacity",
+            "num_of_axles",
+            "transmission_manufacturer",
+            "transmission_type",
+            "has_berth",
+            "has_electronic_engine",
+            "highway_use_tax",
+            "owner_operated",
+            "ifta_qualified",
+            "created",
+            "modified",
+        )
         read_only_fields = (
             "organization",
             "created",

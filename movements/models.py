@@ -241,6 +241,7 @@ class Movement(GenericModel):
                         ),
                     }
                 )
+
             if (
                 self.primary_worker.profile.hazmat_expiration_date
                 and self.primary_worker.profile.hazmat_expiration_date
