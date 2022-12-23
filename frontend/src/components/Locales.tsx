@@ -9,17 +9,7 @@ import { I18n } from 'types/config';
 
 // load locales files
 const loadLocaleData = (locale: I18n) => {
-  switch (locale) {
-    case 'fr':
-      return import('utils/locales/fr.json');
-    case 'ro':
-      return import('utils/locales/ro.json');
-    case 'zh':
-      return import('utils/locales/zh.json');
-    case 'en':
-    default:
-      return import('utils/locales/en.json');
-  }
+  return import('utils/locales/en.json');
 };
 
 // ==============================|| LOCALIZATION ||============================== //

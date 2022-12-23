@@ -46,10 +46,10 @@ const MainLayout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matchDownLG]);
 
-  useEffect(() => {
-    if (open !== drawerOpen) setOpen(drawerOpen);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawerOpen]);
+  // useEffect(() => {
+  //   if (open !== drawerOpen) setOpen(drawerOpen);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [drawerOpen]);
 
   return (
     <Box sx={{ display: 'flex', width: '100%' }}>

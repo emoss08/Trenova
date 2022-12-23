@@ -152,7 +152,7 @@ class CommoditySerializer(GenericSerializer):
 
         hazmat_data = validated_data.pop("hazmat", {})
 
-        if hazmat_data:
+        if hazmat_data and instance.hazmat:
             instance.hazmat.update_hazmat(**hazmat_data)
 
         instance.update_commodity(**validated_data)

@@ -32,7 +32,6 @@ export type CustomizationProps = {
   presetColor: PresetColor;
   themeDirection: ThemeDirection;
   onChangeContainer: VoidFunction;
-  onChangeLocalization: (lang: I18n) => void;
   onChangeMode: (mode: ThemeMode) => void;
   onChangePresetColor: (theme: PresetColor) => void;
   onChangeDirection: (direction: ThemeDirection) => void;

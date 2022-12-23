@@ -4,9 +4,6 @@ import { forwardRef, CSSProperties, ReactNode, Ref } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { Card, CardContent, CardHeader, Divider, Typography, CardProps, CardHeaderProps, CardContentProps } from '@mui/material';
 
-// project import
-import Highlighter from './third-party/Highlighter';
-
 // types
 import { KeyedObject } from 'types/root';
 
@@ -33,8 +30,6 @@ export interface MainCardProps extends KeyedObject {
   shadow?: string;
   elevation?: number;
   title?: ReactNode | string;
-  codeHighlight?: boolean;
-  codeString?: string;
   modal?: boolean;
 }
 
@@ -54,8 +49,6 @@ const MainCard = forwardRef(
       shadow,
       sx = {},
       title,
-      codeHighlight = false,
-      codeString,
       modal = false,
       ...others
     }: MainCardProps,
@@ -78,14 +71,6 @@ const MainCard = forwardRef(
           ':hover': {
             boxShadow: boxShadow ? shadow || theme.customShadows.z1 : 'inherit'
           },
-          ...(codeHighlight && {
-            '& pre': {
-              m: 0,
-              p: '12px !important',
-              fontFamily: theme.typography.fontFamily,
-              fontSize: '0.75rem'
-            }
-          }),
           ...(modal && {
             position: 'absolute' as 'absolute',
             top: '50%',
@@ -119,14 +104,6 @@ const MainCard = forwardRef(
         {/* card content */}
         {content && <CardContent sx={contentSX}>{children}</CardContent>}
         {!content && children}
-
-        {/* card footer - clipboard & highlighter  */}
-        {codeString && (
-          <>
-            <Divider sx={{ borderStyle: 'dashed' }} />
-            <Highlighter codeString={codeString} codeHighlight={codeHighlight} />
-          </>
-        )}
       </Card>
     );
   }
