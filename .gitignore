@@ -3,18 +3,17 @@
 .gitattributes
 /.vscode/
 .mypy_cache/
-/backend/venv/
+/server/venv/
 /.idea/
-/backend/backend/
 /mvenv
 /rvenv
 .env
-media/
+server/media/
 .pytest_cache
-backend.iml
-/scripts/startup.sh
+server/server.iml
+scripts/startup.sh
 /design/
-__pycache__
+server/__pycache__
 templates
 static/
 frontend/node_modules/
@@ -26,5 +25,4 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-frontend
 
