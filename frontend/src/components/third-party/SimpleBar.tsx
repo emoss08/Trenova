@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 // material-ui
 import { alpha, styled } from '@mui/material/styles';
 import { Box, Theme } from '@mui/material';
@@ -6,7 +8,6 @@ import { Box, Theme } from '@mui/material';
 import SimpleBar, { Props } from 'simplebar-react';
 import { BrowserView, MobileView } from 'react-device-detect';
 import { MUIStyledCommonProps } from '@mui/system';
-import { ReactNode } from 'react';
 
 // root style
 const RootStyle = styled(BrowserView)({
@@ -44,7 +45,7 @@ export default function SimpleBarScroll({ children, sx, ...other }: MUIStyledCom
     <>
       <RootStyle>
         <SimpleBarStyle timeout={500} clickOnTrack={false} sx={sx} {...other}>
-          {children}
+          {children as ReactNode}
         </SimpleBarStyle>
       </RootStyle>
       <MobileView>

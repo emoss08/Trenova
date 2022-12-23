@@ -5,13 +5,12 @@ import config from 'config';
 import useLocalStorage from 'hooks/useLocalStorage';
 
 // types
-import { CustomizationProps, FontFamily, I18n, PresetColor, ThemeDirection, ThemeMode } from 'types/config';
+import { CustomizationProps, FontFamily, PresetColor, ThemeDirection, ThemeMode } from 'types/config';
 
 // initial state
 const initialState: CustomizationProps = {
   ...config,
   onChangeContainer: () => {},
-  onChangeLocalization: (lang: I18n) => {},
   onChangeMode: (mode: ThemeMode) => {},
   onChangePresetColor: (theme: PresetColor) => {},
   onChangeDirection: (direction: ThemeDirection) => {},
@@ -34,13 +33,6 @@ function ConfigProvider({ children }: ConfigProviderProps) {
     setConfig({
       ...config,
       container: !config.container
-    });
-  };
-
-  const onChangeLocalization = (lang: I18n) => {
-    setConfig({
-      ...config,
-      i18n: lang
     });
   };
 
@@ -84,7 +76,6 @@ function ConfigProvider({ children }: ConfigProviderProps) {
       value={{
         ...config,
         onChangeContainer,
-        onChangeLocalization,
         onChangeMode,
         onChangePresetColor,
         onChangeDirection,

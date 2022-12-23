@@ -6,19 +6,15 @@ import { OverridableComponent } from '@mui/material/OverridableComponent';
 
 // types
 import { AuthProps } from './auth';
-import { CalendarProps } from './calendar';
 import { MenuProps } from './menu';
 import { SnackbarProps } from './snackbar';
-import { KanbanStateProps } from './kanban';
 
 // ==============================|| ROOT TYPES  ||============================== //
 
 export type RootStateProps = {
   auth: AuthProps;
-  calendar: CalendarProps;
   menu: MenuProps;
   snackbar: SnackbarProps;
-  kanban: KanbanStateProps;
 };
 
 export type KeyedObject = {

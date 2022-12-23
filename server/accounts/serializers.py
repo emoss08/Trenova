@@ -129,7 +129,7 @@ class UserSerializer(GenericSerializer):
             "date_joined": {"read_only": True},
         }
 
-    def create(self, validated_data: Any) -> models.User:
+    def create(self, validated_data: Any) -> models.User:  # type: ignore
         """Create a user
 
         Args:
@@ -155,7 +155,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:
+    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
@@ -172,15 +172,11 @@ class UserSerializer(GenericSerializer):
         """
 
         # Get the organization of the user from the request.
-        organization = super().get_organization
-
         profile_data = validated_data.pop("profile", None)
 
-        validated_data["organization"] = organization
         models.User.objects.filter(pk=instance.pk).update(**validated_data)
 
         if profile_data:
-            profile_data["organization"] = organization
             instance.profile.update_profile(**profile_data)
 
         return instance
