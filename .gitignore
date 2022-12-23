@@ -12,7 +12,7 @@ server/backend/
 server/media/
 .pytest_cache
 server/server.iml
-server/scripts/startup.sh
+scripts/startup.sh
 /design/
 __pycache__
 templates
