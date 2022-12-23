@@ -7,7 +7,7 @@ import ScrollTop from 'components/ScrollTop';
 import Snackbar from 'components/@extended/Snackbar';
 
 // auth provider
-import { FirebaseProvider as AuthProvider } from 'contexts/FirebaseContext';
+import { AuthProvider } from 'contexts/MontaContext';
 
 // ==============================|| APP - THEME, ROUTER, LOCAL  ||============================== //
 
