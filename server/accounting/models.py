@@ -274,3 +274,94 @@ class RevenueCode(GenericModel):
             str: RevenueCode absolute url
         """
         return reverse("accounting:revenue_code_detail", kwargs={"pk": self.pk})
+
+
+class DivisionCode(GenericModel):
+    """
+    Stores division code information for related :model:`organization.Organization`.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    is_active = models.BooleanField(
+        _("Active"),
+        default=True,
+        help_text=_("Whether the division code is active."),
+    )
+    code = models.CharField(
+        _("Code"),
+        max_length=4,
+        unique=True,
+        help_text=_("The division code."),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("The description of the division code."),
+    )
+    cash_account = models.ForeignKey(
+        GeneralLedgerAccount,
+        on_delete=models.CASCADE,
+        related_name="division_code_cash_account",
+        related_query_name="division_code_cash_accounts",
+        help_text=_("The cash account associated with the division code."),
+        verbose_name=_("Cash Account"),
+    )
+    ap_account = models.ForeignKey(
+        GeneralLedgerAccount,
+        on_delete=models.CASCADE,
+        related_name="division_code_ap_account",
+        related_query_name="division_code_ap_accounts",
+        help_text=_("The accounts payable account associated with the division code."),
+        verbose_name=_("Accounts Payable Account"),
+    )
+    expense_account = models.ForeignKey(
+        GeneralLedgerAccount,
+        on_delete=models.CASCADE,
+        related_name="division_code_expense_account",
+        related_query_name="division_code_expense_accounts",
+        help_text=_("The expense account associated with the division code."),
+        verbose_name=_("Expense Account"),
+    )
+
+    class Meta:
+        verbose_name = _("Division Code")
+        verbose_name_plural = _("Division Codes")
+        ordering: list[str] = ["code"]
+
+    def __str__(self) -> str:
+        """DivisionCode string representation
+
+        Returns:
+            str: DivisionCode string representation
+        """
+        return textwrap.wrap(self.code, 4)[0]
+
+    def clean(self) -> None:
+        """DivisionCode model validation
+
+        Returns:
+            None
+        """
+
+        super().clean()
+
+        if (
+            self.expense_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+        ):
+            raise ValidationError(
+                {"expense_account": _("Entered account is not an expense account.")}
+            )
+
+    def get_absolute_url(self) -> str:
+        """DivisionCode absolute url
+
+        Returns:
+            str: DivisionCode absolute url
+        """
+        return reverse("accounting:division_code_detail", kwargs={"pk": self.pk})

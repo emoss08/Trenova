@@ -40,7 +40,10 @@ class CommentTypeViewSet(OrganizationViewSet):
     serializer_class = serializers.CommentTypeSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("id", "name",)
+    filterset_fields = (
+        "id",
+        "name",
+    )
 
 
 class DelayCodeViewSet(OrganizationViewSet):
