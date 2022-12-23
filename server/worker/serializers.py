@@ -129,7 +129,7 @@ class WorkerSerializer(GenericSerializer):
     organization = serializers.CharField(source="organization.name", read_only=True)
     worker_type = serializers.ChoiceField(
         choices=models.Worker.WorkerType.choices,
-        default=models.Worker.WorkerType.EMPLOYEE
+        default=models.Worker.WorkerType.EMPLOYEE,
     )
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
@@ -223,7 +223,7 @@ class WorkerSerializer(GenericSerializer):
 
         return worker
 
-    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
         """Update the worker
 
         Args:

@@ -40,7 +40,11 @@ class HazardousMaterialViewSet(OrganizationViewSet):
     serializer_class = serializers.HazardousMaterialSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("id", "name", "description",)
+    filterset_fields = (
+        "id",
+        "name",
+        "description",
+    )
 
 
 class CommodityViewSet(OrganizationViewSet):
@@ -59,7 +63,11 @@ class CommodityViewSet(OrganizationViewSet):
     serializer_class = serializers.CommoditySerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("id", "name", "description",)
+    filterset_fields = (
+        "id",
+        "name",
+        "description",
+    )
 
     def get_queryset(self) -> QuerySet[models.Commodity]:
         """

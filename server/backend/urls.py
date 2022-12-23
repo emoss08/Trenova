@@ -143,7 +143,9 @@ router.register(
 
 # Route Routing
 router.register(r"routes", route_api.RouteViewSet, basename="routes")
-router.register(r"route_control", route_api.RouteControlViewSet, basename="route-control")
+router.register(
+    r"route_control", route_api.RouteControlViewSet, basename="route-control"
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
