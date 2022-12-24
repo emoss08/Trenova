@@ -1,9 +1,10 @@
-import { Box, IconButton } from '@mui/material';
 import { ConfigContext } from 'contexts/ConfigContext';
 import { useContext } from 'react';
+
+// ==============================|| MUI ||============================== //
 import Brightness4OutlinedIcon from '@mui/icons-material/Brightness4Outlined';
-// @ts-ignore
-import Brightness7OutlinedIcon from '@mui/icons-material/Brightness7Outlined';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import { Box, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 const ThemeSwitcher = () => {
@@ -19,7 +20,7 @@ const ThemeSwitcher = () => {
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <IconButton color="secondary" onClick={handleClick} sx={{ color: 'text.primary', bgcolor: iconBackColor }}>
-        {config.mode === 'dark' ? <Brightness4OutlinedIcon /> : <Brightness7OutlinedIcon />}
+        {config.mode === 'dark' ? <LightModeOutlinedIcon /> : <Brightness4OutlinedIcon />}
       </IconButton>
     </Box>
   );
