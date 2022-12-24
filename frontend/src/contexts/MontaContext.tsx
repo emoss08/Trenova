@@ -217,7 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
       };
       setAuthState(newAuthState);
     }
-  }, [isLoading]);
+  }, [isLoading, setAuthState]);
 
   return (
     <MontaAuthContext.Provider
