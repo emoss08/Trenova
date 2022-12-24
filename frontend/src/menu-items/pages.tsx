@@ -12,16 +12,34 @@ const pages: NavItemType = {
   type: 'group',
   children: [
     {
-      id: 'user',
-      title: <FormattedMessage id="user" />,
+      id: 'profile',
+      title: <FormattedMessage id="profile" />,
       type: 'collapse',
       icon: icons.UserOutlined,
       children: [
         {
-          id: 'profile',
+          id: 'user-profile',
           title: <FormattedMessage id="user-profile" />,
           type: 'item',
-          url: '/user/profile'
+          url: '/account/profile/personal'
+        },
+        {
+          id: 'account-profile',
+          title: <FormattedMessage id="account-profile" />,
+          type: 'item',
+          url: '/account/profile/basic'
+        },
+        {
+          id: 'user-list',
+          title: <FormattedMessage id="user-list" />,
+          type: 'item',
+          url: '/apps/profiles/user-list'
+        },
+        {
+          id: 'user-card',
+          title: <FormattedMessage id="user-card" />,
+          type: 'item',
+          url: '/apps/profiles/user-card'
         }
       ]
     }

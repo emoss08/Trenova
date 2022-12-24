@@ -26,7 +26,7 @@ interface Props {
 const ProfileTabs = ({ focusInput }: Props) => {
   const theme = useTheme();
   const [selectedImage, setSelectedImage] = useState<File | undefined>(undefined);
-  const [avatar, setAvatar] = useState<string | undefined>(avatarImage(`./avatar-1.png`));
+  const [avatar, setAvatar] = useState<string | undefined>(avatarImage(`./default.png`));
 
   useEffect(() => {
     if (selectedImage) {

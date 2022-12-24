@@ -1,10 +1,18 @@
 import { Link } from 'react-router-dom';
-import MainCard from '../../../../components/MainCard';
-import { Box, useMediaQuery, Grid, Typography, Stack, Button } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 
-import BackRight from 'assets/images/profile/UserProfileBackRight';
+// material-ui
+import { useTheme } from '@mui/material/styles';
+import { useMediaQuery, Box, Button, Grid, Stack, Typography } from '@mui/material';
+
+// project import
+import MainCard from 'components/MainCard';
+import ProfileRadialChart from './ProfileRadialChart';
+
+// assets
 import BackLeft from 'assets/images/profile/UserProfileBackLeft';
+import BackRight from 'assets/images/profile/UserProfileBackRight';
+
+// ==============================|| USER PROFILE - TOP CARD ||============================== //
 
 interface Props {
   focusInput: () => void;
@@ -22,7 +30,9 @@ const ProfileCard = ({ focusInput }: Props) => {
       <Grid container justifyContent="space-between" alignItems="center" sx={{ position: 'relative', zIndex: 5 }}>
         <Grid item>
           <Stack direction="row" spacing={matchDownSM ? 1 : 2} alignItems="center">
-            <Box sx={{ ml: { xs: 0, sm: 1 } }}></Box>
+            <Box sx={{ ml: { xs: 0, sm: 1 } }}>
+              <ProfileRadialChart />
+            </Box>
             <Stack spacing={0.75}>
               <Typography variant="h5">Edit Your Profile</Typography>
               <Typography variant="body2" color="secondary">
