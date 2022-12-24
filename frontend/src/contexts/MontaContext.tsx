@@ -11,32 +11,46 @@ export type MontaUserProfile = {
   title: string;
   firstName: string;
   lastName: string;
-  profilePicture: string;
+  profilePicture?: string;
   bio?: string;
   addressLine1: string;
   addressLine2?: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phone: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  phone?: string;
 };
 
 export type MontaUser = {
-  uid?: string;
+  uid: string;
   email?: string;
   username?: string;
   emailVerified?: boolean;
-  profile?: MontaUserProfile;
+  profile: MontaUserProfile;
 };
 
 export type UserContextType = {
   uid?: string;
   isAuthenticated?: boolean;
-
   token?: string | null;
   user?: MontaUser | null | undefined;
-  authenticate: (username: string, password: string) => Promise<{ isAuthenticated: boolean; user: UserContextType }>;
+  authenticate: (username: string, password: string) => Promise<({ isAuthenticated: true } & ProvisionResult) | { isAuthenticated: false }>;
   logout: () => void;
+};
+
+export type ProvisionResult = {
+  token: string;
+  user: {
+    pk: string;
+    username: string;
+    profile: {
+      pk: string;
+      first_name: string;
+      last_name: string;
+      title: string;
+      address_line_1: string;
+    };
+  };
 };
 
 const initialState: AuthProps = {
@@ -46,26 +60,28 @@ const initialState: AuthProps = {
 
 export const MontaAuthContext = createContext({} as UserContextType);
 
-export const authenticate = async (username: string, password: string): Promise<{ isAuthenticated: boolean; user: UserContextType }> => {
+export const authenticate = async (
+  username: string,
+  password: string
+): Promise<({ isAuthenticated: true } & ProvisionResult) | { isAuthenticated: false }> => {
   try {
     const response = await axios.post('http://localhost:8000/api/token/provision/', {
       username,
       password
     });
-    const { token, user: userData } = response.data;
-    console.log(response.data);
+    const { token, user } = response.data as ProvisionResult;
     localStorage.setItem('token', token);
-    localStorage.setItem('m_user_info', JSON.stringify(userData));
-    return { isAuthenticated: true, user: { ...userData, token } };
+    localStorage.setItem('m_user_info', JSON.stringify(user));
+
+    return { isAuthenticated: true, token, user };
   } catch (error) {
     console.error(error);
-    return { isAuthenticated: false, user: {} as UserContextType };
+    return { isAuthenticated: false };
   }
 };
 
 export const logout = () => {
   localStorage.removeItem('token');
-  console.log({ authenticate });
   return { isAuthenticated: false, user: null };
 };
 
@@ -86,7 +102,14 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
           isAuthenticated: true,
           user: {
             uid: JSON.parse(user).id,
-            username: JSON.parse(user).username
+            username: JSON.parse(user).username,
+            profile: {
+              uid: JSON.parse(user).id,
+              firstName: JSON.parse(user).first_name,
+              lastName: JSON.parse(user).last_name,
+              title: JSON.parse(user).title,
+              addressLine1: JSON.parse(user).address_line_1
+            }
           }
         }
       });
@@ -101,7 +124,34 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
     <MontaAuthContext.Provider
       value={{
         ...state,
-        authenticate,
+        authenticate: async (username: string, password: string) => {
+          const context = await authenticate(username, password);
+          if (!context.isAuthenticated) {
+            return context;
+          }
+          const user = context.user;
+          if (!user) {
+            return context;
+          }
+          dispatch({
+            type: LOGIN,
+            payload: {
+              isAuthenticated: true,
+              user: {
+                uid: user.pk,
+                username: user.username,
+                profile: {
+                  uid: user.profile.pk,
+                  firstName: user.profile.first_name,
+                  lastName: user.profile.last_name,
+                  title: user.profile.title,
+                  addressLine1: user.profile.address_line_1
+                }
+              }
+            }
+          });
+          return context;
+        },
         logout
       }}
     >
