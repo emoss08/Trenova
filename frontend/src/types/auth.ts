@@ -11,8 +11,10 @@ export type GuardProps = {
 
 export interface AuthProps {
   isAuthenticated: boolean;
-  isInitialized?: boolean;
+  isLoading: boolean;
   user?: MontaUser | null;
+  isInitialized: boolean;
+
   token?: string | null;
 }
 

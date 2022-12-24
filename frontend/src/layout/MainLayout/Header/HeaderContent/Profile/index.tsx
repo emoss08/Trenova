@@ -48,7 +48,7 @@ function a11yProps(index: number) {
 const Profile = () => {
   const theme = useTheme();
 
-  const { logout, user } = useAuth();
+  const { logout, user, isLoading } = useAuth();
   const handleLogout = async () => {
     try {
       await logout();
@@ -85,6 +85,10 @@ const Profile = () => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
@@ -106,7 +110,7 @@ const Profile = () => {
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
           <Avatar alt="profile user" src={avatar1} size="xs" />
-          <Typography variant="subtitle1">{capitalizeFirstLetter(user?.username)}</Typography>
+          <Typography variant="subtitle1">{capitalizeFirstLetter(user?.username ?? 'Not here yet sorry')}</Typography>
         </Stack>
       </ButtonBase>
       <Popper

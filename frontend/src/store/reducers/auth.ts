@@ -7,6 +7,7 @@ import { AuthProps, AuthActionProps } from 'types/auth';
 // initial state
 export const initialState: AuthProps = {
   isAuthenticated: false,
+  isLoading: false,
   isInitialized: false,
   user: null
 };
