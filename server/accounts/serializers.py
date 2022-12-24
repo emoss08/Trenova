@@ -78,6 +78,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     User Profile Serializer
     """
 
+    title = serializers.StringRelatedField()
+
     class Meta:
         """
         Metaclass for UserProfileSerializer

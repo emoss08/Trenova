@@ -11,6 +11,7 @@ const MaintenanceError = Loadable(lazy(() => import('pages/maintenance/404')));
 const MaintenanceError500 = Loadable(lazy(() => import('pages/maintenance/500')));
 const MaintenanceUnderConstruction = Loadable(lazy(() => import('pages/maintenance/under-construction')));
 const MaintenanceComingSoon = Loadable(lazy(() => import('pages/maintenance/coming-soon')));
+const UserProfile = Loadable(lazy(() => import('pages/apps/profiles/user')));
 
 // render - sample page
 const SamplePage = Loadable(lazy(() => import('pages/extra-pages/sample-page')));
@@ -31,9 +32,19 @@ const MainRoutes = {
         {
           path: 'sample-page',
           element: <SamplePage />
+        },
+        {
+          path: 'user',
+          children: [
+            {
+              path: 'profile',
+              element: <UserProfile />
+            }
+          ]
         }
       ]
     },
+
     {
       path: '/maintenance',
       element: <CommonLayout />,

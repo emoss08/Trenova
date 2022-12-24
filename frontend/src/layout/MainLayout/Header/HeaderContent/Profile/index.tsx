@@ -153,7 +153,7 @@ const Profile = () => {
                                 {user?.profile.firstName} {user?.profile.lastName}
                               </Typography>
                               <Typography variant="body2" color="textSecondary">
-                                UI/UX Designer
+                                {user?.profile.title}
                               </Typography>
                             </Stack>
                           </Stack>

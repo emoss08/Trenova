@@ -11,27 +11,26 @@ export type MontaUserProfile = {
   title: string;
   firstName: string;
   lastName: string;
-  profilePicture?: string;
-  bio?: string;
   addressLine1: string;
   addressLine2?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  phone?: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  phone: string;
 };
 
 export type MontaUser = {
   uid: string;
-  email?: string;
-  username?: string;
-  emailVerified?: boolean;
+  organization: string;
+  department: string;
+  email: string;
+  username: string;
   profile: MontaUserProfile;
 };
 
 export type UserContextType = {
   uid?: string;
-  isAuthenticated?: boolean;
+  isAuthenticated: boolean;
   token?: string | null;
   user?: MontaUser | null | undefined;
   authenticate: (username: string, password: string) => Promise<({ isAuthenticated: true } & ProvisionResult) | { isAuthenticated: false }>;
@@ -43,12 +42,20 @@ export type ProvisionResult = {
   user: {
     id: string;
     username: string;
+    organization: string;
+    department: string;
+    email: string;
     profile: {
       id: string;
       first_name: string;
       last_name: string;
       title: string;
       address_line_1: string;
+      address_line_2?: string;
+      city: string;
+      state: string;
+      zip_code: string;
+      phone: string;
     };
   };
 };
@@ -81,6 +88,7 @@ export const authenticate = async (
 
 export const logout = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('m_user_info');
   return { isAuthenticated: false, user: null };
 };
 
@@ -102,12 +110,20 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
           user: {
             uid: JSON.parse(user).id,
             username: JSON.parse(user).username,
+            email: JSON.parse(user).email,
+            organization: JSON.parse(user).organization,
+            department: JSON.parse(user).department,
             profile: {
               uid: JSON.parse(user).id,
-              firstName: JSON.parse(user).first_name,
-              lastName: JSON.parse(user).last_name,
-              title: JSON.parse(user).title,
-              addressLine1: JSON.parse(user).address_line_1
+              title: JSON.parse(user).profile.title,
+              firstName: JSON.parse(user).profile.first_name,
+              lastName: JSON.parse(user).profile.last_name,
+              addressLine1: JSON.parse(user).profile.address_line_1,
+              addressLine2: JSON.parse(user).profile.address_line_2,
+              city: JSON.parse(user).profile.city,
+              state: JSON.parse(user).profile.state,
+              zipCode: JSON.parse(user).profile.zip_code,
+              phone: JSON.parse(user).profile.phone
             }
           }
         }
@@ -138,13 +154,21 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
               isAuthenticated: true,
               user: {
                 uid: user.id,
+                organization: user.organization,
+                department: user.department,
                 username: user.username,
+                email: user.email,
                 profile: {
                   uid: user.profile.id,
                   firstName: user.profile.first_name,
                   lastName: user.profile.last_name,
                   title: user.profile.title,
-                  addressLine1: user.profile.address_line_1
+                  addressLine1: user.profile.address_line_1,
+                  addressLine2: user.profile.address_line_2,
+                  city: user.profile.city,
+                  state: user.profile.state,
+                  zipCode: user.profile.zip_code,
+                  phone: user.profile.phone
                 }
               }
             }
