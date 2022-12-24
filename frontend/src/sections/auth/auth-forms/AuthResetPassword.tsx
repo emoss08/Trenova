@@ -41,7 +41,7 @@ const AuthResetPassword = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const [level, setLevel] = useState<StringColorProps>();
   const [showPassword, setShowPassword] = useState(false);
@@ -99,7 +99,7 @@ const AuthResetPassword = () => {
               );
 
               setTimeout(() => {
-                navigate(isLoggedIn ? '/auth/login' : '/login', { replace: true });
+                navigate(isAuthenticated ? '/auth/login' : '/login', { replace: true });
               }, 1500);
             }
           } catch (err: any) {

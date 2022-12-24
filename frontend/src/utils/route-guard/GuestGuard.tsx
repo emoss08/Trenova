@@ -11,14 +11,14 @@ import { GuardProps } from 'types/auth';
 // ==============================|| GUEST GUARD ||============================== //
 
 const GuestGuard = ({ children }: GuardProps) => {
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isAuthenticated) {
       navigate(config.defaultPath, { replace: true });
     }
-  }, [isLoggedIn, navigate]);
+  }, [isAuthenticated, navigate]);
 
   return children;
 };

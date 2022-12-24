@@ -2,7 +2,7 @@
 import { FormattedMessage } from 'react-intl';
 
 // assets
-import { ChromeOutlined, QuestionOutlined, DeploymentUnitOutlined } from '@ant-design/icons';
+import { ChromeOutlined, QuestionOutlined, DeploymentUnitOutlined, UserOutlined } from '@ant-design/icons';
 
 // type
 import { NavItemType } from 'types/menu';
@@ -11,7 +11,8 @@ import { NavItemType } from 'types/menu';
 const icons = {
   ChromeOutlined,
   QuestionOutlined,
-  DeploymentUnitOutlined
+  DeploymentUnitOutlined,
+  UserOutlined
 };
 
 // ==============================|| MENU ITEMS - SUPPORT ||============================== //

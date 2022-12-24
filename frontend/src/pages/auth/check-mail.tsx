@@ -16,7 +16,7 @@ const CheckMail = () => {
   const theme = useTheme();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <AuthWrapper>
@@ -33,7 +33,7 @@ const CheckMail = () => {
           <AnimateButton>
             <Button
               component={Link}
-              to={isLoggedIn ? '/auth/login' : '/login'}
+              to={isAuthenticated ? '/auth/login' : '/login'}
               disableElevation
               fullWidth
               size="large"
