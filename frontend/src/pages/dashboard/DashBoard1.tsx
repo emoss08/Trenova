@@ -6,7 +6,7 @@ import MainCard from 'components/MainCard';
 
 // ==============================|| SAMPLE PAGE ||============================== //
 
-const SamplePage = () => (
+const DashBoard1 = () => (
   <MainCard title="Sample Card">
     <Typography variant="body2">
       Lorem ipsum dolor sit amen, consenter nipissing eli, sed do elusion tempos incident ut laborers et doolie magna alissa. Ut enif ad
@@ -17,4 +17,4 @@ const SamplePage = () => (
   </MainCard>
 );
 
-export default SamplePage;
+export default DashBoard1;

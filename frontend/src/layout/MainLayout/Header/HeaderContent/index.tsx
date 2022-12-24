@@ -11,6 +11,7 @@ import Profile from './Profile';
 import Notification from './Notification';
 import MobileSection from './MobileSection';
 import MegaMenuSection from './MegaMenuSection';
+import ThemeSwitcher from './ThemeSwitcher';
 
 // ==============================|| HEADER - CONTENT ||============================== //
 
@@ -28,6 +29,7 @@ const HeaderContent = () => {
 
       <Notification />
       <Message />
+      <ThemeSwitcher />
       {!matchesXs && <Profile />}
       {matchesXs && <MobileSection />}
     </>
