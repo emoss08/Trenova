@@ -41,10 +41,10 @@ export type UserContextType = {
 export type ProvisionResult = {
   token: string;
   user: {
-    pk: string;
+    id: string;
     username: string;
     profile: {
-      pk: string;
+      id: string;
       first_name: string;
       last_name: string;
       title: string;
@@ -72,7 +72,6 @@ export const authenticate = async (
     const { token, user } = response.data as ProvisionResult;
     localStorage.setItem('token', token);
     localStorage.setItem('m_user_info', JSON.stringify(user));
-
     return { isAuthenticated: true, token, user };
   } catch (error) {
     console.error(error);
@@ -138,10 +137,10 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
             payload: {
               isAuthenticated: true,
               user: {
-                uid: user.pk,
+                uid: user.id,
                 username: user.username,
                 profile: {
-                  uid: user.profile.pk,
+                  uid: user.profile.id,
                   firstName: user.profile.first_name,
                   lastName: user.profile.last_name,
                   title: user.profile.title,
@@ -152,7 +151,22 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
           });
           return context;
         },
-        logout
+        logout: () => {
+          const context = logout();
+          if (!context.isAuthenticated) {
+            dispatch({
+              type: LOGOUT,
+              payload: {
+                isAuthenticated: false
+              }
+            });
+            return context;
+          }
+          const user = context.user;
+          if (!user) {
+            return context;
+          }
+        }
       }}
     >
       {children}

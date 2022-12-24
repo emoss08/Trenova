@@ -78,6 +78,13 @@ const Profile = () => {
 
   const iconBackColorOpen = theme.palette.mode === 'dark' ? 'grey.200' : 'grey.300';
 
+  function capitalizeFirstLetter(string: string | undefined) {
+    if (!string) {
+      return;
+    }
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
   return (
     <Box sx={{ flexShrink: 0, ml: 0.75 }}>
       <ButtonBase
@@ -99,7 +106,7 @@ const Profile = () => {
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
           <Avatar alt="profile user" src={avatar1} size="xs" />
-          <Typography variant="subtitle1">{user?.uid}</Typography>
+          <Typography variant="subtitle1">{capitalizeFirstLetter(user?.username)}</Typography>
         </Stack>
       </ButtonBase>
       <Popper
@@ -142,7 +149,9 @@ const Profile = () => {
                           <Stack direction="row" spacing={1.25} alignItems="center">
                             <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
                             <Stack>
-                              <Typography variant="h6">{user?.profile?.firstName}</Typography>
+                              <Typography variant="h6">
+                                {user?.profile.firstName} {user?.profile.lastName}
+                              </Typography>
                               <Typography variant="body2" color="textSecondary">
                                 UI/UX Designer
                               </Typography>
