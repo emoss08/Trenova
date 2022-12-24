@@ -6,7 +6,8 @@ import { AuthProps, AuthActionProps } from 'types/auth';
 
 // initial state
 export const initialState: AuthProps = {
-  isLoggedIn: false,
+  isAuthenticated: false,
+  isLoading: false,
   isInitialized: false,
   user: null
 };
@@ -26,7 +27,7 @@ const auth = (state = initialState, action: AuthActionProps) => {
       const { user } = action.payload!;
       return {
         ...state,
-        isLoggedIn: true,
+        isAuthenticated: true,
         isInitialized: true,
         user
       };
@@ -35,7 +36,7 @@ const auth = (state = initialState, action: AuthActionProps) => {
       return {
         ...state,
         isInitialized: true,
-        isLoggedIn: false,
+        isAuthenticated: false,
         user: null
       };
     }

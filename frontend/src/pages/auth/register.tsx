@@ -11,7 +11,7 @@ import FirebaseRegister from 'sections/auth/auth-forms/AuthRegister';
 // ================================|| REGISTER ||================================ //
 
 const Register = () => {
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <AuthWrapper>
@@ -21,7 +21,7 @@ const Register = () => {
             <Typography variant="h3">Sign up</Typography>
             <Typography
               component={Link}
-              to={isLoggedIn ? '/auth/login' : '/login'}
+              to={isAuthenticated ? '/auth/login' : '/login'}
               variant="body1"
               sx={{ textDecoration: 'none' }}
               color="primary"

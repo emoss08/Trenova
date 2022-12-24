@@ -78,6 +78,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
     User Profile Serializer
     """
 
+    title = serializers.StringRelatedField()
+
     class Meta:
         """
         Metaclass for UserProfileSerializer
@@ -85,7 +87,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         model = models.UserProfile
         fields = [
-            "pk",
+            "id",
             "first_name",
             "last_name",
             "title",
@@ -112,7 +114,7 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         fields = (
-            "pk",
+            "id",
             "organization",
             "department",
             "username",
@@ -256,7 +258,7 @@ class TokenSerializer(serializers.ModelSerializer):
         """
 
         model: type[models.Token] = models.Token
-        fields = ["pk", "user", "created", "expires", "last_used", "key", "description"]
+        fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
 
 
 class TokenProvisionSerializer(serializers.Serializer):

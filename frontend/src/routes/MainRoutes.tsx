@@ -34,6 +34,7 @@ const MainRoutes = {
         }
       ]
     },
+
     {
       path: '/maintenance',
       element: <CommonLayout />,

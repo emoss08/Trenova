@@ -8,10 +8,8 @@ import useAuth from 'hooks/useAuth';
 import AuthWrapper from 'sections/auth/AuthWrapper';
 import AuthLogin from 'sections/auth/auth-forms/AuthLogin';
 
-// ================================|| LOGIN ||================================ //
-
 const Login = () => {
-  const { isLoggedIn } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return (
     <AuthWrapper>
@@ -21,7 +19,7 @@ const Login = () => {
             <Typography variant="h3">Login</Typography>
             <Typography
               component={Link}
-              to={isLoggedIn ? '/auth/register' : '/register'}
+              to={isAuthenticated ? '/auth/register' : '/register'}
               variant="body1"
               sx={{ textDecoration: 'none' }}
               color="primary"
