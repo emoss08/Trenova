@@ -96,6 +96,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "city",
             "state",
             "zip_code",
+            "bio",
             "phone",
         ]
 
