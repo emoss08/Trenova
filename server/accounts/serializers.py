@@ -78,7 +78,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
     User Profile Serializer
     """
 
-    title = serializers.StringRelatedField()
+    title = serializers.StringRelatedField(  # type: ignore
+        source="job_title", required=False, allow_null=True
+    )
 
     class Meta:
         """

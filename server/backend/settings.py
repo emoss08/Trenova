@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-from datetime import timedelta
 from pathlib import Path
 
 import django_stubs_ext
@@ -30,16 +29,11 @@ env = environ.Env(DEBUG=(bool, False))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-
 SECRET_KEY = env("SECRET_KEY")
-
 DEBUG = True
-
 ALLOWED_HOSTS = []  # type: ignore
 CORS_ORIGIN_ALLOW_ALL = True
-
 INTERNAL_IPS = [
     "127.0.0.1",
 ]
@@ -100,9 +94,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # "core.middleware.organization_middleware.OrganizationMiddleware",
 ]
-
 ROOT_URLCONF = "backend.urls"
-
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -118,7 +110,6 @@ TEMPLATES = [
         },
     },
 ]
-
 WSGI_APPLICATION = "backend.wsgi.application"
 
 # Databases
@@ -135,19 +126,14 @@ DATABASES = {
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "UTC"
-
 USE_I18N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "base/static"),
-]
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
@@ -227,12 +213,10 @@ CACHEOPS_REDIS = {
     "port": env("CACHE_OPS_PORT"),
     "db": env("CACHE_OPS_DB"),
 }
-
 CACHEOPS = {
     "auth.user": {"ops": "get", "timeout": 60 * 15},
     "auth.*": {"ops": ("fetch", "get"), "timeout": 60 * 15},
     "auth.permission": {"ops": "all", "timeout": 60 * 60},
-    "*.*": {"ops": (), "timeout": 60 * 60},
 }
 
 # Rest Framework Configurations
@@ -243,7 +227,7 @@ REST_FRAMEWORK = {
         "accounts.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        # "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",

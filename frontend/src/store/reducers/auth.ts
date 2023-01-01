@@ -28,14 +28,12 @@ const auth = (state = initialState, action: AuthActionProps) => {
       return {
         ...state,
         isAuthenticated: true,
-        isInitialized: true,
         user
       };
     }
     case LOGOUT: {
       return {
         ...state,
-        isInitialized: true,
         isAuthenticated: false,
         user: null
       };

@@ -206,7 +206,6 @@ class UserProfile(GenericModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="profile",
-        related_query_name="profiles",
         verbose_name=_("User"),
     )
     title = models.ForeignKey(

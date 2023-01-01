@@ -11,7 +11,7 @@ export const MontaAuthContext = createContext({} as UserContextType);
 export const authenticate = async (
   username: string,
   password: string
-): Promise<({ isAuthenticated: true } & ProvisionResult) | { isAuthenticated: false }> => {
+): Promise<({ isAuthenticated: true; isInitialized: true } & ProvisionResult) | { isAuthenticated: false; isInitialized: false }> => {
   try {
     const response = await axios.post('http://localhost:8000/api/token/provision/', {
       username,
@@ -20,16 +20,16 @@ export const authenticate = async (
     const { token, user } = response.data as ProvisionResult;
     LocalStorageService.setToken(token);
     LocalStorageService.setUser(user);
-    return { isAuthenticated: true, token, user };
+    return { isAuthenticated: true, isInitialized: true, token, user };
   } catch (error) {
     console.error(error);
-    return { isAuthenticated: false };
+    return { isAuthenticated: false, isInitialized: false };
   }
 };
 
 export const logout = () => {
   LocalStorageService.clearRelatedUser();
-  return { isAuthenticated: false, user: null };
+  return { isAuthenticated: false, isInitialized: false, user: null };
 };
 
 interface AuthState {
@@ -39,6 +39,7 @@ interface AuthState {
   logout: () => void;
   setAuthState: (authState: {
     isAuthenticated: boolean;
+    isInitialized: boolean;
     user: {
       uid: any;
       organization: any;
@@ -66,35 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactElement }> = ({ child
   const { isAuthenticated, user, isLoading } = authState;
 
   useEffect(() => {
-    const token = LocalStorageService.getToken();
-    const user = LocalStorageService.getUser();
-    if (token && user) {
-      const newAuthState = {
-        isAuthenticated: true,
-        isLoading: false,
-        user: {
-          uid: user.id,
-          username: user.username,
-          email: user.email,
-          organization: user.organization,
-          department: user.department,
-          profile: {
-            uid: user.id,
-            title: user.profile.title,
-            firstName: user.profile.first_name,
-            lastName: user.profile.last_name,
-            addressLine1: user.profile.address_line_1,
-            addressLine2: user.profile.address_line_2,
-            city: user.profile.city,
-            state: user.profile.state,
-            zipCode: user.profile.zip_code,
-            phone: user.profile.phone
-          }
-        }
-      };
-      setAuthState(newAuthState);
-    }
-  }, [isLoading, setAuthState]);
+    // Remove the authentication logic from the useEffect hook
+  }, [isLoading, setAuthState, isAuthenticated]);
+
+  // Create a new function to handle authentication
 
   return (
     <MontaAuthContext.Provider

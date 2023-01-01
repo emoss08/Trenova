@@ -24,11 +24,13 @@ export const useAuthStore = createTyped(
             }
           }));
           const authResult = await authenticate(username, password);
+          console.log(authResult);
           if (authResult.isAuthenticated && authResult.user) {
             set((state: any) => ({
               ...state,
               authState: {
                 isAuthenticated: authResult.isAuthenticated,
+                isInitialized: authResult.isInitialized,
                 isLoading: false, // Set isLoading to false after the API request is complete
                 token: authResult.token,
                 user: authResult.user
