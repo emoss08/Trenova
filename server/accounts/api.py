@@ -122,11 +122,11 @@ class TokenProvisionView(APIView):
         password = serializer.data.get("password")
 
         if not username or not password:
-            raise AuthenticationFailed("Username or password is not provided")
+            raise AuthenticationFailed({"message": "Username or password is missing"})
         user = authenticate(username=username, password=password)
 
         if not user:
-            raise AuthenticationFailed("Invalid username or password")
+            raise AuthenticationFailed({"message": "Invalid credentials"})
 
         token = models.Token(user=user)  # type: ignore
         token.save()

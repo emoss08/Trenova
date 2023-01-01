@@ -1,7 +1,7 @@
 import { ReactElement } from 'react';
+import { MontaUser } from './user';
 
 // third-party
-import { MontaUser } from '../contexts/MontaContext';
 
 // ==============================|| AUTH TYPES  ||============================== //
 

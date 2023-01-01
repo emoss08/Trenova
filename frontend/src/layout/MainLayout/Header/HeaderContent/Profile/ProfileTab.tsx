@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useContext } from 'react';
 
 // material-ui
 import { List, ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 
 // assets
-import { EditOutlined, ProfileOutlined, LogoutOutlined, UserOutlined, WalletOutlined } from '@ant-design/icons';
+import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { Link, useLocation } from 'react-router-dom';
+import { ConfigContext } from '../../../../../contexts/ConfigContext';
+import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
+import Brightness4OutlinedIcon from '@mui/icons-material/Brightness4Outlined';
 
 // ==============================|| HEADER PROFILE - PROFILE TAB ||============================== //
 
@@ -13,39 +17,29 @@ interface Props {
 }
 
 const ProfileTab = ({ handleLogout }: Props) => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const handleListItemClick = (event: React.MouseEvent<HTMLDivElement>, index: number) => {
-    setSelectedIndex(index);
+  const location = useLocation();
+  const isSelected = (path: string) => location.pathname === path;
+
+  const config = useContext(ConfigContext);
+
+  const handleThemeSwitcher = () => {
+    config.onChangeMode(config.mode === 'dark' ? 'light' : 'dark');
   };
 
   return (
     <List component="nav" sx={{ p: 0, '& .MuiListItemIcon-root': { minWidth: 32 } }}>
-      <ListItemButton selected={selectedIndex === 0} onClick={(event: React.MouseEvent<HTMLDivElement>) => handleListItemClick(event, 0)}>
-        <ListItemIcon>
-          <EditOutlined />
-        </ListItemIcon>
-        <ListItemText primary="Edit Profile" />
-      </ListItemButton>
-      <ListItemButton selected={selectedIndex === 1} onClick={(event: React.MouseEvent<HTMLDivElement>) => handleListItemClick(event, 1)}>
+      <ListItemButton selected={isSelected('/account/profile/personal')} component={Link} to="/account/profile/personal">
         <ListItemIcon>
           <UserOutlined />
         </ListItemIcon>
         <ListItemText primary="View Profile" />
       </ListItemButton>
 
-      <ListItemButton selected={selectedIndex === 3} onClick={(event: React.MouseEvent<HTMLDivElement>) => handleListItemClick(event, 3)}>
-        <ListItemIcon>
-          <ProfileOutlined />
-        </ListItemIcon>
-        <ListItemText primary="Social Profile" />
+      <ListItemButton onClick={handleThemeSwitcher}>
+        <ListItemIcon>{config.mode === 'dark' ? <LightModeOutlinedIcon /> : <Brightness4OutlinedIcon />}</ListItemIcon>
+        <ListItemText primary={config.mode === 'dark' ? 'Switch To Light Mode' : 'Switch To Dark Mode'} />
       </ListItemButton>
-      <ListItemButton selected={selectedIndex === 4} onClick={(event: React.MouseEvent<HTMLDivElement>) => handleListItemClick(event, 4)}>
-        <ListItemIcon>
-          <WalletOutlined />
-        </ListItemIcon>
-        <ListItemText primary="Billing" />
-      </ListItemButton>
-      <ListItemButton selected={selectedIndex === 2} onClick={handleLogout}>
+      <ListItemButton onClick={handleLogout}>
         <ListItemIcon>
           <LogoutOutlined />
         </ListItemIcon>

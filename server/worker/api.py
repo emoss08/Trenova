@@ -39,7 +39,6 @@ class WorkerViewSet(OrganizationViewSet):
 
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
-    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "first_name", "code", "last_name"]
 
@@ -53,15 +52,11 @@ class WorkerViewSet(OrganizationViewSet):
             QuerySet[models.Worker]: A queryset of workers for the current user's organization.
         """
 
-        return (
-            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
-            .select_related(
-                "profiles",
-                "manager",
-                "depot",
-                "organization",
-                "entered_by",
-                "entered_by__organization",
-            )
-            .prefetch_related("contacts", "comments")
-        )
+        return self.queryset.select_related(
+            "profiles",
+            "manager",
+            "depot",
+            "organization",
+            "entered_by",
+            "entered_by__organization",
+        ).prefetch_related("contacts", "comments")

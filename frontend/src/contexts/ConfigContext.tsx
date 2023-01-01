@@ -27,7 +27,7 @@ type ConfigProviderProps = {
 };
 
 function ConfigProvider({ children }: ConfigProviderProps) {
-  const [config, setConfig] = useLocalStorage('mantis-react-ts-config', initialState);
+  const [config, setConfig] = useLocalStorage('monta-config', initialState);
 
   const onChangeContainer = () => {
     setConfig({

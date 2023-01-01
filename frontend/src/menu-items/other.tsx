@@ -23,10 +23,10 @@ const other: NavItemType = {
   type: 'group',
   children: [
     {
-      id: 'sample-page',
-      title: <FormattedMessage id="sample-page" />,
+      id: 'dashboard',
+      title: <FormattedMessage id="dashboard" />,
       type: 'item',
-      url: '/sample-page',
+      url: '/dashboard',
       icon: icons.ChromeOutlined
     },
     {
