@@ -110,7 +110,7 @@ const Profile = () => {
       >
         <Stack direction="row" spacing={2} alignItems="center" sx={{ p: 0.5 }}>
           <Avatar alt="profile user" src={avatar1} size="xs" />
-          <Typography variant="subtitle1">{capitalizeFirstLetter(user?.username ?? 'Not here yet sorry')}</Typography>
+          <Typography variant="subtitle1">{capitalizeFirstLetter(user?.username)}</Typography>
         </Stack>
       </ButtonBase>
       <Popper

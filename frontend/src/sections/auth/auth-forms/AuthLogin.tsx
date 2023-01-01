@@ -3,7 +3,6 @@ import { Link as RouterLink } from 'react-router-dom';
 
 // material-ui
 import {
-  Button,
   Checkbox,
   Divider,
   FormControlLabel,
@@ -17,6 +16,8 @@ import {
   Typography
 } from '@mui/material';
 
+import LoadingButton from '@mui/lab/LoadingButton';
+
 // third party
 import * as Yup from 'yup';
 import { Formik } from 'formik';
@@ -26,7 +27,6 @@ import useAuth from 'hooks/useAuth';
 import useScriptRef from 'hooks/useScriptRef';
 import FirebaseSocial from './FirebaseSocial';
 import IconButton from 'components/@extended/IconButton';
-import AnimateButton from 'components/@extended/AnimateButton';
 
 // assets
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
@@ -85,7 +85,6 @@ const AuthLogin = () => {
               }
             );
           } catch (err: any) {
-            console.error(err);
             if (scriptedRef.current) {
               setStatus({ success: false });
               setErrors({ submit: err.message });
@@ -193,11 +192,17 @@ const AuthLogin = () => {
                 </Grid>
               )}
               <Grid item xs={12}>
-                <AnimateButton>
-                  <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="primary">
-                    Login
-                  </Button>
-                </AnimateButton>
+                <LoadingButton
+                  disableElevation
+                  loading={isSubmitting}
+                  fullWidth
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                >
+                  Submit
+                </LoadingButton>
               </Grid>
               <Grid item xs={12}>
                 <Divider>

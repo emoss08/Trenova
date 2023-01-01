@@ -20,6 +20,7 @@
     "@fullcalendar/timegrid": "^5.11.3",
     "@fullcalendar/timeline": "^5.11.3",
     "@mui/base": "^5.0.0-alpha.100",
+    "@mui/icons-material": "^5.11.0",
     "@mui/lab": "^5.0.0-alpha.102",
     "@mui/material": "^5.10.8",
     "@mui/system": "^5.10.8",
