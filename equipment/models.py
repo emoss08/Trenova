@@ -29,6 +29,7 @@ from localflavor.us.models import USStateField
 
 from utils.models import ChoiceField, GenericModel
 from worker.models import Worker
+from equipment.validators import us_vin_number_validator
 
 
 class EquipmentType(GenericModel):
@@ -299,6 +300,7 @@ class Equipment(GenericModel):
         max_length=17,
         blank=True,
         help_text=_("VIN number of the equipment."),
+        validators=[us_vin_number_validator],
     )
     odometer = models.PositiveIntegerField(
         _("Odometer"),
