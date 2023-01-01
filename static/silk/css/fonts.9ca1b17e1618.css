@@ -1,0 +1,71 @@
+/**
+*   Fira Sans
+*/
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-Regular.e1b70ada54b3.woff");
+  font-weight: normal; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-Medium.1d1a18f44b47.woff");
+  font-weight: bold; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-Bold.ce7872dc357e.woff");
+  font-weight: bolder; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-Light.ce3536f26dc5.woff");
+  font-weight: lighter; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-RegularItalic.04b7db2697c2.woff");
+  font-weight: normal;
+  font-style: italic; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-MediumItalic.04896ef4f406.woff");
+  font-weight: bold;
+  font-style: italic; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-BoldItalic.bd88e031f256.woff");
+  font-weight: bolder;
+  font-style: italic; }
+
+@font-face {
+  font-family: FiraSans;
+  src: url("../fonts/fira/FiraSans-LightItalic.42a68ecc6033.woff");
+  font-weight: lighter;
+  font-style: italic; }
+
+/**
+*   Fantasque
+*/
+@font-face {
+  font-family: Fantasque;
+  src: url("../fonts/fantasque/FantasqueSansMono-Regular.8914b625ed13.woff");
+  font-weight: normal; }
+
+@font-face {
+  font-family: Fantasque;
+  src: url("../fonts/fantasque/FantasqueSansMono-Bold.ee57c63be790.woff");
+  font-weight: bold; }
+
+@font-face {
+  font-family: Fantasque;
+  src: url("../fonts/fantasque/FantasqueSansMono-RegItalic.0ded33e52905.woff");
+  font-weight: normal;
+  font-style: italic; }
+
+@font-face {
+  font-family: Fantasque;
+  src: url("../fonts/fantasque/FantasqueSansMono-BoldItalic.8c0a8ac439c2.woff");
+  font-weight: bold;
+  font-style: italic; }
