@@ -26,10 +26,10 @@ jobs:
           command: pip install -r requirements.txt
       - run:
           name: run lint
-          command: cd server && mypy .
+          command: mypy .
       - run:
           name: run tests
-          command: cd server && python -m pytest -s
+          command: python -m pytest -s
       - store_test_results:
           path: test_results
 workflows:
