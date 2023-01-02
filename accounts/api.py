@@ -41,7 +41,7 @@ class UserViewSet(OrganizationViewSet):
 
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["organization", "department", "profiles"]
+    filterset_fields = ["organization", "department", "profile"]
     serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
     queryset = models.User.objects.all()
 
@@ -54,9 +54,9 @@ class UserViewSet(OrganizationViewSet):
 
         return self.queryset.filter(organization=self.request.user.organization).select_related(  # type: ignore
             "organization",
-            "profiles",
-            "profiles__title",
-            "profiles__user",
+            "profile",
+            "profile__title",
+            "profile__user",
             "department",
         )
 
@@ -128,37 +128,15 @@ class TokenProvisionView(APIView):
         if not user:
             raise AuthenticationFailed({"message": "Invalid credentials"})
 
-        token = models.Token(user=user)  # type: ignore
-        token.save()
+        token, created = models.Token.objects.get_or_create(user=user)
 
-        # Return the token and full user details
         return Response(
             {
-                "token": token.key,
-                "user": serializers.UserSerializer(user).data,
+                "user_id": user.id,
+                "api_token": token.key,
             },
+            status=status.HTTP_200_OK,
         )
-
-
-class JobTitleViewSet(OrganizationViewSet):
-    """
-    Job Title ViewSet to manage requests to the job title endpoint
-    """
-
-    permission_classes = (permissions.IsAuthenticated,)
-    serializer_class = serializers.JobTitleSerializer
-    queryset = models.JobTitle.objects.all()
-
-    def get_queryset(self) -> QuerySet[models.JobTitle]:
-        """Filter the queryset to only include the current user
-
-        Returns:
-            QuerySet[models.JobTitle]: Filtered queryset
-        """
-
-        return self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
-        ).select_related("organization")
 
 
 class TokenVerifyView(APIView):
@@ -193,7 +171,29 @@ class TokenVerifyView(APIView):
 
         return Response(
             {
-                "token": token.key,
-                "user": serializers.UserSerializer(token.user).data,
+                "user_id": token.user.id,
+                "api_token": token.key,
             },
+            status=status.HTTP_200_OK,
         )
+
+
+class JobTitleViewSet(OrganizationViewSet):
+    """
+    Job Title ViewSet to manage requests to the job title endpoint
+    """
+
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.JobTitleSerializer
+    queryset = models.JobTitle.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.JobTitle]:
+        """Filter the queryset to only include the current user
+
+        Returns:
+            QuerySet[models.JobTitle]: Filtered queryset
+        """
+
+        return self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).select_related("organization")
