@@ -61,7 +61,4 @@ class IntegrationBase:
         # Reverse = False, then relations point this model are not returned.
         model_fields = self.model._meta._get_fields(reverse=False)
 
-
-class Test(IntegrationBase):
-    model = models.Integration
-    headers = {"test": "test"}
+        # TODO: FINISH THIS
