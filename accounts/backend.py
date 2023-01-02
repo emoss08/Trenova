@@ -17,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+from typing import Optional, Any
 
 from django.contrib.auth.backends import ModelBackend
+from django.http import HttpRequest
 
 from .models import User
 
@@ -30,11 +31,11 @@ class UserBackend(ModelBackend):
     """User Authentication backend
 
     This class is used to authenticate users using their user id.
-     Returns the user object if the user is authenticated.
+    Returns the user object if the user is authenticated.
     Along with related profile, title and organization objects.
     """
 
-    def get_user(self, user_id: int) -> Optional[User]:
+    def get_user(self, user_id: int) -> User | None:
         """Get the user object.
 
         Args:
