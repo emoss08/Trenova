@@ -132,7 +132,7 @@ class TokenProvisionView(APIView):
 
         return Response(
             {
-                "user_id": user.id,
+                "user_id": user.pk,
                 "api_token": token.key,
             },
             status=status.HTTP_200_OK,
