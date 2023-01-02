@@ -19,9 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import TypeVar
 
-from django.db.models import QuerySet, Model
+from django.db.models import Model, QuerySet
 from rest_framework import viewsets
-
 
 _M = TypeVar("_M", bound=Model)
 

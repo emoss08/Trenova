@@ -27,9 +27,9 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField
 
+from equipment.validators import us_vin_number_validator
 from utils.models import ChoiceField, GenericModel
 from worker.models import Worker
-from equipment.validators import us_vin_number_validator
 
 
 class EquipmentType(GenericModel):

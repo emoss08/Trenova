@@ -29,14 +29,13 @@ from billing import api as billing_api
 from commodities import api as commodities_api
 from control_file import api as control_file_api
 from customer import api as customer_api
-from organization import api as org_api
-from worker import api as worker_api
-from equipment import api as equipment_api
-from location import api as location_api
 from dispatch import api as dispatch_api
+from equipment import api as equipment_api
 from integration import api as integration_api
+from location import api as location_api
+from organization import api as org_api
 from route import api as route_api
-
+from worker import api as worker_api
 
 router = routers.DefaultRouter()
 

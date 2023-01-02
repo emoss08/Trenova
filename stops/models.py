@@ -19,8 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
-import uuid
 import textwrap
+import uuid
 from typing import Any
 
 from django.conf import settings

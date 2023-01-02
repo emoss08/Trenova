@@ -19,9 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any
 
 from django.core.exceptions import ValidationError
-
-from rest_framework.views import exception_handler
 from rest_framework.response import Response
+from rest_framework.views import exception_handler
 
 
 def django_error_handler(exc: Any, context: Any) -> Response | None:

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import final, Any
+from typing import Any, final
 
 from django.db import models
 from django.db.models import CharField
