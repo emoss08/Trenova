@@ -28,7 +28,5 @@ echo 'Starting postgres...'
 sudo service postgresql start
 echo 'Activating virtual environment...'
 source rvenv/bin/activate.fish
-echo 'Changing Into /Server Directory....'
-cd server
 echo 'Starting server'
 py manage.py runserver
