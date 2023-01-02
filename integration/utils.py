@@ -19,9 +19,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Dict
 
+from django.db.models import Model
 from django.db.models.base import ModelBase
 
-from integration import models
+from integration.models import Integration
 
 
 class IntegrationBase:
@@ -29,8 +30,9 @@ class IntegrationBase:
     Blank for now.
     """
 
-    model = None
-    headers: Dict = None
+    model: Model | None = None
+    headers: Dict | None = None
+    integration: Integration | None = None
 
     def _check(self):
         """Checks to make sure that the type of the global variables are correct.
@@ -59,6 +61,7 @@ class IntegrationBase:
         self._check()
 
         # Reverse = False, then relations point this model are not returned.
-        model_fields = self.model._meta._get_fields(reverse=False)
+        if self.model:
+            model_fields = self.model._meta._get_fields(reverse=False)  # type: ignore
 
         # TODO: FINISH THIS
