@@ -17,12 +17,18 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Dict
+from typing import Dict, List, Type, TypeVar, Any
 
+from asgiref.sync import async_to_sync
 from django.db.models import Model
 from django.db.models.base import ModelBase
+from django.utils.datastructures import ImmutableList
+
+import httpx
 
 from integration.models import Integration
+
+_M = TypeVar("_M", bound=Model)
 
 
 class IntegrationBase:
@@ -30,9 +36,15 @@ class IntegrationBase:
     Blank for now.
     """
 
-    model: Model
-    headers: Dict = {}
+    model: Type[ModelBase]
+    headers: Dict[str, Any] = {}
     integration: Integration
+
+    def __init__(self):
+        """
+        Initializes the IntegrationBase class.
+        """
+        self._check()
 
     def _check(self):
         """Checks to make sure that the type of the global variables are correct.
@@ -50,18 +62,3 @@ class IntegrationBase:
             raise TypeError(
                 f"{self.__class__.__name__}.headers must be a dictionary, not {type(self.headers)}"
             )
-
-    def get_fields(self):
-        """
-
-        Returns:
-
-        """
-        # Run the check to make sure that the model
-        self._check()
-
-        # Reverse = False, then relations point this model are not returned.
-        
-        model_fields = self.model._meta._get_fields(reverse=False)  # type: ignore
-
-        # TODO: FINISH THIS
