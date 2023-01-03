@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import httpx
+from django.core.exceptions import ImproperlyConfigured
 
 from integration.utils import IntegrationBase
 
@@ -53,3 +54,11 @@ class IntegrationAuthenticationService(IntegrationBase):
         """
         self.integration.token = await self.authenticate()
         self.integration.save()
+
+    async def launch(self) -> None:
+        """Launch the authentication service.
+
+        Returns:
+            None
+        """
+        await self.set_token()

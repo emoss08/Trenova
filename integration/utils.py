@@ -30,9 +30,9 @@ class IntegrationBase:
     Blank for now.
     """
 
-    model: Model | None = None
-    headers: Dict | None = None
-    integration: Integration | None = None
+    model: Model
+    headers: Dict = {}
+    integration: Integration
 
     def _check(self):
         """Checks to make sure that the type of the global variables are correct.
@@ -41,12 +41,12 @@ class IntegrationBase:
             TypeError: If the model is not a subclass of django.db.models.base.ModelBase.
             TypeError: If the headers is not a dictionary.
         """
-        if self.model and not isinstance(self.model, ModelBase):
+        if not isinstance(self.model, ModelBase):
             raise TypeError(
                 f"{self.__class__.__name__}.model must be a subclass of ModelBase, not {type(self.model)}"
             )
 
-        if self.headers and not isinstance(self.headers, Dict):
+        if not isinstance(self.headers, Dict):
             raise TypeError(
                 f"{self.__class__.__name__}.headers must be a dictionary, not {type(self.headers)}"
             )
@@ -61,7 +61,7 @@ class IntegrationBase:
         self._check()
 
         # Reverse = False, then relations point this model are not returned.
-        if self.model:
-            model_fields = self.model._meta._get_fields(reverse=False)  # type: ignore
+        
+        model_fields = self.model._meta._get_fields(reverse=False)  # type: ignore
 
         # TODO: FINISH THIS
