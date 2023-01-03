@@ -141,12 +141,12 @@ class Integration(GenericModel):
             ValidationError: Validation Errors for the Integration Model
         """
         if (
-                self.name
-                in [
-            IntegrationChoices.GOOGLE_MAPS,
-            IntegrationChoices.GOOGLE_PLACES,
-        ]
-                and self.auth_type != IntegrationAuthTypes.API_KEY
+            self.name
+            in [
+                IntegrationChoices.GOOGLE_MAPS,
+                IntegrationChoices.GOOGLE_PLACES,
+            ]
+            and self.auth_type != IntegrationAuthTypes.API_KEY
         ):
             raise ValidationError(
                 {
@@ -158,12 +158,12 @@ class Integration(GenericModel):
             )
 
         if (
-                self.auth_type
-                in [
-            IntegrationAuthTypes.BEARER_TOKEN,
-            IntegrationAuthTypes.API_KEY,
-        ]
-                and not self.auth_token
+            self.auth_type
+            in [
+                IntegrationAuthTypes.BEARER_TOKEN,
+                IntegrationAuthTypes.API_KEY,
+            ]
+            and not self.auth_token
         ):
             raise ValidationError(
                 {
@@ -175,7 +175,7 @@ class Integration(GenericModel):
             )
 
         if self.auth_type == IntegrationAuthTypes.BASIC_AUTH and (
-                not self.username or not self.password
+            not self.username or not self.password
         ):
             raise ValidationError(
                 {
@@ -191,7 +191,7 @@ class Integration(GenericModel):
             )
 
         if self.auth_type == IntegrationAuthTypes.NO_AUTH and (
-                self.auth_token or self.username or self.password
+            self.auth_token or self.username or self.password
         ):
             raise ValidationError(
                 {
