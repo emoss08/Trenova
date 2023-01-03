@@ -17,14 +17,10 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Dict, List, Type, TypeVar, Any
+from typing import Dict, Type, TypeVar, Any
 
-from asgiref.sync import async_to_sync
 from django.db.models import Model
 from django.db.models.base import ModelBase
-from django.utils.datastructures import ImmutableList
-
-import httpx
 
 from integration.models import Integration
 

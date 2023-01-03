@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import httpx
-from django.core.exceptions import ImproperlyConfigured
 
 from integration.utils import IntegrationBase
 
