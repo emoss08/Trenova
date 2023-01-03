@@ -27,7 +27,6 @@ from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
 from commodities import api as commodities_api
-from control_file import api as control_file_api
 from customer import api as customer_api
 from dispatch import api as dispatch_api
 from equipment import api as equipment_api
@@ -91,11 +90,6 @@ router.register(
 )
 router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodity")
 
-# Control File Routing
-router.register(
-    r"google_api", control_file_api.GoogleAPIViewSet, basename="control_file"
-)
-
 # Customer Routing
 router.register(r"customers", customer_api.CustomerViewSet, basename="customer")
 router.register(
@@ -138,6 +132,9 @@ router.register(
 # Integration Routing
 router.register(
     r"integrations", integration_api.IntegrationViewSet, basename="integrations"
+)
+router.register(
+    r"google_api", integration_api.GoogleAPIViewSet, basename="google-api"
 )
 
 # Route Routing

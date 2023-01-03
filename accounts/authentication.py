@@ -109,20 +109,26 @@ class TokenAuthentication(authentication.TokenAuthentication):
                 .get(key=key)
             )
         except model.DoesNotExist:
-            raise exceptions.AuthenticationFailed("Invalid token")
+            raise exceptions.AuthenticationFailed(
+                _("Invalid token.")
+            )
 
         if (
-            not token.last_used
-            or (timezone.now() - token.last_used).total_seconds() > 60
+                not token.last_used
+                or (timezone.now() - token.last_used).total_seconds() > 60
         ):
             models.Token.objects.filter(pk=token.pk).update(last_used=timezone.now())
 
         if token.is_expired:
-            raise exceptions.AuthenticationFailed("Token has expired")
+            raise exceptions.AuthenticationFailed(
+                _("Token has expired and is no longer valid.")
+            )
 
         user = token.user
 
         if not user.is_active:
-            raise exceptions.AuthenticationFailed("User inactive or deleted")
+            raise exceptions.AuthenticationFailed(
+                _("User inactive or deleted.")
+            )
 
         return user, token

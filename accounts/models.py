@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.
@@ -471,12 +471,6 @@ class Token(models.Model):
         max_length=40,
         unique=True,
         validators=[MinLengthValidator(40)],
-    )
-    description = models.CharField(
-        _("Description"),
-        max_length=100,
-        blank=True,
-        help_text=_("Description of the token"),
     )
 
     class Meta:

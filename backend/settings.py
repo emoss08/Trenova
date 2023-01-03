@@ -67,7 +67,6 @@ INSTALLED_APPS = [
     "integration",
     "equipment",
     "worker",
-    "control_file",
     "dispatch",
     "location",
     "order",

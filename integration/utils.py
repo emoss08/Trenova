@@ -17,14 +17,11 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Dict, Type
 
-from django.db.models import Model
 from django.db.models.base import ModelBase
 
 from integration.models import Integration
-
-_M = TypeVar("_M", bound=Model)
 
 
 class IntegrationBase:
@@ -35,12 +32,6 @@ class IntegrationBase:
     model: Type[ModelBase]
     headers: Dict[str, Any] = {}
     integration: Integration
-
-    def __init__(self):
-        """
-        Initializes the IntegrationBase class.
-        """
-        self._check()
 
     def _check(self):
         """Checks to make sure that the type of the global variables are correct.

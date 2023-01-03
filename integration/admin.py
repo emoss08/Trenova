@@ -38,3 +38,16 @@ class IntegrationAdmin(GenericAdmin[models.Integration]):
         ),
     )
     search_fields = ("name",)
+
+
+@admin.register(models.GoogleAPI)
+class GoogleApiAdmin(GenericAdmin[models.GoogleAPI]):
+    """
+    Google API Admin
+    """
+
+    list_display = (
+        "organization",
+        "id",
+    )
+    search_fields = ("id",)
