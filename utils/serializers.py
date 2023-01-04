@@ -43,6 +43,7 @@ class GenericSerializer(serializers.ModelSerializer):
 
         extra_fields: list[str]
         extra_read_only_fields: list[str]
+        model: _MT  # type: ignore
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the serializer
@@ -107,7 +108,6 @@ class GenericSerializer(serializers.ModelSerializer):
 
     def set_fields(self) -> None:
         """Set the fields for the serializer
-
         Returns:
             None
         """
@@ -123,7 +123,7 @@ class GenericSerializer(serializers.ModelSerializer):
             # If reverse=True, then relations pointing to this model are returned.
             fields = [
                 field.name
-                for field in self.Meta.model._meta._get_fields(reverse=False)
+                for field in self.Meta.model._meta._get_fields(reverse=False)  # type: ignore
                 if field.name not in excluded_fields
             ]
 
