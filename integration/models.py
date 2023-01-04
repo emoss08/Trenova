@@ -21,7 +21,6 @@ import textwrap
 import uuid
 from typing import final
 
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -51,6 +50,55 @@ class IntegrationAuthTypes(models.TextChoices):
     BASIC_AUTH = "basic_auth", _("Basic Auth")
 
 
+class IntegrationVendor(GenericModel):
+    """
+    Stores Integration vendor information related to an :model:`organization.Organization`.
+    """
+
+    id = models.UUIDField(
+        _("ID"),
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Designates whether this integration vendor is active."),
+    )
+    name = ChoiceField(
+        _("Name"),
+        choices=IntegrationChoices.choices,
+        help_text=_("Name of the integration vendor."),
+    )
+
+    class Meta:
+        """
+        Metaclass for IntegrationVendor
+        """
+
+        verbose_name = _("Integration Vendor")
+        verbose_name_plural = _("Integration Vendors")
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        """Returns the name of the integration vendor.
+
+        Returns:
+            str: Name of the integration vendor.
+        """
+        return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    def get_absolute_url(self) -> str:
+        """Returns the absolute url for the integration vendor.
+
+        Returns:
+            str: Absolute url for the integration vendor.
+        """
+        return reverse("integration:integration_vendor_detail", kwargs={"pk": self.pk})
+
+
 class Integration(GenericModel):
     """
     Stores Integration details related to an :model:`organization.Organization`
@@ -62,14 +110,14 @@ class Integration(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Is Active"), default=True, help_text=_("Is the integration active?")
-    )
-    name = ChoiceField(
-        _("Name"),
-        choices=IntegrationChoices.choices,
-        unique=True,
-        help_text=_("Name of the integration"),
+    integration_vendor = models.OneToOneField(
+        IntegrationVendor,
+        on_delete=models.CASCADE,
+        related_name="integration",
+        verbose_name=_("Integration Vendor"),
+        help_text=_("Integration Vendor for the Integration"),
+        blank=True,
+        null=True,
     )
     auth_type = ChoiceField(
         _("Auth Type"),
@@ -121,7 +169,7 @@ class Integration(GenericModel):
 
         verbose_name = _("Integration")
         verbose_name_plural = _("Integrations")
-        ordering: list[str] = ["name"]
+        ordering: list[str] = ["integration_vendor"]
 
     def __str__(self) -> str:
         """String representation of the Integration Model
@@ -129,86 +177,93 @@ class Integration(GenericModel):
         Returns:
             str: String representation of the Integration
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.wrap(self.integration_vendor.name, 50)[0]
 
-    def clean(self) -> None:
-        """Clean method to validate the Integration Model
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: Validation Errors for the Integration Model
-        """
-        if (
-            self.name
-            in [
-                IntegrationChoices.GOOGLE_MAPS,
-                IntegrationChoices.GOOGLE_PLACES,
-            ]
-            and self.auth_type != IntegrationAuthTypes.API_KEY
-        ):
-            raise ValidationError(
-                {
-                    "auth_type": ValidationError(
-                        _("API Key is required for Google Integrations"),
-                        code="invalid",
-                    )
-                }
-            )
-
-        if (
-            self.auth_type
-            in [
-                IntegrationAuthTypes.BEARER_TOKEN,
-                IntegrationAuthTypes.API_KEY,
-            ]
-            and not self.auth_token
-        ):
-            raise ValidationError(
-                {
-                    "auth_token": ValidationError(
-                        _("Auth Token required for Authentication Type."),
-                        code="required",
-                    )
-                }
-            )
-
-        if self.auth_type == IntegrationAuthTypes.BASIC_AUTH and (
-            not self.username or not self.password
-        ):
-            raise ValidationError(
-                {
-                    "username": ValidationError(
-                        _("Username and Password required for Authentication Type."),
-                        code="required",
-                    ),
-                    "password": ValidationError(
-                        _("Username and Password required for Authentication Type."),
-                        code="required",
-                    ),
-                }
-            )
-
-        if self.auth_type == IntegrationAuthTypes.NO_AUTH and (
-            self.auth_token or self.username or self.password
-        ):
-            raise ValidationError(
-                {
-                    "auth_token": ValidationError(
-                        _("Auth Token not required for Authentication Type."),
-                        code="invalid",
-                    ),
-                    "username": ValidationError(
-                        _("Username not required for Authentication Type."),
-                        code="invalid",
-                    ),
-                    "password": ValidationError(
-                        _("Password not required for Authentication Type."),
-                        code="invalid",
-                    ),
-                }
-            )
+    #
+    # def clean(self) -> None:
+    #     """Clean method to validate the Integration Model
+    #
+    #     Returns:
+    #         None
+    #
+    #     Raises:
+    #         ValidationError: Validation Errors for the Integration Model
+    #     """
+    #     if self.pk:
+    #
+    #         if (
+    #             self.integration_vendor.name
+    #             in [
+    #                 IntegrationChoices.GOOGLE_MAPS,
+    #                 IntegrationChoices.GOOGLE_PLACES,
+    #             ]
+    #             and self.auth_type != IntegrationAuthTypes.API_KEY
+    #         ):
+    #             raise ValidationError(
+    #                 {
+    #                     "auth_type": ValidationError(
+    #                         _("API Key is required for Google Integrations"),
+    #                         code="invalid",
+    #                     )
+    #                 }
+    #             )
+    #
+    #         if (
+    #             self.auth_type
+    #             in [
+    #                 IntegrationAuthTypes.BEARER_TOKEN,
+    #                 IntegrationAuthTypes.API_KEY,
+    #             ]
+    #             and not self.auth_token
+    #         ):
+    #             raise ValidationError(
+    #                 {
+    #                     "auth_token": ValidationError(
+    #                         _("Auth Token required for Authentication Type."),
+    #                         code="required",
+    #                     )
+    #                 }
+    #             )
+    #
+    #         if self.auth_type == IntegrationAuthTypes.BASIC_AUTH and (
+    #             not self.username or not self.password
+    #         ):
+    #             raise ValidationError(
+    #                 {
+    #                     "username": ValidationError(
+    #                         _(
+    #                             "Username and Password required for Authentication Type."
+    #                         ),
+    #                         code="required",
+    #                     ),
+    #                     "password": ValidationError(
+    #                         _(
+    #                             "Username and Password required for Authentication Type."
+    #                         ),
+    #                         code="required",
+    #                     ),
+    #                 }
+    #             )
+    #
+    #         if self.auth_type == IntegrationAuthTypes.NO_AUTH and (
+    #             self.auth_token or self.username or self.password
+    #         ):
+    #             raise ValidationError(
+    #                 {
+    #                     "auth_token": ValidationError(
+    #                         _("Auth Token not required for Authentication Type."),
+    #                         code="invalid",
+    #                     ),
+    #                     "username": ValidationError(
+    #                         _("Username not required for Authentication Type."),
+    #                         code="invalid",
+    #                     ),
+    #                     "password": ValidationError(
+    #                         _("Password not required for Authentication Type."),
+    #                         code="invalid",
+    #                     ),
+    #                 }
+    #             )
 
     def get_absolute_url(self) -> str:
         """

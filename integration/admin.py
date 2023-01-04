@@ -16,28 +16,42 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import Type
 
 from django.contrib import admin
 
 from integration import models
-from utils.admin import GenericAdmin
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
-@admin.register(models.Integration)
-class IntegrationAdmin(GenericAdmin[models.Integration]):
+class IntegrationAdmin(
+    GenericStackedInline[models.Integration, models.IntegrationVendor]
+):
     """
     Integration Admin
     """
 
+    model: Type[models.Integration] = models.Integration
     fieldsets = (
-        (None, {"fields": ("name", "auth_type", "is_active")}),
         ("Basic Credentials", {"fields": ("auth_token", "client_id", "client_secret")}),
         (
             "Advanced Credentials",
-            {"classes": ("collapse",), "fields": ("login_url", "username", "password")},
+            {"fields": ("login_url", "username", "password")},
         ),
     )
     search_fields = ("name",)
+    list_display = ("id", "auth_type", "login_url")
+
+
+@admin.register(models.IntegrationVendor)
+class IntegrationVendorAdmin(GenericAdmin[models.IntegrationVendor]):
+    """
+    Integration Vendor Admin
+    """
+
+    list_display = ("id", "name", "is_active")
+    search_fields = ("name",)
+    inlines = (IntegrationAdmin,)
 
 
 @admin.register(models.GoogleAPI)

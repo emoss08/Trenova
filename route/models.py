@@ -138,8 +138,7 @@ class RouteControl(GenericModel):
     organization = models.OneToOneField(
         "organization.Organization",
         on_delete=models.CASCADE,
-        related_name="route_controls",
-        related_query_name="route_control",
+        related_name="route_control",
         verbose_name=_("Organization"),
         help_text=_("Organization related to this route control"),
     )
