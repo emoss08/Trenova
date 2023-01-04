@@ -1,7 +1,0 @@
-{
-    "mypy.configFile": "server/setup.cfg",
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true,
-    "mypy.dmypyExecutable": "dmypy",
-    "mypy.runUsingActiveInterpreter": true
-}
