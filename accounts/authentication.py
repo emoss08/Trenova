@@ -112,10 +112,11 @@ class TokenAuthentication(authentication.TokenAuthentication):
             raise exceptions.AuthenticationFailed("Invalid token.")
 
         if (
-            not token.last_used
-            or (timezone.now() - token.last_used).total_seconds() > 60
+                not token.last_used
+                or (timezone.now() - token.last_used).total_seconds() > 60
         ):
-            token.objects.filter(pk=token.pk).update(last_used=timezone.now())
+            token.last_used = timezone.now()
+            token.save(update_fields=["last_used"])
 
         if token.is_expired:
             raise exceptions.AuthenticationFailed("Token has expired.")
