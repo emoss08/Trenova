@@ -116,17 +116,8 @@ class UserSerializer(GenericSerializer):
         """
 
         model = models.User
-        fields = (
-            "id",
-            "organization",
-            "department",
-            "username",
-            "email",
-            "is_staff",
-            "is_active",
-            "date_joined",
-            "profile",
-        )
+        extra_fields = ("profile",)
+        extra_read_only_fields = ("groups", "user_permissions")
         extra_kwargs = {
             "password": {"write_only": True, "required": False},
             "is_staff": {"read_only": True},

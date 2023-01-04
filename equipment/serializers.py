@@ -43,25 +43,8 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
         """
 
         model = models.EquipmentTypeDetail
-        fields = (
-            "equipment_class",
-            "fixed_cost",
-            "variable_cost",
-            "height",
-            "length",
-            "width",
-            "weight",
-            "idling_fuel_usage",
-            "exempt_from_tolls",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("equipment_class",)
+        extra_read_only_fields = ("equipment_type",)
 
 
 class EquipmentTypeSerializer(GenericSerializer):
@@ -79,19 +62,7 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
 
         model = models.EquipmentType
-        fields = (
-            "organization",
-            "id",
-            "description",
-            "created",
-            "modified",
-            "equipment_type_details",
-        )
-        read_only_fields = (
-            "organization",
-            "created",
-            "modified",
-        )
+        extra_fields = ("equipment_type_details",)
 
     def create(self, validated_data: Any) -> models.EquipmentType:
         """Create new Equipment Type
