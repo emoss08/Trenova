@@ -19,6 +19,9 @@ jobs:
 
       - image: cimg/redis:6.2.6
     steps:
+      - run:
+          name: Make test directory
+          command: mkdir -p /tmp/test-results
       - checkout
       - run: sudo apt-get update
       - run:
@@ -26,12 +29,14 @@ jobs:
           command: pip install -r requirements.txt
       - run:
           name: run lint
-          command: cd server && mypy .
+          command: mypy .
+          when: always
       - run:
           name: run tests
-          command: cd server && python -m pytest -s
+          command: python -m pytest --junitxml=/tmp/test-results/junit.xml
+          when: always
       - store_test_results:
-          path: test_results
+          path: /tmp/test-results
 workflows:
   build-and-test-workflow:
     jobs:

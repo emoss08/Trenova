@@ -105,7 +105,7 @@ class ChoiceField(CharField):
 
     description = _("Choice Field")
 
-    def __init__(self, *args, db_collation=None, **kwargs) -> None:
+    def __init__(self, *args: Any, db_collation=None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
         if self.choices:

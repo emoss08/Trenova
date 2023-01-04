@@ -34,3 +34,18 @@ class IntegrationViewSet(OrganizationViewSet):
     queryset = models.Integration.objects.all()
     serializer_class = serializers.IntegrationSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
+
+class GoogleAPIViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing Google API keys in the system.
+
+    The viewset provides default operations for creating, updating, and deleting Google API keys,
+    as well as listing and retrieving Google API keys. It uses the `GoogleAPISerializer`
+    class to convert the Google API key instances to and from JSON-formatted data.
+
+    Only authenticated users and admins are allowed to access the views provided by this viewset.
+    """
+
+    queryset = models.GoogleAPI.objects.all()
+    serializer_class = serializers.GoogleAPISerializer
+    permission_classes = (permissions.IsAdminUser,)

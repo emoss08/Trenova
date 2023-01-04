@@ -35,10 +35,28 @@ class GenericSerializer(serializers.ModelSerializer):
     doesn't have nested serializers.
     """
 
-    read_only_fields = [
-        "created",
-        "modified",
-    ]
+    class Meta:
+        """
+        A class representing the metadata for the `GenericSerializer`
+        class.
+        """
+
+        extra_fields: list[str]
+        extra_read_only_fields: list[str]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the serializer
+
+        Args:
+            args (Any): Arguments
+            kwargs (Any): Keyword arguments
+
+        Returns:
+            None
+        """
+
+        super().__init__(*args, **kwargs)
+        self.set_fields()
 
     @cached_property
     def get_organization(self) -> Organization:
@@ -86,3 +104,46 @@ class GenericSerializer(serializers.ModelSerializer):
         validated_data["organization"] = organization
 
         return super().update(instance, validated_data)
+
+    def set_fields(self) -> None:
+        """Set the fields for the serializer
+
+        Returns:
+            None
+        """
+
+        # Default excluded fields
+        excluded_fields: list[str] = ["organization", "created", "modified"]
+
+        original_fields = getattr(self.Meta, "fields", None)
+        if original_fields is not None:
+            fields = original_fields
+        else:
+
+            # If reverse=True, then relations pointing to this model are returned.
+            fields = [
+                field.name
+                for field in self.Meta.model._meta._get_fields(reverse=False)
+                if field.name not in excluded_fields
+            ]
+
+        self.Meta.read_only_fields = excluded_fields
+        self.Meta.fields = tuple(fields)
+
+        extra_fields = getattr(self.Meta, "extra_fields", None)
+        if extra_fields:
+            self.Meta.fields += tuple(extra_fields)
+
+        if extra_fields and not isinstance(extra_fields, (list, tuple)):
+            raise TypeError("The `extra_fields` attribute must be a list or tuple.")
+
+        extra_read_only_fields = getattr(self.Meta, "extra_read_only_fields", None)
+        if extra_read_only_fields:
+            self.Meta.read_only_fields += tuple(extra_read_only_fields)
+
+        if extra_read_only_fields and not isinstance(
+            extra_read_only_fields, (list, tuple)
+        ):
+            raise TypeError(
+                "The `extra_read_only_fields` attribute must be a list or tuple."
+            )

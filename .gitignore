@@ -14,7 +14,7 @@ server/media/
 server/server.iml
 scripts/startup.sh
 /design/
-__pycache__
+*/__pycache__
 server/__pycache__
 templates
 static/

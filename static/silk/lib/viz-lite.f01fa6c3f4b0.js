@@ -55,7 +55,7 @@ function Viz(src) {
   var files = options.files === undefined ? [] : options.files;
   var images = options.images === undefined ? [] : options.images;
   var i;
-  
+
   for (i = 0; i < images.length; i++) {
     files.push({ path: images[i].path, data: "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n<svg width=\"" + images[i].width + "\" height=\"" + images[i].height + "\"></svg>" });
   }
@@ -70,21 +70,21 @@ function Viz(src) {
 function render(src, format, engine, totalMemory, files) {
   var graphviz = Module({ TOTAL_MEMORY: totalMemory });
   var i;
-  
+
   for (i = 0; i < files.length; i++) {
     graphviz["ccall"]("vizCreateFile", "number", ["string", "string"], [files[i].path, files[i].data]);
   }
-  
+
   var resultPointer = graphviz["ccall"]("vizRenderFromString", "number", ["string", "string", "string"], [src, format, engine]);
   var resultString = graphviz["Pointer_stringify"](resultPointer);
 
   var errorMessagePointer = graphviz["ccall"]("vizLastErrorMessage", "number", [], []);
   var errorMessageString = graphviz["Pointer_stringify"](errorMessagePointer);
-  
+
   if (errorMessageString != "") {
     throw new Error(errorMessageString);
   }
-  
+
   return resultString;
 }
 
@@ -103,7 +103,7 @@ Viz.svgXmlToPngImageElement = function(svgXml, scale, callback) {
       scale = 1;
     }
   }
-  
+
   var pngImage = new Image();
 
   try {
@@ -118,19 +118,19 @@ Viz.svgXmlToPngImageElement = function(svgXml, scale, callback) {
             throw new Error("Error loading SVG with Fabric");
           }
         }
-      
+
         var element = document.createElement("canvas");
         element.width = options.width;
         element.height = options.height;
-    
+
         var canvas = new fabric.Canvas(element, { enableRetinaScaling: false });
         var obj = fabric.util.groupSVGElements(objects, options);
         canvas.add(obj).renderAll();
-    
+
         pngImage.src = canvas.toDataURL({ multiplier: scale });
         pngImage.width = options.width;
         pngImage.height = options.height;
-      
+
         if (callback !== undefined) {
           callback(null, pngImage);
         }
@@ -149,28 +149,28 @@ Viz.svgXmlToPngImageElement = function(svgXml, scale, callback) {
         pngImage.src = canvas.toDataURL("image/png");
         pngImage.width = svgImage.width;
         pngImage.height = svgImage.height;
-      
+
         if (callback !== undefined) {
           callback(null, pngImage);
         }
       }
-    
+
       svgImage.onerror = function(e) {
         var error;
-      
+
         if ('error' in e) {
           error = e.error;
         } else {
           error = new Error('Error loading SVG');
         }
-      
+
         if (callback !== undefined) {
           callback(error);
         } else {
           throw error;
         }
       }
-    
+
       svgImage.src = "data:image/svg+xml;base64," + b64EncodeUnicode(svgXml);
     }
   } catch (e) {
@@ -180,7 +180,7 @@ Viz.svgXmlToPngImageElement = function(svgXml, scale, callback) {
       throw e;
     }
   }
-  
+
   if (callback === undefined) {
     return pngImage;
   }
@@ -200,5 +200,5 @@ if (typeof module === "object" && module.exports) {
 } else {
   global.Viz = Viz;
 }
-  
+
 })(this);

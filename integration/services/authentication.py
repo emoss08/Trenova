@@ -53,3 +53,11 @@ class IntegrationAuthenticationService(IntegrationBase):
         """
         self.integration.token = await self.authenticate()
         self.integration.save()
+
+    async def launch(self) -> None:
+        """Launch the authentication service.
+
+        Returns:
+            None
+        """
+        await self.set_token()

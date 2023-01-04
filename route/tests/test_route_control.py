@@ -37,8 +37,8 @@ def test_route_control_exists(organization):
     Test route control is created from
     create_route_control post_save signal
     """
-    assert organization.route_controls is not None
-    assert organization.route_controls.organization == organization
+    assert organization.route_control is not None
+    assert organization.route_control.organization == organization
 
 
 @pytest.mark.django_db
@@ -48,8 +48,8 @@ def test_route_distance_choices(organization):
     when the passed choice is not valid.
     """
     with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
-        organization.route_controls.mileage_unit = "invalid"
-        organization.route_controls.full_clean()
+        organization.route_control.mileage_unit = "invalid"
+        organization.route_control.full_clean()
 
 
 @pytest.mark.django_db
@@ -59,5 +59,5 @@ def test_route_model_choices(organization):
     when the passed choice is not a valid.
     """
     with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
-        organization.route_controls.traffic_model = "invalid"
-        organization.route_controls.full_clean()
+        organization.route_control.traffic_model = "invalid"
+        organization.route_control.full_clean()

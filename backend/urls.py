@@ -27,7 +27,6 @@ from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
 from commodities import api as commodities_api
-from control_file import api as control_file_api
 from customer import api as customer_api
 from dispatch import api as dispatch_api
 from equipment import api as equipment_api
@@ -35,6 +34,7 @@ from integration import api as integration_api
 from location import api as location_api
 from organization import api as org_api
 from route import api as route_api
+from stops import api as stops_api
 from worker import api as worker_api
 
 router = routers.DefaultRouter()
@@ -91,11 +91,6 @@ router.register(
 )
 router.register(r"commodities", commodities_api.CommodityViewSet, basename="commodity")
 
-# Control File Routing
-router.register(
-    r"google_api", control_file_api.GoogleAPIViewSet, basename="control_file"
-)
-
 # Customer Routing
 router.register(r"customers", customer_api.CustomerViewSet, basename="customer")
 router.register(
@@ -139,11 +134,17 @@ router.register(
 router.register(
     r"integrations", integration_api.IntegrationViewSet, basename="integrations"
 )
+router.register(r"google_api", integration_api.GoogleAPIViewSet, basename="google-api")
 
 # Route Routing
 router.register(r"routes", route_api.RouteViewSet, basename="routes")
 router.register(
     r"route_control", route_api.RouteControlViewSet, basename="route-control"
+)
+
+# Stops Routing
+router.register(
+    r"qualifier_codes", stops_api.QualifierCodeViewSet, basename="qualifier-codes"
 )
 
 urlpatterns = [

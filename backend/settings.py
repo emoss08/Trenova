@@ -67,7 +67,6 @@ INSTALLED_APPS = [
     "integration",
     "equipment",
     "worker",
-    "control_file",
     "dispatch",
     "location",
     "order",
@@ -214,10 +213,18 @@ CACHEOPS_REDIS = {
     "port": env("CACHE_OPS_PORT"),
     "db": env("CACHE_OPS_DB"),
 }
+# CACHEOPS_SENTINEL = {
+#     'locations': [(env("CACHE_OPS_SENTINEL"), env("CACHE_OPS_SENTINEL_PORT"))],
+#     'service_name': env("CACHE_OPS_SENTINEL_SERVICE"),
+#     'socket_timeout': 0.1,
+#     'db': 0
+# }
+
 CACHEOPS = {
     "auth.user": {"ops": "get", "timeout": 60 * 15},
     "auth.*": {"ops": ("fetch", "get"), "timeout": 60 * 15},
     "auth.permission": {"ops": "all", "timeout": 60 * 60},
+    "accounts.*": {"ops": ("fetch", "get"), "timeout": 60 * 60},
 }
 
 # Rest Framework Configurations

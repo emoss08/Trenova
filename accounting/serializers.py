@@ -17,10 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any
 
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from accounting import models
 from utils.serializers import GenericSerializer

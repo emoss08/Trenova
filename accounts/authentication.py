@@ -109,7 +109,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
                 .get(key=key)
             )
         except model.DoesNotExist:
-            raise exceptions.AuthenticationFailed("Invalid token")
+            raise exceptions.AuthenticationFailed("Invalid token.")
 
         if (
             not token.last_used
@@ -118,11 +118,13 @@ class TokenAuthentication(authentication.TokenAuthentication):
             models.Token.objects.filter(pk=token.pk).update(last_used=timezone.now())
 
         if token.is_expired:
-            raise exceptions.AuthenticationFailed("Token has expired")
+            raise exceptions.AuthenticationFailed("Token has expired.")
 
         user = token.user
 
         if not user.is_active:
-            raise exceptions.AuthenticationFailed("User inactive or deleted")
+            raise exceptions.AuthenticationFailed(  # WHY THE FUCK DOES THIS RETURN A strPROMISE~~!!!!!! if you do _("")
+                "User inactive or deleted."
+            )
 
         return user, token

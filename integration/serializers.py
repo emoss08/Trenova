@@ -66,3 +66,46 @@ class IntegrationSerializer(GenericSerializer):
             "created",
             "modified",
         )
+
+
+class GoogleAPISerializer(GenericSerializer):
+    """
+    A serializer for the `GoogleAPI` model.
+
+    This serializer converts instances of the `GoogleAPI` model into JSON or other data formats,
+    and vice versa. It uses the specified fields (name, description, and code) to create the serialized
+    representation of the `GoogleAPI` model.
+    """
+
+    mileage_unit = serializers.ChoiceField(
+        choices=models.GoogleAPI.GoogleRouteDistanceUnitChoices.choices,
+        default=models.GoogleAPI.GoogleRouteDistanceUnitChoices.IMPERIAL,
+    )
+    traffic_model = serializers.ChoiceField(
+        choices=models.GoogleAPI.GoogleRouteModelChoices.choices,
+        default=models.GoogleAPI.GoogleRouteModelChoices.BEST_GUESS,
+    )
+
+    class Meta:
+        """
+        A class representing the metadata for the `GoogleAPISerializer` class.
+        """
+
+        model = models.GoogleAPI
+        fields = (
+            "id",
+            "organization",
+            "api_key",
+            "mileage_unit",
+            "traffic_model",
+            "add_customer_location",
+            "add_location",
+            "created",
+            "modified",
+        )
+        read_only_fields = (
+            "organization",
+            "id",
+            "created",
+            "modified",
+        )
