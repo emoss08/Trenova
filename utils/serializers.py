@@ -22,6 +22,7 @@ from typing import Any, TypeVar
 from django.db.models import Model
 from django.utils.functional import cached_property
 from rest_framework import serializers
+from rest_framework.serializers import SerializerMetaclass
 
 from accounts.models import Token
 from organization.models import Organization
@@ -35,10 +36,27 @@ class GenericSerializer(serializers.ModelSerializer):
     doesn't have nested serializers.
     """
 
-    read_only_fields = [
-        "created",
-        "modified",
-    ]
+    class Meta:
+        """
+        A class representing the metadata for the `GenericSerializer`
+        class.
+        """
+        model: type[_MT]
+        extra_fields: list[str]
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Initialize the serializer
+
+        Args:
+            args (Any): Arguments
+            kwargs (Any): Keyword arguments
+
+        Returns:
+            None
+        """
+
+        super().__init__(*args, **kwargs)
+        self.set_fields()
 
     @cached_property
     def get_organization(self) -> Organization:
@@ -86,3 +104,25 @@ class GenericSerializer(serializers.ModelSerializer):
         validated_data["organization"] = organization
 
         return super().update(instance, validated_data)
+
+    def set_fields(self) -> None:
+        """Set the fields for the serializer
+
+        Returns:
+            None
+        """
+
+        excluded_fields: list[str] = ["organization", "created", "modified"]
+
+        # If reverse=True, then relations pointing to this model are returned.
+        fields = [
+            f.name
+            for f in self.Meta.model._meta._get_fields(reverse=False)
+            if f.name not in excluded_fields
+        ]
+
+        self.Meta.read_only_fields = excluded_fields
+        self.Meta.fields = tuple(fields)
+
+        if hasattr(self.Meta, "extra_fields"):
+            self.Meta.fields += tuple(self.Meta.extra_fields)
