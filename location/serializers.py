@@ -71,20 +71,6 @@ class LocationContactSerializer(GenericSerializer):
         """
 
         model = models.LocationContact
-        fields = (
-            "id",
-            "name",
-            "email",
-            "phone",
-            "fax",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "created",
-            "modified",
-        )
 
 
 class LocationCommentSerializer(GenericSerializer):
@@ -134,33 +120,7 @@ class LocationSerializer(GenericSerializer):
         """
 
         model = models.Location
-        fields = (
-            "id",
-            "organization",
-            "code",
-            "location_category",
-            "depot",
-            "description",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "state",
-            "zip_code",
-            "longitude",
-            "latitude",
-            "place_id",
-            "is_geocoded",
-            "created",
-            "modified",
-            "location_contacts",
-            "location_comments",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("location_contacts", "location_comments")
 
     def create(self, validated_data: Any) -> models.Location:
         """Create new Location

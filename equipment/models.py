@@ -563,41 +563,39 @@ class EquipmentMaintenancePlan(GenericModel):
         Raises:
             ValidationError: Validation Errors for the EquipmentMaintenancePlan Model
         """
-        if self.by_distance:
-            if self.miles == 0:
-                raise ValidationError(
-                    ValidationError(
-                        {
-                            "miles": _("Miles must be greater than 0."),
-                        },
-                        code="invalid",
-                    ),
-                )
-        if self.by_time:
-            if self.months == 0:
-                raise ValidationError(
-                    ValidationError(
-                        {
-                            "months": _(
-                                "Months must be greater than 0 if by time is selected."
-                            ),
-                        },
-                        code="invalid",
+        if not self.by_distance and not self.by_time and not self.by_engine_hours:
+            raise ValidationError(
+                {
+                    "by_distance": _(
+                        "At least one of the fields must be checked: "
+                        "By Distance, By Time, By Engine Hours."
                     )
-                )
-        if self.by_engine_hours:
-            if self.engine_hours == 0:
-                raise ValidationError(
-                    ValidationError(
-                        {
-                            "engine_hours": _(
-                                "Engine hours must be greater than 0 "
-                                "if by engine hours is selected."
-                            )
-                        },
-                        code="invalid",
+                }
+            )
+
+        if self.by_distance and not self.miles:
+            raise ValidationError(
+                {
+                    "miles": _(
+                        "Miles must be set if the maintenance plan is by distance."
                     )
-                )
+                }
+            )
+
+        if self.by_time and not self.months:
+            raise ValidationError(
+                {"months": _("Months must be set if the maintenance plan is by time.")}
+            )
+
+        if self.by_engine_hours and not self.engine_hours:
+            raise ValidationError(
+                {
+                    "engine_hours": _(
+                        "Engine hours must be set if the maintenance plan is by engine hours."
+                    )
+                }
+            )
+
         super().clean()
 
     def get_absolute_url(self) -> str:

@@ -167,6 +167,10 @@ class AccessorialCharge(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for the AccessorialCharge model.
+        """
+
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
         ordering: list[str] = ["code"]
@@ -211,6 +215,10 @@ class DocumentClassification(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for the DocumentClassification model.
+        """
+
         verbose_name = _("Document Classification")
         verbose_name_plural = _("Document Classifications")
         ordering: list[str] = ["name"]
@@ -224,7 +232,6 @@ class DocumentClassification(GenericModel):
         return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
-
         super().clean()
         if self.__class__.objects.filter(name=self.name).exclude(pk=self.pk).exists():
             raise ValidationError(

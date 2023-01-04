@@ -472,12 +472,6 @@ class Token(models.Model):
         unique=True,
         validators=[MinLengthValidator(40)],
     )
-    description = models.CharField(
-        _("Description"),
-        max_length=100,
-        blank=True,
-        help_text=_("Description of the token"),
-    )
 
     class Meta:
         """

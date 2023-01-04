@@ -68,4 +68,3 @@ class InvalidTokenException(TokenException):
     Exception for invalid token errors
     """
 
-    pass

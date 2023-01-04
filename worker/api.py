@@ -19,7 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
 
 from utils.views import OrganizationViewSet
 from worker import models, serializers

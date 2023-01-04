@@ -82,7 +82,7 @@ class QualifierCode(GenericModel):
         Returns:
             str: Qualifier Code Absolute URL
         """
-        return reverse("order:qualifiercode-detail", kwargs={"pk": self.pk})
+        return reverse("order:qualifier-code-detail", kwargs={"pk": self.pk})
 
 
 class Stop(GenericModel):
@@ -177,7 +177,11 @@ class Stop(GenericModel):
         Returns:
             str: String representation of the Stop
         """
-        return f"{self.movement} - {self.sequence} - {self.location}"
+        return textwrap.shorten(
+            f"{self.movement} - {self.sequence}({self.location})",
+            width=50,
+            placeholder="...",
+        )
 
     def clean(self) -> None:
         """Stop clean Method
@@ -195,11 +199,10 @@ class Stop(GenericModel):
             stop_object=Stop,
         ).validate()
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, **kwargs: Any) -> None:
         """Save the stop object
 
         Args:
-            *args (Any): Arguments
             **kwargs (Any): Keyword Arguments
 
         Returns:
@@ -212,13 +215,14 @@ class Stop(GenericModel):
         elif self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
 
+        # TODO: THIS LOOKS WEIRD TO ME NOW. I MAY CHANGE THIS
         CreateServiceIncident(
             stop=self,
             dc_object=DispatchControl,
             si_object=ServiceIncident,
         ).create()
 
-        super().save(*args, **kwargs)
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
@@ -226,7 +230,7 @@ class Stop(GenericModel):
         Returns:
             str: The absolute url for the stop
         """
-        return reverse("stop-detail", args=[str(self.id)])
+        return reverse("stop:stops-detail", kwargs={"pk": self.pk})
 
 
 class StopComment(GenericModel):
@@ -276,11 +280,24 @@ class StopComment(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for Stop Comment class.
+        """
+
         verbose_name = _("Stop Comment")
         verbose_name_plural = _("Stop Comments")
 
     def __str__(self) -> str:
-        return f"{self.stop} - {self.comment_type} - {self.qualifier_code}"
+        """String representation for stop comment
+
+        Returns:
+            str: return string representation for stop comment.
+        """
+        return textwrap.shorten(
+            f"{self.stop}, {self.comment_type}({self.qualifier_code})",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the StopComment
@@ -288,7 +305,7 @@ class StopComment(GenericModel):
         Returns:
             str: Absolute url for the StopComment
         """
-        return reverse("stop:stopcomment-detail", kwargs={"pk": self.pk})
+        return reverse("stop:stop-comment-detail", kwargs={"pk": self.pk})
 
 
 class ServiceIncident(GenericModel):
@@ -351,7 +368,11 @@ class ServiceIncident(GenericModel):
         Returns:
             str: String representation of the ServiceIncident
         """
-        return f"{self.movement} - {self.stop} - {self.delay_code}"
+        return textwrap.shorten(
+            f"{self.movement}, {self.stop}({self.delay_code})",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the ServiceIncident
@@ -359,4 +380,4 @@ class ServiceIncident(GenericModel):
         Returns:
             str: Absolute url for the ServiceIncident
         """
-        return reverse("service-incident-detail", kwargs={"pk": self.pk})
+        return reverse("stop:service-incident-detail", kwargs={"pk": self.pk})
