@@ -21,7 +21,6 @@ from typing import Any
 
 from rest_framework import serializers
 
-from accounts.models import Token
 from commodities import models
 from utils.serializers import GenericSerializer
 

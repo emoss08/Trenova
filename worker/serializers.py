@@ -22,7 +22,6 @@ from typing import Any
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
-from accounts.models import Token
 from utils.serializers import GenericSerializer
 from worker import models
 

@@ -17,10 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional
 
 from django.contrib.auth.backends import ModelBackend
-from django.http import HttpRequest
 
 from .models import User
 
