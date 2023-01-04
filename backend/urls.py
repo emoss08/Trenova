@@ -35,6 +35,7 @@ from location import api as location_api
 from organization import api as org_api
 from route import api as route_api
 from worker import api as worker_api
+from stops import api as stops_api
 
 router = routers.DefaultRouter()
 
@@ -141,6 +142,11 @@ router.register(
 router.register(r"routes", route_api.RouteViewSet, basename="routes")
 router.register(
     r"route_control", route_api.RouteControlViewSet, basename="route-control"
+)
+
+# Stops Routing
+router.register(
+    r"qualifier_codes", stops_api.QualifierCodeViewSet, basename="qualifier-codes"
 )
 
 urlpatterns = [
