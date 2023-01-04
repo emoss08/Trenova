@@ -180,7 +180,7 @@ class Stop(GenericModel):
         return textwrap.shorten(
             f"{self.movement} - {self.sequence}({self.location})",
             width=50,
-            placeholder="..."
+            placeholder="...",
         )
 
     def clean(self) -> None:
@@ -283,6 +283,7 @@ class StopComment(GenericModel):
         """
         Metaclass for Stop Comment class.
         """
+
         verbose_name = _("Stop Comment")
         verbose_name_plural = _("Stop Comments")
 
@@ -295,7 +296,7 @@ class StopComment(GenericModel):
         return textwrap.shorten(
             f"{self.stop}, {self.comment_type}({self.qualifier_code})",
             width=50,
-            placeholder="..."
+            placeholder="...",
         )
 
     def get_absolute_url(self) -> str:

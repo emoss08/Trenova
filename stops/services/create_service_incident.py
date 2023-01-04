@@ -74,13 +74,13 @@ class CreateServiceIncident:
         )
 
         if (
-                self.stop.arrival_time
-                and dispatch_control.record_service_incident
-                == self.dc_object.ServiceIncidentControlChoices.PICKUP
-                and self.stop.stop_type == StopChoices.PICKUP
-                and self.stop.arrival_time
-                > self.stop.appointment_time
-                + timedelta(minutes=dispatch_control.grace_period)
+            self.stop.arrival_time
+            and dispatch_control.record_service_incident
+            == self.dc_object.ServiceIncidentControlChoices.PICKUP
+            and self.stop.stop_type == StopChoices.PICKUP
+            and self.stop.arrival_time
+            > self.stop.appointment_time
+            + timedelta(minutes=dispatch_control.grace_period)
         ):
             self.si_object.objects.create(
                 organization=self.stop.movement.order.organization,
@@ -104,12 +104,12 @@ class CreateServiceIncident:
         )
 
         if (
-                dispatch_control.record_service_incident
-                == self.dc_object.ServiceIncidentControlChoices.DELIVERY
-                and self.stop.stop_type == StopChoices.DELIVERY
-                and self.stop.arrival_time
-                > self.stop.appointment_time
-                + timedelta(minutes=dispatch_control.grace_period)
+            dispatch_control.record_service_incident
+            == self.dc_object.ServiceIncidentControlChoices.DELIVERY
+            and self.stop.stop_type == StopChoices.DELIVERY
+            and self.stop.arrival_time
+            > self.stop.appointment_time
+            + timedelta(minutes=dispatch_control.grace_period)
         ):
             self.si_object.objects.create(
                 organization=self.stop.movement.order.organization,
@@ -133,11 +133,11 @@ class CreateServiceIncident:
         )
 
         if (
-                dispatch_control.record_service_incident
-                == self.dc_object.ServiceIncidentControlChoices.PICKUP_DELIVERY
-                and self.stop.arrival_time
-                > self.stop.appointment_time
-                + timedelta(minutes=dispatch_control.grace_period)
+            dispatch_control.record_service_incident
+            == self.dc_object.ServiceIncidentControlChoices.PICKUP_DELIVERY
+            and self.stop.arrival_time
+            > self.stop.appointment_time
+            + timedelta(minutes=dispatch_control.grace_period)
         ):
             self.si_object.objects.create(
                 organization=self.stop.movement.order.organization,
@@ -161,13 +161,13 @@ class CreateServiceIncident:
         )
 
         if (
-                dispatch_control.record_service_incident
-                == self.dc_object.ServiceIncidentControlChoices.ALL_EX_SHIPPER
-                and self.stop.stop_type != StopChoices.PICKUP
-                and self.stop.sequence != 1
-                and self.stop.arrival_time
-                > self.stop.appointment_time
-                + timedelta(minutes=dispatch_control.grace_period)
+            dispatch_control.record_service_incident
+            == self.dc_object.ServiceIncidentControlChoices.ALL_EX_SHIPPER
+            and self.stop.stop_type != StopChoices.PICKUP
+            and self.stop.sequence != 1
+            and self.stop.arrival_time
+            > self.stop.appointment_time
+            + timedelta(minutes=dispatch_control.grace_period)
         ):
             self.si_object.objects.create(
                 organization=self.stop.movement.order.organization,

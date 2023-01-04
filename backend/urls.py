@@ -34,8 +34,8 @@ from integration import api as integration_api
 from location import api as location_api
 from organization import api as org_api
 from route import api as route_api
-from worker import api as worker_api
 from stops import api as stops_api
+from worker import api as worker_api
 
 router = routers.DefaultRouter()
 
@@ -134,9 +134,7 @@ router.register(
 router.register(
     r"integrations", integration_api.IntegrationViewSet, basename="integrations"
 )
-router.register(
-    r"google_api", integration_api.GoogleAPIViewSet, basename="google-api"
-)
+router.register(r"google_api", integration_api.GoogleAPIViewSet, basename="google-api")
 
 # Route Routing
 router.register(r"routes", route_api.RouteViewSet, basename="routes")

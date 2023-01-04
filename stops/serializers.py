@@ -18,8 +18,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from typing import Type
 
-from utils.serializers import GenericSerializer
 from stops import models
+from utils.serializers import GenericSerializer
 
 
 class QualifierCodeSerializer(GenericSerializer):

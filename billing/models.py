@@ -170,6 +170,7 @@ class AccessorialCharge(GenericModel):
         """
         Metaclass for the AccessorialCharge model.
         """
+
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
         ordering: list[str] = ["code"]
@@ -217,6 +218,7 @@ class DocumentClassification(GenericModel):
         """
         Metaclass for the DocumentClassification model.
         """
+
         verbose_name = _("Document Classification")
         verbose_name_plural = _("Document Classifications")
         ordering: list[str] = ["name"]
