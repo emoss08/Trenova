@@ -93,11 +93,11 @@ class TokenAuthentication(authentication.TokenAuthentication):
             tuple: User and token
         """
 
-        model = self.get_model()
+        token = self.get_model()
 
         try:
             token = (
-                model.objects.select_related("user", "user__organization")
+                token.objects.select_related("user", "user__organization")
                 .only(
                     "user__id",
                     "user__organization",
@@ -108,14 +108,14 @@ class TokenAuthentication(authentication.TokenAuthentication):
                 )
                 .get(key=key)
             )
-        except model.DoesNotExist:
+        except token.DoesNotExist:
             raise exceptions.AuthenticationFailed("Invalid token.")
 
         if (
             not token.last_used
             or (timezone.now() - token.last_used).total_seconds() > 60
         ):
-            models.Token.objects.filter(pk=token.pk).update(last_used=timezone.now())
+            token.objects.filter(pk=token.pk).update(last_used=timezone.now())
 
         if token.is_expired:
             raise exceptions.AuthenticationFailed("Token has expired.")
