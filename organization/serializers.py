@@ -94,8 +94,6 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "date_format",
             "time_format",
             "logo",
-            "authentication_bg",
-            "authentication_template",
             "depots",
         )
 
