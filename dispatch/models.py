@@ -343,4 +343,4 @@ class CommentType(GenericModel):
         Returns:
             str: Comment type absolute url
         """
-        return reverse("comment_type:detail", kwargs={"pk": self.pk})
+        return reverse("dispatch:comment_type:detail", kwargs={"pk": self.pk})
