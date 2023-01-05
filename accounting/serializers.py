@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-
 from rest_framework import serializers
 
 from accounting import models
@@ -84,29 +83,9 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
-        fields = (
-            "id",
-            "is_active",
-            "organization",
-            "account_number",
-            "description",
-            "account_type",
-            "cash_flow_type",
-            "account_sub_type",
-            "account_classification",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "code",
-            "created",
-            "modified",
-        )
 
 
-class RevenueCodeSerializer(serializers.ModelSerializer):
+class RevenueCodeSerializer(GenericSerializer):
     """RevenueCodeSerializer
 
     A serializer class for the RevenueCode model. This serializer is used to
@@ -150,13 +129,3 @@ class RevenueCodeSerializer(serializers.ModelSerializer):
         """
 
         model = models.RevenueCode
-        fields = (
-            "id",
-            "organization",
-            "code",
-            "description",
-            "expense_account",
-            "revenue_account",
-            "created",
-            "modified",
-        )
