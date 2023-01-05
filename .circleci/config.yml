@@ -23,7 +23,6 @@ jobs:
           name: Make test directory
           command: mkdir -p /tmp/test-results
       - checkout
-      - run: sudo apt-get update
       - run:
           name: install dependencies
           command: pip install -r requirements.txt
