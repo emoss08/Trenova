@@ -45,7 +45,7 @@ class IntegrationSerializer(GenericSerializer):
         """
 
         model = models.Integration
-        extra_fields = ["is_active", "name", "auth_type"]
+        extra_fields = ("is_active", "name", "auth_type")
 
 
 class GoogleAPISerializer(GenericSerializer):
