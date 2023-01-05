@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+from typing import Tuple, Type
 
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -46,9 +46,9 @@ class TokenAuthentication(authentication.TokenAuthentication):
     Authentication backend for the token authentication system.
     """
 
-    model = models.Token
+    model: Type[models.Token] = models.Token
 
-    def authenticate(self, request: Request) -> Optional[tuple[models.User, str]]:
+    def authenticate(self, request: Request) -> Tuple[models.User, models.Token] | None:
         """
 
         Args:
@@ -80,7 +80,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         return self.authenticate_credentials(token)
 
-    def authenticate_credentials(self, key: str) -> tuple[models.User, str]:
+    def authenticate_credentials(self, key: str) -> Tuple[models.User, models.Token]:
         """Authenticate the token
 
         Authenticate the given credentials. If authentication is successful,
@@ -93,11 +93,9 @@ class TokenAuthentication(authentication.TokenAuthentication):
             tuple: User and token
         """
 
-        token = self.get_model()
-
         try:
             token = (
-                token.objects.select_related("user", "user__organization")
+                self.model.objects.select_related("user", "user__organization")
                 .only(
                     "user__id",
                     "user__organization",
@@ -108,7 +106,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
                 )
                 .get(key=key)
             )
-        except token.DoesNotExist:
+        except self.model.DoesNotExist:
             raise exceptions.AuthenticationFailed("Invalid token.")
 
         if (
@@ -118,8 +116,10 @@ class TokenAuthentication(authentication.TokenAuthentication):
             token.last_used = timezone.now()
             token.save(update_fields=["last_used"])
 
-        if token.is_expired:
-            raise exceptions.AuthenticationFailed("Token has expired.")
+        if token.is_expired and token.expires:
+            raise exceptions.AuthenticationFailed(
+                f"Token expired at {token.expires.strftime('%Y-%m-%d %H:%M:%S')}. Please login again."
+            )
 
         user = token.user
 

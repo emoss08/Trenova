@@ -9,11 +9,10 @@ import localflavor.us.models
 from django.conf import settings
 from django.db import migrations, models
 
-import core.validators
+import utils.validators
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -251,7 +250,7 @@ class Migration(migrations.Migration):
                         null=True,
                         upload_to="profiles/",
                         validators=[
-                            core.validators.ImageSizeValidator(600, 600, False, True)
+                            utils.validators.ImageSizeValidator(600, 600, False, True)
                         ],
                         verbose_name="Profile Picture",
                     ),

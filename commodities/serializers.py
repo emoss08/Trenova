@@ -48,25 +48,7 @@ class HazardousMaterialSerializer(GenericSerializer):
         """
 
         model = models.HazardousMaterial
-        fields = (
-            "id",
-            "organization",
-            "is_active",
-            "name",
-            "description",
-            "hazard_class",
-            "packing_group",
-            "erg_number",
-            "proper_shipping_name",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("is_active", "hazard_class", "packing_group")
 
 
 class CommoditySerializer(GenericSerializer):
@@ -89,25 +71,9 @@ class CommoditySerializer(GenericSerializer):
         """
 
         model = models.Commodity
-        fields = (
-            "id",
-            "organization",
-            "name",
-            "description",
-            "min_temp",
-            "max_temp",
-            "set_point_temp",
-            "unit_of_measure",
-            "is_hazmat",
+        extra_fields = (
             "hazmat",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
+            "unit_of_measure",
         )
 
     def create(self, validated_data: Any) -> models.Commodity:

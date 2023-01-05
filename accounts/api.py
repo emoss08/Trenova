@@ -133,7 +133,7 @@ class TokenProvisionView(APIView):
         # if the token is expired then create a new one for the user rather than returning the old one
         if token.is_expired:
             token.delete()
-            token = models.Token.objects.create(user=user)
+            token = models.Token.objects.create(user=user)  # type: ignore
 
         return Response(
             {
