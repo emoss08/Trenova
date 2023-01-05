@@ -37,6 +37,7 @@ class WorkerCommentSerializer(GenericSerializer):
         """
 
         model = models.WorkerComment
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -50,6 +51,7 @@ class WorkerContactSerializer(GenericSerializer):
         """
 
         model = models.WorkerContact
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerProfileSerializer(GenericSerializer):
@@ -63,6 +65,7 @@ class WorkerProfileSerializer(GenericSerializer):
         """
 
         model = models.WorkerProfile
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerSerializer(GenericSerializer):

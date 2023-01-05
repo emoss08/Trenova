@@ -117,7 +117,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
             token.last_used = timezone.now()
             token.save(update_fields=["last_used"])
 
-        if token.is_expired:
+        if token.is_expired and token.expires:
             raise exceptions.AuthenticationFailed(
                 f"Token expired at {token.expires.strftime('%Y-%m-%d %H:%M:%S')}. Please login again."
             )

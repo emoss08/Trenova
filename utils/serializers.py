@@ -113,7 +113,7 @@ class GenericSerializer(serializers.ModelSerializer):
         """
 
         # Default excluded fields
-        excluded_fields: tuple[str, ...] = ("id", "organization", "created", "modified")
+        excluded_fields: tuple[str, ...] = ("organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)
         if original_fields is not None:
@@ -142,7 +142,7 @@ class GenericSerializer(serializers.ModelSerializer):
             self.Meta.read_only_fields += tuple(extra_read_only_fields)
 
         if extra_read_only_fields and not isinstance(
-            extra_read_only_fields, (list, tuple)
+                extra_read_only_fields, (list, tuple)
         ):
             raise TypeError(
                 "The `extra_read_only_fields` attribute must be a list or tuple."

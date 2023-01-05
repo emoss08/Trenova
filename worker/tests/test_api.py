@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from accounts.factories import TokenFactory, UserFactory
@@ -128,6 +127,7 @@ def test_create_worker_with_profile(token):
         format="json",
     )
     assert response.status_code == 201
+    assert response.data["profile"]["license_number"] == "1234567890"
 
 
 @pytest.mark.django_db
