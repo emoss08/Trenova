@@ -83,6 +83,13 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
+        extra_fields = (
+            "is_active",
+            "account_type",
+            "cash_flow_type",
+            "account_sub_type",
+            "account_classification",
+        )
 
 
 class RevenueCodeSerializer(GenericSerializer):
@@ -129,3 +136,4 @@ class RevenueCodeSerializer(GenericSerializer):
         """
 
         model = models.RevenueCode
+        extra_fields = ("expense_account", "revenue_account")

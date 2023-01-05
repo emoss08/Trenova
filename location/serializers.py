@@ -40,19 +40,7 @@ class LocationCategorySerializer(GenericSerializer):
         """
 
         model = models.LocationCategory
-        fields = (
-            "id",
-            "name",
-            "description",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "id",
-            "organization",
-            "created",
-            "modified",
-        )
+        extra_fields = ("name", "description")
 
 
 class LocationContactSerializer(GenericSerializer):
@@ -61,8 +49,6 @@ class LocationContactSerializer(GenericSerializer):
     The serializer provides default operations for creating, update and deleting
     Location Contact, as well as listing and retrieving them.
     """
-
-    id = serializers.UUIDField(required=False)
 
     class Meta:
         """
@@ -80,8 +66,6 @@ class LocationCommentSerializer(GenericSerializer):
     Location Comment information, as well as listing and retrieving them.
     """
 
-    id = serializers.UUIDField(required=False)
-
     class Meta:
         """
         A class representing the metadata for the `LocationCommentSerializer`
@@ -89,18 +73,6 @@ class LocationCommentSerializer(GenericSerializer):
         """
 
         model = models.LocationComment
-        fields = (
-            "id",
-            "comment_type",
-            "comment",
-            "entered_by",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "created",
-            "modified",
-        )
 
 
 class LocationSerializer(GenericSerializer):
@@ -155,7 +127,7 @@ class LocationSerializer(GenericSerializer):
         return location
 
     def update(  # type: ignore
-        self, instance: models.Location, validated_data: Any
+            self, instance: models.Location, validated_data: Any
     ) -> models.Location:
         """Update the worker
 
@@ -171,6 +143,8 @@ class LocationSerializer(GenericSerializer):
         contacts_data = validated_data.pop("location_contacts", [])
 
         # Update the Location
+
+        # TODO(WOLFRED): CHANGE THIS
         instance.code = validated_data.get("code", instance.code)
         instance.location_category = validated_data.get(
             "location_category", instance.location_category

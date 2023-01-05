@@ -61,13 +61,13 @@ class DepotSerializer(serializers.ModelSerializer):
         """
 
         model = models.Depot
-        fields = [
+        fields = (
             "id",
             "organization",
             "name",
             "description",
             "details",
-        ]
+        )
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -82,8 +82,8 @@ class OrganizationSerializer(serializers.ModelSerializer):
         Metaclass for OrganizationSerializer
         """
 
-        model: type[models.Organization] = models.Organization
-        fields: list[str] = [
+        model = models.Organization
+        fields = (
             "id",
             "name",
             "scac_code",
@@ -97,7 +97,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
             "authentication_bg",
             "authentication_template",
             "depots",
-        ]
+        )
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -110,11 +110,11 @@ class DepartmentSerializer(serializers.ModelSerializer):
         Metaclass for Department
         """
 
-        model: type[models.Department] = models.Department
-        fields: list[str] = [
+        model = models.Department
+        fields = (
             "id",
             "organization",
             "depot",
             "name",
             "description",
-        ]
+        )

@@ -113,7 +113,7 @@ class GenericSerializer(serializers.ModelSerializer):
         """
 
         # Default excluded fields
-        excluded_fields: list[str] = ["organization", "created", "modified"]
+        excluded_fields: tuple[str, ...] = ("id", "organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)
         if original_fields is not None:

@@ -41,20 +41,6 @@ class CommentTypeSerializer(GenericSerializer):
         """
 
         model = models.CommentType
-        fields = (
-            "id",
-            "organization",
-            "name",
-            "description",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "id",
-            "organization",
-            "created",
-            "modified",
-        )
 
 
 class DelayCodeSerializer(GenericSerializer):
@@ -75,19 +61,6 @@ class DelayCodeSerializer(GenericSerializer):
         """
 
         model = models.DelayCode
-        fields = (
-            "code",
-            "organization",
-            "description",
-            "f_carrier_or_driver",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "created",
-            "modified",
-        )
 
 
 class FleetCodeSerializer(GenericSerializer):
@@ -110,23 +83,7 @@ class FleetCodeSerializer(GenericSerializer):
         """
 
         model = models.FleetCode
-        fields = (
-            "organization",
-            "is_active",
-            "code",
-            "description",
-            "revenue_goal",
-            "deadhead_goal",
-            "mileage_goal",
-            "description",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "created",
-            "modified",
-        )
+        extra_fields = ("is_active",)
 
 
 class DispatchControlSerializer(GenericSerializer):
@@ -156,25 +113,7 @@ class DispatchControlSerializer(GenericSerializer):
         """
 
         model = models.DispatchControl
-        fields = (
-            "id",
-            "organization",
+        extra_fields = (
             "record_service_incident",
-            "grace_period",
-            "deadhead_target",
-            "driver_assign",
-            "trailer_continuity",
             "distance_method",
-            "dupe_trailer_check",
-            "regulatory_check",
-            "prev_orders_on_hold",
-            "generate_routes",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "id",
-            "organization",
-            "created",
-            "modified",
         )
