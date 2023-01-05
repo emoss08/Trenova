@@ -31,23 +31,13 @@ class WorkerCommentSerializer(GenericSerializer):
     Worker Comment Serializer
     """
 
-    id = serializers.UUIDField(required=False)
-
     class Meta:
         """
         Metaclass for WorkerCommentSerializer
         """
 
         model = models.WorkerComment
-        fields = [
-            "id",
-            "comment_type",
-            "comment",
-            "entered_by",
-            "created",
-            "modified",
-        ]
-        read_only_fields = ["created", "modified"]
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -55,29 +45,13 @@ class WorkerContactSerializer(GenericSerializer):
     Worker Contact Serializer
     """
 
-    id = serializers.UUIDField(required=False)
-
     class Meta:
         """
         Metaclass for WorkerContactSerializer
         """
 
         model = models.WorkerContact
-        fields = [
-            "id",
-            "name",
-            "phone",
-            "email",
-            "relationship",
-            "is_primary",
-            "mobile_phone",
-            "created",
-            "modified",
-        ]
-        read_only_fields = (
-            "created",
-            "modified",
-        )
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerProfileSerializer(GenericSerializer):
@@ -85,38 +59,13 @@ class WorkerProfileSerializer(GenericSerializer):
     Worker Profile Serializer
     """
 
-    # hire_date = serializers.DateField(format="%Y-%m-%d", read_only=True)
-
     class Meta:
         """
         Metaclass for WorkerProfileSerializer
         """
 
         model = models.WorkerProfile
-        fields = [
-            "race",
-            "sex",
-            "date_of_birth",
-            "license_number",
-            "license_state",
-            "license_expiration_date",
-            "endorsements",
-            "hazmat_expiration_date",
-            "hm_126_expiration_date",
-            "termination_date",
-            "review_date",
-            "physical_due_date",
-            "mvr_due_date",
-            "medical_cert_date",
-            "created",
-            "modified",
-        ]
-        read_only_fields = [
-            "organization",
-            "created",
-            "modified",
-            "hire_date",
-        ]
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerSerializer(GenericSerializer):
@@ -140,35 +89,14 @@ class WorkerSerializer(GenericSerializer):
         """
 
         model = models.Worker
-        fields = [
-            "id",
-            "organization",
-            "code",
+        extra_fields = (
             "is_active",
+            "organization",
             "worker_type",
-            "first_name",
-            "last_name",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "state",
-            "zip_code",
-            "depot",
-            "manager",
-            "entered_by",
-            "created",
-            "modified",
             "profile",
             "contacts",
             "comments",
-        ]
-        read_only_fields = [
-            "organization",
-            "id",
-            "code",
-            "created",
-            "modified",
-        ]
+        )
 
     def create(self, validated_data: Any) -> models.Worker:
         """Create the worker.

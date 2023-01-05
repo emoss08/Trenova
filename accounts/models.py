@@ -40,7 +40,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from core.validators import ImageSizeValidator
+from utils.validators import ImageSizeValidator
 from utils.models import GenericModel
 
 
@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.

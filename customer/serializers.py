@@ -52,23 +52,9 @@ class CustomerContactSerializer(GenericSerializer):
         """
 
         model = models.CustomerContact
-        fields = (
-            "id",
-            "organization",
+        extra_fields = (
             "is_active",
-            "name",
-            "email",
-            "title",
-            "phone",
             "is_payable_contact",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
         )
 
 
@@ -80,34 +66,12 @@ class CustomerEmailProfileSerializer(serializers.ModelSerializer):
     of the data.
     """
 
-    read_receipt_to = serializers.EmailField(required=False)
-    read_receipt = serializers.BooleanField(default=False)
-
     class Meta:
         """
         A class representing the metadata for the `CustomerEmailProfileSerializer` class.
         """
 
         model = models.CustomerEmailProfile
-        fields = (
-            "id",
-            "name",
-            "subject",
-            "comment",
-            "from_address",
-            "blind_copy",
-            "read_receipt",
-            "read_receipt_to",
-            "attachment_name",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
 
 
 class CustomerFuelTableDetailSerializer(GenericSerializer):
@@ -128,16 +92,7 @@ class CustomerFuelTableDetailSerializer(GenericSerializer):
         """
 
         model = models.CustomerFuelTableDetail
-        fields = (
-            "id",
-            "amount",
-            "method",
-            "start_price",
-            "percentage",
-            "created",
-            "modified",
-        )
-        read_only_fields = ("id", "created", "modified")
+        extra_fields = ("method",)
         extra_kwargs = {
             "customer_fuel_table": {"required": True},
             "method": {"required": True},
@@ -168,25 +123,11 @@ class CustomerFuelTableSerializer(GenericSerializer):
         """
 
         model = models.CustomerFuelTable
-        fields = (
-            "id",
-            "organization",
-            "name",
-            "description",
-            "created",
-            "modified",
-            "customer_fuel_table_details",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("customer_fuel_table_details",)
 
     @transaction.atomic
     def update(  # type: ignore
-        self, instance: models.CustomerFuelTable, validated_data: Any
+            self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -251,20 +192,7 @@ class CustomerRuleProfileSerializer(serializers.ModelSerializer):
         """
 
         model = models.CustomerRuleProfile
-        fields = (
-            "id",
-            "organization",
-            "name",
-            "created",
-            "modified",
-            "document_class",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("document_class",)
 
     def create(self, validated_data: Any) -> models.CustomerRuleProfile:
         """Create a new CustomerRuleProfile instance.
@@ -290,7 +218,7 @@ class CustomerRuleProfileSerializer(serializers.ModelSerializer):
         return customer_rule_profile
 
     def update(
-        self, instance: models.CustomerRuleProfile, validated_data: Any
+            self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -341,21 +269,7 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         """
 
         model = models.CustomerBillingProfile
-        fields = (
-            "id",
-            "organization",
-            "is_active",
-            "email_profile",
-            "rule_profile",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("is_active", "email_profile", "rule_profile")
 
     def create(self, validated_data: Any):
         """Create a new CustomerBillingProfile instance.
@@ -395,7 +309,7 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         return customer_billing_profile
 
     def update(
-        self, instance: models.CustomerBillingProfile, validated_data: Any
+            self, instance: models.CustomerBillingProfile, validated_data: Any
     ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.
 
@@ -463,31 +377,10 @@ class CustomerSerializer(GenericSerializer):
         """
 
         model = models.Customer
-        fields = (
-            "id",
-            "organization",
-            "is_active",
-            "code",
-            "name",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "state",
-            "zip_code",
-            "created",
-            "modified",
-            "billing_profile",
-            "contacts",
-        )
-        read_only_fields = (
-            "id",
-            "organization",
-            "created",
-            "modified",
-        )
+        extra_fields = ("billing_profile", "contacts")
 
     def _get_or_create_document_classifications(
-        self, documents: Documents
+            self, documents: Documents
     ) -> list[UUID]:
         """Get or create document classifications with the given data.
 
@@ -512,7 +405,7 @@ class CustomerSerializer(GenericSerializer):
         return document_ids
 
     def _create_or_update_document_classifications(
-        self, documents: Documents
+            self, documents: Documents
     ) -> list[UUID]:
         """Create or update document classifications with the given data.
 

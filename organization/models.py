@@ -120,19 +120,6 @@ class Organization(TimeStampedModel):
     logo = models.ImageField(
         _("Logo"), upload_to="organizations/logo/", null=True, blank=True
     )
-    authentication_bg = models.ImageField(
-        _("Authentication Background"),
-        upload_to="organizations/authentication_bg/",
-        null=True,
-        blank=True,
-    )
-    authentication_template = models.CharField(
-        _("Authentication Template"),
-        choices=AuthTemplateChoices.choices,
-        default=AuthTemplateChoices.DEFAULT,
-        help_text=_("The authentication template for the organization."),
-        max_length=10,
-    )
 
     class Meta:
         """
@@ -155,7 +142,7 @@ class Organization(TimeStampedModel):
         Returns:
             str: The absolute url for the organization.
         """
-        return reverse("organization:view", kwargs={"pk": self.pk})
+        return reverse("organization:details", kwargs={"pk": self.pk})
 
 
 class Depot(TimeStampedModel):
@@ -214,7 +201,7 @@ class Depot(TimeStampedModel):
         Returns:
             str: The absolute url for the depot.
         """
-        return reverse("organization:depot:view", kwargs={"pk": self.pk})
+        return reverse("organization:depot-detail", kwargs={"pk": self.pk})
 
 
 class DepotDetail(TimeStampedModel):
@@ -316,7 +303,7 @@ class DepotDetail(TimeStampedModel):
             str: The absolute url for the depot detail.
         """
 
-        return reverse("organization:depot:view", kwargs={"pk": self.depot.pk})
+        return reverse("organization:depot-details", kwargs={"pk": self.depot.pk})
 
 
 class Department(models.Model):
@@ -383,4 +370,4 @@ class Department(models.Model):
             str: Get the absolute url of the Department
         """
 
-        return reverse("user:department-view", kwargs={"pk": self.pk})
+        return reverse("organization:department-detail", kwargs={"pk": self.pk})

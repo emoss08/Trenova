@@ -45,27 +45,7 @@ class IntegrationSerializer(GenericSerializer):
         """
 
         model = models.Integration
-        fields = (
-            "id",
-            "organization",
-            "is_active",
-            "name",
-            "auth_type",
-            "login_url",
-            "auth_token",
-            "username",
-            "password",
-            "client_id",
-            "client_secret",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ["is_active", "name", "auth_type"]
 
 
 class GoogleAPISerializer(GenericSerializer):
@@ -92,20 +72,4 @@ class GoogleAPISerializer(GenericSerializer):
         """
 
         model = models.GoogleAPI
-        fields = (
-            "id",
-            "organization",
-            "api_key",
-            "mileage_unit",
-            "traffic_model",
-            "add_customer_location",
-            "add_location",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("mileage_unit", "traffic_model")

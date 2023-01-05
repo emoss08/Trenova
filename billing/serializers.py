@@ -38,20 +38,6 @@ class ChargeTypeSerializer(GenericSerializer):
         """
 
         model = models.ChargeType
-        fields = (
-            "id",
-            "organization",
-            "name",
-            "description",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "id",
-            "organization",
-            "created",
-            "modified",
-        )
 
 
 class AccessorialChargeSerializer(GenericSerializer):
@@ -71,20 +57,7 @@ class AccessorialChargeSerializer(GenericSerializer):
         """
 
         model = models.AccessorialCharge
-        fields = (
-            "code",
-            "organization",
-            "is_detention",
-            "charge_amount",
-            "method",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "created",
-            "modified",
-        )
+        extra_fields = ("method",)
 
 
 class DocumentClassificationSerializer(GenericSerializer):
@@ -102,17 +75,3 @@ class DocumentClassificationSerializer(GenericSerializer):
         """
 
         model = models.DocumentClassification
-        fields = (
-            "id",
-            "organization",
-            "name",
-            "description",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "id",
-            "organization",
-            "created",
-            "modified",
-        )

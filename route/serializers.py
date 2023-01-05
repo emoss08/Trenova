@@ -31,8 +31,6 @@ class RouteSerializer(GenericSerializer):
     listing and retrieving them.
     """
 
-    id = serializers.UUIDField(required=False)
-
     class Meta:
         """
         A class representing the metadata for the `RouteSerializer`
@@ -40,22 +38,6 @@ class RouteSerializer(GenericSerializer):
         """
 
         model = models.Route
-        fields = (
-            "id",
-            "organization",
-            "origin",
-            "destination",
-            "total_mileage",
-            "duration",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
 
 
 class RouteControlSerializer(GenericSerializer):
@@ -82,21 +64,4 @@ class RouteControlSerializer(GenericSerializer):
         """
 
         model = models.RouteControl
-        fields = (
-            "id",
-            "organization",
-            "mileage_unit",
-            "traffic_model",
-            "generate_routes",
-            "avoid_tolls",
-            "avoid_highways",
-            "avoid_ferries",
-            "created",
-            "modified",
-        )
-        read_only_fields = (
-            "organization",
-            "id",
-            "created",
-            "modified",
-        )
+        extra_fields = ("mileage_unit", "traffic_model")
