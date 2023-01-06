@@ -42,7 +42,8 @@ class IntegrationBase:
         """
         if not isinstance(self.model, ModelBase):
             raise TypeError(
-                f"{self.__class__.__name__}.model must be a subclass of ModelBase, not {type(self.model)}"
+                f"""{self.__class__.__name__}.model must be a subclass of ModelBase,
+                 not {type(self.model)}"""
             )
 
         if not isinstance(self.headers, Dict):

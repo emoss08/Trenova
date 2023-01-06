@@ -203,6 +203,8 @@ class RevenueCode(GenericModel):
         related_query_name="revenue_code_expense_accounts",
         help_text=_("The expense account associated with the revenue code."),
         verbose_name=_("Expense Account"),
+        blank=True,
+        null=True,
     )
     revenue_account = models.ForeignKey(
         GeneralLedgerAccount,
@@ -211,9 +213,15 @@ class RevenueCode(GenericModel):
         related_query_name="revenue_code_revenue_accounts",
         help_text=_("The revenue account associated with the revenue code."),
         verbose_name=_("Revenue Account"),
+        blank=True,
+        null=True,
     )
 
     class Meta:
+        """
+        Metaclass for the RevenueCode Model
+        """
+
         verbose_name = _("Revenue Code")
         verbose_name_plural = _("Revenue Codes")
         ordering: list[str] = ["code"]
@@ -236,14 +244,16 @@ class RevenueCode(GenericModel):
         super().clean()
 
         if (
-            self.expense_account.account_type
+            self.expense_account
+            and self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
                 {"expense_account": _("Entered account is not an expense account.")}
             )
         if (
-            self.revenue_account.account_type
+            self.revenue_account
+            and self.revenue_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(

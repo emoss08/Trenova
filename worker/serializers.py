@@ -74,11 +74,6 @@ class WorkerSerializer(GenericSerializer):
     """
 
     is_active = serializers.BooleanField(default=True)
-    organization = serializers.CharField(source="organization.name", read_only=True)
-    worker_type = serializers.ChoiceField(
-        choices=models.Worker.WorkerType.choices,
-        default=models.Worker.WorkerType.EMPLOYEE,
-    )
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)

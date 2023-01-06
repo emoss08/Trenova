@@ -122,7 +122,6 @@ class FuelVendor(GenericModel):
         _("Email Address"),
         help_text=_("Email address for the vendor"),
         blank=True,
-        null=True,
     )
     communication_mode = ChoiceField(
         _("Communication Mode"),

@@ -186,7 +186,10 @@ class Worker(GenericModel):
             str: Worker full address
         """
 
-        return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
+        return (
+            f"{self.address_line_1} {self.address_line_2}"
+            f" {self.city} {self.state} {self.zip_code}"
+        )
 
     def get_absolute_url(self) -> str:
         """Worker absolute url

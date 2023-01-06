@@ -161,7 +161,8 @@ class Movement(GenericModel):
             None
 
         Raises:
-            ValidationError: If the old movement worker is not None and the user tries to change the worker.
+            ValidationError: If the old movement worker is not
+            None and the user tries to change the worker.
         """
 
         if (
