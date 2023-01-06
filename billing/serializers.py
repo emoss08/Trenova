@@ -28,8 +28,8 @@ class ChargeTypeSerializer(GenericSerializer):
     A serializer for the `ChargeType` model.
 
     This serializer converts instances of the `ChargeType` model into JSON or other data formats,
-    and vice versa. It uses the specified fields (id, name, and description) to create the serialized
-    representation of the `ChargeType` model.
+    and vice versa. It uses the specified fields (id, name, and description) to create
+    the serialized representation of the `ChargeType` model.
     """
 
     class Meta:
@@ -44,9 +44,10 @@ class AccessorialChargeSerializer(GenericSerializer):
     """
     A serializer for the `AccessorialCharge` model.
 
-    This serializer converts instances of the `AccessorialCharge` model into JSON or other data formats,
-    and vice versa. It uses the specified fields (code, is_detention, charge_amount, and method) to
-    create the serialized representation of the `AccessorialCharge` model.
+    This serializer converts instances of the `AccessorialCharge` model into JSON
+    or other data formats, and vice versa. It uses the specified fields
+    (code, is_detention, charge_amount, and method) to create the serialized
+    representation of the `AccessorialCharge` model.
     """
 
     method = serializers.ChoiceField(choices=models.FuelMethodChoices.choices)

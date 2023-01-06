@@ -52,9 +52,9 @@ class GoogleAPISerializer(GenericSerializer):
     """
     A serializer for the `GoogleAPI` model.
 
-    This serializer converts instances of the `GoogleAPI` model into JSON or other data formats,
-    and vice versa. It uses the specified fields (name, description, and code) to create the serialized
-    representation of the `GoogleAPI` model.
+    This serializer converts instances of the `GoogleAPI` model into JSON or other data
+    formats, and vice versa. It uses the specified fields (name, description, and code)
+    to create the serialized representation of the `GoogleAPI` model.
     """
 
     mileage_unit = serializers.ChoiceField(
