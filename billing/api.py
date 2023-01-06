@@ -46,13 +46,14 @@ class AccessorialChargeViewSet(OrganizationViewSet):
     """
     A viewset for viewing and editing accessorial charges in the system.
 
-    The viewset provides default operations for creating, updating, and deleting accessorial charges,
-    as well as listing and retrieving accessorial charges. It uses the `AccessorialChargeSerializer`
-    class to convert the accessorial charge instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating, and
+    deleting accessorial charges, as well as listing and retrieving accessorial
+    charges. It uses the `AccessorialChargeSerializer` class to convert the
+    accessorial charge instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by accessorial charge ID, code, and
-    method.
+    Filtering is also available, with the ability to filter by accessorial charge
+    ID, code, and method.
     """
 
     queryset = models.AccessorialCharge.objects.all()
@@ -66,13 +67,14 @@ class DocumentClassificationViewSet(OrganizationViewSet):
     """
     A viewset for viewing and editing document classifications in the system.
 
-    The viewset provides default operations for creating, updating, and deleting document classifications,
-    as well as listing and retrieving document classifications. It uses the `DocumentClassificationSerializer`
+    The viewset provides default operations for creating, updating, and
+    deleting document classifications, as well as listing and retrieving document classifications.
+    It uses the `DocumentClassificationSerializer`
     class to convert the document classification instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by document classification ID, name, and
-    code.
+    Filtering is also available, with the ability to filter by document classification
+    ID, name, and code.
     """
 
     queryset = models.DocumentClassification.objects.all()
