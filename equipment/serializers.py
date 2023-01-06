@@ -94,7 +94,7 @@ class EquipmentTypeSerializer(GenericSerializer):
         return equipment_type
 
     def update(  # type: ignore
-            self, instance: models.EquipmentType, validated_data: Any
+        self, instance: models.EquipmentType, validated_data: Any
     ) -> models.EquipmentType:
         """Update Equipment Type
 

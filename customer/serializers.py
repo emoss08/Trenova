@@ -127,7 +127,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -218,7 +218,7 @@ class CustomerRuleProfileSerializer(serializers.ModelSerializer):
         return customer_rule_profile
 
     def update(
-            self, instance: models.CustomerRuleProfile, validated_data: Any
+        self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -309,7 +309,7 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         return customer_billing_profile
 
     def update(
-            self, instance: models.CustomerBillingProfile, validated_data: Any
+        self, instance: models.CustomerBillingProfile, validated_data: Any
     ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.
 
@@ -380,7 +380,7 @@ class CustomerSerializer(GenericSerializer):
         extra_fields = ("billing_profile", "contacts")
 
     def _get_or_create_document_classifications(
-            self, documents: Documents
+        self, documents: Documents
     ) -> list[UUID]:
         """Get or create document classifications with the given data.
 
@@ -405,7 +405,7 @@ class CustomerSerializer(GenericSerializer):
         return document_ids
 
     def _create_or_update_document_classifications(
-            self, documents: Documents
+        self, documents: Documents
     ) -> list[UUID]:
         """Create or update document classifications with the given data.
 

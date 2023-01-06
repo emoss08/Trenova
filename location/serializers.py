@@ -127,7 +127,7 @@ class LocationSerializer(GenericSerializer):
         return location
 
     def update(  # type: ignore
-            self, instance: models.Location, validated_data: Any
+        self, instance: models.Location, validated_data: Any
     ) -> models.Location:
         """Update the worker
 
