@@ -19,8 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from accounting.tests.factories import GeneralLedgerAccountFactory
 from accounting import models
+from accounting.tests.factories import GeneralLedgerAccountFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -50,7 +50,7 @@ class TestGeneralLedgerAccount:
             description="Another Description",
             cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
             account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
-            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
         )
 
         assert gl_account is not None

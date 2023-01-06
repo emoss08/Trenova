@@ -19,8 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from accounting.tests.factories import RevenueCodeFactory, GeneralLedgerAccountFactory
 from accounting import models
+from accounting.tests.factories import GeneralLedgerAccountFactory, RevenueCodeFactory
 
 pytestmark = pytest.mark.django_db
 

@@ -19,8 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from accounting import models
-
 
 class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
     """
