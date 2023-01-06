@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-
 from django.core.exceptions import ValidationError
 
 from accounting.tests.factories import GeneralLedgerAccountFactory

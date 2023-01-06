@@ -21,8 +21,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from accounting import models
-
-from accounting.tests.factories import RevenueCodeFactory, GeneralLedgerAccountFactory
+from accounting.tests.factories import GeneralLedgerAccountFactory, RevenueCodeFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -55,7 +54,7 @@ class TestRevenueCodeValidation:
         general_ledger_account.save()
 
         with pytest.raises(
-                ValidationError, match="Entered account is not an expense account."
+            ValidationError, match="Entered account is not an expense account."
         ):
             revenue_code.expense_account = general_ledger_account
             revenue_code.full_clean()
@@ -73,7 +72,7 @@ class TestRevenueCodeValidation:
         general_ledger_account.save()
 
         with pytest.raises(
-                ValidationError, match="Entered account is not a revenue account."
+            ValidationError, match="Entered account is not a revenue account."
         ):
             revenue_code.revenue_account = general_ledger_account
             revenue_code.full_clean()
