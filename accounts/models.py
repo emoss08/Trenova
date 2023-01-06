@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.
@@ -123,7 +123,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         help_text=_("Unique ID for the user."),
     )
-
     organization = models.ForeignKey(
         "organization.Organization",
         on_delete=models.CASCADE,
@@ -189,6 +188,14 @@ class User(AbstractBaseUser, PermissionsMixin):
             str: Absolute URL for the User
         """
         return reverse("users:detail", kwargs={"pk": self.pk})
+
+    def update_user(self, **kwargs) -> None:
+        """
+        Updates the user with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class UserProfile(GenericModel):
@@ -380,6 +387,11 @@ class JobTitle(GenericModel):
         editable=False,
         unique=True,
     )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("If the job title is active"),
+    )
     name = models.CharField(
         _("Name"),
         max_length=100,
@@ -390,11 +402,6 @@ class JobTitle(GenericModel):
         _("Description"),
         blank=True,
         help_text=_("Description of the job title"),
-    )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("If the job title is active"),
     )
 
     class Meta:
