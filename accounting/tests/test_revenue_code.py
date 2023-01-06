@@ -77,3 +77,13 @@ class TestRevenueCode:
         )
 
         assert rev_code is not None
+        assert rev_code.code == "TEST"
+
+    def test_update(self, revenue_code):
+        """
+        Test Revenue code update
+        """
+
+        revenue_code.code = "FOOB"
+
+        assert revenue_code.code == "FOOB"
