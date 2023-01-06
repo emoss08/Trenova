@@ -237,15 +237,10 @@ class UserProfile(GenericModel):
     profile_picture = models.ImageField(
         _("Profile Picture"),
         upload_to="profiles/",
-        null=True,
-        blank=True,
         help_text=_("The profile picture of the user"),
         validators=[ImageSizeValidator(600, 600, False, True)],
-    )
-    bio = models.TextField(
-        _("Bio"),
+        null=True,
         blank=True,
-        help_text=_("The bio of the user"),
     )
     address_line_1 = models.CharField(
         _("Address"),
@@ -298,7 +293,7 @@ class UserProfile(GenericModel):
         """
         return textwrap.wrap(self.user.username, 30)[0]
 
-    def update_profile(self, **kwargs) -> None:
+    def update_profile(self, **kwargs: Any) -> None:
         """
         Updates the profile with the given kwargs
         """
