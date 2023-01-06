@@ -21,34 +21,33 @@ import pytest
 
 from accounts.tests.factories import TokenFactory, UserFactory
 
+from accounts import models
 
-@pytest.fixture()
-def token():
-    """
-    Token fixture
-    """
-    return TokenFactory()
+pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
-def user():
-    """
-    User fixture
-    """
-    return UserFactory()
+class TestToken:
 
+    @pytest.fixture()
+    def token(self):
+        """
+        Token fixture
+        """
+        return TokenFactory()
 
-@pytest.mark.django_db
-def test_token_creation(token):
-    """
-    Test token creation
-    """
-    assert token is not None
+    @pytest.fixture()
+    def user(self):
+        """
+        User fixture
+        """
+        return UserFactory()
 
+    def test_create(self, user):
+        """
+        Test token creation
+        """
+        new_token = models.Token.objects.create(
+            user=user
+        )
 
-@pytest.mark.django_db
-def test_token_user(token):
-    """
-    Test token user
-    """
-    assert token.user is not None
+        assert new_token is not None

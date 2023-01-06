@@ -28,7 +28,7 @@ client = APIClient()
 pytestmark = pytest.mark.django_db
 
 
-class TestAccountsAPI:
+class TestUserAPI:
     @pytest.fixture()
     def user(self):
         """
