@@ -97,7 +97,7 @@ class WorkerCommentFactory(factory.django.DjangoModelFactory):
     worker = factory.SubFactory("worker.factories.WorkerFactory")
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
     comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
-    entered_by = factory.SubFactory("accounts.factories.UserFactory")
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
 
     class Meta:
         """
