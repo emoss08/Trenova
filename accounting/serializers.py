@@ -137,3 +137,47 @@ class RevenueCodeSerializer(GenericSerializer):
 
         model = models.RevenueCode
         extra_fields = ("expense_account", "revenue_account")
+
+
+class DivisionCodeSerializer(GenericSerializer):
+    """RevenueCodeSerializer
+
+    A serializer class for the RevenueCode model. This serializer is used to
+    convert the RevenueCode model instance into a Python dictionary format that
+    can be rendered into a JSON response. It also defines the fields that should be
+    included in the serialized representation of the model.
+
+    Metaclass Attributes:
+        model (models.RevenueCode): The RevenueCode model that this serializer is
+        associated with.
+
+        fields (tuple of str): A tuple of field names that should be included in the
+        serialized representation of the model.
+    """
+
+    cash_account = serializers.PrimaryKeyRelatedField(
+        queryset=models.GeneralLedgerAccount.objects.filter(
+            account_type=models.GeneralLedgerAccount.AccountClassificationChoices.CASH
+        ),
+        required=False,
+    )
+    ap_account = serializers.PrimaryKeyRelatedField(
+        queryset=models.GeneralLedgerAccount.objects.filter(
+            account_type=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        ),
+        required=False,
+    )
+    expense_account = serializers.PrimaryKeyRelatedField(
+        queryset=models.GeneralLedgerAccount.objects.filter(
+            account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+        ),
+        required=False,
+    )
+
+    class Meta:
+        """
+        Metaclass for DivisionCodeSerializer
+        """
+
+        model = models.DivisionCode
+        extra_fields = ("cash_account", "ap_account", "expense_account")

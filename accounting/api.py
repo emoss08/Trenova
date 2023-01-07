@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 
@@ -34,15 +33,12 @@ class GeneralLedgerAccountViewSet(OrganizationViewSet):
     queryset = models.GeneralLedgerAccount.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["id", "account_number", "description", "account_type"]
-
-    def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
-        """
-        Returns the queryset of general ledger accounts associated with the user's organization.
-        """
-        return self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
-        ).order_by("account_number")
+    filterset_fields = [
+        "id",
+        "is_active",
+        "account_number",
+        "account_type",
+    ]
 
 
 class RevenueCodeViewSet(OrganizationViewSet):
@@ -52,14 +48,15 @@ class RevenueCodeViewSet(OrganizationViewSet):
 
     serializer_class = serializers.RevenueCodeSerializer
     queryset = models.RevenueCode.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "code", "description"]
 
-    def get_queryset(self) -> QuerySet[models.RevenueCode]:
-        """
-        Returns the queryset of revenue codes associated with the user's organization.
-        """
-        return self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
-        ).order_by("code")
+
+class DivisionCodeViewSet(OrganizationViewSet):
+    """
+    Division Code ViewSet
+    """
+
+    serializer_class = serializers.DivisionCodeSerializer
+    queryset = models.DivisionCode.objects.all()
+    filterset_fields = ["id", "code", "is_active"]
