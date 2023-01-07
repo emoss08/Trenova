@@ -122,3 +122,4 @@ class TestUserAPI:
         client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         response = client.delete(f"/api/users/{user.id}/")
         assert response.status_code == 204
+        assert response.data is None
