@@ -19,9 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from billing.tests.factories import DocumentClassificationFactory
-
 from billing import models
+from billing.tests.factories import DocumentClassificationFactory
 from organization.factories import OrganizationFactory
 from utils.tests import ApiTest
 

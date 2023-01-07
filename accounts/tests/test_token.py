@@ -19,15 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from accounts.tests.factories import TokenFactory, UserFactory
-
 from accounts import models
+from accounts.tests.factories import TokenFactory, UserFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestToken:
-
     @pytest.fixture()
     def token(self):
         """
@@ -46,8 +44,6 @@ class TestToken:
         """
         Test token creation
         """
-        new_token = models.Token.objects.create(
-            user=user
-        )
+        new_token = models.Token.objects.create(user=user)
 
         assert new_token is not None

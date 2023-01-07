@@ -19,9 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from accounts.tests.factories import JobTitleFactory
-
 from accounts import models
+from accounts.tests.factories import JobTitleFactory
 
 pytestmark = pytest.mark.django_db
 

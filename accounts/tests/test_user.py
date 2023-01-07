@@ -20,8 +20,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 from django.core.exceptions import ValidationError
 
-from accounts.tests.factories import JobTitleFactory, UserFactory
 from accounts import models
+from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.factories import OrganizationFactory
 
 pytestmark = pytest.mark.django_db
