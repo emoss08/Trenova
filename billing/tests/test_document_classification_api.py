@@ -30,7 +30,7 @@ class TestDocumentClassificationAPI(ApiTest):
     Test for Document Classification API
     """
 
-    # TODO: FIGURE OUT WHY document_classificaiton factory
+    # TODO: FIGURE OUT WHY document_classification factory
     # TODO: id doesn't work on path.
 
     @pytest.fixture()
@@ -55,7 +55,7 @@ class TestDocumentClassificationAPI(ApiTest):
         _response = api_client.post(
             "/api/document_classifications/",
             {
-                "organization": organization,
+                "organization": f"{organization}",
                 "name": "test",
                 "description": "Test Description",
             },
@@ -73,7 +73,7 @@ class TestDocumentClassificationAPI(ApiTest):
         response = api_client.post(
             "/api/document_classifications/",
             {
-                "organization": organization,
+                "organization": f"{organization}",
                 "name": "test",
                 "description": "Test Description",
             },
@@ -91,7 +91,7 @@ class TestDocumentClassificationAPI(ApiTest):
         _response = api_client.post(
             "/api/document_classifications/",
             {
-                "organization": organization,
+                "organization": f"{organization}",
                 "name": "test",
                 "description": "Test Description",
             },
@@ -116,7 +116,7 @@ class TestDocumentClassificationAPI(ApiTest):
         _response = api_client.post(
             "/api/document_classifications/",
             {
-                "organization": organization,
+                "organization": f"{organization}",
                 "name": "test",
                 "description": "Test Description",
             },
