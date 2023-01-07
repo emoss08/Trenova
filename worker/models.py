@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -200,6 +200,14 @@ class Worker(GenericModel):
 
         return reverse("worker:detail", kwargs={"pk": self.pk})
 
+    def update_worker(self, **kwargs: Any) -> None:
+        """
+        Updates the user with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
 
 class WorkerProfile(GenericModel):
     """
@@ -350,7 +358,7 @@ class WorkerProfile(GenericModel):
             f"{self.worker.first_name} {self.worker.last_name} Profile", 50
         )[0]
 
-    def update_profile(self, **kwargs):
+    def update_worker_profile(self, **kwargs):
         """Update the worker profile
 
         Args:
@@ -389,18 +397,19 @@ class WorkerProfile(GenericModel):
                 },
             )
 
-        # validate worker regulatory information
+        if (
+            self.date_of_birth
+            and (datetime.today().date() - self.date_of_birth).days < 6570
+        ):
+            raise ValidationError(
+                {
+                    "date_of_birth": _(
+                        "Worker must be at least 18 years old to be entered."
+                    ),
+                },
+            )
+
         validate_worker_regulatory_information(self)
-
-    def save(self, **kwargs) -> None:
-        """Worker Profile save method
-
-        Returns:
-            None
-        """
-
-        self.full_clean()
-        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Worker Profile absolute url
@@ -485,7 +494,7 @@ class WorkerContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def update_location_contact(self, **kwargs):
+    def update_worker_contact(self, **kwargs: Any):
         """Update the location contact
 
         Args:
@@ -565,7 +574,7 @@ class WorkerComment(GenericModel):
 
         return textwrap.wrap(self.comment, 50)[0]
 
-    def update_location_comments(self, **kwargs):
+    def update_worker_comment(self, **kwargs: Any):
         """Update the worker comment
 
         Args:

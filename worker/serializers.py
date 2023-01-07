@@ -160,28 +160,9 @@ class WorkerSerializer(GenericSerializer):
         comments_data = validated_data.pop("comments", [])
         contacts_data = validated_data.pop("contacts", [])
 
-        # Update the worker.
-        instance.is_active = validated_data.get("is_active", instance.is_active)
-        instance.worker_type = validated_data.get("worker_type", instance.worker_type)
-        instance.first_name = validated_data.get("first_name", instance.first_name)
-        instance.last_name = validated_data.get("last_name", instance.last_name)
-        instance.address_line_1 = validated_data.get(
-            "address_line_1", instance.address_line_1
-        )
-        instance.address_line_2 = validated_data.get(
-            "address_line_2", instance.address_line_2
-        )
-        instance.city = validated_data.get("city", instance.city)
-        instance.state = validated_data.get("state", instance.state)
-        instance.zip_code = validated_data.get("zip_code", instance.zip_code)
-        instance.depot = validated_data.get("depot", instance.depot)
-        instance.manager = validated_data.get("manager", instance.manager)
-        instance.entered_by = validated_data.get("entered_by", instance.entered_by)
-        instance.save()
-
         # Update the worker profile.
         if profile_data:
-            instance.profile.update_profile(**profile_data)
+            instance.profile.update_worker_profile(**profile_data)
 
         # Update the worker comments.
         if comments_data:
@@ -204,7 +185,7 @@ class WorkerSerializer(GenericSerializer):
                             }
                         )
 
-                    worker_comment.update_location_comments(**comment_data)
+                    worker_comment.update_worker_comment(**comment_data)
                 else:
                     comment_data["organization"] = instance.organization
                     instance.comments.create(**comment_data)
@@ -231,9 +212,11 @@ class WorkerSerializer(GenericSerializer):
                             }
                         )
 
-                    worker_contact.update_location_contact(**contact_data)
+                    worker_contact.update_worker_contact(**contact_data)
                 else:
                     contact_data["organization"] = instance.organization
                     instance.contacts.create(**contact_data)
+
+        instance.update_worker(**validated_data)
 
         return instance
