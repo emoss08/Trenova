@@ -315,15 +315,6 @@ class UserProfile(GenericModel):
                 {"title": ValidationError(_("Title is not active"), code="invalid")}
             )
 
-    def save(self, **kwargs: Any):
-        """Save the model
-
-        Returns:
-            None
-        """
-        self.clean()
-        super().save(**kwargs)
-
     def get_absolute_url(self) -> str:
         """Absolute URL for the Profile.
 
