@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -242,6 +242,11 @@ class DocumentClassification(GenericModel):
         return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
+        """
+
+        Returns:
+
+        """
         super().clean()
         if self.__class__.objects.filter(name=self.name).exclude(pk=self.pk).exists():
             raise ValidationError(
@@ -257,3 +262,11 @@ class DocumentClassification(GenericModel):
             str: Document classification url
         """
         return reverse("billing:document-classification-detail", kwargs={"pk": self.pk})
+
+    def update_doc_class(self, **kwargs: Any) -> None:
+        """
+        Updates the document classification with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
