@@ -52,17 +52,17 @@ class TestUserAPI:
 
     def test_get(self, token):
         """
-        Test get user
+        Test get users
         """
         client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         response = client.get("/api/users/")
         assert response.status_code == 200
 
-    def test_get_with_id(self, user, token):
+    def test_get_by_id(self, user, token):
         """
         Test get user by ID
         """
-        client.credentials(HTTP_AUTHORIZATION="TOKEN " + token.key)
+        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         response = client.get(f"/api/users/{user.id}/")
         assert response.status_code == 200
 
