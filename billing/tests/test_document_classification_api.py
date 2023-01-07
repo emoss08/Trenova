@@ -77,6 +77,7 @@ class TestDocumentClassificationAPI(ApiTest):
                 "name": "test",
                 "description": "Test Description",
             },
+            format="json",
         )
 
         assert response.status_code == 201
@@ -94,11 +95,13 @@ class TestDocumentClassificationAPI(ApiTest):
                 "name": "test",
                 "description": "Test Description",
             },
+            format="json",
         )
 
         response = api_client.put(
             f"/api/document_classifications/{_response.data['id']}/",
             {"name": "foo", "description": "foo bar description"},
+            format="json",
         )
 
         assert response.status_code == 200
@@ -117,6 +120,7 @@ class TestDocumentClassificationAPI(ApiTest):
                 "name": "test",
                 "description": "Test Description",
             },
+            format="json",
         )
 
         response = api_client.delete(
@@ -125,4 +129,3 @@ class TestDocumentClassificationAPI(ApiTest):
 
         assert response.status_code == 204
         assert response.data is None
-
