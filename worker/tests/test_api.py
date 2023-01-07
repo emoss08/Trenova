@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 from rest_framework.test import APIClient
 
-from accounts.factories import TokenFactory, UserFactory
+from accounts.tests.factories import TokenFactory, UserFactory
 from dispatch.factories import CommentTypeFactory
 from organization.factories import OrganizationFactory
 from worker.factories import WorkerFactory

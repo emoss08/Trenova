@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from billing.factories import AccessorialChargeFactory
+from billing.tests.factories import AccessorialChargeFactory
 
 
 @pytest.fixture()
