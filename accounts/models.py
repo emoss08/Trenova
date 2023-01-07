@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.
@@ -189,7 +189,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return reverse("users:detail", kwargs={"pk": self.pk})
 
-    def update_user(self, **kwargs) -> None:
+    def update_user(self, **kwargs: Any) -> None:
         """
         Updates the user with the given kwargs
         """

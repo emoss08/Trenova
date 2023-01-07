@@ -65,6 +65,8 @@ class TestDocumentClassificationAPI(ApiTest):
             f"/api/document_classifications/{_response.data['id']}/"
         )
         assert response.status_code == 200
+        assert response.data["name"] == "test"
+        assert response.data["description"] == "Test Description"
 
     def test_post(self, api_client, organization):
         """
