@@ -123,7 +123,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         help_text=_("Unique ID for the user."),
     )
-
     organization = models.ForeignKey(
         "organization.Organization",
         on_delete=models.CASCADE,
@@ -190,6 +189,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return reverse("users:detail", kwargs={"pk": self.pk})
 
+    def update_user(self, **kwargs) -> None:
+        """
+        Updates the user with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
 
 class UserProfile(GenericModel):
     """
@@ -230,15 +237,10 @@ class UserProfile(GenericModel):
     profile_picture = models.ImageField(
         _("Profile Picture"),
         upload_to="profiles/",
-        null=True,
-        blank=True,
         help_text=_("The profile picture of the user"),
         validators=[ImageSizeValidator(600, 600, False, True)],
-    )
-    bio = models.TextField(
-        _("Bio"),
+        null=True,
         blank=True,
-        help_text=_("The bio of the user"),
     )
     address_line_1 = models.CharField(
         _("Address"),
@@ -291,7 +293,7 @@ class UserProfile(GenericModel):
         """
         return textwrap.wrap(self.user.username, 30)[0]
 
-    def update_profile(self, **kwargs) -> None:
+    def update_profile(self, **kwargs: Any) -> None:
         """
         Updates the profile with the given kwargs
         """
@@ -312,15 +314,6 @@ class UserProfile(GenericModel):
             raise ValidationError(
                 {"title": ValidationError(_("Title is not active"), code="invalid")}
             )
-
-    def save(self, **kwargs: Any):
-        """Save the model
-
-        Returns:
-            None
-        """
-        self.clean()
-        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Absolute URL for the Profile.
@@ -380,6 +373,11 @@ class JobTitle(GenericModel):
         editable=False,
         unique=True,
     )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("If the job title is active"),
+    )
     name = models.CharField(
         _("Name"),
         max_length=100,
@@ -390,11 +388,6 @@ class JobTitle(GenericModel):
         _("Description"),
         blank=True,
         help_text=_("Description of the job title"),
-    )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("If the job title is active"),
     )
 
     class Meta:

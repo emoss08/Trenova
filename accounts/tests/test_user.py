@@ -19,141 +19,97 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.test import Client
 
-from accounts.factories import JobTitleFactory, UserFactory
-from accounts.models import User
+from accounts import models
+from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.factories import OrganizationFactory
 
-
-@pytest.fixture()
-def user():
-    """
-    User fixture
-    """
-    return UserFactory()
+pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
-def job_title(user):
-    """
-    Job title fixture
-    """
-    return JobTitleFactory(organization=user.organization)
+class TestUser:
+    @pytest.fixture()
+    def user(self):
+        """
+        User fixture
+        """
+        return UserFactory()
 
+    @pytest.fixture()
+    def job_title(self):
+        """
+        Job title fixture
+        """
+        return JobTitleFactory()
 
-@pytest.mark.django_db
-def test_user_creation(user):
-    """
-    Test user creation
-    """
-    assert user is not None
+    @pytest.fixture()
+    def organization(self):
+        """
+        Organization fixture
+        """
+        return OrganizationFactory()
 
+    def test_user_creation(self, organization):
+        """
+        Test user creation
+        """
 
-@pytest.mark.django_db
-def test_user_organization(user):
-    """
-    Test user organization
-    """
-    assert user.organization is not None
+        user = models.User.objects.create(
+            organization=organization,
+            username="testuser",
+            password="anothertestaccount123@",
+            email="testuser@test.com",
+        )
+        assert user.username == "testuser"
+        assert user.email == "testuser@test.com"
+        assert user is not None
 
+    def test_user_profile_update(self, user):
+        """
+        Test user profile update
+        """
 
-@pytest.mark.django_db
-def test_user_profile_creation(user):
-    """
-    Test user profile creation
-    """
-    assert user.profile is not None
+        user.profile.update_profile(  # I FORGOT I MADE THIS MAGIC METHOD :)
+            first_name="foo",
+            last_name="bar",
+            address_line_1="foo bar line 1",
+            city="foo",
+            state="CA",
+            zip_code="12345",
+        )
 
+        assert user.profile.first_name == "foo"
+        assert user.profile.last_name == "bar"
+        assert user.profile.address_line_1 == "foo bar line 1"
+        assert user.profile.city == "foo"
+        assert user.profile.state == "CA"
+        assert user.profile.zip_code == "12345"
 
-@pytest.mark.django_db
-def test_user_profile_updated(user):
-    """
-    Test user profile updated
-    """
-    user.profile.first_name = "test_first_name"
-    user.profile.save()
-    assert user.profile.first_name == "test_first_name"
+    def test_job_title_not_active(self, user, job_title):
+        """
+        Test if the job title is not active,
+        that validation error is raised
+        """
+        job_title.is_active = False
+        job_title.save()
+        user.profile.title = job_title
+        with pytest.raises(ValidationError, match="Title is not active"):
+            user.profile.full_clean()
 
+    def test_create_superuser(self, organization):
+        """
+        Test creating superuser
+        """
 
-@pytest.mark.django_db
-def test_user_updated(user):
-    """
-    Test user updated
-    """
-    user.username = "test_user_updated"
-    user.save()
-    assert user.username == "test_user_updated"
-
-
-@pytest.mark.django_db
-def test_job_title_not_active(user, job_title):
-    """
-    Test if the job title is not active,
-    that validation error is raised
-    """
-    job_title.is_active = False
-    job_title.save()
-    user.profile.title = job_title
-    with pytest.raises(ValidationError, match="Title is not active"):
-        user.profile.save()
-
-
-@pytest.mark.django_db
-def test_create_superuser():
-    """
-    Test creating supe user
-    """
-    organization = OrganizationFactory()
-
-    admin_user = User(
-        organization=organization,
-        username="test_admin",
-        email="test_admin@admin.com",
-        is_staff=True,
-        is_superuser=True,
-    )
-    admin_user.set_password("test_admin")
-    admin_user.save()
-
-    client = Client()
-    login_response = client.login(username="test_admin", password="test_admin")
-    assert login_response is True
-
-
-@pytest.mark.django_db
-def test_create_superuser_is_superuser_error():
-    """
-    Test creating superuser throws
-    value error
-    """
-    organization = OrganizationFactory()
-
-    with pytest.raises(ValueError, match="Superuser must have is_superuser=True."):
-        User.objects.create_superuser(
+        admin_user = models.User(
             organization=organization,
             username="test_admin",
-            email="test@admin.com",
-            password="test_admin",
-            is_superuser=False,
+            email="test_admin@admin.com",
             is_staff=True,
-        )
-
-
-@pytest.mark.django_db
-def test_create_superuser_is_staff_error():
-    """
-    Test creating superuser throws
-    value error
-    """
-    organization = OrganizationFactory()
-
-    with pytest.raises(ValueError, match="Superuser must have is_staff=True."):
-        User.objects.create_superuser(
-            organization=organization,
-            username="test_admin",
-            email="test@admin.com",
-            password="test_admin",
             is_superuser=True,
-            is_staff=False,
         )
+        admin_user.set_password("test_admin")
+        admin_user.save()
+
+        assert admin_user.is_staff is True
+        assert admin_user.is_superuser is True

@@ -98,7 +98,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "city",
             "state",
             "zip_code",
-            "bio",
             "phone",
         ]
 
@@ -167,13 +166,12 @@ class UserSerializer(GenericSerializer):
             None
         """
 
-        # Get the organization of the user from the request.
         profile_data = validated_data.pop("profile", None)
-
-        models.User.objects.filter(pk=instance.pk).update(**validated_data)
 
         if profile_data:
             instance.profile.update_profile(**profile_data)
+
+        instance.update_user(**validated_data)
 
         return instance
 

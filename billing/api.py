@@ -74,7 +74,7 @@ class DocumentClassificationViewSet(OrganizationViewSet):
 
     Only authenticated users are allowed to access the views provided by this viewset.
     Filtering is also available, with the ability to filter by document classification
-    ID, name, and code.
+    ID, and name.
     """
 
     queryset = models.DocumentClassification.objects.all()

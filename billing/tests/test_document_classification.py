@@ -19,30 +19,50 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from billing.factories import DocumentClassificationFactory
+from billing import models
+from billing.tests.factories import DocumentClassificationFactory
+from organization.factories import OrganizationFactory
+from utils.tests import ApiTest
+
+pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture()
-def document_classification():
-    """
-    Document classification fixture
-    """
-    return DocumentClassificationFactory()
+class TestDocumentClassification:
+    @pytest.fixture()
+    def document_classification(self):
+        """
+        Document classification fixture
+        """
+        return DocumentClassificationFactory()
 
+    @pytest.fixture()
+    def organization(self):
+        """
+        Organization Fixture
+        """
+        return OrganizationFactory()
 
-@pytest.mark.django_db
-def test_document_classification_creation(document_classification):
-    """
-    Test document classification creation
-    """
-    assert document_classification is not None
+    def test_document_classification_creation(self, organization):
+        """
+        Test document classification creation
+        """
+        document_classification = models.DocumentClassification.objects.create(
+            organization=organization,
+            name="TEST",
+            description="Test document classification",
+        )
 
+        assert document_classification.name == "TEST"
+        assert document_classification.description == "Test document classification"
 
-@pytest.mark.django_db
-def test_document_classification_update(document_classification):
-    """
-    Test document classification update
-    """
-    document_classification.name = "New name"
-    document_classification.save()
-    assert document_classification.name == "New name"
+    def test_document_classification_update(self, document_classification):
+        """
+        Test document classification update
+        """
+
+        document_classification.update_doc_class(
+            name="NEWDOC", description="Another Test Description"
+        )
+
+        assert document_classification.name == "NEWDOC"
+        assert document_classification.description == "Another Test Description"

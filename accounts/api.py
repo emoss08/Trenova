@@ -42,7 +42,7 @@ class UserViewSet(OrganizationViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["organization", "department", "profile"]
-    serializer_class: type[serializers.UserSerializer] = serializers.UserSerializer
+    serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
 
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
@@ -69,7 +69,7 @@ class UpdatePasswordView(UpdateAPIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """
+        """Update the password
 
         Args:
             request (Request): The request object
@@ -101,7 +101,7 @@ class TokenProvisionView(APIView):
     Rest API endpoint for users can create a token
     """
 
-    permission_classes: list[Any] = []
+    permission_classes = []
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Handle Post requests
@@ -149,7 +149,7 @@ class TokenVerifyView(APIView):
     Rest API endpoint for users can verify a token
     """
 
-    permission_classes: list[Any] = []
+    permission_classes = []
     serializer_class = serializers.VerifyTokenSerializer
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:

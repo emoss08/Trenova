@@ -86,7 +86,7 @@ class LocationCommentFactory(factory.django.DjangoModelFactory):
     location = factory.SubFactory("location.factories.LocationFactory")
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
     comment = factory.Faker("text", locale="en_US")
-    entered_by = factory.SubFactory("accounts.factories.UserFactory")
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
 
     class Meta:
         """

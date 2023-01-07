@@ -16,12 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Any, OrderedDict
 
 import pytest
 from rest_framework.test import APIClient
 
-from accounts.factories import TokenFactory, UserFactory
+from accounts.tests.factories import TokenFactory, UserFactory
 from equipment.factories import EquipmentFactory
 from organization.factories import OrganizationFactory
 

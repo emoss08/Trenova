@@ -18,32 +18,50 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from rest_framework.test import APIClient
 
-from accounts import models
 from accounts.tests.factories import TokenFactory, UserFactory
+from organization.factories import OrganizationFactory
 
-pytestmark = pytest.mark.django_db
 
+class ApiTest:
+    """
+    A test mixin that gives some default fixtures for Monta.
 
-class TestToken:
+    Methods:
+        token: Fixture to get a token
+        api_client: Fixture to get and authenticated
+        client.
+    """
+
     @pytest.fixture()
     def token(self):
         """
-        Token fixture
+        Token Fixture
         """
         return TokenFactory()
 
     @pytest.fixture()
+    def organization(self):
+        """
+        Organization Fixture
+        """
+        return OrganizationFactory()
+
+    @pytest.fixture()
     def user(self):
         """
-        User fixture
+        User Fixture
         """
         return UserFactory()
 
-    def test_create(self, user):
-        """
-        Test token creation
-        """
-        new_token = models.Token.objects.create(user=user)
+    @pytest.fixture()
+    def api_client(self, token) -> APIClient:
+        """API client Fixture
 
-        assert new_token is not None
+        Returns:
+            APIClient: Authenticated Api object
+        """
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+        return client
