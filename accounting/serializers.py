@@ -140,15 +140,15 @@ class RevenueCodeSerializer(GenericSerializer):
 
 
 class DivisionCodeSerializer(GenericSerializer):
-    """RevenueCodeSerializer
+    """A serializer class for the DivisionCode model.
 
-    A serializer class for the RevenueCode model. This serializer is used to
-    convert the RevenueCode model instance into a Python dictionary format that
-    can be rendered into a JSON response. It also defines the fields that should be
-    included in the serialized representation of the model.
+    This serializer is used to convert the DivisionCode model instance into
+    a Python dictionary format that can be rendered into a JSON response.
+    It also defines the fields that should be included in the serialized
+    representation of the model.
 
     Metaclass Attributes:
-        model (models.RevenueCode): The RevenueCode model that this serializer is
+        model (models.DivisionCode): The RevenueCode model that this serializer is
         associated with.
 
         fields (tuple of str): A tuple of field names that should be included in the

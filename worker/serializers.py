@@ -31,13 +31,15 @@ class WorkerCommentSerializer(GenericSerializer):
     Worker Comment Serializer
     """
 
+    id = serializers.UUIDField(required=False)
+
     class Meta:
         """
         Metaclass for WorkerCommentSerializer
         """
 
         model = models.WorkerComment
-        extra_read_only_fields = ("worker",)
+        extra_read_only_fields = ("worker", "id")
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -45,13 +47,15 @@ class WorkerContactSerializer(GenericSerializer):
     Worker Contact Serializer
     """
 
+    id = serializers.UUIDField(required=False)
+
     class Meta:
         """
         Metaclass for WorkerContactSerializer
         """
 
         model = models.WorkerContact
-        extra_read_only_fields = ("worker",)
+        extra_read_only_fields = ("worker", "id")
 
 
 class WorkerProfileSerializer(GenericSerializer):
@@ -168,6 +172,7 @@ class WorkerSerializer(GenericSerializer):
         if comments_data:
             for comment_data in comments_data:
                 comment_id = comment_data.get("id", None)
+                print(comment_id)
                 if comment_id:
                     try:
                         worker_comment = models.WorkerComment.objects.get(
