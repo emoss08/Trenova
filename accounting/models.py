@@ -363,7 +363,8 @@ class DivisionCode(GenericModel):
         super().clean()
 
         if (
-            self.expense_account.account_type
+            self.expense_account
+            and self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
