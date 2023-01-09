@@ -40,6 +40,7 @@ INTERNAL_IPS = [
 
 # Application definition
 INSTALLED_APPS = [
+    # Django Apps
     "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
+    # Third-Party apps
     "django_extensions",
     "localflavor",
     "cacheops",
@@ -59,7 +61,9 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "silk",
+    "encrypted_model_fields",
     "pgtrigger",
+    # Monta Apps
     "backend",
     "core",
     "accounts",
@@ -256,3 +260,6 @@ REST_FRAMEWORK = {
 CELERY_BROKER_URL = env("CELERY_REDIS_BROKER_URL")
 CELERY_RESULT_BACKEND = env("CELERY_REDIS_BROKER_URL")
 CELERY_CACHE_BACKEND = "celery"
+
+# Field Encryption
+FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")

@@ -31,6 +31,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import datetime
 from django.utils.translation import gettext_lazy as _
+from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 
 from dispatch.validators.regulatory import validate_worker_regulatory_information
@@ -263,11 +264,11 @@ class WorkerProfile(GenericModel):
         null=True,
         help_text=_("Date of Birth of the worker."),
     )
-    license_number = models.CharField(
+    license_number = EncryptedCharField(
         _("License Number"),
         max_length=20,
-        help_text=_("License Number."),
-        blank=True,
+        help_text=_("Driver License Number"),
+        blank=True
     )
     license_state = USStateField(
         _("License State"),
@@ -382,12 +383,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-            self.endorsements
-            in [
-                WorkerProfile.EndorsementChoices.X,
-                WorkerProfile.EndorsementChoices.HAZMAT,
-            ]
-            and not self.hazmat_expiration_date
+                self.endorsements
+                in [
+            WorkerProfile.EndorsementChoices.X,
+            WorkerProfile.EndorsementChoices.HAZMAT,
+        ]
+                and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
@@ -398,8 +399,8 @@ class WorkerProfile(GenericModel):
             )
 
         if (
-            self.date_of_birth
-            and (datetime.today().date() - self.date_of_birth).days < 6570
+                self.date_of_birth
+                and (datetime.today().date() - self.date_of_birth).days < 6570
         ):
             raise ValidationError(
                 {
