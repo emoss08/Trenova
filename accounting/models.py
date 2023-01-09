@@ -343,7 +343,7 @@ class DivisionCode(GenericModel):
 
         verbose_name = _("Division Code")
         verbose_name_plural = _("Division Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """DivisionCode string representation

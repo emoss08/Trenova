@@ -172,7 +172,6 @@ class WorkerSerializer(GenericSerializer):
         if comments_data:
             for comment_data in comments_data:
                 comment_id = comment_data.get("id", None)
-                print(comment_id)
                 if comment_id:
                     try:
                         worker_comment = models.WorkerComment.objects.get(
