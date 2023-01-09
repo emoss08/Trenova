@@ -19,30 +19,139 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
+from billing import models
 from billing.tests.factories import ChargeTypeFactory
+from utils.tests import UnitTest, ApiTest
 
 
-@pytest.fixture()
-def charge_type():
+class TestChargeType(UnitTest):
     """
-    Charge type fixture
+    Test for Charge Types
     """
-    return ChargeTypeFactory()
+
+    @pytest.fixture()
+    def charge_type(self):
+        """
+        Charge type fixture
+        """
+        return ChargeTypeFactory()
+
+    def test_list(self, charge_type):
+        """
+        Test Charge Type List
+        """
+        assert charge_type is not None
+
+    def test_create(self, organization):
+        """
+        Test Create Charge Type
+        """
+        charge_type = models.ChargeType.objects.create(
+            organization=organization,
+            name="test",
+            description="Test Description",
+        )
+
+        assert charge_type is not None
+        assert charge_type.name == "test"
+        assert charge_type.description == "Test Description"
+
+    def test_update(self, charge_type):
+        """
+        Test Charge Type update
+        """
+
+        char_type = models.ChargeType.objects.get(id=charge_type.id)
+
+        char_type.name = "maybe"
+        char_type.save()
+
+        assert char_type is not None
+        assert char_type.name == "maybe"
 
 
-@pytest.mark.django_db
-def test_charge_type_creation(charge_type):
+class TestChargeTypeApi(ApiTest):
     """
-    Test charge type creation
+    Test for Charge Type API
     """
-    assert charge_type is not None
 
+    @pytest.fixture()
+    def charge_type(self):
+        """
+        Charge Type Factory
+        """
+        return ChargeTypeFactory()
 
-@pytest.mark.django_db
-def test_charge_type_update(charge_type):
-    """
-    Test charge type update
-    """
-    charge_type.name = "New name"
-    charge_type.save()
-    assert charge_type.name == "New name"
+    def test_get(self, api_client):
+        """
+        Test get Charge Type
+        """
+        response = api_client.get("/api/charge_types/")
+        assert response.status_code == 200
+
+    def test_get_by_id(self, api_client, organization):
+        """
+        Test get Charge Type by ID
+        """
+
+        _response = api_client.post(
+            "/api/charge_types/",
+            {
+                "organization": f"{organization}",
+                "name": "foob",
+                "description": "Test Description",
+            },
+            format="json",
+        )
+
+        response = api_client.get(f"/api/charge_types/{_response.data['id']}/")
+
+        assert response.status_code == 200
+        assert response.data["name"] == "foob"
+        assert response.data["description"] == "Test Description"
+
+    def test_put(self, api_client, organization):
+        """
+        Test put Charge Type
+        """
+
+        _response = api_client.post(
+            "/api/charge_types/",
+            {
+                "organization": f"{organization}",
+                "name": "foob",
+                "description": "Test Description",
+            },
+            format="json",
+        )
+
+        response = api_client.put(
+            f"/api/charge_types/{_response.data['id']}/",
+            {"name": "foo bar"},
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert response.data["name"] == "foo bar"
+
+    def test_delete(self, api_client, organization):
+        """
+        Test Delete Charge Type
+        """
+
+        _response = api_client.post(
+            "/api/charge_types/",
+            {
+                "organization": f"{organization}",
+                "name": "foob",
+                "description": "Test Description",
+            },
+            format="json",
+        )
+
+        response = api_client.delete(
+            f"/api/charge_types/{_response.data['id']}/",
+        )
+
+        assert response.status_code == 204
+        assert response.data is None
