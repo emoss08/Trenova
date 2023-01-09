@@ -30,10 +30,14 @@ class ApiTest:
     Api Test.
 
     Methods:
-        token: Fixture to get a token
+        organization: Pytest fixture for OrganizationFactory.
+        user: Pytest fixture for UserFactory.
+        token: Fixture for TokenFactory.
         api_client: Fixture to get and authenticated
         client.
     """
+
+    pytestmark = pytest.mark.django_db
 
     @pytest.fixture()
     def token(self):
@@ -72,7 +76,13 @@ class UnitTest:
     """
     A test mixin that gives some default fixtures for
     Unit Test.
+
+    Methods:
+        organization: Pytest fixture for OrganizationFactory.
+        user: Pytest fixture for UserFactory.
     """
+
+    pytestmark = pytest.mark.django_db
 
     @pytest.fixture()
     def organization(self):
