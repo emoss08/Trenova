@@ -239,17 +239,17 @@ class RevenueCode(GenericModel):
         super().clean()
 
         if (
-            self.expense_account
-            and self.expense_account.account_type
-            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+                self.expense_account
+                and self.expense_account.account_type
+                != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
                 {"expense_account": _("Entered account is not an expense account.")}
             )
         if (
-            self.revenue_account
-            and self.revenue_account.account_type
-            != GeneralLedgerAccount.AccountTypeChoices.REVENUE
+                self.revenue_account
+                and self.revenue_account.account_type
+                != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(
                 {"revenue_account": _("Entered account is not a revenue account.")}
@@ -363,9 +363,9 @@ class DivisionCode(GenericModel):
         super().clean()
 
         if (
-            self.cash_account
-            and self.cash_account.account_classification
-            != GeneralLedgerAccount.AccountClassificationChoices.CASH
+                self.cash_account
+                and self.cash_account.account_classification
+                != GeneralLedgerAccount.AccountClassificationChoices.CASH
         ):
             raise ValidationError(
                 {
@@ -376,9 +376,9 @@ class DivisionCode(GenericModel):
             )
 
         if (
-            self.expense_account
-            and self.expense_account.account_type
-            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+                self.expense_account
+                and self.expense_account.account_type
+                != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
                 {
@@ -389,9 +389,9 @@ class DivisionCode(GenericModel):
             )
 
         if (
-            self.ap_account
-            and self.ap_account.account_classification
-            != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+                self.ap_account
+                and self.ap_account.account_classification
+                != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
         ):
             raise ValidationError(
                 {
