@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import final
+from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -31,6 +31,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import datetime
 from django.utils.translation import gettext_lazy as _
+from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 
 from dispatch.validators.regulatory import validate_worker_regulatory_information
@@ -122,32 +123,32 @@ class Worker(GenericModel):
     depot = models.ForeignKey(
         Depot,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="worker",
         related_query_name="workers",
         verbose_name=_("Depot"),
         help_text=_("The depot of the worker."),
+        null=True,
+        blank=True,
     )
     manager = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="worker",
         related_query_name="workers",
         verbose_name=_("Manager"),
         help_text=_("The manager of the worker."),
+        null=True,
+        blank=True,
     )
     entered_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="worker_entered",
         related_query_name="workers_entered",
         verbose_name=_("Entered by"),
         help_text=_("The user who entered the worker."),
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -199,6 +200,14 @@ class Worker(GenericModel):
         """
 
         return reverse("worker:detail", kwargs={"pk": self.pk})
+
+    def update_worker(self, **kwargs: Any) -> None:
+        """
+        Updates the user with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class WorkerProfile(GenericModel):
@@ -255,10 +264,10 @@ class WorkerProfile(GenericModel):
         null=True,
         help_text=_("Date of Birth of the worker."),
     )
-    license_number = models.CharField(
+    license_number = EncryptedCharField(
         _("License Number"),
         max_length=20,
-        help_text=_("License Number."),
+        help_text=_("Driver License Number"),
         blank=True,
     )
     license_state = USStateField(
@@ -350,7 +359,7 @@ class WorkerProfile(GenericModel):
             f"{self.worker.first_name} {self.worker.last_name} Profile", 50
         )[0]
 
-    def update_profile(self, **kwargs):
+    def update_worker_profile(self, **kwargs):
         """Update the worker profile
 
         Args:
@@ -384,23 +393,46 @@ class WorkerProfile(GenericModel):
             raise ValidationError(
                 {
                     "hazmat_expiration_date": _(
-                        "Hazmat expiration date is required for this endorsement."
+                        "Hazmat expiration date is required for this endorsement. Please try again."
                     ),
                 },
+                code="invalid",
             )
 
-        # validate worker regulatory information
+        if (
+            self.date_of_birth
+            and (datetime.today().date() - self.date_of_birth).days < 6570
+        ):
+            raise ValidationError(
+                {
+                    "date_of_birth": _(
+                        "Worker must be at least 18 years old to be entered. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+
+        if self.license_number and not self.license_state:
+            raise ValidationError(
+                {
+                    "license_state": _(
+                        "You must provide license state. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+
+        if self.license_number and not self.license_expiration_date:
+            raise ValidationError(
+                {
+                    "license_expiration_date": _(
+                        "You must provide license expiration date. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
         validate_worker_regulatory_information(self)
-
-    def save(self, **kwargs) -> None:
-        """Worker Profile save method
-
-        Returns:
-            None
-        """
-
-        self.full_clean()
-        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Worker Profile absolute url
@@ -485,7 +517,7 @@ class WorkerContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def update_location_contact(self, **kwargs):
+    def update_worker_contact(self, **kwargs: Any):
         """Update the location contact
 
         Args:
@@ -565,7 +597,7 @@ class WorkerComment(GenericModel):
 
         return textwrap.wrap(self.comment, 50)[0]
 
-    def update_location_comments(self, **kwargs):
+    def update_worker_comment(self, **kwargs: Any):
         """Update the worker comment
 
         Args:

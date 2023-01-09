@@ -41,7 +41,7 @@ router = routers.DefaultRouter()
 
 # Accounts Routing
 router.register(r"users", accounts_api.UserViewSet, basename="users")
-router.register(r"job_titles", accounts_api.JobTitleViewSet, basename="job_titles")
+router.register(r"job_titles", accounts_api.JobTitleViewSet, basename="job-titles")
 
 # Accounting Routes
 router.register(
@@ -50,7 +50,10 @@ router.register(
     basename="general_ledger_accounts",
 )
 router.register(
-    r"revenue_codes", accounting_api.RevenueCodeViewSet, basename="revenue_codes"
+    r"revenue_codes", accounting_api.RevenueCodeViewSet, basename="revenue-codes"
+)
+router.register(
+    r"division_codes", accounting_api.DivisionCodeViewSet, basename="division-codes"
 )
 
 # Organization Routing

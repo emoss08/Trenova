@@ -142,6 +142,10 @@ class GeneralLedgerAccount(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for GeneralLedgerAccount Model
+        """
+
         verbose_name = _("General Ledger Account")
         verbose_name_plural = _("General Ledger Accounts")
         ordering = ["account_number"]
@@ -153,15 +157,6 @@ class GeneralLedgerAccount(GenericModel):
             str: GeneralLedgerAccount string representation
         """
         return textwrap.wrap(self.account_number, 20)[0]
-
-    def save(self, **kwargs: Any) -> None:
-        """Saves GeneralLedgerAccount instance
-
-        Args:
-            **kwargs (Any): Keyword arguments
-        """
-        self.full_clean()
-        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """GeneralLedgerAccount absolute url
@@ -317,31 +312,38 @@ class DivisionCode(GenericModel):
         GeneralLedgerAccount,
         on_delete=models.CASCADE,
         related_name="division_code_cash_account",
-        related_query_name="division_code_cash_accounts",
         help_text=_("The cash account associated with the division code."),
         verbose_name=_("Cash Account"),
+        blank=True,
+        null=True,
     )
     ap_account = models.ForeignKey(
         GeneralLedgerAccount,
         on_delete=models.CASCADE,
         related_name="division_code_ap_account",
-        related_query_name="division_code_ap_accounts",
         help_text=_("The accounts payable account associated with the division code."),
         verbose_name=_("Accounts Payable Account"),
+        blank=True,
+        null=True,
     )
     expense_account = models.ForeignKey(
         GeneralLedgerAccount,
         on_delete=models.CASCADE,
         related_name="division_code_expense_account",
-        related_query_name="division_code_expense_accounts",
         help_text=_("The expense account associated with the division code."),
         verbose_name=_("Expense Account"),
+        blank=True,
+        null=True,
     )
 
     class Meta:
+        """
+        Metaclass for DivisionCode Model
+        """
+
         verbose_name = _("Division Code")
         verbose_name_plural = _("Division Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """DivisionCode string representation
@@ -361,7 +363,8 @@ class DivisionCode(GenericModel):
         super().clean()
 
         if (
-            self.expense_account.account_type
+            self.expense_account
+            and self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(

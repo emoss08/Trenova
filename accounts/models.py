@@ -189,7 +189,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return reverse("users:detail", kwargs={"pk": self.pk})
 
-    def update_user(self, **kwargs) -> None:
+    def update_user(self, **kwargs: Any) -> None:
         """
         Updates the user with the given kwargs
         """
