@@ -300,7 +300,7 @@ class UserProfile(GenericModel):
         Args:
             kwargs: Keyword Arguments
         """
-        
+
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
@@ -338,7 +338,7 @@ class UserProfile(GenericModel):
             return self.profile_picture.url
         return "/static/media/avatars/blank.avif"
 
-    @property
+    @cached_property
     def get_full_address_combo(self) -> str:
         """get the full address combo
 
