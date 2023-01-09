@@ -26,13 +26,18 @@ from organization.factories import OrganizationFactory
 
 class ApiTest:
     """
-    A test mixin that gives some default fixtures for Monta.
+    A test mixin that gives some default fixtures for
+    Api Test.
 
     Methods:
-        token: Fixture to get a token
+        organization: Pytest fixture for OrganizationFactory.
+        user: Pytest fixture for UserFactory.
+        token: Fixture for TokenFactory.
         api_client: Fixture to get and authenticated
         client.
     """
+
+    pytestmark = pytest.mark.django_db
 
     @pytest.fixture()
     def token(self):
@@ -65,3 +70,30 @@ class ApiTest:
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         return client
+
+
+class UnitTest:
+    """
+    A test mixin that gives some default fixtures for
+    Unit Test.
+
+    Methods:
+        organization: Pytest fixture for OrganizationFactory.
+        user: Pytest fixture for UserFactory.
+    """
+
+    pytestmark = pytest.mark.django_db
+
+    @pytest.fixture()
+    def organization(self):
+        """
+        Organization Fixture
+        """
+        return OrganizationFactory()
+
+    @pytest.fixture()
+    def user(self):
+        """
+        User Fixture
+        """
+        return UserFactory()

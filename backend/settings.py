@@ -40,6 +40,7 @@ INTERNAL_IPS = [
 
 # Application definition
 INSTALLED_APPS = [
+    # Django Apps
     "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
+    # Third-Party apps
     "django_extensions",
     "localflavor",
     "cacheops",
@@ -59,7 +61,9 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "silk",
+    "encrypted_model_fields",
     "pgtrigger",
+    # Monta Apps
     "backend",
     "core",
     "accounts",
@@ -236,14 +240,17 @@ REST_FRAMEWORK = {
         "accounts.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        # "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
-    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
-    "DEFAULT_THROTTLE_RATES": {"user": "10/second"},
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"user": "10/second", "auth": "5/minute"},
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "EXCEPTION_HANDLER": "core.exceptions.django_error_handler",
@@ -253,3 +260,6 @@ REST_FRAMEWORK = {
 CELERY_BROKER_URL = env("CELERY_REDIS_BROKER_URL")
 CELERY_RESULT_BACKEND = env("CELERY_REDIS_BROKER_URL")
 CELERY_CACHE_BACKEND = "celery"
+
+# Field Encryption
+FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")

@@ -61,3 +61,21 @@ class RevenueCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounting.RevenueCode"
+
+
+class DivisionCodeFactory(factory.django.DjangoModelFactory):
+    """
+    Division Code Factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    is_active = True
+    code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
+
+    class Meta:
+        """
+        Metaclass for DivisionCodeFactory
+        """
+
+        model = "accounting.DivisionCode"

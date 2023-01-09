@@ -107,9 +107,13 @@ class ChargeType(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for Charge Type
+        """
+
         verbose_name = _("Charge Type")
         verbose_name_plural = _("Charge Types")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Charge Type string representation
@@ -231,7 +235,7 @@ class DocumentClassification(GenericModel):
 
         verbose_name = _("Document Classification")
         verbose_name_plural = _("Document Classifications")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Document classification string representation
@@ -242,12 +246,17 @@ class DocumentClassification(GenericModel):
         return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
-        """
+        """DocumentClassification Clean Method
 
         Returns:
+            None
 
+        Raises:
+            ValidationError: If Document Classification is not valid.
         """
+
         super().clean()
+
         if self.__class__.objects.filter(name=self.name).exclude(pk=self.pk).exists():
             raise ValidationError(
                 {
