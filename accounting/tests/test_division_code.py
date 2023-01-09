@@ -21,7 +21,7 @@ import pytest
 
 from accounting import models
 from accounting.tests.factories import DivisionCodeFactory, GeneralLedgerAccountFactory
-from utils.tests import UnitTest, ApiTest
+from utils.tests import ApiTest, UnitTest
 
 
 class TestDivisionCode(UnitTest):
@@ -153,7 +153,7 @@ class TestDivisionCodeApi(ApiTest):
         response = api_client.put(
             f"/api/division_codes/{_response.data['id']}/",
             {"code": "foob", "is_active": False, "description": "Another Description"},
-            format="json"
+            format="json",
         )
 
         assert response.status_code == 200
