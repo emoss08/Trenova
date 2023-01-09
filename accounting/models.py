@@ -363,12 +363,42 @@ class DivisionCode(GenericModel):
         super().clean()
 
         if (
+            self.cash_account
+            and self.cash_account.account_classification
+            != GeneralLedgerAccount.AccountClassificationChoices.CASH
+        ):
+            raise ValidationError(
+                {
+                    "cash_account": _(
+                        "Entered account is not an cash account. Please try again."
+                    )
+                }
+            )
+
+        if (
             self.expense_account
             and self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
-                {"expense_account": _("Entered account is not an expense account.")}
+                {
+                    "expense_account": _(
+                        "Entered account is not an expense account. Please try again."
+                    )
+                }
+            )
+
+        if (
+            self.ap_account
+            and self.ap_account.account_classification
+            != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        ):
+            raise ValidationError(
+                {
+                    "ap_account": _(
+                        "Entered account is not an accounts payable account. Please try again."
+                    )
+                }
             )
 
     def get_absolute_url(self) -> str:
