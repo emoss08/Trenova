@@ -78,12 +78,20 @@ class TestRevenueCode:
 
         assert rev_code is not None
         assert rev_code.code == "TEST"
+        assert rev_code.description == "Another Description"
 
     def test_update(self, revenue_code):
         """
         Test Revenue code update
         """
 
-        revenue_code.code = "FOOB"
+        rev_code = models.RevenueCode.objects.get(
+            id=revenue_code.id
+        )
 
-        assert revenue_code.code == "FOOB"
+        rev_code.code = "FOOB"
+
+        rev_code.save()
+
+        assert rev_code is not None
+        assert rev_code.code == "FOOB"
