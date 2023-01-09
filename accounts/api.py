@@ -101,6 +101,7 @@ class TokenProvisionView(APIView):
     Rest API endpoint for users can create a token
     """
 
+    throttle_scope = "token"
     permission_classes = []
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
