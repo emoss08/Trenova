@@ -26,7 +26,8 @@ from organization.factories import OrganizationFactory
 
 class ApiTest:
     """
-    A test mixin that gives some default fixtures for Monta.
+    A test mixin that gives some default fixtures for
+    Api Test.
 
     Methods:
         token: Fixture to get a token
@@ -65,3 +66,24 @@ class ApiTest:
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         return client
+
+
+class UnitTest:
+    """
+    A test mixin that gives some default fixtures for
+    Unit Test.
+    """
+
+    @pytest.fixture()
+    def organization(self):
+        """
+        Organization Fixture
+        """
+        return OrganizationFactory()
+
+    @pytest.fixture()
+    def user(self):
+        """
+        User Fixture
+        """
+        return UserFactory()
