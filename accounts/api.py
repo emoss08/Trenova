@@ -66,6 +66,7 @@ class UpdatePasswordView(UpdateAPIView):
     An endpoint for changing password.
     """
 
+    throttle_scope = "auth"
     serializer_class = serializers.ChangePasswordSerializer
 
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
@@ -101,7 +102,7 @@ class TokenProvisionView(APIView):
     Rest API endpoint for users can create a token
     """
 
-    throttle_scope = "token"
+    throttle_scope = "auth"
     permission_classes = []
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
