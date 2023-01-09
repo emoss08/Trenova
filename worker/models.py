@@ -123,32 +123,32 @@ class Worker(GenericModel):
     depot = models.ForeignKey(
         Depot,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="worker",
         related_query_name="workers",
         verbose_name=_("Depot"),
         help_text=_("The depot of the worker."),
+        null=True,
+        blank=True,
     )
     manager = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="worker",
         related_query_name="workers",
         verbose_name=_("Manager"),
         help_text=_("The manager of the worker."),
+        null=True,
+        blank=True,
     )
     entered_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="worker_entered",
         related_query_name="workers_entered",
         verbose_name=_("Entered by"),
         help_text=_("The user who entered the worker."),
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -268,7 +268,7 @@ class WorkerProfile(GenericModel):
         _("License Number"),
         max_length=20,
         help_text=_("Driver License Number"),
-        blank=True
+        blank=True,
     )
     license_state = USStateField(
         _("License State"),
@@ -383,31 +383,53 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
                     "hazmat_expiration_date": _(
-                        "Hazmat expiration date is required for this endorsement."
+                        "Hazmat expiration date is required for this endorsement. Please try again."
                     ),
                 },
+                code="invalid",
             )
 
         if (
-                self.date_of_birth
-                and (datetime.today().date() - self.date_of_birth).days < 6570
+            self.date_of_birth
+            and (datetime.today().date() - self.date_of_birth).days < 6570
         ):
             raise ValidationError(
                 {
                     "date_of_birth": _(
-                        "Worker must be at least 18 years old to be entered."
+                        "Worker must be at least 18 years old to be entered. Please try again."
                     ),
                 },
+                code="invalid",
+            )
+
+        if self.license_number and not self.license_state:
+            raise ValidationError(
+                {
+                    "license_state": _(
+                        "You must provide license state. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+
+        if self.license_number and not self.license_expiration_date:
+            raise ValidationError(
+                {
+                    "license_expiration_date": _(
+                        "You must provide license expiration date. Please try again."
+                    )
+                },
+                code="invalid",
             )
 
         validate_worker_regulatory_information(self)
