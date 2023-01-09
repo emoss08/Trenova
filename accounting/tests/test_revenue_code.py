@@ -85,9 +85,7 @@ class TestRevenueCode:
         Test Revenue code update
         """
 
-        rev_code = models.RevenueCode.objects.get(
-            id=revenue_code.id
-        )
+        rev_code = models.RevenueCode.objects.get(id=revenue_code.id)
 
         rev_code.code = "FOOB"
 

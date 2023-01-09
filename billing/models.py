@@ -110,6 +110,7 @@ class ChargeType(GenericModel):
         """
         Metaclass for Charge Type
         """
+
         verbose_name = _("Charge Type")
         verbose_name_plural = _("Charge Types")
         ordering = ["name"]

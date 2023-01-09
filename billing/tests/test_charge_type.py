@@ -21,7 +21,7 @@ import pytest
 
 from billing import models
 from billing.tests.factories import ChargeTypeFactory
-from utils.tests import UnitTest, ApiTest
+from utils.tests import ApiTest, UnitTest
 
 
 class TestChargeType(UnitTest):

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import final, Any
+from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError

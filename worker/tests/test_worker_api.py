@@ -117,9 +117,9 @@ class TestWorkerApi(ApiTest):
                         "email": "test@test.com",
                         "relationship": "Mother",
                         "is_primary": True,
-                        "mobile_phone": "1234567890"
+                        "mobile_phone": "1234567890",
                     }
-                ]
+                ],
             },
             format="json",
         )
@@ -183,7 +183,7 @@ class TestWorkerApi(ApiTest):
                         "comment": "TEST COMMENT CREATION 2",
                         "comment_type": comment_type.id,
                         "entered_by": user.id,
-                    }
+                    },
                 ],
                 "contacts": [
                     {
@@ -192,7 +192,7 @@ class TestWorkerApi(ApiTest):
                         "email": "test@test.com",
                         "relationship": "Mother",
                         "is_primary": True,
-                        "mobile_phone": "1234567890"
+                        "mobile_phone": "1234567890",
                     },
                     {
                         "name": "Test Contact 2",
@@ -200,9 +200,9 @@ class TestWorkerApi(ApiTest):
                         "email": "test@test.com",
                         "relationship": "Mother",
                         "is_primary": True,
-                        "mobile_phone": "1234567890"
-                    }
-                ]
+                        "mobile_phone": "1234567890",
+                    },
+                ],
             },
             format="json",
         )
@@ -275,7 +275,7 @@ class TestWorkerApi(ApiTest):
                         "comment": "TEST COMMENT CREATION 2",
                         "comment_type": comment_type.id,
                         "entered_by": user.id,
-                    }
+                    },
                 ],
                 "contacts": [
                     {
@@ -284,7 +284,7 @@ class TestWorkerApi(ApiTest):
                         "email": "test@test.com",
                         "relationship": "Mother",
                         "is_primary": True,
-                        "mobile_phone": "1234567890"
+                        "mobile_phone": "1234567890",
                     },
                     {
                         "name": "Test Contact 2",
@@ -292,9 +292,9 @@ class TestWorkerApi(ApiTest):
                         "email": "test@test.com",
                         "relationship": "Mother",
                         "is_primary": True,
-                        "mobile_phone": "1234567890"
-                    }
-                ]
+                        "mobile_phone": "1234567890",
+                    },
+                ],
             },
             format="json",
         )
@@ -334,9 +334,9 @@ class TestWorkerApi(ApiTest):
                         "email": "test@test.com",
                         "relationship": "Mother",
                         "is_primary": True,
-                        "mobile_phone": "1234567890"
+                        "mobile_phone": "1234567890",
                     }
-                ]
+                ],
             },
             format="json",
         )
