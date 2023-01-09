@@ -16,9 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
 
 from commodities import models, serializers
 from utils.views import OrganizationViewSet
@@ -38,12 +37,9 @@ class HazardousMaterialViewSet(OrganizationViewSet):
 
     queryset = models.HazardousMaterial.objects.all()
     serializer_class = serializers.HazardousMaterialSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
     filterset_fields = (
-        "id",
+        "is_active",
         "name",
-        "description",
     )
 
 
@@ -61,13 +57,7 @@ class CommodityViewSet(OrganizationViewSet):
 
     queryset = models.Commodity.objects.all()
     serializer_class = serializers.CommoditySerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = (
-        "id",
-        "name",
-        "description",
-    )
+    filterset_fields = ("name",)
 
     def get_queryset(self) -> QuerySet[models.Commodity]:
         """

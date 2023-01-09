@@ -17,9 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
-
 from location import models, serializers
 from utils.views import OrganizationViewSet
 
@@ -38,12 +35,6 @@ class LocationCategoryViewSet(OrganizationViewSet):
 
     queryset = models.LocationCategory.objects.all()
     serializer_class = serializers.LocationCategorySerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = (
-        "id",
-        "name",
-    )
 
 
 class LocationViewSet(OrganizationViewSet):

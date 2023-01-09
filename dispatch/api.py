@@ -38,8 +38,6 @@ class CommentTypeViewSet(OrganizationViewSet):
 
     queryset = models.CommentType.objects.all()
     serializer_class = serializers.CommentTypeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
     filterset_fields = (
         "id",
         "name",
@@ -60,8 +58,6 @@ class DelayCodeViewSet(OrganizationViewSet):
 
     queryset = models.DelayCode.objects.all()
     serializer_class = serializers.DelayCodeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
     filterset_fields = ("code",)
 
 
@@ -79,8 +75,6 @@ class FleetCodeViewSet(OrganizationViewSet):
 
     queryset = models.FleetCode.objects.all()
     serializer_class = serializers.FleetCodeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
     filterset_fields = ("code",)
 
 
@@ -99,3 +93,5 @@ class DispatchControlViewSet(OrganizationViewSet):
     queryset = models.DispatchControl.objects.all()
     serializer_class = serializers.DispatchControlSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
+# TODO: Write comment type serializer
