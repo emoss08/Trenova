@@ -93,7 +93,8 @@ class TestUser:
         job_title.is_active = False
         job_title.save()
         user.profile.title = job_title
-        with pytest.raises(ValidationError, match="Title is not active"):
+        with pytest.raises(ValidationError,
+                           match="The selected job title is not active. Please select a different job title."):
             user.profile.full_clean()
 
     def test_create_superuser(self, organization):

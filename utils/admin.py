@@ -59,11 +59,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         )
 
     def save_model(
-        self,
-        request: HttpRequest,
-        obj: _M,
-        form: type[BaseModelForm],
-        change: bool,
+            self,
+            request: HttpRequest,
+            obj: _M,
+            form: type[BaseModelForm],
+            change: bool,
     ) -> None:
         """Save Model Instance
         Args:
@@ -78,7 +78,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_model(request, obj, form, change)
 
     def save_formset(
-        self, request: HttpRequest, form: Any, formset: Any, change: Any
+            self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
         Args:
@@ -97,11 +97,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_formset(request, form, formset, change)
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: _M | None = None,
-        change: bool = False,
-        **kwargs: Any,
+            self,
+            request: HttpRequest,
+            obj: _M | None = None,
+            change: bool = False,
+            **kwargs: Any,
     ) -> type[ModelForm[_M]]:
         """Get Form for Model
         Args:
@@ -114,6 +114,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         """
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields:
+            print(field)
             if field == "organization":
                 form.base_fields[field].initial = request.user.organization  # type: ignore
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()

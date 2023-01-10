@@ -58,7 +58,7 @@ class CustomerContactSerializer(GenericSerializer):
         )
 
 
-class CustomerEmailProfileSerializer(serializers.ModelSerializer):
+class CustomerEmailProfileSerializer(GenericSerializer):
     """Serializer for the CustomerEmailProfile model.
 
     This serializer converts the CustomerEmailProfile model into a format that
@@ -127,7 +127,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
 
     @transaction.atomic
     def update(  # type: ignore
-        self, instance: models.CustomerFuelTable, validated_data: Any
+            self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -171,7 +171,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         return instance
 
 
-class CustomerRuleProfileSerializer(serializers.ModelSerializer):
+class CustomerRuleProfileSerializer(GenericSerializer):
     """A serializer for the CustomerRuleProfile model.
 
     The serializer provides default operations for creating, updating, and deleting
@@ -218,7 +218,7 @@ class CustomerRuleProfileSerializer(serializers.ModelSerializer):
         return customer_rule_profile
 
     def update(
-        self, instance: models.CustomerRuleProfile, validated_data: Any
+            self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
 
@@ -245,7 +245,7 @@ class CustomerRuleProfileSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CustomerBillingProfileSerializer(serializers.ModelSerializer):
+class CustomerBillingProfileSerializer(GenericSerializer):
     """A serializer for the CustomerBillingProfile model.
 
     The serializer provides default operations for creating, updating, and deleting
@@ -269,7 +269,7 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         """
 
         model = models.CustomerBillingProfile
-        extra_fields = ("is_active", "email_profile", "rule_profile")
+        extra_fields = ("is_active", "email_profile", "rule_profile",)
 
     def create(self, validated_data: Any):
         """Create a new CustomerBillingProfile instance.
@@ -309,7 +309,7 @@ class CustomerBillingProfileSerializer(serializers.ModelSerializer):
         return customer_billing_profile
 
     def update(
-        self, instance: models.CustomerBillingProfile, validated_data: Any
+            self, instance: models.CustomerBillingProfile, validated_data: Any
     ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.
 
@@ -380,7 +380,7 @@ class CustomerSerializer(GenericSerializer):
         extra_fields = ("billing_profile", "contacts")
 
     def _get_or_create_document_classifications(
-        self, documents: Documents
+            self, documents: Documents
     ) -> list[UUID]:
         """Get or create document classifications with the given data.
 
@@ -405,7 +405,7 @@ class CustomerSerializer(GenericSerializer):
         return document_ids
 
     def _create_or_update_document_classifications(
-        self, documents: Documents
+            self, documents: Documents
     ) -> list[UUID]:
         """Create or update document classifications with the given data.
 

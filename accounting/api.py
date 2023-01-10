@@ -17,9 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
-
 from accounting import models, serializers
 from utils.views import OrganizationViewSet
 
@@ -31,10 +28,7 @@ class GeneralLedgerAccountViewSet(OrganizationViewSet):
 
     serializer_class = serializers.GeneralLedgerAccountSerializer
     queryset = models.GeneralLedgerAccount.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend]
     filterset_fields = [
-        "id",
         "is_active",
         "account_number",
         "account_type",
@@ -48,8 +42,7 @@ class RevenueCodeViewSet(OrganizationViewSet):
 
     serializer_class = serializers.RevenueCodeSerializer
     queryset = models.RevenueCode.objects.all()
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["id", "code", "description"]
+    filterset_fields = ["code"]
 
 
 class DivisionCodeViewSet(OrganizationViewSet):
@@ -59,4 +52,4 @@ class DivisionCodeViewSet(OrganizationViewSet):
 
     serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
-    filterset_fields = ["id", "code", "is_active"]
+    filterset_fields = ["code", "is_active"]

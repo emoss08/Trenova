@@ -17,12 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Type
 
 from django.contrib.auth.backends import ModelBackend
 
 from .models import User
 
-UserModel: type[User] = User
+UserModel: Type[User] = User
 
 
 class UserBackend(ModelBackend):
@@ -40,8 +41,9 @@ class UserBackend(ModelBackend):
             user_id (int): parameter to get the primary key of the user.
 
         Returns:
-            Optional[User]: Returns a user object if the user is authenticated.
+            User | None: Returns a user object if the user is authenticated.
         """
+
         try:
             user = (
                 UserModel._default_manager.only("id")

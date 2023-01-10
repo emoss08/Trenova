@@ -35,7 +35,6 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     description.
     """
 
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.OrganizationSerializer
     queryset = models.Organization.objects.all()
 
@@ -57,7 +56,6 @@ class DepotViewSet(viewsets.ModelViewSet):
     Depot ViewSet to manage requests to the depot endpoint
     """
 
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.DepotSerializer
     queryset = models.Depot.objects.all()
 
@@ -76,7 +74,6 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     Department ViewSet to manage requests to the department endpoint
     """
 
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.DepartmentSerializer
     queryset = models.Department.objects.all()
 

@@ -208,6 +208,7 @@ class Stop(GenericModel):
         Returns:
             None
         """
+
         self.full_clean()
 
         if self.arrival_time and not self.departure_time:
@@ -216,11 +217,11 @@ class Stop(GenericModel):
             self.status = StatusChoices.COMPLETED
 
         # TODO: THIS LOOKS WEIRD TO ME NOW. I MAY CHANGE THIS
-        CreateServiceIncident(
-            stop=self,
-            dc_object=DispatchControl,
-            si_object=ServiceIncident,
-        ).create()
+        # CreateServiceIncident(
+        #     stop=self,
+        #     dc_object=DispatchControl,
+        #     si_object=ServiceIncident,
+        # ).create()
 
         super().save(**kwargs)
 

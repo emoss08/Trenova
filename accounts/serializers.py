@@ -47,14 +47,13 @@ class VerifyTokenSerializer(serializers.Serializer):
         token = attrs.get("token")
 
         if models.Token.objects.filter(key=token).exists():
-            # Query the user from the token and return the ID of the user
             return {
                 "token": token,
                 "user_id": models.Token.objects.get(key=token).user.id,
             }
         else:
-            msg = "Unable to validate given token"
-            raise serializers.ValidationError(msg, code="authentication")
+            raise serializers.ValidationError("Unable to validate given token. Please try again.",
+                                              code="authentication")
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
@@ -141,7 +140,6 @@ class UserSerializer(GenericSerializer):
         profile_data = validated_data.pop("profile", {})
 
         # Create the user
-        validated_data["organization"] = organization
         user: models.User = models.User.objects.create(**validated_data)
 
         # Create the user profile
@@ -197,7 +195,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         user = self.context["request"].user
         if not user.check_password(value):
-            raise serializers.ValidationError(_("Old password is incorrect"))  # type: ignore
+            raise serializers.ValidationError(_("Old password is incorrect. Please try again."))  # type: ignore
         return value
 
     def validate(self, attrs: Any) -> Any:
@@ -211,7 +209,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         """
 
         if attrs["new_password"] != attrs["confirm_password"]:
-            raise serializers.ValidationError(_("Passwords do not match"))  # type: ignore
+            raise serializers.ValidationError(_("Passwords do not match. Please try again."))  # type: ignore
         password_validation.validate_password(
             attrs["new_password"], self.context["request"].user
         )

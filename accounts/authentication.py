@@ -110,8 +110,8 @@ class TokenAuthentication(authentication.TokenAuthentication):
             raise exceptions.AuthenticationFailed("Invalid token.")
 
         if (
-            not token.last_used
-            or (timezone.now() - token.last_used).total_seconds() > 60
+                not token.last_used
+                or (timezone.now() - token.last_used).total_seconds() > 60
         ):
             token.last_used = timezone.now()
             token.save(update_fields=["last_used"])
@@ -124,8 +124,8 @@ class TokenAuthentication(authentication.TokenAuthentication):
         user = token.user
 
         if not user.is_active:
-            raise exceptions.AuthenticationFailed(  # WHY THE FUCK DOES THIS RETURN A strPROMISE~~!!!!!! if you do _("")
-                "User inactive or deleted."
+            raise exceptions.AuthenticationFailed(
+                "User inactive or deleted. Please Try Again."
             )
 
         return user, token

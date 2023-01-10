@@ -64,7 +64,7 @@ class OrderValidation:
             raise ValidationError(
                 {
                     "rate_method": ValidationError(
-                        _("Freight Charge Amount is required for flat rating method."),
+                        _("Freight Charge Amount is required for flat rating method. Please try again."),
                         code="invalid",
                     )
                 }
@@ -85,7 +85,7 @@ class OrderValidation:
             raise ValidationError(
                 {
                     "revenue_code": ValidationError(
-                        _("Revenue Code is required."),
+                        _("Revenue Code is required. Please try again."),
                         code="invalid",
                     )
                 }
@@ -110,7 +110,7 @@ class OrderValidation:
                     "ready_to_bill": ValidationError(
                         _(
                             "Cannot mark an order ready to bill if the order status"
-                            " is not complete."
+                            " is not complete. Please try again."
                         ),
                         code="invalid",
                     )
@@ -130,13 +130,13 @@ class OrderValidation:
         """
 
         if (
-            self.order.rate_method == RatingMethodChoices.PER_MILE
-            and self.order.mileage is None
+                self.order.rate_method == RatingMethodChoices.PER_MILE
+                and self.order.mileage is None
         ):
             raise ValidationError(
                 {
                     "rate_method": ValidationError(
-                        _("Mileage is required for per mile rating method."),
+                        _("Mileage is required for per mile rating method. Please try again."),
                         code="invalid",
                     )
                 }
@@ -152,18 +152,18 @@ class OrderValidation:
 
         order_control = self.order_control.objects.get(organization=self.organization)
         if (
-            self.order.origin_location
-            and order_control.enforce_origin_destination
-            and self.order.origin_location == self.order.destination_location
+                self.order.origin_location
+                and order_control.enforce_origin_destination
+                and self.order.origin_location == self.order.destination_location
         ):
             raise ValidationError(
                 {
                     "origin_location": ValidationError(
-                        _("Origin and Destination cannot be the same."),
+                        _("Origin and Destination cannot be the same. Please try again."),
                         code="invalid",
                     ),
                     "destination_location": ValidationError(
-                        _("Origin and Destination cannot be the same."),
+                        _("Origin and Destination cannot be the same. Please try again."),
                         code="invalid",
                     ),
                 }
