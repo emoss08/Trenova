@@ -38,22 +38,72 @@ User = settings.AUTH_USER_MODEL
 
 
 def order_documentation_upload_to(instance: OrderDocumentation, filename: str) -> str:
-    """
-    order_documentation_upload_to
+    """Returns the path to upload the order documentation to.
+
+    Upload the order documentation to the order documentation directory
+    and name the file with the order id and the filename.
 
     Args:
         instance (Order): The instance of the Order.
         filename (str): file name.
 
     Returns:
-        str: upload path for the order documentation to be stored.
+        Upload path for the order documentation to be stored. For example.
+
+        `order_documentation/M000123/invoice-12341.pdf`
+
+        Upload path is always a string. If the file is not uploaded, the
+        upload path will be an empty string.
+
+    See Also:
+        `OrderDocumentation`: The model that this function is used for.
     """
     return f"order_documentation/{instance.order.pro_number}/{filename}"
 
 
 class OrderControl(GenericModel):
-    """
-    Stores the order control information for a related :model:`organization.Organization`.
+    """Stores the order control information for a related :model:`organization.Organization`.
+
+    The OrderControl model stores the order control information for a related
+    organization. It is used to store information such as whether to automatically
+    rate orders, calculate distance, enforce customer information, generate routes,
+    and more.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID.
+            Editable and unique.
+        organization (OneToOneField): ForeignKey to the related organization model
+            with a CASCADE on delete. Has a verbose name of "Organization" and
+            related names of "order_control" and "order_controls".
+        auto_rate_orders (BooleanField): Default value is True.
+            Help text is "Auto rate orders".
+        calculate_distance (BooleanField): Default value is True.
+            Help text is "Calculate distance for the order".
+        enforce_customer (BooleanField): Default value is False.
+            Help text is "Enforce Customer to being entered when entering an order.".
+        enforce_rev_code (BooleanField): Default value is False.
+            Help text is "Enforce rev code being entered when entering an order.".
+        enforce_shipper (BooleanField): Default value is False.
+            Help text is "Enforce shipper when putting in an order.".
+        enforce_cancel_comm (BooleanField): Default value is False.
+            Help text is "Enforce comment when cancelling an order.".
+        generate_routes (BooleanField): Default value is False.
+            Help text is "Automatically generate routes for order entry.".
+        auto_pop_address (BooleanField): Default value is True.
+            Help text is "Auto populate address from location ID when entering an order.".
+        auto_sequence_stops (BooleanField): Default value is True.
+            Help text is "Auto Sequence stops for the order and movements.".
+        auto_order_total (BooleanField): Default value is True.
+            Help text is "Automate the order total amount calculation.".
+        enforce_origin_destination (BooleanField): Default value is False.
+            Help text is "Compare and validate that origin and destination are not the same.".
+
+    Methods:
+        get_absolute_url(self) -> str:
+            Returns the URL for this object's detail view.
+
+        save(self, *args, **kwargs) -> None:
+            Saves the current object to the database.
     """
 
     id = models.UUIDField(
@@ -150,14 +200,33 @@ class OrderControl(GenericModel):
         """Order control absolute url
 
         Returns:
-            str: Order control absolute url
+            Absolute url for the order control object. For example,
+            `/order_control/1/`
         """
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
 class OrderType(GenericModel):
-    """
-    Order Type Model Fields
+    """Stores the order type information for a related :model:`organization.Organization`.
+
+    The OrderType model stores information about an order type, such as its name,
+    description, and whether it is active. It also has metadata for ordering and
+    verbose names.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID.
+            Editable and unique.
+        is_active (BooleanField): Default value is True. Verbose name is "Is Active".
+        name (CharField): Verbose name is "Name". Max length is 255 and must be unique.
+            Help text is "Name of the Order Type".
+        description (TextField): Verbose name is "Description". Can be blank.
+            Help text is "Description of the Order Type".
+
+    Methods:
+        __str__(self) -> str:
+            Returns the name of the OrderType.
+        get_absolute_url(self) -> str:
+            Returns the absolute URL for the OrderType's detail view.
     """
 
     id = models.UUIDField(
@@ -184,8 +253,8 @@ class OrderType(GenericModel):
 
     class Meta:
         verbose_name = _("Order Type")
-        verbose_name_plural = _("Order Types")
         ordering: list[str] = ["name"]
+        verbose_name_plural = _("Order Types")
 
     def __str__(self) -> str:
         """Order Type String Representation
