@@ -292,6 +292,14 @@ class Order(GenericModel):
         editable=False,
         help_text=_("Pro Number of the Order"),
     )
+    order_type = models.ForeignKey(
+        OrderType,
+        on_delete=models.PROTECT,
+        verbose_name=_("Order Type"),
+        related_name="orders",
+        related_query_name="order",
+        help_text=_("Order Type of the Order"),
+    )
     status = ChoiceField(
         _("Status"),
         choices=StatusChoices.choices,
@@ -526,10 +534,10 @@ class Order(GenericModel):
         """
 
         # Call the OrderValidation class
-
-        OrderValidation(
-            order=self, organization=self.organization, order_control=OrderControl
-        ).validate()
+        #
+        # OrderValidation(
+        #     order=self, organization=self.organization, order_control=OrderControl
+        # ).validate()
 
     def save(self, **kwargs: Any) -> None:
         """Order save method

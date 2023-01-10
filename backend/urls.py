@@ -157,6 +157,7 @@ router.register(
 )
 router.register(r"order_types", order_api.OrderTypeViewSet, basename="order-types")
 router.register(r"reason_codes", order_api.ReasonCodeViewSet, basename="reason-codes")
+router.register(r"orders", order_api.OrderViewSet, basename="orders")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

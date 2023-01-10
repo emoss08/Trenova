@@ -19,6 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import serializers
 
+from accounting.serializers import RevenueCodeSerializer
+from accounts.serializers import UserSerializer
+from commodities.serializers import CommoditySerializer, HazardousMaterialSerializer
+from customer.serializers import CustomerSerializer
+from equipment.serializers import EquipmentTypeSerializer
+from location.serializers import LocationSerializer
+from utils.models import StatusChoices
 from utils.serializers import GenericSerializer
 from order import models
 
@@ -97,3 +104,58 @@ class ReasonCodeSerializer(GenericSerializer):
 
         model = models.ReasonCode
         extra_fields = ("code_type",)
+
+
+class OrderSerializer(GenericSerializer):
+    """A serializer for the `Order` model.
+
+    A serializer class for the Order Model. This serializer is used
+    to convert the Order model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        status (ChoiceField): A choice field that determines the status of the order.
+        revenue_code
+    """
+
+    order_type = OrderTypeSerializer()
+    status = serializers.ChoiceField(
+        default=StatusChoices.NEW, choices=StatusChoices.choices
+    )
+    revenue_code = RevenueCodeSerializer(required=False)
+    origin_location = LocationSerializer()
+    destination_location = LocationSerializer()
+    rate_method = serializers.ChoiceField(
+        default=models.RatingMethodChoices.FLAT,
+        choices=models.RatingMethodChoices.choices,
+    )
+    customer = CustomerSerializer(required=True)
+    equipment_type = EquipmentTypeSerializer()
+    commodity = CommoditySerializer()
+    entered_by = UserSerializer()
+    hazmat = HazardousMaterialSerializer()
+
+    class Meta:
+        """Metaclass for OrderSerializer
+
+        Attributes:
+            model (models.Order): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.Order
+        extra_fields = (
+            "order_type",
+            "status",
+            "revenue_code",
+            "origin_location",
+            "destination_location",
+            "rate_method",
+            "customer",
+            "equipment_type",
+            "commodity",
+            "entered_by",
+            "hazmat",
+        )

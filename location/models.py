@@ -80,6 +80,14 @@ class LocationCategory(GenericModel):
         """
         return reverse("location:locationcategory_detail", kwargs={"pk": self.pk})
 
+    def update_location_category(self, **kwargs: Any) -> None:
+        """
+        Updates the Location Category with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
+
 
 class Location(GenericModel):
     """
@@ -203,6 +211,14 @@ class Location(GenericModel):
             str: Location address combination
         """
         return f"{self.address_line_1}, {self.city}, {self.state} {self.zip_code}"
+
+    def update_location(self, **kwargs: Any) -> None:
+        """
+        Updates the location with the given kwargs
+        """
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class LocationContact(GenericModel):

@@ -82,3 +82,22 @@ class ReasonCodeViewSet(OrganizationViewSet):
 
     queryset = models.ReasonCode.objects.all()
     serializer_class = serializers.ReasonCodeSerializer
+
+
+class OrderViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing Orders in the system.
+
+    The viewset provides default operations for creating, updating and deleting orders,
+    as well as listing and retrieving Orders. It uses the ``OrderSerializer`` class to
+    convert the order instances to and from JSON-formatted data.
+
+    Attributes:
+        queryset (QuerySet): A queryset of Order objects that will be used to
+        retrieve and update Order objects.
+
+        serializer_class (OrderSerializer): A serializer class that will be used to
+        convert Order objects to and from JSON-formatted data.
+    """
+
+    queryset = models.Order.objects.all()
+    serializer_class = serializers.OrderSerializer
