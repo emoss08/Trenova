@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-            self,
-            user_name: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        user_name: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-            self,
-            username: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.
@@ -410,15 +410,6 @@ class JobTitle(GenericModel):
             str: String representation of the JobTitle Model.
         """
         return textwrap.wrap(self.name, 30)[0]
-
-    def save(self, **kwargs: Any):
-        """Save the model
-
-        Returns:
-            None
-        """
-        self.clean()
-        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Absolute URL for the JobTitle.

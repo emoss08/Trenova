@@ -24,12 +24,11 @@ from utils.serializers import GenericSerializer
 
 
 class GeneralLedgerAccountSerializer(GenericSerializer):
-    """GeneralLedgerAccountSerializer
+    """A serializer class for the GeneralLedgerAccount model.
 
-        A serializer class for the GeneralLedgerAccount model. This serializer is used
-        to convert the GeneralLedgerAccount model instance into a Python dictionary
-        format that can be rendered into a JSON response. It also defines the fields
-        that should be included in the serialized representation of the model.
+    This serializer is used to convert the GeneralLedgerAccount model instance into a Python
+    dictionary format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
 
     Attributes:
         is_active (serializers.BooleanField): A boolean field representing the
@@ -51,16 +50,9 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         the classification of the account. The choices are taken from the
         AccountClassificationChoices model field.
 
-    Metaclass Attributes:
-        model (models.GeneralLedgerAccount): The GeneralLedgerAccount model that
-        this serializer is associated with.
-
-        fields (tuple of str): A tuple of field names that should be included in the
-        serialized representation of the model.
-
-        read_only_fields (tuple of str): A tuple of field names that should be
-        included in the serialized representation of the model, but should be
-        treated as read-only and not modifiable by the client.
+    See Also:
+        GenericSerializer: A generic serializer class that provides the
+        functionality for the serializer.
     """
 
     is_active = serializers.BooleanField(default=True)
@@ -80,6 +72,12 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
     class Meta:
         """
         Metaclass for GeneralLedgerAccountSerializer
+
+        Attributes:
+            model (models.GeneralLedgerAccount): The model that the serializer
+            is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
         """
 
         model = models.GeneralLedgerAccount
@@ -93,12 +91,11 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
 
 
 class RevenueCodeSerializer(GenericSerializer):
-    """RevenueCodeSerializer
+    """A serializer class for the RevenueCode model.
 
-    A serializer class for the RevenueCode model. This serializer is used to
-    convert the RevenueCode model instance into a Python dictionary format that
-    can be rendered into a JSON response. It also defines the fields that should be
-    included in the serialized representation of the model.
+    This serializer is used to convert the RevenueCode model instance into a
+    Python dictionary format that can be rendered into a JSON response. It also defines
+    the fields that should be included in the serialized representation of the model.
 
     Attributes:
         expense_account (serializers.PrimaryKeyRelatedField): A primary key related
@@ -111,12 +108,9 @@ class RevenueCodeSerializer(GenericSerializer):
         The queryset is filtered to only include accounts with an
         AccountTypeChoices value of REVENUE.
 
-    Metaclass Attributes:
-        model (models.RevenueCode): The RevenueCode model that this serializer is
-        associated with.
-
-        fields (tuple of str): A tuple of field names that should be included in the
-        serialized representation of the model.
+    See Also:
+        GenericSerializer: A generic serializer class that provides the
+        functionality for the serializer.
     """
 
     expense_account = serializers.PrimaryKeyRelatedField(
@@ -131,8 +125,12 @@ class RevenueCodeSerializer(GenericSerializer):
     )
 
     class Meta:
-        """
-        Metaclass for RevenueCodeSerializer
+        """Metaclass for RevenueCodeSerializer
+
+        Attributes:
+            model (models.RevenueCode): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
         """
 
         model = models.RevenueCode
@@ -147,12 +145,25 @@ class DivisionCodeSerializer(GenericSerializer):
     It also defines the fields that should be included in the serialized
     representation of the model.
 
-    Metaclass Attributes:
-        model (models.DivisionCode): The RevenueCode model that this serializer is
-        associated with.
+    Attributes:
+        cash_account (serializers.PrimaryKeyRelatedField): A primary key related
+        field representing the cash account associated with the division code.
+        The queryset is filtered to only include accounts with an
+        AccountTypeChoices value of CASH.
 
-        fields (tuple of str): A tuple of field names that should be included in the
-        serialized representation of the model.
+        expense_account (serializers.PrimaryKeyRelatedField): A primary key related
+        field representing the expense account associated with the division code.
+        The queryset is filtered to only include accounts with an
+        AccountTypeChoices value of EXPENSE.
+
+        ap_account (serializers.PrimaryKeyRelatedField): A primary key related
+        field representing the accounts payable account associated with the
+        division code. The queryset is filtered to only include accounts with an
+        AccountTypeChoices value of ACCOUNTS_PAYABLE.
+
+    See Also:
+        GenericSerializer: A generic serializer class that provides the
+        functionality for the serializer.
     """
 
     cash_account = serializers.PrimaryKeyRelatedField(
@@ -175,8 +186,12 @@ class DivisionCodeSerializer(GenericSerializer):
     )
 
     class Meta:
-        """
-        Metaclass for DivisionCodeSerializer
+        """Metaclass for DivisionCodeSerializer
+
+        Attributes:
+            model (models.DivisionCode): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
         """
 
         model = models.DivisionCode
