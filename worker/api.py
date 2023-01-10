@@ -29,10 +29,6 @@ class WorkerViewSet(OrganizationViewSet):
     The viewset provides default operations for creating, updating, and deleting workers,
     as well as listing and retrieving workers. It uses the `WorkerSerializer` class to
     convert the worker instances to and from JSON-formatted data.
-
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by worker ID, first name, code,
-    and last name.
     """
 
     queryset = models.Worker.objects.all()
