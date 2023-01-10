@@ -26,3 +26,4 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 staticfiles
+media

@@ -50,11 +50,11 @@ class UserManager(BaseUserManager):
     """
 
     def create_user(
-        self,
-        user_name: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            user_name: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """
@@ -85,11 +85,11 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
 
         """Create and save a superuser with the given username, email and password.
@@ -316,7 +316,11 @@ class UserProfile(GenericModel):
         """
         if self.title and self.title.is_active is False:
             raise ValidationError(
-                {"title": ValidationError(_("Title is not active"), code="invalid")}
+                {
+                    "title": _(
+                        "The selected job title is not active. Please select a different job title.",
+                    )
+                }, code="invalid", params={"value": self.title},
             )
 
     def get_absolute_url(self) -> str:
@@ -363,7 +367,9 @@ class UserProfile(GenericModel):
         Returns:
             str: Get the full name of the user
         """
-        return f"{self.first_name} {self.last_name}"
+        return textwrap.shorten(
+            f"{self.first_name} {self.last_name}", width=30, placeholder="...",
+        )
 
 
 class JobTitle(GenericModel):

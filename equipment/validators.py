@@ -34,6 +34,6 @@ def us_vin_number_validator(value: str) -> None:
     """
     if not re.match(r"^(?=.*[0-9])(?=.*[A-z])[0-9A-z-]{17}$", value):
         raise ValidationError(
-            _("%(value)s is not a valid US VIN number"),
+            _("%(value)s is not a valid US VIN number. Please try again."),
             params={"value": value},
         )
