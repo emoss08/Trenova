@@ -16,8 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
 
 from billing import models, serializers
 from utils.views import OrganizationViewSet
@@ -37,9 +35,7 @@ class ChargeTypeViewSet(OrganizationViewSet):
 
     queryset = models.ChargeType.objects.all()
     serializer_class = serializers.ChargeTypeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("id", "name")
+    filterset_fields = ("name",)
 
 
 class AccessorialChargeViewSet(OrganizationViewSet):
@@ -58,9 +54,7 @@ class AccessorialChargeViewSet(OrganizationViewSet):
 
     queryset = models.AccessorialCharge.objects.all()
     serializer_class = serializers.AccessorialChargeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("code", "is_detention", "charge_amount", "method")
+    filterset_fields = ("code", "is_detention", "method")
 
 
 class DocumentClassificationViewSet(OrganizationViewSet):
@@ -79,9 +73,4 @@ class DocumentClassificationViewSet(OrganizationViewSet):
 
     queryset = models.DocumentClassification.objects.all()
     serializer_class = serializers.DocumentClassificationSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = (
-        "id",
-        "name",
-    )
+    filterset_fields = ("name",)

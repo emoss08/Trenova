@@ -17,9 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
-
 from equipment import models, serializers
 from utils.views import OrganizationViewSet
 
@@ -38,9 +35,6 @@ class EquipmentTypeViewSet(OrganizationViewSet):
 
     queryset = models.EquipmentType.objects.all()
     serializer_class = serializers.EquipmentTypeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("id",)
 
 
 class EquipmentViewSet(OrganizationViewSet):
@@ -57,6 +51,9 @@ class EquipmentViewSet(OrganizationViewSet):
 
     queryset = models.Equipment.objects.all()
     serializer_class = serializers.EquipmentSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("id",)
+    filterset_fields = (
+        "is_active",
+        "manufacturer",
+        "is_berth",
+        "highway_use_tax",
+    )

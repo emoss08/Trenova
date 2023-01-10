@@ -36,6 +36,7 @@ from organization import api as org_api
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
+from order import api as order_api
 
 router = routers.DefaultRouter()
 
@@ -149,6 +150,14 @@ router.register(
 router.register(
     r"qualifier_codes", stops_api.QualifierCodeViewSet, basename="qualifier-codes"
 )
+
+# Order Routing
+router.register(
+    r"order_control", order_api.OrderControlViewSet, basename="order-control"
+)
+router.register(r"order_types", order_api.OrderTypeViewSet, basename="order-types")
+router.register(r"reason_codes", order_api.ReasonCodeViewSet, basename="reason-codes")
+router.register(r"orders", order_api.OrderViewSet, basename="orders")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

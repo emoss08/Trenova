@@ -464,7 +464,7 @@ class CustomerContact(GenericModel):
             raise ValidationError(
                 {
                     "email": ValidationError(
-                        _("Payable contact must have an email address"),
+                        _("Payable contact must have an email address. Please Try Again."),
                         code="invalid",
                     )
                 }
@@ -651,7 +651,7 @@ class CustomerFuelProfile(GenericModel):
                 ValidationError(
                     {
                         "customer_fuel_table": _(
-                            "Customer Fuel Table is required if the FSC Method is Table."
+                            "Customer Fuel Table is required if the FSC Method is Table. Please try again."
                         )
                     },
                     code="required",

@@ -17,9 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
-
 from stops import models, serializers
 from utils.views import OrganizationViewSet
 
@@ -37,9 +34,3 @@ class QualifierCodeViewSet(OrganizationViewSet):
 
     queryset = models.QualifierCode.objects.all()
     serializer_class = serializers.QualifierCodeSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = (
-        "id",
-        "code",
-    )

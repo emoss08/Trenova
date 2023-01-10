@@ -39,9 +39,7 @@ class CustomerViewSet(OrganizationViewSet):
 
     queryset = models.Customer.objects.all()
     serializer_class = serializers.CustomerSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("id", "code", "name")
+    filterset_fields = ("code", "name")
 
     def get_queryset(self) -> QuerySet[models.Customer]:
         """Returns a queryset of customers for the current organization.
@@ -82,9 +80,7 @@ class CustomerBillingProfileViewSet(OrganizationViewSet):
 
     queryset = models.CustomerBillingProfile.objects.all()
     serializer_class = serializers.CustomerBillingProfileSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ("id", "customer", "rule_profile")
+    filterset_fields = ("is_active", "customer", "rule_profile")
 
 
 class CustomerFuelTableViewSet(OrganizationViewSet):
@@ -102,8 +98,6 @@ class CustomerFuelTableViewSet(OrganizationViewSet):
 
     queryset = models.CustomerFuelTable.objects.all()
     serializer_class = serializers.CustomerFuelTableSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
     filterset_fields = (
         "id",
         "name",
@@ -141,12 +135,7 @@ class CustomerRuleProfileViewSet(OrganizationViewSet):
 
     queryset = models.CustomerRuleProfile.objects.all()
     serializer_class = serializers.CustomerRuleProfileSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = (
-        "id",
-        "name",
-    )
+    filterset_fields = ("name",)
 
     def get_queryset(self) -> QuerySet[models.CustomerRuleProfile]:
         """Get the queryset for the viewset.

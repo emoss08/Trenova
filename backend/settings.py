@@ -218,6 +218,7 @@ CACHEOPS_REDIS = {
     "port": env("CACHE_OPS_PORT"),
     "db": env("CACHE_OPS_DB"),
 }
+
 # CACHEOPS_SENTINEL = {
 #     'locations': [(env("CACHE_OPS_SENTINEL"), env("CACHE_OPS_SENTINEL_PORT"))],
 #     'service_name': env("CACHE_OPS_SENTINEL_SERVICE"),

@@ -21,8 +21,7 @@ from typing import Any
 
 from django.contrib.auth import authenticate
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
@@ -39,11 +38,9 @@ class UserViewSet(OrganizationViewSet):
     User ViewSet to manage requests to the user endpoint
     """
 
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["organization", "department", "profile"]
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
+    filterset_fields = ["department", "username", "email", "is_staff"]
 
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
         """Filter the queryset to only include the current user
@@ -190,9 +187,9 @@ class JobTitleViewSet(OrganizationViewSet):
     Job Title ViewSet to manage requests to the job title endpoint
     """
 
-    permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.JobTitleSerializer
     queryset = models.JobTitle.objects.all()
+    filterset_fields = ["is_active", "name"]
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
         """Filter the queryset to only include the current user

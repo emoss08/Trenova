@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from rest_framework import permissions
-
 from integration import models, serializers
 from utils.views import OrganizationViewSet
 
@@ -33,7 +31,6 @@ class IntegrationViewSet(OrganizationViewSet):
 
     queryset = models.Integration.objects.all()
     serializer_class = serializers.IntegrationSerializer
-    permission_classes = (permissions.IsAuthenticated,)
 
 
 class GoogleAPIViewSet(OrganizationViewSet):
@@ -48,4 +45,3 @@ class GoogleAPIViewSet(OrganizationViewSet):
 
     queryset = models.GoogleAPI.objects.all()
     serializer_class = serializers.GoogleAPISerializer
-    permission_classes = (permissions.IsAdminUser,)

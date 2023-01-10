@@ -52,13 +52,31 @@ class TestDivisionCode(UnitTest):
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         )
 
+    @pytest.fixture()
+    def cash_account(self):
+        """
+        Cash Account from GL Account Factory
+        """
+        return GeneralLedgerAccountFactory(
+            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.CASH
+        )
+
+    @pytest.fixture()
+    def ap_account(self):
+        """
+        AP Account from GL Account Factory
+        """
+        return GeneralLedgerAccountFactory(
+            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        )
+
     def test_list(self, division_code):
         """
         Test Division Code List
         """
         assert division_code is not None
 
-    def test_create(self, organization, general_ledger_account, expense_account):
+    def test_create(self, organization, ap_account, expense_account, cash_account):
         """
         Test Division Code Creation
         """
@@ -68,8 +86,8 @@ class TestDivisionCode(UnitTest):
             is_active=True,
             code="NEW",
             description="Test Description",
-            cash_account=general_ledger_account,
-            ap_account=general_ledger_account,
+            cash_account=cash_account,
+            ap_account=ap_account,
             expense_account=expense_account,
         )
 

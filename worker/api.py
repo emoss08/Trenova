@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend
 
 from utils.views import OrganizationViewSet
 from worker import models, serializers
@@ -30,16 +29,10 @@ class WorkerViewSet(OrganizationViewSet):
     The viewset provides default operations for creating, updating, and deleting workers,
     as well as listing and retrieving workers. It uses the `WorkerSerializer` class to
     convert the worker instances to and from JSON-formatted data.
-
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by worker ID, first name, code,
-    and last name.
     """
 
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["id", "first_name", "code", "last_name"]
 
     def get_queryset(self) -> QuerySet[models.Worker]:
         """Returns a queryset of workers for the current user's organization.

@@ -82,6 +82,10 @@ class LocationSerializer(GenericSerializer):
     Location information, as well as listing and retrieving them.
     """
 
+    location_category = serializers.HyperlinkedRelatedField(
+        view_name="location-categories-detail",
+        queryset=models.LocationCategory.objects.all(),
+    )
     location_contacts = LocationContactSerializer(many=True, required=False)
     location_comments = LocationCommentSerializer(many=True, required=False)
 
@@ -92,7 +96,7 @@ class LocationSerializer(GenericSerializer):
         """
 
         model = models.Location
-        extra_fields = ("location_contacts", "location_comments")
+        extra_fields = ("location_category", "location_contacts", "location_comments")
 
     def create(self, validated_data: Any) -> models.Location:
         """Create new Location
@@ -106,11 +110,18 @@ class LocationSerializer(GenericSerializer):
 
         organization = super().get_organization
 
+        location_category_data = validated_data.pop("location_category", None)
         comments_data = validated_data.pop("location_comments", [])
         contacts_data = validated_data.pop("location_contacts", [])
 
         validated_data["organization"] = organization
         location = models.Location.objects.create(**validated_data)
+
+        if location_category_data:
+            location_category = LocationCategorySerializer().create(
+                location_category_data
+            )
+            location.location_category = location_category
 
         # Create the Location Comment
         if comments_data:
@@ -127,7 +138,7 @@ class LocationSerializer(GenericSerializer):
         return location
 
     def update(  # type: ignore
-        self, instance: models.Location, validated_data: Any
+            self, instance: models.Location, validated_data: Any
     ) -> models.Location:
         """Update the worker
 
@@ -139,31 +150,14 @@ class LocationSerializer(GenericSerializer):
             models.Location: Location instance.
         """
 
+        location_category_data = validated_data.pop("location_category", None)
         comments_data = validated_data.pop("location_comments", [])
         contacts_data = validated_data.pop("location_contacts", [])
 
-        # Update the Location
-
-        # TODO(WOLFRED): CHANGE THIS
-        instance.code = validated_data.get("code", instance.code)
-        instance.location_category = validated_data.get(
-            "location_category", instance.location_category
-        )
-        instance.depot = validated_data.get("depot", instance.depot)
-        instance.description = validated_data.get("description", instance.description)
-        instance.address_line_1 = validated_data.get(
-            "address_line_1", instance.address_line_1
-        )
-        instance.address_line_2 = validated_data.get(
-            "address_line_2", instance.address_line_2
-        )
-        instance.city = validated_data.get("city", instance.city)
-        instance.state = validated_data.get("state", instance.state)
-        instance.zip_code = validated_data.get("zip_code", instance.zip_code)
-        instance.longitude = validated_data.get("longitude", instance.longitude)
-        instance.latitude = validated_data.get("latitude", instance.latitude)
-        instance.place_id = validated_data.get("place_id", instance.place_id)
-        instance.is_geocoded = validated_data.get("is_geocoded", instance.is_geocoded)
+        if location_category_data:
+            instance.location_category.update_location_category(
+                **location_category_data
+            )
 
         # Update the location comments
         if comments_data:
@@ -217,5 +211,7 @@ class LocationSerializer(GenericSerializer):
                 else:
                     contact_data["organization"] = instance.organization
                     instance.location_contacts.create(**contact_data)
+
+        instance.update_location(**validated_data)
 
         return instance
