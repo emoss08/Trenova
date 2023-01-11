@@ -132,6 +132,7 @@ class UserSerializer(GenericSerializer):
         organization = super().get_organization
 
         # Popped data (profile)
+        validated_data["organization"] = organization
         profile_data = validated_data.pop("profile", {})
 
         # Create the user

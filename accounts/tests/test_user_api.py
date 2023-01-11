@@ -66,6 +66,23 @@ class TestUserAPI:
         response = client.get(f"/api/users/{user.id}/")
         assert response.status_code == 200
 
+    def test_post(self, token, organization):
+        """
+        Test create user
+        """
+        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+        response = client.post(
+            "/api/users/",
+            {
+                "username": "test",
+                "email": "test@test.com",
+            },
+            format="json",
+        )
+        assert response.status_code == 201
+        assert response.data["username"] == "test"
+        assert response.data["email"] == "test@test.com"
+
     def test_put(self, token, user):
         """
         Test Put request
@@ -87,7 +104,6 @@ class TestUserAPI:
             },
             format="json",
         )
-
         assert response.status_code == 200
         assert response.data["username"] == "test"
         assert response.data["email"] == "test@test.com"
