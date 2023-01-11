@@ -38,3 +38,4 @@ redis==4.3.4
 whitenoise==6.2.0
 kafka-python==2.0.2
 msgpack==1.0.4
+channels==4.0.0

@@ -58,7 +58,7 @@ router.register(
 )
 
 # Organization Routing
-router.register(r"organizations", org_api.OrganizationViewSet, basename="organizations")
+router.register(r"organizations", org_api.OrganizationViewSet, basename="organization")
 organization_router = routers.NestedSimpleRouter(
     router, r"organizations", lookup="organizations"
 )
@@ -73,6 +73,15 @@ organization_router.register(
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
+router.register(
+    r"worker_profiles", worker_api.WorkerProfileViewSet, basename="workerprofile"
+)
+router.register(
+    r"worker_comments", worker_api.WorkerCommentViewSet, basename="worker-comment"
+)
+router.register(
+    r"worker_contacts", worker_api.WorkerContactViewSet, basename="worker-contact"
+)
 
 # Billing Routing
 router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")

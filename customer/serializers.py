@@ -217,7 +217,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
         return customer_rule_profile
 
-    def update(
+    def update(  # type: ignore
             self, instance: models.CustomerRuleProfile, validated_data: Any
     ) -> models.CustomerRuleProfile:
         """Update an existing CustomerRuleProfile instance.
@@ -308,7 +308,7 @@ class CustomerBillingProfileSerializer(GenericSerializer):
 
         return customer_billing_profile
 
-    def update(
+    def update(  # type: ignore
             self, instance: models.CustomerBillingProfile, validated_data: Any
     ) -> models.CustomerBillingProfile:
         """Update an existing CustomerBillingProfile instance.

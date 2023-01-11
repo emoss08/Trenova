@@ -142,7 +142,7 @@ class GenericSerializer(serializers.ModelSerializer):
             self.Meta.read_only_fields += tuple(extra_read_only_fields)
 
         if extra_read_only_fields and not isinstance(
-            extra_read_only_fields, (list, tuple)
+                extra_read_only_fields, (list, tuple)
         ):
             raise TypeError(
                 "The `extra_read_only_fields` attribute must be a list or tuple."

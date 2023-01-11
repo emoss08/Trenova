@@ -118,7 +118,7 @@ class LocationSerializer(GenericSerializer):
         location = models.Location.objects.create(**validated_data)
 
         if location_category_data:
-            location_category = LocationCategorySerializer().create(
+            location_category = LocationCategorySerializer().create(  # type: ignore
                 location_category_data
             )
             location.location_category = location_category
@@ -155,7 +155,7 @@ class LocationSerializer(GenericSerializer):
         contacts_data = validated_data.pop("location_contacts", [])
 
         if location_category_data:
-            instance.location_category.update_location_category(
+            instance.location_category.update_location_category(  # type: ignore
                 **location_category_data
             )
 

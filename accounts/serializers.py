@@ -72,7 +72,7 @@ class JobTitleSerializer(serializers.ModelSerializer):
         fields = ["id", "organization", "name", "description", "is_active"]
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(GenericSerializer):
     """
     User Profile Serializer
     """
@@ -87,18 +87,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         """
 
         model = models.UserProfile
-        fields = [
-            "id",
-            "first_name",
-            "last_name",
-            "title",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "state",
-            "zip_code",
-            "phone",
-        ]
+        extra_fields = ("title",)
+        extra_read_only_fields = ("id", "user",)
 
 
 class UserSerializer(GenericSerializer):
