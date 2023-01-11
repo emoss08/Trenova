@@ -16,6 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import Any
+
+from django.db.models import QuerySet
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from accounting import models, serializers
 from utils.views import OrganizationViewSet
@@ -53,3 +58,29 @@ class DivisionCodeViewSet(OrganizationViewSet):
     serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
     filterset_fields = ["code", "is_active"]
+
+    def get_queryset(self) -> QuerySet[models.DivisionCode]:
+        """Filter the queryset to only include the current user's organization
+
+        Returns:
+            QuerySet[models.DivisionCode]: Filtered queryset
+        """
+        return (
+            self.queryset.filter(organization=self.request.user.organization)
+            .select_related(  # type: ignore
+                "organization",
+                "cash_account",
+                "ap_account",
+                "expense_account",
+            )
+            .only(
+                "id",
+                "is_active",
+                "code",
+                "description",
+                "organization__id",
+                "cash_account",
+                "ap_account",
+                "expense_account",
+            )
+        )
