@@ -133,24 +133,23 @@ class Movement(GenericModel):
             ValidationError: If the old movement status is in progress, or completed.
         """
 
-        if self.pk:
-            old_status = Movement.objects.get(pk=self.pk).status
+        old_status = Movement.objects.get(pk=self.pk).status
 
-            if self.status == StatusChoices.NEW and old_status in [
-                StatusChoices.IN_PROGRESS,
-                StatusChoices.COMPLETED,
-            ]:
-                raise ValidationError(
-                    {
-                        "status": ValidationError(
-                            _(
-                                "Cannot change status to new if the status was"
-                                " previously in progress or completed."
-                            ),
-                            code="invalid",
-                        )
-                    }
-                )
+        if self.status == StatusChoices.NEW and old_status in [
+            StatusChoices.IN_PROGRESS,
+            StatusChoices.COMPLETED,
+        ]:
+            raise ValidationError(
+                {
+                    "status": ValidationError(
+                        _(
+                            "Cannot change status to new if the status was"
+                            " previously in progress or completed."
+                        ),
+                        code="invalid",
+                    )
+                }
+            )
 
     def validate_movement_worker(self) -> None:
         """Validate Movement worker
@@ -405,12 +404,12 @@ class Movement(GenericModel):
         Returns:
             None
         """
-        # self.validate_primary_worker_regulatory()
-        # # self.validate_movement_statuses()
-        # self.validate_movement_worker()
-        # self.validate_worker_compare()
-        # self.validate_movement_stop_status()
-        # self.validate_worker_commodity()
+        self.validate_primary_worker_regulatory()
+        self.validate_movement_statuses()
+        self.validate_movement_worker()
+        self.validate_worker_compare()
+        self.validate_movement_stop_status()
+        self.validate_worker_commodity()
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
