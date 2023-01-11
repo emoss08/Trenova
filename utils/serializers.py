@@ -112,8 +112,7 @@ class GenericSerializer(serializers.ModelSerializer):
             None
         """
 
-        # Default excluded fields
-        excluded_fields: tuple[str, ...] = ("organization", "created", "modified")
+        read_only_field: tuple[str, ...] = ("organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)
         if original_fields is not None:
@@ -124,10 +123,10 @@ class GenericSerializer(serializers.ModelSerializer):
             fields = [
                 field.name
                 for field in self.Meta.model._meta._get_fields(reverse=False)  # type: ignore
-                if field.name not in excluded_fields
+                if field.name not in read_only_field
             ]
 
-        self.Meta.read_only_fields = excluded_fields
+        self.Meta.read_only_fields = read_only_field
         self.Meta.fields = tuple(fields)
 
         extra_fields = getattr(self.Meta, "extra_fields", None)
@@ -142,7 +141,7 @@ class GenericSerializer(serializers.ModelSerializer):
             self.Meta.read_only_fields += tuple(extra_read_only_fields)
 
         if extra_read_only_fields and not isinstance(
-                extra_read_only_fields, (list, tuple)
+            extra_read_only_fields, (list, tuple)
         ):
             raise TypeError(
                 "The `extra_read_only_fields` attribute must be a list or tuple."

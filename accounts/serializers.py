@@ -52,8 +52,10 @@ class VerifyTokenSerializer(serializers.Serializer):
                 "user_id": models.Token.objects.get(key=token).user.id,
             }
         else:
-            raise serializers.ValidationError("Unable to validate given token. Please try again.",
-                                              code="authentication")
+            raise serializers.ValidationError(
+                "Unable to validate given token. Please try again.",
+                code="authentication",
+            )
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
@@ -88,7 +90,10 @@ class UserProfileSerializer(GenericSerializer):
 
         model = models.UserProfile
         extra_fields = ("title",)
-        extra_read_only_fields = ("id", "user",)
+        extra_read_only_fields = (
+            "id",
+            "user",
+        )
 
 
 class UserSerializer(GenericSerializer):
