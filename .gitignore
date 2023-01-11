@@ -28,3 +28,4 @@ lerna-debug.log*
 staticfiles
 media
 .data
+Kafka
