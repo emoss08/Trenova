@@ -100,7 +100,6 @@ class GenericSerializer(serializers.ModelSerializer):
         Returns:
             _MT: Updated instance
         """
-
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 

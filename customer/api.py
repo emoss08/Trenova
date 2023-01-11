@@ -18,8 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.db.models import QuerySet
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions
 
 from customer import models, serializers
 from utils.views import OrganizationViewSet
