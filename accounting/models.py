@@ -103,7 +103,6 @@ class GeneralLedgerAccount(GenericModel):
     account_number = models.CharField(
         _("Account Number"),
         max_length=20,
-        unique=True,
         help_text=_("The account number of the general ledger account."),
         validators=[
             validators.RegexValidator(
@@ -158,6 +157,30 @@ class GeneralLedgerAccount(GenericModel):
         """
         return textwrap.wrap(self.account_number, 20)[0]
 
+    def clean(self) -> None:
+        """General ledger account clean method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If account number is not unique
+        """
+        super().clean()
+
+        if (
+            GeneralLedgerAccount.objects.filter(account_number=self.account_number)
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(
+                {
+                    "account_number": _(
+                        "An account with this account number already exists. Please try again."
+                    )
+                }, code="invalid",
+            )
+
     def get_absolute_url(self) -> str:
         """GeneralLedgerAccount absolute url
 
@@ -167,6 +190,17 @@ class GeneralLedgerAccount(GenericModel):
         return reverse(
             "accounting:general_ledger_account_detail", kwargs={"pk": self.pk}
         )
+
+    def update_gl_account(self, **kwargs):
+        """Update the worker profile
+
+        Args:
+            **kwargs: Keyword arguments
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class RevenueCode(GenericModel):
@@ -279,6 +313,21 @@ class RevenueCode(GenericModel):
             str: RevenueCode absolute url
         """
         return reverse("accounting:revenue_code_detail", kwargs={"pk": self.pk})
+
+    def update_revenue_code(self, **kwargs: Any):
+        """Update the revenue code.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Examples:
+            >>> revenue_code = RevenueCode.objects.get(pk=uuid.uuid4())
+            >>> revenue_code.update_revenue_code(code="1234", description="New Description")
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class DivisionCode(GenericModel):
