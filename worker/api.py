@@ -23,6 +23,21 @@ from utils.views import OrganizationViewSet
 from worker import models, serializers
 
 
+class WorkerCommentViewSet(OrganizationViewSet):
+    queryset = models.WorkerComment.objects.all()
+    serializer_class = serializers.WorkerCommentSerializer
+
+
+class WorkerContactViewSet(OrganizationViewSet):
+    queryset = models.WorkerContact.objects.all()
+    serializer_class = serializers.WorkerContactSerializer
+
+
+class WorkerProfileViewSet(OrganizationViewSet):
+    queryset = models.WorkerProfile.objects.all()
+    serializer_class = serializers.WorkerProfileSerializer
+
+
 class WorkerViewSet(OrganizationViewSet):
     """A viewset for viewing and editing workers in the system.
 
