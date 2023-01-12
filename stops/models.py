@@ -121,6 +121,8 @@ class Stop(GenericModel):
         related_query_name="stop",
         verbose_name=_("Location"),
         help_text=_("The location of the stop."),
+        null=True,
+        blank=True,
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
