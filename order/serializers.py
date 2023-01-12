@@ -19,12 +19,19 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import serializers
 
+from accounting.models import RevenueCode
 from accounting.serializers import RevenueCodeSerializer
+from accounts.models import User
 from accounts.serializers import UserSerializer
+from commodities.models import Commodity, HazardousMaterial
 from commodities.serializers import CommoditySerializer, HazardousMaterialSerializer
+from customer.models import Customer
 from customer.serializers import CustomerSerializer
+from equipment.models import EquipmentType
 from equipment.serializers import EquipmentTypeSerializer
+from location.models import Location
 from location.serializers import LocationSerializer
+from movements.models import Movement
 from utils.models import StatusChoices
 from utils.serializers import GenericSerializer
 from order import models
@@ -115,26 +122,40 @@ class OrderSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
 
     Attributes:
-        status (ChoiceField): A choice field that determines the status of the order.
-        revenue_code
     """
 
-    order_type = OrderTypeSerializer()
-    status = serializers.ChoiceField(
-        default=StatusChoices.NEW, choices=StatusChoices.choices
+    order_type = serializers.PrimaryKeyRelatedField(
+        queryset=models.OrderType.objects.all(),
+        allow_null=True,
     )
-    revenue_code = RevenueCodeSerializer(required=False)
-    origin_location = LocationSerializer()
-    destination_location = LocationSerializer()
-    rate_method = serializers.ChoiceField(
-        default=models.RatingMethodChoices.FLAT,
-        choices=models.RatingMethodChoices.choices,
+    revenue_code = serializers.PrimaryKeyRelatedField(
+        queryset=RevenueCode.objects.all(),
+        allow_null=True,
     )
-    customer = CustomerSerializer(required=True)
-    equipment_type = EquipmentTypeSerializer()
-    commodity = CommoditySerializer()
-    entered_by = UserSerializer()
-    hazmat = HazardousMaterialSerializer()
+    origin_location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        allow_null=True,
+    )
+    destination_location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        allow_null=True,
+    )
+    customer = serializers.PrimaryKeyRelatedField(
+        queryset=Customer.objects.all(),
+    )
+    equipment_type = serializers.PrimaryKeyRelatedField(
+        queryset=EquipmentType.objects.all()
+    )
+    commodity = serializers.PrimaryKeyRelatedField(
+        queryset=Commodity.objects.all(), allow_null=True
+    )
+    entered_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    hazmat = serializers.PrimaryKeyRelatedField(
+        queryset=HazardousMaterial.objects.all(),
+        allow_null=True,
+    )
 
     class Meta:
         """Metaclass for OrderSerializer
@@ -148,11 +169,9 @@ class OrderSerializer(GenericSerializer):
         model = models.Order
         extra_fields = (
             "order_type",
-            "status",
             "revenue_code",
             "origin_location",
             "destination_location",
-            "rate_method",
             "customer",
             "equipment_type",
             "commodity",

@@ -132,24 +132,24 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement status is in progress, or completed.
         """
+        if Movement.objects.filter(pk=self.pk).exists():
+            old_status = Movement.objects.get(pk=self.pk).status
 
-        old_status = Movement.objects.get(pk=self.pk).status
-
-        if self.status == StatusChoices.NEW and old_status in [
-            StatusChoices.IN_PROGRESS,
-            StatusChoices.COMPLETED,
-        ]:
-            raise ValidationError(
-                {
-                    "status": ValidationError(
-                        _(
-                            "Cannot change status to new if the status was"
-                            " previously in progress or completed."
-                        ),
-                        code="invalid",
-                    )
-                }
-            )
+            if self.status == StatusChoices.NEW and old_status in [
+                StatusChoices.IN_PROGRESS,
+                StatusChoices.COMPLETED,
+            ]:
+                raise ValidationError(
+                    {
+                        "status": ValidationError(
+                            _(
+                                "Cannot change status to new if the status was"
+                                " previously in progress or completed."
+                            ),
+                            code="invalid",
+                        )
+                    }
+                )
 
     def validate_movement_worker(self) -> None:
         """Validate Movement worker

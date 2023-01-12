@@ -47,6 +47,7 @@ class OrderValidation:
         self.validate_ready_to_bill()
         self.validate_per_mile_rate_method()
         self.validate_compare_origin_destination()
+        self.validate_location()
 
     def validate_freight_rate_method(self) -> None:
         """Validate the freight charge amount
@@ -64,7 +65,9 @@ class OrderValidation:
             raise ValidationError(
                 {
                     "rate_method": ValidationError(
-                        _("Freight Charge Amount is required for flat rating method. Please try again."),
+                        _(
+                            "Freight Charge Amount is required for flat rating method. Please try again."
+                        ),
                         code="invalid",
                     )
                 }
@@ -107,14 +110,12 @@ class OrderValidation:
         if self.order.ready_to_bill and self.order.status != StatusChoices.COMPLETED:
             raise ValidationError(
                 {
-                    "ready_to_bill": ValidationError(
-                        _(
-                            "Cannot mark an order ready to bill if the order status"
-                            " is not complete. Please try again."
-                        ),
-                        code="invalid",
-                    )
-                }
+                    "ready_to_bill": _(
+                        "Cannot mark an order ready to bill if the order status"
+                        " is not complete. Please try again."
+                    ),
+                },
+                code="invalid",
             )
 
     def validate_per_mile_rate_method(self) -> None:
@@ -130,16 +131,16 @@ class OrderValidation:
         """
 
         if (
-                self.order.rate_method == RatingMethodChoices.PER_MILE
-                and self.order.mileage is None
+            self.order.rate_method == RatingMethodChoices.PER_MILE
+            and self.order.mileage is None
         ):
             raise ValidationError(
                 {
-                    "rate_method": ValidationError(
-                        _("Mileage is required for per mile rating method. Please try again."),
-                        code="invalid",
-                    )
-                }
+                    "rate_method": _(
+                        "Mileage is required for per mile rating method. Please try again."
+                    ),
+                },
+                code="invalid",
             )
 
     def validate_compare_origin_destination(self) -> None:
@@ -152,19 +153,47 @@ class OrderValidation:
 
         order_control = self.order_control.objects.get(organization=self.organization)
         if (
-                self.order.origin_location
-                and order_control.enforce_origin_destination
-                and self.order.origin_location == self.order.destination_location
+            self.order.origin_location
+            and order_control.enforce_origin_destination
+            and self.order.origin_location == self.order.destination_location
         ):
             raise ValidationError(
                 {
-                    "origin_location": ValidationError(
-                        _("Origin and Destination cannot be the same. Please try again."),
-                        code="invalid",
-                    ),
-                    "destination_location": ValidationError(
-                        _("Origin and Destination cannot be the same. Please try again."),
-                        code="invalid",
+                    "origin_location": _(
+                        "Origin and Destination cannot be the same. Please try again."
                     ),
                 }
+            )
+
+    def validate_location(self) -> None:
+        """Validate location is provided.
+
+        If origin_location and destination_location are not provided,
+        then require the address field for both origin and destination.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the location is not provided and the address is not provided.
+        """
+
+        if not self.order.origin_location and not self.order.origin_address:
+            raise ValidationError(
+                {
+                    "origin_address": _(
+                        "Origin Location or Address is required. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+
+        if not self.order.destination_location and not self.order.destination_address:
+            raise ValidationError(
+                {
+                    "destination_address": _(
+                        "Destination Location or Address is required. Please try again."
+                    ),
+                },
+                code="invalid",
             )

@@ -322,6 +322,8 @@ class Order(GenericModel):
         related_query_name="origin_orders",
         verbose_name=_("Origin Location"),
         help_text=_("Origin Location of the Order"),
+        blank=True,
+        null=True,
     )
     origin_address = models.CharField(
         _("Origin Address"),
@@ -341,6 +343,8 @@ class Order(GenericModel):
         related_name="destination_order",
         related_query_name="destination_orders",
         verbose_name=_("Destination Location"),
+        blank=True,
+        null=True,
     )
     destination_address = models.CharField(
         _("Destination Address"),
@@ -453,6 +457,8 @@ class Order(GenericModel):
         related_query_name="order",
         verbose_name=_("Commodity"),
         help_text=_("Commodity"),
+        blank=True,
+        null=True,
     )
     entered_by = models.ForeignKey(
         User,
@@ -532,12 +538,11 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the Order is not valid
         """
-
-        # Call the OrderValidation class
-        #
-        # OrderValidation(
-        #     order=self, organization=self.organization, order_control=OrderControl
-        # ).validate()
+        super().clean()
+        
+        OrderValidation(
+            order=self, organization=self.organization, order_control=OrderControl
+        ).validate()
 
     def save(self, **kwargs: Any) -> None:
         """Order save method
@@ -584,7 +589,7 @@ class Order(GenericModel):
 
         return self.freight_charge_amount
 
-    def set_hazardous_class(self) -> Optional[HazardousMaterial]:
+    def set_hazardous_class(self) -> HazardousMaterial | None:
         """Set the hazardous class from commodity
 
         if a commodity is selected automatically set the hazardous
@@ -592,9 +597,9 @@ class Order(GenericModel):
         HazardousMaterial.
 
         Returns:
-            HazardousMaterial: Instance of the HazardousMaterial
+            HazardousMaterial | None: Instance of the HazardousMaterial
         """
-        if self.commodity.hazmat:
+        if self.commodity and self.commodity.hazmat is not None:
             self.hazmat = self.commodity.hazmat
         return self.hazmat
 
@@ -629,8 +634,12 @@ class Order(GenericModel):
         )
 
         if o_control.auto_pop_address:
-            self.origin_address = self.origin_location.get_address_combination
-            self.destination_address = self.destination_location.get_address_combination
+            if self.origin_location:
+                self.origin_address = self.origin_location.get_address_combination
+            if self.destination_location:
+                self.destination_address = (
+                    self.destination_location.get_address_combination
+                )
 
 
 class OrderDocumentation(GenericModel):
