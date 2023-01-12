@@ -24,21 +24,31 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from accounts import models
+from organization.models import Department
 from utils.serializers import GenericSerializer
 
 
 class VerifyTokenSerializer(serializers.Serializer):
-    """
-    Verify Token Serializer
+    """A serializer for token verification.
+
+    The serializer provides a token field. The token field is used to verify the incoming token
+    from the user. If the given token is valid then the user is given back the token and the user
+    id in the response. Otherwise the user is given an error message.
+
+    Attributes:
+        token (serializers.CharField): The token to be verified.
+
+    Methods:
+        validate(attrs: Any) -> Any: Validate the token.
     """
 
     token = serializers.CharField()
 
     def validate(self, attrs: Any) -> Any:
-        """Validate the token
+        """Validate the token.
 
         Args:
-            attrs (OrderedDict): Attributes
+            attrs (Any): Attributes
 
         Returns:
             dict[str, Any]: Validated attributes
@@ -59,15 +69,28 @@ class VerifyTokenSerializer(serializers.Serializer):
 
 
 class JobTitleSerializer(serializers.ModelSerializer):
-    """
-    Job Title Serializer
+    """Serializer for the JobTitle model.
+
+    This serializer converts the JobTitle model into a format that
+    can be easily converted to and from JSON, and allows for easy validation
+    of the data.
+
+    Attributes:
+        is_active (serializers.BooleanField): A boolean field representing the
     """
 
     is_active = serializers.BooleanField(required=False, default=True)
 
     class Meta:
         """
-        Metaclass for JobTitleSerializer
+        Metaclass for GeneralLedgerAccountSerializer
+
+        Attributes:
+            model (models.JobTitle): The model that the serializer
+            is for.
+
+            fields (list[str]): The fields that should be included
+            in the serialized representation of the model.
         """
 
         model = models.JobTitle
@@ -79,8 +102,8 @@ class UserProfileSerializer(GenericSerializer):
     User Profile Serializer
     """
 
-    title = serializers.StringRelatedField(  # type: ignore
-        source="job_title", required=False, allow_null=True
+    title = serializers.PrimaryKeyRelatedField(
+        queryset=models.JobTitle.objects.all(), required=False
     )
 
     class Meta:
@@ -101,6 +124,9 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), allow_null=True,
+    )
     profile = UserProfileSerializer(required=False, allow_null=True)
 
     class Meta:
@@ -110,9 +136,9 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = ("groups", "user_permissions")
+        extra_read_only_fields = ("groups", "user_permissions",)
         extra_kwargs = {
-            "password": {"write_only": True, "required": False},
+            "password": {"write_only": True},
             "is_staff": {"read_only": True},
             "is_active": {"read_only": True},
             "date_joined": {"read_only": True},

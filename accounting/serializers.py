@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Any
 
 from rest_framework import serializers
 
@@ -90,8 +89,6 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
             "account_classification",
         )
 
-    def update(self, instance, validated_data):
-        print("I'm being called.")
 
 class RevenueCodeSerializer(GenericSerializer):
     """A serializer class for the RevenueCode model.
@@ -116,8 +113,18 @@ class RevenueCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
-    expense_account = GeneralLedgerAccountSerializer()
-    revenue_account = GeneralLedgerAccountSerializer()
+    expense_account = serializers.PrimaryKeyRelatedField(
+        queryset=models.GeneralLedgerAccount.objects.filter(
+            account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+        ),
+        allow_null=True,
+    )
+    revenue_account = serializers.PrimaryKeyRelatedField(
+        queryset=models.GeneralLedgerAccount.objects.filter(
+            account_type=models.GeneralLedgerAccount.AccountTypeChoices.REVENUE
+        ),
+        allow_null=True,
+    )
 
     class Meta:
         """Metaclass for RevenueCodeSerializer
@@ -130,32 +137,6 @@ class RevenueCodeSerializer(GenericSerializer):
 
         model = models.RevenueCode
         extra_fields = ("expense_account", "revenue_account")
-
-    def update(
-        self, instance: models.RevenueCode, validated_data: Any
-    ) -> models.RevenueCode:
-        """Update the instance with the validated data.
-
-        Args:
-            instance (models.RevenueCode): The instance to update.
-            validated_data (Any): The validated data.
-
-        Returns:
-            models.RevenueCode: The updated instance.
-        """
-
-        expense_account_data = validated_data.pop("expense_account")
-        revenue_account_data = validated_data.pop("revenue_account")
-
-        if expense_account_data:
-            instance.expense_account.update_gl_account(**expense_account_data)
-
-        if revenue_account_data:
-            instance.revenue_account.update_gl_account(**revenue_account_data)
-
-        instance.update_revenue_code(**validated_data)
-
-        return instance
 
 
 class DivisionCodeSerializer(GenericSerializer):
@@ -187,23 +168,24 @@ class DivisionCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    is_active = serializers.BooleanField(default=True)
     cash_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountClassificationChoices.CASH
         ),
-        required=False,
+        allow_null=True,
     )
     ap_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
         ),
-        required=False,
+        allow_null=True,
     )
     expense_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ),
-        required=False,
+        allow_null=True,
     )
 
     class Meta:
@@ -216,4 +198,4 @@ class DivisionCodeSerializer(GenericSerializer):
         """
 
         model = models.DivisionCode
-        extra_fields = ("cash_account", "ap_account", "expense_account")
+        extra_fields = ("is_active", "cash_account", "ap_account", "expense_account")
