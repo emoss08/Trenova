@@ -116,6 +116,12 @@ router.register(
     customer_api.CustomerRuleProfileViewSet,
     basename="customer-rule-profiles",
 )
+router.register(
+    r"customer_billing_profiles",
+    customer_api.CustomerBillingProfileViewSet,
+    basename="customer-billing-profiles"
+)
+
 
 # Equipment Routing
 router.register(
