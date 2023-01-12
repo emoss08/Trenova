@@ -79,7 +79,7 @@ class GenericSerializer(serializers.ModelSerializer):
         """Create the object
 
         Args:
-            validated_data (dict[str, Any]): Validated data
+            validated_data (Any): Validated data
 
         Returns:
             _MT: Created object
@@ -107,6 +107,7 @@ class GenericSerializer(serializers.ModelSerializer):
 
     def set_fields(self) -> None:
         """Set the fields for the serializer
+
         Returns:
             None
         """
@@ -114,10 +115,10 @@ class GenericSerializer(serializers.ModelSerializer):
         read_only_field: tuple[str, ...] = ("organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)
+
         if original_fields is not None:
             fields = original_fields
         else:
-
             # If reverse=True, then relations pointing to this model are returned.
             fields = [
                 field.name

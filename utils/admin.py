@@ -114,7 +114,6 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         """
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields:
-            print(field)
             if field == "organization":
                 form.base_fields[field].initial = request.user.organization  # type: ignore
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
