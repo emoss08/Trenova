@@ -23,8 +23,6 @@ from dispatch.factories import CommentTypeFactory
 from utils.tests import ApiTest
 from worker.factories import WorkerFactory
 
-pytestmark = pytest.mark.django_db
-
 
 class TestWorkerApi(ApiTest):
     """
@@ -123,6 +121,7 @@ class TestWorkerApi(ApiTest):
             },
             format="json",
         )
+
         assert response.status_code == 201
         assert response.data is not None
         assert response.data["is_active"] is True

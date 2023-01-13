@@ -60,13 +60,19 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         choices=models.GeneralLedgerAccount.AccountTypeChoices.choices
     )
     cash_flow_type = serializers.ChoiceField(
-        choices=models.GeneralLedgerAccount.CashFlowTypeChoices.choices
+        choices=models.GeneralLedgerAccount.CashFlowTypeChoices.choices,
+        allow_null=True,
+        required=False,
     )
     account_sub_type = serializers.ChoiceField(
-        choices=models.GeneralLedgerAccount.AccountSubTypeChoices.choices
+        choices=models.GeneralLedgerAccount.AccountSubTypeChoices.choices,
+        allow_null=True,
+        required=False,
     )
     account_classification = serializers.ChoiceField(
-        choices=models.GeneralLedgerAccount.AccountClassificationChoices.choices
+        choices=models.GeneralLedgerAccount.AccountClassificationChoices.choices,
+        allow_null=True,
+        required=False,
     )
 
     class Meta:
@@ -116,12 +122,16 @@ class RevenueCodeSerializer(GenericSerializer):
     expense_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
-        )
+        ),
+        allow_null=True,
+        required=False,
     )
     revenue_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.REVENUE
-        )
+        ),
+        allow_null=True,
+        required=False,
     )
 
     class Meta:
@@ -166,22 +176,26 @@ class DivisionCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    is_active = serializers.BooleanField(default=True)
     cash_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
-            account_type=models.GeneralLedgerAccount.AccountClassificationChoices.CASH
+            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.CASH
         ),
+        allow_null=True,
         required=False,
     )
     ap_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
         ),
+        allow_null=True,
         required=False,
     )
     expense_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ),
+        allow_null=True,
         required=False,
     )
 
@@ -195,4 +209,4 @@ class DivisionCodeSerializer(GenericSerializer):
         """
 
         model = models.DivisionCode
-        extra_fields = ("cash_account", "ap_account", "expense_account")
+        extra_fields = ("is_active", "cash_account", "ap_account", "expense_account")

@@ -121,6 +121,8 @@ class Stop(GenericModel):
         related_query_name="stop",
         verbose_name=_("Location"),
         help_text=_("The location of the stop."),
+        null=True,
+        blank=True,
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
@@ -216,12 +218,11 @@ class Stop(GenericModel):
         elif self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
 
-        # TODO: THIS LOOKS WEIRD TO ME NOW. I MAY CHANGE THIS
-        # CreateServiceIncident(
-        #     stop=self,
-        #     dc_object=DispatchControl,
-        #     si_object=ServiceIncident,
-        # ).create()
+        CreateServiceIncident(
+            stop=self,
+            dc_object=DispatchControl,
+            si_object=ServiceIncident,
+        ).create()
 
         super().save(**kwargs)
 

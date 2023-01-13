@@ -18,12 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from typing import Any, TypeAlias
-from uuid import UUID
 
-from django.db import transaction
 from rest_framework import serializers
 
-from billing.serializers import DocumentClassificationSerializer
+from billing.models import DocumentClassification
 from customer import models
 from utils.serializers import GenericSerializer
 
@@ -125,9 +123,8 @@ class CustomerFuelTableSerializer(GenericSerializer):
         model = models.CustomerFuelTable
         extra_fields = ("customer_fuel_table_details",)
 
-    @transaction.atomic
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -184,7 +181,9 @@ class CustomerRuleProfileSerializer(GenericSerializer):
     code.
     """
 
-    document_class = DocumentClassificationSerializer(many=True, required=False)
+    document_class = serializers.PrimaryKeyRelatedField(
+        queryset=DocumentClassification.objects.all(), many=True
+    )
 
     class Meta:
         """
@@ -193,56 +192,6 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
         model = models.CustomerRuleProfile
         extra_fields = ("document_class",)
-
-    def create(self, validated_data: Any) -> models.CustomerRuleProfile:
-        """Create a new CustomerRuleProfile instance.
-
-        Args:
-            validated_data (dict): A dictionary of validated data for the new
-                CustomerRuleProfile instance. This data should include the
-                'document_class' field, which is a list of IDs for the
-                DocumentClassification objects associated with the new
-                CustomerRuleProfile.
-
-        Returns:
-            CustomerRuleProfile: The newly created CustomerRuleProfile instance.
-        """
-
-        document_class_ids = validated_data.pop("document_class")
-
-        customer_rule_profile = models.CustomerRuleProfile.objects.create(
-            **validated_data
-        )
-        customer_rule_profile.document_class.set(document_class_ids)
-
-        return customer_rule_profile
-
-    def update(
-            self, instance: models.CustomerRuleProfile, validated_data: Any
-    ) -> models.CustomerRuleProfile:
-        """Update an existing CustomerRuleProfile instance.
-
-        Args:
-            instance (CustomerRuleProfile): The CustomerRuleProfile instance to update.
-            validated_data (dict): A dictionary of validated data for the updated
-                CustomerRuleProfile instance. This data should include the
-                'name' and 'document_class' fields, which are the updated values
-                for the name and document classifications of the CustomerRuleProfile.
-
-        Returns:
-            CustomerRuleProfile: The updated CustomerRuleProfile instance.
-        """
-
-        document_class = validated_data.pop("document_class", [])
-
-        instance.name = validated_data.get("name", instance.name)
-        instance.save()
-
-        if document_class:
-            instance.document_class.set(document_class)
-            instance.save()
-
-        return instance
 
 
 class CustomerBillingProfileSerializer(GenericSerializer):
@@ -260,8 +209,16 @@ class CustomerBillingProfileSerializer(GenericSerializer):
     """
 
     is_active = serializers.BooleanField(default=True)
-    email_profile = CustomerEmailProfileSerializer(required=False)
-    rule_profile = CustomerRuleProfileSerializer(required=False)
+    email_profile = serializers.PrimaryKeyRelatedField(
+        queryset=models.CustomerEmailProfile.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    rule_profile = serializers.PrimaryKeyRelatedField(
+        queryset=models.CustomerRuleProfile.objects.all(),
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         """
@@ -269,95 +226,11 @@ class CustomerBillingProfileSerializer(GenericSerializer):
         """
 
         model = models.CustomerBillingProfile
-        extra_fields = ("is_active", "email_profile", "rule_profile",)
-
-    def create(self, validated_data: Any):
-        """Create a new CustomerBillingProfile instance.
-
-        Args:
-            validated_data (dict): A dictionary of validated data for the new
-                CustomerBillingProfile instance. This data should include the
-                'email_profile' and 'rule_profile' fields, which are the
-                CustomerEmailProfile and CustomerRuleProfile instances
-                associated with the new CustomerBillingProfile.
-
-        Returns:
-            CustomerBillingProfile: The newly created CustomerBillingProfile instance.
-        """
-
-        email_profile_data = validated_data.pop("email_profile", {})
-        rule_profile_data = validated_data.pop("rule_profile", {})
-
-        customer_billing_profile = models.CustomerBillingProfile.objects.create(
-            **validated_data
+        extra_fields = (
+            "is_active",
+            "email_profile",
+            "rule_profile",
         )
-
-        if email_profile_data:
-            email_profile = models.CustomerEmailProfile.objects.create(
-                **email_profile_data
-            )
-            customer_billing_profile.email_profile = email_profile
-
-        if rule_profile_data:
-            rule_profile = models.CustomerRuleProfile.objects.create(
-                **rule_profile_data
-            )
-            customer_billing_profile.rule_profile = rule_profile
-
-        customer_billing_profile.save()
-
-        return customer_billing_profile
-
-    def update(
-            self, instance: models.CustomerBillingProfile, validated_data: Any
-    ) -> models.CustomerBillingProfile:
-        """Update an existing CustomerBillingProfile instance.
-
-        Args:
-            instance (CustomerBillingProfile): The CustomerBillingProfile instance to
-                update.
-
-            validated_data (dict): A dictionary of validated data for the updated
-                CustomerBillingProfile instance. This data should include the
-                'email_profile' and 'rule_profile' fields, which are the
-                updated values for the CustomerEmailProfile and CustomerRuleProfile
-                instances associated with the CustomerBillingProfile.
-
-        Returns:
-            CustomerBillingProfile: The updated CustomerBillingProfile instance.
-        """
-
-        email_profile = validated_data.pop("email_profile", {})
-        rule_profile = validated_data.pop("rule_profile", {})
-
-        instance.is_active = validated_data.get("is_active", instance.is_active)
-        instance.save()
-
-        if email_profile:
-            email_profile_instance = models.CustomerEmailProfile.objects.get(
-                id=email_profile["id"], organization=email_profile["organization"]
-            )
-
-            email_profile_instance.email = email_profile.get(
-                "email", email_profile_instance.email
-            )
-            email_profile_instance.save()
-
-            instance.email_profile = email_profile_instance
-
-        if rule_profile:
-            rule_profile_instance = models.CustomerRuleProfile.objects.get(
-                id=rule_profile["id"], organization=rule_profile["organization"]
-            )
-
-            rule_profile_instance.name = rule_profile.get(
-                "name", rule_profile_instance.name
-            )
-            rule_profile_instance.save()
-
-            instance.rule_profile = rule_profile_instance
-
-        return instance
 
 
 class CustomerSerializer(GenericSerializer):
@@ -368,8 +241,17 @@ class CustomerSerializer(GenericSerializer):
     create the serialized representation of the `Customer` model.
     """
 
-    billing_profile = CustomerBillingProfileSerializer(required=False)
-    contacts = CustomerContactSerializer(many=True, required=False)
+    billing_profile = serializers.PrimaryKeyRelatedField(
+        queryset=models.CustomerBillingProfile.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    contacts = serializers.PrimaryKeyRelatedField(
+        queryset=models.CustomerContact.objects.all(),
+        many=True,
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         """
@@ -378,178 +260,3 @@ class CustomerSerializer(GenericSerializer):
 
         model = models.Customer
         extra_fields = ("billing_profile", "contacts")
-
-    def _get_or_create_document_classifications(
-            self, documents: Documents
-    ) -> list[UUID]:
-        """Get or create document classifications with the given data.
-
-        Args:
-            documents: A list of dictionaries, each representing a document classification with the keys 'name' and 'organization'.
-
-        Returns:
-            A list of the IDs of the retrieved or created document classifications.
-
-        """
-
-        document_ids = []
-        for document in documents:
-            document["organization"] = super().get_organization
-            (
-                document_instance,
-                created,
-            ) = models.DocumentClassification.objects.get_or_create(
-                name=document.get("name"), defaults=document
-            )
-            document_ids.append(document_instance.id)
-        return document_ids
-
-    def _create_or_update_document_classifications(
-            self, documents: Documents
-    ) -> list[UUID]:
-        """Create or update document classifications with the given data.
-
-        Args:
-            documents: A list of dictionaries, each representing a document classification with the keys 'name' and 'organization'.
-
-        Returns:
-            A list of the IDs of the created or updated document classifications.
-
-        """
-
-        document_ids = []
-        for document in documents:
-            document["organization"] = super().get_organization
-            (
-                document_instance,
-                created,
-            ) = models.DocumentClassification.objects.update_or_create(
-                name=document.get("name"), defaults=document
-            )
-            document_ids.append(document_instance.id)
-        return document_ids
-
-    def create(self, validated_data: Any) -> models.Customer:
-        """Create a new Customer instance.
-
-        Args:
-            validated_data (Any): A dictionary of validated data for the new
-                Customer instance. This data should include the 'billing_profile'
-                and 'contacts' fields, which are the CustomerBillingProfile and
-                CustomerContact instances associated with the new Customer.
-
-        Returns:
-            Customer: The newly created Customer instance.
-        """
-
-        # Get user organization
-        organization = super().get_organization
-
-        # Pop the billing profile and contacts from the validated data
-        billing_profile_data = validated_data.pop("billing_profile", {})
-        contacts_data = validated_data.pop("contacts", [])
-
-        # Create the customer
-        validated_data["organization"] = organization
-        customer = models.Customer.objects.create(**validated_data)
-
-        # Create the billing profile
-        if billing_profile_data:
-            rule_profile_data = billing_profile_data.pop("rule_profile", {})
-            email_profile_data = billing_profile_data.pop("email_profile", {})
-
-            # Billing profiles are automatically created from signals. However,
-            # If passed, we have to delete the one that was created.
-            customer_billing_profile = models.CustomerBillingProfile.objects.get(
-                customer=customer
-            )
-            customer_billing_profile.delete()
-
-            billing_profile_data["organization"] = organization
-            billing_profile = models.CustomerBillingProfile.objects.create(
-                customer=customer,
-                **billing_profile_data,
-            )
-
-            # Create the customer billing profile
-            if email_profile_data:
-                email_profile_data["organization"] = organization
-                email_profile = models.CustomerEmailProfile.objects.create(
-                    **email_profile_data
-                )
-                billing_profile.email_profile = email_profile
-
-            # Create the billing profile
-            if rule_profile_data:
-                # Pop document classifications from the rule profile data
-                document_class = rule_profile_data.pop("document_class", [])
-
-                # Create the rule profile
-                rule_profile_data["organization"] = organization
-                rule_profile = models.CustomerRuleProfile.objects.create(
-                    **rule_profile_data
-                )
-                billing_profile.rule_profile = rule_profile
-
-                # Create the document classifications
-                if document_class:
-                    rule_profile.document_class.set(
-                        self._get_or_create_document_classifications(document_class)  # type: ignore
-                    )
-
-        # Create the contacts
-        if contacts_data:
-            contacts_data = [
-                {**contact, "organization": organization} for contact in contacts_data
-            ]
-            contacts = [
-                models.CustomerContact(customer=customer, **contact)
-                for contact in contacts_data
-            ]
-            models.CustomerContact.objects.bulk_create(contacts)
-
-        return customer
-
-    def update(self, instance: models.Customer, validated_data: Any):  # type: ignore
-        """Update an existing Customer instance.
-
-        Args:
-            instance (Customer): The existing Customer instance to update.
-            validated_data (dict): A dictionary of validated data for the updated
-                Customer instance. This data should include the 'billing_profile'
-                and 'contacts' fields, which are the updated values for the
-                CustomerBillingProfile and CustomerContact instances associated
-                with the Customer.
-
-        Returns:
-            Customer: The updated Customer instance.
-        """
-
-        billing_profile_data = validated_data.pop("billing_profile", {})
-        contacts_data = validated_data.pop("contacts", {})
-
-        instance.update_customer(**validated_data)
-
-        if billing_profile_data:
-            rule_profile_data = billing_profile_data.pop("rule_profile", {})
-            email_profile_data = billing_profile_data.pop("email_profile", {})
-
-            if email_profile_data:
-                instance.billing_profile.email_profile.update_customer_email_profile(  # type: ignore
-                    **email_profile_data
-                )
-
-            if rule_profile_data:
-                document_class_data = rule_profile_data.pop("document_class", [])
-                instance.billing_profile.rule_profile.update_customer_rule_profile(  # type: ignore
-                    **rule_profile_data
-                )
-                instance.billing_profile.rule_profile.document_class.set(  # type: ignore
-                    self._create_or_update_document_classifications(document_class_data)
-                )
-
-        if contacts_data:
-            for contact, contact_data in zip(instance.contacts.all(), contacts_data):
-                contact.update_customer_contact(**contact_data)
-
-        return instance

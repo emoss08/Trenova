@@ -22,6 +22,8 @@ from typing import Any
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
+from accounts.models import User
+from organization.models import Depot
 from utils.serializers import GenericSerializer
 from worker import models
 
@@ -77,6 +79,21 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
+    depot = serializers.PrimaryKeyRelatedField(  # type: ignore
+        queryset=Depot.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    manager = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    entered_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
+    )
     is_active = serializers.BooleanField(default=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
@@ -90,8 +107,9 @@ class WorkerSerializer(GenericSerializer):
         model = models.Worker
         extra_fields = (
             "is_active",
-            "organization",
-            "worker_type",
+            "depot",
+            "manager",
+            "entered_by",
             "profile",
             "contacts",
             "comments",
