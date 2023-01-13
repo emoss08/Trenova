@@ -218,12 +218,11 @@ class Stop(GenericModel):
         elif self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
 
-        # TODO: THIS LOOKS WEIRD TO ME NOW. I MAY CHANGE THIS
-        # CreateServiceIncident(
-        #     stop=self,
-        #     dc_object=DispatchControl,
-        #     si_object=ServiceIncident,
-        # ).create()
+        CreateServiceIncident(
+            stop=self,
+            dc_object=DispatchControl,
+            si_object=ServiceIncident,
+        ).create()
 
         super().save(**kwargs)
 

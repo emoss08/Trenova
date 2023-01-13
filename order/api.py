@@ -101,3 +101,58 @@ class OrderViewSet(OrganizationViewSet):
 
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
+
+class OrderDocumentationViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing Order documentation in the system.
+
+    The viewset provides default operations for creating, updating and deleting order documentation,
+    as well as listing and retrieving Order Documentation. It uses the ``OrderDocumentationSerializer`` class to
+    convert the order documentation instances to and from JSON-formatted data.
+
+    Attributes:
+        queryset (QuerySet): A queryset of OrderDocumentation objects that will be used to
+        retrieve and update OrderDocumentation objects.
+
+        serializer_class (OrderDocumentationSerializer): A serializer class that will be used to
+        convert OrderDocumentation objects to and from JSON-formatted data.
+    """
+
+    queryset = models.OrderDocumentation.objects.all()
+    serializer_class = serializers.OrderDocumentationSerializer
+
+class OrderCommentViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing Order comments in the system.
+
+    The viewset provides default operations for creating, updating and deleting order comments,
+    as well as listing and retrieving Order Comments. It uses the ``OrderCommentSerializer`` class to
+    convert the order comment instances to and from JSON-formatted data.
+
+    Attributes:
+        queryset (QuerySet): A queryset of OrderComment objects that will be used to
+        retrieve and update OrderComment objects.
+
+        serializer_class (OrderCommentSerializer): A serializer class that will be used to
+        convert OrderComment objects to and from JSON-formatted data.
+    """
+
+    queryset = models.OrderComment.objects.all()
+    serializer_class = serializers.OrderCommentSerializer
+
+
+class AdditionalChargeViewSet(OrganizationViewSet):
+    """A viewset for viewing and editing Additional charges in the system.
+
+    The viewset provides default operations for creating, updating and deleting additional charges,
+    as well as listing and retrieving Additional Charges. It uses the ``AdditionalChargeSerializer`` class to
+    convert the additional charge instances to and from JSON-formatted data.
+
+    Attributes:
+        queryset (QuerySet): A queryset of AdditionalCharge objects that will be used to
+        retrieve and update AdditionalCharge objects.
+
+        serializer_class (AdditionalChargeSerializer): A serializer class that will be used to
+        convert AdditionalCharge objects to and from JSON-formatted data.
+    """
+
+    queryset = models.AdditionalCharge.objects.all()
+    serializer_class = serializers.AdditionalChargeSerializer

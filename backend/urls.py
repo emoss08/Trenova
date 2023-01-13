@@ -37,6 +37,7 @@ from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
 from order import api as order_api
+from movements import api as movement_api
 
 router = routers.DefaultRouter()
 
@@ -165,6 +166,12 @@ router.register(
 router.register(
     r"qualifier_codes", stops_api.QualifierCodeViewSet, basename="qualifier-codes"
 )
+router.register(
+    r"stop_comments", stops_api.StopCommentViewSet, basename="stop-comments"
+)
+router.register(
+    r"service_incidents", stops_api.ServiceIncidentViewSet, basename="service-incidents"
+)
 
 # Order Routing
 router.register(
@@ -173,6 +180,20 @@ router.register(
 router.register(r"order_types", order_api.OrderTypeViewSet, basename="order-types")
 router.register(r"reason_codes", order_api.ReasonCodeViewSet, basename="reason-codes")
 router.register(r"orders", order_api.OrderViewSet, basename="orders")
+router.register(
+    r"order_documents", order_api.OrderDocumentationViewSet, basename="order-documents"
+)
+router.register(
+    r"order_comments", order_api.OrderCommentViewSet, basename="order-comments"
+)
+router.register(
+    r"additional_charges", order_api.AdditionalChargeViewSet, basename="additional-charges"
+)
+
+# Movement Routing
+router.register(
+    r"movements", movement_api.MovementViewSet, basename="movements"
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
