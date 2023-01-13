@@ -20,10 +20,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import QuerySet
 
 from commodities import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class HazardousMaterialViewSet(OrganizationViewSet):
+class HazardousMaterialViewSet(OrganizationMixin):
     """A viewset for viewing and editing hazardous materials in the system.
 
     The viewset provides default operations for creating, updating, and deleting hazardous materials,
@@ -43,7 +43,7 @@ class HazardousMaterialViewSet(OrganizationViewSet):
     )
 
 
-class CommodityViewSet(OrganizationViewSet):
+class CommodityViewSet(OrganizationMixin):
     """A viewset for viewing and editing commodities in the system.
 
     The viewset provides default operations for creating, updating, and deleting commodities,

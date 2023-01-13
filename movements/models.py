@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import datetime
+import textwrap
 import uuid
 
 from django.core.exceptions import ValidationError
@@ -107,7 +108,9 @@ class Movement(GenericModel):
         Returns:
             str: String representation of the Movement
         """
-        return f"{self.order} - {self.ref_num}"
+        return textwrap.shorten(
+            f"{self.order} - {self.ref_num}", width=30, placeholder="..."
+        )
 
     @staticmethod
     def set_ref_number() -> str:
@@ -132,8 +135,7 @@ class Movement(GenericModel):
         Raises:
             ValidationError: If the old movement status is in progress, or completed.
         """
-
-        if self.pk:
+        if Movement.objects.filter(pk=self.pk).exists():
             old_status = Movement.objects.get(pk=self.pk).status
 
             if self.status == StatusChoices.NEW and old_status in [
@@ -167,9 +169,9 @@ class Movement(GenericModel):
         """
 
         if (
-                self.status == StatusChoices.IN_PROGRESS
-                and not self.primary_worker
-                and not self.equipment
+            self.status == StatusChoices.IN_PROGRESS
+            and not self.primary_worker
+            and not self.equipment
         ):
             raise ValidationError(
                 {
@@ -198,9 +200,9 @@ class Movement(GenericModel):
         """
 
         if (
-                self.primary_worker
-                and self.secondary_worker
-                and self.primary_worker == self.secondary_worker
+            self.primary_worker
+            and self.secondary_worker
+            and self.primary_worker == self.secondary_worker
         ):
             raise ValidationError(
                 {
@@ -245,9 +247,9 @@ class Movement(GenericModel):
                 )
 
             if (
-                    self.primary_worker.profile.hazmat_expiration_date
-                    and self.primary_worker.profile.hazmat_expiration_date
-                    < datetime.date.today()
+                self.primary_worker.profile.hazmat_expiration_date
+                and self.primary_worker.profile.hazmat_expiration_date
+                < datetime.date.today()
             ):
                 raise ValidationError(
                     {
@@ -277,9 +279,9 @@ class Movement(GenericModel):
             )
             if dispatch_control.regulatory_check:
                 if (
-                        self.primary_worker.profile.license_expiration_date
-                        and self.primary_worker.profile.license_expiration_date
-                        < datetime.date.today()
+                    self.primary_worker.profile.license_expiration_date
+                    and self.primary_worker.profile.license_expiration_date
+                    < datetime.date.today()
                 ):
                     raise ValidationError(
                         {
@@ -291,9 +293,9 @@ class Movement(GenericModel):
                     )
 
                 if (
-                        self.primary_worker.profile.physical_due_date
-                        and self.primary_worker.profile.physical_due_date
-                        < datetime.date.today()
+                    self.primary_worker.profile.physical_due_date
+                    and self.primary_worker.profile.physical_due_date
+                    < datetime.date.today()
                 ):
                     raise ValidationError(
                         {
@@ -305,9 +307,9 @@ class Movement(GenericModel):
                     )
 
                 if (
-                        self.primary_worker.profile.medical_cert_date
-                        and self.primary_worker.profile.medical_cert_date
-                        < datetime.date.today()
+                    self.primary_worker.profile.medical_cert_date
+                    and self.primary_worker.profile.medical_cert_date
+                    < datetime.date.today()
                 ):
                     raise ValidationError(
                         {
@@ -319,8 +321,8 @@ class Movement(GenericModel):
                     )
 
                 if (
-                        self.primary_worker.profile.mvr_due_date
-                        and self.primary_worker.profile.mvr_due_date < datetime.date.today()
+                    self.primary_worker.profile.mvr_due_date
+                    and self.primary_worker.profile.mvr_due_date < datetime.date.today()
                 ):
                     raise ValidationError(
                         {
@@ -353,8 +355,8 @@ class Movement(GenericModel):
             ValidationError: Movement is not valid.
         """
         if (
-                self.status == StatusChoices.IN_PROGRESS
-                and self.stops.filter(status=StatusChoices.NEW).exists()
+            self.status == StatusChoices.IN_PROGRESS
+            and self.stops.filter(status=StatusChoices.NEW).exists()
         ):
             raise ValidationError(
                 {
@@ -367,8 +369,8 @@ class Movement(GenericModel):
                 }
             )
         elif (
-                self.status == StatusChoices.NEW
-                and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
+            self.status == StatusChoices.NEW
+            and self.stops.filter(status=StatusChoices.IN_PROGRESS).exists()
         ):
             raise ValidationError(
                 {
@@ -382,10 +384,10 @@ class Movement(GenericModel):
             )
 
         if (
-                self.status == StatusChoices.COMPLETED
-                and self.stops.filter(
-            status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
-        ).exists()
+            self.status == StatusChoices.COMPLETED
+            and self.stops.filter(
+                status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            ).exists()
         ):
             raise ValidationError(
                 {
@@ -405,12 +407,12 @@ class Movement(GenericModel):
         Returns:
             None
         """
-        # self.validate_primary_worker_regulatory()
-        # # self.validate_movement_statuses()
-        # self.validate_movement_worker()
-        # self.validate_worker_compare()
-        # self.validate_movement_stop_status()
-        # self.validate_worker_commodity()
+        self.validate_primary_worker_regulatory()
+        self.validate_movement_statuses()
+        self.validate_movement_worker()
+        self.validate_worker_compare()
+        self.validate_movement_stop_status()
+        self.validate_worker_commodity()
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement

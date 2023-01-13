@@ -464,7 +464,9 @@ class CustomerContact(GenericModel):
             raise ValidationError(
                 {
                     "email": ValidationError(
-                        _("Payable contact must have an email address. Please Try Again."),
+                        _(
+                            "Payable contact must have an email address. Please Try Again."
+                        ),
                         code="invalid",
                     )
                 }

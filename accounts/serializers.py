@@ -24,21 +24,31 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from accounts import models
+from organization.models import Department
 from utils.serializers import GenericSerializer
 
 
 class VerifyTokenSerializer(serializers.Serializer):
-    """
-    Verify Token Serializer
+    """A serializer for token verification.
+
+    The serializer provides a token field. The token field is used to verify the incoming token
+    from the user. If the given token is valid then the user is given back the token and the user
+    id in the response. Otherwise the user is given an error message.
+
+    Attributes:
+        token (serializers.CharField): The token to be verified.
+
+    Methods:
+        validate(attrs: Any) -> Any: Validate the token.
     """
 
     token = serializers.CharField()
 
     def validate(self, attrs: Any) -> Any:
-        """Validate the token
+        """Validate the token.
 
         Args:
-            attrs (OrderedDict): Attributes
+            attrs (Any): Attributes
 
         Returns:
             dict[str, Any]: Validated attributes
@@ -52,33 +62,50 @@ class VerifyTokenSerializer(serializers.Serializer):
                 "user_id": models.Token.objects.get(key=token).user.id,
             }
         else:
-            raise serializers.ValidationError("Unable to validate given token. Please try again.",
-                                              code="authentication")
+            raise serializers.ValidationError(
+                "Unable to validate given token. Please try again.",
+                code="authentication",
+            )
 
 
-class JobTitleSerializer(serializers.ModelSerializer):
-    """
-    Job Title Serializer
+class JobTitleSerializer(GenericSerializer):
+    """Serializer for the JobTitle model.
+
+    This serializer converts the JobTitle model into a format that
+    can be easily converted to and from JSON, and allows for easy validation
+    of the data.
+
+    Attributes:
+        is_active (serializers.BooleanField): A boolean field representing the
     """
 
     is_active = serializers.BooleanField(required=False, default=True)
 
     class Meta:
         """
-        Metaclass for JobTitleSerializer
+        Metaclass for GeneralLedgerAccountSerializer
+
+        Attributes:
+            model (models.JobTitle): The model that the serializer
+            is for.
+
+            fields (list[str]): The fields that should be included
+            in the serialized representation of the model.
         """
 
         model = models.JobTitle
         fields = ["id", "organization", "name", "description", "is_active"]
 
 
-class UserProfileSerializer(serializers.ModelSerializer):
+class UserProfileSerializer(GenericSerializer):
     """
     User Profile Serializer
     """
 
-    title = serializers.StringRelatedField(  # type: ignore
-        source="job_title", required=False, allow_null=True
+    title = serializers.PrimaryKeyRelatedField(
+        queryset=models.JobTitle.objects.all(),
+        required=False,
+        allow_null=True,
     )
 
     class Meta:
@@ -87,18 +114,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
         """
 
         model = models.UserProfile
-        fields = [
+        extra_fields = ("title",)
+        extra_read_only_fields = (
             "id",
-            "first_name",
-            "last_name",
-            "title",
-            "address_line_1",
-            "address_line_2",
-            "city",
-            "state",
-            "zip_code",
-            "phone",
-        ]
+            "user",
+        )
 
 
 class UserSerializer(GenericSerializer):
@@ -106,6 +126,11 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
+    department = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(),
+        allow_null=True,
+        required=False,
+    )
     profile = UserProfileSerializer(required=False, allow_null=True)
 
     class Meta:
@@ -115,9 +140,8 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = ("groups", "user_permissions")
+        extra_read_only_fields = ("groups", "user_permissions", "password")
         extra_kwargs = {
-            "password": {"write_only": True, "required": False},
             "is_staff": {"read_only": True},
             "is_active": {"read_only": True},
             "date_joined": {"read_only": True},
@@ -137,6 +161,7 @@ class UserSerializer(GenericSerializer):
         organization = super().get_organization
 
         # Popped data (profile)
+        validated_data["organization"] = organization
         profile_data = validated_data.pop("profile", {})
 
         # Create the user

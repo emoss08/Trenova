@@ -103,7 +103,6 @@ class GeneralLedgerAccount(GenericModel):
     account_number = models.CharField(
         _("Account Number"),
         max_length=20,
-        unique=True,
         help_text=_("The account number of the general ledger account."),
         validators=[
             validators.RegexValidator(
@@ -158,6 +157,31 @@ class GeneralLedgerAccount(GenericModel):
         """
         return textwrap.wrap(self.account_number, 20)[0]
 
+    def clean(self) -> None:
+        """General ledger account clean method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If account number is not unique
+        """
+        super().clean()
+
+        if (
+            GeneralLedgerAccount.objects.filter(account_number=self.account_number)
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(
+                {
+                    "account_number": _(
+                        "An account with this account number already exists. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
     def get_absolute_url(self) -> str:
         """GeneralLedgerAccount absolute url
 
@@ -167,6 +191,17 @@ class GeneralLedgerAccount(GenericModel):
         return reverse(
             "accounting:general_ledger_account_detail", kwargs={"pk": self.pk}
         )
+
+    def update_gl_account(self, **kwargs):
+        """Update the worker profile
+
+        Args:
+            **kwargs: Keyword arguments
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class RevenueCode(GenericModel):
@@ -239,20 +274,28 @@ class RevenueCode(GenericModel):
         super().clean()
 
         if (
-                self.expense_account
-                and self.expense_account.account_type
-                != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+            self.expense_account
+            and self.expense_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
-                {"expense_account": _("Entered account is not an expense account.")}
+                {
+                    "expense_account": _(
+                        "Entered account is not an expense account. Please try again."
+                    )
+                }
             )
         if (
-                self.revenue_account
-                and self.revenue_account.account_type
-                != GeneralLedgerAccount.AccountTypeChoices.REVENUE
+            self.revenue_account
+            and self.revenue_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(
-                {"revenue_account": _("Entered account is not a revenue account.")}
+                {
+                    "revenue_account": _(
+                        "Entered account is not a revenue account. Please try again."
+                    )
+                }
             )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
@@ -279,6 +322,21 @@ class RevenueCode(GenericModel):
             str: RevenueCode absolute url
         """
         return reverse("accounting:revenue_code_detail", kwargs={"pk": self.pk})
+
+    def update_revenue_code(self, **kwargs: Any):
+        """Update the revenue code.
+
+        Args:
+            **kwargs: Keyword arguments
+
+        Examples:
+            >>> revenue_code = RevenueCode.objects.get(pk=uuid.uuid4())
+            >>> revenue_code.update_revenue_code(code="1234", description="New Description")
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class DivisionCode(GenericModel):
@@ -363,9 +421,9 @@ class DivisionCode(GenericModel):
         super().clean()
 
         if (
-                self.cash_account
-                and self.cash_account.account_classification
-                != GeneralLedgerAccount.AccountClassificationChoices.CASH
+            self.cash_account
+            and self.cash_account.account_classification
+            != GeneralLedgerAccount.AccountClassificationChoices.CASH
         ):
             raise ValidationError(
                 {
@@ -376,9 +434,9 @@ class DivisionCode(GenericModel):
             )
 
         if (
-                self.expense_account
-                and self.expense_account.account_type
-                != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+            self.expense_account
+            and self.expense_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
                 {
@@ -389,9 +447,9 @@ class DivisionCode(GenericModel):
             )
 
         if (
-                self.ap_account
-                and self.ap_account.account_classification
-                != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+            self.ap_account
+            and self.ap_account.account_classification
+            != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
         ):
             raise ValidationError(
                 {

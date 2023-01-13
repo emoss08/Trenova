@@ -25,7 +25,7 @@ from rest_framework import viewsets
 _M = TypeVar("_M", bound=Model)
 
 
-class OrganizationViewSet(viewsets.ModelViewSet):
+class OrganizationMixin(viewsets.ModelViewSet):
     """
     Organization ViewSet to manage requests to the organization endpoint
     """

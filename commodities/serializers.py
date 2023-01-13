@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any
-
 from rest_framework import serializers
 
 from commodities import models
@@ -60,9 +58,10 @@ class CommoditySerializer(GenericSerializer):
     representation of the `Commodity` model.
     """
 
-    hazmat = HazardousMaterialSerializer(required=False)
-    unit_of_measure = serializers.ChoiceField(
-        models.Commodity.UnitOfMeasureChoices.choices
+    hazmat = serializers.PrimaryKeyRelatedField(
+        queryset=models.HazardousMaterial.objects.all(),
+        allow_null=True,
+        required=False,
     )
 
     class Meta:
@@ -71,55 +70,4 @@ class CommoditySerializer(GenericSerializer):
         """
 
         model = models.Commodity
-        extra_fields = (
-            "hazmat",
-            "unit_of_measure",
-        )
-
-    def create(self, validated_data: Any) -> models.Commodity:
-        """Create a new commodity.
-
-        Args:
-            validated_data (Any): The validated data.
-
-        Returns:
-            models.Commodity: The newly created commodity.
-        """
-
-        # Get the organization from the user if they are using basic auth.
-        organization = super().get_organization
-
-        hazmat_data = validated_data.pop("hazmat", {})
-
-        if hazmat_data:
-            hazmat = models.HazardousMaterial.objects.create(
-                organization=organization, **hazmat_data
-            )
-            validated_data["hazmat"] = hazmat
-
-        commodity = models.Commodity.objects.create(
-            organization=organization, **validated_data
-        )
-        return commodity
-
-    def update(  # type: ignore
-        self, instance: models.Commodity, validated_data: Any
-    ) -> models.Commodity:
-        """Update an existing commodity.
-
-        Args:
-            instance (models.Commodity): The commodity to update.
-            validated_data (Any): The validated data.
-
-        Returns:
-            models.Commodity: The updated commodity.
-        """
-
-        hazmat_data = validated_data.pop("hazmat", {})
-
-        if hazmat_data and instance.hazmat:
-            instance.hazmat.update_hazmat(**hazmat_data)
-
-        instance.update_commodity(**validated_data)
-
-        return instance
+        extra_fields = ("hazmat",)
