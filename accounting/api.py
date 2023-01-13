@@ -63,7 +63,7 @@ class DivisionCodeViewSet(OrganizationMixin):
             QuerySet[models.DivisionCode]: Filtered queryset
         """
         return (
-            self.queryset.filter(organization=self.request.user.organization)   # type: ignore
+            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
             .select_related(
                 "organization",
                 "cash_account",

@@ -163,9 +163,9 @@ class TestDivisionCodeApi(ApiTest):
                 "account_number": "7000-0000-0000-0000",
                 "description": "Foo bar",
                 "account_type": "ASSET",
-                "account_classification": "CASH"
+                "account_classification": "CASH",
             },
-            format="json"
+            format="json",
         )
 
         _response = api_client.post(
@@ -185,7 +185,7 @@ class TestDivisionCodeApi(ApiTest):
                 "code": "foob",
                 "is_active": False,
                 "description": "Another Description",
-                "cash_account": f"{cash_account_data.data['id']}"
+                "cash_account": f"{cash_account_data.data['id']}",
             },
             format="json",
         )

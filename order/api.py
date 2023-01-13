@@ -19,8 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import permissions
 
-from utils.views import OrganizationMixin
 from order import models, serializers
+from utils.views import OrganizationMixin
 
 
 class OrderControlViewSet(OrganizationMixin):
