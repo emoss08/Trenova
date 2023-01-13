@@ -36,3 +36,23 @@ class OrderTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = models.OrderType
+
+class ReasonCodeFactory(factory.django.DjangoModelFactory):
+    """
+    ReasonCode Factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    code_type = factory.Faker(
+        "random_element",
+        elements=("VOIDED", "CANCELLED"),
+    )
+
+    class Meta:
+        """
+        Metaclass for ReasonCodeFactory
+        """
+
+        model = models.ReasonCode
