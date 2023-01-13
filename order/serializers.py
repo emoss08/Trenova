@@ -137,11 +137,11 @@ class OrderSerializer(GenericSerializer):
 
     order_type = serializers.PrimaryKeyRelatedField(
         queryset=models.OrderType.objects.all(),
-        allow_null=True,
     )
     revenue_code = serializers.PrimaryKeyRelatedField(
         queryset=RevenueCode.objects.all(),
         allow_null=True,
+        required=False,
     )
     origin_location = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.all(),
@@ -158,7 +158,9 @@ class OrderSerializer(GenericSerializer):
         queryset=EquipmentType.objects.all()
     )
     commodity = serializers.PrimaryKeyRelatedField(
-        queryset=Commodity.objects.all(), allow_null=True
+        queryset=Commodity.objects.all(),
+        allow_null=True,
+        required=False,
     )
     entered_by = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
@@ -166,11 +168,13 @@ class OrderSerializer(GenericSerializer):
     hazmat = serializers.PrimaryKeyRelatedField(
         queryset=HazardousMaterial.objects.all(),
         allow_null=True,
+        required=False,
     )
     movements = serializers.PrimaryKeyRelatedField(
         queryset=Movement.objects.all(),
         many=True,
         allow_null=True,
+        required=False,
     )
 
     class Meta:
