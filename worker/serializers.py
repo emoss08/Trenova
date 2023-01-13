@@ -79,7 +79,7 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
-    depot = serializers.PrimaryKeyRelatedField(
+    depot = serializers.PrimaryKeyRelatedField(  # type: ignore
         queryset=Depot.objects.all(),
         allow_null=True,
     )
