@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2022 MONTA
+COPYRIGHT(c) 2022 MONTA
 
 This file is part of Monta.
 
@@ -30,6 +30,8 @@ class OrderControlViewSet(OrganizationViewSet):
     as well as listing and retrieving Order Control. It uses the ``OrderControlSerializer`` class to
     convert the order control instance to and from JSON-formatted data.
 
+    Only admin users are allowed to access the views provided by this viewset.
+
     Attributes:
         queryset (QuerySet): A queryset of OrderControl objects that will be used to
         retrieve and update OrderControl objects.
@@ -53,6 +55,9 @@ class OrderTypeViewSet(OrganizationViewSet):
     as well as listing and retrieving Order Types. It uses the ``OrderTypesSerializer`` class to
     convert the order type instances to and from JSON-formatted data.
 
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by order type by is_active.
+
     Attributes:
         queryset (QuerySet): A queryset of OrderType objects that will be used to
         retrieve and update OrderType objects.
@@ -63,6 +68,7 @@ class OrderTypeViewSet(OrganizationViewSet):
 
     queryset = models.OrderType.objects.all()
     serializer_class = serializers.OrderTypeSerializer
+    filterset_fields = ("is_active",)
 
 
 class ReasonCodeViewSet(OrganizationViewSet):
@@ -71,6 +77,9 @@ class ReasonCodeViewSet(OrganizationViewSet):
     The viewset provides default operations for creating, updating and deleting reason codes,
     as well as listing and retrieving Reason Codes. It uses the ``ReasonCodeSerializer`` class to
     convert the reason code instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by order type by is_active.
 
     Attributes:
         queryset (QuerySet): A queryset of OrderType objects that will be used to
@@ -91,6 +100,12 @@ class OrderViewSet(OrganizationViewSet):
     as well as listing and retrieving Orders. It uses the ``OrderSerializer`` class to
     convert the order instances to and from JSON-formatted data.
 
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by order type by order_type,
+    revenue_code, customer, transferred_to_billing, equipment_type, commodity, entered_by
+    and hazmat.
+
+
     Attributes:
         queryset (QuerySet): A queryset of Order objects that will be used to
         retrieve and update Order objects.
@@ -101,6 +116,16 @@ class OrderViewSet(OrganizationViewSet):
 
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
+    filterset_fields = (
+        "order_type",
+        "revenue_code",
+        "customer",
+        "transferred_to_billing",
+        "equipment_type",
+        "commodity",
+        "entered_by",
+        "hazmat",
+    )
 
 class OrderDocumentationViewSet(OrganizationViewSet):
     """A viewset for viewing and editing Order documentation in the system.
@@ -127,6 +152,9 @@ class OrderCommentViewSet(OrganizationViewSet):
     as well as listing and retrieving Order Comments. It uses the ``OrderCommentSerializer`` class to
     convert the order comment instances to and from JSON-formatted data.
 
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by order type by order_type, and entered_by.
+
     Attributes:
         queryset (QuerySet): A queryset of OrderComment objects that will be used to
         retrieve and update OrderComment objects.
@@ -137,14 +165,17 @@ class OrderCommentViewSet(OrganizationViewSet):
 
     queryset = models.OrderComment.objects.all()
     serializer_class = serializers.OrderCommentSerializer
-
+    filterset_fields = ("comment_type", "entered_by",)
 
 class AdditionalChargeViewSet(OrganizationViewSet):
     """A viewset for viewing and editing Additional charges in the system.
 
     The viewset provides default operations for creating, updating and deleting additional charges,
-    as well as listing and retrieving Additional Charges. It uses the ``AdditionalChargeSerializer`` class to
-    convert the additional charge instances to and from JSON-formatted data.
+    as well as listing and retrieving Additional Charges. It uses the ``AdditionalChargeSerializer``
+    class to convert the additional charge instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by order type by charge, and entered_by.
 
     Attributes:
         queryset (QuerySet): A queryset of AdditionalCharge objects that will be used to
@@ -156,3 +187,4 @@ class AdditionalChargeViewSet(OrganizationViewSet):
 
     queryset = models.AdditionalCharge.objects.all()
     serializer_class = serializers.AdditionalChargeSerializer
+    filterset_fields = ("charge", "entered_by",)
