@@ -127,6 +127,7 @@ class OrderViewSet(OrganizationMixin):
         "hazmat",
     )
 
+
 class OrderDocumentationViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order documentation in the system.
 
@@ -144,6 +145,7 @@ class OrderDocumentationViewSet(OrganizationMixin):
 
     queryset = models.OrderDocumentation.objects.all()
     serializer_class = serializers.OrderDocumentationSerializer
+
 
 class OrderCommentViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order comments in the system.
@@ -165,7 +167,11 @@ class OrderCommentViewSet(OrganizationMixin):
 
     queryset = models.OrderComment.objects.all()
     serializer_class = serializers.OrderCommentSerializer
-    filterset_fields = ("comment_type", "entered_by",)
+    filterset_fields = (
+        "comment_type",
+        "entered_by",
+    )
+
 
 class AdditionalChargeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Additional charges in the system.
@@ -187,4 +193,7 @@ class AdditionalChargeViewSet(OrganizationMixin):
 
     queryset = models.AdditionalCharge.objects.all()
     serializer_class = serializers.AdditionalChargeSerializer
-    filterset_fields = ("charge", "entered_by",)
+    filterset_fields = (
+        "charge",
+        "entered_by",
+    )

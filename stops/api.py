@@ -73,7 +73,8 @@ class StopViewSet(OrganizationMixin):
     queryset = models.Stop.objects.all()
     serializer_class = serializers.StopSerializer
 
-class ServiceIncidentViewSet(OrganizationMixin):
+
+class ServiceIncidentViewSet(OrganizationViewSet):
     """A viewset for viewing and editing ServiceIncident information in the system.
 
     The viewset provides default operations for creating, updating and deleting service incidents,

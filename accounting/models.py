@@ -178,7 +178,8 @@ class GeneralLedgerAccount(GenericModel):
                     "account_number": _(
                         "An account with this account number already exists. Please try again."
                     )
-                }, code="invalid",
+                },
+                code="invalid",
             )
 
     def get_absolute_url(self) -> str:
@@ -278,7 +279,11 @@ class RevenueCode(GenericModel):
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
-                {"expense_account": _("Entered account is not an expense account. Please try again.")}
+                {
+                    "expense_account": _(
+                        "Entered account is not an expense account. Please try again."
+                    )
+                }
             )
         if (
             self.revenue_account
@@ -286,7 +291,11 @@ class RevenueCode(GenericModel):
             != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(
-                {"revenue_account": _("Entered account is not a revenue account. Please try again.")}
+                {
+                    "revenue_account": _(
+                        "Entered account is not a revenue account. Please try again."
+                    )
+                }
             )
 
     def save(self, *args: Any, **kwargs: Any) -> None:

@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 
 from dispatch import models, serializers
@@ -93,5 +92,6 @@ class DispatchControlViewSet(OrganizationMixin):
     queryset = models.DispatchControl.objects.all()
     serializer_class = serializers.DispatchControlSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
 
 # TODO: Write comment type serializer
