@@ -139,7 +139,6 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = (
         extra_kwargs = {
             "is_staff": {"read_only": True},
             "is_active": {"read_only": True},
