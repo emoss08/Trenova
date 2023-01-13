@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from movements import serializers, models
-from organization.api import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class MovementViewSet(OrganizationViewSet):
+class MovementViewSet(OrganizationMixin):
     """A viewset for viewing and editing Movement information in the system.
 
     The viewset provides default operations for creating, updating and deleting movements,

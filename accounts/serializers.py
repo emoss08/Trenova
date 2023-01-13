@@ -103,7 +103,9 @@ class UserProfileSerializer(GenericSerializer):
     """
 
     title = serializers.PrimaryKeyRelatedField(
-        queryset=models.JobTitle.objects.all(), required=False
+        queryset=models.JobTitle.objects.all(),
+        required=False,
+        allow_null=True,
     )
 
     class Meta:
@@ -125,7 +127,9 @@ class UserSerializer(GenericSerializer):
     """
 
     department = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(), allow_null=True,
+        queryset=Department.objects.all(),
+        allow_null=True,
+        required=False,
     )
     profile = UserProfileSerializer(required=False, allow_null=True)
 
@@ -136,9 +140,8 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = ("groups", "user_permissions",)
+        extra_read_only_fields = ("groups", "user_permissions", "password")
         extra_kwargs = {
-            "password": {"write_only": True},
             "is_staff": {"read_only": True},
             "is_active": {"read_only": True},
             "date_joined": {"read_only": True},

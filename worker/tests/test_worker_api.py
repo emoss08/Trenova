@@ -23,8 +23,6 @@ from dispatch.factories import CommentTypeFactory
 from utils.tests import ApiTest
 from worker.factories import WorkerFactory
 
-pytestmark = pytest.mark.django_db
-
 
 class TestWorkerApi(ApiTest):
     """

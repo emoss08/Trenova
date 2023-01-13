@@ -19,11 +19,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import permissions
 
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 from order import models, serializers
 
 
-class OrderControlViewSet(OrganizationViewSet):
+class OrderControlViewSet(OrganizationMixin):
     """A viewset for viewing and editing OrderControl in the system.
 
     The viewset provides default operations for creating, updating Order Control,
@@ -48,7 +48,7 @@ class OrderControlViewSet(OrganizationViewSet):
     serializer_class = serializers.OrderControlSerializer
 
 
-class OrderTypeViewSet(OrganizationViewSet):
+class OrderTypeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order types in the system.
 
     The viewset provides default operations for creating, updating and deleting order types,
@@ -71,7 +71,7 @@ class OrderTypeViewSet(OrganizationViewSet):
     filterset_fields = ("is_active",)
 
 
-class ReasonCodeViewSet(OrganizationViewSet):
+class ReasonCodeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Reason codes in the system.
 
     The viewset provides default operations for creating, updating and deleting reason codes,
@@ -93,7 +93,7 @@ class ReasonCodeViewSet(OrganizationViewSet):
     serializer_class = serializers.ReasonCodeSerializer
 
 
-class OrderViewSet(OrganizationViewSet):
+class OrderViewSet(OrganizationMixin):
     """A viewset for viewing and editing Orders in the system.
 
     The viewset provides default operations for creating, updating and deleting orders,
@@ -127,7 +127,7 @@ class OrderViewSet(OrganizationViewSet):
         "hazmat",
     )
 
-class OrderDocumentationViewSet(OrganizationViewSet):
+class OrderDocumentationViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order documentation in the system.
 
     The viewset provides default operations for creating, updating and deleting order documentation,
@@ -145,7 +145,7 @@ class OrderDocumentationViewSet(OrganizationViewSet):
     queryset = models.OrderDocumentation.objects.all()
     serializer_class = serializers.OrderDocumentationSerializer
 
-class OrderCommentViewSet(OrganizationViewSet):
+class OrderCommentViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order comments in the system.
 
     The viewset provides default operations for creating, updating and deleting order comments,
@@ -167,7 +167,7 @@ class OrderCommentViewSet(OrganizationViewSet):
     serializer_class = serializers.OrderCommentSerializer
     filterset_fields = ("comment_type", "entered_by",)
 
-class AdditionalChargeViewSet(OrganizationViewSet):
+class AdditionalChargeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Additional charges in the system.
 
     The viewset provides default operations for creating, updating and deleting additional charges,

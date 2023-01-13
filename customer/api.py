@@ -20,10 +20,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import QuerySet
 
 from customer import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class CustomerViewSet(OrganizationViewSet):
+class CustomerViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -63,7 +63,7 @@ class CustomerViewSet(OrganizationViewSet):
         )
 
 
-class CustomerBillingProfileViewSet(OrganizationViewSet):
+class CustomerBillingProfileViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer billing profile information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customer
@@ -81,7 +81,7 @@ class CustomerBillingProfileViewSet(OrganizationViewSet):
     filterset_fields = ("is_active", "customer", "rule_profile")
 
 
-class CustomerFuelTableViewSet(OrganizationViewSet):
+class CustomerFuelTableViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer fuel table information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customer
@@ -118,7 +118,7 @@ class CustomerFuelTableViewSet(OrganizationViewSet):
         )
 
 
-class CustomerRuleProfileViewSet(OrganizationViewSet):
+class CustomerRuleProfileViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer rule profile information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customer

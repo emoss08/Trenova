@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from django.db.models import QuerySet
-from rest_framework import permissions, viewsets
+from rest_framework import viewsets
 
 from organization import models, serializers
 

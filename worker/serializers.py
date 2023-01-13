@@ -79,14 +79,20 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
-    depot = serializers.PrimaryKeyRelatedField(
-        queryset=Depot.objects.all(), allow_null=True,
+    depot = serializers.PrimaryKeyRelatedField(  # type: ignore
+        queryset=Depot.objects.all(),
+        allow_null=True,
+        required=False,
     )
     manager = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), allow_null=True,
+        queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
     )
     entered_by = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), allow_null=True,
+        queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
     )
     is_active = serializers.BooleanField(default=True)
     profile = WorkerProfileSerializer(required=False)

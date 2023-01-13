@@ -76,8 +76,11 @@ class OrganizationSerializer(serializers.ModelSerializer):
     Organization Serializer
     """
 
-    depots = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=models.Depot.objects.all()
+    depots = serializers.PrimaryKeyRelatedField(  # type: ignore
+        many=True,
+        queryset=models.Depot.objects.all(),
+        required=False,
+        allow_null=True,
     )
 
     class Meta:

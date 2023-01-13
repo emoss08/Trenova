@@ -51,14 +51,17 @@ class MovementSerializer(GenericSerializer):
     equipment = serializers.PrimaryKeyRelatedField(
         queryset=Equipment.objects.all(),
         allow_null=True,
+        required=False,
     )
     primary_worker = serializers.PrimaryKeyRelatedField(
         queryset=Worker.objects.all(),
         allow_null=True,
+        required=False,
     )
     secondary_worker = serializers.PrimaryKeyRelatedField(
         queryset=Worker.objects.all(),
         allow_null=True,
+        required=False,
     )
 
     class Meta:

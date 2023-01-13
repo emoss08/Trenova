@@ -19,26 +19,26 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.db.models import QuerySet
 
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 from worker import models, serializers
 
 
-class WorkerCommentViewSet(OrganizationViewSet):
+class WorkerCommentViewSet(OrganizationMixin):
     queryset = models.WorkerComment.objects.all()
     serializer_class = serializers.WorkerCommentSerializer
 
 
-class WorkerContactViewSet(OrganizationViewSet):
+class WorkerContactViewSet(OrganizationMixin):
     queryset = models.WorkerContact.objects.all()
     serializer_class = serializers.WorkerContactSerializer
 
 
-class WorkerProfileViewSet(OrganizationViewSet):
+class WorkerProfileViewSet(OrganizationMixin):
     queryset = models.WorkerProfile.objects.all()
     serializer_class = serializers.WorkerProfileSerializer
 
 
-class WorkerViewSet(OrganizationViewSet):
+class WorkerViewSet(OrganizationMixin):
     """A viewset for viewing and editing workers in the system.
 
     The viewset provides default operations for creating, updating, and deleting workers,

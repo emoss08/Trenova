@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from stops import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class QualifierCodeViewSet(OrganizationViewSet):
+class QualifierCodeViewSet(OrganizationMixin):
     """A viewset for viewing and editing QualifierCode information in the system.
 
     The viewset provides default operations for creating, updating and deleting routes,
@@ -38,7 +38,7 @@ class QualifierCodeViewSet(OrganizationViewSet):
     queryset = models.QualifierCode.objects.all()
     serializer_class = serializers.QualifierCodeSerializer
 
-class StopCommentViewSet(OrganizationViewSet):
+class StopCommentViewSet(OrganizationMixin):
     """A viewset for viewing and editing StopComment information in the system.
 
     The viewset provides default operations for creating, updating and deleting stop comments,
@@ -56,7 +56,7 @@ class StopCommentViewSet(OrganizationViewSet):
     serializer_class = serializers.StopCommentSerializer
 
 
-class StopViewSet(OrganizationViewSet):
+class StopViewSet(OrganizationMixin):
     """A viewset for viewing and editing Stop information in the system.
 
     The viewset provides default operations for creating, updating and deleting stops,
@@ -73,7 +73,7 @@ class StopViewSet(OrganizationViewSet):
     queryset = models.Stop.objects.all()
     serializer_class = serializers.StopSerializer
 
-class ServiceIncidentViewSet(OrganizationViewSet):
+class ServiceIncidentViewSet(OrganizationMixin):
     """A viewset for viewing and editing ServiceIncident information in the system.
 
     The viewset provides default operations for creating, updating and deleting service incidents,

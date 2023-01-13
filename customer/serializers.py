@@ -214,10 +214,12 @@ class CustomerBillingProfileSerializer(GenericSerializer):
     email_profile = serializers.PrimaryKeyRelatedField(
         queryset=models.CustomerEmailProfile.objects.all(),
         allow_null=True,
+        required=False,
     )
     rule_profile = serializers.PrimaryKeyRelatedField(
         queryset=models.CustomerRuleProfile.objects.all(),
         allow_null=True,
+        required=False,
     )
 
     class Meta:
@@ -242,12 +244,15 @@ class CustomerSerializer(GenericSerializer):
     """
 
     billing_profile = serializers.PrimaryKeyRelatedField(
-        queryset=models.CustomerBillingProfile.objects.all(), allow_null=True
+        queryset=models.CustomerBillingProfile.objects.all(),
+        allow_null=True,
+        required=False,
     )
     contacts = serializers.PrimaryKeyRelatedField(
         queryset=models.CustomerContact.objects.all(),
         many=True,
         allow_null=True,
+        required=False,
     )
     class Meta:
         """

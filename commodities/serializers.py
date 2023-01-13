@@ -59,7 +59,9 @@ class CommoditySerializer(GenericSerializer):
     """
 
     hazmat = serializers.PrimaryKeyRelatedField(
-        queryset=models.HazardousMaterial.objects.all(), allow_null=True
+        queryset=models.HazardousMaterial.objects.all(),
+        allow_null=True,
+        required=False,
     )
 
     class Meta:

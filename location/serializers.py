@@ -82,16 +82,19 @@ class LocationSerializer(GenericSerializer):
     location_category = serializers.PrimaryKeyRelatedField(
         queryset=models.LocationCategory.objects.all(),
         allow_null=True,
+        required=False,
     )
     location_contacts = serializers.PrimaryKeyRelatedField(
         queryset=models.LocationContact.objects.all(),
         many=True,
         allow_null=True,
+        required=False,
     )
     location_comments = serializers.PrimaryKeyRelatedField(
         queryset=models.LocationComment.objects.all(),
         many=True,
         allow_null=True,
+        required=False,
     )
 
     class Meta:

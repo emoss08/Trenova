@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from billing import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class ChargeTypeViewSet(OrganizationViewSet):
+class ChargeTypeViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing charge types in the system.
 
@@ -38,7 +38,7 @@ class ChargeTypeViewSet(OrganizationViewSet):
     filterset_fields = ("name",)
 
 
-class AccessorialChargeViewSet(OrganizationViewSet):
+class AccessorialChargeViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing accessorial charges in the system.
 
@@ -57,7 +57,7 @@ class AccessorialChargeViewSet(OrganizationViewSet):
     filterset_fields = ("code", "is_detention", "method")
 
 
-class DocumentClassificationViewSet(OrganizationViewSet):
+class DocumentClassificationViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing document classifications in the system.
 

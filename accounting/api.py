@@ -20,10 +20,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import QuerySet
 
 from accounting import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class GeneralLedgerAccountViewSet(OrganizationViewSet):
+class GeneralLedgerAccountViewSet(OrganizationMixin):
     """
     General Ledger Account ViewSet
     """
@@ -37,7 +37,7 @@ class GeneralLedgerAccountViewSet(OrganizationViewSet):
     ]
 
 
-class RevenueCodeViewSet(OrganizationViewSet):
+class RevenueCodeViewSet(OrganizationMixin):
     """
     Revenue Code ViewSet
     """
@@ -47,7 +47,7 @@ class RevenueCodeViewSet(OrganizationViewSet):
     filterset_fields = ["code"]
 
 
-class DivisionCodeViewSet(OrganizationViewSet):
+class DivisionCodeViewSet(OrganizationMixin):
     """
     Division Code ViewSet
     """
@@ -63,8 +63,8 @@ class DivisionCodeViewSet(OrganizationViewSet):
             QuerySet[models.DivisionCode]: Filtered queryset
         """
         return (
-            self.queryset.filter(organization=self.request.user.organization)
-            .select_related(  # type: ignore
+            self.queryset.filter(organization=self.request.user.organization)   # type: ignore
+            .select_related(
                 "organization",
                 "cash_account",
                 "ap_account",

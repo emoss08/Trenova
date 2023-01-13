@@ -144,7 +144,6 @@ class TestDivisionCodeApi(ApiTest):
             },
             format="json",
         )
-
         response = api_client.get(f"/api/division_codes/{_response.data['id']}/")
 
         assert response.status_code == 200
@@ -156,6 +155,18 @@ class TestDivisionCodeApi(ApiTest):
         """
         Test put Division Code
         """
+
+        cash_account_data = api_client.post(
+            "/api/gl_accounts/",
+            {
+                "is_active": True,
+                "account_number": "7000-0000-0000-0000",
+                "description": "Foo bar",
+                "account_type": "ASSET",
+                "account_classification": "CASH"
+            },
+            format="json"
+        )
 
         _response = api_client.post(
             "/api/division_codes/",
@@ -170,7 +181,12 @@ class TestDivisionCodeApi(ApiTest):
 
         response = api_client.put(
             f"/api/division_codes/{_response.data['id']}/",
-            {"code": "foob", "is_active": False, "description": "Another Description"},
+            {
+                "code": "foob",
+                "is_active": False,
+                "description": "Another Description",
+                "cash_account": f"{cash_account_data.data['id']}"
+            },
             format="json",
         )
 
