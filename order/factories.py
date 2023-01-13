@@ -56,3 +56,26 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = models.ReasonCode
+
+class OrderFactory(factory.django.DjangoModelFactory):
+    """
+    Order Factory
+    """
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    order_type = factory.SubFactory(OrderTypeFactory)
+    status = "N"
+    revenue_code = factory.SubFactory("accounting.tests.factories.RevenueCodeFactory")
+    origin_location = factory.SubFactory("location.factories.LocationFactory")
+    origin_appointment = factory.Faker("date_time", locale="en_US")
+    destination_location = factory.SubFactory("location.factories.LocationFactory")
+    destination_appointment = factory.Faker("date_time", locale="en_US")
+    customer = factory.SubFactory("customer.factories.CustomerFactory")
+    equipment_type = factory.SubFactory("equipment.tests.factories.EquipmentTypeFactory")
+    bol_number = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+    class Meta:
+        """
+        Metaclass for orderFactory
+        """
+
+        model = models.Order
