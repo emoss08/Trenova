@@ -125,7 +125,8 @@ class UserSerializer(GenericSerializer):
     """
 
     department = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(), allow_null=True,
+        queryset=Department.objects.all(),
+        allow_null=True,
     )
     profile = UserProfileSerializer(required=False, allow_null=True)
 
@@ -136,7 +137,10 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = ("groups", "user_permissions",)
+        extra_read_only_fields = (
+            "groups",
+            "user_permissions",
+        )
         extra_kwargs = {
             "password": {"write_only": True},
             "is_staff": {"read_only": True},

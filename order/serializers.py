@@ -21,15 +21,15 @@ from rest_framework import serializers
 
 from accounting.models import RevenueCode
 from accounts.models import User
-from billing.models import DocumentClassification, AccessorialCharge
+from billing.models import AccessorialCharge, DocumentClassification
 from commodities.models import Commodity, HazardousMaterial
 from customer.models import Customer
 from dispatch.models import CommentType
 from equipment.models import EquipmentType
 from location.models import Location
 from movements.models import Movement
-from utils.serializers import GenericSerializer
 from order import models
+from utils.serializers import GenericSerializer
 
 
 class OrderControlSerializer(GenericSerializer):
@@ -196,6 +196,7 @@ class OrderSerializer(GenericSerializer):
             "movements",
         )
 
+
 class OrderDocumentationSerializer(GenericSerializer):
     """A serializer for the `OrderDocumentation` model.
 
@@ -229,6 +230,7 @@ class OrderDocumentationSerializer(GenericSerializer):
 
         model = models.OrderDocumentation
         extra_fields = ("order", "document_class")
+
 
 class OrderCommentSerializer(GenericSerializer):
     """A serializer for the `OrderComment` model.

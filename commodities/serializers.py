@@ -68,6 +68,4 @@ class CommoditySerializer(GenericSerializer):
         """
 
         model = models.Commodity
-        extra_fields = (
-            "hazmat",
-        )
+        extra_fields = ("hazmat",)

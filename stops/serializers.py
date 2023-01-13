@@ -130,10 +130,8 @@ class ServiceIncidentSerializer(GenericSerializer):
         queryset=models.Stop.objects.all(),
     )
     delay_code = serializers.PrimaryKeyRelatedField(
-        queryset=DelayCode.objects.all(),
-        allow_null=True
+        queryset=DelayCode.objects.all(), allow_null=True
     )
-
 
     class Meta:
         """Metaclass for the `ServiceIncidentSerializer` class
@@ -143,6 +141,7 @@ class ServiceIncidentSerializer(GenericSerializer):
             extra_fields (tuple): A tuple of extra fields that should be included
             in the serialized representation of the model.
         """
+
         model = models.ServiceIncident
         extra_fields = (
             "movement",

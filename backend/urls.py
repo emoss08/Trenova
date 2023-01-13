@@ -32,12 +32,12 @@ from dispatch import api as dispatch_api
 from equipment import api as equipment_api
 from integration import api as integration_api
 from location import api as location_api
+from movements import api as movement_api
+from order import api as order_api
 from organization import api as org_api
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
-from order import api as order_api
-from movements import api as movement_api
 
 router = routers.DefaultRouter()
 
@@ -120,7 +120,7 @@ router.register(
 router.register(
     r"customer_billing_profiles",
     customer_api.CustomerBillingProfileViewSet,
-    basename="customer-billing-profiles"
+    basename="customer-billing-profiles",
 )
 
 
@@ -187,13 +187,13 @@ router.register(
     r"order_comments", order_api.OrderCommentViewSet, basename="order-comments"
 )
 router.register(
-    r"additional_charges", order_api.AdditionalChargeViewSet, basename="additional-charges"
+    r"additional_charges",
+    order_api.AdditionalChargeViewSet,
+    basename="additional-charges",
 )
 
 # Movement Routing
-router.register(
-    r"movements", movement_api.MovementViewSet, basename="movements"
-)
+router.register(r"movements", movement_api.MovementViewSet, basename="movements")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

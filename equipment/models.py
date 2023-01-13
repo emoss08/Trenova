@@ -586,7 +586,11 @@ class EquipmentMaintenancePlan(GenericModel):
 
         if self.by_time and not self.months:
             raise ValidationError(
-                {"months": _("Months must be set if the maintenance plan is by time. Please try again.")}
+                {
+                    "months": _(
+                        "Months must be set if the maintenance plan is by time. Please try again."
+                    )
+                }
             )
 
         if self.by_engine_hours and not self.engine_hours:

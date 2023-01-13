@@ -19,8 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import permissions
 
-from utils.views import OrganizationViewSet
 from order import models, serializers
+from utils.views import OrganizationViewSet
 
 
 class OrderControlViewSet(OrganizationViewSet):
@@ -127,6 +127,7 @@ class OrderViewSet(OrganizationViewSet):
         "hazmat",
     )
 
+
 class OrderDocumentationViewSet(OrganizationViewSet):
     """A viewset for viewing and editing Order documentation in the system.
 
@@ -144,6 +145,7 @@ class OrderDocumentationViewSet(OrganizationViewSet):
 
     queryset = models.OrderDocumentation.objects.all()
     serializer_class = serializers.OrderDocumentationSerializer
+
 
 class OrderCommentViewSet(OrganizationViewSet):
     """A viewset for viewing and editing Order comments in the system.
@@ -165,7 +167,11 @@ class OrderCommentViewSet(OrganizationViewSet):
 
     queryset = models.OrderComment.objects.all()
     serializer_class = serializers.OrderCommentSerializer
-    filterset_fields = ("comment_type", "entered_by",)
+    filterset_fields = (
+        "comment_type",
+        "entered_by",
+    )
+
 
 class AdditionalChargeViewSet(OrganizationViewSet):
     """A viewset for viewing and editing Additional charges in the system.
@@ -187,4 +193,7 @@ class AdditionalChargeViewSet(OrganizationViewSet):
 
     queryset = models.AdditionalCharge.objects.all()
     serializer_class = serializers.AdditionalChargeSerializer
-    filterset_fields = ("charge", "entered_by",)
+    filterset_fields = (
+        "charge",
+        "entered_by",
+    )

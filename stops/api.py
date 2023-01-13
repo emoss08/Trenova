@@ -38,6 +38,7 @@ class QualifierCodeViewSet(OrganizationViewSet):
     queryset = models.QualifierCode.objects.all()
     serializer_class = serializers.QualifierCodeSerializer
 
+
 class StopCommentViewSet(OrganizationViewSet):
     """A viewset for viewing and editing StopComment information in the system.
 
@@ -72,6 +73,7 @@ class StopViewSet(OrganizationViewSet):
 
     queryset = models.Stop.objects.all()
     serializer_class = serializers.StopSerializer
+
 
 class ServiceIncidentViewSet(OrganizationViewSet):
     """A viewset for viewing and editing ServiceIncident information in the system.
