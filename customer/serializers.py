@@ -18,12 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from typing import Any, TypeAlias
-from uuid import UUID
 
 from rest_framework import serializers
 
 from billing.models import DocumentClassification
-from billing.serializers import DocumentClassificationSerializer
 from customer import models
 from utils.serializers import GenericSerializer
 
@@ -126,7 +124,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         extra_fields = ("customer_fuel_table_details",)
 
     def update(  # type: ignore
-            self, instance: models.CustomerFuelTable, validated_data: Any
+        self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
         """Update a customer fuel table.
 
@@ -254,6 +252,7 @@ class CustomerSerializer(GenericSerializer):
         allow_null=True,
         required=False,
     )
+
     class Meta:
         """
         A class representing the metadata for the `CustomerSerializer` class.
