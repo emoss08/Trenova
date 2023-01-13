@@ -278,7 +278,7 @@ class RevenueCode(GenericModel):
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             raise ValidationError(
-                {"expense_account": _("Entered account is not an expense account.")}
+                {"expense_account": _("Entered account is not an expense account. Please try again.")}
             )
         if (
             self.revenue_account
@@ -286,7 +286,7 @@ class RevenueCode(GenericModel):
             != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             raise ValidationError(
-                {"revenue_account": _("Entered account is not a revenue account.")}
+                {"revenue_account": _("Entered account is not a revenue account. Please try again.")}
             )
 
     def save(self, *args: Any, **kwargs: Any) -> None:

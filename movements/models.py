@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import datetime
+import textwrap
 import uuid
 
 from django.core.exceptions import ValidationError
@@ -107,7 +108,7 @@ class Movement(GenericModel):
         Returns:
             str: String representation of the Movement
         """
-        return f"{self.order} - {self.ref_num}"
+        return textwrap.shorten(f"{self.order} - {self.ref_num}", width=30, placeholder="...")
 
     @staticmethod
     def set_ref_number() -> str:
