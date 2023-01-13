@@ -29,7 +29,6 @@ class QualifierCodeViewSet(OrganizationViewSet):
     convert the route instances and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filter is also available, with the ability to filter by id, origin and destination.
 
     Attributes:
         queryset (models.QualifierCode): The queryset of the viewset.
@@ -47,7 +46,6 @@ class StopCommentViewSet(OrganizationViewSet):
     convert the stop comment instances and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filter is also available, with the ability to filter by id, origin and destination.
 
     Attributes:
         queryset (models.StopComment): The queryset of the viewset.
@@ -66,7 +64,6 @@ class StopViewSet(OrganizationViewSet):
     convert the stop instances and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filter is also available, with the ability to filter by id, origin and destination.
 
     Attributes:
         queryset (models.Stop): The queryset of the viewset.
@@ -76,7 +73,6 @@ class StopViewSet(OrganizationViewSet):
     queryset = models.Stop.objects.all()
     serializer_class = serializers.StopSerializer
 
-
 class ServiceIncidentViewSet(OrganizationViewSet):
     """A viewset for viewing and editing ServiceIncident information in the system.
 
@@ -85,7 +81,7 @@ class ServiceIncidentViewSet(OrganizationViewSet):
     convert the service incident instances and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filter is also available, with the ability to filter by id, origin and destination.
+    Filter is also available, with the ability to filter by delay_code.
 
     Attributes:
         queryset (models.ServiceIncident): The queryset of the viewset.
@@ -94,3 +90,4 @@ class ServiceIncidentViewSet(OrganizationViewSet):
 
     queryset = models.ServiceIncident.objects.all()
     serializer_class = serializers.ServiceIncidentSerializer
+    filterset_fields = ("delay_code",)

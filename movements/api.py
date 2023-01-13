@@ -29,7 +29,8 @@ class MovementViewSet(OrganizationViewSet):
     convert the movement instances and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filter is also available, with the ability to filter by id, origin and destination.
+    Filter is also available, with the ability to filter by equipment, primary_worker and
+    secondary_worker.
 
     Attributes:
         queryset (models.Movement): The queryset of the viewset.
@@ -38,3 +39,8 @@ class MovementViewSet(OrganizationViewSet):
 
     queryset = models.Movement.objects.all()
     serializer_class = serializers.MovementSerializer
+    filterset_fields = (
+        "equipment",
+        "primary_worker",
+        "secondary_worker",
+    )
