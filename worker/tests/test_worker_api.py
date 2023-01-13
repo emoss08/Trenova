@@ -121,6 +121,7 @@ class TestWorkerApi(ApiTest):
             },
             format="json",
         )
+
         assert response.status_code == 201
         assert response.data is not None
         assert response.data["is_active"] is True

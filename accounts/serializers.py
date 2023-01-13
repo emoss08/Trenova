@@ -68,7 +68,7 @@ class VerifyTokenSerializer(serializers.Serializer):
             )
 
 
-class JobTitleSerializer(serializers.ModelSerializer):
+class JobTitleSerializer(GenericSerializer):
     """Serializer for the JobTitle model.
 
     This serializer converts the JobTitle model into a format that
@@ -129,6 +129,7 @@ class UserSerializer(GenericSerializer):
     department = serializers.PrimaryKeyRelatedField(
         queryset=Department.objects.all(),
         allow_null=True,
+        required=False,
     )
     profile = UserProfileSerializer(required=False, allow_null=True)
 
@@ -139,9 +140,11 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
+        extra_read_only_fields = ("groups", "user_permissions", "password")
         extra_kwargs = {
             "is_staff": {"read_only": True},
             "is_active": {"read_only": True},
+            "date_joined": {"read_only": True},
         }
 
     def create(self, validated_data: Any) -> models.User:  # type: ignore

@@ -82,13 +82,17 @@ class WorkerSerializer(GenericSerializer):
     depot = serializers.PrimaryKeyRelatedField(  # type: ignore
         queryset=Depot.objects.all(),
         allow_null=True,
+        required=False,
     )
     manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
         allow_null=True,
+        required=False,
     )
     entered_by = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
+        allow_null=True,
+        required=False,
     )
     is_active = serializers.BooleanField(default=True)
     profile = WorkerProfileSerializer(required=False)
@@ -96,6 +100,10 @@ class WorkerSerializer(GenericSerializer):
     comments = WorkerCommentSerializer(many=True, required=False)
 
     class Meta:
+        """
+        Metaclass for WorkerSerializer
+        """
+
         model = models.Worker
         extra_fields = (
             "is_active",
