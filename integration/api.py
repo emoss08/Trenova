@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from integration import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class IntegrationViewSet(OrganizationViewSet):
+class IntegrationViewSet(OrganizationMixin):
     """A viewset for viewing and editing integration information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -33,7 +33,7 @@ class IntegrationViewSet(OrganizationViewSet):
     serializer_class = serializers.IntegrationSerializer
 
 
-class GoogleAPIViewSet(OrganizationViewSet):
+class GoogleAPIViewSet(OrganizationMixin):
     """A viewset for viewing and editing Google API keys in the system.
 
     The viewset provides default operations for creating, updating, and deleting Google API keys,

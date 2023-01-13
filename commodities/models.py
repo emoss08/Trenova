@@ -316,4 +316,4 @@ class Commodity(GenericModel):
         Returns:
             str: Commodity Absolute URL
         """
-        return reverse("order:commodity_detail", kwargs={"pk": self.pk})
+        return reverse("commodity:commodity_detail", kwargs={"pk": self.pk})

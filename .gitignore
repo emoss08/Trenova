@@ -27,3 +27,5 @@ pnpm-debug.log*
 lerna-debug.log*
 staticfiles
 media
+.data
+Kafka

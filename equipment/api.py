@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from equipment import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class EquipmentTypeViewSet(OrganizationViewSet):
+class EquipmentTypeViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -37,7 +37,7 @@ class EquipmentTypeViewSet(OrganizationViewSet):
     serializer_class = serializers.EquipmentTypeSerializer
 
 
-class EquipmentViewSet(OrganizationViewSet):
+class EquipmentViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,

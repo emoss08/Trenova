@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from route import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class RouteViewSet(OrganizationViewSet):
+class RouteViewSet(OrganizationMixin):
     """A viewset for viewing and editing Route information in the system.
 
     The viewset provides default operations for creating, updating and deleting routes,
@@ -40,7 +40,7 @@ class RouteViewSet(OrganizationViewSet):
     )
 
 
-class RouteControlViewSet(OrganizationViewSet):
+class RouteControlViewSet(OrganizationMixin):
     """A viewset for viewing and editing RouteControl information in the system.
 
     The viewset provides default operations for creating, updating and deleting route

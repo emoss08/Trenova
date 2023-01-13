@@ -75,9 +75,9 @@ class StopValidation:
         """
 
         if (
-                not self.stop.movement.primary_worker
-                and not self.stop.movement.equipment
-                and self.stop.arrival_time
+            not self.stop.movement.primary_worker
+            and not self.stop.movement.equipment
+            and self.stop.arrival_time
         ):
             raise ValidationError(
                 {
@@ -189,8 +189,8 @@ class StopValidation:
             ).first()
 
             if (
-                    previous_stop
-                    and self.stop.appointment_time < previous_stop.appointment_time
+                previous_stop
+                and self.stop.appointment_time < previous_stop.appointment_time
             ):
                 raise ValidationError(
                     {
@@ -228,13 +228,13 @@ class StopValidation:
                 )
 
             if (
-                    next_stop
-                    and self.stop.status != StatusChoices.COMPLETED
-                    and next_stop.status
-                    in [
-                StatusChoices.COMPLETED,
-                StatusChoices.IN_PROGRESS,
-            ]
+                next_stop
+                and self.stop.status != StatusChoices.COMPLETED
+                and next_stop.status
+                in [
+                    StatusChoices.COMPLETED,
+                    StatusChoices.IN_PROGRESS,
+                ]
             ):
                 raise ValidationError(
                     {
@@ -269,9 +269,9 @@ class StopValidation:
             )
 
         if (
-                self.stop.departure_time
-                and self.stop.arrival_time
-                and self.stop.departure_time < self.stop.arrival_time
+            self.stop.departure_time
+            and self.stop.arrival_time
+            and self.stop.departure_time < self.stop.arrival_time
         ):
             raise ValidationError(
                 {
