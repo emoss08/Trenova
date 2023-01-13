@@ -79,7 +79,7 @@ class GenericSerializer(serializers.ModelSerializer):
         """Create the object
 
         Args:
-            validated_data (dict[str, Any]): Validated data
+            validated_data (Any): Validated data
 
         Returns:
             _MT: Created object
@@ -100,7 +100,6 @@ class GenericSerializer(serializers.ModelSerializer):
         Returns:
             _MT: Updated instance
         """
-
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
@@ -108,26 +107,26 @@ class GenericSerializer(serializers.ModelSerializer):
 
     def set_fields(self) -> None:
         """Set the fields for the serializer
+
         Returns:
             None
         """
 
-        # Default excluded fields
-        excluded_fields: tuple[str, ...] = ("organization", "created", "modified")
+        read_only_field: tuple[str, ...] = ("organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)
+
         if original_fields is not None:
             fields = original_fields
         else:
-
             # If reverse=True, then relations pointing to this model are returned.
             fields = [
                 field.name
                 for field in self.Meta.model._meta._get_fields(reverse=False)  # type: ignore
-                if field.name not in excluded_fields
+                if field.name not in read_only_field
             ]
 
-        self.Meta.read_only_fields = excluded_fields
+        self.Meta.read_only_fields = read_only_field
         self.Meta.fields = tuple(fields)
 
         extra_fields = getattr(self.Meta, "extra_fields", None)

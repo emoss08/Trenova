@@ -359,17 +359,6 @@ class WorkerProfile(GenericModel):
             f"{self.worker.first_name} {self.worker.last_name} Profile", 50
         )[0]
 
-    def update_worker_profile(self, **kwargs):
-        """Update the worker profile
-
-        Args:
-            **kwargs: Keyword arguments
-        """
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
-
     def clean(self) -> None:
         """Worker Profile clean method
 
@@ -442,6 +431,17 @@ class WorkerProfile(GenericModel):
         """
 
         return reverse("worker:profile-detail", kwargs={"pk": self.pk})
+
+    def update_worker_profile(self, **kwargs):
+        """Update the worker profile
+
+        Args:
+            **kwargs: Keyword arguments
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class WorkerContact(GenericModel):

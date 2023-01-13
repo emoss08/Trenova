@@ -21,7 +21,7 @@ from __future__ import annotations
 import decimal
 import textwrap
 import uuid
-from typing import Any, Optional, final
+from typing import Any, final
 
 from django.conf import settings
 from django.db import models
@@ -322,6 +322,8 @@ class Order(GenericModel):
         related_query_name="origin_orders",
         verbose_name=_("Origin Location"),
         help_text=_("Origin Location of the Order"),
+        blank=True,
+        null=True,
     )
     origin_address = models.CharField(
         _("Origin Address"),
@@ -341,6 +343,8 @@ class Order(GenericModel):
         related_name="destination_order",
         related_query_name="destination_orders",
         verbose_name=_("Destination Location"),
+        blank=True,
+        null=True,
     )
     destination_address = models.CharField(
         _("Destination Address"),
@@ -453,6 +457,8 @@ class Order(GenericModel):
         related_query_name="order",
         verbose_name=_("Commodity"),
         help_text=_("Commodity"),
+        blank=True,
+        null=True,
     )
     entered_by = models.ForeignKey(
         User,
@@ -532,12 +538,11 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the Order is not valid
         """
+        super().clean()
 
-        # Call the OrderValidation class
-        #
-        # OrderValidation(
-        #     order=self, organization=self.organization, order_control=OrderControl
-        # ).validate()
+        OrderValidation(
+            order=self, organization=self.organization, order_control=OrderControl
+        ).validate()
 
     def save(self, **kwargs: Any) -> None:
         """Order save method
@@ -548,7 +553,7 @@ class Order(GenericModel):
         self.full_clean()
 
         if self.ready_to_bill:
-            self.sub_total = self.calculate_total()
+            self.sub_total = self.calculate_total()  # type: ignore
 
         self.set_address()
         self.set_hazardous_class()
@@ -567,24 +572,32 @@ class Order(GenericModel):
         """
         return reverse("order-detail", kwargs={"pk": self.pk})
 
-    def calculate_total(self) -> decimal.Decimal:
+    def calculate_total(self) -> decimal.Decimal | None:
         """Calculate the sub_total for an order
 
         Returns:
             decimal.Decimal: The total for the order
         """
 
-        # Handle the flat fee rate calculation
-        if self.rate_method == RatingMethodChoices.FLAT:
-            return self.freight_charge_amount + self.other_charge_amount
+        order_control: OrderControl = OrderControl.objects.get(
+            organization=self.organization
+        )
 
-        # Handle the mileage rate calculation
-        if self.rate_method == RatingMethodChoices.PER_MILE:
-            return self.freight_charge_amount * self.mileage + self.other_charge_amount
+        if order_control.auto_order_total:
+            # Handle the flat fee rate calculation
+            if self.rate_method == RatingMethodChoices.FLAT:
+                return self.freight_charge_amount + self.other_charge_amount
 
-        return self.freight_charge_amount
+            # Handle the mileage rate calculation
+            if self.rate_method == RatingMethodChoices.PER_MILE:
+                return (
+                    self.freight_charge_amount * self.mileage + self.other_charge_amount
+                )
 
-    def set_hazardous_class(self) -> Optional[HazardousMaterial]:
+            return self.freight_charge_amount
+        return None
+
+    def set_hazardous_class(self) -> HazardousMaterial | None:
         """Set the hazardous class from commodity
 
         if a commodity is selected automatically set the hazardous
@@ -592,9 +605,9 @@ class Order(GenericModel):
         HazardousMaterial.
 
         Returns:
-            HazardousMaterial: Instance of the HazardousMaterial
+            HazardousMaterial | None: Instance of the HazardousMaterial
         """
-        if self.commodity.hazmat:
+        if self.commodity and self.commodity.hazmat is not None:
             self.hazmat = self.commodity.hazmat
         return self.hazmat
 
@@ -629,8 +642,12 @@ class Order(GenericModel):
         )
 
         if o_control.auto_pop_address:
-            self.origin_address = self.origin_location.get_address_combination
-            self.destination_address = self.destination_location.get_address_combination
+            if self.origin_location:
+                self.origin_address = self.origin_location.get_address_combination
+            if self.destination_location:
+                self.destination_address = (
+                    self.destination_location.get_address_combination
+                )
 
 
 class OrderDocumentation(GenericModel):
@@ -828,8 +845,10 @@ class AdditionalCharge(GenericModel):
         """
         Save the AdditionalCharge
         """
+
         self.charge_amount = self.charge.charge_amount
         self.sub_total = self.charge_amount * self.unit
+
         super().save(**kwargs)
 
     def get_absolute_url(self) -> str:

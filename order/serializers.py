@@ -19,15 +19,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import serializers
 
-from accounting.serializers import RevenueCodeSerializer
-from accounts.serializers import UserSerializer
-from commodities.serializers import CommoditySerializer, HazardousMaterialSerializer
-from customer.serializers import CustomerSerializer
-from equipment.serializers import EquipmentTypeSerializer
-from location.serializers import LocationSerializer
-from utils.models import StatusChoices
-from utils.serializers import GenericSerializer
+from accounting.models import RevenueCode
+from accounts.models import User
+from billing.models import AccessorialCharge, DocumentClassification
+from commodities.models import Commodity, HazardousMaterial
+from customer.models import Customer
+from dispatch.models import CommentType
+from equipment.models import EquipmentType
+from location.models import Location
+from movements.models import Movement
 from order import models
+from utils.serializers import GenericSerializer
 
 
 class OrderControlSerializer(GenericSerializer):
@@ -115,26 +117,61 @@ class OrderSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
 
     Attributes:
-        status (ChoiceField): A choice field that determines the status of the order.
-        revenue_code
+        order_type (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the type of the order.
+        revenue_code (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the revenue code of the order.
+        origin_location (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the origin location of the order.
+        destination_location (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the destination location of the order.
+        customer (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the customer of the order.
+        commodity (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the commodity of the order.
+        entered_by (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the user that entered the order.
+        hazmat (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the hazardous material of the order.
     """
 
-    order_type = OrderTypeSerializer()
-    status = serializers.ChoiceField(
-        default=StatusChoices.NEW, choices=StatusChoices.choices
+    order_type = serializers.PrimaryKeyRelatedField(
+        queryset=models.OrderType.objects.all(),
+        allow_null=True,
     )
-    revenue_code = RevenueCodeSerializer(required=False)
-    origin_location = LocationSerializer()
-    destination_location = LocationSerializer()
-    rate_method = serializers.ChoiceField(
-        default=models.RatingMethodChoices.FLAT,
-        choices=models.RatingMethodChoices.choices,
+    revenue_code = serializers.PrimaryKeyRelatedField(
+        queryset=RevenueCode.objects.all(),
+        allow_null=True,
     )
-    customer = CustomerSerializer(required=True)
-    equipment_type = EquipmentTypeSerializer()
-    commodity = CommoditySerializer()
-    entered_by = UserSerializer()
-    hazmat = HazardousMaterialSerializer()
+    origin_location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        allow_null=True,
+    )
+    destination_location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        allow_null=True,
+    )
+    customer = serializers.PrimaryKeyRelatedField(
+        queryset=Customer.objects.all(),
+    )
+    equipment_type = serializers.PrimaryKeyRelatedField(
+        queryset=EquipmentType.objects.all()
+    )
+    commodity = serializers.PrimaryKeyRelatedField(
+        queryset=Commodity.objects.all(), allow_null=True
+    )
+    entered_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+    hazmat = serializers.PrimaryKeyRelatedField(
+        queryset=HazardousMaterial.objects.all(),
+        allow_null=True,
+    )
+    movements = serializers.PrimaryKeyRelatedField(
+        queryset=Movement.objects.all(),
+        many=True,
+        allow_null=True,
+    )
 
     class Meta:
         """Metaclass for OrderSerializer
@@ -148,14 +185,124 @@ class OrderSerializer(GenericSerializer):
         model = models.Order
         extra_fields = (
             "order_type",
-            "status",
             "revenue_code",
             "origin_location",
             "destination_location",
-            "rate_method",
             "customer",
             "equipment_type",
             "commodity",
             "entered_by",
             "hazmat",
+            "movements",
         )
+
+
+class OrderDocumentationSerializer(GenericSerializer):
+    """A serializer for the `OrderDocumentation` model.
+
+    A serializer class for the OrderDocumentation Model. This serializer is used
+    to convert the OrderDocumentation model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        order (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the order of the order documentation.
+        document_class (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the document classification of the order documentation.
+    """
+
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=models.Order.objects.all(),
+    )
+    document_class = serializers.PrimaryKeyRelatedField(
+        queryset=DocumentClassification.objects.all()
+    )
+
+    class Meta:
+        """Metaclass for OrderDocumentationSerializer
+
+        Attributes:
+            model (models.OrderDocumentation): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.OrderDocumentation
+        extra_fields = ("order", "document_class")
+
+
+class OrderCommentSerializer(GenericSerializer):
+    """A serializer for the `OrderComment` model.
+
+    A serializer class for the OrderComment Model. This serializer is used
+    to convert the OrderComment model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        order (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the order of the order comment.
+    """
+
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=models.Order.objects.all(),
+    )
+    comment_type = serializers.PrimaryKeyRelatedField(
+        queryset=CommentType.objects.all(),
+    )
+    entered_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+
+    class Meta:
+        """Metaclass for OrderCommentSerializer
+
+        Attributes:
+            model (models.OrderComment): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.OrderComment
+        extra_fields = ("order", "comment_type", "entered_by")
+
+
+class AdditionalChargeSerializer(GenericSerializer):
+    """A serializer for the `AdditionalCharge` model.
+
+    A serializer class for the AdditionalCharge Model. This serializer is used
+    to convert the AdditionalCharge model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        order (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the order of the additional charge.
+        charge (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the charge of the additional charge.
+        entered_by (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the user that entered the additional charge.
+    """
+
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=models.Order.objects.all(),
+    )
+    charge = serializers.PrimaryKeyRelatedField(
+        queryset=AccessorialCharge.objects.all(),
+    )
+    entered_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+
+    class Meta:
+        """Metaclass for AdditionalChargeSerializer
+
+        Attributes:
+            model (models.AdditionalCharge): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.AdditionalCharge
+        extra_fields = ("order", "charge_type", "entered_by")

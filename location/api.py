@@ -18,10 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from location import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class LocationCategoryViewSet(OrganizationViewSet):
+class LocationCategoryViewSet(OrganizationMixin):
     """A viewset for viewing and editing location information in the system.
 
     The viewset provides default operations for creating, updating and deleting locations,
@@ -37,7 +37,7 @@ class LocationCategoryViewSet(OrganizationViewSet):
     serializer_class = serializers.LocationCategorySerializer
 
 
-class LocationViewSet(OrganizationViewSet):
+class LocationViewSet(OrganizationMixin):
     """A viewset for viewing and editing location information in the system.
 
     The viewset provides default operations for creating, updating and deleting locations,

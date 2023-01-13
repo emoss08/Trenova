@@ -30,10 +30,10 @@ from rest_framework.views import APIView
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class UserViewSet(OrganizationViewSet):
+class UserViewSet(OrganizationMixin):
     """
     User ViewSet to manage requests to the user endpoint
     """
@@ -182,7 +182,7 @@ class TokenVerifyView(APIView):
         )
 
 
-class JobTitleViewSet(OrganizationViewSet):
+class JobTitleViewSet(OrganizationMixin):
     """
     Job Title ViewSet to manage requests to the job title endpoint
     """

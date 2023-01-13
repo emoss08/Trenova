@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from rest_framework import serializers
 
 from organization import models
+from utils.serializers import GenericSerializer
 
 
 class DepotDetailSerializer(serializers.ModelSerializer):
@@ -75,7 +76,12 @@ class OrganizationSerializer(serializers.ModelSerializer):
     Organization Serializer
     """
 
-    depots = DepotSerializer(many=True, read_only=True)
+    depots = serializers.PrimaryKeyRelatedField(  # type: ignore
+        many=True,
+        queryset=models.Depot.objects.all(),
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         """
@@ -98,7 +104,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
         )
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class DepartmentSerializer(GenericSerializer):
     """
     Department Serializer
     """

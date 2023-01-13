@@ -17,14 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions
 
 from dispatch import models, serializers
-from utils.views import OrganizationViewSet
+from utils.views import OrganizationMixin
 
 
-class CommentTypeViewSet(OrganizationViewSet):
+class CommentTypeViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -44,7 +43,7 @@ class CommentTypeViewSet(OrganizationViewSet):
     )
 
 
-class DelayCodeViewSet(OrganizationViewSet):
+class DelayCodeViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -61,7 +60,7 @@ class DelayCodeViewSet(OrganizationViewSet):
     filterset_fields = ("code",)
 
 
-class FleetCodeViewSet(OrganizationViewSet):
+class FleetCodeViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -78,7 +77,7 @@ class FleetCodeViewSet(OrganizationViewSet):
     filterset_fields = ("code",)
 
 
-class DispatchControlViewSet(OrganizationViewSet):
+class DispatchControlViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -93,5 +92,6 @@ class DispatchControlViewSet(OrganizationViewSet):
     queryset = models.DispatchControl.objects.all()
     serializer_class = serializers.DispatchControlSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
 
 # TODO: Write comment type serializer
