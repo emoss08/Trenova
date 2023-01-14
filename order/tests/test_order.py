@@ -18,7 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from django.utils import timezone, dateformat
+from django.utils import timezone
 
 from accounting.tests.factories import RevenueCodeFactory
 from customer.factories import CustomerFactory

@@ -79,3 +79,20 @@ class OrderFactory(factory.django.DjangoModelFactory):
         """
 
         model = models.Order
+
+class OrderCommentFactory(factory.django.DjangoModelFactory):
+    """
+    Order Comment Factory
+    """
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    order = factory.SubFactory(OrderFactory)
+    comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
+    comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+
+    class Meta:
+        """
+        Metaclass For OrderCommentFactory
+        """
+
+        model = models.OrderComment
