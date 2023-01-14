@@ -7,7 +7,6 @@
 
 ## Introduction
 
----
 Monta provides a fully capable backend software that supports modern transportation and logistics business.
 It is built on top of the Django framework and is designed to be easily extendable.
 
@@ -19,14 +18,8 @@ It is built on top of the Django framework and is designed to be easily extendab
 - Kafka 3.3.1+
 - Zookeeper 3.7+
 
-## What is Monta?
-
----
-Monta is a Asset Transportation Management System primarily for Over-the-road trucking companies.
-
 ## What makes Monta Different?
 
----
 Monta leverages Machine Learning to make predictions and leverages the forecasted data to make decisions in
 the application without needing your input. Additionally, Monta has over 20 scheduled tasks that run
 in the background of the application to assist your operation, these tasks are designed to reduce repetitiveness and 
@@ -36,7 +29,6 @@ help to manage your system!
 
 ### Order Prediction Application Example
 
----
 The most common usage for Machine Learning is simply assigning the order to proper worker. Sounds easy enough right?
 There are quite a few dependencies that need to be accounted for that our Machine Learning models are trained on.
 First, does the driver have enough time to get the order to its destination based on the pickup and delivery date?
