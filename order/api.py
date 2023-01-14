@@ -91,6 +91,7 @@ class ReasonCodeViewSet(OrganizationMixin):
 
     queryset = models.ReasonCode.objects.all()
     serializer_class = serializers.ReasonCodeSerializer
+    filterset_fields = ("is_active",)
 
 
 class OrderViewSet(OrganizationMixin):
