@@ -22,7 +22,7 @@ It is built on top of the Django framework and is designed to be easily extendab
 
 Monta leverages Machine Learning to make predictions and leverages the forecasted data to make decisions in
 the application without needing your input. Additionally, Monta has over 20 scheduled tasks that run
-in the background of the application to assist your operation, these tasks are designed to reduce repetitiveness and 
+in the background of the application to assist your operation, these tasks are designed to reduce repetitiveness and
 to reduce manual entry. Finally, we know time is money and adding head count to manage a system is a real
 world problem, our goal is to give you a system that manages your operation for you without needing to hire additional
 help to manage your system!

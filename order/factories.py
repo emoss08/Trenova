@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import factory
-
 from factory.fuzzy import FuzzyDecimal
 
 from order import models
@@ -38,6 +37,7 @@ class OrderTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = models.OrderType
+
 
 class ReasonCodeFactory(factory.django.DjangoModelFactory):
     """
@@ -59,10 +59,12 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
 
         model = models.ReasonCode
 
+
 class OrderFactory(factory.django.DjangoModelFactory):
     """
     Order Factory
     """
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order_type = factory.SubFactory(OrderTypeFactory)
     status = "N"
@@ -72,9 +74,12 @@ class OrderFactory(factory.django.DjangoModelFactory):
     destination_location = factory.SubFactory("location.factories.LocationFactory")
     destination_appointment = factory.Faker("date_time", locale="en_US")
     customer = factory.SubFactory("customer.factories.CustomerFactory")
-    equipment_type = factory.SubFactory("equipment.tests.factories.EquipmentTypeFactory")
+    equipment_type = factory.SubFactory(
+        "equipment.tests.factories.EquipmentTypeFactory"
+    )
     bol_number = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+
     class Meta:
         """
         Metaclass for orderFactory
@@ -82,10 +87,12 @@ class OrderFactory(factory.django.DjangoModelFactory):
 
         model = models.Order
 
+
 class OrderCommentFactory(factory.django.DjangoModelFactory):
     """
     Order Comment Factory
     """
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
@@ -99,14 +106,18 @@ class OrderCommentFactory(factory.django.DjangoModelFactory):
 
         model = models.OrderComment
 
+
 class OrderDocumentationFactory(factory.django.DjangoModelFactory):
     """
     Order Documentation Factory
     """
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     document = factory.django.FileField(filename="test.txt")
-    document_class = factory.SubFactory("billing.tests.factories.DocumentClassificationFactory")
+    document_class = factory.SubFactory(
+        "billing.tests.factories.DocumentClassificationFactory"
+    )
 
     class Meta:
         """
@@ -115,10 +126,12 @@ class OrderDocumentationFactory(factory.django.DjangoModelFactory):
 
         model = models.OrderDocumentation
 
+
 class AdditionalChargeFactory(factory.django.DjangoModelFactory):
     """
     AdditionalCharge Factory
     """
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     charge = factory.SubFactory("billing.tests.factories.AccessorialChargeFactory")
@@ -130,4 +143,5 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for AdditionalChargeFactory
         """
+
         model = models.AdditionalCharge

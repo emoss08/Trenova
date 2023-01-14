@@ -18,9 +18,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from order.factories import OrderTypeFactory
-from utils.tests import UnitTest, ApiTest
+
 from order import models
+from order.factories import OrderTypeFactory
+from utils.tests import ApiTest, UnitTest
+
 
 class TestOrderType(UnitTest):
     """
@@ -49,7 +51,7 @@ class TestOrderType(UnitTest):
             organization=organization,
             is_active=True,
             name="foo bar",
-            description="foo bar"
+            description="foo bar",
         )
 
         assert ord_type is not None
@@ -71,6 +73,7 @@ class TestOrderType(UnitTest):
         assert ord_type is not None
         assert ord_type.name == "Foo Bart"
 
+
 class TestOrderTypeAPI(ApiTest):
     """
     Test for Order Type API
@@ -81,11 +84,10 @@ class TestOrderTypeAPI(ApiTest):
         """
         Order Type Factory
         """
-        return api_client.post("/api/order_types/", {
-            "name": "Foo Bar",
-            "description": "Foo Bar",
-            "is_active": True
-        })
+        return api_client.post(
+            "/api/order_types/",
+            {"name": "Foo Bar", "description": "Foo Bar", "is_active": True},
+        )
 
     def test_get(self, api_client):
         """
@@ -109,11 +111,10 @@ class TestOrderTypeAPI(ApiTest):
         """
         Test put Order Type
         """
-        response = api_client.put(f"/api/order_types/{order_type.data['id']}/", {
-            "name": "New Name",
-            "description": "New Description",
-            "is_active": False
-        })
+        response = api_client.put(
+            f"/api/order_types/{order_type.data['id']}/",
+            {"name": "New Name", "description": "New Description", "is_active": False},
+        )
 
         assert response.status_code == 200
         assert response.data["name"] == "New Name"

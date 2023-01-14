@@ -18,9 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from order.factories import ReasonCodeFactory
-from utils.tests import UnitTest, ApiTest
+
 from order import models
+from order.factories import ReasonCodeFactory
+from utils.tests import ApiTest, UnitTest
 
 
 class TestReasonCode(UnitTest):
@@ -50,7 +51,7 @@ class TestReasonCode(UnitTest):
             is_active=True,
             code="foobo",
             description="foo bar",
-            code_type="VOIDED"
+            code_type="VOIDED",
         )
 
         assert r_code is not None
@@ -84,12 +85,15 @@ class TestReasonCodeAPI(ApiTest):
         """
         Reason Code Factory
         """
-        return api_client.post("/api/reason_codes/", {
-            "code": "NEWT",
-            "description": "Foo Bar",
-            "is_active": True,
-            "code_type": "VOIDED"
-        })
+        return api_client.post(
+            "/api/reason_codes/",
+            {
+                "code": "NEWT",
+                "description": "Foo Bar",
+                "is_active": True,
+                "code_type": "VOIDED",
+            },
+        )
 
     def test_get(self, api_client):
         """
@@ -114,12 +118,15 @@ class TestReasonCodeAPI(ApiTest):
         """
         Test put Reason Code
         """
-        response = api_client.put(f"/api/reason_codes/{reason_code.data['id']}/", {
-            "code": "FOBO",
-            "description": "New Description",
-            "is_active": False,
-            "code_type": "VOIDED"
-        })
+        response = api_client.put(
+            f"/api/reason_codes/{reason_code.data['id']}/",
+            {
+                "code": "FOBO",
+                "description": "New Description",
+                "is_active": False,
+                "code_type": "VOIDED",
+            },
+        )
 
         assert response.status_code == 200
         assert response.data["code"] == "FOBO"

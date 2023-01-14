@@ -21,7 +21,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from accounts.tests.factories import TokenFactory, UserFactory
-from equipment.tests.factories import  EquipmentTypeFactory
+from equipment.tests.factories import EquipmentTypeFactory
 from organization.factories import OrganizationFactory
 
 

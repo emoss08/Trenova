@@ -25,9 +25,9 @@ from time import sleep
 import pytest
 
 from billing.tests.factories import DocumentClassificationFactory
-from order.factories import OrderDocumentationFactory, OrderFactory
-from utils.tests import UnitTest, ApiTest
 from order import models
+from order.factories import OrderDocumentationFactory, OrderFactory
+from utils.tests import ApiTest, UnitTest
 
 
 class TestOrderDocumentation(UnitTest):
@@ -145,7 +145,9 @@ class TestOrderDocumentationApi(ApiTest):
         response = api_client.get("/api/order_documents/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, order_documentation, order, document_classification):
+    def test_get_by_id(
+        self, api_client, order_documentation, order, document_classification
+    ):
         """
         Test get Order Documentation by ID
         """
@@ -156,9 +158,9 @@ class TestOrderDocumentationApi(ApiTest):
 
         assert response.data is not None
         assert response.status_code == 200
-        assert response.data['order'] == order.id
-        assert response.data['document'] is not None
-        assert response.data['document_class'] == document_classification.id
+        assert response.data["order"] == order.id
+        assert response.data["document"] is not None
+        assert response.data["document_class"] == document_classification.id
 
         if os.path.exists("testfile.txt"):
             # Remove file once it is generated
@@ -180,21 +182,23 @@ class TestOrderDocumentationApi(ApiTest):
             {
                 "order": f"{order.id}",
                 "document": test_file,
-                "document_class": f"{document_classification.id}"
-            }
+                "document_class": f"{document_classification.id}",
+            },
         )
 
         assert response.data is not None
         assert response.status_code == 200
-        assert response.data['order'] == order.id
-        assert response.data['document'] is not None
-        assert response.data['document_class'] == document_classification.id
+        assert response.data["order"] == order.id
+        assert response.data["document"] is not None
+        assert response.data["document_class"] == document_classification.id
 
         if os.path.exists(fpath):
             # Remove file once it is generated
             return os.remove(fpath)
 
-    def test_patch(self, api_client, order, order_documentation, document_classification):
+    def test_patch(
+        self, api_client, order, order_documentation, document_classification
+    ):
         """
         Test patch Order Documentation by ID
         """
@@ -210,15 +214,15 @@ class TestOrderDocumentationApi(ApiTest):
             {
                 "order": f"{order.id}",
                 "document": test_file,
-                "document_class": f"{document_classification.id}"
-            }
+                "document_class": f"{document_classification.id}",
+            },
         )
 
         assert response.data is not None
         assert response.status_code == 200
-        assert response.data['order'] == order.id
-        assert response.data['document'] is not None
-        assert response.data['document_class'] == document_classification.id
+        assert response.data["order"] == order.id
+        assert response.data["document"] is not None
+        assert response.data["document_class"] == document_classification.id
 
         if os.path.exists(fpath):
             # Remove file once it is generated
@@ -229,7 +233,9 @@ class TestOrderDocumentationApi(ApiTest):
         Test Delete by ID
         """
 
-        response = api_client.delete(f"/api/order_documents/{order_documentation.data['id']}/")
+        response = api_client.delete(
+            f"/api/order_documents/{order_documentation.data['id']}/"
+        )
 
         assert response.status_code == 204
         assert response.data is None

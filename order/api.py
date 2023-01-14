@@ -93,6 +93,7 @@ class ReasonCodeViewSet(OrganizationMixin):
     serializer_class = serializers.ReasonCodeSerializer
     filterset_fields = ("is_active",)
 
+
 class OrderViewSet(OrganizationMixin):
     """A viewset for viewing and editing Orders in the system.
 

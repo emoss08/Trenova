@@ -24,9 +24,9 @@ from accounting.tests.factories import RevenueCodeFactory
 from customer.factories import CustomerFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
-from order.factories import OrderFactory, OrderTypeFactory
-from utils.tests import UnitTest, ApiTest
 from order import models
+from order.factories import OrderFactory, OrderTypeFactory
+from utils.tests import ApiTest, UnitTest
 
 
 class TestOrder(UnitTest):

@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from utils.tests import UnitTest
 from order import models
+from utils.tests import UnitTest
 
 
 class TestOrderControl(UnitTest):

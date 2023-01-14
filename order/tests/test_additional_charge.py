@@ -21,9 +21,9 @@ import decimal
 import pytest
 
 from billing.tests.factories import AccessorialChargeFactory
-from order.factories import AdditionalChargeFactory, OrderFactory
-from utils.tests import UnitTest, ApiTest
 from order import models
+from order.factories import AdditionalChargeFactory, OrderFactory
+from utils.tests import ApiTest, UnitTest
 
 
 class TestAdditionalCharge(UnitTest):
@@ -130,7 +130,8 @@ class TestAdditionalChargeAPI(ApiTest):
                 "charge_amount": 123.00,
                 "unit": 2,
                 "entered_by": f"{user.id}",
-            }, format="json"
+            },
+            format="json",
         )
 
     def test_get(self, api_client):
@@ -140,7 +141,9 @@ class TestAdditionalChargeAPI(ApiTest):
         response = api_client.get("/api/additional_charges/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, additional_charge, order, user, accessorial_charge):
+    def test_get_by_id(
+        self, api_client, additional_charge, order, user, accessorial_charge
+    ):
         """
         Test get Additional Charge by id
         """
@@ -162,9 +165,7 @@ class TestAdditionalChargeAPI(ApiTest):
         """
         response = api_client.patch(
             f"/api/additional_charges/{additional_charge.data['id']}/",
-            {
-                "order": f"{order.id}"
-            },
+            {"order": f"{order.id}"},
         )
 
         assert response.status_code == 200
