@@ -96,3 +96,19 @@ class OrderCommentFactory(factory.django.DjangoModelFactory):
         """
 
         model = models.OrderComment
+
+class OrderDocumentationFactory(factory.django.DjangoModelFactory):
+    """
+    Order Documentation Factory
+    """
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    order = factory.SubFactory(OrderFactory)
+    document = factory.django.FileField(filename="test.txt")
+    document_class = factory.SubFactory("billing.tests.factories.DocumentClassificationFactory")
+
+    class Meta:
+        """
+        Metaclass for OrderDocumentationFactory
+        """
+
+        model = models.OrderDocumentation
