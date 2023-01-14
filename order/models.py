@@ -880,9 +880,14 @@ class ReasonCode(GenericModel):
         editable=False,
         unique=True,
     )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Is Active"),
+    )
     code = models.CharField(
         _("Code"),
-        max_length=255,
+        max_length=5,
         unique=True,
         help_text=_("Code of the Reason Code"),
     )

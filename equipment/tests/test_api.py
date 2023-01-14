@@ -21,7 +21,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from accounts.tests.factories import TokenFactory, UserFactory
-from equipment.factories import EquipmentFactory
+from equipment.tests.factories import EquipmentTypeFactory
 from organization.factories import OrganizationFactory
 
 
@@ -58,7 +58,7 @@ def equipment_type():
     EquipmentType Fixture
     """
 
-    return EquipmentFactory.EquipmentTypeFactory()
+    return EquipmentTypeFactory()
 
 
 @pytest.fixture()
