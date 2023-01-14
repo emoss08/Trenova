@@ -309,4 +309,4 @@ class AdditionalChargeSerializer(GenericSerializer):
         """
 
         model = models.AdditionalCharge
-        extra_fields = ("order", "charge_type", "entered_by")
+        extra_fields = ("order", "charge", "entered_by")

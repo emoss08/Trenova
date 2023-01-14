@@ -19,6 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
+from factory.fuzzy import FuzzyDecimal
+
 from order import models
 
 
@@ -112,3 +114,20 @@ class OrderDocumentationFactory(factory.django.DjangoModelFactory):
         """
 
         model = models.OrderDocumentation
+
+class AdditionalChargeFactory(factory.django.DjangoModelFactory):
+    """
+    AdditionalCharge Factory
+    """
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    order = factory.SubFactory(OrderFactory)
+    charge = factory.SubFactory("billing.tests.factories.AccessorialChargeFactory")
+    charge_amount = FuzzyDecimal(low=10.00, high=100000.00, precision=2)
+    sub_total = FuzzyDecimal(low=10.00, high=100000.00, precision=2)
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+
+    class Meta:
+        """
+        Metaclass for AdditionalChargeFactory
+        """
+        model = models.AdditionalCharge
