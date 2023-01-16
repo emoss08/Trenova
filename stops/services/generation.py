@@ -16,7 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from django.core.exceptions import ValidationError
 
 from movements.models import Movement
 from order.models import Order, OrderControl

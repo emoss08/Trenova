@@ -21,10 +21,12 @@ import factory
 
 from movements import models
 
+
 class MovementFactory(factory.django.DjangoModelFactory):
     """
     Factory for Movement Model.
     """
+
     id = factory.Faker("uuid4")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory("order.tests.factories.OrderFactory")
@@ -35,4 +37,5 @@ class MovementFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for MovementFactory
         """
+
         model = models.Movement
