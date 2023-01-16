@@ -25,7 +25,7 @@ from customer.factories import CustomerFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order import models
-from order.factories import OrderFactory, OrderTypeFactory
+from order.tests.factories import OrderFactory, OrderTypeFactory
 from utils.tests import ApiTest, UnitTest
 
 

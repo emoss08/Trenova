@@ -80,3 +80,4 @@ class MovementSerializer(GenericSerializer):
             "primary_worker",
             "secondary_worker",
         )
+        extra_read_only_fields = ("id", "ref_num")

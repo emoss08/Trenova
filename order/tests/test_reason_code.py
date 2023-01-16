@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from order import models
-from order.factories import ReasonCodeFactory
+from order.tests.factories import ReasonCodeFactory
 from utils.tests import ApiTest, UnitTest
 
 
