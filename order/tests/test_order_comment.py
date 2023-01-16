@@ -26,7 +26,7 @@ from dispatch.factories import CommentTypeFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order import models
-from order.factories import OrderCommentFactory, OrderFactory, OrderTypeFactory
+from order.tests.factories import OrderCommentFactory, OrderFactory, OrderTypeFactory
 from utils.tests import ApiTest, UnitTest
 
 

@@ -18,15 +18,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
-import shutil
-from pathlib import Path
-from time import sleep
 
 import pytest
 
 from billing.tests.factories import DocumentClassificationFactory
 from order import models
-from order.factories import OrderDocumentationFactory, OrderFactory
+from order.tests.factories import OrderDocumentationFactory, OrderFactory
 from utils.tests import ApiTest, UnitTest
 
 
