@@ -43,31 +43,26 @@ class StopService:
         Returns:
             None
         """
-        if not movement.stops:
-            origin_stop: models.Stop = models.Stop.objects.create(
-                organization=movement.organization,
-                movement=movement,
-                stop_type=StopChoices.PICKUP,
-                location=order.origin_location,
-                address_line=order.origin_address,
-                appointment_time=order.origin_appointment,
-            )
-            destination_stop: models.Stop = models.Stop.objects.create(
-                organization=movement.organization,
-                movement=movement,
-                sequence=2,
-                stop_type=StopChoices.DELIVERY,
-                location=order.destination_location,
-                address_line=order.destination_address,
-                appointment_time=order.destination_appointment,
-            )
-            return origin_stop, destination_stop
-        else:
-            raise ValidationError(
-                {
-                    "__all__": "Cannot create a movement without stops. Please try again."
-                }, code="invalid"
-            )
+
+        origin_stop: models.Stop = models.Stop.objects.create(
+            organization=movement.organization,
+            movement=movement,
+            stop_type=StopChoices.PICKUP,
+            location=order.origin_location,
+            address_line=order.origin_address,
+            appointment_time=order.origin_appointment,
+        )
+        destination_stop: models.Stop = models.Stop.objects.create(
+            organization=movement.organization,
+            movement=movement,
+            sequence=2,
+            stop_type=StopChoices.DELIVERY,
+            location=order.destination_location,
+            address_line=order.destination_address,
+            appointment_time=order.destination_appointment,
+        )
+        return origin_stop, destination_stop
+
     @staticmethod
     def sequence_stops(instance: models.Stop) -> None:
         """Sequence Stops
