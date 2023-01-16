@@ -21,7 +21,7 @@ import pytest
 
 from billing.tests.factories import AccessorialChargeFactory
 from order import models
-from order.factories import AdditionalChargeFactory, OrderFactory
+from order.tests.factories import AdditionalChargeFactory, OrderFactory
 from utils.tests import ApiTest, UnitTest
 
 

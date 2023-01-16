@@ -42,6 +42,7 @@ class StopService:
         Returns:
             None
         """
+
         origin_stop: models.Stop = models.Stop.objects.create(
             organization=movement.organization,
             movement=movement,
@@ -59,7 +60,6 @@ class StopService:
             address_line=order.destination_address,
             appointment_time=order.destination_appointment,
         )
-
         return origin_stop, destination_stop
 
     @staticmethod
