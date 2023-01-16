@@ -42,9 +42,9 @@ def generate_movement_stops(
     Returns:
         None
     """
-    if created and not instance.stops.exists():
-        stop_generation.StopService.create_initial_stops(instance, instance.order)
 
+    if created and not instance.order.movements.exists():
+        stop_generation.StopService.create_initial_stops(instance, instance.order)
 
 @receiver(pre_save, sender=models.Movement)
 def set_movement_ref_number(
