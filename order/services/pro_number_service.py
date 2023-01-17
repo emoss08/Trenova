@@ -19,26 +19,19 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from order.models import Order
 
+def set_pro_number() -> str:
+    """Generate a unique pro number for an order.
 
-class OrderService:
-    """Order Service
-
-    Service to manage all order actions
+    Returns:
+        str: The pro number for the order.
     """
 
-    @staticmethod
-    def set_pro_number() -> str:
-        """Generate a unique pro number for an order.
+    count: int = Order.objects.count() + 1
+    pro_number = f"ORD{count:06d}"
 
-        Returns:
-            str: The pro number for the order.
-        """
-        count = Order.objects.count() + 1
+    # Check if pro number already exists and generate a new one if it does.
+    while Order.objects.filter(pro_number=pro_number).exists():
+        count += 1
         pro_number = f"ORD{count:06d}"
 
-        # Check if pro number already exists and generate a new one if it does.
-        while Order.objects.filter(pro_number=pro_number).exists():
-            count += 1
-            pro_number = f"ORD{count:06d}"
-
-        return pro_number
+    return pro_number
