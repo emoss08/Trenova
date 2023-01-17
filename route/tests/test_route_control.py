@@ -47,9 +47,13 @@ def test_route_distance_choices(organization):
     Test Route avoidance choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         organization.route_control.mileage_unit = "invalid"
         organization.route_control.full_clean()
+
+    assert excinfo.value.message_dict["mileage_unit"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 
 @pytest.mark.django_db
@@ -58,6 +62,11 @@ def test_route_model_choices(organization):
     Test Route model choices throws ValidationError
     when the passed choice is not a valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         organization.route_control.traffic_model = "invalid"
         organization.route_control.full_clean()
+
+    assert excinfo.value.message_dict["traffic_model"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
+

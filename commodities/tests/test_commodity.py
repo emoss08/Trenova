@@ -45,9 +45,13 @@ def test_unit_of_measure_choices(commodity):
     Test Unit of measure choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         commodity.unit_of_measure = "invalid"
         commodity.full_clean()
+
+    assert excinfo.value.message_dict["unit_of_measure"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 
 @pytest.mark.django_db
@@ -66,14 +70,3 @@ def test_commodity_is_hazmat_if_hazmat_class(commodity):
     Test commodity hazardous material creation
     """
     assert commodity.is_hazmat is True
-
-
-@pytest.mark.django_db
-def test_commodity_is_hazmat_and_not_hazmat_class(commodity):
-    """
-    Test if commodity has hazardous material assigned,
-    that it is marked as hazardous material.
-    """
-    if commodity.hazmat and not commodity.is_hazmat:
-        assert False
-    assert True

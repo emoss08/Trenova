@@ -45,9 +45,14 @@ def test_hazardous_class_choices(hazardous_material):
     Test Unit of measure choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         hazardous_material.hazard_class = "invalid"
         hazardous_material.full_clean()
+
+    assert excinfo.value.message_dict["hazard_class"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
+
 
 
 @pytest.mark.django_db
@@ -56,10 +61,13 @@ def test_packing_group_choices(hazardous_material):
     Test Packing group choice throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         hazardous_material.packing_group = "invalid"
         hazardous_material.full_clean()
 
+    assert excinfo.value.message_dict["packing_group"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 @pytest.mark.django_db
 def test_hazardous_material_update(hazardous_material):

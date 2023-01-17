@@ -54,9 +54,13 @@ def test_worker_type_choices(worker):
     Test Worker Type choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         worker.worker_type = "invalid"
         worker.full_clean()
+
+    assert excinfo.value.message_dict["worker_type"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 
 @pytest.mark.django_db
@@ -74,9 +78,14 @@ def test_worker_sex_choices(worker):
     Test Worker Sex choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         worker.profile.sex = "invalid"
         worker.profile.full_clean()
+
+    assert excinfo.value.message_dict["sex"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
+
 
 
 @pytest.mark.django_db
@@ -85,9 +94,13 @@ def test_worker_endorsement_choices(worker):
     Test Worker Endorsement choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         worker.profile.endorsements = "invalid"
         worker.profile.full_clean()
+
+    assert excinfo.value.message_dict["endorsements"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 
 @pytest.mark.django_db
@@ -96,13 +109,14 @@ def test_hazmat_endorsement(worker):
     Test when Endorsement is HAZMAT or X and no hazmat_expiration
     is set throw a ValidationError.
     """
-    with pytest.raises(
-        ValidationError,
-        match="Hazmat expiration date is required for this endorsement.",
-    ):
+    with pytest.raises(ValidationError) as excinfo:
         worker.profile.endorsements = "X"
         worker.profile.hazmat_expiration_date = ""
         worker.profile.full_clean()
+
+    assert excinfo.value.message_dict["hazmat_expiration_date"] == [
+        "Hazmat expiration date is required for this endorsement. Please try again."
+    ]
 
 
 @pytest.mark.django_db
