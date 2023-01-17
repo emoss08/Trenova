@@ -21,30 +21,36 @@ import factory
 from django.utils import timezone
 from factory.fuzzy import FuzzyDecimal
 
-from order import models
-
 from django.core.files.uploadedfile import SimpleUploadedFile
+
+from utils.models import RatingMethodChoices
+
 
 class OrderTypeFactory(factory.django.DjangoModelFactory):
     """
     OrderType factory
     """
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-
     class Meta:
         """
         Metaclass for OrderTypeFactory
         """
+        model = "order.OrderType"
+        django_get_or_create = ("organization",)
 
-        model = models.OrderType
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")
 
 
 class ReasonCodeFactory(factory.django.DjangoModelFactory):
     """
     ReasonCode Factory
     """
+    class Meta:
+        """
+        Metaclass for ReasonCodeFactory
+        """
+        model = "order.ReasonCode"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
@@ -54,18 +60,17 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
         elements=("VOIDED", "CANCELLED"),
     )
 
-    class Meta:
-        """
-        Metaclass for ReasonCodeFactory
-        """
-
-        model = models.ReasonCode
-
 
 class OrderFactory(factory.django.DjangoModelFactory):
     """
     Order Factory
     """
+    class Meta:
+        """
+        Metaclass for orderFactory
+        """
+        model = "order.Order"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order_type = factory.SubFactory(OrderTypeFactory)
@@ -74,7 +79,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
     origin_location = factory.SubFactory("location.factories.LocationFactory")
     origin_appointment = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     destination_location = factory.SubFactory("location.factories.LocationFactory")
-    rate_method = models.RatingMethodChoices.FLAT
+    rate_method = RatingMethodChoices.FLAT
     freight_charge_amount = FuzzyDecimal(10, 1000, 2)
     destination_appointment = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     customer = factory.SubFactory("customer.factories.CustomerFactory")
@@ -84,18 +89,17 @@ class OrderFactory(factory.django.DjangoModelFactory):
     bol_number = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
 
-    class Meta:
-        """
-        Metaclass for orderFactory
-        """
-
-        model = models.Order
-
 
 class OrderCommentFactory(factory.django.DjangoModelFactory):
     """
     Order Comment Factory
     """
+    class Meta:
+        """
+        Metaclass For OrderCommentFactory
+        """
+        model = "order.OrderComment"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
@@ -103,18 +107,17 @@ class OrderCommentFactory(factory.django.DjangoModelFactory):
     comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
 
-    class Meta:
-        """
-        Metaclass For OrderCommentFactory
-        """
-
-        model = models.OrderComment
-
 
 class OrderDocumentationFactory(factory.django.DjangoModelFactory):
     """
     Order Documentation Factory
     """
+    class Meta:
+        """
+        Metaclass for OrderDocumentationFactory
+        """
+        model = "order.OrderDocumentation"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
@@ -123,18 +126,17 @@ class OrderDocumentationFactory(factory.django.DjangoModelFactory):
         "billing.tests.factories.DocumentClassificationFactory"
     )
 
-    class Meta:
-        """
-        Metaclass for OrderDocumentationFactory
-        """
-
-        model = models.OrderDocumentation
-
 
 class AdditionalChargeFactory(factory.django.DjangoModelFactory):
     """
     AdditionalCharge Factory
     """
+    class Meta:
+        """
+        Metaclass for AdditionalChargeFactory
+        """
+        model = "order.AdditionalCharge"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
@@ -142,10 +144,3 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
     charge_amount = FuzzyDecimal(low=10.00, high=100000.00, precision=2)
     sub_total = FuzzyDecimal(low=10.00, high=100000.00, precision=2)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
-
-    class Meta:
-        """
-        Metaclass for AdditionalChargeFactory
-        """
-
-        model = models.AdditionalCharge

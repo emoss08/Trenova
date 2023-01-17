@@ -19,20 +19,20 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from equipment import models
+from equipment.models import EquipmentTypeDetail
 
 
 class EquipmentTypeFactory(factory.django.DjangoModelFactory):
     """
     EquipmentType factory
     """
-
     class Meta:
         """
         Metaclass for EquipmentTypeFactory
         """
 
-        model = models.EquipmentType
+        model = "equipment.EquipmentType"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     id = factory.Faker("word", locale="en_US")
@@ -43,30 +43,29 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
     """
     Factory for EquipmentTypeDetail model.
     """
-
     class Meta:
         """
         Metaclass for EquipmentTypeDetailFactory
         """
-
-        model = models.EquipmentTypeDetail
+        model = "equipment.EquipmentTypeDetail"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
-    equipment_class = models.EquipmentTypeDetail.EquipmentClassChoices.TRAILER
+    equipment_class = EquipmentTypeDetail.EquipmentClassChoices.TRAILER
+
 
 
 class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
     """
     EquipmentManufacturer factory
     """
-
     class Meta:
         """
         Metaclass for EquipmentManufacturerFactory
         """
-
-        model = models.EquipmentManufacturer
+        model = "equipment.EquipmentManufacturer"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     id = factory.Faker("name")
@@ -77,13 +76,12 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
     """
     Equipment factory
     """
-
     class Meta:
         """
         Metaclass for EquipmentFactory
         """
-
-        model = models.Equipment
+        model = "equipment.Equipment"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)

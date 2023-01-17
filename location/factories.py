@@ -19,29 +19,31 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from location.models import Location, LocationCategory, LocationComment, LocationContact
-
-
 class LocationCategoryFactory(factory.django.DjangoModelFactory):
     """
     LocationCategory factory
     """
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-
     class Meta:
         """
         Metaclass for LocationCategoryFactory
         """
+        model = "location.LocationCategory"
+        django_get_or_create = ("organization",)
 
-        model = LocationCategory
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")
 
 
 class LocationFactory(factory.django.DjangoModelFactory):
     """
     Location factory
     """
+    class Meta:
+        """
+        Metaclass for LocationFactory
+        """
+        model = "location.Location"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("word", locale="en_US")
@@ -51,25 +53,17 @@ class LocationFactory(factory.django.DjangoModelFactory):
     state = "NC"
     zip_code = factory.Faker("zipcode", locale="en_US")
 
-    class Meta:
-        """
-        Metaclass for LocationFactory
-        """
-
-        model = Location
-
 
 class LocationContactFactory(factory.django.DjangoModelFactory):
     """
     LocationContact factory
     """
-
     class Meta:
         """
         Metaclass for LocationContactFactory
         """
-
-        model = LocationContact
+        model = "location.LocationContact"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
@@ -81,16 +75,16 @@ class LocationCommentFactory(factory.django.DjangoModelFactory):
     """
     LocationComment factory
     """
+    class Meta:
+        """
+        Metaclass for LocationCommentFactory
+        """
+
+        model = "location.LocationComment"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
     comment = factory.Faker("text", locale="en_US")
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
-
-    class Meta:
-        """
-        Metaclass for LocationCommentFactory
-        """
-
-        model = LocationComment

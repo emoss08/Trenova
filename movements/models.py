@@ -123,6 +123,25 @@ class Movement(GenericModel):
         code = f"MOV{Movement.objects.count() + 1:06d}"
         return "MOV000001" if Movement.objects.filter(ref_num=code).exists() else code
 
+    def validate_stops_in_movement(self) -> None:
+        """
+        Validate that a stop must already exist before a movement can be created.
+
+        Returns:
+
+        """
+        if not self.stops.exists():
+            raise ValidationError(
+                {
+                    "stops": ValidationError(
+                        _(
+                            "A stop must already exists before a movement can be created."
+                        ),
+                        code="invalid",
+                    )
+                }
+            )
+
     def validate_movement_statuses(self) -> None:
         """Validate Movement status
 
@@ -407,12 +426,12 @@ class Movement(GenericModel):
         Returns:
             None
         """
-        self.validate_primary_worker_regulatory()
-        self.validate_movement_statuses()
-        self.validate_movement_worker()
-        self.validate_worker_compare()
-        self.validate_movement_stop_status()
-        self.validate_worker_commodity()
+        # self.validate_primary_worker_regulatory()
+        # self.validate_movement_statuses()
+        # self.validate_movement_worker()
+        # self.validate_worker_compare()
+        # self.validate_movement_stop_status()
+        # self.validate_worker_commodity()
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement

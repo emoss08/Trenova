@@ -25,24 +25,29 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
     """
     Job title factory
     """
+    class Meta:
+        """
+        Metaclass for JobTitleFactory
+        """
+        model = "accounts.JobTitle"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     is_active = True
     name = factory.Faker("job")
     description = factory.Faker("text")
 
-    class Meta:
-        """
-        Metaclass for JobTitleFactory
-        """
-
-        model = "accounts.JobTitle"
-
 
 class UserFactory(factory.django.DjangoModelFactory):
     """
     User factory
     """
+    class Meta:
+        """
+        Metaclass for UserFactory
+        """
+        model = "accounts.User"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     username = factory.Faker("user_name")
@@ -50,13 +55,6 @@ class UserFactory(factory.django.DjangoModelFactory):
     email = factory.Faker("email")
     is_staff = True
     date_joined = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
-
-    class Meta:
-        """
-        Meta class
-        """
-
-        model = "accounts.User"
 
     @factory.post_generation
     def profile(self, create, extracted, **kwargs):
@@ -89,22 +87,20 @@ class ProfileFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         """
-        Meta class
+        Metaclass for ProfileFactory
         """
-
         model = "accounts.UserProfile"
+        django_get_or_create = ("organization",)
 
 
 class TokenFactory(factory.django.DjangoModelFactory):
     """
     Token factory
     """
-
-    user = factory.SubFactory(UserFactory)
-
     class Meta:
         """
-        Meta class
+        Metaclass for TokenFactory
         """
-
         model = "accounts.Token"
+
+    user = factory.SubFactory(UserFactory)

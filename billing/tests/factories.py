@@ -19,52 +19,49 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from billing import models
-
 
 class ChargeTypeFactory(factory.django.DjangoModelFactory):
     """
     ChargeType factory
     """
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-
     class Meta:
         """
         Metaclass for ChargeTypeFactory
         """
+        model = "billing.ChargeType"
+        django_get_or_create = ("organization",)
 
-        model = models.ChargeType
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")
 
 
 class AccessorialChargeFactory(factory.django.DjangoModelFactory):
     """
     AccessorialCharge factory
     """
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = factory.Faker("word", locale="en_US")
-
     class Meta:
         """
         Metaclass for AccessorialChargeFactory
         """
 
-        model = models.AccessorialCharge
+        model = "billing.AccessorialCharge"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    code = factory.Faker("word", locale="en_US")
 
 
 class DocumentClassificationFactory(factory.django.DjangoModelFactory):
     """
     DocumentClassification factory
     """
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-
     class Meta:
         """
         Metaclass for DocumentClassificationFactory
         """
 
-        model = models.DocumentClassification
+        model = "billing.DocumentClassification"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")

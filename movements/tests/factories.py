@@ -19,23 +19,20 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from movements import models
-
 
 class MovementFactory(factory.django.DjangoModelFactory):
     """
     Factory for Movement Model.
     """
+    class Meta:
+        """
+        Metaclass for MovementFactory
+        """
+        model = "movements.Movement"
+        django_get_or_create = ("organization",)
 
     id = factory.Faker("uuid4")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory("order.tests.factories.OrderFactory")
     equipment = factory.SubFactory("equipment.tests.factories.EquipmentFactory")
     primary_worker = factory.SubFactory("worker.factories.WorkerFactory")
-
-    class Meta:
-        """
-        Metaclass for MovementFactory
-        """
-
-        model = models.Movement

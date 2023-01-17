@@ -24,6 +24,12 @@ class WorkerFactory(factory.django.DjangoModelFactory):
     """
     Worker factory
     """
+    class Meta:
+        """
+        Metaclass for WorkerFactory
+        """
+        model = "worker.Worker"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("text", locale="en_US", max_nb_chars=10)
@@ -35,13 +41,6 @@ class WorkerFactory(factory.django.DjangoModelFactory):
     city = factory.Faker("city")
     state = "CA"
     zip_code = factory.Faker("zipcode")
-
-    class Meta:
-        """
-        Metaclass for WorkerFactory
-        """
-
-        model = "worker.Worker"
 
     @factory.post_generation
     def worker_contact(self, create, extracted, **kwargs):
@@ -74,34 +73,33 @@ class WorkerContactFactory(factory.django.DjangoModelFactory):
     """
     WorkerContact factory
     """
+    class Meta:
+        """
+        Metaclass for WorkerContactFactory
+        """
+        model = "worker.WorkerContact"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     worker = factory.SubFactory("worker.factories.WorkerFactory")
     name = factory.Faker("name", locale="en_US")
     email = factory.Faker("email", locale="en_US")
 
-    class Meta:
-        """
-        Metaclass for WorkerContactFactory
-        """
-
-        model = "worker.WorkerContact"
-
 
 class WorkerCommentFactory(factory.django.DjangoModelFactory):
     """
     WorkerComment factory
     """
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    worker = factory.SubFactory("worker.factories.WorkerFactory")
-    comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
-    comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
-    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
-
     class Meta:
         """
         Metaclass for WorkerCommentFactory
         """
 
         model = "worker.WorkerComment"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    worker = factory.SubFactory("worker.factories.WorkerFactory")
+    comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
+    comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
