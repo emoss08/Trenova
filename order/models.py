@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from __future__ import annotations
 
 import decimal
@@ -24,13 +25,13 @@ import uuid
 from typing import Any, final
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.db.models.aggregates import Sum
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from commodities.models import HazardousMaterial
-from order.validation import OrderValidation
 from stops.models import Stop
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
@@ -89,8 +90,6 @@ class OrderControl(GenericModel):
             Help text is "Enforce comment when cancelling an order.".
         generate_routes (BooleanField): Default value is False.
             Help text is "Automatically generate routes for order entry.".
-        auto_pop_address (BooleanField): Default value is True.
-            Help text is "Auto populate address from location ID when entering an order.".
         auto_sequence_stops (BooleanField): Default value is True.
             Help text is "Auto Sequence stops for the order and movements.".
         auto_order_total (BooleanField): Default value is True.
@@ -153,13 +152,6 @@ class OrderControl(GenericModel):
         _("Generate Routes"),
         default=False,
         help_text=_("Automatically generate routes for order entry."),
-    )
-    auto_pop_address = models.BooleanField(
-        _("Auto Populate Address"),
-        default=True,
-        help_text=_(
-            "Auto populate address from location ID " "when entering an order."
-        ),
     )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
@@ -253,7 +245,7 @@ class OrderType(GenericModel):
 
     class Meta:
         verbose_name = _("Order Type")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
         verbose_name_plural = _("Order Types")
 
     def __str__(self) -> str:
@@ -519,7 +511,7 @@ class Order(GenericModel):
 
         verbose_name = _("Order")
         verbose_name_plural = _("Orders")
-        ordering: list[str] = ["-pro_number"]
+        ordering = ["-pro_number"]
 
     def __str__(self) -> str:
         """String representation of the Order
@@ -540,9 +532,77 @@ class Order(GenericModel):
         """
         super().clean()
 
-        OrderValidation(
-            order=self, organization=self.organization, order_control=OrderControl
-        ).validate()
+        # Validate Freight Rate Method
+        if (
+            self.rate_method == RatingMethodChoices.FLAT
+            and not self.freight_charge_amount
+        ):
+            raise ValidationError(
+                {
+                    "rate_method": _(
+                        "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
+        # Validate Ready to Bill
+        if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
+            raise ValidationError(
+                {
+                    "ready_to_bill": _(
+                        "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
+        # Validate Per Mile Method
+        if self.rate_method == RatingMethodChoices.PER_MILE and not self.mileage:
+            raise ValidationError(
+                {
+                    "rate_method": _(
+                        "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
+        # Validate compare origin and destination are not the same.
+        if (
+            self.organization.order_control.enforce_origin_destination
+            and self.origin_location == self.destination_location
+        ):
+            raise ValidationError(
+                {
+                    "origin_location": _(
+                        "Origin and Destination locations cannot be the same. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+
+        # Validate that origin_location or origin_address is provided.
+        if not self.origin_location and not self.origin_address:
+            raise ValidationError(
+                {
+                    "origin_address": _(
+                        "Origin Location or Address is required. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+
+        # Validate that destination_location or destination_address is provided.
+        if not self.destination_location and not self.destination_address:
+            raise ValidationError(
+                {
+                    "destination_address": _(
+                        "Destination Location or Address is required. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
 
     def save(self, **kwargs: Any) -> None:
         """Order save method
@@ -555,12 +615,17 @@ class Order(GenericModel):
         if self.ready_to_bill:
             self.sub_total = self.calculate_total()  # type: ignore
 
-        self.set_address()
-        self.set_hazardous_class()
+        # If origin location is provided, set origin address to location address.
+        if self.origin_location and not self.origin_address:
+            self.origin_address = self.origin_location.get_address_combination
 
-        if self.status == StatusChoices.COMPLETED:
-            self.pieces = self.total_piece()
-            self.weight = self.total_weight()
+        # If destination location is provided, set destination address to location address.
+        if self.destination_location and not self.destination_address:
+            self.destination_address = self.destination_location.get_address_combination
+
+        # If the commodity has a hazmat class, set the hazmat class on the order.
+        if self.commodity and self.commodity.hazmat:
+            self.hazmat = self.commodity.hazmat
 
         super().save(**kwargs)
 
@@ -579,11 +644,7 @@ class Order(GenericModel):
             decimal.Decimal: The total for the order
         """
 
-        order_control: OrderControl = OrderControl.objects.get(
-            organization=self.organization
-        )
-
-        if order_control.auto_order_total:
+        if self.organization.order_control.auto_order_total:
             # Handle the flat fee rate calculation
             if self.rate_method == RatingMethodChoices.FLAT:
                 return self.freight_charge_amount + self.other_charge_amount
@@ -596,58 +657,6 @@ class Order(GenericModel):
 
             return self.freight_charge_amount
         return None
-
-    def set_hazardous_class(self) -> HazardousMaterial | None:
-        """Set the hazardous class from commodity
-
-        if a commodity is selected automatically set the hazardous
-        class from the relationship between commodity and
-        HazardousMaterial.
-
-        Returns:
-            HazardousMaterial | None: Instance of the HazardousMaterial
-        """
-        if self.commodity and self.commodity.hazmat is not None:
-            self.hazmat = self.commodity.hazmat
-        return self.hazmat
-
-    def total_piece(self) -> int:
-        """Get the total piece count for the order
-
-        Returns:
-            int: Total piece count for the order
-        """
-        return Stop.objects.filter(movement__order__exact=self).aggregate(
-            Sum("pieces")
-        )["pieces__sum"]
-
-    def total_weight(self) -> int:
-        """Get the total weight for the order.
-
-        Returns:
-            int: Total weight for the order
-        """
-        return Stop.objects.filter(movement__order__exact=self).aggregate(
-            Sum("weight")
-        )["weight__sum"]
-
-    def set_address(self) -> None:
-        """Set the address for the order
-
-        Returns:
-            None
-        """
-        o_control: OrderControl = OrderControl.objects.get(
-            organization=self.entered_by.organization
-        )
-
-        if o_control.auto_pop_address:
-            if self.origin_location:
-                self.origin_address = self.origin_location.get_address_combination
-            if self.destination_location:
-                self.destination_address = (
-                    self.destination_location.get_address_combination
-                )
 
 
 class OrderDocumentation(GenericModel):
@@ -670,8 +679,7 @@ class OrderDocumentation(GenericModel):
     document = models.FileField(
         _("Document"),
         upload_to=order_documentation_upload_to,
-        null=True,
-        blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=["pdf"])],
     )
     document_class = models.ForeignKey(
         "billing.DocumentClassification",
@@ -695,7 +703,9 @@ class OrderDocumentation(GenericModel):
         Returns:
             str: String representation of the OrderDocumentation
         """
-        return f"{self.order} - {self.document_class}"
+        return textwrap.shorten(
+            f"{self.order} - {self.document_class}", 50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the OrderDocumentation
@@ -752,6 +762,7 @@ class OrderComment(GenericModel):
 
         verbose_name = _("Order Comment")
         verbose_name_plural = _("Order Comments")
+        ordering = ["-created"]
 
     def __str__(self) -> str:
         """String representation of the OrderComment
@@ -759,7 +770,9 @@ class OrderComment(GenericModel):
         Returns:
             str: String representation of the OrderComment
         """
-        return f"{self.order} - {self.comment}"
+        return textwrap.shorten(
+            f"{self.order} - {self.comment_type}", 50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the OrderComment
@@ -839,7 +852,9 @@ class AdditionalCharge(GenericModel):
         Returns:
             str: String representation of the AdditionalCharges
         """
-        return f"{self.order} - {self.charge}"
+        return textwrap.shorten(
+            f"{self.order} - {self.charge}", 50, placeholder="..."
+        )
 
     def save(self, **kwargs: Any):
         """
@@ -909,7 +924,7 @@ class ReasonCode(GenericModel):
 
         verbose_name = _("Reason Code")
         verbose_name_plural = _("Reason Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """Reason Code String Representation
