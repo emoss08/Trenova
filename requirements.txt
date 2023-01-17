@@ -39,3 +39,4 @@ pytest-django==4.5.2
 pytest-html==3.2.0
 redis==4.3.4
 whitenoise==6.2.0
+django-nested-inline==0.4.5
