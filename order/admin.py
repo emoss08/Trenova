@@ -18,8 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
-
+from nested_inline.admin import NestedStackedInline, NestedModelAdmin
 from order import models
+from movements.models import Movement
 from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
 
 
@@ -33,7 +34,7 @@ class OrderDocumentationInline(
     model: type[models.OrderDocumentation] = models.OrderDocumentation
 
 
-class OrderComment(GenericStackedInline[models.OrderComment, models.Order]):
+class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]):
     """
     Order comment inline
     """
@@ -41,13 +42,25 @@ class OrderComment(GenericStackedInline[models.OrderComment, models.Order]):
     model: type[models.OrderComment] = models.OrderComment
 
 
-class AdditionalCharge(GenericStackedInline[models.AdditionalCharge, models.Order]):
+class AdditionalChargeInline(GenericStackedInline[models.AdditionalCharge, models.Order]):
     """
     Order Additional Charge inline
     """
 
     model: type[models.AdditionalCharge] = models.AdditionalCharge
 
+class StopInline(NestedStackedInline):
+    """
+    Order Stop Inline
+    """
+    model = models.Stop
+    extra = 1
+class MovementInline(NestedStackedInline):
+    """
+    Order Movement Inline
+    """
+    model: type[Movement] = Movement
+    inlines = [StopInline]
 
 @admin.register(models.OrderType)
 class OrderTypeAdmin(GenericAdmin[models.OrderType]):
@@ -89,7 +102,7 @@ class OrderControlAdmin(GenericAdmin[models.OrderControl]):
 
 
 @admin.register(models.Order)
-class OrderAdmin(GenericAdmin[models.Order]):
+class OrderAdmin(NestedModelAdmin):
     """
     Order Admin
     """
@@ -102,7 +115,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
     )
     search_fields = ("pro_number",)
     fieldsets = (
-        (None, {"fields": ("status", "order_type", "revenue_code", "entered_by")}),
+        (None, {"fields": ("organization", "status", "order_type", "revenue_code", "entered_by")}),
         (
             "Order Information",
             {
@@ -153,7 +166,6 @@ class OrderAdmin(GenericAdmin[models.Order]):
         ),
     )
     inlines = (
+        MovementInline,
         OrderDocumentationInline,
-        OrderComment,
-        AdditionalCharge,
     )

@@ -25,7 +25,9 @@ from django.dispatch import receiver
 from movements.models import Movement
 from movements.services.generation import MovementService
 from order import models
-from order.services.order_service import OrderService
+from order.services.pro_number_service import set_pro_number
+from stops.selectors import total_piece_count_for_order, total_weight_for_order
+from utils.models import StatusChoices
 
 
 @receiver(pre_save, sender=models.Order)
@@ -45,7 +47,7 @@ def generate_pro_number(
         None
     """
     if not instance.pro_number:
-        instance.pro_number = OrderService.set_pro_number()
+        instance.pro_number = set_pro_number()
 
 
 @receiver(post_save, sender=models.Order)
@@ -65,3 +67,41 @@ def generate_order_movement(
     """
     if created and not Movement.objects.filter(order=instance).exists():
         MovementService.create_initial_movement(instance)
+
+@receiver(post_save, sender=models.Order)
+def total_order_piece_count(
+    sender: models.Order, instance: models.Order, created: bool, **kwargs: Any
+) -> None:
+    """Update the total piece count for an order
+
+    Args:
+        sender (Order): Order
+        instance (Order): The Order instance.
+        created (bool): if the Order was created
+        **kwargs (Any): Keyword Arguments
+
+    Returns:
+        None
+    """
+    if instance.status == StatusChoices.COMPLETED:
+        instance.pieces = total_piece_count_for_order(order=instance)
+        instance.save()
+
+@receiver(post_save, sender=models.Order)
+def total_order_weight(
+    sender: models.Order, instance: models.Order, created: bool, **kwargs: Any
+) -> None:
+    """Update the total weight for an order
+
+    Args:
+        sender (Order): Order
+        instance (Order): The Order instance.
+        created (bool): if the Order was created
+        **kwargs (Any): Keyword Arguments
+
+    Returns:
+        None
+    """
+    if instance.status == StatusChoices.COMPLETED:
+        instance.weight = total_weight_for_order(order=instance)
+        instance.save()
