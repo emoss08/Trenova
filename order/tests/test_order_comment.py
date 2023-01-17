@@ -173,6 +173,7 @@ class TestOrderCommentAPI(ApiTest):
                 "origin_appointment": f"{timezone.now()}",
                 "destination_location": f"{destination_location.id}",
                 "destination_appointment": f"{timezone.now()}",
+                "freight_charge_amount": 100.00,
                 "customer": f"{customer.id}",
                 "equipment_type": f"{equipment_type.id}",
                 "entered_by": f"{user.id}",

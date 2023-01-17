@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import os
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from billing.tests.factories import DocumentClassificationFactory
 from order import models
@@ -63,35 +64,37 @@ class TestOrderDocumentation(UnitTest):
         """
         Test Order Documentation Create
         """
-        test_file = os.path.basename("files/dummy.pdf")
+        pdf_file = SimpleUploadedFile("dummy.pdf", b"file_content", content_type="application/pdf")
 
-        ord_doc = models.OrderDocumentation.objects.create(
+        created_document = models.OrderDocumentation.objects.create(
             organization=organization,
             order=order,
-            document=test_file,
+            document=pdf_file,
             document_class=document_classification,
         )
 
-        assert ord_doc is not None
-        assert ord_doc.order == order
-        assert ord_doc.document == test_file
-        assert ord_doc.organization == organization
-        assert ord_doc.document_class == document_classification
+        assert created_document is not None
+        assert created_document.order == order
+        assert created_document.organization == organization
+        assert created_document.document_class == document_classification
+        assert created_document.document.name is not None
+        assert created_document.document.read() == b"file_content"
+        assert created_document.document.size == len(b"file_content")
 
     def test_update(self, order_document, organization, order, document_classification):
         """
         Test Order Documentation update
         """
-        test_file = os.path.basename("files/dummy.pdf")
+        pdf_file = SimpleUploadedFile("dummy.pdf", b"file_content", content_type="application/pdf")
 
-        ord_doc = models.OrderDocumentation.objects.get(id=order_document.id)
-        ord_doc.document = test_file
+        updated_document = models.OrderDocumentation.objects.get(id=order_document.id)
+        updated_document.document = pdf_file
+        updated_document.save()
 
-        ord_doc.save()
-
-        assert ord_doc is not None
-        assert ord_doc.document == test_file
-
+        assert updated_document is not None
+        assert updated_document.document.name is not None
+        assert updated_document.document.read() == b"file_content"
+        assert updated_document.document.size == len(b"file_content")
 
 class TestOrderDocumentationApi(ApiTest):
     """
@@ -119,21 +122,17 @@ class TestOrderDocumentationApi(ApiTest):
         """
         Pytest Fixture for Order Documentation
         """
-        fpath = "testfile.txt"
-        test_file = open(fpath, "w")
-        test_file.write("Hello World")
-        test_file.close()
-        test_file = open(fpath, "r")
 
-        return api_client.post(
-            "/api/order_documents/",
-            {
-                "organization": f"{organization}",
-                "order": f"{order.id}",
-                "document": test_file,
-                "document_class": f"{document_classification.id}",
-            },
-        )
+        with open("order/tests/files/dummy.pdf", "rb") as test_file:
+            return api_client.post(
+                "/api/order_documents/",
+                {
+                    "organization": f"{organization}",
+                    "order": f"{order.id}",
+                    "document": test_file,
+                    "document_class": f"{document_classification.id}",
+                },
+            )
 
     def test_get(self, api_client):
         """
@@ -159,39 +158,26 @@ class TestOrderDocumentationApi(ApiTest):
         assert response.data["document"] is not None
         assert response.data["document_class"] == document_classification.id
 
-        if os.path.exists("testfile.txt"):
-            # Remove file once it is generated
-            return os.remove("testfile.txt")
-
     def test_put(self, api_client, order, order_documentation, document_classification):
         """
         Test put Order Documentation by ID
         """
 
-        fpath = "putfile.txt"
-        test_file = open(fpath, "w")
-        test_file.write("Hello World")
-        test_file.close()
-        test_file = open(fpath, "r")
-
-        response = api_client.put(
-            f"/api/order_documents/{order_documentation.data['id']}/",
-            {
-                "order": f"{order.id}",
-                "document": test_file,
-                "document_class": f"{document_classification.id}",
-            },
-        )
+        with open("order/tests/files/dummy.pdf", "rb") as test_file:
+            response = api_client.put(
+                f"/api/order_documents/{order_documentation.data['id']}/",
+                {
+                    "order": f"{order.id}",
+                    "document": test_file,
+                    "document_class": f"{document_classification.id}",
+                },
+            )
 
         assert response.data is not None
         assert response.status_code == 200
         assert response.data["order"] == order.id
         assert response.data["document"] is not None
         assert response.data["document_class"] == document_classification.id
-
-        if os.path.exists(fpath):
-            # Remove file once it is generated
-            return os.remove(fpath)
 
     def test_patch(
         self, api_client, order, order_documentation, document_classification
@@ -200,30 +186,21 @@ class TestOrderDocumentationApi(ApiTest):
         Test patch Order Documentation by ID
         """
 
-        fpath = "patchfile.txt"
-        test_file = open(fpath, "w")
-        test_file.write("Hello World")
-        test_file.close()
-        test_file = open(fpath, "r")
-
-        response = api_client.put(
-            f"/api/order_documents/{order_documentation.data['id']}/",
-            {
-                "order": f"{order.id}",
-                "document": test_file,
-                "document_class": f"{document_classification.id}",
-            },
-        )
+        with open("order/tests/files/dummy.pdf", "rb") as test_file:
+            response = api_client.put(
+                f"/api/order_documents/{order_documentation.data['id']}/",
+                {
+                    "order": f"{order.id}",
+                    "document": test_file,
+                    "document_class": f"{document_classification.id}",
+                },
+            )
 
         assert response.data is not None
         assert response.status_code == 200
         assert response.data["order"] == order.id
         assert response.data["document"] is not None
         assert response.data["document_class"] == document_classification.id
-
-        if os.path.exists(fpath):
-            # Remove file once it is generated
-            return os.remove(fpath)
 
     def test_delete(self, api_client, order_documentation):
         """
