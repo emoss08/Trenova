@@ -142,6 +142,8 @@ class Stop(GenericModel):
         _("Stop Address"),
         max_length=255,
         help_text=_("Stop Address"),
+        blank=True,
+        null=True,
     )
     appointment_time = models.DateTimeField(
         _("Stop Appointment Time"),
@@ -218,11 +220,14 @@ class Stop(GenericModel):
         elif self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
 
-        CreateServiceIncident(
-            stop=self,
-            dc_object=DispatchControl,
-            si_object=ServiceIncident,
-        ).create()
+        if self.location and not self.address_line:
+            self.address_line = self.location.get_address_combination
+
+        # CreateServiceIncident(
+        #     stop=self,
+        #     dc_object=DispatchControl,
+        #     si_object=ServiceIncident,
+        # ).create()
 
         super().save(**kwargs)
 
