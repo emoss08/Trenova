@@ -90,7 +90,7 @@ class ProfileFactory(factory.django.DjangoModelFactory):
         Metaclass for ProfileFactory
         """
         model = "accounts.UserProfile"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "title", "user",)
 
 
 class TokenFactory(factory.django.DjangoModelFactory):
@@ -102,5 +102,6 @@ class TokenFactory(factory.django.DjangoModelFactory):
         Metaclass for TokenFactory
         """
         model = "accounts.Token"
+        django_get_or_create = ("user",)
 
     user = factory.SubFactory(UserFactory)
