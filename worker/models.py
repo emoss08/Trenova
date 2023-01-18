@@ -66,7 +66,6 @@ class Worker(GenericModel):
         _("Code"),
         max_length=10,
         unique=True,
-        blank=True,
         editable=False,
         help_text=_(
             "The code of the worker. This field is required and must be unique."
@@ -158,7 +157,10 @@ class Worker(GenericModel):
 
         verbose_name = _("worker")
         verbose_name_plural = _("workers")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
+        indexes = [
+            models.Index(fields=["first_name", "last_name"]),
+        ]
 
     def __str__(self) -> str:
         """Worker string representation
