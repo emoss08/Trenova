@@ -20,16 +20,18 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from dispatch.factories import CommentTypeFactory
-from utils.tests import ApiTest
 from worker.factories import WorkerFactory
 
 
-class TestWorkerApi(ApiTest):
+pytestmark = pytest.mark.django_db
+
+
+class TestWorkerApi:
     """
     Tests for Worker API.
     """
 
-    @pytest.fixture()
+    @pytest.fixture
     def worker(self):
         """
         Worker Fixture
@@ -37,7 +39,7 @@ class TestWorkerApi(ApiTest):
 
         return WorkerFactory()
 
-    @pytest.fixture()
+    @pytest.fixture
     def comment_type(self):
         """
         Comment Type Fixture

@@ -26,10 +26,12 @@ from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order import models
 from order.tests.factories import OrderFactory, OrderTypeFactory
-from utils.tests import ApiTest, UnitTest
 
 
-class TestOrder(UnitTest):
+pytestmark = pytest.mark.django_db
+
+
+class TestOrder:
     """
     Class to test Order
     """
@@ -148,55 +150,27 @@ class TestOrder(UnitTest):
         assert n_order.weight == 20_000
 
 
-class TestOrderAPI(ApiTest):
+class TestOrderAPI:
     """
     Test for Reason Code API
     """
 
-    @pytest.fixture()
-    def order_type(self):
-        """
-        Pytest Fixture for Order Type
-        """
-        return OrderTypeFactory()
-
-    @pytest.fixture()
+    @pytest.fixture
     def origin_location(self):
         """
         Pytest Fixture for Origin Location
         """
         return LocationFactory()
 
-    @pytest.fixture()
+    @pytest.fixture
     def destination_location(self):
         """
         Pytest Fixture for Destination Location
         """
         return LocationFactory()
 
-    @pytest.fixture()
-    def revenue_code(self):
-        """
-        Pytest Fixture for Revenue Code
-        """
-        return RevenueCodeFactory()
-
-    @pytest.fixture()
-    def customer(self):
-        """
-        Pytest Fixture for Customer
-        """
-        return CustomerFactory()
-
-    @pytest.fixture()
-    def equipment_type(self):
-        """
-        Pytest Fixture for Equipment Type
-        """
-        return EquipmentTypeFactory()
-
-    @pytest.fixture()
-    def order(
+    @pytest.fixture
+    def order_api(
         self,
         api_client,
         organization,
@@ -240,7 +214,7 @@ class TestOrderAPI(ApiTest):
     def test_get_by_id(
         self,
         api_client,
-        order,
+        order_api,
         order_type,
         revenue_code,
         origin_location,
@@ -252,7 +226,7 @@ class TestOrderAPI(ApiTest):
         """
         Test get Order by id
         """
-        response = api_client.get(f"/api/orders/{order.data['id']}/")
+        response = api_client.get(f"/api/orders/{order_api.data['id']}/")
         assert response.status_code == 200
         assert response.data["order_type"] == order_type.id
         assert response.data["revenue_code"] == revenue_code.id
@@ -273,7 +247,7 @@ class TestOrderAPI(ApiTest):
     def test_put(
         self,
         api_client,
-        order,
+        order_api,
         origin_location,
         destination_location,
         order_type,
@@ -286,7 +260,7 @@ class TestOrderAPI(ApiTest):
         Test put Order
         """
         response = api_client.put(
-            f"/api/orders/{order.data['id']}/",
+            f"/api/orders/{order_api.data['id']}/",
             {
                 "origin_location": f"{origin_location.id}",
                 "destination_location": f"{destination_location.id}",
@@ -321,13 +295,13 @@ class TestOrderAPI(ApiTest):
     def test_patch(
         self,
         api_client,
-        order,
+        order_api,
     ):
         """
         Test patch Order
         """
         response = api_client.patch(
-            f"/api/orders/{order.data['id']}/",
+            f"/api/orders/{order_api.data['id']}/",
             {
                 "bol_number": "patchedbol",
             },

@@ -22,26 +22,11 @@ from django.core.exceptions import ValidationError
 
 from billing import models
 from billing.tests.factories import DocumentClassificationFactory
-from organization.factories import OrganizationFactory
-from utils.tests import ApiTest
 
 pytestmark = pytest.mark.django_db
 
 
 class TestDocumentClassification:
-    @pytest.fixture()
-    def document_classification(self):
-        """
-        Document classification fixture
-        """
-        return DocumentClassificationFactory()
-
-    @pytest.fixture()
-    def organization(self):
-        """
-        Organization Fixture
-        """
-        return OrganizationFactory()
 
     def test_document_classification_creation(self, organization):
         """
@@ -69,17 +54,10 @@ class TestDocumentClassification:
         assert document_classification.description == "Another Test Description"
 
 
-class TestDocumentClassificationAPI(ApiTest):
+class TestDocumentClassificationAPI:
     """
     Test for Document Classification API
     """
-
-    @pytest.fixture()
-    def document_classification(self):
-        """
-        Document classification fixture
-        """
-        return DocumentClassificationFactory()
 
     def test_get(self, api_client):
         """
@@ -178,13 +156,6 @@ class TestDocumentationClassificationValidation:
     """
     Test for Document Classification Validation
     """
-
-    @pytest.fixture()
-    def document_classification(self):
-        """
-        Document classification fixture
-        """
-        return DocumentClassificationFactory()
 
     def test_cannot_delete_con(self, document_classification):
         """

@@ -20,21 +20,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from order import models
-from order.tests.factories import OrderTypeFactory
-from utils.tests import ApiTest, UnitTest
+
+pytestmark = pytest.mark.django_db
 
 
-class TestOrderType(UnitTest):
+class TestOrderType:
     """
     Class to test order Type
     """
 
-    @pytest.fixture()
-    def order_type(self):
-        """
-        Pytest Fixture for order Type
-        """
-        return OrderTypeFactory()
 
     def test_list(self, order_type):
         """
@@ -74,12 +68,12 @@ class TestOrderType(UnitTest):
         assert ord_type.name == "Foo Bart"
 
 
-class TestOrderTypeAPI(ApiTest):
+class TestOrderTypeAPI:
     """
     Test for Order Type API
     """
 
-    @pytest.fixture()
+    @pytest.fixture
     def order_type(self, api_client):
         """
         Order Type Factory

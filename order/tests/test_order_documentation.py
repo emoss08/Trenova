@@ -18,41 +18,22 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import shutil
+from pathlib import Path
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from billing.tests.factories import DocumentClassificationFactory
 from order import models
-from order.tests.factories import OrderDocumentationFactory, OrderFactory
-from utils.tests import ApiTest, UnitTest
 
 
-class TestOrderDocumentation(UnitTest):
+pytestmark = pytest.mark.django_db
+
+
+class TestOrderDocumentation:
     """
     Class to test Order Documentation
     """
-
-    @pytest.fixture()
-    def order_document(self):
-        """
-        Pytest Fixture for Order Documentation
-        """
-        return OrderDocumentationFactory()
-
-    @pytest.fixture()
-    def order(self):
-        """
-        Pytest Fixture for Order
-        """
-        return OrderFactory()
-
-    @pytest.fixture()
-    def document_classification(self):
-        """
-        Pytest Fixture for Document Classification
-        """
-        return DocumentClassificationFactory()
 
     def test_list(self, order_document):
         """
@@ -96,26 +77,12 @@ class TestOrderDocumentation(UnitTest):
         assert updated_document.document.read() == b"file_content"
         assert updated_document.document.size == len(b"file_content")
 
-class TestOrderDocumentationApi(ApiTest):
+class TestOrderDocumentationApi:
     """
     Order Documentation API
     """
 
-    @pytest.fixture()
-    def order(self):
-        """
-        Pytest Fixture for Order
-        """
-        return OrderFactory()
-
-    @pytest.fixture()
-    def document_classification(self):
-        """
-        Pytest Fixture for Document Classification
-        """
-        return DocumentClassificationFactory()
-
-    @pytest.fixture()
+    @pytest.fixture
     def order_documentation(
         self, api_client, order, document_classification, organization
     ):
@@ -124,7 +91,7 @@ class TestOrderDocumentationApi(ApiTest):
         """
 
         with open("order/tests/files/dummy.pdf", "rb") as test_file:
-            return api_client.post(
+            yield api_client.post(
                 "/api/order_documents/",
                 {
                     "organization": f"{organization}",
@@ -216,6 +183,50 @@ class TestOrderDocumentationApi(ApiTest):
 
         if os.path.exists("testfile.txt"):
             return os.remove("testfile.txt")
+
+    @staticmethod
+    def remove_media_directory(file_path: str) -> None:
+        """Remove Media Directory after test tear down.
+
+        Primary usage is when tests are performing file uplaods.
+        This method deletes the media directory after the test.
+        This is to prevent the media directory from filling up
+        with test files.
+
+        Args:
+            file_path (str): path to directory in media folder.
+
+        Returns:
+            None
+        """
+
+        base_dir = Path(__file__).resolve().parent.parent
+        media_dir = os.path.join(base_dir, "media/" + file_path)
+
+        if os.path.exists(media_dir):
+            shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
+
+    @staticmethod
+    def remove_file(file_path: str) -> None:
+        """Remove File after test tear down.
+
+        Primary usage is when tests are performing file uplaods.
+        This method deletes the file after the test.
+        This is to prevent the media directory from filling up
+        with test files.
+
+        Args:
+            file_path (str): path to file in media folder.
+
+        Returns:
+            None
+        """
+
+        base_dir = Path(__file__).resolve().parent.parent
+        file = os.path.join(base_dir, "media/" + file_path)
+
+        if os.path.exists(file):
+            os.remove(file)
 
     def test_tear_down(self):
         """

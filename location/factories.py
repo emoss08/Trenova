@@ -43,7 +43,7 @@ class LocationFactory(factory.django.DjangoModelFactory):
         Metaclass for LocationFactory
         """
         model = "location.Location"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "location_category",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("word", locale="en_US")

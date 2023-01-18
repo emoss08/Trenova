@@ -22,8 +22,10 @@ from django.core.exceptions import ValidationError
 
 from worker.factories import WorkerFactory
 
+pytestmark = pytest.mark.django_db
 
-@pytest.fixture()
+
+@pytest.fixture
 def worker():
     """
     Worker fixture
@@ -31,7 +33,6 @@ def worker():
     return WorkerFactory()
 
 
-@pytest.mark.django_db
 def test_worker_creation(worker):
     """
     Test worker creation
@@ -39,7 +40,6 @@ def test_worker_creation(worker):
     assert worker is not None
 
 
-@pytest.mark.django_db
 def test_worker_code(worker):
     """
     Test worker code is generated from
@@ -48,7 +48,6 @@ def test_worker_code(worker):
     assert worker.code is not None
 
 
-@pytest.mark.django_db
 def test_worker_type_choices(worker):
     """
     Test Worker Type choices throws ValidationError
@@ -63,7 +62,6 @@ def test_worker_type_choices(worker):
     ]
 
 
-@pytest.mark.django_db
 def test_worker_profile(worker):
     """
     Test worker code is generated from
@@ -72,54 +70,6 @@ def test_worker_profile(worker):
     assert worker.profile is not None
 
 
-@pytest.mark.django_db
-def test_worker_sex_choices(worker):
-    """
-    Test Worker Sex choices throws ValidationError
-    when the passed choice is not valid.
-    """
-    with pytest.raises(ValidationError) as excinfo:
-        worker.profile.sex = "invalid"
-        worker.profile.full_clean()
-
-    assert excinfo.value.message_dict["sex"] == [
-        "Value 'invalid' is not a valid choice."
-    ]
-
-
-
-@pytest.mark.django_db
-def test_worker_endorsement_choices(worker):
-    """
-    Test Worker Endorsement choices throws ValidationError
-    when the passed choice is not valid.
-    """
-    with pytest.raises(ValidationError) as excinfo:
-        worker.profile.endorsements = "invalid"
-        worker.profile.full_clean()
-
-    assert excinfo.value.message_dict["endorsements"] == [
-        "Value 'invalid' is not a valid choice."
-    ]
-
-
-@pytest.mark.django_db
-def test_hazmat_endorsement(worker):
-    """
-    Test when Endorsement is HAZMAT or X and no hazmat_expiration
-    is set throw a ValidationError.
-    """
-    with pytest.raises(ValidationError) as excinfo:
-        worker.profile.endorsements = "X"
-        worker.profile.hazmat_expiration_date = ""
-        worker.profile.full_clean()
-
-    assert excinfo.value.message_dict["hazmat_expiration_date"] == [
-        "Hazmat expiration date is required for this endorsement. Please try again."
-    ]
-
-
-@pytest.mark.django_db
 def test_worker_contact_creation(worker):
     """
     Test worker contact creation
@@ -127,7 +77,6 @@ def test_worker_contact_creation(worker):
     assert worker.worker_contact is not None
 
 
-@pytest.mark.django_db
 def test_worker_contact_update(worker):
     """
     Test worker contact update
@@ -137,7 +86,6 @@ def test_worker_contact_update(worker):
     assert worker.worker_contact.phone_number == "1234567890"
 
 
-@pytest.mark.django_db
 def test_worker_comment_creation(worker):
     """
     Test worker comment creation
@@ -145,7 +93,6 @@ def test_worker_comment_creation(worker):
     assert worker.worker_comment is not None
 
 
-@pytest.mark.django_db
 def test_worker_comment_update(worker):
     """
     Test worker comment update

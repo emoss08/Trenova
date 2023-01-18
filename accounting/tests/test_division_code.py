@@ -21,10 +21,12 @@ import pytest
 
 from accounting import models
 from accounting.tests.factories import DivisionCodeFactory, GeneralLedgerAccountFactory
-from utils.tests import ApiTest, UnitTest
 
 
-class TestDivisionCode(UnitTest):
+pytestmark = pytest.mark.django_db
+
+
+class TestDivisionCode:
     """
     Test for Division code
     """
@@ -111,7 +113,7 @@ class TestDivisionCode(UnitTest):
         assert div_code.code == "FOOB"
 
 
-class TestDivisionCodeApi(ApiTest):
+class TestDivisionCodeApi:
     """
     Test for Division Code API
     """
