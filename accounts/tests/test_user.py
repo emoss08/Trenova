@@ -21,33 +21,11 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from accounts import models
-from accounts.tests.factories import JobTitleFactory, UserFactory
-from organization.factories import OrganizationFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestUser:
-    @pytest.fixture()
-    def user(self):
-        """
-        User fixture
-        """
-        return UserFactory()
-
-    @pytest.fixture()
-    def job_title(self):
-        """
-        Job title fixture
-        """
-        return JobTitleFactory()
-
-    @pytest.fixture()
-    def organization(self):
-        """
-        Organization fixture
-        """
-        return OrganizationFactory()
 
     def test_user_creation(self, organization):
         """
@@ -93,11 +71,12 @@ class TestUser:
         job_title.is_active = False
         job_title.save()
         user.profile.title = job_title
-        with pytest.raises(
-            ValidationError,
-            match="The selected job title is not active. Please select a different job title.",
-        ):
+        with pytest.raises(ValidationError) as excinfo:
             user.profile.full_clean()
+
+        assert excinfo.value.message_dict["title"] == [
+            "The selected job title is not active. Please select a different job title."
+        ]
 
     def test_create_superuser(self, organization):
         """
