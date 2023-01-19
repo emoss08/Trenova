@@ -17,10 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
-import shutil
-from pathlib import Path
-
 import pytest
 from rest_framework.test import APIClient
 
@@ -49,14 +45,6 @@ def organization():
     yield organization
 
 
-@pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-    user = UserFactory()
-    yield user
-
 
 @pytest.fixture
 def api_client(token):
@@ -77,3 +65,30 @@ def job_title():
     """
     job_title = JobTitleFactory()
     yield job_title
+
+
+@pytest.fixture
+def user(api_client, organization):
+    """
+    User Fixture
+    """
+    user = api_client.post(
+        "/api/users/",
+        {
+            "organization": f"{organization}",
+            "username": "foobar",
+            "email": "foobar@user.com",
+            "password": "trashuser12345%",
+            "profile": {
+                "organization": f"{organization}",
+                "first_name": "foo",
+                "last_name": "bar",
+                "address_line_1": "test address line 1",
+                "city": "test",
+                "state": "NC",
+                "zip_code": "12345",
+            },
+        },
+        format="json",
+    )
+    yield user

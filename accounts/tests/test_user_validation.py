@@ -20,18 +20,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from accounts import models
-from organization.factories import OrganizationFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestUserValidation:
-    @pytest.fixture()
-    def organization(self):
-        """
-        Organization fixture
-        """
-        return OrganizationFactory()
 
     def test_create_superuser_is_superuser_error(self, organization):
         """
@@ -39,7 +32,7 @@ class TestUserValidation:
         value error
         """
 
-        with pytest.raises(ValueError, match="Superuser must have is_superuser=True."):
+        with pytest.raises(ValueError) as excinfo:
             models.User.objects.create_superuser(
                 organization=organization,
                 username="test_admin",
@@ -49,13 +42,15 @@ class TestUserValidation:
                 is_staff=True,
             )
 
+        assert excinfo.value.__str__() == "Superuser must have is_superuser=True."
+
     def test_create_superuser_is_staff_error(self, organization):
         """
         Test creating superuser throws
         value error
         """
 
-        with pytest.raises(ValueError, match="Superuser must have is_staff=True."):
+        with pytest.raises(ValueError) as excinfo:
             models.User.objects.create_superuser(
                 organization=organization,
                 username="test_admin",
@@ -64,3 +59,5 @@ class TestUserValidation:
                 is_superuser=True,
                 is_staff=False,
             )
+
+        assert excinfo.value.__str__() == "Superuser must have is_staff=True."
