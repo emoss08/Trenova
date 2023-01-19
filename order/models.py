@@ -80,14 +80,8 @@ class OrderControl(GenericModel):
             Help text is "Auto rate orders".
         calculate_distance (BooleanField): Default value is True.
             Help text is "Calculate distance for the order".
-        enforce_customer (BooleanField): Default value is False.
-            Help text is "Enforce Customer to being entered when entering an order.".
         enforce_rev_code (BooleanField): Default value is False.
             Help text is "Enforce rev code being entered when entering an order.".
-        enforce_shipper (BooleanField): Default value is False.
-            Help text is "Enforce shipper when putting in an order.".
-        enforce_cancel_comm (BooleanField): Default value is False.
-            Help text is "Enforce comment when cancelling an order.".
         generate_routes (BooleanField): Default value is False.
             Help text is "Automatically generate routes for order entry.".
         auto_sequence_stops (BooleanField): Default value is True.
@@ -126,32 +120,22 @@ class OrderControl(GenericModel):
     calculate_distance = models.BooleanField(
         _("Calculate Distance"),
         default=True,
-        help_text=_("Calculate distance for the order"),
-    )
-    enforce_customer = models.BooleanField(
-        _("Enforce Customer"),
-        default=False,
-        help_text=_("Enforce Customer to being enter when entering an order."),
+        help_text=_("Automatically Calculate distance for the order"),
     )
     enforce_rev_code = models.BooleanField(
         _("Enforce Rev Code"),
         default=False,
         help_text=_("Enforce rev code code being entered when entering an order."),
     )
-    enforce_shipper = models.BooleanField(
-        _("Enforce Shipper"),
-        default=False,
-        help_text=_("Enforce shipper when putting in an order."),
-    )
-    enforce_cancel_comm = models.BooleanField(
+    enforce_voided_comm = models.BooleanField(
         _("Enforce Voided Comm"),
         default=False,
-        help_text=_("Enforce comment when cancelling an order."),
+        help_text=_("Enforce comment when voiding an order."),
     )
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
-        help_text=_("Automatically generate routes for order entry."),
+        help_text=_("Automatically generate routing information for the order."),
     )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
@@ -178,7 +162,7 @@ class OrderControl(GenericModel):
 
         verbose_name = _("Order Control")
         verbose_name_plural = _("Order Controls")
-        ordering: list[str] = ["organization"]
+        ordering = ["organization"]
 
     def __str__(self) -> str:
         """Order control string representation
@@ -530,9 +514,8 @@ class Order(GenericModel):
         Raises:
             ValidationError: If the Order is not valid
         """
-        super().clean()
 
-        # Validate Freight Rate Method
+        # Validate 'freight_charge_amount' is entered if 'rate_method' is 'FLAT'
         if (
             self.rate_method == RatingMethodChoices.FLAT
             and not self.freight_charge_amount
@@ -546,7 +529,7 @@ class Order(GenericModel):
                 code="invalid",
             )
 
-        # Validate Ready to Bill
+        # Validate order not marked 'ready_to_bill' if 'status' is not COMPLETED
         if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
             raise ValidationError(
                 {
@@ -557,7 +540,7 @@ class Order(GenericModel):
                 code="invalid",
             )
 
-        # Validate Per Mile Method
+        # Validate 'mileage' is entered if 'rate_method' is 'PER_MILE'
         if self.rate_method == RatingMethodChoices.PER_MILE and not self.mileage:
             raise ValidationError(
                 {
@@ -604,15 +587,30 @@ class Order(GenericModel):
                 code="invalid",
             )
 
+        # Validate revenue code is entered if Order Control requires it for the organization.
+        if self.organization.order_control.enforce_rev_code and not self.revenue_code:
+            raise ValidationError(
+                {"revenue_code": _("Revenue code is required. Please try again.")},
+                code="invalid",
+            )
+
+        super().clean()
+
+
     def save(self, **kwargs: Any) -> None:
         """Order save method
+
+        Args:
+            kwargs (Any): Keyword Arguments
 
         Returns:
             None
         """
         self.full_clean()
 
-        if self.ready_to_bill:
+        # If order marked 'ready_to_bill' and organization order control 'auto_order_total' is set.
+        # Calculate the total for the order and save it as the 'sub_total'.
+        if self.ready_to_bill and self.organization.order_control.auto_order_total:
             self.sub_total = self.calculate_total()  # type: ignore
 
         # If origin location is provided, set origin address to location address.
@@ -637,26 +635,28 @@ class Order(GenericModel):
         """
         return reverse("order-detail", kwargs={"pk": self.pk})
 
-    def calculate_total(self) -> decimal.Decimal | None:
+    def calculate_total(self) -> decimal.Decimal:
         """Calculate the sub_total for an order
+
+        Calculate the sub_total for the order if the organization 'OrderControl'
+        has auto_total_order as True. If not, this method will be skipped in the
+        save method.
 
         Returns:
             decimal.Decimal: The total for the order
         """
 
-        if self.organization.order_control.auto_order_total:
-            # Handle the flat fee rate calculation
-            if self.rate_method == RatingMethodChoices.FLAT:
-                return self.freight_charge_amount + self.other_charge_amount
+        # Handle the flat fee rate calculation
+        if self.rate_method == RatingMethodChoices.FLAT:
+            return self.freight_charge_amount + self.other_charge_amount
 
-            # Handle the mileage rate calculation
-            if self.rate_method == RatingMethodChoices.PER_MILE:
-                return (
-                    self.freight_charge_amount * self.mileage + self.other_charge_amount
-                )
+        # Handle the mileage rate calculation
+        if self.rate_method == RatingMethodChoices.PER_MILE:
+            return (
+                self.freight_charge_amount * self.mileage + self.other_charge_amount
+            )
 
-            return self.freight_charge_amount
-        return None
+        return self.freight_charge_amount
 
 
 class OrderDocumentation(GenericModel):
@@ -852,15 +852,12 @@ class AdditionalCharge(GenericModel):
         Returns:
             str: String representation of the AdditionalCharges
         """
-        return textwrap.shorten(
-            f"{self.order} - {self.charge}", 50, placeholder="..."
-        )
+        return textwrap.shorten(f"{self.order} - {self.charge}", 50, placeholder="...")
 
     def save(self, **kwargs: Any):
         """
         Save the AdditionalCharge
         """
-
         self.charge_amount = self.charge.charge_amount
         self.sub_total = self.charge_amount * self.unit
 
