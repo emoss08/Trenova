@@ -55,16 +55,6 @@ class Organization(TimeStampedModel):
         ENGLISH = "en", _("English")
         SPANISH = "es", _("Spanish")
 
-    @final
-    class AuthTemplateChoices(models.TextChoices):
-        """
-        Choices for Authentication Template
-        """
-
-        DEFAULT = "default", _("Default")
-        CORPORATE = "corporate", _("Corporate")
-        CREATIVE = "creative", _("Creative")
-        FANCY = "fancy", _("Fancy")
 
     id = models.UUIDField(
         primary_key=True,
