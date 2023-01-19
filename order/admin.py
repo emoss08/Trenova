@@ -18,14 +18,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
-from nested_inline.admin import NestedStackedInline, NestedModelAdmin
+from nested_inline.admin import NestedStackedInline, NestedModelAdmin, NestedTabularInline
 from order import models
 from movements.models import Movement
-from utils.admin import GenericAdmin, GenericStackedInline, GenericTabularInline
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
 class OrderDocumentationInline(
-    GenericTabularInline[models.OrderDocumentation, models.Order]
+    NestedTabularInline[models.OrderDocumentation, models.Order]
 ):
     """
     Order documentation inline
