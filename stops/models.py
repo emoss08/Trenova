@@ -66,7 +66,7 @@ class QualifierCode(GenericModel):
 
         verbose_name = _("Qualifier Code")
         verbose_name_plural = _("Qualifier Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """Qualifier Code String Representation
@@ -173,7 +173,7 @@ class Stop(GenericModel):
 
         verbose_name = _("Stop")
         verbose_name_plural = _("Stops")
-        ordering: list[str] = ["movement", "sequence"]
+        ordering = ["movement", "sequence"]
 
     def __str__(self) -> str:
         """String representation of the Stop

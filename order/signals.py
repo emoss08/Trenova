@@ -65,7 +65,7 @@ def generate_order_movement(
     Returns:
         None
     """
-    if created and not Movement.objects.filter(order=instance).exists():
+    if created and Movement.objects.filter(order=instance).exists() is False:
         MovementService.create_initial_movement(instance)
 
 @receiver(post_save, sender=models.Order)
@@ -85,7 +85,6 @@ def total_order_piece_count(
     """
     if instance.status == StatusChoices.COMPLETED:
         instance.pieces = total_piece_count_for_order(order=instance)
-        instance.save()
 
 @receiver(post_save, sender=models.Order)
 def total_order_weight(
@@ -104,4 +103,3 @@ def total_order_weight(
     """
     if instance.status == StatusChoices.COMPLETED:
         instance.weight = total_weight_for_order(order=instance)
-        instance.save()

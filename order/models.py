@@ -554,6 +554,7 @@ class Order(GenericModel):
         # Validate compare origin and destination are not the same.
         if (
             self.organization.order_control.enforce_origin_destination
+            and self.origin_location and self.destination_location
             and self.origin_location == self.destination_location
         ):
             raise ValidationError(
@@ -611,7 +612,7 @@ class Order(GenericModel):
         # If order marked 'ready_to_bill' and organization order control 'auto_order_total' is set.
         # Calculate the total for the order and save it as the 'sub_total'.
         if self.ready_to_bill and self.organization.order_control.auto_order_total:
-            self.sub_total = self.calculate_total()  # type: ignore
+            self.sub_total = self.calculate_total()
 
         # If origin location is provided, set origin address to location address.
         if self.origin_location and not self.origin_address:
