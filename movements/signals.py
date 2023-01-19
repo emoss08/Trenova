@@ -48,7 +48,7 @@ def generate_initial_stops(
         None
     """
 
-    if created and not instance.order.movements.exists():
+    if created and instance.order.movements.count() == 1:
         stop_generation.StopService.create_initial_stops(instance, instance.order)
 
 @receiver(pre_save, sender=models.Movement)
