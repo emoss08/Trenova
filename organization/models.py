@@ -72,7 +72,10 @@ class Organization(TimeStampedModel):
         editable=False,
         unique=True,
     )
-    name = models.CharField(_("Organization Name"), max_length=255, unique=True)
+    name = models.CharField(
+        _("Organization Name"),
+        max_length=255,
+    )
     scac_code = models.CharField(
         max_length=4,
         verbose_name=_("SCAC Code"),
