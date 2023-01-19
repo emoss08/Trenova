@@ -19,14 +19,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
+
 class LocationCategoryFactory(factory.django.DjangoModelFactory):
     """
     LocationCategory factory
     """
+
     class Meta:
         """
         Metaclass for LocationCategoryFactory
         """
+
         model = "location.LocationCategory"
         django_get_or_create = ("organization",)
 
@@ -38,12 +41,17 @@ class LocationFactory(factory.django.DjangoModelFactory):
     """
     Location factory
     """
+
     class Meta:
         """
         Metaclass for LocationFactory
         """
+
         model = "location.Location"
-        django_get_or_create = ("organization", "location_category",)
+        django_get_or_create = (
+            "organization",
+            "location_category",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("word", locale="en_US")
@@ -58,12 +66,17 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
     """
     LocationContact factory
     """
+
     class Meta:
         """
         Metaclass for LocationContactFactory
         """
+
         model = "location.LocationContact"
-        django_get_or_create = ("organization",)
+        django_get_or_create = (
+            "organization",
+            "location",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
@@ -75,13 +88,19 @@ class LocationCommentFactory(factory.django.DjangoModelFactory):
     """
     LocationComment factory
     """
+
     class Meta:
         """
         Metaclass for LocationCommentFactory
         """
 
         model = "location.LocationComment"
-        django_get_or_create = ("organization",)
+        django_get_or_create = (
+            "organization",
+            "location",
+            "comment_type",
+            "entered_by",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")

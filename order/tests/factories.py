@@ -30,10 +30,12 @@ class OrderTypeFactory(factory.django.DjangoModelFactory):
     """
     OrderType factory
     """
+
     class Meta:
         """
         Metaclass for OrderTypeFactory
         """
+
         model = "order.OrderType"
         django_get_or_create = ("organization",)
 
@@ -45,10 +47,12 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
     """
     ReasonCode Factory
     """
+
     class Meta:
         """
         Metaclass for ReasonCodeFactory
         """
+
         model = "order.ReasonCode"
         django_get_or_create = ("organization",)
 
@@ -65,23 +69,37 @@ class OrderFactory(factory.django.DjangoModelFactory):
     """
     Order Factory
     """
+
     class Meta:
         """
         Metaclass for orderFactory
         """
+
         model = "order.Order"
-        django_get_or_create = ("organization",)
+        django_get_or_create = (
+            "organization",
+            "order_type",
+            "revenue_code",
+            "origin_location",
+            "destination_location",
+            "customer",
+            "equipment_type",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order_type = factory.SubFactory(OrderTypeFactory)
     status = "N"
     revenue_code = factory.SubFactory("accounting.tests.factories.RevenueCodeFactory")
     origin_location = factory.SubFactory("location.factories.LocationFactory")
-    origin_appointment = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
+    origin_appointment = factory.Faker(
+        "date_time", tzinfo=timezone.get_current_timezone()
+    )
     destination_location = factory.SubFactory("location.factories.LocationFactory")
     rate_method = RatingMethodChoices.FLAT
     freight_charge_amount = FuzzyDecimal(10, 1000, 2)
-    destination_appointment = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
+    destination_appointment = factory.Faker(
+        "date_time", tzinfo=timezone.get_current_timezone()
+    )
     customer = factory.SubFactory("customer.factories.CustomerFactory")
     equipment_type = factory.SubFactory(
         "equipment.tests.factories.EquipmentTypeFactory"
@@ -94,10 +112,12 @@ class OrderCommentFactory(factory.django.DjangoModelFactory):
     """
     Order Comment Factory
     """
+
     class Meta:
         """
         Metaclass For OrderCommentFactory
         """
+
         model = "order.OrderComment"
         django_get_or_create = ("organization",)
 
@@ -112,16 +132,20 @@ class OrderDocumentationFactory(factory.django.DjangoModelFactory):
     """
     Order Documentation Factory
     """
+
     class Meta:
         """
         Metaclass for OrderDocumentationFactory
         """
+
         model = "order.OrderDocumentation"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "order", "document_class")
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
-    document = SimpleUploadedFile("file.pdf", b"file_content", content_type="application/pdf")
+    document = SimpleUploadedFile(
+        "file.pdf", b"file_content", content_type="application/pdf"
+    )
     document_class = factory.SubFactory(
         "billing.tests.factories.DocumentClassificationFactory"
     )
@@ -131,12 +155,14 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
     """
     AdditionalCharge Factory
     """
+
     class Meta:
         """
         Metaclass for AdditionalChargeFactory
         """
+
         model = "order.AdditionalCharge"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "order", "entered_by", "charge")
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)

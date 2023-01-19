@@ -45,7 +45,9 @@ class TestOrderDocumentation:
         """
         Test Order Documentation Create
         """
-        pdf_file = SimpleUploadedFile("dummy.pdf", b"file_content", content_type="application/pdf")
+        pdf_file = SimpleUploadedFile(
+            "dummy.pdf", b"file_content", content_type="application/pdf"
+        )
 
         created_document = models.OrderDocumentation.objects.create(
             organization=organization,
@@ -66,7 +68,9 @@ class TestOrderDocumentation:
         """
         Test Order Documentation update
         """
-        pdf_file = SimpleUploadedFile("dummy.pdf", b"file_content", content_type="application/pdf")
+        pdf_file = SimpleUploadedFile(
+            "dummy.pdf", b"file_content", content_type="application/pdf"
+        )
 
         updated_document = models.OrderDocumentation.objects.get(id=order_document.id)
         updated_document.document = pdf_file
@@ -76,6 +80,7 @@ class TestOrderDocumentation:
         assert updated_document.document.name is not None
         assert updated_document.document.read() == b"file_content"
         assert updated_document.document.size == len(b"file_content")
+
 
 class TestOrderDocumentationApi:
     """
@@ -188,7 +193,7 @@ class TestOrderDocumentationApi:
     def remove_media_directory(file_path: str) -> None:
         """Remove Media Directory after test tear down.
 
-        Primary usage is when tests are performing file uplaods.
+        Primary usage is when tests are performing file uploads.
         This method deletes the media directory after the test.
         This is to prevent the media directory from filling up
         with test files.
@@ -210,7 +215,7 @@ class TestOrderDocumentationApi:
     def remove_file(file_path: str) -> None:
         """Remove File after test tear down.
 
-        Primary usage is when tests are performing file uplaods.
+        Primary usage is when tests are performing file uploads.
         This method deletes the file after the test.
         This is to prevent the media directory from filling up
         with test files.
