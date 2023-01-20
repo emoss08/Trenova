@@ -137,6 +137,11 @@ class OrderControl(GenericModel):
         default=False,
         help_text=_("Automatically generate routing information for the order."),
     )
+    enforce_commodity = models.BooleanField(
+        _("Enforce Commodity Code"),
+        default=False,
+        help_text=_("Enforce the commodity input on the entry of an order."),
+    )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
         default=True,
@@ -554,7 +559,8 @@ class Order(GenericModel):
         # Validate compare origin and destination are not the same.
         if (
             self.organization.order_control.enforce_origin_destination
-            and self.origin_location and self.destination_location
+            and self.origin_location
+            and self.destination_location
             and self.origin_location == self.destination_location
         ):
             raise ValidationError(
@@ -595,8 +601,14 @@ class Order(GenericModel):
                 code="invalid",
             )
 
+        # Validate commodity is entered if Order Control requires it for the organization.
+        if self.organization.order_control.enforce_commodity and not self.commodity:
+            raise ValidationError(
+                {"commodity": _("Commodity is required. Please try again.")},
+                code="invalid",
+            )
+        
         super().clean()
-
 
     def save(self, **kwargs: Any) -> None:
         """Order save method
@@ -653,9 +665,7 @@ class Order(GenericModel):
 
         # Handle the mileage rate calculation
         if self.rate_method == RatingMethodChoices.PER_MILE:
-            return (
-                self.freight_charge_amount * self.mileage + self.other_charge_amount
-            )
+            return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
         return self.freight_charge_amount
 
