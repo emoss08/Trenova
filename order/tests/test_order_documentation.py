@@ -88,7 +88,7 @@ class TestOrderDocumentationApi:
     """
 
     @pytest.fixture
-    def order_documentation(
+    def order_documentation_api(
         self, api_client, order, document_classification, organization
     ):
         """
@@ -114,14 +114,14 @@ class TestOrderDocumentationApi:
         assert response.status_code == 200
 
     def test_get_by_id(
-        self, api_client, order_documentation, order, document_classification
+        self, api_client, order_documentation_api, order, document_classification
     ):
         """
         Test get Order Documentation by ID
         """
 
         response = api_client.get(
-            f"/api/order_documents/{order_documentation.data['id']}/"
+            f"/api/order_documents/{order_documentation_api.data['id']}/"
         )
 
         assert response.data is not None
@@ -130,14 +130,14 @@ class TestOrderDocumentationApi:
         assert response.data["document"] is not None
         assert response.data["document_class"] == document_classification.id
 
-    def test_put(self, api_client, order, order_documentation, document_classification):
+    def test_put(self, api_client, order, order_documentation_api, document_classification):
         """
         Test put Order Documentation by ID
         """
 
         with open("order/tests/files/dummy.pdf", "rb") as test_file:
             response = api_client.put(
-                f"/api/order_documents/{order_documentation.data['id']}/",
+                f"/api/order_documents/{order_documentation_api.data['id']}/",
                 {
                     "order": f"{order.id}",
                     "document": test_file,
@@ -152,7 +152,7 @@ class TestOrderDocumentationApi:
         assert response.data["document_class"] == document_classification.id
 
     def test_patch(
-        self, api_client, order, order_documentation, document_classification
+        self, api_client, order, order_documentation_api, document_classification
     ):
         """
         Test patch Order Documentation by ID
@@ -160,7 +160,7 @@ class TestOrderDocumentationApi:
 
         with open("order/tests/files/dummy.pdf", "rb") as test_file:
             response = api_client.put(
-                f"/api/order_documents/{order_documentation.data['id']}/",
+                f"/api/order_documents/{order_documentation_api.data['id']}/",
                 {
                     "order": f"{order.id}",
                     "document": test_file,
@@ -174,13 +174,13 @@ class TestOrderDocumentationApi:
         assert response.data["document"] is not None
         assert response.data["document_class"] == document_classification.id
 
-    def test_delete(self, api_client, order_documentation):
+    def test_delete(self, api_client, order_documentation_api):
         """
         Test Delete by ID
         """
 
         response = api_client.delete(
-            f"/api/order_documents/{order_documentation.data['id']}/"
+            f"/api/order_documents/{order_documentation_api.data['id']}/"
         )
 
         assert response.status_code == 204
