@@ -31,10 +31,12 @@ class MovementFactory(factory.django.DjangoModelFactory):
         """
 
         model = "movements.Movement"
-        django_get_or_create = ("organization", "order", "equipment", "primary_worker")
+        django_get_or_create = ("organization", "order", "equipment", "primary_worker",)
 
     id = factory.Faker("uuid4")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory("order.tests.factories.OrderFactory")
     equipment = factory.SubFactory("equipment.tests.factories.EquipmentFactory")
     primary_worker = factory.SubFactory("worker.factories.WorkerFactory")
+    secondary_worker = factory.SubFactory("worker.factories.WorkerFactory")
+    status = "N"
