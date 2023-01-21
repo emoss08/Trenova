@@ -20,21 +20,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from order import models
-from order.tests.factories import ReasonCodeFactory
-from utils.tests import ApiTest, UnitTest
+
+pytestmark = pytest.mark.django_db
 
 
-class TestReasonCode(UnitTest):
+class TestReasonCode:
     """
     Class to test Reason Code
     """
-
-    @pytest.fixture()
-    def reason_code(self):
-        """
-        Pytest Fixture for Reason Code
-        """
-        return ReasonCodeFactory()
 
     def test_list(self, reason_code):
         """
@@ -75,12 +68,12 @@ class TestReasonCode(UnitTest):
         assert r_code.code == "NEWTY"
 
 
-class TestReasonCodeAPI(ApiTest):
+class TestReasonCodeAPI:
     """
     Test for Reason Code API
     """
 
-    @pytest.fixture()
+    @pytest.fixture
     def reason_code(self, api_client):
         """
         Reason Code Factory

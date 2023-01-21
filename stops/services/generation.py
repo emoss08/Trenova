@@ -18,7 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from movements.models import Movement
-from order.models import Order, OrderControl
+from order.models import Order
 from stops import models
 from utils.models import StopChoices
 
@@ -46,6 +46,7 @@ class StopService:
         origin_stop: models.Stop = models.Stop.objects.create(
             organization=movement.organization,
             movement=movement,
+            sequence=1,
             stop_type=StopChoices.PICKUP,
             location=order.origin_location,
             address_line=order.origin_address,
@@ -71,14 +72,11 @@ class StopService:
 
         Returns:
             None
-
-        Raises:
-            SequenceException: If the stop sequence is not valid.
         """
-        order_control: OrderControl = OrderControl.objects.filter(
-            organization=instance.organization
-        ).get()
-        if order_control.auto_sequence_stops:
+
+        # FIXME: Does not properly sequence stops. Need to figure out a way to sequence this properly.
+
+        if instance.organization.order_control.auto_sequence_stops:
             stop_list = []
             stops = models.Stop.objects.filter(movement=instance.movement).order_by(
                 "created"

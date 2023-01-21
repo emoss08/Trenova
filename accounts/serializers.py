@@ -159,10 +159,11 @@ class UserSerializer(GenericSerializer):
 
         # Get the organization of the user from the request.
         organization = super().get_organization
+        validated_data["organization"] = organization
 
         # Popped data (profile)
-        validated_data["organization"] = organization
         profile_data = validated_data.pop("profile", {})
+        profile_data["organization"] = organization
 
         # Create the user
         user: models.User = models.User.objects.create(**validated_data)

@@ -18,30 +18,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from billing import models
 from billing.tests.factories import DocumentClassificationFactory
-from organization.factories import OrganizationFactory
-from utils.tests import ApiTest
 
 pytestmark = pytest.mark.django_db
 
 
 class TestDocumentClassification:
-    @pytest.fixture()
-    def document_classification(self):
-        """
-        Document classification fixture
-        """
-        return DocumentClassificationFactory()
-
-    @pytest.fixture()
-    def organization(self):
-        """
-        Organization Fixture
-        """
-        return OrganizationFactory()
-
     def test_document_classification_creation(self, organization):
         """
         Test document classification creation
@@ -66,3 +51,136 @@ class TestDocumentClassification:
 
         assert document_classification.name == "NEWDOC"
         assert document_classification.description == "Another Test Description"
+
+
+class TestDocumentClassificationAPI:
+    """
+    Test for Document Classification API
+    """
+
+    def test_get(self, api_client):
+        """
+        Test get Document Classification
+        """
+        response = api_client.get("/api/document_classifications/")
+        assert response.status_code == 200
+
+    def test_get_by_id(self, api_client, organization):
+        """
+        Test get Document classification by ID
+        """
+
+        _response = api_client.post(
+            "/api/document_classifications/",
+            {
+                "organization": f"{organization}",
+                "name": "test",
+                "description": "Test Description",
+            },
+        )
+
+        response = api_client.get(
+            f"/api/document_classifications/{_response.data['id']}/"
+        )
+        assert response.status_code == 200
+        assert response.data["name"] == "test"
+        assert response.data["description"] == "Test Description"
+
+    def test_post(self, api_client, organization):
+        """
+        Test Post Document Classification
+        """
+        response = api_client.post(
+            "/api/document_classifications/",
+            {
+                "organization": f"{organization}",
+                "name": "test",
+                "description": "Test Description",
+            },
+            format="json",
+        )
+
+        assert response.status_code == 201
+        assert response.data["name"] == "test"
+        assert response.data["description"] == "Test Description"
+
+    def test_put(self, api_client, organization):
+        """
+        Test Put Document Classification
+        """
+        _response = api_client.post(
+            "/api/document_classifications/",
+            {
+                "organization": f"{organization}",
+                "name": "test",
+                "description": "Test Description",
+            },
+            format="json",
+        )
+
+        response = api_client.put(
+            f"/api/document_classifications/{_response.data['id']}/",
+            {"name": "foo", "description": "foo bar description"},
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert response.data["name"] == "foo"
+        assert response.data["description"] == "foo bar description"
+
+    def test_delete(self, api_client, organization):
+        """
+        Test Delete Document Classification
+        """
+
+        _response = api_client.post(
+            "/api/document_classifications/",
+            {
+                "organization": f"{organization}",
+                "name": "test",
+                "description": "Test Description",
+            },
+            format="json",
+        )
+
+        response = api_client.delete(
+            f"/api/document_classifications/{_response.data['id']}/"
+        )
+
+        assert response.status_code == 204
+        assert response.data is None
+
+
+class TestDocumentationClassificationValidation:
+    """
+    Test for Document Classification Validation
+    """
+
+    def test_cannot_delete_con(self, document_classification):
+        """
+        Test for cannot delete consolidated document classification
+        """
+
+        document_classification.name = "CON"
+        document_classification.save()
+
+        with pytest.raises(ValidationError) as excinfo:
+            document_classification.delete()
+
+        assert excinfo.value.message_dict["name"] == [
+            "Document classification with this name cannot be deleted. Please try again."
+        ]
+
+    def test_unique_name(self, document_classification):
+        """
+        Test for unique name
+        """
+        with pytest.raises(ValidationError) as excinfo:
+            models.DocumentClassification.objects.create(
+                organization=document_classification.organization,
+                name=document_classification.name,
+                description="Test document classification",
+            )
+        assert excinfo.value.message_dict["name"] == [
+            "Document classification with this name already exists. Please try again."
+        ]

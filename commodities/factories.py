@@ -19,8 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from commodities.models import Commodity, HazardousMaterial
-
 
 class CommodityFactory(factory.django.DjangoModelFactory):
     """
@@ -32,7 +30,8 @@ class CommodityFactory(factory.django.DjangoModelFactory):
         Metaclass for CommodityFactory
         """
 
-        model = Commodity
+        model = "commodities.Commodity"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
@@ -49,7 +48,8 @@ class HazardousMaterialFactory(factory.django.DjangoModelFactory):
         Metaclass for HazardousMaterialFactory
         """
 
-        model = HazardousMaterial
+        model = "commodities.HazardousMaterial"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")

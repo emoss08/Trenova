@@ -19,9 +19,6 @@ jobs:
 
       - image: cimg/redis:6.2.6
     steps:
-      - run:
-          name: Make test directory
-          command: mkdir -p /tmp/test-results
       - checkout
       - run:
           name: install dependencies
@@ -32,10 +29,13 @@ jobs:
           when: always
       - run:
           name: run tests
-          command: python -m pytest --junitxml=/tmp/test-results/junit.xml
+          command: |
+            mkdir test-results
+            pytest --junitxml=test-results/junit.xml
           when: always
+
       - store_test_results:
-          path: /tmp/test-results
+          path: test-results
 workflows:
   build-and-test-workflow:
     jobs:

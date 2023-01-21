@@ -50,7 +50,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
         request: HttpRequest,
         obj: Optional[GeneralLedgerAccount] = None,
         change: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 

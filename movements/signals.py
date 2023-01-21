@@ -28,10 +28,15 @@ from stops.services import generation as stop_generation
 
 
 @receiver(post_save, sender=models.Movement)
-def generate_movement_stops(
+def generate_initial_stops(
     sender: models.Movement, instance: models.Movement, created: bool, **kwargs: Any
 ):
-    """Generate the movement stops
+    """Generate initial movements stops.
+
+    This signal should only be fired if the first movement is being added to the order.
+    Its purpose is to create the initial stops for the movement, by taking the origin
+    and destination from the order. This is done by calling the StopService. This
+    service will then create the stops and sequence them.
 
     Args:
         sender (Movement): Movement
@@ -42,7 +47,8 @@ def generate_movement_stops(
     Returns:
         None
     """
-    if created and not instance.stops.exists():
+
+    if created and instance.order.movements.count() == 1:
         stop_generation.StopService.create_initial_stops(instance, instance.order)
 
 

@@ -56,8 +56,9 @@ class StopValidation:
         # self.validate_compare_app_time()
         # self.validate_previous_app_time()
         # self.validate_next_app_time()
-        # # self.validate_reserve_status_change()
+        # self.validate_reserve_status_change()
         # self.validate_movement_driver_equipment()
+        self.ensure_location()
         # self.validate_arrival_departure_movement()
 
     def validate_arrival_departure_movement(self) -> None:
@@ -291,3 +292,22 @@ class StopValidation:
                         )
                     }
                 )
+
+    def ensure_location(self):
+        """Ensure location is entered
+
+        Ensure that either location or address_line is entered.
+        If neither is entered, raise a validation error.
+
+        Returns:
+
+        """
+        if not self.stop.location and not self.stop.address_line:
+            raise ValidationError(
+                {
+                    "location": ValidationError(
+                        _("Must enter a location or address line."),
+                        code="invalid",
+                    )
+                }
+            )

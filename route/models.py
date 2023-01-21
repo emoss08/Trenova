@@ -73,8 +73,8 @@ class Route(GenericModel):
 
         verbose_name = _("Route")
         verbose_name_plural = _("Routes")
-        ordering: tuple[str, ...] = ("origin", "destination")
-        indexes: list[models.Index] = [
+        ordering = ("origin", "destination")
+        indexes = [
             models.Index(fields=["total_mileage", "duration"]),
         ]
 
@@ -182,7 +182,7 @@ class RouteControl(GenericModel):
 
         verbose_name = _("Route Control")
         verbose_name_plural = _("Route Controls")
-        ordering: tuple[str, ...] = ("organization",)
+        ordering = ("organization",)
 
     def __str__(self) -> str:
         """Route Control string representation

@@ -20,21 +20,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from billing import models
-from billing.tests.factories import ChargeTypeFactory
-from utils.tests import ApiTest, UnitTest
+
+pytestmark = pytest.mark.django_db
 
 
-class TestChargeType(UnitTest):
+class TestChargeType:
     """
     Test for Charge Types
     """
-
-    @pytest.fixture()
-    def charge_type(self):
-        """
-        Charge type fixture
-        """
-        return ChargeTypeFactory()
 
     def test_list(self, charge_type):
         """
@@ -70,17 +63,10 @@ class TestChargeType(UnitTest):
         assert char_type.name == "maybe"
 
 
-class TestChargeTypeApi(ApiTest):
+class TestChargeTypeApi:
     """
     Test for Charge Type API
     """
-
-    @pytest.fixture()
-    def charge_type(self):
-        """
-        Charge Type Factory
-        """
-        return ChargeTypeFactory()
 
     def test_get(self, api_client):
         """

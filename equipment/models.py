@@ -57,7 +57,7 @@ class EquipmentType(GenericModel):
 
         verbose_name = _("Equipment Type")
         verbose_name_plural = _("Equipment Types")
-        ordering: list[str] = ["-id"]
+        ordering = ["-id"]
 
     def __str__(self) -> str:
         """Equipment Type string representation
@@ -177,7 +177,7 @@ class EquipmentTypeDetail(GenericModel):
 
         verbose_name = _("Equipment Type Detail")
         verbose_name_plural = _("Equipment Type Details")
-        ordering: list[str] = ["-equipment_type"]
+        ordering = ["-equipment_type"]
 
     def __str__(self) -> str:
         """Equipment Type Detail string representation

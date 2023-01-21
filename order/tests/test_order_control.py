@@ -17,11 +17,14 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import pytest
+
 from order import models
-from utils.tests import UnitTest
+
+pytestmark = pytest.mark.django_db
 
 
-class TestOrderControl(UnitTest):
+class TestOrderControl:
     """
     Class to test Order Control
     """

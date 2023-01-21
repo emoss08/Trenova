@@ -53,7 +53,7 @@ def create_dispatch_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create Dispatch Control Information
 
@@ -75,7 +75,7 @@ def create_order_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create Dispatch Control Information
 
