@@ -31,7 +31,12 @@ class MovementFactory(factory.django.DjangoModelFactory):
         """
 
         model = "movements.Movement"
-        django_get_or_create = ("organization", "order", "equipment", "primary_worker",)
+        django_get_or_create = (
+            "organization",
+            "order",
+            "equipment",
+            "primary_worker",
+        )
 
     id = factory.Faker("uuid4")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

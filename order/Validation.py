@@ -34,6 +34,7 @@ class OrderValidation:
         self.validate_order_control()
         self.validate_ready_to_bill()
         self.validate_order_locations()
+
     def validate_rating_method(self) -> None:
         """Validate rating method.
 
@@ -109,16 +110,21 @@ class OrderValidation:
                 code="invalid",
             )
 
-
         # Validate revenue code is entered if Order Control requires it for the organization.
-        if self.order.organization.order_control.enforce_rev_code and not self.order.revenue_code:
+        if (
+            self.order.organization.order_control.enforce_rev_code
+            and not self.order.revenue_code
+        ):
             raise ValidationError(
                 {"revenue_code": _("Revenue code is required. Please try again.")},
                 code="invalid",
             )
 
         # Validate commodity is entered if Order Control requires it for the organization.
-        if self.order.organization.order_control.enforce_commodity and not self.order.commodity:
+        if (
+            self.order.organization.order_control.enforce_commodity
+            and not self.order.commodity
+        ):
             raise ValidationError(
                 {"commodity": _("Commodity is required. Please try again.")},
                 code="invalid",

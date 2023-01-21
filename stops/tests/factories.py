@@ -25,12 +25,18 @@ class StopFactory(factory.django.DjangoModelFactory):
     """
     Stop Factory
     """
+
     class Meta:
         """
         Metaclass for StopFactory
         """
+
         model = "stops.Stop"
-        django_get_or_create = ("organization", "movement", "location",)
+        django_get_or_create = (
+            "organization",
+            "movement",
+            "location",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     movement = factory.SubFactory("movement.tests.factories.MovementFactory")

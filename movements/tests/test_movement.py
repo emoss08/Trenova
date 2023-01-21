@@ -220,6 +220,7 @@ class TestMovementValidation:
         assert excinfo.value.message_dict["primary_worker"] == [
             "Cannot assign a terminated worker. Please update the worker's profile and try again."
         ]
+
     def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat(self):
         """
         Test ValidationError is thrown when the worker is being assigned
@@ -239,7 +240,6 @@ class TestMovementValidation:
             "Worker must be hazmat certified to haul this order. Please try again."
         ]
 
-
     def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat(self):
         """
         Test ValidationError is thrown when the worker is being assigned
@@ -252,7 +252,9 @@ class TestMovementValidation:
         order = OrderFactory(commodity=commodity, hazmat=hazmat)
         worker = WorkerFactory()
         worker.profile.endorsements = "H"
-        worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=1)
+        worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(
+            days=1
+        )
 
         with pytest.raises(ValidationError) as excinfo:
             MovementFactory(order=order, primary_worker=worker)
@@ -377,12 +379,13 @@ class TestMovementValidation:
         worker = WorkerFactory()
 
         with pytest.raises(ValidationError) as excinfo:
-            MovementFactory(order=order, primary_worker=primary_worker, secondary_worker=worker)
+            MovementFactory(
+                order=order, primary_worker=primary_worker, secondary_worker=worker
+            )
 
         assert excinfo.value.message_dict["secondary_worker"] == [
             "Worker must be hazmat certified to haul this order. Please try again."
         ]
-
 
     def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat(self):
         """
@@ -401,10 +404,14 @@ class TestMovementValidation:
 
         worker = WorkerFactory()
         worker.profile.endorsements = "H"
-        worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=1)
+        worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(
+            days=1
+        )
 
         with pytest.raises(ValidationError) as excinfo:
-            MovementFactory(order=order, primary_worker=primary_worker, secondary_worker=worker)
+            MovementFactory(
+                order=order, primary_worker=primary_worker, secondary_worker=worker
+            )
 
         assert excinfo.value.message_dict["secondary_worker"] == [
             "Worker hazmat certification has expired. Please try again."

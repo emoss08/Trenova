@@ -374,12 +374,12 @@ class WorkerProfile(GenericModel):
         super().clean()
 
         if (
-                self.endorsements
-                in [
-            WorkerProfile.EndorsementChoices.X,
-            WorkerProfile.EndorsementChoices.HAZMAT,
-        ]
-                and not self.hazmat_expiration_date
+            self.endorsements
+            in [
+                WorkerProfile.EndorsementChoices.X,
+                WorkerProfile.EndorsementChoices.HAZMAT,
+            ]
+            and not self.hazmat_expiration_date
         ):
             raise ValidationError(
                 {
@@ -391,8 +391,8 @@ class WorkerProfile(GenericModel):
             )
 
         if (
-                self.date_of_birth
-                and (datetime.today().date() - self.date_of_birth).days < 6570
+            self.date_of_birth
+            and (datetime.today().date() - self.date_of_birth).days < 6570
         ):
             raise ValidationError(
                 {
