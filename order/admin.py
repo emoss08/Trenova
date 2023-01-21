@@ -26,6 +26,7 @@ from nested_inline.admin import (
 
 from movements.models import Movement
 from order import models
+from stops.models import Stop
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
@@ -62,7 +63,7 @@ class StopInline(NestedStackedInline):
     Order Stop Inline
     """
 
-    model = models.Stop
+    model = Stop
     extra = 1
 
 
