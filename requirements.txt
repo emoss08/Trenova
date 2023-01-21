@@ -40,3 +40,5 @@ pytest-html==3.2.0
 redis==4.4.2
 whitenoise==6.3.0
 django-nested-inline==0.4.5
+pytest-cov==4.0.0
+pytest-bdd==6.1.1

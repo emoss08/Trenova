@@ -75,7 +75,6 @@ class TestWorkerApi:
         )
 
         response = api_client.get(f"/api/workers/{worker.id}/")
-
         assert response.status_code == 200
 
     def test_create(self, api_client, comment_type, user):
@@ -96,7 +95,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "profile": {
                     "race": "TEST",
-                    "sex": "male",
+                    "sex": "MALE",
                     "date_of_birth": "1970-12-10",
                     "license_number": "1234567890",
                     "license_expiration_date": "2022-01-01",
@@ -123,7 +122,6 @@ class TestWorkerApi:
             },
             format="json",
         )
-
         assert response.status_code == 201
         assert response.data is not None
         assert response.data["is_active"] is True
@@ -135,7 +133,7 @@ class TestWorkerApi:
         assert response.data["state"] == "CA"
         assert response.data["zip_code"] == "12345"
         assert response.data["profile"]["race"] == "TEST"
-        assert response.data["profile"]["sex"] == "male"
+        assert response.data["profile"]["sex"] == "MALE"
         assert response.data["profile"]["date_of_birth"] == "1970-12-10"
         assert response.data["profile"]["license_number"] == "1234567890"
         assert response.data["profile"]["license_state"] == "NC"
@@ -167,7 +165,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "profile": {
                     "race": "TEST",
-                    "sex": "male",
+                    "sex": "MALE",
                     "date_of_birth": "1970-12-10",
                     "license_number": "1234567890",
                     "license_expiration_date": "2022-01-01",
@@ -218,7 +216,7 @@ class TestWorkerApi:
         assert response.data["state"] == "CA"
         assert response.data["zip_code"] == "12345"
         assert response.data["profile"]["race"] == "TEST"
-        assert response.data["profile"]["sex"] == "male"
+        assert response.data["profile"]["sex"] == "MALE"
         assert response.data["profile"]["date_of_birth"] == "1970-12-10"
         assert response.data["profile"]["license_number"] == "1234567890"
         assert response.data["profile"]["license_state"] == "NC"
@@ -233,7 +231,6 @@ class TestWorkerApi:
 
         # -- TEST SECOND INPUTS --
         assert response.data["comments"][1]["comment"] == "TEST COMMENT CREATION 2"
-
         assert response.data["contacts"][1]["name"] == "Test Contact 2"
         assert response.data["contacts"][1]["phone"] == 1234567890
         assert response.data["contacts"][1]["email"] == "test@test.com"
@@ -259,7 +256,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "profile": {
                     "race": "TEST",
-                    "sex": "male",
+                    "sex": "MALE",
                     "date_of_birth": "1970-12-10",
                     "license_number": "1234567890",
                     "license_expiration_date": "2022-01-01",
@@ -313,7 +310,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "profile": {
                     "race": "TEST",
-                    "sex": "male",
+                    "sex": "MALE",
                     "date_of_birth": "1970-12-10",
                     "license_number": "1234569780",
                     "license_state": "NC",
