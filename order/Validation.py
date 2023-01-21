@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import StatusChoices, RatingMethodChoices
+from utils.models import RatingMethodChoices, StatusChoices
 
 
 class OrderValidation:
