@@ -77,8 +77,7 @@ def test_dispatch_control_google_integration(organization):
     Test Service incident control choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(
-        ValidationError) as excinfo:
+    with pytest.raises(ValidationError) as excinfo:
         organization.dispatch_control.distance_method = "Google"
         organization.dispatch_control.full_clean()
 
