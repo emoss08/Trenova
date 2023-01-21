@@ -27,7 +27,6 @@ pytestmark = pytest.mark.django_db
 
 
 class TestDocumentClassification:
-
     def test_document_classification_creation(self, organization):
         """
         Test document classification creation

@@ -23,7 +23,6 @@ pytestmark = pytest.mark.django_db
 
 
 class TestUserAPI:
-
     def test_get(self, token, api_client):
         """
         Test get users
@@ -31,7 +30,7 @@ class TestUserAPI:
         response = api_client.get("/api/users/")
         assert response.status_code == 200
 
-    def test_get_by_id(self,api_client, user, token):
+    def test_get_by_id(self, api_client, user, token):
         """
         Test get user by ID
         """

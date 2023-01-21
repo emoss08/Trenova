@@ -45,7 +45,6 @@ def organization():
     yield organization
 
 
-
 @pytest.fixture
 def api_client(token):
     """API client Fixture

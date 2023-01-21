@@ -69,4 +69,3 @@ def test_route_model_choices(organization):
     assert excinfo.value.message_dict["traffic_model"] == [
         "Value 'invalid' is not a valid choice."
     ]
-

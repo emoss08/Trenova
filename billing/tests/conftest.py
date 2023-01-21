@@ -66,6 +66,7 @@ def api_client(token):
     client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
     yield client
 
+
 @pytest.fixture
 def document_classification():
     """
@@ -73,6 +74,7 @@ def document_classification():
     """
     document_classification = DocumentClassificationFactory()
     yield document_classification
+
 
 @pytest.fixture()
 def charge_type():

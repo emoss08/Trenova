@@ -24,12 +24,14 @@ class MovementFactory(factory.django.DjangoModelFactory):
     """
     Factory for Movement Model.
     """
+
     class Meta:
         """
         Metaclass for MovementFactory
         """
+
         model = "movements.Movement"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "order", "equipment", "primary_worker")
 
     id = factory.Faker("uuid4")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

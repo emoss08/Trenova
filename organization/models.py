@@ -55,7 +55,6 @@ class Organization(TimeStampedModel):
         ENGLISH = "en", _("English")
         SPANISH = "es", _("Spanish")
 
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,

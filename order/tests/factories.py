@@ -162,7 +162,12 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.AdditionalCharge"
-        django_get_or_create = ("organization", "order", "charge", "entered_by",)
+        django_get_or_create = (
+            "organization",
+            "order",
+            "charge",
+            "entered_by",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)

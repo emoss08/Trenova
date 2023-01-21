@@ -25,10 +25,12 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
     """
     Job title factory
     """
+
     class Meta:
         """
         Metaclass for JobTitleFactory
         """
+
         model = "accounts.JobTitle"
         django_get_or_create = ("organization",)
 
@@ -42,10 +44,12 @@ class UserFactory(factory.django.DjangoModelFactory):
     """
     User factory
     """
+
     class Meta:
         """
         Metaclass for UserFactory
         """
+
         model = "accounts.User"
         django_get_or_create = ("organization",)
 
@@ -89,18 +93,25 @@ class ProfileFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for ProfileFactory
         """
+
         model = "accounts.UserProfile"
-        django_get_or_create = ("organization", "title", "user",)
+        django_get_or_create = (
+            "organization",
+            "title",
+            "user",
+        )
 
 
 class TokenFactory(factory.django.DjangoModelFactory):
     """
     Token factory
     """
+
     class Meta:
         """
         Metaclass for TokenFactory
         """
+
         model = "accounts.Token"
         django_get_or_create = ("user",)
 

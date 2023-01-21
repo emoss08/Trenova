@@ -26,6 +26,7 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
     """
     EquipmentType factory
     """
+
     class Meta:
         """
         Metaclass for EquipmentTypeFactory
@@ -43,10 +44,12 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
     """
     Factory for EquipmentTypeDetail model.
     """
+
     class Meta:
         """
         Metaclass for EquipmentTypeDetailFactory
         """
+
         model = "equipment.EquipmentTypeDetail"
         django_get_or_create = ("organization",)
 
@@ -55,20 +58,21 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
     equipment_class = EquipmentTypeDetail.EquipmentClassChoices.TRAILER
 
 
-
 class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
     """
     EquipmentManufacturer factory
     """
+
     class Meta:
         """
         Metaclass for EquipmentManufacturerFactory
         """
+
         model = "equipment.EquipmentManufacturer"
         django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("name")
+    id = factory.Faker("word", locale="en_US")
     description = factory.Faker("text")
 
 
@@ -76,13 +80,20 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
     """
     Equipment factory
     """
+
     class Meta:
         """
         Metaclass for EquipmentFactory
         """
+
         model = "equipment.Equipment"
-        django_get_or_create = ("organization",)
+        django_get_or_create = (
+            "organization",
+            "equipment_type",
+            "manufacturer",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    id = factory.Faker("word", locale="en_US")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)

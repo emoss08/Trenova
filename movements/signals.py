@@ -51,6 +51,7 @@ def generate_initial_stops(
     if created and instance.order.movements.count() == 1:
         stop_generation.StopService.create_initial_stops(instance, instance.order)
 
+
 @receiver(pre_save, sender=models.Movement)
 def set_movement_ref_number(
     sender: models.Movement, instance: models.Movement, **kwargs: Any

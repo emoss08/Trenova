@@ -25,7 +25,6 @@ pytestmark = pytest.mark.django_db
 
 
 class TestUserValidation:
-
     def test_create_superuser_is_superuser_error(self, organization):
         """
         Test creating superuser throws

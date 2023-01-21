@@ -18,7 +18,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
-from nested_inline.admin import NestedStackedInline, NestedModelAdmin, NestedTabularInline
+from nested_inline.admin import (
+    NestedStackedInline,
+    NestedModelAdmin,
+    NestedTabularInline,
+)
 from order import models
 from movements.models import Movement
 from utils.admin import GenericAdmin, GenericStackedInline
@@ -42,25 +46,33 @@ class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]
     model: type[models.OrderComment] = models.OrderComment
 
 
-class AdditionalChargeInline(GenericStackedInline[models.AdditionalCharge, models.Order]):
+class AdditionalChargeInline(
+    GenericStackedInline[models.AdditionalCharge, models.Order]
+):
     """
     Order Additional Charge inline
     """
 
     model: type[models.AdditionalCharge] = models.AdditionalCharge
 
+
 class StopInline(NestedStackedInline):
     """
     Order Stop Inline
     """
+
     model = models.Stop
     extra = 1
+
+
 class MovementInline(NestedStackedInline):
     """
     Order Movement Inline
     """
+
     model: type[Movement] = Movement
     inlines = [StopInline]
+
 
 @admin.register(models.OrderType)
 class OrderTypeAdmin(GenericAdmin[models.OrderType]):
@@ -115,7 +127,18 @@ class OrderAdmin(NestedModelAdmin):
     )
     search_fields = ("pro_number",)
     fieldsets = (
-        (None, {"fields": ("organization", "status", "order_type", "revenue_code", "entered_by")}),
+        (
+            None,
+            {
+                "fields": (
+                    "organization",
+                    "status",
+                    "order_type",
+                    "revenue_code",
+                    "entered_by",
+                )
+            },
+        ),
         (
             "Order Information",
             {

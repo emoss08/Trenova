@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from order.models import Order
 
+
 def set_pro_number() -> str:
     """Generate a unique pro number for an order.
 

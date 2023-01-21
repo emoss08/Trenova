@@ -19,14 +19,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
+
 class CustomerFactory(factory.django.DjangoModelFactory):
     """
     Customer factory
     """
+
     class Meta:
         """
         Metaclass for CustomerFactory
         """
+
         model = "customer.Customer"
         django_get_or_create = ("organization",)
 
@@ -38,10 +41,12 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
     """
     Customer contact factory
     """
+
     class Meta:
         """
         Metaclass for CustomerContactFactory
         """
+
         model = "customer.CustomerContact"
         django_get_or_create = ("organization",)
 

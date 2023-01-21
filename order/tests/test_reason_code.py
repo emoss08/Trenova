@@ -23,6 +23,7 @@ from order import models
 
 pytestmark = pytest.mark.django_db
 
+
 class TestReasonCode:
     """
     Class to test Reason Code

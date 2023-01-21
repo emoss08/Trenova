@@ -293,7 +293,6 @@ class StopValidation:
                     }
                 )
 
-
     def ensure_location(self):
         """Ensure location is entered
 

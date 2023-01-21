@@ -25,7 +25,11 @@ import pytest
 from rest_framework.test import APIClient
 
 from accounts.tests.factories import TokenFactory, UserFactory
+from equipment.tests.factories import EquipmentFactory
+from movements.tests.factories import MovementFactory
+from order.tests.factories import OrderFactory
 from organization.factories import OrganizationFactory
+from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -69,45 +73,37 @@ def api_client(token):
     return client
 
 
-def remove_media_directory(file_path: str) -> None:
-    """Remove Media Directory after test tear down.
-
-    Primary usage is when tests are performing file uplaods.
-    This method deletes the media directory after the test.
-    This is to prevent the media directory from filling up
-    with test files.
-
-    Args:
-        file_path (str): path to directory in media folder.
-
-    Returns:
-        None
+@pytest.fixture
+def movement():
     """
-
-    base_dir = Path(__file__).resolve().parent.parent
-    media_dir = os.path.join(base_dir, "media/" + file_path)
-
-    if os.path.exists(media_dir):
-        shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
-
-
-def remove_file(file_path: str) -> None:
-    """Remove File after test tear down.
-
-    Primary usage is when tests are performing file uplaods.
-    This method deletes the file after the test.
-    This is to prevent the media directory from filling up
-    with test files.
-
-    Args:
-        file_path (str): path to file in media folder.
-
-    Returns:
-        None
+    Pytest Fixture for Movement
     """
+    movement = MovementFactory()
+    yield movement
 
-    base_dir = Path(__file__).resolve().parent.parent
-    file = os.path.join(base_dir, "media/" + file_path)
 
-    if os.path.exists(file):
-        os.remove(file)
+@pytest.fixture
+def worker():
+    """
+    Pytest Fixture for Worker
+    """
+    worker = WorkerFactory()
+    yield worker
+
+
+@pytest.fixture
+def equipment():
+    """
+    Pytest fixture for Equipment
+    """
+    equipment = EquipmentFactory()
+    yield equipment
+
+
+@pytest.fixture
+def order():
+    """
+    Pytest fixture for Order
+    """
+    order = OrderFactory()
+    yield order

@@ -54,7 +54,6 @@ def test_hazardous_class_choices(hazardous_material):
     ]
 
 
-
 @pytest.mark.django_db
 def test_packing_group_choices(hazardous_material):
     """
@@ -68,6 +67,7 @@ def test_packing_group_choices(hazardous_material):
     assert excinfo.value.message_dict["packing_group"] == [
         "Value 'invalid' is not a valid choice."
     ]
+
 
 @pytest.mark.django_db
 def test_hazardous_material_update(hazardous_material):

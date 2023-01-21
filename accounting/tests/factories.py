@@ -24,10 +24,12 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
     """
     General Ledger Account factory
     """
+
     class Meta:
         """
         Metaclass for GeneralLedger Account Factory
         """
+
         model = "accounting.GeneralLedgerAccount"
         django_get_or_create = ("organization",)
 
@@ -43,15 +45,16 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("sentence", nb_words=6, locale="en_US")
 
 
-
 class RevenueCodeFactory(factory.django.DjangoModelFactory):
     """
     Revenue Code factory
     """
+
     class Meta:
         """
         Metaclass for RevenueCode Factory
         """
+
         model = "accounting.RevenueCode"
         django_get_or_create = ("organization",)
 
@@ -64,10 +67,12 @@ class DivisionCodeFactory(factory.django.DjangoModelFactory):
     """
     Division Code Factory
     """
+
     class Meta:
         """
         Metaclass for DivisionCodeFactory
         """
+
         model = "accounting.DivisionCode"
         django_get_or_create = ("organization",)
 

@@ -24,10 +24,12 @@ class ChargeTypeFactory(factory.django.DjangoModelFactory):
     """
     ChargeType factory
     """
+
     class Meta:
         """
         Metaclass for ChargeTypeFactory
         """
+
         model = "billing.ChargeType"
         django_get_or_create = ("organization",)
 
@@ -39,6 +41,7 @@ class AccessorialChargeFactory(factory.django.DjangoModelFactory):
     """
     AccessorialCharge factory
     """
+
     class Meta:
         """
         Metaclass for AccessorialChargeFactory
@@ -55,6 +58,7 @@ class DocumentClassificationFactory(factory.django.DjangoModelFactory):
     """
     DocumentClassification factory
     """
+
     class Meta:
         """
         Metaclass for DocumentClassificationFactory

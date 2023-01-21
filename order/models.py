@@ -607,7 +607,7 @@ class Order(GenericModel):
                 {"commodity": _("Commodity is required. Please try again.")},
                 code="invalid",
             )
-        
+
         super().clean()
 
     def save(self, **kwargs: Any) -> None:

@@ -24,10 +24,12 @@ class WorkerFactory(factory.django.DjangoModelFactory):
     """
     Worker factory
     """
+
     class Meta:
         """
         Metaclass for WorkerFactory
         """
+
         model = "worker.Worker"
         django_get_or_create = ("organization",)
 
@@ -73,10 +75,12 @@ class WorkerContactFactory(factory.django.DjangoModelFactory):
     """
     WorkerContact factory
     """
+
     class Meta:
         """
         Metaclass for WorkerContactFactory
         """
+
         model = "worker.WorkerContact"
         django_get_or_create = ("organization",)
 
@@ -90,6 +94,7 @@ class WorkerCommentFactory(factory.django.DjangoModelFactory):
     """
     WorkerComment factory
     """
+
     class Meta:
         """
         Metaclass for WorkerCommentFactory

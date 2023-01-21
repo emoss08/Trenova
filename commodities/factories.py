@@ -19,10 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
+
 class CommodityFactory(factory.django.DjangoModelFactory):
     """
     Commodity factory
     """
+
     class Meta:
         """
         Metaclass for CommodityFactory
@@ -40,10 +42,12 @@ class HazardousMaterialFactory(factory.django.DjangoModelFactory):
     """
     HazardousMaterial Factory
     """
+
     class Meta:
         """
         Metaclass for HazardousMaterialFactory
         """
+
         model = "commodities.HazardousMaterial"
         django_get_or_create = ("organization",)
 

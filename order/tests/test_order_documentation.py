@@ -130,7 +130,9 @@ class TestOrderDocumentationApi:
         assert response.data["document"] is not None
         assert response.data["document_class"] == document_classification.id
 
-    def test_put(self, api_client, order, order_documentation_api, document_classification):
+    def test_put(
+        self, api_client, order, order_documentation_api, document_classification
+    ):
         """
         Test put Order Documentation by ID
         """

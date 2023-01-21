@@ -29,7 +29,6 @@ class TestOrderType:
     Class to test order Type
     """
 
-
     def test_list(self, order_type):
         """
         Test Order Type list

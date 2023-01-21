@@ -260,7 +260,9 @@ class DocumentClassification(GenericModel):
         if self.__class__.objects.filter(name=self.name).exclude(pk=self.pk).exists():
             raise ValidationError(
                 {
-                    "name": _("Document classification with this name already exists. Please try again."),
+                    "name": _(
+                        "Document classification with this name already exists. Please try again."
+                    ),
                 },
             )
 
@@ -280,7 +282,8 @@ class DocumentClassification(GenericModel):
                     "name": _(
                         "Document classification with this name cannot be deleted. Please try again."
                     ),
-                }, code="invalid",
+                },
+                code="invalid",
             )
         super().delete(*args, **kwargs)
 

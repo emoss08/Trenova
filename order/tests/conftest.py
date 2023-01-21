@@ -22,12 +22,21 @@ from rest_framework.test import APIClient
 
 from accounting.tests.factories import RevenueCodeFactory
 from accounts.tests.factories import TokenFactory, UserFactory
-from billing.tests.factories import DocumentClassificationFactory, AccessorialChargeFactory
+from billing.tests.factories import (
+    DocumentClassificationFactory,
+    AccessorialChargeFactory,
+)
 from customer.factories import CustomerFactory
 from dispatch.factories import CommentTypeFactory
 from equipment.tests.factories import EquipmentTypeFactory
-from order.tests.factories import OrderTypeFactory, ReasonCodeFactory, OrderFactory, OrderDocumentationFactory, \
-    AdditionalChargeFactory, OrderCommentFactory
+from order.tests.factories import (
+    OrderTypeFactory,
+    ReasonCodeFactory,
+    OrderFactory,
+    OrderDocumentationFactory,
+    AdditionalChargeFactory,
+    OrderCommentFactory,
+)
 from organization.factories import OrganizationFactory
 
 
@@ -114,8 +123,9 @@ def order_document():
     """
     Pytest Fixture for Order Documentation
     """
-    order_document =  OrderDocumentationFactory()
+    order_document = OrderDocumentationFactory()
     yield order_document
+
 
 @pytest.fixture
 def additional_charge():
@@ -133,6 +143,7 @@ def accessorial_charge():
     """
     accessorial_charge = AccessorialChargeFactory()
     yield accessorial_charge
+
 
 @pytest.fixture
 def revenue_code():
@@ -177,4 +188,3 @@ def comment_type():
     """
     comment_type = CommentTypeFactory()
     yield comment_type
-
