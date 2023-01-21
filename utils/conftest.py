@@ -27,7 +27,6 @@ from rest_framework.test import APIClient
 from accounts.tests.factories import TokenFactory, UserFactory
 from organization.factories import OrganizationFactory
 
-
 pytestmark = pytest.mark.django_db
 
 

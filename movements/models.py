@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import datetime
 import textwrap
 import uuid
 
@@ -25,10 +24,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from dispatch.models import DispatchControl
-from utils.models import ChoiceField, GenericModel, StatusChoices
-from worker.models import WorkerProfile
 from movements.validation import MovementValidation
+from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
 class Movement(GenericModel):

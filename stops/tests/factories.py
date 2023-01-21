@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import factory
 from django.utils import timezone
 
+
 class StopFactory(factory.django.DjangoModelFactory):
     """
     Stop Factory

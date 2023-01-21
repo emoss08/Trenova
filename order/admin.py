@@ -19,12 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 from nested_inline.admin import (
-    NestedStackedInline,
     NestedModelAdmin,
+    NestedStackedInline,
     NestedTabularInline,
 )
-from order import models
+
 from movements.models import Movement
+from order import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 

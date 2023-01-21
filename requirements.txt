@@ -14,6 +14,7 @@ django-environ==0.9.0
 django-extensions==3.2.1
 django-filter==22.1
 django-localflavor==3.1
+django-nested-inline==0.4.5
 django-pgtrigger==4.6.0
 django-phonenumber-field==7.0.2
 django-redis==5.2.0
@@ -35,10 +36,9 @@ phonenumbers==8.13.4
 Pillow==9.4.0
 psycopg2==2.9.5
 pytest~=7.2.1
+pytest-bdd==6.1.1
+pytest-cov==4.0.0
 pytest-django==4.5.2
 pytest-html==3.2.0
 redis==4.4.2
 whitenoise==6.3.0
-django-nested-inline==0.4.5
-pytest-cov==4.0.0
-pytest-bdd==6.1.1

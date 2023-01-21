@@ -22,7 +22,6 @@ import pytest
 from accounting import models
 from accounting.tests.factories import DivisionCodeFactory, GeneralLedgerAccountFactory
 
-
 pytestmark = pytest.mark.django_db
 
 

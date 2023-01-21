@@ -17,9 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from pypdf import PdfMerger
 from django.conf import settings
 from django.core.files.storage import default_storage
+from pypdf import PdfMerger
 
 from billing.models import DocumentClassification
 from order.models import Order, OrderDocumentation

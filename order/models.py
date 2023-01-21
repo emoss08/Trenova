@@ -30,9 +30,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from commodities.models import HazardousMaterial
 from order.Validation import OrderValidation
-from stops.models import Stop
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL

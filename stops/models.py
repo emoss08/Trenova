@@ -28,8 +28,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from dispatch.models import DispatchControl
-from stops.services.create_service_incident import CreateServiceIncident
 from stops.validation import StopValidation
 from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
 
