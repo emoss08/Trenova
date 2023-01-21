@@ -26,7 +26,6 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from order import models
 
-
 pytestmark = pytest.mark.django_db
 
 

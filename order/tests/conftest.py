@@ -23,22 +23,21 @@ from rest_framework.test import APIClient
 from accounting.tests.factories import RevenueCodeFactory
 from accounts.tests.factories import TokenFactory, UserFactory
 from billing.tests.factories import (
-    DocumentClassificationFactory,
     AccessorialChargeFactory,
+    DocumentClassificationFactory,
 )
 from customer.factories import CustomerFactory
 from dispatch.factories import CommentTypeFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from order.tests.factories import (
-    OrderTypeFactory,
-    ReasonCodeFactory,
-    OrderFactory,
-    OrderDocumentationFactory,
     AdditionalChargeFactory,
     OrderCommentFactory,
+    OrderDocumentationFactory,
+    OrderFactory,
+    OrderTypeFactory,
+    ReasonCodeFactory,
 )
 from organization.factories import OrganizationFactory
-
 
 pytestmark = pytest.mark.django_db
 

@@ -22,7 +22,6 @@ import pytest
 from dispatch.factories import CommentTypeFactory
 from worker.factories import WorkerFactory
 
-
 pytestmark = pytest.mark.django_db
 
 

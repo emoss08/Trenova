@@ -23,7 +23,6 @@ from django.utils import timezone
 from location.factories import LocationFactory
 from order import models
 
-
 pytestmark = pytest.mark.django_db
 
 

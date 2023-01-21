@@ -27,7 +27,6 @@ from location.factories import LocationFactory
 from order import models
 from order.tests.factories import OrderFactory, OrderTypeFactory
 
-
 pytestmark = pytest.mark.django_db
 
 

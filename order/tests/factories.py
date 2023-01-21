@@ -18,10 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import factory
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from factory.fuzzy import FuzzyDecimal
-
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 from utils.models import RatingMethodChoices
 

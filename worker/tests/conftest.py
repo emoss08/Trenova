@@ -30,7 +30,6 @@ from organization.factories import OrganizationFactory
 from organization.models import Organization
 from worker import models
 
-
 pytestmark = pytest.mark.django_db
 
 

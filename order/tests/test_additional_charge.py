@@ -18,8 +18,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from order import models
 
+from order import models
 
 pytestmark = pytest.mark.django_db
 
