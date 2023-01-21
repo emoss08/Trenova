@@ -30,7 +30,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.Validation import OrderValidation
+from order.validation import OrderValidation
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
@@ -344,6 +344,8 @@ class Order(GenericModel):
         decimal_places=2,
         default=0,
         help_text=_("Total Mileage"),
+        blank=True,
+        null=True,
     )
     other_charge_amount = models.DecimalField(
         _("Additional Charge Amount"),
@@ -358,6 +360,8 @@ class Order(GenericModel):
         decimal_places=2,
         default=0,
         help_text=_("Freight Charge Amount"),
+        blank=True,
+        null=True,
     )
     rate_method = ChoiceField(
         _("Rating Method"),
