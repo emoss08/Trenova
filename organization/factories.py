@@ -19,23 +19,21 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from organization import models
-
 
 class OrganizationFactory(factory.django.DjangoModelFactory):
     """
     Organization factory class
     """
 
-    name = factory.Faker("company", locale="en_US")
-    scac_code = "RNDM"
-
     class Meta:
         """
         Metaclass for OrganizationFactory
         """
 
-        model = models.Organization
+        model = "organization.Organization"
+
+    name = factory.Faker("company", locale="en_US")
+    scac_code = "RNDM"
 
 
 class DepotFactory(factory.django.DjangoModelFactory):
@@ -43,12 +41,13 @@ class DepotFactory(factory.django.DjangoModelFactory):
     Depot factory class
     """
 
-    name = factory.Faker("company", locale="en_US")
-    organization = factory.SubFactory(OrganizationFactory)
-
     class Meta:
         """
         Metaclass for DepotFactory
         """
 
-        model = models.Depot
+        model = "organization.Depot"
+        django_get_or_create = ("organization",)
+
+    name = factory.Faker("company", locale="en_US")
+    organization = factory.SubFactory(OrganizationFactory)

@@ -19,37 +19,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from billing.tests.factories import AccessorialChargeFactory
 from order import models
-from order.tests.factories import AdditionalChargeFactory, OrderFactory
-from utils.tests import ApiTest, UnitTest
+
+pytestmark = pytest.mark.django_db
 
 
-class TestAdditionalCharge(UnitTest):
+class TestAdditionalCharge:
     """
     Class to test order Type
     """
-
-    @pytest.fixture()
-    def additional_charge(self):
-        """
-        Pytest Fixture for order Type
-        """
-        return AdditionalChargeFactory()
-
-    @pytest.fixture()
-    def order(self):
-        """
-        Pytest Fixture for Order
-        """
-        return OrderFactory()
-
-    @pytest.fixture()
-    def accessorial_charge(self):
-        """
-        Pytest Fixture for Accessorial Charge
-        """
-        return AccessorialChargeFactory()
 
     def test_list(self, additional_charge):
         """
@@ -94,33 +72,19 @@ class TestAdditionalCharge(UnitTest):
         )
 
 
-class TestAdditionalChargeAPI(ApiTest):
+class TestAdditionalChargeAPI:
     """
     Test for Additional Charge API
     """
 
-    @pytest.fixture()
-    def accessorial_charge(self):
-        """
-        Pytest Fixture for Accessorial Charge
-        """
-        return AccessorialChargeFactory()
-
-    @pytest.fixture()
-    def order(self):
-        """
-        Pytest Fixture for Order
-        """
-        return OrderFactory()
-
-    @pytest.fixture()
-    def additional_charge(
+    @pytest.fixture
+    def additional_charge_api(
         self, api_client, user, organization, order, accessorial_charge
     ):
         """
         Additional Charge Factory
         """
-        return api_client.post(
+        additional_charge_api = api_client.post(
             "/api/additional_charges/",
             {
                 "organization": f"{organization.id}",
@@ -132,6 +96,7 @@ class TestAdditionalChargeAPI(ApiTest):
             },
             format="json",
         )
+        yield additional_charge_api
 
     def test_get(self, api_client):
         """
@@ -141,13 +106,13 @@ class TestAdditionalChargeAPI(ApiTest):
         assert response.status_code == 200
 
     def test_get_by_id(
-        self, api_client, additional_charge, order, user, accessorial_charge
+        self, api_client, additional_charge_api, order, user, accessorial_charge
     ):
         """
         Test get Additional Charge by id
         """
         response = api_client.get(
-            f"/api/additional_charges/{additional_charge.data['id']}/"
+            f"/api/additional_charges/{additional_charge_api.data['id']}/"
         )
 
         assert response.status_code == 200
@@ -158,12 +123,12 @@ class TestAdditionalChargeAPI(ApiTest):
 
     # no need to test put, because it will never be used for this endpoint.
 
-    def test_patch(self, api_client, additional_charge, order):
+    def test_patch(self, api_client, additional_charge_api, order):
         """
         Test put Order Type
         """
         response = api_client.patch(
-            f"/api/additional_charges/{additional_charge.data['id']}/",
+            f"/api/additional_charges/{additional_charge_api.data['id']}/",
             {"order": f"{order.id}"},
         )
 
@@ -171,12 +136,12 @@ class TestAdditionalChargeAPI(ApiTest):
         assert response.data is not None
         assert response.data["order"] == order.id
 
-    def test_delete(self, api_client, additional_charge):
+    def test_delete(self, api_client, additional_charge_api):
         """
         Test Delete Additional Charge
         """
         response = api_client.delete(
-            f"/api/additional_charges/{additional_charge.data['id']}/"
+            f"/api/additional_charges/{additional_charge_api.data['id']}/"
         )
 
         assert response.status_code == 204

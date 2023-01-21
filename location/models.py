@@ -185,7 +185,7 @@ class Location(GenericModel):
 
         verbose_name = _("Location")
         verbose_name_plural = _("Locations")
-        ordering: tuple[str, ...] = ("id",)
+        ordering = ("code",)
 
     def __str__(self) -> str:
         """Location string representation
@@ -193,7 +193,9 @@ class Location(GenericModel):
         Returns:
             str: Location ID
         """
-        return textwrap.wrap(f"{self.id}: {self.code}", 50)[0]
+        return textwrap.wrap(
+            f"{self.code}: {self.address_line_1}, {self.city}, {self.state}", 50
+        )[0]
 
     def get_absolute_url(self) -> str:
         """Location absolute URL

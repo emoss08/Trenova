@@ -55,24 +55,16 @@ class Organization(TimeStampedModel):
         ENGLISH = "en", _("English")
         SPANISH = "es", _("Spanish")
 
-    @final
-    class AuthTemplateChoices(models.TextChoices):
-        """
-        Choices for Authentication Template
-        """
-
-        DEFAULT = "default", _("Default")
-        CORPORATE = "corporate", _("Corporate")
-        CREATIVE = "creative", _("Creative")
-        FANCY = "fancy", _("Fancy")
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False,
         unique=True,
     )
-    name = models.CharField(_("Organization Name"), max_length=255, unique=True)
+    name = models.CharField(
+        _("Organization Name"),
+        max_length=255,
+    )
     scac_code = models.CharField(
         max_length=4,
         verbose_name=_("SCAC Code"),

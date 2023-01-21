@@ -20,41 +20,16 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 from django.utils import timezone
 
-from accounting.tests.factories import RevenueCodeFactory
-from customer.factories import CustomerFactory
-from dispatch.factories import CommentTypeFactory
-from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order import models
-from order.tests.factories import OrderCommentFactory, OrderFactory, OrderTypeFactory
-from utils.tests import ApiTest, UnitTest
+
+pytestmark = pytest.mark.django_db
 
 
-class TestOrderComment(UnitTest):
+class TestOrderComment:
     """
     Class to test Order
     """
-
-    @pytest.fixture()
-    def order(self):
-        """
-        Pytest Fixture for Reason Code
-        """
-        return OrderFactory()
-
-    @pytest.fixture()
-    def order_comment(self):
-        """
-        Pytest Fixture for Order Comment
-        """
-        return OrderCommentFactory()
-
-    @pytest.fixture()
-    def comment_type(self):
-        """
-        Pytest Fixture for Comment Type
-        """
-        return CommentTypeFactory()
 
     def test_list(self, order_comment):
         """
@@ -93,26 +68,19 @@ class TestOrderComment(UnitTest):
         assert ord_comment.comment == "GET GLAD"
 
 
-class TestOrderCommentAPI(ApiTest):
+class TestOrderCommentAPI:
     """
     Test for Reason Code API
     """
 
-    @pytest.fixture()
-    def order_type(self):
-        """
-        Pytest Fixture for Order Type
-        """
-        return OrderTypeFactory()
-
-    @pytest.fixture()
+    @pytest.fixture
     def origin_location(self):
         """
         Pytest Fixture for Origin Location
         """
         return LocationFactory()
 
-    @pytest.fixture()
+    @pytest.fixture
     def destination_location(self):
         """
         Pytest Fixture for Destination Location
@@ -120,35 +88,7 @@ class TestOrderCommentAPI(ApiTest):
         return LocationFactory()
 
     @pytest.fixture()
-    def revenue_code(self):
-        """
-        Pytest Fixture for Revenue Code
-        """
-        return RevenueCodeFactory()
-
-    @pytest.fixture()
-    def customer(self):
-        """
-        Pytest Fixture for Customer
-        """
-        return CustomerFactory()
-
-    @pytest.fixture()
-    def equipment_type(self):
-        """
-        Pytest Fixture for Equipment Type
-        """
-        return EquipmentTypeFactory()
-
-    @pytest.fixture()
-    def comment_type(self):
-        """
-        Pytest Fixture for Comment Type
-        """
-        return CommentTypeFactory()
-
-    @pytest.fixture()
-    def order(
+    def order_api(
         self,
         api_client,
         organization,
@@ -173,6 +113,7 @@ class TestOrderCommentAPI(ApiTest):
                 "origin_appointment": f"{timezone.now()}",
                 "destination_location": f"{destination_location.id}",
                 "destination_appointment": f"{timezone.now()}",
+                "freight_charge_amount": 100.00,
                 "customer": f"{customer.id}",
                 "equipment_type": f"{equipment_type.id}",
                 "entered_by": f"{user.id}",
@@ -182,14 +123,14 @@ class TestOrderCommentAPI(ApiTest):
         )
 
     @pytest.fixture()
-    def order_comment(self, order, user, comment_type, api_client):
+    def order_comment(self, order_api, user, comment_type, api_client):
         """
         Pytest Fixture for Order Comment
         """
         return api_client.post(
             "/api/order_comments/",
             {
-                "order": f"{order.data['id']}",
+                "order": f"{order_api.data['id']}",
                 "comment_type": f"{comment_type.id}",
                 "comment": "IM HAPPY YOU'RE HERE",
                 "entered_by": f"{user.id}",
@@ -197,7 +138,7 @@ class TestOrderCommentAPI(ApiTest):
             format="json",
         )
 
-    def test_get_by_id(self, order_comment, order, comment_type, user, api_client):
+    def test_get_by_id(self, order_comment, order_api, comment_type, user, api_client):
         """
         Test get Order Comment by ID
         """
@@ -205,20 +146,20 @@ class TestOrderCommentAPI(ApiTest):
         assert response.status_code == 200
         assert response.data is not None
         assert (
-            f"{response.data['order']}" == order.data["id"]
+            f"{response.data['order']}" == order_api.data["id"]
         )  # returns UUID <UUID>, convert to F-string
         assert response.data["comment_type"] == comment_type.id
         assert response.data["comment"] == "IM HAPPY YOU'RE HERE"
         assert response.data["entered_by"] == user.id
 
-    def test_put(self, api_client, order, order_comment, comment_type, user):
+    def test_put(self, api_client, order_api, order_comment, comment_type, user):
         """
         Test put Order Comment
         """
         response = api_client.put(
             f"/api/order_comments/{order_comment.data['id']}/",
             {
-                "order": f"{order.data['id']}",
+                "order": f"{order_api.data['id']}",
                 "comment_type": f"{comment_type.id}",
                 "comment": "BE GLAD IM HERE",
                 "entered_by": f"{user.id}",
@@ -229,7 +170,7 @@ class TestOrderCommentAPI(ApiTest):
         assert response.status_code == 200
         assert response.data is not None
         assert (
-            f"{response.data['order']}" == order.data["id"]
+            f"{response.data['order']}" == order_api.data["id"]
         )  # returns UUID <UUID>, convert to F-string
         assert response.data["comment_type"] == comment_type.id
         assert response.data["comment"] == "BE GLAD IM HERE"

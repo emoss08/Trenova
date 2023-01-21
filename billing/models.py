@@ -260,9 +260,32 @@ class DocumentClassification(GenericModel):
         if self.__class__.objects.filter(name=self.name).exclude(pk=self.pk).exists():
             raise ValidationError(
                 {
-                    "name": _("Document classification with this name already exists."),
+                    "name": _(
+                        "Document classification with this name already exists. Please try again."
+                    ),
                 },
             )
+
+    def delete(self, *args: Any, **kwargs: Any) -> None:
+        """DocumentClassification Delete Method
+
+        Args:
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None
+        """
+        if self.name == "CON":
+            raise ValidationError(
+                {
+                    "name": _(
+                        "Document classification with this name cannot be deleted. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+        super().delete(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance

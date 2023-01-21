@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from equipment import models
+from equipment.models import EquipmentTypeDetail
 
 
 class EquipmentTypeFactory(factory.django.DjangoModelFactory):
@@ -32,7 +32,8 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
         Metaclass for EquipmentTypeFactory
         """
 
-        model = models.EquipmentType
+        model = "equipment.EquipmentType"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     id = factory.Faker("word", locale="en_US")
@@ -49,11 +50,12 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
         Metaclass for EquipmentTypeDetailFactory
         """
 
-        model = models.EquipmentTypeDetail
+        model = "equipment.EquipmentTypeDetail"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
-    equipment_class = models.EquipmentTypeDetail.EquipmentClassChoices.TRAILER
+    equipment_class = EquipmentTypeDetail.EquipmentClassChoices.TRAILER
 
 
 class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
@@ -66,10 +68,11 @@ class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
         Metaclass for EquipmentManufacturerFactory
         """
 
-        model = models.EquipmentManufacturer
+        model = "equipment.EquipmentManufacturer"
+        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("name")
+    id = factory.Faker("word", locale="en_US")
     description = factory.Faker("text")
 
 
@@ -83,8 +86,14 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
         Metaclass for EquipmentFactory
         """
 
-        model = models.Equipment
+        model = "equipment.Equipment"
+        django_get_or_create = (
+            "organization",
+            "equipment_type",
+            "manufacturer",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    id = factory.Faker("word", locale="en_US")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)

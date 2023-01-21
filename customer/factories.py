@@ -19,23 +19,22 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 
-from customer import models
-
 
 class CustomerFactory(factory.django.DjangoModelFactory):
     """
     Customer factory
     """
 
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("name", locale="en_US")
-
     class Meta:
         """
         Metaclass for CustomerFactory
         """
 
-        model = models.Customer
+        model = "customer.Customer"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("name", locale="en_US")
 
 
 class CustomerContactFactory(factory.django.DjangoModelFactory):
@@ -43,16 +42,17 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
     Customer contact factory
     """
 
+    class Meta:
+        """
+        Metaclass for CustomerContactFactory
+        """
+
+        model = "customer.CustomerContact"
+        django_get_or_create = ("organization",)
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
     name = factory.Faker("name", locale="en_US")
     email = factory.Faker("email", locale="en_US")
     title = factory.Faker("word", locale="en_US")
     is_payable_contact = True
-
-    class Meta:
-        """
-        Metaclass for CustomerContactFactory
-        """
-
-        model = models.CustomerContact

@@ -17,28 +17,25 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from celery import shared_task
+
 from order.models import Order
+from order.services.consolidate_pdf import combine_pdfs
 
 
-class OrderService:
-    """Order Service
+@shared_task  # type: ignore
+def consolidate_order_documentation(order_id: str) -> None:
+    """Consolidate Order
 
-    Service to manage all order actions
+    Query the database for the Order and call the consolidate_pdf
+    service to combine the PDFs into a single PDF.
+
+    Args:
+        order_id (str): Order ID
+
+    Returns:
+        None
     """
 
-    @staticmethod
-    def set_pro_number() -> str:
-        """Generate a unique pro number for an order.
-
-        Returns:
-            str: The pro number for the order.
-        """
-        count = Order.objects.count() + 1
-        pro_number = f"ORD{count:06d}"
-
-        # Check if pro number already exists and generate a new one if it does.
-        while Order.objects.filter(pro_number=pro_number).exists():
-            count += 1
-            pro_number = f"ORD{count:06d}"
-
-        return pro_number
+    order: Order = Order.objects.get(id=order_id)
+    combine_pdfs(order=order)

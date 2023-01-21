@@ -28,8 +28,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from dispatch.models import DispatchControl
-from stops.services.create_service_incident import CreateServiceIncident
 from stops.validation import StopValidation
 from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
 
@@ -66,7 +64,7 @@ class QualifierCode(GenericModel):
 
         verbose_name = _("Qualifier Code")
         verbose_name_plural = _("Qualifier Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """Qualifier Code String Representation
@@ -142,6 +140,8 @@ class Stop(GenericModel):
         _("Stop Address"),
         max_length=255,
         help_text=_("Stop Address"),
+        blank=True,
+        null=True,
     )
     appointment_time = models.DateTimeField(
         _("Stop Appointment Time"),
@@ -171,7 +171,7 @@ class Stop(GenericModel):
 
         verbose_name = _("Stop")
         verbose_name_plural = _("Stops")
-        ordering: list[str] = ["movement", "sequence"]
+        ordering = ["movement", "sequence"]
 
     def __str__(self) -> str:
         """String representation of the Stop
@@ -218,11 +218,16 @@ class Stop(GenericModel):
         elif self.arrival_time and self.departure_time:
             self.status = StatusChoices.COMPLETED
 
-        CreateServiceIncident(
-            stop=self,
-            dc_object=DispatchControl,
-            si_object=ServiceIncident,
-        ).create()
+        # If the location code is entered and not the address_line then autofill address_line
+        # with the location combination (address_line_1, address_line_2, city, state & zip_code)
+        if self.location and not self.address_line:
+            self.address_line = self.location.get_address_combination
+
+        # CreateServiceIncident(
+        #     stop=self,
+        #     dc_object=DispatchControl,
+        #     si_object=ServiceIncident,
+        # ).create()
 
         super().save(**kwargs)
 

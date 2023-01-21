@@ -66,7 +66,6 @@ class Worker(GenericModel):
         _("Code"),
         max_length=10,
         unique=True,
-        blank=True,
         editable=False,
         help_text=_(
             "The code of the worker. This field is required and must be unique."
@@ -158,7 +157,10 @@ class Worker(GenericModel):
 
         verbose_name = _("worker")
         verbose_name_plural = _("workers")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
+        indexes = [
+            models.Index(fields=["first_name", "last_name"]),
+        ]
 
     def __str__(self) -> str:
         """Worker string representation
@@ -221,10 +223,10 @@ class WorkerProfile(GenericModel):
         Worker Sex/Gender Choices
         """
 
-        MALE = "male", _("Male")
-        FEMALE = "female", _("Female")
-        NON_BINARY = "non-binary", _("Non-binary")
-        OTHER = "other", _("Other")
+        MALE = "MALE", _("Male")
+        FEMALE = "FEMALE", _("Female")
+        NON_BINARY = "NON-BINARY", _("Non-binary")
+        OTHER = "OTHER", _("Other")
 
     @final
     class EndorsementChoices(models.TextChoices):

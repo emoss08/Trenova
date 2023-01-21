@@ -25,6 +25,14 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
     General Ledger Account factory
     """
 
+    class Meta:
+        """
+        Metaclass for GeneralLedger Account Factory
+        """
+
+        model = "accounting.GeneralLedgerAccount"
+        django_get_or_create = ("organization",)
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     account_number = factory.Faker(
         "numerify",
@@ -36,31 +44,23 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
     )
     description = factory.Faker("sentence", nb_words=6, locale="en_US")
 
-    class Meta:
-        """
-        Metaclass for General
-        Ledger Account Factory
-        """
-
-        model = "accounting.GeneralLedgerAccount"
-
 
 class RevenueCodeFactory(factory.django.DjangoModelFactory):
     """
     Revenue Code factory
     """
 
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = factory.Faker("pystr", max_chars=4)
-    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
-
     class Meta:
         """
-        Metaclass for Revenue
-        Code Factory
+        Metaclass for RevenueCode Factory
         """
 
         model = "accounting.RevenueCode"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
 
 
 class DivisionCodeFactory(factory.django.DjangoModelFactory):
@@ -68,14 +68,15 @@ class DivisionCodeFactory(factory.django.DjangoModelFactory):
     Division Code Factory
     """
 
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    is_active = True
-    code = factory.Faker("pystr", max_chars=4)
-    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
-
     class Meta:
         """
         Metaclass for DivisionCodeFactory
         """
 
         model = "accounting.DivisionCode"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    is_active = True
+    code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)

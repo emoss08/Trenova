@@ -18,61 +18,31 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from rest_framework.test import APIClient
-
-from accounts.tests.factories import TokenFactory, UserFactory
-from organization.factories import OrganizationFactory
-
-client = APIClient()
 
 pytestmark = pytest.mark.django_db
 
 
 class TestUserAPI:
-    @pytest.fixture()
-    def user(self):
-        """
-        User fixture
-        """
-        return UserFactory()
-
-    @pytest.fixture()
-    def token(self, user):
-        """
-        Token fixture
-        """
-        return TokenFactory(user=user)
-
-    @pytest.fixture()
-    def organization(self, user):
-        """
-        Organization fixture
-        """
-        return OrganizationFactory()
-
-    def test_get(self, token):
+    def test_get(self, token, api_client):
         """
         Test get users
         """
-        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-        response = client.get("/api/users/")
+        response = api_client.get("/api/users/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, user, token):
+    def test_get_by_id(self, api_client, user, token):
         """
         Test get user by ID
         """
-        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-        response = client.get(f"/api/users/{user.id}/")
+        response = api_client.get(f"/api/users/{user.data['id']}/")
         assert response.status_code == 200
 
-    def test_put(self, token, user):
+    def test_put(self, token, user, api_client):
         """
         Test Put request
         """
-        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-        response = client.put(
-            f"/api/users/{user.id}/",
+        response = api_client.put(
+            f"/api/users/{user.data['id']}/",
             {
                 "username": "test",
                 "email": "test@test.com",
@@ -98,11 +68,10 @@ class TestUserAPI:
         assert response.data["profile"]["state"] == "NC"
         assert response.data["profile"]["zip_code"] == "12345"
 
-    def test_delete(self, user, token):
+    def test_delete(self, user, token, api_client):
         """
         Test delete user
         """
-        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-        response = client.delete(f"/api/users/{user.id}/")
+        response = api_client.delete(f"/api/users/{user.data['id']}/")
         assert response.status_code == 204
         assert response.data is None

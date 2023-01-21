@@ -29,7 +29,7 @@ def create_integration(
     sender: models.IntegrationVendor,
     instance: models.IntegrationVendor,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Creates an Integration if a new vendor is added.
 

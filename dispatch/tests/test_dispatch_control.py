@@ -47,9 +47,13 @@ def test_service_incident_control_choices(organization):
     Test Service incident control choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         organization.dispatch_control.record_service_incident = "invalid"
         organization.dispatch_control.full_clean()
+
+    assert excinfo.value.message_dict["record_service_incident"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 
 @pytest.mark.django_db
@@ -58,9 +62,13 @@ def test_distance_method_choices(organization):
     Test Service incident control choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(ValidationError, match="Value 'invalid' is not a valid choice."):
+    with pytest.raises(ValidationError) as excinfo:
         organization.dispatch_control.distance_method = "invalid"
         organization.dispatch_control.full_clean()
+
+    assert excinfo.value.message_dict["distance_method"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
 
 
 @pytest.mark.django_db
@@ -69,11 +77,12 @@ def test_dispatch_control_google_integration(organization):
     Test Service incident control choices throws ValidationError
     when the passed choice is not valid.
     """
-    with pytest.raises(
-        ValidationError,
-        match="Google Maps integration is not configured for the organization."
-        " Please configure the integration before selecting Google as "
-        "the distance method.",
-    ):
+    with pytest.raises(ValidationError) as excinfo:
         organization.dispatch_control.distance_method = "Google"
         organization.dispatch_control.full_clean()
+
+    assert excinfo.value.message_dict["distance_method"] == [
+        "Google Maps integration is not configured for the organization."
+        " Please configure the integration before selecting Google as "
+        "the distance method."
+    ]
