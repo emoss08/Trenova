@@ -25,13 +25,13 @@ import uuid
 from typing import Any, final
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from commodities.models import HazardousMaterial
+from order.Validation import OrderValidation
 from stops.models import Stop
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
@@ -511,7 +511,7 @@ class Order(GenericModel):
         return textwrap.wrap(self.pro_number, 10)[0]
 
     def clean(self) -> None:
-        """Order save method
+        """Order clean method
 
         Returns:
             None
@@ -520,93 +520,7 @@ class Order(GenericModel):
             ValidationError: If the Order is not valid
         """
 
-        # Validate 'freight_charge_amount' is entered if 'rate_method' is 'FLAT'
-        if (
-            self.rate_method == RatingMethodChoices.FLAT
-            and not self.freight_charge_amount
-        ):
-            raise ValidationError(
-                {
-                    "rate_method": _(
-                        "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
-                    )
-                },
-                code="invalid",
-            )
-
-        # Validate order not marked 'ready_to_bill' if 'status' is not COMPLETED
-        if self.ready_to_bill and self.status != StatusChoices.COMPLETED:
-            raise ValidationError(
-                {
-                    "ready_to_bill": _(
-                        "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
-                    )
-                },
-                code="invalid",
-            )
-
-        # Validate 'mileage' is entered if 'rate_method' is 'PER_MILE'
-        if self.rate_method == RatingMethodChoices.PER_MILE and not self.mileage:
-            raise ValidationError(
-                {
-                    "rate_method": _(
-                        "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
-                    )
-                },
-                code="invalid",
-            )
-
-        # Validate compare origin and destination are not the same.
-        if (
-            self.organization.order_control.enforce_origin_destination
-            and self.origin_location
-            and self.destination_location
-            and self.origin_location == self.destination_location
-        ):
-            raise ValidationError(
-                {
-                    "origin_location": _(
-                        "Origin and Destination locations cannot be the same. Please try again."
-                    )
-                },
-                code="invalid",
-            )
-
-        # Validate that origin_location or origin_address is provided.
-        if not self.origin_location and not self.origin_address:
-            raise ValidationError(
-                {
-                    "origin_address": _(
-                        "Origin Location or Address is required. Please try again."
-                    ),
-                },
-                code="invalid",
-            )
-
-        # Validate that destination_location or destination_address is provided.
-        if not self.destination_location and not self.destination_address:
-            raise ValidationError(
-                {
-                    "destination_address": _(
-                        "Destination Location or Address is required. Please try again."
-                    ),
-                },
-                code="invalid",
-            )
-
-        # Validate revenue code is entered if Order Control requires it for the organization.
-        if self.organization.order_control.enforce_rev_code and not self.revenue_code:
-            raise ValidationError(
-                {"revenue_code": _("Revenue code is required. Please try again.")},
-                code="invalid",
-            )
-
-        # Validate commodity is entered if Order Control requires it for the organization.
-        if self.organization.order_control.enforce_commodity and not self.commodity:
-            raise ValidationError(
-                {"commodity": _("Commodity is required. Please try again.")},
-                code="invalid",
-            )
+        OrderValidation(order=self)
 
         super().clean()
 
