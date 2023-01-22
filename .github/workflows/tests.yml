@@ -50,3 +50,11 @@ jobs:
           pip install tox tox-gh-actions
       - name: Test with tox
         run: tox -vv
+        env:
+          SECRET_KEY: 69tgugtg%^fgJO&*&
+          DEBUG: 1
+          DB_NAME: postgres
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_PORT: 5432
+          FIELD_ENCRYPTION_KEY: cxvoIIUnDvcCE9IkjaS_l3pvUUjngSK0eRubxEBwkRs=
