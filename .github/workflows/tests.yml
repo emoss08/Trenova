@@ -24,6 +24,9 @@ jobs:
           --health-retries 5
       redis:
         image: redis
+        env:
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
         ports:
           - 6379:6379
         options: >-
