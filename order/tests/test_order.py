@@ -296,6 +296,7 @@ class TestOrderAPI:
         assert response.status_code == 200
         assert response.data["bol_number"] == "patchedbol"
 
+
 class TestOrderValidation:
     """
     Test for Order Validation
@@ -307,10 +308,7 @@ class TestOrderValidation:
         and the `freight_charge_amount` is None
         """
         with pytest.raises(ValidationError) as excinfo:
-            OrderFactory(
-                rate_method="F",
-                freight_charge_amount=None
-            )
+            OrderFactory(rate_method="F", freight_charge_amount=None)
 
         assert excinfo.value.message_dict["freight_charge_amount"] == [
             "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
@@ -322,10 +320,7 @@ class TestOrderValidation:
         and the `mileage` is None
         """
         with pytest.raises(ValidationError) as excinfo:
-            OrderFactory(
-                rate_method="PM",
-                mileage=None
-            )
+            OrderFactory(rate_method="PM", mileage=None)
 
         assert excinfo.value.message_dict["mileage"] == [
             "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
@@ -423,4 +418,3 @@ class TestOrderValidation:
         assert excinfo.value.message_dict["destination_address"] == [
             "Destination Location or Address is required. Please try again."
         ]
-
