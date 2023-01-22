@@ -21,6 +21,18 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      redis:
+        image: redis
+        env:
+          REDIS_HOST: redis
+          REDIS_PORT: 6379
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     strategy:
       max-parallel: 4
       matrix:
@@ -43,7 +55,6 @@ jobs:
           DB_NAME: postgres
           DB_USER: postgres
           DB_PASSWORD: postgres
-          DB_HOST: postgres
           DB_PORT: 5432
           CACHE_OPS_HOST: redis
           CACHE_OPS_PORT: 6379
