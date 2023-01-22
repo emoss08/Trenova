@@ -195,11 +195,7 @@ class Stop(GenericModel):
             ValidationError: If the stop is not valid.
 
         """
-
-        StopValidation(
-            stop=self,
-            stop_object=Stop,
-        ).validate()
+        StopValidation(stop=self)
 
     def save(self, **kwargs: Any) -> None:
         """Save the stop object

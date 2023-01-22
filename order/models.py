@@ -30,7 +30,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.Validation import OrderValidation
+from order.validation import OrderValidation
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
@@ -344,6 +344,8 @@ class Order(GenericModel):
         decimal_places=2,
         default=0,
         help_text=_("Total Mileage"),
+        blank=True,
+        null=True,
     )
     other_charge_amount = models.DecimalField(
         _("Additional Charge Amount"),
@@ -358,6 +360,8 @@ class Order(GenericModel):
         decimal_places=2,
         default=0,
         help_text=_("Freight Charge Amount"),
+        blank=True,
+        null=True,
     )
     rate_method = ChoiceField(
         _("Rating Method"),
@@ -572,14 +576,20 @@ class Order(GenericModel):
         """
 
         # Handle the flat fee rate calculation
-        if self.rate_method == RatingMethodChoices.FLAT:
+
+        if self.freight_charge_amount and self.rate_method == RatingMethodChoices.FLAT:
             return self.freight_charge_amount + self.other_charge_amount
 
         # Handle the mileage rate calculation
-        if self.rate_method == RatingMethodChoices.PER_MILE:
+        if (
+            self.freight_charge_amount
+            and self.mileage
+            and self.rate_method
+            and self.rate_method == RatingMethodChoices.PER_MILE
+        ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
-        return self.freight_charge_amount
+        return self.freight_charge_amount  # type: ignore
 
 
 class OrderDocumentation(GenericModel):

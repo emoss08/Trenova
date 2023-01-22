@@ -39,9 +39,10 @@ class StopFactory(factory.django.DjangoModelFactory):
         )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    movement = factory.SubFactory("movement.tests.factories.MovementFactory")
+    movement = factory.SubFactory("movements.tests.factories.MovementFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
     appointment_time = factory.Faker(
         "date_time", tzinfo=timezone.get_current_timezone()
     )
+    sequence = 1
     stop_type = "P"

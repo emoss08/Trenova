@@ -41,4 +41,5 @@ pytest-cov==4.0.0
 pytest-django==4.5.2
 pytest-html==3.2.0
 redis==4.4.2
+tox==4.3.5
 whitenoise==6.3.0
