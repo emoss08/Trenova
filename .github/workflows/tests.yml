@@ -50,7 +50,3 @@ jobs:
           pip install tox tox-gh-actions
       - name: Test with tox
         run: tox -vv
-        env:
-          POSTGRES_NAME=postgres
-          POSTGRES_USER=postgres
-          POSTGRES_PASSWORD=postgres
