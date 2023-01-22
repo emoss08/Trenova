@@ -11,7 +11,6 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_HOST: postgres
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: postgres
@@ -50,4 +49,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
       - name: Test with tox
+        environment:
+          - POSTGRES_NAME=postgres
+          - POSTGRES_USER=postgres
+          - POSTGRES_PASSWORD=postgres
         run: tox -vv
+        depends-on: [ postgres, redis ]
