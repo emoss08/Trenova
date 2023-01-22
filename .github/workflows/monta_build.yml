@@ -23,5 +23,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run Tests
+        env:
+          SECRET_KEY: 69tgugtg%^fgJO&*&
+          DEBUG: 1
+          DB_NAME: postgres
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: postgres
+          DB_PORT: 5432
+          CACHE_OPS_HOST: redis
+          CACHE_OPS_PORT: 6379
+          CACHE_OPS_DB: 1
+          DEFAULT_REDIS_LOCATION: redis://redis:6379/0
+          CELERY_REDIS_LOCATION: redis://redis:6379/0
+          CELERY_REDIS_BROKER_URL: redis://redis:6379/0
+          SESSIONS_REDIS_LOCATION: redis://redis:6379/0
+          FIELD_ENCRYPTION_KEY: cxvoIIUnDvcCE9IkjaS_l3pvUUjngSK0eRubxEBwkRs=
         run: |
           pytest -s
