@@ -49,11 +49,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
 
-      - name: Migrate Database
-        run: |
-          python manage.py makemigrations
-          python manage.py migrate
-
       - name: Test with tox
         run: tox -vv
         env:
