@@ -576,14 +576,20 @@ class Order(GenericModel):
         """
 
         # Handle the flat fee rate calculation
-        if self.rate_method == RatingMethodChoices.FLAT:
+
+        if self.freight_charge_amount and self.rate_method == RatingMethodChoices.FLAT:
             return self.freight_charge_amount + self.other_charge_amount
 
         # Handle the mileage rate calculation
-        if self.rate_method == RatingMethodChoices.PER_MILE:
+        if (
+            self.freight_charge_amount
+            and self.mileage
+            and self.rate_method
+            and self.rate_method == RatingMethodChoices.PER_MILE
+        ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
-        return self.freight_charge_amount
+        return self.freight_charge_amount  # type: ignore
 
 
 class OrderDocumentation(GenericModel):
