@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from accounting.tests.factories import RevenueCodeFactory
@@ -25,7 +26,7 @@ from customer.factories import CustomerFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order import models
-from order.tests.factories import OrderFactory, OrderTypeFactory
+from order.tests.factories import OrderFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -34,20 +35,6 @@ class TestOrder:
     """
     Class to test Order
     """
-
-    @pytest.fixture()
-    def order(self):
-        """
-        Pytest Fixture for Reason Code
-        """
-        return OrderFactory()
-
-    @pytest.fixture()
-    def order_type(self):
-        """
-        Pytest Fixture for Order Type
-        """
-        return OrderTypeFactory()
 
     @pytest.fixture()
     def origin_location(self):
@@ -308,3 +295,126 @@ class TestOrderAPI:
 
         assert response.status_code == 200
         assert response.data["bol_number"] == "patchedbol"
+
+
+class TestOrderValidation:
+    """
+    Test for Order Validation
+    """
+
+    def test_flat_method_requires_freight_charge_amount(self):
+        """
+        Test ValidationError is thrown when the order has `FLAT` rating method
+        and the `freight_charge_amount` is None
+        """
+        with pytest.raises(ValidationError) as excinfo:
+            OrderFactory(rate_method="F", freight_charge_amount=None)
+
+        assert excinfo.value.message_dict["freight_charge_amount"] == [
+            "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
+        ]
+
+    def test_per_mile_requires_mileage(self):
+        """
+        Test ValidationError is thrown when the order has `PER-MILE` rating method
+        and the `mileage` is None
+        """
+        with pytest.raises(ValidationError) as excinfo:
+            OrderFactory(rate_method="PM", mileage=None)
+
+        assert excinfo.value.message_dict["mileage"] == [
+            "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
+        ]
+
+    def test_order_origin_destination_location_cannot_be_the_same(self):
+        """
+        Test ValidationError is thrown when the order `origin_location and
+        `destination_location` is the same.
+        """
+        order = OrderFactory()
+        order.organization.order_control.enforce_origin_destination = True
+
+        location = LocationFactory()
+
+        with pytest.raises(ValidationError) as excinfo:
+            order.origin_location = location
+            order.destination_location = location
+            order.save()
+
+        assert excinfo.value.message_dict["origin_location"] == [
+            "Origin and Destination locations cannot be the same. Please try again."
+        ]
+
+    def test_order_revenue_code_is_enforced(self):
+        """
+        Test ValidationError is thrown if the `order_control` has `enforce_rev_code`
+        set as `TRUE`
+        """
+        order = OrderFactory()
+        order.organization.order_control.enforce_rev_code = True
+
+        with pytest.raises(ValidationError) as excinfo:
+            order.revenue_code = None
+            order.save()
+
+        assert excinfo.value.message_dict["revenue_code"] == [
+            "Revenue code is required. Please try again."
+        ]
+
+    def test_order_commodity_is_enforced(self):
+        """
+        Test ValidationError is thrown if the `order_control` has `enforce_commodity`
+        set as `TRUE`
+        """
+        order = OrderFactory()
+        order.organization.order_control.enforce_commodity = True
+
+        with pytest.raises(ValidationError) as excinfo:
+            order.revenue_code = None
+            order.save()
+
+        assert excinfo.value.message_dict["commodity"] == [
+            "Commodity is required. Please try again."
+        ]
+
+    def test_order_must_be_completed_to_bill(self):
+        """
+        Test ValidationError is thrown if the order status is not `COMPLETED`
+        and `ready_to_bill` is marked `TRUE`
+        """
+        with pytest.raises(ValidationError) as excinfo:
+            OrderFactory(status="N", ready_to_bill=True)
+
+        assert excinfo.value.message_dict["ready_to_bill"] == [
+            "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
+        ]
+
+    def test_order_origin_location_or_address_is_required(self):
+        """
+        Test ValidationError is thrown if the order `origin_location` and
+        `origin_address` is blank
+        """
+        with pytest.raises(ValidationError) as excinfo:
+            OrderFactory(
+                origin_location=None,
+                origin_address=None,
+            )
+
+        assert excinfo.value.message_dict["origin_address"] == [
+            "Origin Location or Address is required. Please try again."
+        ]
+
+    def test_order_destination_location_or_address_is_required(self):
+        """
+        Test ValidationError is thrown if the order `destination_location` and
+        `destination_address` is blank
+        """
+        with pytest.raises(ValidationError) as excinfo:
+            OrderFactory(
+                destination_location=None,
+                destination_address=None,
+            )
+
+        assert excinfo.value.message_dict["destination_address"] == [
+            "Destination Location or Address is required. Please try again."
+        ]

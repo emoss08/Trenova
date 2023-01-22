@@ -57,7 +57,7 @@ class OrderValidation:
         ):
             raise ValidationError(
                 {
-                    "rate_method": _(
+                    "freight_charge_amount": _(
                         "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
                     )
                 },
@@ -71,7 +71,7 @@ class OrderValidation:
         ):
             raise ValidationError(
                 {
-                    "rate_method": _(
+                    "mileage": _(
                         "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
                     )
                 },
