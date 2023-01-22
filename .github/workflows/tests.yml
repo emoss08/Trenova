@@ -54,4 +54,3 @@ jobs:
           - POSTGRES_USER=postgres
           - POSTGRES_PASSWORD=postgres
         run: tox -vv
-        depends-on: [ postgres, redis ]
