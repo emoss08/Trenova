@@ -124,7 +124,7 @@ DATABASES = {
         "NAME": env("DB_NAME"),
         "USER": env("DB_USER"),
         "PASSWORD": env("DB_PASSWORD"),
-        "HOST": env("DB_HOST"),
+        "HOST": "localhost",
         "PORT": env("DB_PORT"),
     }
 }
@@ -175,7 +175,7 @@ AUTH_PASSWORD_VALIDATORS = [
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("DEFAULT_REDIS_LOCATION"),
+        "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PREFIX": "default",
@@ -183,7 +183,7 @@ CACHES = {
     },
     "sessions": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("SESSIONS_REDIS_LOCATION"),
+        "LOCATION": "redis://127.0.0.1:6379/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PREFIX": "sessions",
@@ -196,7 +196,7 @@ CACHES = {
     },
     "celery": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("CELERY_REDIS_LOCATION"),
+        "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "PREFIX": "sessions",
@@ -214,9 +214,9 @@ SESSION_CACHE_ALIAS = "sessions"
 
 # Cacheops configurations
 CACHEOPS_REDIS = {
-    "host": env("CACHE_OPS_HOST"),
-    "port": env("CACHE_OPS_PORT"),
-    "db": env("CACHE_OPS_DB"),
+    "host": "localhost",
+    "port": "6379",
+    "db": 3,
 }
 
 # CACHEOPS_SENTINEL = {
@@ -259,8 +259,8 @@ REST_FRAMEWORK = {
 }
 
 # Celery Configurations
-CELERY_BROKER_URL = env("CELERY_REDIS_BROKER_URL")
-CELERY_RESULT_BACKEND = env("CELERY_REDIS_BROKER_URL")
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/2"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
 CELERY_CACHE_BACKEND = "celery"
 
 # Field Encryption
