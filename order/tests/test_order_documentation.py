@@ -28,6 +28,7 @@ from order import models
 
 pytestmark = pytest.mark.django_db
 
+
 def remove_media_directory(file_path: str) -> None:
     """Remove Media Directory after test tear down.
 
@@ -48,6 +49,7 @@ def remove_media_directory(file_path: str) -> None:
 
     if os.path.exists(media_dir):
         shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
+
 
 def remove_file(file_path: str) -> None:
     """Remove File after test tear down.
@@ -75,7 +77,6 @@ class TestOrderDocumentation:
     """
     Class to test Order Documentation
     """
-
 
     def test_list(self, order_document):
         """
@@ -232,5 +233,5 @@ class TestOrderDocumentationApi:
 
         if os.path.exists("testfile.txt"):
             return os.remove("testfile.txt")
-        
+
         remove_media_directory("order_documentation")

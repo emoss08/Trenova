@@ -113,13 +113,13 @@ def test_create_equip_type_with_detail(api_client):
     assert response.data["description"] == "Test Equipment Type Description"
     assert response.data["equipment_type_details"]["equipment_class"] == "TRACTOR"
     assert response.data["equipment_type_details"]["exempt_from_tolls"] is True
-    assert response.data["equipment_type_details"]["fixed_cost"] == '100.0000'
-    assert response.data["equipment_type_details"]["variable_cost"] == '10.0000'
-    assert response.data["equipment_type_details"]["height"] == '10.0000'
-    assert response.data["equipment_type_details"]["length"] == '10.0000'
-    assert response.data["equipment_type_details"]["width"] == '10.0000'
-    assert response.data["equipment_type_details"]["weight"] == '10.0000'
-    assert response.data["equipment_type_details"]["idling_fuel_usage"] == '10.0000'
+    assert response.data["equipment_type_details"]["fixed_cost"] == "100.0000"
+    assert response.data["equipment_type_details"]["variable_cost"] == "10.0000"
+    assert response.data["equipment_type_details"]["height"] == "10.0000"
+    assert response.data["equipment_type_details"]["length"] == "10.0000"
+    assert response.data["equipment_type_details"]["width"] == "10.0000"
+    assert response.data["equipment_type_details"]["weight"] == "10.0000"
+    assert response.data["equipment_type_details"]["idling_fuel_usage"] == "10.0000"
 
 
 @pytest.mark.django_db
@@ -200,10 +200,10 @@ def test_update_equipment_details(api_client):
     assert response.data["id"] == "test_updated"
     assert response.data["description"] == "Test Equipment Updated"
     assert response.data["equipment_type_details"]["equipment_class"] == "TRAILER"
-    assert response.data["equipment_type_details"]["fixed_cost"] == '1.0000'
-    assert response.data["equipment_type_details"]["variable_cost"] == '0.0000'
-    assert response.data["equipment_type_details"]["height"] == '0.0000'
-    assert response.data["equipment_type_details"]["length"] == '0.0000'
-    assert response.data["equipment_type_details"]["width"] == '3.0000'
-    assert response.data["equipment_type_details"]["weight"] == '0.0000'
-    assert response.data["equipment_type_details"]["idling_fuel_usage"] == '0.0000'
+    assert response.data["equipment_type_details"]["fixed_cost"] == "1.0000"
+    assert response.data["equipment_type_details"]["variable_cost"] == "0.0000"
+    assert response.data["equipment_type_details"]["height"] == "0.0000"
+    assert response.data["equipment_type_details"]["length"] == "0.0000"
+    assert response.data["equipment_type_details"]["width"] == "3.0000"
+    assert response.data["equipment_type_details"]["weight"] == "0.0000"
+    assert response.data["equipment_type_details"]["idling_fuel_usage"] == "0.0000"

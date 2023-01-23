@@ -66,8 +66,6 @@ def validate_worker_regulatory_information(value) -> None:
     }
     if dispatch_control and dispatch_control.regulatory_check:
         if errors := {
-            field: error
-            for field, error in fields.items()
-            if not getattr(value, field)
+            field: error for field, error in fields.items() if not getattr(value, field)
         }:
             raise ValidationError(errors)
