@@ -17,60 +17,14 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
-import shutil
-from pathlib import Path
-
 import pytest
-from rest_framework.test import APIClient
 
-from accounts.tests.factories import TokenFactory, UserFactory
 from equipment.tests.factories import EquipmentFactory
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory
-from organization.factories import OrganizationFactory
 from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def token():
-    """
-    Token Fixture
-    """
-    token = TokenFactory()
-    yield token
-
-
-@pytest.fixture
-def organization():
-    """
-    Organization Fixture
-    """
-    organization = OrganizationFactory()
-    yield organization
-
-
-@pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-    user = UserFactory()
-    yield user
-
-
-@pytest.fixture
-def api_client(token):
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
-    return client
 
 
 @pytest.fixture
@@ -78,8 +32,7 @@ def movement():
     """
     Pytest Fixture for Movement
     """
-    movement = MovementFactory()
-    yield movement
+    yield MovementFactory()
 
 
 @pytest.fixture
@@ -87,8 +40,7 @@ def worker():
     """
     Pytest Fixture for Worker
     """
-    worker = WorkerFactory()
-    yield worker
+    yield WorkerFactory()
 
 
 @pytest.fixture
@@ -96,8 +48,7 @@ def equipment():
     """
     Pytest fixture for Equipment
     """
-    equipment = EquipmentFactory()
-    yield equipment
+    yield EquipmentFactory()
 
 
 @pytest.fixture
@@ -105,5 +56,4 @@ def order():
     """
     Pytest fixture for Order
     """
-    order = OrderFactory()
-    yield order
+    yield OrderFactory()

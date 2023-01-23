@@ -22,53 +22,34 @@ import shutil
 from pathlib import Path
 
 import pytest
-from rest_framework.test import APIClient
 
-from accounts.tests.factories import TokenFactory, UserFactory
-from organization.factories import OrganizationFactory
+from dispatch.factories import CommentTypeFactory
 from worker import models
+from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def token():
+def worker():
     """
-    Token Fixture
+    Worker Fixture
     """
-    yield TokenFactory()
+
+    yield WorkerFactory()
 
 
 @pytest.fixture
-def organization():
+def comment_type():
     """
-    Organization Fixture
+    Comment Type Fixture
     """
-    yield OrganizationFactory()
+
+    yield CommentTypeFactory()
 
 
 @pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-    yield UserFactory()
-
-
-@pytest.fixture
-def api_client(token):
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-    yield client
-
-
-@pytest.fixture
-def worker(organization):
+def worker_api(organization):
     """
     Worker Fixture
     """

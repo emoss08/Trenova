@@ -30,22 +30,6 @@ class TestWorkerApi:
     Tests for Worker API.
     """
 
-    @pytest.fixture
-    def worker(self):
-        """
-        Worker Fixture
-        """
-
-        return WorkerFactory()
-
-    @pytest.fixture
-    def comment_type(self):
-        """
-        Comment Type Fixture
-        """
-
-        return CommentTypeFactory()
-
     def test_get(self, api_client):
         """
         Test get Document Classification
@@ -53,7 +37,7 @@ class TestWorkerApi:
         response = api_client.get("/api/workers/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, worker):
+    def test_get_by_id(self, api_client, worker_api):
         """
         Test get Document classification by ID
         """
@@ -73,7 +57,7 @@ class TestWorkerApi:
             format="json",
         )
 
-        response = api_client.get(f"/api/workers/{worker.id}/")
+        response = api_client.get(f"/api/workers/{worker_api.id}/")
         assert response.status_code == 200
 
     def test_create(self, api_client, comment_type, user):
@@ -237,7 +221,7 @@ class TestWorkerApi:
         assert response.data["contacts"][1]["is_primary"] is True
         assert response.data["contacts"][1]["mobile_phone"] == 1234567890
 
-    def test_put(self, api_client, comment_type, user, worker):
+    def test_put(self, api_client, comment_type, user, worker_api):
         """
         Test creating worker
         """

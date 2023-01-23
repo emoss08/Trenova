@@ -18,10 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from rest_framework.test import APIClient
+from django.utils import timezone
 
 from accounting.tests.factories import RevenueCodeFactory
-from accounts.tests.factories import TokenFactory, UserFactory
 from billing.tests.factories import (
     AccessorialChargeFactory,
     DocumentClassificationFactory,
@@ -29,6 +28,7 @@ from billing.tests.factories import (
 from customer.factories import CustomerFactory
 from dispatch.factories import CommentTypeFactory
 from equipment.tests.factories import EquipmentTypeFactory
+from location.factories import LocationFactory
 from order.tests.factories import (
     AdditionalChargeFactory,
     OrderCommentFactory,
@@ -37,45 +37,8 @@ from order.tests.factories import (
     OrderTypeFactory,
     ReasonCodeFactory,
 )
-from organization.factories import OrganizationFactory
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def token():
-    """
-    Token Fixture
-    """
-    yield TokenFactory()
-
-
-@pytest.fixture
-def organization():
-    """
-    Organization Fixture
-    """
-    yield OrganizationFactory()
-
-
-@pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-    yield UserFactory()
-
-
-@pytest.fixture
-def api_client(token):
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-    return client
 
 
 @pytest.fixture
@@ -142,7 +105,7 @@ def revenue_code():
     yield RevenueCodeFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def customer():
     """
     Pytest Fixture for Customer
@@ -172,3 +135,135 @@ def comment_type():
     Pytest Fixture for Comment Type
     """
     yield CommentTypeFactory()
+
+
+@pytest.fixture
+def origin_location():
+    """
+    Pytest Fixture for Origin Location
+    """
+    return LocationFactory()
+
+
+@pytest.fixture
+def destination_location():
+    """
+    Pytest Fixture for Destination Location
+    """
+    return LocationFactory()
+
+
+@pytest.fixture
+def order_api(
+    api_client,
+    organization,
+    order_type,
+    revenue_code,
+    origin_location,
+    destination_location,
+    customer,
+    equipment_type,
+    user,
+):
+    """
+    Pytest Fixture for Reason Code
+    """
+    return api_client.post(
+        "/api/orders/",
+        {
+            "organization": f"{organization.id}",
+            "order_type": f"{order_type.id}",
+            "revenue_code": f"{revenue_code.id}",
+            "origin_location": f"{origin_location.id}",
+            "origin_appointment": f"{timezone.now()}",
+            "destination_location": f"{destination_location.id}",
+            "destination_appointment": f"{timezone.now()}",
+            "freight_charge_amount": 100.00,
+            "customer": f"{customer.id}",
+            "equipment_type": f"{equipment_type.id}",
+            "entered_by": f"{user.id}",
+            "bol_number": "newbol",
+        },
+        format="json",
+    )
+
+
+@pytest.fixture
+def additional_charge_api(api_client, user, organization, order, accessorial_charge):
+    """
+    Additional Charge Factory
+    """
+    yield api_client.post(
+        "/api/additional_charges/",
+        {
+            "organization": f"{organization.id}",
+            "order": f"{order.id}",
+            "charge": f"{accessorial_charge.code}",
+            "charge_amount": 123.00,
+            "unit": 2,
+            "entered_by": f"{user.id}",
+        },
+        format="json",
+    )
+
+
+@pytest.fixture
+def order_comment_api(order_api, user, comment_type, api_client):
+    """
+    Pytest Fixture for Order Comment
+    """
+    return api_client.post(
+        "/api/order_comments/",
+        {
+            "order": f"{order_api.data['id']}",
+            "comment_type": f"{comment_type.id}",
+            "comment": "IM HAPPY YOU'RE HERE",
+            "entered_by": f"{user.id}",
+        },
+        format="json",
+    )
+
+
+@pytest.fixture
+def order_documentation_api(api_client, order, document_classification, organization):
+    """
+    Pytest Fixture for Order Documentation
+    """
+
+    with open("order/tests/files/dummy.pdf", "rb") as test_file:
+        yield api_client.post(
+            "/api/order_documents/",
+            {
+                "organization": f"{organization}",
+                "order": f"{order.id}",
+                "document": test_file,
+                "document_class": f"{document_classification.id}",
+            },
+        )
+
+
+@pytest.fixture
+def order_type_api(api_client):
+    """
+    Order Type Factory
+    """
+    return api_client.post(
+        "/api/order_types/",
+        {"name": "Foo Bar", "description": "Foo Bar", "is_active": True},
+    )
+
+
+@pytest.fixture
+def reason_code_api(api_client):
+    """
+    Reason Code Factory
+    """
+    return api_client.post(
+        "/api/reason_codes/",
+        {
+            "code": "NEWT",
+            "description": "Foo Bar",
+            "is_active": True,
+            "code_type": "VOIDED",
+        },
+    )

@@ -77,26 +77,6 @@ class TestAdditionalChargeAPI:
     Test for Additional Charge API
     """
 
-    @pytest.fixture
-    def additional_charge_api(
-        self, api_client, user, organization, order, accessorial_charge
-    ):
-        """
-        Additional Charge Factory
-        """
-        yield api_client.post(
-            "/api/additional_charges/",
-            {
-                "organization": f"{organization.id}",
-                "order": f"{order.id}",
-                "charge": f"{accessorial_charge.code}",
-                "charge_amount": 123.00,
-                "unit": 2,
-                "entered_by": f"{user.id}",
-            },
-            format="json",
-        )
-
     def test_get(self, api_client):
         """
         Test get Additional Charge

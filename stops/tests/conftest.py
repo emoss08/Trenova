@@ -22,49 +22,10 @@ import shutil
 from pathlib import Path
 
 import pytest
-from rest_framework.test import APIClient
 
-from accounts.tests.factories import TokenFactory, UserFactory
-from organization.factories import OrganizationFactory
 from stops.tests.factories import StopFactory
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def token():
-    """
-    Token Fixture
-    """
-    yield TokenFactory()
-
-
-@pytest.fixture
-def organization():
-    """
-    Organization Fixture
-    """
-    yield OrganizationFactory()
-
-
-@pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-    yield UserFactory()
-
-
-@pytest.fixture
-def api_client(token):
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-    yield client
 
 
 @pytest.fixture

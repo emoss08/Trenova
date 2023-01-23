@@ -21,9 +21,6 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from accounting.tests.factories import RevenueCodeFactory
-from customer.factories import CustomerFactory
-from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order import models
 from order.tests.factories import OrderFactory
@@ -35,41 +32,6 @@ class TestOrder:
     """
     Class to test Order
     """
-
-    @pytest.fixture()
-    def origin_location(self):
-        """
-        Pytest Fixture for Origin Location
-        """
-        return LocationFactory()
-
-    @pytest.fixture()
-    def destination_location(self):
-        """
-        Pytest Fixture for Destination Location
-        """
-        return LocationFactory()
-
-    @pytest.fixture()
-    def revenue_code(self):
-        """
-        Pytest Fixture for Revenue Code
-        """
-        return RevenueCodeFactory()
-
-    @pytest.fixture()
-    def customer(self):
-        """
-        Pytest Fixture for Customer
-        """
-        return CustomerFactory()
-
-    @pytest.fixture()
-    def equipment_type(self):
-        """
-        Pytest Fixture for Equipment Type
-        """
-        return EquipmentTypeFactory()
 
     def test_list(self, order):
         """
@@ -140,55 +102,6 @@ class TestOrderAPI:
     """
     Test for Reason Code API
     """
-
-    @pytest.fixture
-    def origin_location(self):
-        """
-        Pytest Fixture for Origin Location
-        """
-        return LocationFactory()
-
-    @pytest.fixture
-    def destination_location(self):
-        """
-        Pytest Fixture for Destination Location
-        """
-        return LocationFactory()
-
-    @pytest.fixture
-    def order_api(
-        self,
-        api_client,
-        organization,
-        order_type,
-        revenue_code,
-        origin_location,
-        destination_location,
-        customer,
-        equipment_type,
-        user,
-    ):
-        """
-        Pytest Fixture for Reason Code
-        """
-        return api_client.post(
-            "/api/orders/",
-            {
-                "organization": f"{organization.id}",
-                "order_type": f"{order_type.id}",
-                "revenue_code": f"{revenue_code.id}",
-                "origin_location": f"{origin_location.id}",
-                "origin_appointment": f"{timezone.now()}",
-                "destination_location": f"{destination_location.id}",
-                "destination_appointment": f"{timezone.now()}",
-                "freight_charge_amount": 100.00,
-                "customer": f"{customer.id}",
-                "equipment_type": f"{equipment_type.id}",
-                "entered_by": f"{user.id}",
-                "bol_number": "newbol",
-            },
-            format="json",
-        )
 
     def test_get(self, api_client):
         """
