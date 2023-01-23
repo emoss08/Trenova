@@ -151,7 +151,7 @@ def test_update_equipment_type(api_client):
         "description": "Test Equipment Type Description Updated",
     }
     response = api_client.put(
-        f"/api/equipment_types/test_equipment_type/", put_data, format="json"
+        "/api/equipment_types/test_equipment_type/", put_data, format="json"
     )
     assert response.status_code == 200
     assert response.data["id"] == "test_updated"
@@ -188,7 +188,7 @@ def test_update_equipment_details(api_client):
         },
     }
     response = api_client.put(
-        f"/api/equipment_types/test_equipment_type/", put_data, format="json"
+        "/api/equipment_types/test_equipment_type/", put_data, format="json"
     )
 
     # --- ASSERTION ---

@@ -81,10 +81,9 @@ class EquipmentTypeSerializer(GenericSerializer):
         )
 
         if detail_data:
-            details = models.EquipmentTypeDetail.objects.get(
+            if details := models.EquipmentTypeDetail.objects.get(
                 organization=organization, equipment_type=equipment_type
-            )
-            if details:  # type: ignore
+            ):
                 details.delete()
 
             models.EquipmentTypeDetail.objects.create(

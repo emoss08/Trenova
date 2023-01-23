@@ -469,15 +469,18 @@ class Equipment(GenericModel):
                 }
             )
 
-        if self.primary_worker and self.secondary_worker:
-            if self.primary_worker == self.secondary_worker:
-                raise ValidationError(
-                    {
-                        "primary_worker": _(
-                            "Primary worker and secondary worker cannot be the same. Please try again."
-                        )
-                    }
-                )
+        if (
+            self.primary_worker
+            and self.secondary_worker
+            and self.primary_worker == self.secondary_worker
+        ):
+            raise ValidationError(
+                {
+                    "primary_worker": _(
+                        "Primary worker and secondary worker cannot be the same. Please try again."
+                    )
+                }
+            )
 
     def get_absolute_url(self) -> str:
         """Equipment absolute URL

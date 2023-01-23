@@ -52,10 +52,7 @@ class WorkerFactory(factory.django.DjangoModelFactory):
         if not create:
             return
 
-        if extracted:
-            self.worker_contact = extracted
-        else:
-            self.worker_contact = WorkerContactFactory(worker=self)
+        self.worker_contact = extracted or WorkerContactFactory(worker=self)
 
     @factory.post_generation
     def worker_comment(self, create, extracted, **kwargs):
@@ -65,10 +62,7 @@ class WorkerFactory(factory.django.DjangoModelFactory):
         if not create:
             return
 
-        if extracted:
-            self.worker_comment = extracted
-        else:
-            self.worker_comment = WorkerCommentFactory(worker=self)
+        self.worker_comment = extracted or WorkerCommentFactory(worker=self)
 
 
 class WorkerContactFactory(factory.django.DjangoModelFactory):

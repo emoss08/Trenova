@@ -207,7 +207,7 @@ class TestOrderDocumentationApi:
         """
 
         base_dir = Path(__file__).resolve().parent.parent
-        media_dir = os.path.join(base_dir, "media/" + file_path)
+        media_dir = os.path.join(base_dir, f"media/{file_path}")
 
         if os.path.exists(media_dir):
             shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
@@ -229,7 +229,7 @@ class TestOrderDocumentationApi:
         """
 
         base_dir = Path(__file__).resolve().parent.parent
-        file = os.path.join(base_dir, "media/" + file_path)
+        file = os.path.join(base_dir, f"media/{file_path}")
 
         if os.path.exists(file):
             os.remove(file)

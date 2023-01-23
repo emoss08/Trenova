@@ -52,7 +52,7 @@ class TestOrderControl:
         order_control.save()
 
         assert order_control is not None
-        assert order_control.auto_rate_orders is False
-        assert order_control.calculate_distance is True
-        assert order_control.enforce_customer is True
-        assert order_control.enforce_rev_code is True
+        assert not order_control.auto_rate_orders
+        assert order_control.calculate_distance
+        assert order_control.enforce_customer
+        assert order_control.enforce_rev_code

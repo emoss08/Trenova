@@ -69,11 +69,10 @@ class GenericSerializer(serializers.ModelSerializer):
 
         if self.context["request"].user.is_authenticated:
             return self.context["request"].user.organization
-        else:
-            token = (
-                self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
-            )
-            return Token.objects.get(key=token).user.organization
+        token = (
+            self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+        )
+        return Token.objects.get(key=token).user.organization
 
     def create(self, validated_data: Any) -> _MT:  # type: ignore
         """Create the object

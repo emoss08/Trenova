@@ -39,4 +39,4 @@ class CustomerGenerationService:
         code = instance.name[:3].upper()
         new_code = f"{code}{Customer.objects.count() + 1:04d}"
 
-        return code if not Customer.objects.filter(code=code).exists() else new_code
+        return new_code if Customer.objects.filter(code=code).exists() else code

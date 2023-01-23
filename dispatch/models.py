@@ -151,11 +151,9 @@ class DispatchControl(GenericModel):
             ValidationError: If the dispatch control is not valid.
         """
         super().clean()
-        if self.distance_method == self.DistanceMethodChoices.GOOGLE and not any(
-            [
-                integration.integration_type == IntegrationChoices.GOOGLE_MAPS
-                for integration in self.organization.integrations.all()
-            ]
+        if self.distance_method == self.DistanceMethodChoices.GOOGLE and all(
+            integration.integration_type != IntegrationChoices.GOOGLE_MAPS
+            for integration in self.organization.integrations.all()
         ):
             raise ValidationError(
                 ValidationError(

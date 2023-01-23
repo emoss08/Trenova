@@ -99,13 +99,15 @@ class ImageSizeValidator:
         Returns:
             bool: True if validators are equal, False otherwise.
         """
-        if not isinstance(other, ImageSizeValidator):
-            return NotImplemented
         return (
-            self.width == other.width
-            and self.height == other.height
-            and self.less_than == other.less_than
-            and self.greater_than == other.greater_than
+            (
+                self.width == other.width
+                and self.height == other.height
+                and self.less_than == other.less_than
+                and self.greater_than == other.greater_than
+            )
+            if isinstance(other, ImageSizeValidator)
+            else NotImplemented
         )
 
     def __ne__(self, other: object) -> bool:

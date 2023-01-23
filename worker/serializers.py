@@ -167,7 +167,7 @@ class WorkerSerializer(GenericSerializer):
 
         return worker
 
-    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:    # type: ignore
         """Update the worker
 
         Args:
@@ -189,8 +189,7 @@ class WorkerSerializer(GenericSerializer):
         # Update the worker comments.
         if comments_data:
             for comment_data in comments_data:
-                comment_id = comment_data.get("id", None)
-                if comment_id:
+                if comment_id := comment_data.get("id", None):
                     try:
                         worker_comment = models.WorkerComment.objects.get(
                             id=comment_id, worker=instance
@@ -215,9 +214,7 @@ class WorkerSerializer(GenericSerializer):
         # Update the worker contacts.
         if contacts_data:
             for contact_data in contacts_data:
-                contact_id = contact_data.get("id", None)
-
-                if contact_id:
+                if contact_id := contact_data.get("id", None):
                     try:
                         worker_contact = models.WorkerContact.objects.get(
                             id=contact_id, worker=instance

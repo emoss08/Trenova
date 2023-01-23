@@ -31,8 +31,7 @@ def token():
     """
     Token Fixture
     """
-    token = TokenFactory()
-    yield token
+    yield TokenFactory()
 
 
 @pytest.fixture
@@ -40,8 +39,7 @@ def organization():
     """
     Organization Fixture
     """
-    organization = OrganizationFactory()
-    yield organization
+    yield OrganizationFactory()
 
 
 @pytest.fixture
@@ -52,7 +50,7 @@ def api_client(token):
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
     yield client
 
 
@@ -61,8 +59,7 @@ def job_title():
     """
     Job title fixture
     """
-    job_title = JobTitleFactory()
-    yield job_title
+    yield JobTitleFactory()
 
 
 @pytest.fixture
@@ -70,7 +67,7 @@ def user(api_client, organization):
     """
     User Fixture
     """
-    user = api_client.post(
+    yield api_client.post(
         "/api/users/",
         {
             "organization": f"{organization}",
@@ -89,4 +86,3 @@ def user(api_client, organization):
         },
         format="json",
     )
-    yield user
