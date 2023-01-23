@@ -25,6 +25,7 @@ import pytest
 
 pytestmark = pytest.mark.django_db
 
+
 def remove_media_directory(file_path: str) -> None:
     """Remove Media Directory after test tear down.
 

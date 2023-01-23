@@ -40,6 +40,7 @@ from order.tests.factories import (
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture
 def order_type():
     """
@@ -143,6 +144,7 @@ def origin_location():
     """
     return LocationFactory()
 
+
 @pytest.fixture
 def destination_location():
     """
@@ -153,15 +155,15 @@ def destination_location():
 
 @pytest.fixture
 def order_api(
-        api_client,
-        organization,
-        order_type,
-        revenue_code,
-        origin_location,
-        destination_location,
-        customer,
-        equipment_type,
-        user,
+    api_client,
+    organization,
+    order_type,
+    revenue_code,
+    origin_location,
+    destination_location,
+    customer,
+    equipment_type,
+    user,
 ):
     """
     Pytest Fixture for Reason Code
@@ -185,10 +187,9 @@ def order_api(
         format="json",
     )
 
+
 @pytest.fixture
-def additional_charge_api(
-        api_client, user, organization, order, accessorial_charge
-):
+def additional_charge_api(api_client, user, organization, order, accessorial_charge):
     """
     Additional Charge Factory
     """
@@ -204,6 +205,7 @@ def additional_charge_api(
         },
         format="json",
     )
+
 
 @pytest.fixture
 def order_comment_api(order_api, user, comment_type, api_client):
@@ -223,9 +225,7 @@ def order_comment_api(order_api, user, comment_type, api_client):
 
 
 @pytest.fixture
-def order_documentation_api(
-        api_client, order, document_classification, organization
-):
+def order_documentation_api(api_client, order, document_classification, organization):
     """
     Pytest Fixture for Order Documentation
     """
@@ -240,6 +240,7 @@ def order_documentation_api(
                 "document_class": f"{document_classification.id}",
             },
         )
+
 
 @pytest.fixture
 def order_type_api(api_client):

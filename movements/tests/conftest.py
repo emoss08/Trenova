@@ -26,6 +26,7 @@ from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture
 def movement():
     """

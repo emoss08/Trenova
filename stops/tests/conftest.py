@@ -27,6 +27,7 @@ from stops.tests.factories import StopFactory
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture
 def stop():
     """

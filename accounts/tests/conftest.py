@@ -21,6 +21,7 @@ import pytest
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture
 def user(api_client, organization):
     """

@@ -71,11 +71,15 @@ class TestOrderCommentAPI:
     Test for Reason Code API
     """
 
-    def test_get_by_id(self, order_comment_api, order_api, comment_type, user, api_client):
+    def test_get_by_id(
+        self, order_comment_api, order_api, comment_type, user, api_client
+    ):
         """
         Test get Order Comment by ID
         """
-        response = api_client.get(f"/api/order_comments/{order_comment_api.data['id']}/")
+        response = api_client.get(
+            f"/api/order_comments/{order_comment_api.data['id']}/"
+        )
         assert response.status_code == 200
         assert response.data is not None
         assert (
@@ -129,7 +133,9 @@ class TestOrderCommentAPI:
         """
         Test delete Order Comment
         """
-        response = api_client.delete(f"/api/order_comments/{order_comment_api.data['id']}/")
+        response = api_client.delete(
+            f"/api/order_comments/{order_comment_api.data['id']}/"
+        )
 
         assert response.status_code == 204
         assert response.data is None

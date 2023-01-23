@@ -72,7 +72,6 @@ class TestOrderTypeAPI:
     Test for Order Type API
     """
 
-
     def test_get(self, api_client):
         """
         Test get Order Type
