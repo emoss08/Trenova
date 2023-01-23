@@ -209,11 +209,12 @@ class Stop(GenericModel):
 
         self.full_clean()
 
-        if self.arrival_time and not self.departure_time:
-            self.status = StatusChoices.IN_PROGRESS
-        elif self.arrival_time and self.departure_time:
-            self.status = StatusChoices.COMPLETED
-
+        if self.arrival_time:
+            self.status = (
+                StatusChoices.COMPLETED
+                if self.departure_time
+                else StatusChoices.IN_PROGRESS
+            )
         # If the location code is entered and not the address_line then autofill address_line
         # with the location combination (address_line_1, address_line_2, city, state & zip_code)
         if self.location and not self.address_line:
