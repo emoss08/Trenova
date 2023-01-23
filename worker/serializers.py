@@ -167,7 +167,7 @@ class WorkerSerializer(GenericSerializer):
 
         return worker
 
-    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:    # type: ignore
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
         """Update the worker
 
         Args:
