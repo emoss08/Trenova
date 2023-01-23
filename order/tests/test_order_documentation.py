@@ -28,11 +28,54 @@ from order import models
 
 pytestmark = pytest.mark.django_db
 
+def remove_media_directory(file_path: str) -> None:
+    """Remove Media Directory after test tear down.
+
+    Primary usage is when tests are performing file uploads.
+    This method deletes the media directory after the test.
+    This is to prevent the media directory from filling up
+    with test files.
+
+    Args:
+        file_path (str): path to directory in media folder.
+
+    Returns:
+        None
+    """
+
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    media_dir = os.path.join(base_dir, f"media/{file_path}")
+
+    if os.path.exists(media_dir):
+        shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
+
+def remove_file(file_path: str) -> None:
+    """Remove File after test tear down.
+
+    Primary usage is when tests are performing file uploads.
+    This method deletes the file after the test.
+    This is to prevent the media directory from filling up
+    with test files.
+
+    Args:
+        file_path (str): path to file in media folder.
+
+    Returns:
+        None
+    """
+
+    base_dir = Path(__file__).resolve().parent.parent.parent
+    file = os.path.join(base_dir, f"media/{file_path}")
+
+    if os.path.exists(file):
+        os.remove(file)
+
 
 class TestOrderDocumentation:
     """
     Class to test Order Documentation
     """
+
 
     def test_list(self, order_document):
         """
@@ -189,53 +232,5 @@ class TestOrderDocumentationApi:
 
         if os.path.exists("testfile.txt"):
             return os.remove("testfile.txt")
-
-    @staticmethod
-    def remove_media_directory(file_path: str) -> None:
-        """Remove Media Directory after test tear down.
-
-        Primary usage is when tests are performing file uploads.
-        This method deletes the media directory after the test.
-        This is to prevent the media directory from filling up
-        with test files.
-
-        Args:
-            file_path (str): path to directory in media folder.
-
-        Returns:
-            None
-        """
-
-        base_dir = Path(__file__).resolve().parent.parent
-        media_dir = os.path.join(base_dir, "media/" + file_path)
-
-        if os.path.exists(media_dir):
-            shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
-
-    @staticmethod
-    def remove_file(file_path: str) -> None:
-        """Remove File after test tear down.
-
-        Primary usage is when tests are performing file uploads.
-        This method deletes the file after the test.
-        This is to prevent the media directory from filling up
-        with test files.
-
-        Args:
-            file_path (str): path to file in media folder.
-
-        Returns:
-            None
-        """
-
-        base_dir = Path(__file__).resolve().parent.parent
-        file = os.path.join(base_dir, "media/" + file_path)
-
-        if os.path.exists(file):
-            os.remove(file)
-
-    def test_tear_down(self):
-        """
-        Tear down tests
-        """
-        self.remove_media_directory("order_documentation")
+        
+        remove_media_directory("order_documentation")
