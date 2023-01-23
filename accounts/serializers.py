@@ -174,7 +174,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:    # type: ignore
+    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
