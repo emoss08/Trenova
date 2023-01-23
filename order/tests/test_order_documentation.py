@@ -130,25 +130,6 @@ class TestOrderDocumentationApi:
     Order Documentation API
     """
 
-    @pytest.fixture
-    def order_documentation_api(
-        self, api_client, order, document_classification, organization
-    ):
-        """
-        Pytest Fixture for Order Documentation
-        """
-
-        with open("order/tests/files/dummy.pdf", "rb") as test_file:
-            yield api_client.post(
-                "/api/order_documents/",
-                {
-                    "organization": f"{organization}",
-                    "order": f"{order.id}",
-                    "document": test_file,
-                    "document_class": f"{document_classification.id}",
-                },
-            )
-
     def test_get(self, api_client):
         """
         Test get Order Documentation

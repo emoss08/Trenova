@@ -73,21 +73,6 @@ class TestReasonCodeAPI:
     Test for Reason Code API
     """
 
-    @pytest.fixture
-    def reason_code(self, api_client):
-        """
-        Reason Code Factory
-        """
-        return api_client.post(
-            "/api/reason_codes/",
-            {
-                "code": "NEWT",
-                "description": "Foo Bar",
-                "is_active": True,
-                "code_type": "VOIDED",
-            },
-        )
-
     def test_get(self, api_client):
         """
         Test get Reason Code
@@ -95,11 +80,11 @@ class TestReasonCodeAPI:
         response = api_client.get("/api/reason_codes/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, reason_code):
+    def test_get_by_id(self, api_client, reason_code_api):
         """
         Test get Reason Code by id
         """
-        response = api_client.get(f"/api/reason_codes/{reason_code.data['id']}/")
+        response = api_client.get(f"/api/reason_codes/{reason_code_api.data['id']}/")
 
         assert response.status_code == 200
         assert response.data["code"] == "NEWT"
@@ -107,12 +92,12 @@ class TestReasonCodeAPI:
         assert response.data["is_active"] is True
         assert response.data["code_type"] == "VOIDED"
 
-    def test_put(self, api_client, reason_code):
+    def test_put(self, api_client, reason_code_api):
         """
         Test put Reason Code
         """
         response = api_client.put(
-            f"/api/reason_codes/{reason_code.data['id']}/",
+            f"/api/reason_codes/{reason_code_api.data['id']}/",
             {
                 "code": "FOBO",
                 "description": "New Description",
@@ -126,11 +111,11 @@ class TestReasonCodeAPI:
         assert response.data["description"] == "New Description"
         assert response.data["is_active"] is False
 
-    def test_delete(self, api_client, reason_code):
+    def test_delete(self, api_client, reason_code_api):
         """
         Test Delete Reason Code
         """
-        response = api_client.delete(f"/api/reason_codes/{reason_code.data['id']}/")
+        response = api_client.delete(f"/api/reason_codes/{reason_code_api.data['id']}/")
 
         assert response.status_code == 204
         assert response.data is None
