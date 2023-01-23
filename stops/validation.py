@@ -86,19 +86,23 @@ class StopValidation:
                 equipment assigned.
         """
 
-        if not self.stop.movement.primary_worker and not self.stop.movement.equipment:
-            if self.stop.status in [
+        if (
+            not self.stop.movement.primary_worker
+            and not self.stop.movement.equipment
+            and self.stop.status
+            in [
                 StatusChoices.IN_PROGRESS,
                 StatusChoices.COMPLETED,
-            ]:
-                raise ValidationError(
-                    {
-                        "status": _(
-                            "Cannot change status to in progress or completed if there is no equipment or primary worker. Please try again."
-                        )
-                    },
-                    code="invalid",
-                )
+            ]
+        ):
+            raise ValidationError(
+                {
+                    "status": _(
+                        "Cannot change status to in progress or completed if there is no equipment or primary worker. Please try again."
+                    )
+                },
+                code="invalid",
+            )
 
     def validate_reserve_status_change(self) -> None:
         """Validate the status change for previous stop
@@ -160,7 +164,6 @@ class StopValidation:
 
         if (
             self.stop.departure_time
-            and self.stop.arrival_time
             and self.stop.departure_time < self.stop.arrival_time
         ):
             raise ValidationError(
