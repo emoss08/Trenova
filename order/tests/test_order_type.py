@@ -72,16 +72,6 @@ class TestOrderTypeAPI:
     Test for Order Type API
     """
 
-    @pytest.fixture
-    def order_type(self, api_client):
-        """
-        Order Type Factory
-        """
-        return api_client.post(
-            "/api/order_types/",
-            {"name": "Foo Bar", "description": "Foo Bar", "is_active": True},
-        )
-
     def test_get(self, api_client):
         """
         Test get Order Type
@@ -89,23 +79,23 @@ class TestOrderTypeAPI:
         response = api_client.get("/api/order_types/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, order_type):
+    def test_get_by_id(self, api_client, order_type_api):
         """
         Test get Order Type by id
         """
-        response = api_client.get(f"/api/order_types/{order_type.data['id']}/")
+        response = api_client.get(f"/api/order_types/{order_type_api.data['id']}/")
 
         assert response.status_code == 200
         assert response.data["name"] == "Foo Bar"
         assert response.data["description"] == "Foo Bar"
         assert response.data["is_active"] is True
 
-    def test_put(self, api_client, order_type):
+    def test_put(self, api_client, order_type_api):
         """
         Test put Order Type
         """
         response = api_client.put(
-            f"/api/order_types/{order_type.data['id']}/",
+            f"/api/order_types/{order_type_api.data['id']}/",
             {"name": "New Name", "description": "New Description", "is_active": False},
         )
 
@@ -114,11 +104,11 @@ class TestOrderTypeAPI:
         assert response.data["description"] == "New Description"
         assert response.data["is_active"] is False
 
-    def test_delete(self, api_client, order_type):
+    def test_delete(self, api_client, order_type_api):
         """
         Test Delete order type
         """
-        response = api_client.delete(f"/api/order_types/{order_type.data['id']}/")
+        response = api_client.delete(f"/api/order_types/{order_type_api.data['id']}/")
 
         assert response.status_code == 204
         assert response.data is None

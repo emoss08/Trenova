@@ -36,7 +36,7 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     is_active = True
-    name = factory.Faker("job")
+    name = factory.Faker("pystr", max_chars=100)
     description = factory.Faker("text")
 
 

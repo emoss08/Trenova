@@ -76,7 +76,10 @@ class WorkerContactFactory(factory.django.DjangoModelFactory):
         """
 
         model = "worker.WorkerContact"
-        django_get_or_create = ("organization",)
+        django_get_or_create = (
+            "organization",
+            "worker",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     worker = factory.SubFactory("worker.factories.WorkerFactory")
@@ -95,7 +98,12 @@ class WorkerCommentFactory(factory.django.DjangoModelFactory):
         """
 
         model = "worker.WorkerComment"
-        django_get_or_create = ("organization",)
+        django_get_or_create = (
+            "organization",
+            "worker",
+            "comment_type",
+            "entered_by",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     worker = factory.SubFactory("worker.factories.WorkerFactory")
