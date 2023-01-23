@@ -1,7 +1,7 @@
 default:
   close:
     comment: '⚠️ This has been marked to be closed in $DELAY.'
-    delay: '7 days'
+    delay: 15s
 
 labels:
   duplicate:
