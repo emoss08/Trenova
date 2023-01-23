@@ -22,49 +22,8 @@ import shutil
 from pathlib import Path
 
 import pytest
-from rest_framework.test import APIClient
-
-from accounts.tests.factories import TokenFactory, UserFactory
-from organization.factories import OrganizationFactory
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def token():
-    """
-    Token Fixture
-    """
-    yield TokenFactory()
-
-
-@pytest.fixture
-def organization():
-    """
-    Organization Fixture
-    """
-    yield OrganizationFactory()
-
-
-@pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-    yield UserFactory()
-
-
-@pytest.fixture
-def api_client(token):
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-    return client
-
 
 def remove_media_directory(file_path: str) -> None:
     """Remove Media Directory after test tear down.
@@ -82,7 +41,7 @@ def remove_media_directory(file_path: str) -> None:
     """
 
     base_dir = Path(__file__).resolve().parent.parent
-    media_dir = os.path.join(base_dir, "media/" + file_path)
+    media_dir = os.path.join(base_dir, f"media/{file_path}")
 
     if os.path.exists(media_dir):
         shutil.rmtree(media_dir, ignore_errors=True, onerror=None)

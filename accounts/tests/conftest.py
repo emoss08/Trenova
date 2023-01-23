@@ -18,49 +18,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from rest_framework.test import APIClient
-
-from accounts.tests.factories import JobTitleFactory, TokenFactory
-from organization.factories import OrganizationFactory
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def token():
-    """
-    Token Fixture
-    """
-    yield TokenFactory()
-
-
-@pytest.fixture
-def organization():
-    """
-    Organization Fixture
-    """
-    yield OrganizationFactory()
-
-
-@pytest.fixture
-def api_client(token):
-    """API client Fixture
-
-    Returns:
-        APIClient: Authenticated Api object
-    """
-    client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-    yield client
-
-
-@pytest.fixture
-def job_title():
-    """
-    Job title fixture
-    """
-    yield JobTitleFactory()
-
 
 @pytest.fixture
 def user(api_client, organization):
