@@ -1,0 +1,22 @@
+default:
+  close:
+    comment: '⚠️ This has been marked to be closed in $DELAY.'
+    delay: '7 days'
+
+labels:
+  duplicate:
+    action: close
+    delay: 15s
+    comment: "Duplicate issue created! Closing in $DELAY . . ."
+  wontfix:
+    action: close
+    delay: 15s
+    comment: "Will not be fixed! Closing in $DELAY . . ."
+  invalid: close
+  'merge when passing': merge
+  'squash when passing': merge
+  'rebase when passing': merge
+
+merges:
+  - action: delete_branch
+  - action: tag
