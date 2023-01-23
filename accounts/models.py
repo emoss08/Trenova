@@ -511,6 +511,4 @@ class Token(models.Model):
         Checks if the token is expired.
         """
 
-        if self.expires is None or timezone.now() < self.expires:
-            return False
-        return True
+        return self.expires is not None and timezone.now() >= self.expires

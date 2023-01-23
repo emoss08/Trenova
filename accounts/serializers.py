@@ -174,7 +174,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
+    def update(self, instance: models.User, validated_data: Any) -> models.User:    # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
@@ -190,9 +190,7 @@ class UserSerializer(GenericSerializer):
             None
         """
 
-        profile_data = validated_data.pop("profile", None)
-
-        if profile_data:
+        if profile_data := validated_data.pop("profile", None):
             instance.profile.update_profile(**profile_data)
 
         instance.update_user(**validated_data)

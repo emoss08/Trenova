@@ -40,7 +40,4 @@ class WorkerGenerationService:
         new_code = f"{code}{Worker.objects.count() + 1:04d}"
 
         # Check if the code already exists in the database
-        if Worker.objects.filter(code=code).exists():
-            return new_code
-        else:
-            return code
+        return new_code if Worker.objects.filter(code=code).exists() else code

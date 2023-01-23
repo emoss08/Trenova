@@ -72,11 +72,11 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         try:
             token = auth[1].decode()
-        except UnicodeError:
+        except UnicodeError as e:
             msg = _(
                 "Invalid token header. Token string should not contain invalid characters."
             )
-            raise exceptions.AuthenticationFailed(msg)  # type: ignore
+            raise exceptions.AuthenticationFailed(msg) from e  # type: ignore
 
         return self.authenticate_credentials(token)
 
@@ -106,8 +106,8 @@ class TokenAuthentication(authentication.TokenAuthentication):
                 )
                 .get(key=key)
             )
-        except self.model.DoesNotExist:
-            raise exceptions.AuthenticationFailed("Invalid token.")
+        except self.model.DoesNotExist as e:
+            raise exceptions.AuthenticationFailed("Invalid token.") from e
 
         if (
             not token.last_used

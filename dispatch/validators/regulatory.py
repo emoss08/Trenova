@@ -39,7 +39,6 @@ def validate_worker_regulatory_information(value) -> None:
     dispatch_control: Optional[DispatchControl] = DispatchControl.objects.filter(
         organization=value.worker.organization
     ).first()
-    errors = {}
     fields = {
         "license_number": _(
             "Organization has regulatory check enabled. Please enter a license number."
@@ -66,8 +65,9 @@ def validate_worker_regulatory_information(value) -> None:
         ),
     }
     if dispatch_control and dispatch_control.regulatory_check:
-        for field, error in fields.items():
-            if not getattr(value, field):
-                errors[field] = error
-        if errors:
+        if errors := {
+            field: error
+            for field, error in fields.items()
+            if not getattr(value, field)
+        }:
             raise ValidationError(errors)
