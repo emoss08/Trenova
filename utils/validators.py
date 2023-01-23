@@ -38,8 +38,8 @@ class ImageSizeValidator:
         self,
         width: int,
         height: int,
-        less_than: Optional[bool],
-        greater_than: Optional[bool],
+        less_than: bool | None,
+        greater_than: bool | None,
     ) -> None:
         self.width = width
         self.height = height

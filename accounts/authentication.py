@@ -46,9 +46,9 @@ class TokenAuthentication(authentication.TokenAuthentication):
     Authentication backend for the token authentication system.
     """
 
-    model: Type[models.Token] = models.Token
+    model: type[models.Token] = models.Token
 
-    def authenticate(self, request: Request) -> Tuple[models.User, models.Token] | None:
+    def authenticate(self, request: Request) -> tuple[models.User, models.Token] | None:
         """
 
         Args:
@@ -80,7 +80,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         return self.authenticate_credentials(token)
 
-    def authenticate_credentials(self, key: str) -> Tuple[models.User, models.Token]:
+    def authenticate_credentials(self, key: str) -> tuple[models.User, models.Token]:
         """Authenticate the token
 
         Authenticate the given credentials. If authentication is successful,

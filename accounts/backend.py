@@ -23,7 +23,7 @@ from django.contrib.auth.backends import ModelBackend
 
 from .models import User
 
-UserModel: Type[User] = User
+UserModel: type[User] = User
 
 
 class UserBackend(ModelBackend):

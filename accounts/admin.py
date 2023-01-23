@@ -120,7 +120,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Optional[Any] = ...,
+        obj: Any | None = ...,
         change: bool = True,
         **kwargs: Any,
     ) -> type[ModelForm[models.User]]:

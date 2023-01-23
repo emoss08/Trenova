@@ -48,7 +48,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Optional[GeneralLedgerAccount] = None,
+        obj: GeneralLedgerAccount | None = None,
         change: bool = False,
         **kwargs: Any,
     ) -> type[ModelForm[GeneralLedgerAccount]]:
