@@ -170,8 +170,8 @@ class TokenVerifyView(APIView):
 
         try:
             token = models.Token.objects.get(key=token)
-        except models.Token.DoesNotExist:
-            raise InvalidTokenException("Token is invalid")
+        except models.Token.DoesNotExist as e:
+            raise InvalidTokenException("Token is invalid") from e
 
         return Response(
             {

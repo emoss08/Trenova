@@ -68,10 +68,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         if not create:
             return
 
-        if extracted:
-            self.profile = extracted
-        else:
-            self.profile = ProfileFactory(user=self)
+        self.profile = extracted or ProfileFactory(user=self)
 
 
 class ProfileFactory(factory.django.DjangoModelFactory):

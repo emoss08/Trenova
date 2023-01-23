@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils.deconstruct import deconstructible
@@ -38,8 +38,8 @@ class ImageSizeValidator:
         self,
         width: int,
         height: int,
-        less_than: Optional[bool],
-        greater_than: Optional[bool],
+        less_than: bool | None,
+        greater_than: bool | None,
     ) -> None:
         self.width = width
         self.height = height
@@ -99,13 +99,15 @@ class ImageSizeValidator:
         Returns:
             bool: True if validators are equal, False otherwise.
         """
-        if not isinstance(other, ImageSizeValidator):
-            return NotImplemented
         return (
-            self.width == other.width
-            and self.height == other.height
-            and self.less_than == other.less_than
-            and self.greater_than == other.greater_than
+            (  # type: ignore
+                self.width == other.width
+                and self.height == other.height
+                and self.less_than == other.less_than
+                and self.greater_than == other.greater_than
+            )
+            if isinstance(other, ImageSizeValidator)
+            else NotImplemented
         )
 
     def __ne__(self, other: object) -> bool:

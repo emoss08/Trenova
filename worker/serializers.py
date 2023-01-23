@@ -189,13 +189,12 @@ class WorkerSerializer(GenericSerializer):
         # Update the worker comments.
         if comments_data:
             for comment_data in comments_data:
-                comment_id = comment_data.get("id", None)
-                if comment_id:
+                if comment_id := comment_data.get("id", None):
                     try:
                         worker_comment = models.WorkerComment.objects.get(
                             id=comment_id, worker=instance
                         )
-                    except models.WorkerComment.DoesNotExist:
+                    except models.WorkerComment.DoesNotExist as e:
                         raise serializers.ValidationError(
                             {
                                 "comments": (
@@ -205,7 +204,7 @@ class WorkerSerializer(GenericSerializer):
                                     )
                                 )
                             }
-                        )
+                        ) from e
 
                     worker_comment.update_worker_comment(**comment_data)
                 else:
@@ -215,14 +214,12 @@ class WorkerSerializer(GenericSerializer):
         # Update the worker contacts.
         if contacts_data:
             for contact_data in contacts_data:
-                contact_id = contact_data.get("id", None)
-
-                if contact_id:
+                if contact_id := contact_data.get("id", None):
                     try:
                         worker_contact = models.WorkerContact.objects.get(
                             id=contact_id, worker=instance
                         )
-                    except models.WorkerContact.DoesNotExist:
+                    except models.WorkerContact.DoesNotExist as exc:
                         raise serializers.ValidationError(
                             {
                                 "comments": (
@@ -232,7 +229,7 @@ class WorkerSerializer(GenericSerializer):
                                     )
                                 )
                             }
-                        )
+                        ) from exc
 
                     worker_contact.update_worker_contact(**contact_data)
                 else:

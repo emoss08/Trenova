@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 from django.contrib import admin
 from django.forms import ModelForm
@@ -48,7 +48,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Optional[GeneralLedgerAccount] = None,
+        obj: GeneralLedgerAccount | None = None,
         change: bool = False,
         **kwargs: Any,
     ) -> type[ModelForm[GeneralLedgerAccount]]:

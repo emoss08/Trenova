@@ -35,8 +35,7 @@ def token():
     """
     Token Fixture
     """
-    token = TokenFactory()
-    yield token
+    yield TokenFactory()
 
 
 @pytest.fixture
@@ -44,8 +43,7 @@ def organization():
     """
     Organization Fixture
     """
-    organization = OrganizationFactory()
-    yield organization
+    yield OrganizationFactory()
 
 
 @pytest.fixture
@@ -53,8 +51,7 @@ def user():
     """
     User Fixture
     """
-    user = UserFactory()
-    yield user
+    yield UserFactory()
 
 
 @pytest.fixture
@@ -65,7 +62,7 @@ def api_client(token):
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
     return client
 
 
@@ -107,7 +104,7 @@ def remove_file(file_path: str) -> None:
     """
 
     base_dir = Path(__file__).resolve().parent.parent
-    file = os.path.join(base_dir, "media/" + file_path)
+    file = os.path.join(base_dir, f"media/{file_path}")
 
     if os.path.exists(file):
         os.remove(file)
