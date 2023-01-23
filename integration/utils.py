@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Dict, Type
+from typing import Any
 
 from django.db.models.base import ModelBase
 

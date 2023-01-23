@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Tuple, Type
 
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _

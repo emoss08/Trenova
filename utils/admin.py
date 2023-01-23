@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, TypeVar
 from collections.abc import Sequence
+from typing import Any, TypeVar
 
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
