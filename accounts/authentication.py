@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Tuple, Type
 
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -46,9 +45,9 @@ class TokenAuthentication(authentication.TokenAuthentication):
     Authentication backend for the token authentication system.
     """
 
-    model: Type[models.Token] = models.Token
+    model: type[models.Token] = models.Token
 
-    def authenticate(self, request: Request) -> Tuple[models.User, models.Token] | None:
+    def authenticate(self, request: Request) -> tuple[models.User, models.Token] | None:
         """
 
         Args:
@@ -72,15 +71,15 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         try:
             token = auth[1].decode()
-        except UnicodeError:
+        except UnicodeError as e:
             msg = _(
                 "Invalid token header. Token string should not contain invalid characters."
             )
-            raise exceptions.AuthenticationFailed(msg)  # type: ignore
+            raise exceptions.AuthenticationFailed(msg) from e  # type: ignore
 
         return self.authenticate_credentials(token)
 
-    def authenticate_credentials(self, key: str) -> Tuple[models.User, models.Token]:
+    def authenticate_credentials(self, key: str) -> tuple[models.User, models.Token]:
         """Authenticate the token
 
         Authenticate the given credentials. If authentication is successful,
@@ -106,8 +105,8 @@ class TokenAuthentication(authentication.TokenAuthentication):
                 )
                 .get(key=key)
             )
-        except self.model.DoesNotExist:
-            raise exceptions.AuthenticationFailed("Invalid token.")
+        except self.model.DoesNotExist as e:
+            raise exceptions.AuthenticationFailed("Invalid token.") from e
 
         if (
             not token.last_used

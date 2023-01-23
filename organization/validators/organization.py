@@ -38,11 +38,11 @@ def validate_org_timezone(value: str) -> None:
 
     try:
         pytz.timezone(value)
-    except pytz.exceptions.UnknownTimeZoneError:
+    except pytz.exceptions.UnknownTimeZoneError as e:
         raise ValidationError(
             _("%(value)s is not a valid timezone"),
             params={"value": value},
-        )
+        ) from e
 
 
 def validate_org_time_format(value: str) -> None:

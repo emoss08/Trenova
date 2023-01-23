@@ -36,8 +36,7 @@ def token():
     """
     Token Fixture
     """
-    token = TokenFactory()
-    yield token
+    yield TokenFactory()
 
 
 @pytest.fixture
@@ -45,8 +44,7 @@ def organization():
     """
     Organization Fixture
     """
-    organization = OrganizationFactory()
-    yield organization
+    yield OrganizationFactory()
 
 
 @pytest.fixture
@@ -54,8 +52,7 @@ def user():
     """
     User Fixture
     """
-    user = UserFactory()
-    yield user
+    yield UserFactory()
 
 
 @pytest.fixture
@@ -66,7 +63,7 @@ def api_client(token):
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
     yield client
 
 
@@ -75,8 +72,7 @@ def stop():
     """
     Stop Fixture
     """
-    stop = StopFactory()
-    yield stop
+    yield StopFactory()
 
 
 def remove_media_directory(file_path: str) -> None:
@@ -95,7 +91,7 @@ def remove_media_directory(file_path: str) -> None:
     """
 
     base_dir: Path = Path(__file__).resolve().parent.parent
-    media_dir: str = os.path.join(base_dir, "media/" + file_path)
+    media_dir: str = os.path.join(base_dir, f"media/{file_path}")
 
     if os.path.exists(media_dir):
         shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
@@ -117,7 +113,7 @@ def remove_file(file_path: str) -> None:
     """
 
     base_dir: Path = Path(__file__).resolve().parent.parent
-    file: str = os.path.join(base_dir, "media/" + file_path)
+    file: str = os.path.join(base_dir, f"media/{file_path}")
 
     if os.path.exists(file):
         os.remove(file)

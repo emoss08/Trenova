@@ -259,64 +259,65 @@ class MovementValidation:
             ValidationError: If the worker is not allowed to move the commodity.
         """
 
-        if self.movement.order.hazmat:
-            # Validation for the primary_worker
-            if self.movement.primary_worker:
-                if self.movement.primary_worker.profile.endorsements not in [
-                    WorkerProfile.EndorsementChoices.HAZMAT,
-                    WorkerProfile.EndorsementChoices.X,
-                ]:
-                    raise ValidationError(
-                        {
-                            "primary_worker": _(
-                                "Worker must be hazmat certified to haul this order. Please try again."
-                            ),
-                        },
-                        code="invalid",
-                    )
+        if not self.movement.order.hazmat:
+            return
+        # Validation for the primary_worker
+        if self.movement.primary_worker:
+            if self.movement.primary_worker.profile.endorsements not in [
+                WorkerProfile.EndorsementChoices.HAZMAT,
+                WorkerProfile.EndorsementChoices.X,
+            ]:
+                raise ValidationError(
+                    {
+                        "primary_worker": _(
+                            "Worker must be hazmat certified to haul this order. Please try again."
+                        ),
+                    },
+                    code="invalid",
+                )
 
-                if (
-                    self.movement.primary_worker.profile.hazmat_expiration_date
-                    and self.movement.primary_worker.profile.hazmat_expiration_date
-                    < datetime.date.today()
-                ):
-                    raise ValidationError(
-                        {
-                            "primary_worker": _(
-                                "Worker hazmat certification has expired. Please try again."
-                            ),
-                        },
-                        code="invalid",
-                    )
+            if (
+                self.movement.primary_worker.profile.hazmat_expiration_date
+                and self.movement.primary_worker.profile.hazmat_expiration_date
+                < datetime.date.today()
+            ):
+                raise ValidationError(
+                    {
+                        "primary_worker": _(
+                            "Worker hazmat certification has expired. Please try again."
+                        ),
+                    },
+                    code="invalid",
+                )
 
-            # Validation for the secondary_worker.
-            if self.movement.secondary_worker:
-                if self.movement.secondary_worker.profile.endorsements not in [
-                    WorkerProfile.EndorsementChoices.HAZMAT,
-                    WorkerProfile.EndorsementChoices.X,
-                ]:
-                    raise ValidationError(
-                        {
-                            "secondary_worker": _(
-                                "Worker must be hazmat certified to haul this order. Please try again."
-                            ),
-                        },
-                        code="invalid",
-                    )
+        # Validation for the secondary_worker.
+        if self.movement.secondary_worker:
+            if self.movement.secondary_worker.profile.endorsements not in [
+                WorkerProfile.EndorsementChoices.HAZMAT,
+                WorkerProfile.EndorsementChoices.X,
+            ]:
+                raise ValidationError(
+                    {
+                        "secondary_worker": _(
+                            "Worker must be hazmat certified to haul this order. Please try again."
+                        ),
+                    },
+                    code="invalid",
+                )
 
-                if (
-                    self.movement.secondary_worker.profile.hazmat_expiration_date
-                    and self.movement.secondary_worker.profile.hazmat_expiration_date
-                    < datetime.date.today()
-                ):
-                    raise ValidationError(
-                        {
-                            "secondary_worker": _(
-                                "Worker hazmat certification has expired. Please try again."
-                            ),
-                        },
-                        code="invalid",
-                    )
+            if (
+                self.movement.secondary_worker.profile.hazmat_expiration_date
+                and self.movement.secondary_worker.profile.hazmat_expiration_date
+                < datetime.date.today()
+            ):
+                raise ValidationError(
+                    {
+                        "secondary_worker": _(
+                            "Worker hazmat certification has expired. Please try again."
+                        ),
+                    },
+                    code="invalid",
+                )
 
     def validate_movement_stop_status(self) -> None:
         """Validate Movement Stop Status

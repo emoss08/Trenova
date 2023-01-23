@@ -32,8 +32,7 @@ def token():
     """
     Token Fixture
     """
-    token = TokenFactory()
-    yield token
+    yield TokenFactory()
 
 
 @pytest.fixture
@@ -41,8 +40,7 @@ def organization():
     """
     Organization Fixture
     """
-    organization = OrganizationFactory()
-    yield organization
+    yield OrganizationFactory()
 
 
 @pytest.fixture
@@ -50,8 +48,7 @@ def user():
     """
     User Fixture
     """
-    user = UserFactory()
-    yield user
+    yield UserFactory()
 
 
 @pytest.fixture
@@ -62,7 +59,7 @@ def api_client(token):
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
     yield client
 
 
@@ -71,8 +68,7 @@ def document_classification():
     """
     Document classification fixture
     """
-    document_classification = DocumentClassificationFactory()
-    yield document_classification
+    yield DocumentClassificationFactory()
 
 
 @pytest.fixture()
@@ -80,5 +76,4 @@ def charge_type():
     """
     Charge type fixture
     """
-    charge_type = ChargeTypeFactory()
-    yield charge_type
+    yield ChargeTypeFactory()

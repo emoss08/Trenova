@@ -84,7 +84,7 @@ class TestAdditionalChargeAPI:
         """
         Additional Charge Factory
         """
-        additional_charge_api = api_client.post(
+        yield api_client.post(
             "/api/additional_charges/",
             {
                 "organization": f"{organization.id}",
@@ -96,7 +96,6 @@ class TestAdditionalChargeAPI:
             },
             format="json",
         )
-        yield additional_charge_api
 
     def test_get(self, api_client):
         """

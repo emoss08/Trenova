@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Dict, Type
+from typing import Any
 
 from django.db.models.base import ModelBase
 
@@ -29,8 +29,8 @@ class IntegrationBase:
     Blank for now.
     """
 
-    model: Type[ModelBase]
-    headers: Dict[str, Any] = {}
+    model: type[ModelBase]
+    headers: dict[str, Any] = {}
     integration: Integration
 
     def _check(self):
@@ -46,7 +46,7 @@ class IntegrationBase:
                  not {type(self.model)}"""
             )
 
-        if not isinstance(self.headers, Dict):
+        if not isinstance(self.headers, dict):
             raise TypeError(
                 f"{self.__class__.__name__}.headers must be a dictionary, not {type(self.headers)}"
             )

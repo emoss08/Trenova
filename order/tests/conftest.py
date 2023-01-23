@@ -47,8 +47,7 @@ def token():
     """
     Token Fixture
     """
-    token = TokenFactory()
-    yield token
+    yield TokenFactory()
 
 
 @pytest.fixture
@@ -56,8 +55,7 @@ def organization():
     """
     Organization Fixture
     """
-    organization = OrganizationFactory()
-    yield organization
+    yield OrganizationFactory()
 
 
 @pytest.fixture
@@ -65,8 +63,7 @@ def user():
     """
     User Fixture
     """
-    user = UserFactory()
-    yield user
+    yield UserFactory()
 
 
 @pytest.fixture
@@ -77,7 +74,7 @@ def api_client(token):
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
     return client
 
 
@@ -86,8 +83,7 @@ def order_type():
     """
     Pytest Fixture for order Type
     """
-    order_type = OrderTypeFactory()
-    yield order_type
+    yield OrderTypeFactory()
 
 
 @pytest.fixture
@@ -95,8 +91,7 @@ def order():
     """
     Pytest Fixture for Order
     """
-    order = OrderFactory()
-    yield order
+    yield OrderFactory()
 
 
 @pytest.fixture
@@ -104,8 +99,7 @@ def document_classification():
     """
     Pytest Fixture for Document Classification
     """
-    document_classification = DocumentClassificationFactory()
-    yield document_classification
+    yield DocumentClassificationFactory()
 
 
 @pytest.fixture
@@ -113,8 +107,7 @@ def reason_code():
     """
     Pytest Fixture for Reason Code
     """
-    reason_code = ReasonCodeFactory()
-    yield reason_code
+    yield ReasonCodeFactory()
 
 
 @pytest.fixture
@@ -122,8 +115,7 @@ def order_document():
     """
     Pytest Fixture for Order Documentation
     """
-    order_document = OrderDocumentationFactory()
-    yield order_document
+    yield OrderDocumentationFactory()
 
 
 @pytest.fixture
@@ -131,8 +123,7 @@ def additional_charge():
     """
     Pytest Fixture for order Type
     """
-    additional_charge = AdditionalChargeFactory()
-    yield additional_charge
+    yield AdditionalChargeFactory()
 
 
 @pytest.fixture
@@ -140,8 +131,7 @@ def accessorial_charge():
     """
     Pytest Fixture for Accessorial Charge
     """
-    accessorial_charge = AccessorialChargeFactory()
-    yield accessorial_charge
+    yield AccessorialChargeFactory()
 
 
 @pytest.fixture
@@ -149,8 +139,7 @@ def revenue_code():
     """
     Pytest Fixture for Revenue Code
     """
-    revenue_code = RevenueCodeFactory()
-    yield revenue_code
+    yield RevenueCodeFactory()
 
 
 @pytest.fixture()
@@ -158,8 +147,7 @@ def customer():
     """
     Pytest Fixture for Customer
     """
-    customer = CustomerFactory()
-    yield customer
+    yield CustomerFactory()
 
 
 @pytest.fixture
@@ -167,8 +155,7 @@ def equipment_type():
     """
     Pytest Fixture for Equipment Type
     """
-    equipment_type = EquipmentTypeFactory()
-    yield equipment_type
+    yield EquipmentTypeFactory()
 
 
 @pytest.fixture
@@ -176,8 +163,7 @@ def order_comment():
     """
     Pytest Fixture for Order Comment
     """
-    order_comment = OrderCommentFactory()
-    yield order_comment
+    yield OrderCommentFactory()
 
 
 @pytest.fixture
@@ -185,5 +171,4 @@ def comment_type():
     """
     Pytest Fixture for Comment Type
     """
-    comment_type = CommentTypeFactory()
-    yield comment_type
+    yield CommentTypeFactory()

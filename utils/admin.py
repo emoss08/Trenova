@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Sequence, TypeVar
+from collections.abc import Sequence
+from typing import Any, TypeVar
 
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
@@ -134,11 +135,11 @@ class GenericAdmin(admin.ModelAdmin[_M]):
                     " when self.autocomplete is True"
                 )
 
-            autocomplete_fields = []
-            for field in self.model._meta.get_fields():
-                if field.is_relation and field.many_to_one:
-                    autocomplete_fields.append(field.name)
-            return autocomplete_fields
+            return [
+                field.name
+                for field in self.model._meta.get_fields()
+                if field.is_relation and field.many_to_one
+            ]
         return []
 
 
@@ -168,11 +169,11 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
         Returns:
             Sequence[str]: Autocomplete Fields
         """
-        autocomplete_fields = []
-        for field in self.model._meta.get_fields():
-            if field.is_relation and field.many_to_one:
-                autocomplete_fields.append(field.name)
-        return autocomplete_fields
+        return [
+            field.name
+            for field in self.model._meta.get_fields()
+            if field.is_relation and field.many_to_one
+        ]
 
 
 class GenericTabularInline(GenericStackedInline[_C, _P]):
