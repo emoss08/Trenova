@@ -1,4 +1,4 @@
-name: Monta & Tests
+name: Monta Build
 
 on:
   - pull_request
@@ -52,7 +52,6 @@ jobs:
         run: tox -vv
         env:
           SECRET_KEY: 69tgugtg%^fgJO&*&
-          DEBUG: 1
           DB_NAME: postgres
           DB_USER: postgres
           DB_PASSWORD: postgres
