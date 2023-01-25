@@ -19,15 +19,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from dispatch import factories
+from dispatch.factories import CommentTypeFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def comment_type():
     """
     Comment type fixture
     """
-    return factories.CommentTypeFactory()
+    yield CommentTypeFactory()
 
 
 @pytest.mark.django_db

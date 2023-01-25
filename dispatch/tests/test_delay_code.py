@@ -19,15 +19,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from dispatch import factories
+from dispatch.factories import DelayCodeFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def delay_code():
     """
     Delay code fixture
     """
-    return factories.DelayCodeFactory()
+    yield DelayCodeFactory()
 
 
 @pytest.mark.django_db

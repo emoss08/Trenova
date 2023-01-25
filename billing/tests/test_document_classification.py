@@ -21,12 +21,15 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from billing import models
-from billing.tests.factories import DocumentClassificationFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestDocumentClassification:
+    """
+    Test for Document Classification
+    """
+
     def test_document_classification_creation(self, organization):
         """
         Test document classification creation

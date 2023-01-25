@@ -54,7 +54,7 @@ class LocationFactory(factory.django.DjangoModelFactory):
         )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = factory.Faker("word", locale="en_US")
+    code = factory.Faker("pystr", max_chars=100)
     location_category = factory.SubFactory("location.factories.LocationCategoryFactory")
     address_line_1 = factory.Faker("address", locale="en_US")
     city = factory.Faker("city", locale="en_US")
@@ -69,7 +69,7 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         """
-        Metaclass for LocationContactFactory
+        Metaclaszs for LocationContactFactory
         """
 
         model = "location.LocationContact"
@@ -80,7 +80,7 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
-    name = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    name = factory.Faker("pystr", max_chars=100)
     email = factory.Faker("email", locale="en_US")
 
 
