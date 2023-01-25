@@ -19,7 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from rest_framework import HTTP_HEADER_ENCODING, authentication, exceptions
 from rest_framework.request import Request
 
@@ -58,7 +57,6 @@ class TokenAuthentication(authentication.TokenAuthentication):
         """
 
         auth: list[bytes] = get_authorization_header(request).split()
-        print(len(auth))
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
@@ -68,7 +66,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
             raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
             msg = "Invalid token header. Token string should not contain spaces. Please try again."
-            raise exceptions.AuthenticationFailed()
+            raise exceptions.AuthenticationFailed(msg)
 
         try:
             token = auth[1].decode()
