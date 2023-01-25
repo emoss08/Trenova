@@ -19,6 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any, final
 
+from django.core import checks
+from django.core.checks import CheckMessage, Error
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
@@ -110,3 +112,43 @@ class ChoiceField(CharField):
         self.db_collation = db_collation
         if self.choices:
             self.max_length = max(len(choice[0]) for choice in self.choices)
+
+    def check(self, **kwargs: Any) -> list[CheckMessage | CheckMessage]:
+        """Check the field for errors.
+
+        Check the fields for errors and return a list of Error objects.
+
+        Args:
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            list[CheckMessage | CheckMessage]: List of Error objects
+        """
+        return [
+            *super().check(**kwargs),
+            *self._validate_choices_attribute(**kwargs),
+        ]
+
+    def _validate_choices_attribute(self, **kwargs: Any) -> list[Error] | list:
+        """Validate the choices attribute for the field.
+
+        Validate the choices attribute is set in the field, if not return a list of
+        Error objects.
+
+        Args:
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            list{Error} | list: List of Error objects or an empty list
+        """
+        if self.choices is None:
+            return [
+                checks.Error(
+                    "ChoiceField must define a `choice` attribute.",
+                    hint="Add a `choice` attribute to the ChoiceField.",
+                    obj=self,
+                    id="fields.E120",
+                )
+            ]
+        return []
+
