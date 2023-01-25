@@ -80,7 +80,7 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
-    name = factory.Faker("name", locale="en_US")
+    name = factory.Faker("text", locale="en_US", max_nb_chars=100)
     email = factory.Faker("email", locale="en_US")
 
 

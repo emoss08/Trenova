@@ -151,4 +151,3 @@ class ChoiceField(CharField):
                 )
             ]
         return []
-

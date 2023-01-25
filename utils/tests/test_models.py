@@ -22,6 +22,7 @@ from django.db.models import TextChoices
 
 from utils import models
 
+
 def test_choice_field_with_no_choice_attr():
     """
     Test Error is thrown when Choice has no choices attribute
@@ -35,6 +36,7 @@ def test_choice_field_with_no_choice_attr():
     for error in errors:
         assert isinstance(error, Error)
         assert error.msg == "ChoiceField must define a `choice` attribute."
+
 
 def test_choice_field_with_no_max_length():
     """
@@ -51,10 +53,12 @@ def test_choice_field_with_no_max_length():
         assert error.id == "fields.E120"
         assert error.msg == "CharFields must define a 'max_length' attribute."
 
+
 def test_choice_model_created_with_max_length():
     """
     Test Choice model is created
     """
+
     class TestChoices(TextChoices):
         """
         Status choices for Order model

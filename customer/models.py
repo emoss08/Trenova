@@ -111,7 +111,7 @@ class Customer(GenericModel):
 
         verbose_name = _("Customer")
         verbose_name_plural = _("Customers")
-        ordering: list[str] = ["-code"]
+        ordering = ["-code"]
 
     def __str__(self) -> str:
         """Customer string representation
@@ -195,7 +195,7 @@ class CustomerBillingProfile(GenericModel):
 
         verbose_name = _("Customer Billing Profile")
         verbose_name_plural = _("Customer Billing Profiles")
-        ordering: list[str] = ["customer"]
+        ordering = ["customer"]
 
     def __str__(self) -> str:
         """Customer Billing Profile string representation
@@ -281,7 +281,7 @@ class CustomerEmailProfile(GenericModel):
 
         verbose_name = _("Customer Email Profile")
         verbose_name_plural = _("Customer Email Profiles")
-        ordering: list[str] = ["-name"]
+        ordering = ["-name"]
 
     def __str__(self) -> str:
         """CustomerEmailProfile string representation
@@ -341,7 +341,7 @@ class CustomerRuleProfile(GenericModel):
 
         verbose_name = _("Customer Rule Profile")
         verbose_name_plural = _("Customer Rule Profiles")
-        ordering: list[str] = ["-name"]
+        ordering = ["-name"]
 
     def __str__(self) -> str:
         """CustomerRuleProfile string representation
@@ -431,7 +431,7 @@ class CustomerContact(GenericModel):
     class Meta:
         verbose_name = _("Customer Contact")
         verbose_name_plural = _("Customer Contacts")
-        ordering: list[str] = ["customer", "name"]
+        ordering = ["customer", "name"]
 
     def __str__(self) -> str:
         """Customer Contact string representation
@@ -628,7 +628,7 @@ class CustomerFuelProfile(GenericModel):
     class Meta:
         verbose_name = _("Customer Fuel Profile")
         verbose_name_plural = _("Customer Fuel Profiles")
-        ordering: list[str] = ["customer"]
+        ordering = ["customer"]
 
     def __str__(self) -> str:
         """Customer Fuel Profile string representation
@@ -697,7 +697,7 @@ class CustomerFuelTable(GenericModel):
     class Meta:
         verbose_name = _("Customer Fuel Table")
         verbose_name_plural = _("Customer Fuel Table")
-        ordering: list[str] = ["id"]
+        ordering = ["id"]
 
     def __str__(self) -> str:
         """Customer Fuel Profile string representation
@@ -768,7 +768,7 @@ class CustomerFuelTableDetail(GenericModel):
     class Meta:
         verbose_name = _("Customer Fuel Profile Detail")
         verbose_name_plural = _("Customer Fuel Profile Details")
-        ordering: list[str] = ["customer_fuel_table"]
+        ordering = ["customer_fuel_table"]
 
     def __str__(self) -> str:
         """Customer Fuel Profile Detail string representation

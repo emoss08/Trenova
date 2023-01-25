@@ -490,10 +490,12 @@ class BillingException(GenericModel):
         """
         return textwrap.wrap(self.order.pro_number, 50)[0]
 
+
 class BillingHistory(GenericModel):
     """
     Class for storing information about the billing history.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
