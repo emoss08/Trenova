@@ -26,7 +26,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
 @final
@@ -43,26 +43,6 @@ class FuelMethodChoices(models.TextChoices):
     DISTANCE = "D", _("Distance")
     FLAT = "F", _("Flat")
     PERCENTAGE = "P", _("Percentage")
-
-
-@final
-class BillingExceptionChoices(models.TextChoices):
-    """
-    A class representing the possible billing exception choices.
-
-    This class inherits from the `models.TextChoices` class and defines five constants:
-    - PAPERWORK: representing a billing exception related to paperwork
-    - CHARGE: representing a billing exception resulting in a charge
-    - CREDIT: representing a billing exception resulting in a credit
-    - DEBIT: representing a billing exception resulting in a debit
-    - OTHER: representing any other type of billing exception
-    """
-
-    PAPERWORK = "PAPERWORK", _("Paperwork")
-    CHARGE = "CHARGE", _("Charge")
-    CREDIT = "CREDIT", _("Credit")
-    DEBIT = "DEBIT", _("Debit")
-    OTHER = "OTHER", _("OTHER")
 
 
 class ChargeType(GenericModel):
@@ -187,7 +167,7 @@ class AccessorialCharge(GenericModel):
 
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """Other Charge string representation
@@ -302,3 +282,210 @@ class DocumentClassification(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
+
+
+class BillingQueue(GenericModel):
+    """
+    Class for storing information about the billing queue.
+    """
+
+    @final
+    class BillTypeChoices(models.TextChoices):
+        """
+        Status choices for Order model
+        """
+
+        INVOICE = "INVOICE", _("Invoice")
+        CREDIT = "CREDIT", _("Credit")
+        DEBIT = "DEBIT", _("Debit")
+        PREPAID = "PREPAID", _("Prepaid")
+        OTHER = "OTHER", _("Other")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        help_text=_("Assigned order to the billing queue"),
+    )
+    bill_type = ChoiceField(
+        _("Bill Type"),
+        choices=BillTypeChoices.choices,
+        default=BillTypeChoices.INVOICE,
+        help_text=_("Bill type for the billing queue"),
+    )
+    other_charge_total = models.DecimalField(
+        _("Other Charge Total"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        blank=True,
+        null=True,
+        help_text=_("Other charge total for Order"),
+    )
+    total_amount = models.DecimalField(
+        _("Total Amount"),
+        max_digits=10,
+        decimal_places=2,
+        default=0.00,
+        blank=True,
+        null=True,
+        help_text=_("Total amount for Order"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the BillingQueue model.
+        """
+
+        verbose_name = _("Billing Queue")
+        verbose_name_plural = _("Billing Queues")
+        ordering = ["order"]
+
+    def __str__(self) -> str:
+        """String Representation of the BillingQueue model
+
+        Returns:
+            str: BillingQueue string representation
+        """
+        return textwrap.wrap(self.order.pro_number, 50)[0]
+
+    def clean(self) -> None:
+        """
+        Clean method for the BillingQueue model.
+
+        Raises:
+            ValidationError: If order does not meet the requirements for billing.
+        """
+        super().clean()
+
+        # If order is already billed raise ValidationError
+        if self.order.billed:
+            raise ValidationError(
+                {
+                    "order": _(
+                        "Order has already been billed. Please try again with a different order."
+                    ),
+                },
+            )
+
+        # If order is already transferred to billing raise ValidationError
+        if self.order.transferred_to_billing:
+            raise ValidationError(
+                {
+                    "order": _(
+                        "Order has already been transferred to billing. Please try again with a different order."
+                    ),
+                },
+            )
+
+        # If order is voided raise ValidationError
+        if self.order.status == StatusChoices.VOIDED:
+            raise ValidationError(
+                {
+                    "order": _(
+                        "Order has been voided. Please try again with a different order."
+                    ),
+                },
+            )
+
+        # If order is not ready to be billed raise ValidationError
+        if self.order.ready_to_bill is False:
+            raise ValidationError(
+                {
+                    "order": _(
+                        "Order is not ready to be billed. Please try again with a different order."
+                    ),
+                },
+            )
+
+    def save(self, **kwargs: Any) -> None:
+        """Save method for the BillingQueue model.
+
+        Args:
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None
+        """
+        self.full_clean()
+
+        if not self.bill_type:
+            self.bill_type = self.BillTypeChoices.INVOICE
+
+        self.total_amount = self.order.sub_total
+        self.other_charge_total = self.order.other_charge_amount
+
+        super().save(**kwargs)
+
+
+class BillingException(GenericModel):
+    """
+    Class for storing information about the billing exception.
+    """
+
+    @final
+    class BillingExceptionChoices(models.TextChoices):
+        """
+        A class representing the possible billing exception choices.
+
+        This class inherits from the `models.TextChoices` class and defines five constants:
+        - PAPERWORK: representing a billing exception related to paperwork
+        - CHARGE: representing a billing exception resulting in a charge
+        - CREDIT: representing a billing exception resulting in a credit
+        - DEBIT: representing a billing exception resulting in a debit
+        - OTHER: representing any other type of billing exception
+        """
+
+        PAPERWORK = "PAPERWORK", _("Paperwork")
+        CHARGE = "CHARGE", _("Charge")
+        CREDIT = "CREDIT", _("Credit")
+        DEBIT = "DEBIT", _("Debit")
+        OTHER = "OTHER", _("OTHER")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    exception_type = ChoiceField(
+        _("Exception Type"),
+        choices=BillingExceptionChoices.choices,
+        default=BillingExceptionChoices.PAPERWORK,
+        help_text=_("Type of billing exception"),
+    )
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.RESTRICT,
+        related_name="billing_exception",
+        help_text=_("Assigned order to the billing exception"),
+    )
+    exception_message = models.TextField(
+        _("Exception Message"),
+        help_text=_("Message for the billing exception"),
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the BillingException model.
+        """
+
+        verbose_name = _("Billing Exception")
+        verbose_name_plural = _("Billing Exceptions")
+        ordering = ["order"]
+
+    def __str__(self) -> str:
+        """String Representation of the BillingException model
+
+        Returns:
+            str: BillingException string representation
+        """
+        return textwrap.wrap(self.order.pro_number, 50)[0]

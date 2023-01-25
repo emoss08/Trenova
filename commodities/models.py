@@ -135,7 +135,7 @@ class HazardousMaterial(GenericModel):
     class Meta:
         verbose_name = _("Hazardous Material")
         verbose_name_plural = _("Hazardous Materials")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Hazardous Material String Representation
@@ -272,7 +272,7 @@ class Commodity(GenericModel):
 
         verbose_name = _("Commodity")
         verbose_name_plural = _("Commodities")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Commodity String Representation
@@ -293,11 +293,10 @@ class Commodity(GenericModel):
             setattr(self, key, value)
         self.save()
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
+    def save(self, **kwargs: Any) -> None:
         """Save Commodity
 
         Args:
-            *args (Any): Variable length argument list.
             **kwargs (Any): Keyword Arguments
 
         Returns:
