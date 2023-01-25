@@ -64,19 +64,17 @@ class TokenAuthentication(authentication.TokenAuthentication):
             return None
 
         if len(auth) == 1:
-            msg = _("Invalid token header. No credentials provided. Please try again.")
-            raise exceptions.AuthenticationFailed(msg)  # type: ignore
+            msg = "Invalid token header. No credentials provided. Please try again."
+            raise exceptions.AuthenticationFailed(msg)
         elif len(auth) > 2:
-            msg = _("Invalid token header. Token string should not contain spaces. Please try again.")
-            raise exceptions.AuthenticationFailed(msg)  # type: ignore
+            msg = "Invalid token header. Token string should not contain spaces. Please try again."
+            raise exceptions.AuthenticationFailed()
 
         try:
             token = auth[1].decode()
         except UnicodeError as e:
-            msg = _(
-                "Invalid token header. Token string should not contain invalid characters."
-            )
-            raise exceptions.AuthenticationFailed(msg) from e  # type: ignore
+            msg = "Invalid token header. Token string should not contain invalid characters."
+            raise exceptions.AuthenticationFailed(msg) from e
 
         return self.authenticate_credentials(token)
 
