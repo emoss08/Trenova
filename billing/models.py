@@ -489,3 +489,91 @@ class BillingException(GenericModel):
             str: BillingException string representation
         """
         return textwrap.wrap(self.order.pro_number, 50)[0]
+
+class BillingHistory(GenericModel):
+    """
+    Class for storing information about the billing history.
+    """
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text=_("Unique identifier for the billing history"),
+    )
+    batch_name = models.CharField(
+        _("Batch Name"),
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text=_("Name of the batch"),
+    )
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.RESTRICT,
+        related_name="billing_history",
+        help_text=_("Assigned order to the billing history"),
+    )
+    bill_type = ChoiceField(
+        _("Bill Type"),
+        choices=BillingQueue.BillTypeChoices.choices,
+        default=BillingQueue.BillTypeChoices.INVOICE,
+        help_text=_("Type of bill"),
+    )
+    sub_total = models.DecimalField(
+        _("Sub Total"),
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Sub total for Order"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the BillingHistory model.
+        """
+
+        verbose_name = _("Billing History")
+        verbose_name_plural = _("Billing Histories")
+        ordering = ["order"]
+
+    def __str__(self) -> str:
+        """String Representation of the BillingHistory model
+
+        Returns:
+            str: BillingHistory string representation
+        """
+        return textwrap.wrap(self.order.pro_number, 50)[0]
+
+    def clean(self) -> None:
+        """Clean method for the BillingHistory model.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError
+        """
+        if not self.order.billed:
+            raise ValidationError(
+                {
+                    "order": _(
+                        "Order has not been billed. Please try again with a different order."
+                    ),
+                },
+            )
+
+    def save(self, **kwargs: Any) -> None:
+        """Save method for the BillingHistory model.
+
+        Args:
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None
+        """
+
+        self.full_clean()
+        self.sub_total = round(self.order.sub_total, 2)
