@@ -20,19 +20,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from accounts import models
-from accounts.tests.factories import JobTitleFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestJobTitle:
-    @pytest.fixture()
-    def job_title(self):
-        """
-        Job title fixture
-        """
-        return JobTitleFactory()
-
     def test_list(self, job_title):
         """
         Test Job Title list
