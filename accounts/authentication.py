@@ -58,15 +58,16 @@ class TokenAuthentication(authentication.TokenAuthentication):
         """
 
         auth: list[bytes] = get_authorization_header(request).split()
+        print(len(auth))
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
 
         if len(auth) == 1:
-            msg = _("Invalid token header. No credentials provided.")
+            msg = _("Invalid token header. No credentials provided. Please try again.")
             raise exceptions.AuthenticationFailed(msg)  # type: ignore
         elif len(auth) > 2:
-            msg = _("Invalid token header. Token string should not contain spaces.")
+            msg = _("Invalid token header. Token string should not contain spaces. Please try again.")
             raise exceptions.AuthenticationFailed(msg)  # type: ignore
 
         try:
