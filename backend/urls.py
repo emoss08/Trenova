@@ -226,7 +226,7 @@ urlpatterns = [
         "api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="verify-token"
     ),
     path(
-        "api/user/change_password/",
+        "api/users/change_password/",
         accounts_api.UpdatePasswordView.as_view(),
         name="change-password",
     ),
