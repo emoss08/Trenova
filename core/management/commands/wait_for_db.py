@@ -17,12 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import time
 from typing import Any
 
-import time
 from django.core.management.base import BaseCommand
-from psycopg2 import OperationalError as Psycopg2OperationalError
 from django.db.utils import OperationalError
+from psycopg2 import OperationalError as Psycopg2OperationalError
+
 
 class Command(BaseCommand):
     """
@@ -35,6 +36,7 @@ class Command(BaseCommand):
     database is not available, which would put unnecessary load on the server. Once the database is available, the
     command prints a message 'Database available!' to the console.
     """
+
     def handle(self, *args: Any, **options: Any) -> None:
         """
         Handle the command.
@@ -51,16 +53,20 @@ class Command(BaseCommand):
         Returns:
             None
         """
-        self.stdout.write('Waiting for database...')
+        self.stdout.write("Waiting for database...")
         db_up = False
         delay = 1
         while not db_up:
             try:
-                self.check(databases=['default'])
+                self.check(databases=["default"])
                 db_up = True
             except (Psycopg2OperationalError, OperationalError):
-                self.stdout.write(self.style.WARNING(f'Database unavailable, waiting {delay} second(s)...'))
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"Database unavailable, waiting {delay} second(s)..."
+                    )
+                )
                 time.sleep(delay)
-                delay = min(60, delay*2)
+                delay = min(60, delay * 2)
 
-        self.stdout.write(self.style.SUCCESS('Database available!'))
+        self.stdout.write(self.style.SUCCESS("Database available!"))

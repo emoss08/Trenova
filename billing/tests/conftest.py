@@ -23,7 +23,7 @@ from accounting.tests.factories import RevenueCodeFactory
 from billing.tests.factories import ChargeTypeFactory, DocumentClassificationFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
-from order.tests.factories import OrderTypeFactory, OrderFactory
+from order.tests.factories import OrderFactory, OrderTypeFactory
 from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
@@ -44,12 +44,14 @@ def charge_type():
     """
     yield ChargeTypeFactory()
 
+
 @pytest.fixture
 def order_type():
     """
     Order Type Fixture
     """
     yield OrderTypeFactory()
+
 
 @pytest.fixture
 def order():
@@ -58,12 +60,14 @@ def order():
     """
     yield OrderFactory()
 
+
 @pytest.fixture
 def revenue_code():
     """
     Revenue Code Fixture
     """
     yield RevenueCodeFactory()
+
 
 @pytest.fixture
 def customer():
@@ -72,12 +76,14 @@ def customer():
     """
     yield CustomerFactory()
 
+
 @pytest.fixture
 def worker():
     """
     Worker Fixture
     """
     yield WorkerFactory()
+
 
 @pytest.fixture
 def commodity():

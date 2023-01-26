@@ -518,9 +518,7 @@ class BillingQueue(GenericModel):
         # If order is voided raise ValidationError
         if self.order.status == StatusChoices.VOIDED:
             errors.append(
-                _(
-                    "Order has been voided. Please try again with a different order."
-                )
+                _("Order has been voided. Please try again with a different order.")
             )
 
         # If order is not ready to be billed raise ValidationError

@@ -18,13 +18,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from django.test import Client
 from django.contrib.auth import get_user_model
+from django.test import Client
 from django.urls import reverse
 
 from accounts.tests.factories import UserFactory
 
 pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def client():
@@ -32,6 +33,7 @@ def client():
     Fixture to create a client.
     """
     yield Client()
+
 
 @pytest.fixture
 def user_test():
@@ -43,6 +45,7 @@ def user_test():
         username="regularjoe",
         password="testpass123",
     )
+
 
 @pytest.fixture
 def admin_user(organization):
@@ -56,27 +59,31 @@ def admin_user(organization):
         password="anotherpassword1234%",
     )
 
-def test_users_list(client, admin_user, user_test):
+
+def test_admin_users_list(client, admin_user, user_test):
     client.force_login(admin_user)
     url = reverse("admin:accounts_user_changelist")
     res = client.get(url)
 
-    assert b'regularjoe' in res.content
-    assert b'user@example.com' in res.content
+    assert b"regularjoe" in res.content
+    assert b"user@example.com" in res.content
 
-def test_edit_user_page(client, admin_user, user):
+
+def test_admin_edit_user_page(client, admin_user, user):
     client.force_login(admin_user)
     url = reverse("admin:accounts_user_change", args=[user.id])
     res = client.get(url)
 
     assert res.status_code == 200
 
-def test_create_user_page(client, admin_user):
+
+def test_admin_create_user_page(client, admin_user):
     client.force_login(admin_user)
     url = reverse("admin:accounts_user_add")
     res = client.get(url)
 
     assert res.status_code == 200
+
 
 def test_create_superuser_is_superuser_error(organization):
     """
@@ -95,6 +102,7 @@ def test_create_superuser_is_superuser_error(organization):
         )
 
     assert excinfo.value.__str__() == "Superuser must have is_superuser=True."
+
 
 def test_create_superuser_is_staff_error(organization):
     """
