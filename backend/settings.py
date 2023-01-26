@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "encrypted_model_fields",
     "pgtrigger",
     "nested_inline",
+    "drf_spectacular",
     # Monta Apps
     "backend",
     "core",
@@ -252,6 +253,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_RATES": {"user": "10/second", "auth": "5/minute"},
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
@@ -265,3 +267,10 @@ CELERY_CACHE_BACKEND = "celery"
 
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Monta API",
+    "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
