@@ -26,6 +26,8 @@ django_compressor==4.3
 djangorestframework~=3.14.0
 djangorestframework-stubs[compatible-mypy]
 drf-nested-routers
+drf-spectacular==0.25.1
+drf-spectacular==0.25.1
 factory_boy==3.2.1
 hiredis==2.1.1
 httpx==0.23.1
@@ -41,5 +43,6 @@ pytest-cov==4.0.0
 pytest-django==4.5.2
 pytest-html==3.2.0
 redis==4.4.2
+rich==13.0.0
 tox==4.3.5
 whitenoise==6.3.0

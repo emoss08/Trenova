@@ -20,16 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 from django.core.exceptions import ValidationError
 
-from organization.factories import OrganizationFactory
-
-
-@pytest.fixture()
-def organization():
-    """
-    Organization fixture
-    """
-    return OrganizationFactory()
-
 
 @pytest.mark.django_db
 def test_dispatch_control_creation(organization):

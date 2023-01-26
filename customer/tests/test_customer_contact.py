@@ -23,12 +23,12 @@ from django.core.exceptions import ValidationError
 from customer.factories import CustomerContactFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def customer_contact():
     """
     Customer contact fixture
     """
-    return CustomerContactFactory()
+    yield CustomerContactFactory()
 
 
 @pytest.mark.django_db

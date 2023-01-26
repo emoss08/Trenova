@@ -23,12 +23,12 @@ from django.core.exceptions import ValidationError
 from commodities.factories import CommodityFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def commodity():
     """
     Commodity fixture
     """
-    return CommodityFactory()
+    yield CommodityFactory()
 
 
 @pytest.mark.django_db

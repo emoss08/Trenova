@@ -203,8 +203,8 @@ class TestMovementValidation:
 
     def test_primary_worker_termination_date(self):
         """
-        Test ValidationError is thrown when the primary worker
-        termination_date is filled with any date.
+        Test ValidationError is thrown when the primary worker termination_date
+        is filled with any date.
         """
         worker = WorkerFactory()
         worker.profile.termination_date = timezone.now()
@@ -269,6 +269,7 @@ class TestMovementValidation:
         Test ValidationError is thrown when the secondary worker
         license_expiration_date is less than today's date.
         """
+
         worker = WorkerFactory()
         worker.profile.license_expiration_date = timezone.now() - timedelta(days=1)
         worker.profile.save()

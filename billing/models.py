@@ -26,7 +26,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
 @final
@@ -302,8 +302,6 @@ class DocumentClassification(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-<<<<<<< Updated upstream
-=======
 
 
 class BillingQueue(GenericModel):
@@ -520,9 +518,7 @@ class BillingQueue(GenericModel):
         # If order is voided raise ValidationError
         if self.order.status == StatusChoices.VOIDED:
             errors.append(
-                _(
-                    "Order has been voided. Please try again with a different order."
-                )
+                _("Order has been voided. Please try again with a different order.")
             )
 
         # If order is not ready to be billed raise ValidationError
@@ -564,7 +560,7 @@ class BillingQueue(GenericModel):
             self.revenue_code = self.order.revenue_code
 
         # If commodity `description` is set, set `commodity_descr` to the description of the commodity
-        if self.commodity.description:
+        if self.commodity and self.commodity.description:
             self.commodity_descr = self.commodity.description
 
         # if order has `bol_number`, set `bol_number` to `bol_number`
@@ -737,4 +733,3 @@ class BillingHistory(GenericModel):
 
         self.full_clean()
         self.sub_total = round(self.order.sub_total, 2)
->>>>>>> Stashed changes

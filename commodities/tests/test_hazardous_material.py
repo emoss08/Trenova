@@ -23,12 +23,12 @@ from django.core.exceptions import ValidationError
 from commodities.factories import HazardousMaterialFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def hazardous_material():
     """
     Hazardous material fixture
     """
-    return HazardousMaterialFactory()
+    yield HazardousMaterialFactory()
 
 
 @pytest.mark.django_db

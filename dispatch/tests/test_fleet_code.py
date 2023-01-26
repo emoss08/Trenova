@@ -19,15 +19,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from dispatch import factories
+from dispatch.factories import FleetCodeFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def fleet_code():
     """
     Fleet code fixture
     """
-    return factories.FleetCodeFactory()
+    yield FleetCodeFactory()
 
 
 @pytest.mark.django_db

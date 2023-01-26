@@ -20,45 +20,38 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from accounts import models
-from accounts.tests.factories import JobTitleFactory
 
 pytestmark = pytest.mark.django_db
 
 
-class TestJobTitle:
-    @pytest.fixture()
-    def job_title(self):
-        """
-        Job title fixture
-        """
-        return JobTitleFactory()
+def test_list(job_title):
+    """
+    Test Job Title list
+    """
+    assert job_title is not None
 
-    def test_list(self, job_title):
-        """
-        Test Job Title list
-        """
-        assert job_title is not None
 
-    def test_create(self, job_title):
-        """
-        Test job title creation
-        """
-        new_job_title = models.JobTitle.objects.create(
-            organization=job_title.organization,
-            is_active=True,
-            name="TEST",
-            description="Another Description",
-        )
+def test_create(job_title):
+    """
+    Test job title creation
+    """
+    new_job_title = models.JobTitle.objects.create(
+        organization=job_title.organization,
+        is_active=True,
+        name="TEST",
+        description="Another Description",
+    )
 
-        assert new_job_title is not None
-        assert new_job_title.name == "TEST"
-        assert new_job_title.description == "Another Description"
+    assert new_job_title is not None
+    assert new_job_title.name == "TEST"
+    assert new_job_title.description == "Another Description"
 
-    def test_update_job_title(self, job_title):
-        """
-        Test job title update
-        """
-        job_title.name = "test_update_job_title"
-        job_title.save()
 
-        assert job_title.name == "test_update_job_title"
+def test_update_job_title(job_title):
+    """
+    Test job title update
+    """
+    job_title.name = "test_update_job_title"
+    job_title.save()
+
+    assert job_title.name == "test_update_job_title"

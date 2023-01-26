@@ -401,5 +401,5 @@ class MovementValidation:
                         "Equipment is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
                     ),
                 },
-                code="invalid",
+                code="invalid_worker_and_equipment",
             )

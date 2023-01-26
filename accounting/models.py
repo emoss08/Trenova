@@ -254,7 +254,7 @@ class RevenueCode(GenericModel):
 
         verbose_name = _("Revenue Code")
         verbose_name_plural = _("Revenue Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """RevenueCode string representation
