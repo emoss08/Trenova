@@ -303,7 +303,6 @@ class DocumentClassification(GenericModel):
             setattr(self, key, value)
         self.save()
 
-
 class BillingQueue(GenericModel):
     """
     Class for storing information about the billing queue.
