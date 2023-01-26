@@ -46,7 +46,7 @@ class OrderControlViewSet(OrganizationMixin):
     queryset = models.OrderControl.objects.all()
     permission_classes = [permissions.IsAdminUser]
     serializer_class = serializers.OrderControlSerializer
-
+    http_method_names = ["get", "put", "patch", "head", "options"]
 
 class OrderTypeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order types in the system.
