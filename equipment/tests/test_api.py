@@ -18,54 +18,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-from rest_framework.test import APIClient
 
-from accounts.tests.factories import TokenFactory, UserFactory
 from equipment.tests.factories import EquipmentTypeFactory
-from organization.factories import OrganizationFactory
 
 
 @pytest.fixture
-def user():
-    """
-    User Fixture
-    """
-
-    return UserFactory()
-
-
-@pytest.fixture
-def token(user):
-    """
-    Token Fixture
-    """
-
-    return TokenFactory()
-
-
-@pytest.fixture()
-def organization(user):
-    """
-    Organization Fixture
-    """
-
-    return OrganizationFactory()
-
-
-@pytest.fixture()
 def equipment_type():
     """
     EquipmentType Fixture
     """
 
     return EquipmentTypeFactory()
-
-
-@pytest.fixture()
-def api_client(user):
-    client = APIClient()
-    client.force_authenticate(user=user)
-    return client
 
 
 @pytest.mark.django_db

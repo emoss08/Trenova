@@ -54,6 +54,6 @@ class EquipmentViewSet(OrganizationMixin):
     filterset_fields = (
         "is_active",
         "manufacturer",
-        "is_berth",
+        "has_berth",
         "highway_use_tax",
     )

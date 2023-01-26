@@ -25,14 +25,6 @@ from worker.factories import WorkerFactory
 pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def worker():
-    """
-    Worker fixture
-    """
-    return WorkerFactory()
-
-
 def test_worker_creation(worker):
     """
     Test worker creation

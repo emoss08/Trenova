@@ -30,19 +30,19 @@ class TestUserAPI:
         response = api_client.get("/api/users/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, user, token):
+    def test_get_by_id(self, api_client, user_api, token):
         """
         Test get user by ID
         """
-        response = api_client.get(f"/api/users/{user.data['id']}/")
+        response = api_client.get(f"/api/users/{user_api.data['id']}/")
         assert response.status_code == 200
 
-    def test_put(self, token, user, api_client):
+    def test_put(self, token, user_api, api_client):
         """
         Test Put request
         """
         response = api_client.put(
-            f"/api/users/{user.data['id']}/",
+            f"/api/users/{user_api.data['id']}/",
             {
                 "username": "test",
                 "email": "test@test.com",
@@ -68,10 +68,10 @@ class TestUserAPI:
         assert response.data["profile"]["state"] == "NC"
         assert response.data["profile"]["zip_code"] == "12345"
 
-    def test_delete(self, user, token, api_client):
+    def test_delete(self, user_api, token, api_client):
         """
         Test delete user
         """
-        response = api_client.delete(f"/api/users/{user.data['id']}/")
+        response = api_client.delete(f"/api/users/{user_api.data['id']}/")
         assert response.status_code == 204
         assert response.data is None

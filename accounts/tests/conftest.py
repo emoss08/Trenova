@@ -19,11 +19,37 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
+from accounts.tests.factories import JobTitleFactory, TokenFactory, UserFactory
+
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def user(api_client, organization):
+def job_title():
+    """
+    Job title fixture
+    """
+    return JobTitleFactory()
+
+
+@pytest.fixture
+def token():
+    """
+    Token fixture
+    """
+    return TokenFactory()
+
+
+@pytest.fixture
+def user():
+    """
+    User fixture
+    """
+    return UserFactory()
+
+
+@pytest.fixture
+def user_api(api_client, organization):
     """
     User Fixture
     """

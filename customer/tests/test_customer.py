@@ -22,12 +22,12 @@ import pytest
 from customer.factories import CustomerFactory
 
 
-@pytest.fixture()
+@pytest.fixture
 def customer():
     """
     Customer fixture
     """
-    return CustomerFactory()
+    yield CustomerFactory()
 
 
 @pytest.mark.django_db

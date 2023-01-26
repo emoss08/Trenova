@@ -19,16 +19,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-from organization.factories import OrganizationFactory
-
-
-@pytest.fixture()
-def organization():
-    """
-    Organization fixture
-    """
-    return OrganizationFactory()
-
 
 @pytest.mark.django_db
 def test_organization_creation(organization):
