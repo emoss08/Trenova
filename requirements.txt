@@ -43,3 +43,4 @@ pytest-html==3.2.0
 redis==4.4.2
 tox==4.3.5
 whitenoise==6.3.0
+rich==13.0.0
