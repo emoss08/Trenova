@@ -19,8 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import password_validation
+from django.contrib.auth import password_validation, authenticate
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from rest_framework import serializers
 
 from accounts import models
@@ -140,10 +141,9 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = ("groups", "user_permissions", "password")
+        extra_read_only_fields = ("groups", "user_permissions", "is_staff", "is_active")
         extra_kwargs = {
-            "is_staff": {"read_only": True},
-            "is_active": {"read_only": True},
+            "password": {"write_only": True, "required": False},
             "date_joined": {"read_only": True},
         }
 
@@ -275,6 +275,28 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Token Provision Request",
+            summary="Token Provision Request",
+            value={
+                "username": "test",
+                "password": "test",
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            "Token Provision Response",
+            summary="Token Provision Response",
+            value={
+                "user_id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                "api_token": "756ab1e4e0d23ff3a7eda30e09ffda65cae2d623",
+            },
+            response_only=True,
+        ),
+    ]
+)
 class TokenProvisionSerializer(serializers.Serializer):
     """
     Token Provision Serializer
@@ -282,3 +304,35 @@ class TokenProvisionSerializer(serializers.Serializer):
 
     username = serializers.CharField()
     password = serializers.CharField()
+
+    def create(self, validated_data: Any) -> models.Token:
+        """Create a token
+
+        Args:
+            validated_data (Any): Validated data
+
+        Returns:
+            models.Token: Token instance
+        """
+        username = validated_data["username"]
+        password = validated_data["password"]
+
+        if not username or not password:
+            raise serializers.ValidationError(
+                _("Username or password is missing. Please try again.")
+            )
+
+        user = authenticate(username=username, password=password)
+
+        if not user:
+            raise serializers.ValidationError(
+                _("User with the given credentials does not exist. Please try again.")
+            )
+
+        token, created = models.Token.objects.get_or_create(user=user)
+
+        if token.is_expired:
+            token.delete()
+            token = models.Token.objects.create(user=user)
+
+        return token

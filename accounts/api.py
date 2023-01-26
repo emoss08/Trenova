@@ -19,10 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import authenticate
 from django.db.models import QuerySet
 from rest_framework import status
-from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -101,6 +99,7 @@ class TokenProvisionView(APIView):
 
     throttle_scope = "auth"
     permission_classes = []
+    serializer_class = serializers.TokenProvisionSerializer
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Handle Post requests
@@ -114,32 +113,15 @@ class TokenProvisionView(APIView):
             Response: Response of token and user id
         """
 
-        serializer = serializers.TokenProvisionSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid()
-
-        username = serializer.data.get("username")
-        password = serializer.data.get("password")
-
-        if not username or not password:
-            raise AuthenticationFailed({"message": "Username or password is missing"})
-        user = authenticate(username=username, password=password)
-
-        if not user:
-            raise AuthenticationFailed({"message": "Invalid credentials"})
-
-        token, created = models.Token.objects.get_or_create(user=user)
-
-        # if the token is expired then create a new one for the user rather than returning the old one
-        if token.is_expired:
-            token.delete()
-            token = models.Token.objects.create(user=user)  # type: ignore
+        serializer.save()
 
         return Response(
             {
-                "user_id": user.pk,
-                "api_token": token.key,
-            },
-            status=status.HTTP_200_OK,
+                "user_id": serializer.instance.user.id,
+                "api_token": serializer.instance.key,
+            }, status=status.HTTP_200_OK
         )
 
 
