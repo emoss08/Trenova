@@ -307,17 +307,97 @@ class BillingQueue(GenericModel):
         editable=False,
         unique=True,
     )
+    order_type = models.ForeignKey(
+        "order.OrderType",
+        on_delete=models.RESTRICT,
+        verbose_name=_("Order Type"),
+        related_name="billing_queue",
+        help_text=_("Assigned order type to the billing queue"),
+    )
     order = models.ForeignKey(
         "order.Order",
         on_delete=models.RESTRICT,
         related_name="billing_queue",
         help_text=_("Assigned order to the billing queue"),
+        verbose_name=_("Order"),
+    )
+    revenue_code = models.ForeignKey(
+        "accounting.RevenueCode",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        verbose_name=_("Revenue Code"),
+        help_text=_("Assigned revenue code to the billing queue"),
+        blank=True,
+        null=True,
+    )
+    customer = models.ForeignKey(
+        "customer.Customer",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        help_text=_("Assigned customer to the billing queue"),
+        verbose_name=_("Customer"),
+    )
+    invoice_number = models.CharField(
+        _("Invoice Number"),
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text=_("Invoice number for the billing queue"),
+    )
+    pieces = models.PositiveIntegerField(
+        _("Pieces"),
+        help_text=_("Total Piece Count of the Order"),
+        default=0,
+    )
+    weight = models.DecimalField(
+        _("Weight"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Total Weight of the Order"),
+        default=0,
     )
     bill_type = ChoiceField(
         _("Bill Type"),
         choices=BillTypeChoices.choices,
         default=BillTypeChoices.INVOICE,
         help_text=_("Bill type for the billing queue"),
+    )
+    bill_date = models.DateField(
+        _("Billed Date"),
+        null=True,
+        blank=True,
+        help_text=_("Date invoiced was billed."),
+    )
+    mileage = models.DecimalField(
+        _("Total Mileage"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text=_("Total Mileage"),
+        blank=True,
+        null=True,
+    )
+    worker = models.ForeignKey(
+        "worker.Worker",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        help_text=_("Assigned worker to the billing queue"),
+        verbose_name=_("Worker"),
+    )
+    commodity = models.ForeignKey(
+        "commodities.Commodity",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        help_text=_("Assigned commodity to the billing queue"),
+        verbose_name=_("Commodity"),
+        blank=True,
+        null=True,
+    )
+    commodity_descr = models.CharField(
+        _("Commodity Description"),
+        max_length=255,
+        blank=True,
+        null=True,
     )
     other_charge_total = models.DecimalField(
         _("Other Charge Total"),
@@ -328,6 +408,15 @@ class BillingQueue(GenericModel):
         null=True,
         help_text=_("Other charge total for Order"),
     )
+    freight_charge_amount = models.DecimalField(
+        _("Freight Charge Amount"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text=_("Freight Charge Amount"),
+        blank=True,
+        null=True,
+    )
     total_amount = models.DecimalField(
         _("Total Amount"),
         max_digits=10,
@@ -336,6 +425,30 @@ class BillingQueue(GenericModel):
         blank=True,
         null=True,
         help_text=_("Total amount for Order"),
+    )
+    is_summary = models.BooleanField(
+        _("Is Summary"),
+        default=False,
+        help_text=_("Is the invoice going to be a summary bill."),
+    )
+    is_cancelled = models.BooleanField(
+        _("Is Cancelled"),
+        default=False,
+        help_text=_("Is the invoice cancelled."),
+    )
+    bol_number = models.CharField(
+        _("BOL Number"),
+        max_length=255,
+        help_text=_("BOL Number"),
+    )
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        help_text=_("Assigned user to the billing queue"),
+        verbose_name=_("User"),
+        blank=True,
+        null=True,
     )
 
     class Meta:
@@ -415,9 +528,35 @@ class BillingQueue(GenericModel):
         """
         self.full_clean()
 
+        # If order has `pieces`, set `pieces` to order `pieces`
+        if self.order.pieces:
+            self.pieces = self.order.pieces
+
+        # If order has `weight`, set `weight` to order `weight`
+        if self.order.weight:
+            self.weight = self.order.weight
+
+        # If order has `mileage`, set `mileage` to order `mileage`
+        if self.order.mileage:
+            self.mileage = self.order.mileage
+
+        # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
+        if self.order.revenue_code:
+            self.revenue_code = self.order.revenue_code
+
+        # If commodity `description` is set, set `commodity_descr` to the description of the commodity
+        if self.commodity.description:
+            self.commodity_descr = self.commodity.description
+
+        # if order has `bol_number`, set `bol_number` to `bol_number`
+        if self.order.bol_number:
+            self.bol_number = self.order.bol_number
+
+        # If `bill_type` is not set, set `bill_type` to `INVOICE`
         if not self.bill_type:
             self.bill_type = self.BillTypeChoices.INVOICE
 
+        self.freight_charge_amount = self.order.freight_charge_amount
         self.total_amount = self.order.sub_total
         self.other_charge_total = self.order.other_charge_amount
 
