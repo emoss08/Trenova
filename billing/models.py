@@ -45,6 +45,26 @@ class FuelMethodChoices(models.TextChoices):
     PERCENTAGE = "P", _("Percentage")
 
 
+@final
+class BillingExceptionChoices(models.TextChoices):
+    """
+    A class representing the possible billing exception choices.
+
+    This class inherits from the `models.TextChoices` class and defines five constants:
+    - PAPERWORK: representing a billing exception related to paperwork
+    - CHARGE: representing a billing exception resulting in a charge
+    - CREDIT: representing a billing exception resulting in a credit
+    - DEBIT: representing a billing exception resulting in a debit
+    - OTHER: representing any other type of billing exception
+    """
+
+    PAPERWORK = "PAPERWORK", _("Paperwork")
+    CHARGE = "CHARGE", _("Charge")
+    CREDIT = "CREDIT", _("Credit")
+    DEBIT = "DEBIT", _("Debit")
+    OTHER = "OTHER", _("OTHER")
+
+
 class ChargeType(GenericModel):
     """Class for storing other charge types.
 
@@ -167,7 +187,7 @@ class AccessorialCharge(GenericModel):
 
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
-        ordering = ["code"]
+        ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
         """Other Charge string representation
@@ -477,45 +497,42 @@ class BillingQueue(GenericModel):
         """
         super().clean()
 
+        errors = []
+
         # If order is already billed raise ValidationError
         if self.order.billed:
-            raise ValidationError(
-                {
-                    "order": _(
-                        "Order has already been billed. Please try again with a different order."
-                    ),
-                },
+            errors.append(
+                _(
+                    "Order has already been billed. Please try again with a different order."
+                )
             )
 
         # If order is already transferred to billing raise ValidationError
         if self.order.transferred_to_billing:
-            raise ValidationError(
-                {
-                    "order": _(
-                        "Order has already been transferred to billing. Please try again with a different order."
-                    ),
-                },
+            errors.append(
+                _(
+                    "Order has already been transferred to billing. Please try again with a different order."
+                )
             )
 
         # If order is voided raise ValidationError
         if self.order.status == StatusChoices.VOIDED:
-            raise ValidationError(
-                {
-                    "order": _(
-                        "Order has been voided. Please try again with a different order."
-                    ),
-                },
+            errors.append(
+                _(
+                    "Order has been voided. Please try again with a different order."
+                )
             )
 
         # If order is not ready to be billed raise ValidationError
         if self.order.ready_to_bill is False:
-            raise ValidationError(
-                {
-                    "order": _(
-                        "Order is not ready to be billed. Please try again with a different order."
-                    ),
-                },
+            errors.append(
+                _(
+                    "Order is not ready to be billed. Please try again with a different order."
+                )
             )
+
+        if errors:
+            raise ValidationError({"order": errors})
 
     def save(self, **kwargs: Any) -> None:
         """Save method for the BillingQueue model.
