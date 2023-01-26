@@ -16,14 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Any
 
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets, status
-from rest_framework.request import Request
-from rest_framework.response import Response
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import viewsets
 
 from organization import models, serializers
 
@@ -56,9 +53,12 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             "depots__details",
         )
 
+
 @extend_schema(
     parameters=[
-        OpenApiParameter("organizations_pk", OpenApiTypes.UUID, OpenApiParameter.PATH, required=True),
+        OpenApiParameter(
+            "organizations_pk", OpenApiTypes.UUID, OpenApiParameter.PATH, required=True
+        ),
     ]
 )
 class DepotViewSet(viewsets.ModelViewSet):
@@ -81,7 +81,9 @@ class DepotViewSet(viewsets.ModelViewSet):
 
 @extend_schema(
     parameters=[
-        OpenApiParameter("organizations_pk", OpenApiTypes.UUID, OpenApiParameter.PATH, required=True),
+        OpenApiParameter(
+            "organizations_pk", OpenApiTypes.UUID, OpenApiParameter.PATH, required=True
+        ),
     ]
 )
 class DepartmentViewSet(viewsets.ModelViewSet):

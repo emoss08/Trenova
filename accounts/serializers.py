@@ -19,9 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import password_validation, authenticate
+from django.contrib.auth import authenticate, password_validation
 from django.utils.translation import gettext_lazy as _
-from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
@@ -121,6 +121,7 @@ class UserProfileSerializer(GenericSerializer):
             "user",
         )
 
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -144,8 +145,8 @@ class UserProfileSerializer(GenericSerializer):
                     "city": "San Antonio",
                     "state": "TX",
                     "zip_code": "12345",
-                    "phone": "12345678903"
-                }
+                    "phone": "12345678903",
+                },
             },
             request_only=True,
         ),
@@ -179,8 +180,8 @@ class UserProfileSerializer(GenericSerializer):
                     "city": "San Antonio",
                     "state": "TX",
                     "zip_code": "12345",
-                    "phone": "12345678903"
-                }
+                    "phone": "12345678903",
+                },
             },
             response_only=True,
         ),
@@ -238,7 +239,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:    # type: ignore
+    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
@@ -272,9 +273,7 @@ class UserSerializer(GenericSerializer):
         OpenApiExample(
             "Change User Password Response",
             summary="Change User Password Response",
-            value={
-                "Password updated successfully."
-            },
+            value={"Password updated successfully."},
             response_only=True,
             status_codes=["200"],
         ),
@@ -407,7 +406,7 @@ class TokenProvisionSerializer(serializers.Serializer):
         if not user:
             raise serializers.ValidationError(
                 "User with the given credentials does not exist. Please try again.",
-                code="authorization"
+                code="authorization",
             )
         attrs["user"] = user
         return attrs

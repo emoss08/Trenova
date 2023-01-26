@@ -275,5 +275,5 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "ENUM_NAME_OVERRIDES": {
         "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
-        }
+    },
 }

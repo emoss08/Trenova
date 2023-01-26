@@ -64,10 +64,13 @@ class TestUserAPI:
         assert "password" not in response.data
         assert response.data["username"] == payload["username"]
         assert response.data["email"] == payload["email"]
-        assert response.data["profile"]["first_name"] == payload["profile"]["first_name"]
+        assert (
+            response.data["profile"]["first_name"] == payload["profile"]["first_name"]
+        )
         assert response.data["profile"]["last_name"] == payload["profile"]["last_name"]
         assert (
-            response.data["profile"]["address_line_1"] == payload["profile"]["address_line_1"]
+            response.data["profile"]["address_line_1"]
+            == payload["profile"]["address_line_1"]
         )
         assert response.data["profile"]["city"] == payload["profile"]["city"]
         assert response.data["profile"]["state"] == payload["profile"]["state"]
