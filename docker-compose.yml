@@ -29,7 +29,7 @@ services:
 
   db:
     image: postgres:latest
-    container_name: user-db
+    container_name: monta-db
     ports:
       - "5432:5432"
     environment:
@@ -37,6 +37,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
     restart: always
+    expose :
+      - "5432"
 
 
   redis:
@@ -49,6 +51,8 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    expose :
+      - "6379"
 
   redis-slave:
     container_name: monta-cache-slave
@@ -58,4 +62,23 @@ services:
     command: redis-server --slaveof monta-cache 6379
     depends_on:
       - redis
+    restart: always
+
+  monta:
+    build: .
+    command: python manage.py migrate
+    volumes:
+      - .:/code
+      - ./logs:/code/logs
+      - ./static:/code/static
+      - ./media:/code/media
+      - ./config:/code/config
+      - ./scripts:/code/scripts
+    ports:
+        - "8000:8000"
+    depends_on:
+        - db
+        - redis
+        - redis-slave
+        - broker
     restart: always
