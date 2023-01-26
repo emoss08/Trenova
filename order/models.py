@@ -232,8 +232,8 @@ class OrderType(GenericModel):
 
     class Meta:
         verbose_name = _("Order Type")
-        ordering = ["name"]
         verbose_name_plural = _("Order Types")
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Order Type String Representation
