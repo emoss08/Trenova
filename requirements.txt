@@ -45,3 +45,4 @@ redis==4.4.2
 rich==13.0.0
 tox==4.3.5
 whitenoise==6.3.0
+drf-spectacular==0.25.1
