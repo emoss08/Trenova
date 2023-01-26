@@ -31,6 +31,7 @@ TOKEN_URL = reverse("provision-token")
 
 client = APIClient()
 
+
 def test_obtain_token(organization):
     """
     Test obtain token successfully.
@@ -53,6 +54,7 @@ def test_obtain_token(organization):
     assert "api_token" in response.data
     assert "user_id" in response.data
 
+
 def test_obtain_token_with_bad_credentials(user):
     """
     Test obtain token throws ValidationError when the credentials
@@ -68,9 +70,13 @@ def test_obtain_token_with_bad_credentials(user):
         serializer = TokenProvisionSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
-    assert "User with the given credentials does not exist. Please try again." in str(excinfo.value.detail)
+    assert "User with the given credentials does not exist. Please try again." in str(
+        excinfo.value.detail
+    )
     assert excinfo.value.default_code == "invalid"
     assert "code='authorization'" in str(excinfo.value.detail["non_field_errors"])
+
+
 def test_obtain_token_without_username():
     """
     Test obtain token throws ValidationError when the username

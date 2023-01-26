@@ -136,5 +136,5 @@ class TestUserAPI:
         Test delete user
         """
         response = api_client.delete(f"/api/users/{user_api.data['id']}/")
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

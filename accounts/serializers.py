@@ -121,7 +121,71 @@ class UserProfileSerializer(GenericSerializer):
             "user",
         )
 
-
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "User Request",
+            summary="User Request",
+            value={
+                "id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                "department": "7eaaca59-7e58-4398-82e9-d6d9321d483d",
+                "username": "test_user",
+                "email": "test_user@example.com",
+                "password": "test_password",
+                "profile": {
+                    "id": "a75a4b66-3f3a-48af-a089-4b7f1373f7a1",
+                    "user": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                    "title": "bfa74d30-915f-425a-b957-15b826c3bee2",
+                    "first_name": "Example",
+                    "last_name": "User",
+                    "profile_picture": None,
+                    "address_line_1": "123 Example Location",
+                    "address_line_2": "Unit 123",
+                    "city": "San Antonio",
+                    "state": "TX",
+                    "zip_code": "12345",
+                    "phone": "12345678903"
+                }
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            "User Response",
+            summary="User Response",
+            value={
+                "last_login": "2023-01-26T19:17:37.565110Z",
+                "is_superuser": False,
+                "id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                "department": "7eaaca59-7e58-4398-82e9-d6d9321d483d",
+                "username": "test_user",
+                "email": "test_user@example.com",
+                "is_staff": False,
+                "date_joined": "2022-12-04T00:05:00Z",
+                "groups": [
+                    0,
+                ],
+                "user_permissions": [
+                    0,
+                ],
+                "profile": {
+                    "id": "a75a4b66-3f3a-48af-a089-4b7f1373f7a1",
+                    "user": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                    "title": "bfa74d30-915f-425a-b957-15b826c3bee2",
+                    "first_name": "Example",
+                    "last_name": "User",
+                    "profile_picture": "http://localhost:8000/media/profile_pictures/placeholder.png",
+                    "address_line_1": "123 Example Location",
+                    "address_line_2": "Unit 123",
+                    "city": "San Antonio",
+                    "state": "TX",
+                    "zip_code": "12345",
+                    "phone": "12345678903"
+                }
+            },
+            response_only=True,
+        ),
+    ]
+)
 class UserSerializer(GenericSerializer):
     """
     User Serializer
@@ -174,7 +238,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
+    def update(self, instance: models.User, validated_data: Any) -> models.User:    # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
@@ -193,11 +257,29 @@ class UserSerializer(GenericSerializer):
         if profile_data := validated_data.pop("profile", None):
             instance.profile.update_profile(**profile_data)
 
+        if password := validated_data.pop("password", None):
+            raise serializers.ValidationError(
+                "Password cannot be changed using this endpoint. Please use the change password endpoint."
+            )
+
         instance.update_user(**validated_data)
 
         return instance
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Change User Password Response",
+            summary="Change User Password Response",
+            value={
+                "Password updated successfully."
+            },
+            response_only=True,
+            status_codes=["200"],
+        ),
+    ]
+)
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Change Password Serializer
@@ -324,7 +406,7 @@ class TokenProvisionSerializer(serializers.Serializer):
 
         if not user:
             raise serializers.ValidationError(
-                _("User with the given credentials does not exist. Please try again."),
+                "User with the given credentials does not exist. Please try again.",
                 code="authorization"
             )
         attrs["user"] = user
