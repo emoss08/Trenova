@@ -450,10 +450,11 @@ class TestMovementValidation:
                 equipment=None,
             )
 
-        assert excinfo.value.message_dict["primary_worker"] == [
+
+        assert excinfo.value.message_dict['primary_worker'] == [
             "Primary worker is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
         ]
-        assert excinfo.value.message_dict["equipment"] == [
+        assert excinfo.value.message_dict['equipment'] == [
             "Equipment is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
         ]
 
@@ -472,6 +473,7 @@ class TestMovementValidation:
             movement.status = "P"
             movement.save()
 
+
         assert excinfo.value.message_dict["status"] == [
             "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
         ]
@@ -489,6 +491,7 @@ class TestMovementValidation:
         with pytest.raises(ValidationError) as excinfo:
             movement.status = "N"
             movement.save()
+
 
         assert excinfo.value.message_dict["status"] == [
             "Cannot change status to `NEW` if any of the stops are in progress or completed. Please try again."
