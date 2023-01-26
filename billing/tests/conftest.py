@@ -19,7 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
+from accounting.tests.factories import RevenueCodeFactory
 from billing.tests.factories import ChargeTypeFactory, DocumentClassificationFactory
+from commodities.factories import CommodityFactory
+from customer.factories import CustomerFactory
+from order.tests.factories import OrderTypeFactory, OrderFactory
+from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -32,9 +37,51 @@ def document_classification():
     yield DocumentClassificationFactory()
 
 
-@pytest.fixture()
+@pytest.fixture
 def charge_type():
     """
     Charge type fixture
     """
     yield ChargeTypeFactory()
+
+@pytest.fixture
+def order_type():
+    """
+    Order Type Fixture
+    """
+    yield OrderTypeFactory()
+
+@pytest.fixture
+def order():
+    """
+    Order Fixture
+    """
+    yield OrderFactory()
+
+@pytest.fixture
+def revenue_code():
+    """
+    Revenue Code Fixture
+    """
+    yield RevenueCodeFactory()
+
+@pytest.fixture
+def customer():
+    """
+    Customer Fixture
+    """
+    yield CustomerFactory()
+
+@pytest.fixture
+def worker():
+    """
+    Worker Fixture
+    """
+    yield WorkerFactory()
+
+@pytest.fixture
+def commodity():
+    """
+    Commodity Fixture
+    """
+    yield CommodityFactory()
