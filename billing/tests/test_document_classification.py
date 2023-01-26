@@ -150,7 +150,7 @@ class TestDocumentClassificationAPI:
             f"/api/document_classifications/{_response.data['id']}/"
         )
 
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None
 
 

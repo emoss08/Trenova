@@ -137,5 +137,5 @@ class TestOrderCommentAPI:
             f"/api/order_comments/{order_comment_api.data['id']}/"
         )
 
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

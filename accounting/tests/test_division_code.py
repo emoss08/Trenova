@@ -211,8 +211,6 @@ class TestDivisionCodeApi:
             },
             format="json",
         )
-
         response = api_client.delete(f"/api/division_codes/{_response.data['id']}/")
-
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

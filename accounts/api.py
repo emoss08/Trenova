@@ -19,10 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import authenticate
 from django.db.models import QuerySet
 from rest_framework import status
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -40,7 +39,7 @@ class UserViewSet(OrganizationMixin):
 
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
-    filterset_fields = ["department", "username", "email", "is_staff"]
+    filterset_fields = ["department__name", "is_staff"]
 
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
         """Filter the queryset to only include the current user
@@ -67,40 +66,34 @@ class UpdatePasswordView(UpdateAPIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Update the password
+        """Handle update requests
 
         Args:
-            request (Request): The request object
+            request (Request): Request object
             *args (Any): Arguments
-            **kwargs (Any): Keyword arguments
+            **kwargs (Any): Keyword Arguments
 
         Returns:
-            Response: The response object
+            Response: Response of the updated user
         """
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        if hasattr(user, "token"):
-            user.token.delete()
-
-        token, created = models.Token.objects.get_or_create(user=user)
+        serializer.save()
         return Response(
-            {
-                "token": token.key,
-            },
+            "Password updated successfully",
             status=status.HTTP_200_OK,
         )
 
 
-class TokenProvisionView(APIView):
+class TokenProvisionView(ObtainAuthToken):
     """
     Rest API endpoint for users can create a token
     """
 
     throttle_scope = "auth"
     permission_classes = []
+    serializer_class = serializers.TokenProvisionSerializer
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Handle Post requests
@@ -114,32 +107,20 @@ class TokenProvisionView(APIView):
             Response: Response of token and user id
         """
 
-        serializer = serializers.TokenProvisionSerializer(data=request.data)
-        serializer.is_valid()
-
-        username = serializer.data.get("username")
-        password = serializer.data.get("password")
-
-        if not username or not password:
-            raise AuthenticationFailed({"message": "Username or password is missing"})
-        user = authenticate(username=username, password=password)
-
-        if not user:
-            raise AuthenticationFailed({"message": "Invalid credentials"})
-
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
         token, created = models.Token.objects.get_or_create(user=user)
 
-        # if the token is expired then create a new one for the user rather than returning the old one
         if token.is_expired:
             token.delete()
-            token = models.Token.objects.create(user=user)  # type: ignore
+            token = models.Token.objects.create(user=user)
 
         return Response(
             {
-                "user_id": user.pk,
+                "user_id": user.id,
                 "api_token": token.key,
-            },
-            status=status.HTTP_200_OK,
+            }
         )
 
 

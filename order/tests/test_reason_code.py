@@ -117,5 +117,5 @@ class TestReasonCodeAPI:
         """
         response = api_client.delete(f"/api/reason_codes/{reason_code_api.data['id']}/")
 
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

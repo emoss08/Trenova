@@ -19,8 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import password_validation
+from django.contrib.auth import authenticate, password_validation
 from django.utils.translation import gettext_lazy as _
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
@@ -121,6 +122,71 @@ class UserProfileSerializer(GenericSerializer):
         )
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "User Request",
+            summary="User Request",
+            value={
+                "id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                "department": "7eaaca59-7e58-4398-82e9-d6d9321d483d",
+                "username": "test_user",
+                "email": "test_user@example.com",
+                "password": "test_password",
+                "profile": {
+                    "id": "a75a4b66-3f3a-48af-a089-4b7f1373f7a1",
+                    "user": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                    "title": "bfa74d30-915f-425a-b957-15b826c3bee2",
+                    "first_name": "Example",
+                    "last_name": "User",
+                    "profile_picture": None,
+                    "address_line_1": "123 Example Location",
+                    "address_line_2": "Unit 123",
+                    "city": "San Antonio",
+                    "state": "TX",
+                    "zip_code": "12345",
+                    "phone": "12345678903",
+                },
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            "User Response",
+            summary="User Response",
+            value={
+                "last_login": "2023-01-26T19:17:37.565110Z",
+                "is_superuser": False,
+                "id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                "department": "7eaaca59-7e58-4398-82e9-d6d9321d483d",
+                "username": "test_user",
+                "email": "test_user@example.com",
+                "is_staff": False,
+                "date_joined": "2022-12-04T00:05:00Z",
+                "groups": [
+                    0,
+                ],
+                "user_permissions": [
+                    0,
+                ],
+                "profile": {
+                    "id": "a75a4b66-3f3a-48af-a089-4b7f1373f7a1",
+                    "user": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                    "title": "bfa74d30-915f-425a-b957-15b826c3bee2",
+                    "first_name": "Example",
+                    "last_name": "User",
+                    "profile_picture": "http://localhost:8000/media/profile_pictures/placeholder.png",
+                    "address_line_1": "123 Example Location",
+                    "address_line_2": "Unit 123",
+                    "city": "San Antonio",
+                    "state": "TX",
+                    "zip_code": "12345",
+                    "phone": "12345678903",
+                },
+            },
+            response_only=True,
+        ),
+    ]
+)
 class UserSerializer(GenericSerializer):
     """
     User Serializer
@@ -140,10 +206,9 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile",)
-        extra_read_only_fields = ("groups", "user_permissions", "password")
+        extra_read_only_fields = ("groups", "user_permissions", "is_staff", "is_active")
         extra_kwargs = {
-            "is_staff": {"read_only": True},
-            "is_active": {"read_only": True},
+            "password": {"write_only": True, "required": False},
             "date_joined": {"read_only": True},
         }
 
@@ -166,7 +231,7 @@ class UserSerializer(GenericSerializer):
         profile_data["organization"] = organization
 
         # Create the user
-        user: models.User = models.User.objects.create(**validated_data)
+        user: models.User = models.User.objects.create_user(**validated_data)
 
         # Create the user profile
         if profile_data:
@@ -193,11 +258,27 @@ class UserSerializer(GenericSerializer):
         if profile_data := validated_data.pop("profile", None):
             instance.profile.update_profile(**profile_data)
 
+        if password := validated_data.pop("password", None):
+            raise serializers.ValidationError(
+                "Password cannot be changed using this endpoint. Please use the change password endpoint."
+            )
+
         instance.update_user(**validated_data)
 
         return instance
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Change User Password Response",
+            summary="Change User Password Response",
+            value={"Password updated successfully."},
+            response_only=True,
+            status_codes=["200"],
+        ),
+    ]
+)
 class ChangePasswordSerializer(serializers.Serializer):
     """
     Change Password Serializer
@@ -275,10 +356,57 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
 
 
+@extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            "Token Provision Request",
+            summary="Token Provision Request",
+            value={
+                "username": "test",
+                "password": "test",
+            },
+            request_only=True,
+        ),
+        OpenApiExample(
+            "Token Provision Response",
+            summary="Token Provision Response",
+            value={
+                "user_id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
+                "api_token": "756ab1e4e0d23ff3a7eda30e09ffda65cae2d623",
+            },
+            response_only=True,
+        ),
+    ]
+)
 class TokenProvisionSerializer(serializers.Serializer):
     """
     Token Provision Serializer
     """
 
     username = serializers.CharField()
-    password = serializers.CharField()
+    password = serializers.CharField(
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+
+    def validate(self, attrs: Any) -> Any:
+        """Validate the data
+
+        Args:
+            attrs (Any): Data to validate
+
+        Returns:
+            Any
+        """
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        user = authenticate(username=username, password=password)
+
+        if not user:
+            raise serializers.ValidationError(
+                "User with the given credentials does not exist. Please try again.",
+                code="authorization",
+            )
+        attrs["user"] = user
+        return attrs

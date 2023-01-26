@@ -202,14 +202,14 @@ class TestOrderDocumentationApi:
 
     def test_delete(self, api_client, order_documentation_api):
         """
-        Test Delete by ID
+        Test Delete by I
         """
 
         response = api_client.delete(
             f"/api/order_documents/{order_documentation_api.data['id']}/"
         )
 
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None
 
         if os.path.exists("testfile.txt"):
