@@ -166,7 +166,7 @@ class UserSerializer(GenericSerializer):
         profile_data["organization"] = organization
 
         # Create the user
-        user: models.User = models.User.objects.create(**validated_data)
+        user: models.User = models.User.objects.create_user(**validated_data)
 
         # Create the user profile
         if profile_data:
@@ -303,36 +303,29 @@ class TokenProvisionSerializer(serializers.Serializer):
     """
 
     username = serializers.CharField()
-    password = serializers.CharField()
+    password = serializers.CharField(
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
 
-    def create(self, validated_data: Any) -> models.Token:
-        """Create a token
+    def validate(self, attrs: Any) -> Any:
+        """Validate the data
 
         Args:
-            validated_data (Any): Validated data
+            attrs (Any): Data to validate
 
         Returns:
-            models.Token: Token instance
+            Any
         """
-        username = validated_data["username"]
-        password = validated_data["password"]
-
-        if not username or not password:
-            raise serializers.ValidationError(
-                _("Username or password is missing. Please try again.")
-            )
+        username = attrs.get("username")
+        password = attrs.get("password")
 
         user = authenticate(username=username, password=password)
 
         if not user:
             raise serializers.ValidationError(
-                _("User with the given credentials does not exist. Please try again.")
+                _("User with the given credentials does not exist. Please try again."),
+                code="authorization"
             )
-
-        token, created = models.Token.objects.get_or_create(user=user)
-
-        if token.is_expired:
-            token.delete()
-            token = models.Token.objects.create(user=user)
-
-        return token
+        attrs["user"] = user
+        return attrs

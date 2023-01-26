@@ -21,9 +21,11 @@ from typing import Any
 
 from django.db.models import QuerySet
 from rest_framework import status
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from accounts import models, serializers
@@ -92,7 +94,7 @@ class UpdatePasswordView(UpdateAPIView):
         )
 
 
-class TokenProvisionView(APIView):
+class TokenProvisionView(ObtainAuthToken):
     """
     Rest API endpoint for users can create a token
     """
@@ -100,6 +102,7 @@ class TokenProvisionView(APIView):
     throttle_scope = "auth"
     permission_classes = []
     serializer_class = serializers.TokenProvisionSerializer
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """Handle Post requests
@@ -114,14 +117,19 @@ class TokenProvisionView(APIView):
         """
 
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid()
-        serializer.save()
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, created = models.Token.objects.get_or_create(user=user)
+
+        if token.is_expired:
+            token.delete()
+            token = models.Token.objects.create(user=user)
 
         return Response(
             {
-                "user_id": serializer.instance.user.id,
-                "api_token": serializer.instance.key,
-            }, status=status.HTTP_200_OK
+                "user_id": user.id,
+                "api_token": token.key,
+            }
         )
 
 
