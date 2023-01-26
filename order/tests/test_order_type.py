@@ -110,5 +110,5 @@ class TestOrderTypeAPI:
         """
         response = api_client.delete(f"/api/order_types/{order_type_api.data['id']}/")
 
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

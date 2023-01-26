@@ -123,5 +123,5 @@ class TestAdditionalChargeAPI:
             f"/api/additional_charges/{additional_charge_api.data['id']}/"
         )
 
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

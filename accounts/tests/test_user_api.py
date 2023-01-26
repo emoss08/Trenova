@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.contrib.auth import get_user_model
 
 pytestmark = pytest.mark.django_db
 
@@ -36,6 +37,70 @@ class TestUserAPI:
         """
         response = api_client.get(f"/api/users/{user_api.data['id']}/")
         assert response.status_code == 200
+
+    def test_create_success(self, api_client):
+        """
+        Test Create user
+        """
+
+        payload = {
+            "username": "test_user",
+            "email": "test_user@example.com",
+            "password": "test_password1234%",
+            "profile": {
+                "first_name": "test",
+                "last_name": "user",
+                "address_line_1": "test",
+                "city": "test",
+                "state": "NC",
+                "zip_code": "12345",
+            },
+        }
+
+        response = api_client.post("/api/users/", payload, format="json")
+        assert response.status_code == 201
+        user = get_user_model().objects.get(username=payload["username"])
+        assert user.check_password(payload["password"])
+        assert "password" not in response.data
+        assert response.data["username"] == payload["username"]
+        assert response.data["email"] == payload["email"]
+        assert (
+            response.data["profile"]["first_name"] == payload["profile"]["first_name"]
+        )
+        assert response.data["profile"]["last_name"] == payload["profile"]["last_name"]
+        assert (
+            response.data["profile"]["address_line_1"]
+            == payload["profile"]["address_line_1"]
+        )
+        assert response.data["profile"]["city"] == payload["profile"]["city"]
+        assert response.data["profile"]["state"] == payload["profile"]["state"]
+        assert response.data["profile"]["zip_code"] == payload["profile"]["zip_code"]
+
+    def test_user_with_email_exists_error(self, api_client, organization):
+        """
+        Test Create user with email exists
+        """
+        payload = {
+            "username": "test_user2",
+            "email": "test_user@example.com",
+            "password": "test_password1234%",
+            "profile": {
+                "first_name": "test",
+                "last_name": "user",
+                "address_line_1": "test",
+                "city": "test",
+                "state": "NC",
+                "zip_code": "12345",
+            },
+        }
+        get_user_model().objects.create_user(
+            organization=organization,
+            username=payload["username"],
+            email=payload["email"],
+            password=payload["password"],
+        )
+        response = api_client.post("/api/users/", payload, format="json")
+        assert response.status_code == 400
 
     def test_put(self, token, user_api, api_client):
         """
@@ -67,11 +132,12 @@ class TestUserAPI:
         assert response.data["profile"]["city"] == "test"
         assert response.data["profile"]["state"] == "NC"
         assert response.data["profile"]["zip_code"] == "12345"
+        assert "password" not in response.data
 
     def test_delete(self, user_api, token, api_client):
         """
         Test delete user
         """
         response = api_client.delete(f"/api/users/{user_api.data['id']}/")
-        assert response.status_code == 204
+        assert response.status_code == 200
         assert response.data is None

@@ -51,7 +51,7 @@ class UserManager(BaseUserManager):
 
     def create_user(
         self,
-        user_name: str,
+        username: str,
         email: str,
         password: str | None = None,
         **extra_fields: Any,
@@ -70,13 +70,13 @@ class UserManager(BaseUserManager):
             User: User object.
         """
 
-        if not user_name:
+        if not username:
             raise ValueError(_("The username must be set"))
         if not email:
             raise ValueError(_("The email must be set"))
 
         user: User = self.model(  # type: ignore
-            username=user_name.lower(),
+            username=username.lower(),
             email=self.normalize_email(email),
             **extra_fields,
         )
