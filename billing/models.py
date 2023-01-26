@@ -560,7 +560,7 @@ class BillingQueue(GenericModel):
             self.revenue_code = self.order.revenue_code
 
         # If commodity `description` is set, set `commodity_descr` to the description of the commodity
-        if self.commodity.description:
+        if self.commodity and self.commodity.description:
             self.commodity_descr = self.commodity.description
 
         # if order has `bol_number`, set `bol_number` to `bol_number`

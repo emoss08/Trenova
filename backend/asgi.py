@@ -14,7 +14,7 @@ from django.core.asgi import get_asgi_application
 from rich.console import Console
 
 console = Console()
-logo = text2art("MONTA", font="Larry 3D")
+logo = text2art("MONTA", font="Larry 3D")  # type: ignore
 console.print(logo, style="bold purple")
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
