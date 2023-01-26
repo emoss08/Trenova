@@ -273,4 +273,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
+        }
 }
