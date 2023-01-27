@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.urls import reverse
 
 from order import models
 
@@ -33,7 +34,7 @@ class TestOrderType:
         """
         Test Order Type list
         """
-        assert order_type is not None
+        assert order_type
 
     def test_create(self, organization):
         """
@@ -47,8 +48,8 @@ class TestOrderType:
             description="foo bar",
         )
 
-        assert ord_type is not None
-        assert ord_type.is_active is True
+        assert ord_type
+        assert ord_type.is_active
         assert ord_type.name == "foo bar"
         assert ord_type.description == "foo bar"
 
@@ -63,7 +64,7 @@ class TestOrderType:
 
         ord_type.save()
 
-        assert ord_type is not None
+        assert ord_type
         assert ord_type.name == "Foo Bart"
 
 
@@ -83,8 +84,9 @@ class TestOrderTypeAPI:
         """
         Test get Order Type by id
         """
-        response = api_client.get(f"/api/order_types/{order_type_api.data['id']}/")
-
+        response = api_client.get(
+            reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]})
+        )
         assert response.status_code == 200
         assert response.data["name"] == "Foo Bar"
         assert response.data["description"] == "Foo Bar"
@@ -95,10 +97,9 @@ class TestOrderTypeAPI:
         Test put Order Type
         """
         response = api_client.put(
-            f"/api/order_types/{order_type_api.data['id']}/",
+            reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]}),
             {"name": "New Name", "description": "New Description", "is_active": False},
         )
-
         assert response.status_code == 200
         assert response.data["name"] == "New Name"
         assert response.data["description"] == "New Description"
@@ -108,7 +109,9 @@ class TestOrderTypeAPI:
         """
         Test Delete order type
         """
-        response = api_client.delete(f"/api/order_types/{order_type_api.data['id']}/")
+        response = api_client.delete(
+            reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]}),
+        )
 
         assert response.status_code == 200
-        assert response.data is None
+        assert not response.data
