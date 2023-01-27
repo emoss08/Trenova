@@ -18,34 +18,17 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from accounting import models
-from accounting.tests.factories import GeneralLedgerAccountFactory, RevenueCodeFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestRevenueCode:
-    @pytest.fixture()
-    def revenue_code(self):
-        """
-        Revenue Code Fixture
-        """
-        return RevenueCodeFactory()
-
-    @pytest.fixture()
-    def expense_account(self):
-        """
-        Expense Code General Ledger Account Fixture
-        """
-        return GeneralLedgerAccountFactory()
-
-    @pytest.fixture()
-    def revenue_account(self):
-        """
-        Revenue Code General Ledger Account Fixture
-        """
-        return GeneralLedgerAccountFactory()
+    """
+    Test for Revenue Code
+    """
 
     def test_list(self, revenue_code):
         """
@@ -57,16 +40,6 @@ class TestRevenueCode:
         """
         Test Revenue code creation
         """
-
-        expense_account.account_type = (
-            models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
-        )
-        expense_account.save()
-
-        revenue_account.account_type = (
-            models.GeneralLedgerAccount.AccountTypeChoices.REVENUE
-        )
-        revenue_account.save()
 
         rev_code = models.RevenueCode.objects.create(
             organization=expense_account.organization,
@@ -93,3 +66,35 @@ class TestRevenueCode:
 
         assert rev_code is not None
         assert rev_code.code == "FOOB"
+
+
+class TestRevenueCodeValidation:
+    """
+    Test for Revenue Code Validation
+    """
+
+    def test_expense_account(self, revenue_code, revenue_account):
+        """
+        Test Whether the validation error
+        is thrown if an account other than an expense account
+        is passed.
+        """
+
+        with pytest.raises(
+            ValidationError, match="Entered account is not an expense account."
+        ):
+            revenue_code.expense_account = revenue_account
+            revenue_code.full_clean()
+
+    def test_revenue_account(self, revenue_code, expense_account):
+        """
+        Test Whether the validation error
+        is thrown if an account other than an expense account
+        is passed.
+        """
+
+        with pytest.raises(
+            ValidationError, match="Entered account is not a revenue account."
+        ):
+            revenue_code.revenue_account = expense_account
+            revenue_code.full_clean()
