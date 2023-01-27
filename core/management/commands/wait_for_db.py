@@ -29,22 +29,24 @@ class Command(BaseCommand):
     """
     Django command to pause execution until database is available.
 
-    This command is used to check the availability of a database and waits for it to be ready. It uses the 'check' method
-    provided by Django to check the availability of the 'default' database. If the database is not available, it waits
-    for 'delay' seconds before retrying the connection. The delay time starts at 1 second, and is doubled in each
-    iteration (up to a maximum of 60 seconds) so that the script doesn't retry the connection too frequently when the
-    database is not available, which would put unnecessary load on the server. Once the database is available, the
-    command prints a message 'Database available!' to the console.
+    This command is used to check the availability of a database and waits for it to be ready. It uses the
+    'check' method provided by Django to check the availability of the 'default' database. If the database
+    is not available, it waits for 'delay' seconds before retrying the connection. The delay time starts
+    at 1 second, and is doubled in each iteration (up to a maximum of 60 seconds) so that the script
+    doesn't retry the connection too frequently when the database is not available, which would put
+    unnecessary load on the server. Once the database is available, the command prints a message
+    'Database available!' to the console.
     """
 
     def handle(self, *args: Any, **options: Any) -> None:
         """
         Handle the command.
 
-        This method is called when the command is run. It writes the message 'Waiting for database...' to the console,
-        and enters a loop to check the availability of the 'default' database using the 'check' method provided by Django.
-        If the database is not available, it waits for 'delay' seconds before retrying the connection. Once the database
-        becomes available, the method writes the message 'Database available!' to the console.
+        This method is called when the command is run. It writes the message 'Waiting for database...' to the
+        console, and enters a loop to check the availability of the 'default' database using the 'check'
+        method provided by Django. If the database is not available, it waits for 'delay' seconds
+        before retrying the connection. Once the database becomes available, the method writes the
+        message 'Database available!' to the console.
 
         Args:
             *args: Additional arguments passed to the command

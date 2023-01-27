@@ -75,7 +75,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "primary_worker": _(
-                        "Cannot assign a worker with an expired license. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired license. Please update the worker's"
+                        " profile and try again."
                     )
                 },
                 code="invalid",
@@ -89,7 +90,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "primary_worker": _(
-                        "Cannot assign a worker with an expired physical. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired physical. Please update the worker's"
+                        " profile and try again."
                     )
                 },
                 code="invalid",
@@ -103,7 +105,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "primary_worker": _(
-                        "Cannot assign a worker with an expired medical certificate. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired medical certificate. Please update the worker's"
+                        " profile and try again."
                     )
                 },
                 code="invalid",
@@ -117,7 +120,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "primary_worker": _(
-                        "Cannot assign a worker with an expired medical certificate. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired medical certificate. Please update the worker's"
+                        " profile and try again."
                     )
                 },
                 code="invalid",
@@ -131,7 +135,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "primary_worker": _(
-                        "Cannot assign a worker with an expired MVR. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired MVR. Please update the worker's"
+                        " profile and try again."
                     ),
                 },
                 code="invalid",
@@ -165,7 +170,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "secondary_worker": _(
-                        "Cannot assign a worker with an expired license. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired license. Please update the worker's"
+                        " profile and try again."
                     )
                 },
                 code="invalid",
@@ -179,7 +185,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "secondary_worker": _(
-                        "Cannot assign a worker with an expired physical. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired physical. Please update the worker's"
+                        " profile and try again."
                     )
                 },
                 code="invalid",
@@ -193,7 +200,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "secondary_worker": _(
-                        "Cannot assign a worker with an expired medical certificate. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired medical certificate. Please update the"
+                        " worker's profile and try again."
                     )
                 },
                 code="invalid",
@@ -207,7 +215,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "secondary_worker": _(
-                        "Cannot assign a worker with an expired MVR. Please update the worker's profile and try again."
+                        "Cannot assign a worker with an expired MVR. Please update the worker's"
+                        " profile and try again."
                     ),
                 },
                 code="invalid",
@@ -338,7 +347,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "status": _(
-                        "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
+                        "Cannot change status to anything other than `NEW` if any of the stops are"
+                        " not in progress. Please try again."
                     )
                 },
                 code="invalid",
@@ -352,7 +362,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "status": _(
-                        "Cannot change status to `NEW` if any of the stops are in progress or completed. Please try again."
+                        "Cannot change status to `NEW` if any of the stops are in progress or"
+                        " completed. Please try again."
                     )
                 },
                 code="invalid",
@@ -367,7 +378,8 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "status": _(
-                        "Cannot change status to `COMPLETED` if any of the stops are in progress or new. Please try again."
+                        "Cannot change status to `COMPLETED` if any of the stops are in"
+                        " progress or new. Please try again."
                     )
                 },
                 code="invalid",
@@ -395,10 +407,12 @@ class MovementValidation:
             raise ValidationError(
                 {
                     "primary_worker": _(
-                        "Primary worker is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
+                        "Primary worker is required before movement status can be changed"
+                        " to `In Progress` or `Completed`. Please try again."
                     ),
                     "equipment": _(
-                        "Equipment is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
+                        "Equipment is required before movement status can be changed to"
+                        " `In Progress` or `Completed`. Please try again."
                     ),
                 },
                 code="invalid_worker_and_equipment",

@@ -98,7 +98,8 @@ class StopValidation:
             raise ValidationError(
                 {
                     "status": _(
-                        "Cannot change status to in progress or completed if there is no equipment or primary worker. Please try again."
+                        "Cannot change status to in progress or completed if there is no equipment"
+                        " or primary worker. Please try again."
                     )
                 },
                 code="invalid",
@@ -134,7 +135,8 @@ class StopValidation:
                 raise ValidationError(
                     {
                         "status": _(
-                            "Cannot change status to in progress or completed if previous stop is not completed. Please try again."
+                            "Cannot change status to in progress or completed if previous stop is "
+                            "not completed. Please try again."
                         )
                     },
                     code="invalid",

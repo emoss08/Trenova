@@ -249,7 +249,7 @@ class OrderType(GenericModel):
         Returns:
             str: Order Type Absolute URL
         """
-        return reverse("order:ordertype_detail", kwargs={"pk": self.pk})
+        return reverse("order-types-detail", kwargs={"pk": self.pk})
 
 
 class Order(GenericModel):
