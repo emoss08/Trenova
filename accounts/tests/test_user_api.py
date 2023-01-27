@@ -19,6 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 from django.contrib.auth import get_user_model
+from rest_framework.exceptions import ValidationError
+
+from accounts.serializers import UserSerializer
 
 pytestmark = pytest.mark.django_db
 
@@ -141,3 +144,30 @@ class TestUserAPI:
         response = api_client.delete(f"/api/users/{user_api.data['id']}/")
         assert response.status_code == 200
         assert response.data is None
+
+
+    def test_user_cannot_change_password_on_update(self, user):
+        """
+        Test User cannot change password when updating
+        """
+        payload = {
+            "username": "test_user",
+            "email": "test_user@example.com",
+            "password": "test_password1234%",
+            "profile": {
+                "first_name": "test",
+                "last_name": "user",
+                "address_line_1": "test",
+                "city": "test",
+                "state": "NC",
+                "zip_code": "12345",
+            },
+        }
+
+        with pytest.raises(ValidationError) as excinfo:
+            serializer = UserSerializer.update(self=UserSerializer,instance=user, validated_data=payload)
+            serializer.is_valid(raise_exception=True)
+
+        assert "Password cannot be changed using this endpoint. Please use the change password endpoint." in str(excinfo.value.detail)
+        assert "code='invalid'" in str(excinfo.value.detail)
+        assert excinfo.value.default_code == "invalid"

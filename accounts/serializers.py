@@ -239,6 +239,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
+
     def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
         """Update a user
 
@@ -258,7 +259,7 @@ class UserSerializer(GenericSerializer):
         if profile_data := validated_data.pop("profile", None):
             instance.profile.update_profile(**profile_data)
 
-        if password := validated_data.pop("password", None):
+        if validated_data.pop("password", None):
             raise serializers.ValidationError(
                 "Password cannot be changed using this endpoint. Please use the change password endpoint."
             )
