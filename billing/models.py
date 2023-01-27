@@ -361,7 +361,6 @@ class BillingQueue(GenericModel):
         _("Invoice Number"),
         max_length=50,
         blank=True,
-        null=True,
         help_text=_("Invoice number for the billing queue"),
     )
     pieces = models.PositiveIntegerField(
@@ -417,7 +416,6 @@ class BillingQueue(GenericModel):
         _("Commodity Description"),
         max_length=255,
         blank=True,
-        null=True,
     )
     other_charge_total = models.DecimalField(
         _("Other Charge Total"),
@@ -624,7 +622,6 @@ class BillingException(GenericModel):
         _("Exception Message"),
         help_text=_("Message for the billing exception"),
         blank=True,
-        null=True,
     )
 
     class Meta:

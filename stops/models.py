@@ -141,7 +141,6 @@ class Stop(GenericModel):
         max_length=255,
         help_text=_("Stop Address"),
         blank=True,
-        null=True,
     )
     appointment_time = models.DateTimeField(
         _("Stop Appointment Time"),
