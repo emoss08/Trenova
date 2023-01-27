@@ -145,10 +145,10 @@ class TestUserAPI:
         assert response.status_code == 200
         assert response.data is None
 
-
     def test_user_cannot_change_password_on_update(self, user):
         """
-        Test User cannot change password when updating
+        Test ValidationError is thrown when posting to update user endpoint
+        with password.
         """
         payload = {
             "username": "test_user",
@@ -165,9 +165,14 @@ class TestUserAPI:
         }
 
         with pytest.raises(ValidationError) as excinfo:
-            serializer = UserSerializer.update(self=UserSerializer,instance=user, validated_data=payload)
+            serializer = UserSerializer.update(
+                self=UserSerializer, instance=user, validated_data=payload
+            )
             serializer.is_valid(raise_exception=True)
 
-        assert "Password cannot be changed using this endpoint. Please use the change password endpoint." in str(excinfo.value.detail)
+        assert (
+            "Password cannot be changed using this endpoint. Please use the change password endpoint."
+            in str(excinfo.value.detail)
+        )
         assert "code='invalid'" in str(excinfo.value.detail)
         assert excinfo.value.default_code == "invalid"
