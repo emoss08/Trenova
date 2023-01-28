@@ -180,7 +180,7 @@ class OrderControl(GenericModel):
 
         Returns:
             Absolute url for the order control object. For example,
-            `/order_control/1/`
+            `/order_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/`
         """
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
@@ -231,6 +231,9 @@ class OrderType(GenericModel):
     )
 
     class Meta:
+        """
+        Metaclass for OrderType model
+        """
         verbose_name = _("Order Type")
         verbose_name_plural = _("Order Types")
         ordering = ["name"]

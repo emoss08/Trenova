@@ -21,7 +21,11 @@ import pytest
 from django.urls import reverse
 
 from accounting.models import GeneralLedgerAccount
-from accounting.tests.factories import GeneralLedgerAccountFactory, RevenueCodeFactory, DivisionCodeFactory
+from accounting.tests.factories import (
+    GeneralLedgerAccountFactory,
+    RevenueCodeFactory,
+    DivisionCodeFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -77,6 +81,7 @@ def division_code():
     """
     yield DivisionCodeFactory()
 
+
 @pytest.fixture
 def cash_account():
     """
@@ -85,6 +90,7 @@ def cash_account():
     yield GeneralLedgerAccountFactory(
         account_classification=GeneralLedgerAccount.AccountClassificationChoices.CASH
     )
+
 
 @pytest.fixture
 def ap_account():
@@ -95,17 +101,19 @@ def ap_account():
         account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
     )
 
+
 @pytest.fixture
 def gl_account_api(api_client, organization):
     """
     GL account fixture for API
     """
     yield api_client.post(
-        reverse('general_ledger_accounts-list'),
+        reverse("general_ledger_accounts-list"),
         {
             "organization": f"{organization.id}",
             "account_number": "1234-1234-1234-1234",
             "account_type": f"{GeneralLedgerAccount.AccountTypeChoices.REVENUE}",
-            "description": "Test General Ledger Account"
-        }, format="json"
+            "description": "Test General Ledger Account",
+        },
+        format="json",
     )

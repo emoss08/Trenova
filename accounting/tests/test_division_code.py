@@ -28,6 +28,7 @@ class TestDivisionCode:
     """
     Test for Division code
     """
+
     def test_list(self, division_code):
         """
         Test Division Code List
@@ -73,6 +74,7 @@ class TestDivisionCodeApi:
     """
     Test for Division Code API
     """
+
     def test_get(self, api_client):
         """
         Test get Division Code
