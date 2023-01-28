@@ -169,8 +169,8 @@ class GeneralLedgerAccount(GenericModel):
         super().clean()
 
         if (
-            GeneralLedgerAccount.objects.filter(account_number=self.account_number)
-            .exclude(id=self.id)
+            GeneralLedgerAccount.objects.filter(account_number__exact=self.account_number)
+            .exclude(id__exact=self.id)
             .exists()
         ):
             raise ValidationError(
@@ -193,7 +193,7 @@ class GeneralLedgerAccount(GenericModel):
         )
 
     def update_gl_account(self, **kwargs):
-        """Update the worker profile
+        """Update the General Ledger account
 
         Args:
             **kwargs: Keyword arguments
@@ -201,7 +201,7 @@ class GeneralLedgerAccount(GenericModel):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
-        self.save()
+        self.save(**kwargs)
 
 
 class RevenueCode(GenericModel):

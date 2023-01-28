@@ -59,9 +59,7 @@ class TestRevenueCode:
         """
 
         rev_code = models.RevenueCode.objects.get(id=revenue_code.id)
-
         rev_code.code = "FOOB"
-
         rev_code.save()
 
         assert rev_code is not None

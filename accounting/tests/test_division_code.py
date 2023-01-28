@@ -20,7 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 
 from accounting import models
-from accounting.tests.factories import DivisionCodeFactory, GeneralLedgerAccountFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -29,48 +28,6 @@ class TestDivisionCode:
     """
     Test for Division code
     """
-
-    @pytest.fixture()
-    def division_code(self):
-        """
-        Division Code Factory
-        """
-        return DivisionCodeFactory()
-
-    @pytest.fixture()
-    def general_ledger_account(self):
-        """
-        General Ledger Account Factory
-        """
-        return GeneralLedgerAccountFactory()
-
-    @pytest.fixture()
-    def expense_account(self):
-        """
-        Expense Account from GL Account Factory
-        """
-        return GeneralLedgerAccountFactory(
-            account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
-        )
-
-    @pytest.fixture()
-    def cash_account(self):
-        """
-        Cash Account from GL Account Factory
-        """
-        return GeneralLedgerAccountFactory(
-            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.CASH
-        )
-
-    @pytest.fixture()
-    def ap_account(self):
-        """
-        AP Account from GL Account Factory
-        """
-        return GeneralLedgerAccountFactory(
-            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
-        )
-
     def test_list(self, division_code):
         """
         Test Division Code List
@@ -116,14 +73,6 @@ class TestDivisionCodeApi:
     """
     Test for Division Code API
     """
-
-    @pytest.fixture()
-    def division_code(self):
-        """
-        Division Code Factory
-        """
-        return DivisionCodeFactory()
-
     def test_get(self, api_client):
         """
         Test get Division Code
