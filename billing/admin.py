@@ -19,7 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from django.contrib import admin
 
-from billing.models import AccessorialCharge, ChargeType, DocumentClassification, BillingControl
+from billing.models import (
+    AccessorialCharge,
+    BillingControl,
+    ChargeType,
+    DocumentClassification,
+)
 from utils.admin import GenericAdmin
 
 
@@ -28,12 +33,11 @@ class BillingControlAdmin(GenericAdmin[BillingControl]):
     """
     Billing Control Admin
     """
+
     model: type[BillingControl] = BillingControl
-    list_display = (
-        "organization",
-        "auto_bill_orders"
-    )
+    list_display = ("organization", "auto_bill_orders")
     search_fields = ("organization", "auto_bill_orders")
+
 
 @admin.register(DocumentClassification)
 class DocumentClassificationAdmin(GenericAdmin[DocumentClassification]):

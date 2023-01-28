@@ -22,9 +22,9 @@ from django.urls import reverse
 
 from accounting.models import GeneralLedgerAccount
 from accounting.tests.factories import (
+    DivisionCodeFactory,
     GeneralLedgerAccountFactory,
     RevenueCodeFactory,
-    DivisionCodeFactory,
 )
 
 pytestmark = pytest.mark.django_db

@@ -22,8 +22,8 @@ from typing import Any
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from organization.models import Organization
 from billing import models
+from organization.models import Organization
 
 
 @receiver(post_save, sender=Organization)

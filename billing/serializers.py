@@ -24,7 +24,7 @@ from accounts.models import User
 from billing import models
 from commodities.models import Commodity
 from customer.models import Customer
-from order.models import OrderType, Order
+from order.models import Order, OrderType
 from utils.serializers import GenericSerializer
 from worker.models import Worker
 
@@ -47,6 +47,7 @@ class BillingControlSerializer(GenericSerializer):
         """
 
         model = models.BillingControl
+
 
 class BillingQueueSerializer(GenericSerializer):
     """A serializer for the `BillingQueue` model.
@@ -89,14 +90,10 @@ class BillingQueueSerializer(GenericSerializer):
         queryset=Worker.objects.all(),
     )
     commodity = serializers.PrimaryKeyRelatedField(
-        queryset=Commodity.objects.all(),
-        required=False,
-        allow_null=True
+        queryset=Commodity.objects.all(), required=False, allow_null=True
     )
     user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        required=False,
-        allow_null=True
+        queryset=User.objects.all(), required=False, allow_null=True
     )
 
     class Meta:
@@ -118,7 +115,6 @@ class BillingQueueSerializer(GenericSerializer):
             "commodity",
             "user",
         )
-
 
 
 class ChargeTypeSerializer(GenericSerializer):

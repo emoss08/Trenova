@@ -39,6 +39,7 @@ def test_auto_bill_criteria_required_when_auto_bill_true(organization):
         "Auto Billing criteria is required when `Auto Bill Orders` is on. Please try again."
     ]
 
+
 def test_auto_bill_criteria_choices_is_invalid(organization):
     """
     Test when passing invalid choice to `auto_bill_criteria`

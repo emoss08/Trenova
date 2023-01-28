@@ -234,6 +234,7 @@ class OrderType(GenericModel):
         """
         Metaclass for OrderType model
         """
+
         verbose_name = _("Order Type")
         verbose_name_plural = _("Order Types")
         ordering = ["name"]

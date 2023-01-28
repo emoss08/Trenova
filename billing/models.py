@@ -159,7 +159,9 @@ class BillingControl(GenericModel):
     enforce_customer_billing = models.BooleanField(
         _("Enforce Customer Billing Requirements"),
         default=True,
-        help_text=_("Define if customer billing requirements will be enforced when billing.")
+        help_text=_(
+            "Define if customer billing requirements will be enforced when billing."
+        ),
     )
 
     class Meta:
@@ -675,7 +677,7 @@ class BillingQueue(GenericModel):
 
         errors = []
 
-        #TODO (WOLFRED): Write validation tests for this.
+        # TODO (WOLFRED): Write validation tests for this.
 
         # If order is already billed raise ValidationError
         if self.order.billed:

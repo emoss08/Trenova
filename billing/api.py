@@ -47,6 +47,7 @@ class BillingControlViewSet(OrganizationMixin):
     serializer_class = serializers.BillingControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
 
+
 class BillingQueueViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing billing queue in the system.
@@ -67,9 +68,8 @@ class BillingQueueViewSet(OrganizationMixin):
         "worker__code",
         "customer__code",
         "revenue_code__code",
-        "order_type"
+        "order_type",
     )
-
 
 
 class ChargeTypeViewSet(OrganizationMixin):
