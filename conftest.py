@@ -59,4 +59,4 @@ def api_client(token):
     """
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
-    return client
+    yield client
