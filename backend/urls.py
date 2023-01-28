@@ -80,7 +80,7 @@ organization_router.register(
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
 router.register(
-    r"worker_profiles", worker_api.WorkerProfileViewSet, basename="workerprofile"
+    r"worker_profiles", worker_api.WorkerProfileViewSet, basename="worker-profile"
 )
 router.register(
     r"worker_comments", worker_api.WorkerCommentViewSet, basename="worker-comment"
@@ -90,6 +90,8 @@ router.register(
 )
 
 # Billing Routing
+router.register(r"billing_control", billing_api.BillingControlViewSet, basename="billing-control")
+router.register(r"billing_queue", billing_api.BillingQueueViewSet, basename="billing-queue")
 router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")
 router.register(
     r"accessorial_charges",

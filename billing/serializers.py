@@ -19,8 +19,106 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import serializers
 
+from accounting.models import RevenueCode
+from accounts.models import User
 from billing import models
+from commodities.models import Commodity
+from customer.models import Customer
+from order.models import OrderType, Order
 from utils.serializers import GenericSerializer
+from worker.models import Worker
+
+
+class BillingControlSerializer(GenericSerializer):
+    """A serializer for the `BillingControl` model.
+
+    A serializer class for the BillingControl model. This serializer is used
+    to convert BillingControl model instances into a Python dictionary format
+    that can be rendered into a JSON response. It also defined the fields that
+    should be included in the serialized representation of the model
+    """
+
+    class Meta:
+        """
+        Metaclass for the BillingControlSerializer
+
+        Attributes:
+            model (BillingControl): The model that the serializer is for.
+        """
+
+        model = models.BillingControl
+
+class BillingQueueSerializer(GenericSerializer):
+    """A serializer for the `BillingQueue` model.
+
+    A serializer class for the BillingQueue Model. This serializer is used
+    to convert the BillingQueue model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        order_type (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the type of the BillingQueue.
+        revenue_code (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the revenue code of the BillingQueue.
+        customer (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the customer of the BillingQueue.
+        worker (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the worker of BillingQueue.
+        commodity (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the commodity of the BillingQueue.
+        user (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the user that entered the BillingQueue.
+    """
+
+    order_type = serializers.PrimaryKeyRelatedField(
+        queryset=OrderType.objects.all(),
+    )
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=Order.objects.all(),
+    )
+    revenue_code = serializers.PrimaryKeyRelatedField(
+        queryset=RevenueCode.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    customer = serializers.PrimaryKeyRelatedField(
+        queryset=Customer.objects.all(),
+    )
+    worker = serializers.PrimaryKeyRelatedField(
+        queryset=Worker.objects.all(),
+    )
+    commodity = serializers.PrimaryKeyRelatedField(
+        queryset=Commodity.objects.all(),
+        required=False,
+        allow_null=True
+    )
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    class Meta:
+        """Metaclass for BillingQueueSerializer
+
+        Attributes:
+            model (models.BillingQueue): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.BillingQueue
+        extra_fields = (
+            "order_type",
+            "order",
+            "revenue_code",
+            "customer",
+            "worker",
+            "commodity",
+            "user",
+        )
+
 
 
 class ChargeTypeSerializer(GenericSerializer):

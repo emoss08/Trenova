@@ -16,9 +16,60 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from rest_framework import permissions
 
 from billing import models, serializers
 from utils.views import OrganizationMixin
+
+
+class BillingControlViewSet(OrganizationMixin):
+    """A viewset for viewing and editing BillingControl in the system.
+
+    The viewset provides default operations for creating, updating Order Control,
+    as well as listing and retrieving Order Control. It uses the ``BillingControlSerializer``
+    class to convert the order control instance to and from JSON-formatted data.
+
+    Only admin users are allowed to access the views provided by this viewset.
+
+    Attributes:
+        queryset (QuerySet): A queryset of BillingControl objects that will be used to
+        retrieve and update BillingControl objects.
+
+        serializer_class (BillingControlSerializer): A serializer class that will be used to
+        convert BillingControl objects to and from JSON-formatted data.
+
+        permission_classes (list): A list of permission classes that will be used to
+        determine if a user has permission to perform a particular action.
+    """
+
+    queryset = models.BillingControl.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = serializers.BillingControlSerializer
+    http_method_names = ["get", "put", "patch", "head", "options"]
+
+class BillingQueueViewSet(OrganizationMixin):
+    """
+    A viewset for viewing and editing billing queue in the system.
+
+    The viewset provides default operations for creating, updating, and deleting charge types,
+    as well as listing and retrieving charge types. It uses the `BillingQueueSerializer` class to
+    convert the charge type instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
+    code, `revenue_code` code and `order_type` id.
+    """
+
+    queryset = models.BillingQueue.objects.all()
+    serializer_class = serializers.BillingQueueSerializer
+    filterset_fields = (
+        "order__pro_number",
+        "worker__code",
+        "customer__code",
+        "revenue_code__code",
+        "order_type"
+    )
+
 
 
 class ChargeTypeViewSet(OrganizationMixin):
