@@ -27,7 +27,7 @@ pytestmark = pytest.mark.django_db
 
 
 class TestUserAPI:
-    def test_get(self, token, api_client):
+    def test_get(self, api_client):
         """
         Test get users
         """
