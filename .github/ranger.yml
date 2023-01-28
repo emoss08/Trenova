@@ -12,7 +12,7 @@ labels:
     action: close
     delay: 15s
     comment: "Will not be fixed! Closing in $DELAY . . ."
-  enhancement:
+  'enhancement':
     delay: 15s
     comment: "Thank you for your suggestion! We will consider it in the future!"
   'included in next release':
