@@ -27,8 +27,8 @@ class OrderControlViewSet(OrganizationMixin):
     """A viewset for viewing and editing OrderControl in the system.
 
     The viewset provides default operations for creating, updating Order Control,
-    as well as listing and retrieving Order Control. It uses the ``OrderControlSerializer`` class to
-    convert the order control instance to and from JSON-formatted data.
+    as well as listing and retrieving Order Control. It uses the ``OrderControlSerializer``
+    class to convert the order control instance to and from JSON-formatted data.
 
     Only admin users are allowed to access the views provided by this viewset.
 

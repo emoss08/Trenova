@@ -17,5 +17,32 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Any
 
-# from .models import Customer, CustomerBillingProfile
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from billing import models
+from organization.models import Organization
+
+
+@receiver(post_save, sender=Organization)
+def create_billing_control(
+    sender: Organization,
+    instance: Organization,
+    created: bool,
+    **kwargs: Any,
+) -> None:
+    """Create Billing Control information.
+
+    Args:
+        sender (Organization): Organization
+        instance (Organization): The Organization instance
+        created (bool): if the Organization was created
+        **kwargs (Any): Keyword Arguments
+
+    Returns:
+        None
+    """
+    if created:
+        models.BillingControl.objects.create(organization=instance)

@@ -18,20 +18,18 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.core.exceptions import ValidationError
+from django.urls import reverse
 
 from accounting import models
-from accounting.tests.factories import GeneralLedgerAccountFactory
 
 pytestmark = pytest.mark.django_db
 
 
 class TestGeneralLedgerAccount:
-    @pytest.fixture()
-    def general_ledger_account(self):
-        """
-        General Ledger Account fixture
-        """
-        return GeneralLedgerAccountFactory()
+    """
+    Class to test General Ledger Account
+    """
 
     def test_list(self, general_ledger_account):
         """
@@ -63,3 +61,133 @@ class TestGeneralLedgerAccount:
         general_ledger_account.account_number = "1234-1234-1234-1234"
         general_ledger_account.save()
         assert general_ledger_account.account_number == "1234-1234-1234-1234"
+
+
+class TestGeneralLedgerAccountApi:
+    """
+    Class for the General Ledger account api
+    """
+
+    def test_get(self, api_client):
+        """
+        Test get General Ledger accounts
+        """
+        response = api_client.get(reverse("general_ledger_accounts-list"))
+        assert response.status_code == 200
+
+    def test_get_by_id(self, api_client, gl_account_api):
+        """
+        Test get General Ledger account by ID
+        """
+        response = api_client.get(
+            reverse(
+                "general_ledger_accounts-detail",
+                kwargs={"pk": gl_account_api.data["id"]},
+            )
+        )
+        assert response.status_code == 200
+        assert response.data["account_number"] == gl_account_api.data["account_number"]
+        assert response.data["account_type"] == gl_account_api.data["account_type"]
+        assert response.data["description"] == gl_account_api.data["description"]
+
+    def test_put(self, api_client, gl_account_api):
+        """
+        Test put General Ledger Account
+        """
+        response = api_client.put(
+            reverse(
+                "general_ledger_accounts-detail",
+                kwargs={"pk": gl_account_api.data["id"]},
+            ),
+            {
+                "account_number": "2345-2345-2345-2345",
+                "description": "Another Test Description",
+                "account_type": f"{models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE}",
+                "cash_flow_type": f"{models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING}",
+                "account_sub_type": f"{models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET}",
+                "account_classification": f"{models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_RECEIVABLE}",
+            },
+        )
+        assert response.status_code == 200
+        assert response.data["account_number"] == "2345-2345-2345-2345"
+        assert (
+            response.data["account_type"]
+            == models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+        )
+        assert response.data["description"] == "Another Test Description"
+        assert (
+            response.data["cash_flow_type"]
+            == models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING
+        )
+        assert (
+            response.data["account_sub_type"]
+            == models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET
+        )
+        assert (
+            response.data["account_classification"]
+            == models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_RECEIVABLE
+        )
+
+    def test_delete(self, api_client, gl_account_api):
+        """
+        Test delete general Ledger account
+        """
+        response = api_client.delete(
+            reverse(
+                "general_ledger_accounts-detail",
+                kwargs={"pk": gl_account_api.data["id"]},
+            )
+        )
+
+        assert response.status_code == 200
+        assert not response.data
+
+
+class TestGeneralLedgerAccountValidation:
+    """
+    Class for the General Ledger Account Validation.
+    """
+
+    def test_account_number(self, general_ledger_account):
+        """
+        Test Whether the validation error is thrown
+        if the entered account_number value is not a
+        regex match.
+        """
+
+        with pytest.raises(ValidationError) as excinfo:
+            general_ledger_account.account_number = "00000-2323411-124141"
+            general_ledger_account.full_clean()
+
+        assert excinfo.value.message_dict["account_number"] == [
+            "Account number must be in the format 0000-0000-0000-0000."
+        ]
+
+    def test_unique_account_numer(self, general_ledger_account):
+        """
+        Test creating a General Ledger account with the same account number
+        throws ValidationError.
+        """
+        models.GeneralLedgerAccount.objects.create(
+            organization=general_ledger_account.organization,
+            account_number="1234-1234-1234-1234",
+            account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
+            description="Another Description",
+            cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
+            account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
+            account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
+        )
+        with pytest.raises(ValidationError) as excinfo:
+            models.GeneralLedgerAccount.objects.create(
+                organization=general_ledger_account.organization,
+                account_number="1234-1234-1234-1234",
+                account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
+                description="Another Description",
+                cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
+                account_sub_type=models.GeneralLedgerAccount.AccountSubTypeChoices.CURRENT_ASSET,
+                account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
+            )
+
+        assert excinfo.value.message_dict["account_number"] == [
+            "An account with this account number already exists. Please try again."
+        ]

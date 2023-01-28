@@ -239,7 +239,6 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-
     def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
         """Update a user
 
