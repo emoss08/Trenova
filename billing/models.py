@@ -87,7 +87,7 @@ class BillingControl(GenericModel):
         """
         A class representing the possible auto billing choices.
 
-        This class inherits from the `models.TextChoices` class and defines five constants:
+        This class inherits from the `models.TextChoices` class and defines three constants:
         - ORDER_DELIVERY: representing a criteria stating to auto bill orders on delivery.
         - TRANSFERRED_TO_BILL: representing a criteria stating to auto bill order when
         orders are transferred to billing queue.
@@ -102,6 +102,24 @@ class BillingControl(GenericModel):
         MARKED_READY_TO_BILL = "MARKED_READY", _(
             "Auto Bill when order is marked ready to bill in Billing Queue"
         )
+
+    @final
+    class OrderTransferCriteriaChoices(models.TextChoices):
+        """
+        A class representing the possible order transfer choices.
+
+        This class inherits from the `models.TextChoices` class and defines three constants:
+        - READY_AND_COMPLETED: representing a criteria stating the order must be `ready_to_bill`
+        & `completed` before it can be transferred to billing.
+        - COMPLETED: representing a criteria stating the order must be `completed` before it can
+        be transferred to billing.
+        - READY_TO_BILL: representing a criteria stating the order must be `ready_to_bill` before it
+        can be transferred to billing.
+        """
+
+        READY_AND_COMPLETED = "READY_AND_COMPLETED", _("Ready to bill & Completed")
+        COMPLETED = "COMPLETED", _("Completed")
+        READY_TO_BILL = "READY_TO_BILL", _("Ready to bill")
 
     id = models.UUIDField(
         primary_key=True,
@@ -131,6 +149,17 @@ class BillingControl(GenericModel):
         default=AutoBillingCriteriaChoices.MARKED_READY_TO_BILL,
         help_text=_("Define a criteria on when auto billing is to occur."),
         blank=True,
+    )
+    order_transfer_criteria = ChoiceField(
+        _("Order Transfer Criteria"),
+        choices=OrderTransferCriteriaChoices.choices,
+        default=OrderTransferCriteriaChoices.READY_AND_COMPLETED,
+        help_text=_("Define when an order can be transferred to billing."),
+    )
+    enforce_customer_billing = models.BooleanField(
+        _("Enforce Customer Billing Requirements"),
+        default=True,
+        help_text=_("Define if customer billing requirements will be enforced when billing.")
     )
 
     class Meta:
@@ -390,7 +419,6 @@ class DocumentClassification(GenericModel):
             None
         """
 
-        # TODO (WOLFRED): Write Test for this validation.
         if self.name == "CON":
             raise ValidationError(
                 {
@@ -647,6 +675,8 @@ class BillingQueue(GenericModel):
 
         errors = []
 
+        #TODO (WOLFRED): Write validation tests for this.
+
         # If order is already billed raise ValidationError
         if self.order.billed:
             errors.append(
@@ -669,11 +699,43 @@ class BillingQueue(GenericModel):
                 _("Order has been voided. Please try again with a different order.")
             )
 
-        # If order is not ready to be billed raise ValidationError
-        if self.order.ready_to_bill is False:
+        # If billing control `order_transfer_criteria` is `READY_AND_COMPLETE` and order `status` is not `COMPLETED`
+        # and order `ready_to_bill` is `False` raise ValidationError
+        if (
+            self.organization.billing_control.order_transfer_criteria
+            == BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
+            and self.order.status != StatusChoices.COMPLETED
+            and self.order.ready_to_bill is False
+        ):
             errors.append(
                 _(
-                    "Order is not ready to be billed. Please try again with a different order."
+                    "Order must be `COMPLETED` and `READY_TO_BILL` must be marked before transferring to billing. Please try again."
+                )
+            )
+
+        # If billing control `order_transfer_criteria` is `COMPLETED` and order `status` is not `COMPLETED`
+        # raise ValidationError
+        if (
+            self.organization.billing_control.order_transfer_criteria
+            == BillingControl.OrderTransferCriteriaChoices.COMPLETED
+            and self.order.status != StatusChoices.COMPLETED
+        ):
+            errors.append(
+                _(
+                    "Order must be `COMPLETED` before transferring to billing. Please try again."
+                )
+            )
+
+        # if billing control `order_transfer_criteria` is `READY_TO_BILL` and order `ready_to_bill` is false
+        # raise ValidationError
+        if (
+            self.organization.billing_control.order_transfer_criteria
+            == BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
+            and self.order.ready_to_bill is False
+        ):
+            errors.append(
+                _(
+                    "Order must be marked `READY_TO_BILL` before transferring to billing. Please try again."
                 )
             )
 
@@ -692,19 +754,19 @@ class BillingQueue(GenericModel):
         self.full_clean()
 
         # If order has `pieces`, set `pieces` to order `pieces`
-        if self.order.pieces:
+        if self.order.pieces and not self.pieces:
             self.pieces = self.order.pieces
 
         # If order has `weight`, set `weight` to order `weight`
-        if self.order.weight:
+        if self.order.weight and not self.weight:
             self.weight = self.order.weight
 
         # If order has `mileage`, set `mileage` to order `mileage`
-        if self.order.mileage:
+        if self.order.mileage and not self.weight:
             self.mileage = self.order.mileage
 
         # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
-        if self.order.revenue_code:
+        if self.order.revenue_code and not self.revenue_code:
             self.revenue_code = self.order.revenue_code
 
         # If commodity `description` is set, set `commodity_descr` to the description of the commodity
@@ -712,14 +774,15 @@ class BillingQueue(GenericModel):
             self.commodity_descr = self.commodity.description
 
         # if order has `bol_number`, set `bol_number` to `bol_number`
-        if self.order.bol_number:
+        if self.order.bol_number and not self.bol_number:
             self.bol_number = self.order.bol_number
 
         # If `bill_type` is not set, set `bill_type` to `INVOICE`
         if not self.bill_type:
             self.bill_type = self.BillTypeChoices.INVOICE
 
-        if self.order.consignee_ref_number:
+        # If order has `consignee_ref_number`
+        if self.order.consignee_ref_number and not self.consignee_ref_number:
             self.consignee_ref_number = self.order.consignee_ref_number
 
         self.customer = self.order.customer
