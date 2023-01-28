@@ -65,6 +65,119 @@ class BillingExceptionChoices(models.TextChoices):
     OTHER = "OTHER", _("OTHER")
 
 
+class BillingControl(GenericModel):
+    """Stores the billing control information for a related :model: `organization.Organization`
+
+    The BillingControl model stores the billing control information for a related organizaiton.
+    It is used to store information such as whether to auto-bill invoices, or if users can or
+    cannot delete records from billing history and more.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID.
+            Editable and unique.
+        organization (OneToOneField): ForeignKey to the related organization model
+            with a CASCADE on delete. Has a verbose name of "Organization" and
+            related names of "billing_control".
+        remove_billing_history (BooleanField): Default value is False.
+            Help text is "Whether users can remove records from billing history.".
+    """
+
+    @final
+    class AutoBillingCriteriaChoices(models.TextChoices):
+        """
+        A class representing the possible auto billing choices.
+
+        This class inherits from the `models.TextChoices` class and defines five constants:
+        - ORDER_DELIVERY: representing a criteria stating to auto bill orders on delivery.
+        - TRANSFERRED_TO_BILL: representing a criteria stating to auto bill order when
+        orders are transferred to billing queue.
+        - CREDIT: representing a criteria stating to auto bill order when orders are
+        marked ready to bill in the billing queue.
+        """
+
+        ORDER_DELIVERY = "ORDER_DELIVERY", _("Auto Bill when order is delivered")
+        TRANSFERRED_TO_BILL = "TRANSFERRED_TO_BILL", _(
+            "Auto Bill when order are transferred to billing"
+        )
+        MARKED_READY_TO_BILL = "MARKED_READY", _(
+            "Auto Bill when order is marked ready to bill in Billing Queue"
+        )
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.OneToOneField(
+        "organization.Organization",
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="billing_control",
+    )
+    remove_billing_history = models.BooleanField(
+        _("Remove Billing History"),
+        default=False,
+        help_text=_("Whether users can remove records from billing history."),
+    )
+    auto_bill_orders = models.BooleanField(
+        _("Auto Bill Orders"),
+        default=False,
+        help_text=_("Whether to automatically bill orders directly to customer"),
+    )
+    auto_bill_criteria = ChoiceField(
+        _("Auto Bill Criteria"),
+        choices=AutoBillingCriteriaChoices.choices,
+        default=AutoBillingCriteriaChoices.MARKED_READY_TO_BILL,
+        help_text=_("Define a criteria on when auto billing is to occur."),
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for BillingControl
+        """
+
+        verbose_name = _("Billing Control")
+        verbose_name_plural = _("Billing Controls")
+
+    def __str__(self) -> str:
+        """Billing control string representation
+
+        Returns:
+            str: Billing control string representation
+        """
+        return textwrap.wrap(self.organization.name, width=25, placeholder="...")[0]
+
+    def clean(self) -> None:
+        """Billing control clean method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If billing control is not valid.
+        """
+        if self.auto_bill_orders and not self.auto_bill_criteria:
+            raise ValidationError(
+                {
+                    "auto_bill_criteria": _(
+                        "Auto Billing criteria is required when `Auto Bill Orders` is on. Please try again."
+                    ),
+                },
+                code="invalid_billing_control",
+            )
+
+    def get_absolute_url(self) -> str:
+        """Billing Control absolute url
+
+        Returns:
+            Absolute url for the billing control object. For example,
+            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-control-detail", kwargs={"pk": self.pk})
+
+
 class ChargeType(GenericModel):
     """Class for storing other charge types.
 
@@ -187,7 +300,7 @@ class AccessorialCharge(GenericModel):
 
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
 
     def __str__(self) -> str:
         """Other Charge string representation
@@ -276,6 +389,8 @@ class DocumentClassification(GenericModel):
         Returns:
             None
         """
+
+        # TODO (WOLFRED): Write Test for this validation.
         if self.name == "CON":
             raise ValidationError(
                 {
@@ -320,6 +435,7 @@ class BillingQueue(GenericModel):
     pieces (models.PositiveIntegerField): total piece count of the order.
     weight (models.DecimalField): total weight of the order.
     bill_type (ChoiceField): bill type for the billing queue, with choices from the `BillTypeChoices` class.
+    ready_to_bill (models.BooleanField): Whether order is ready to be billed to the customer.
     bill_date (models.DateField): date the invoice was billed.
     mileage (models.DecimalField): total mileage.
     worker (models.ForeignKey): foreign key to the `Worker` model, representing the assigned worker
@@ -403,6 +519,11 @@ class BillingQueue(GenericModel):
         choices=BillTypeChoices.choices,
         default=BillTypeChoices.INVOICE,
         help_text=_("Bill type for the billing queue"),
+    )
+    ready_to_bill = models.BooleanField(
+        _("Ready to bill"),
+        default=False,
+        help_text=_("Order is ready to be billed to customer."),
     )
     bill_date = models.DateField(
         _("Billed Date"),
@@ -621,6 +742,13 @@ class BillingHistory(GenericModel):
         unique=True,
         help_text=_("Unique identifier for the billing history"),
     )
+    order_type = models.ForeignKey(
+        "order.OrderType",
+        on_delete=models.RESTRICT,
+        verbose_name=_("Order Type"),
+        related_name="billing_history",
+        help_text=_("Assigned order type to the billing history"),
+    )
     order = models.ForeignKey(
         "order.Order",
         on_delete=models.RESTRICT,
@@ -637,12 +765,29 @@ class BillingHistory(GenericModel):
         blank=True,
         null=True,
     )
-    order_type = models.ForeignKey(
-        "order.OrderType",
+    customer = models.ForeignKey(
+        "customer.Customer",
+        verbose_name=_("Customer"),
         on_delete=models.RESTRICT,
-        verbose_name=_("Order Type"),
         related_name="billing_history",
-        help_text=_("Assigned order type to the billing history"),
+    )
+    invoice_number = models.CharField(
+        _("Invoice Number"),
+        max_length=50,
+        blank=True,
+        help_text=_("Invoice number for the billing history"),
+    )
+    pieces = models.PositiveIntegerField(
+        _("Pieces"),
+        help_text=_("Total Piece Count of the Order"),
+        default=0,
+    )
+    weight = models.DecimalField(
+        _("Weight"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Total Weight of the Order"),
+        default=0,
     )
     bill_type = ChoiceField(
         _("Bill Type"),
@@ -656,12 +801,6 @@ class BillingHistory(GenericModel):
         blank=True,
         help_text=_("Date invoiced was billed."),
     )
-    customer = models.ForeignKey(
-        "customer.Customer",
-        verbose_name=_("Customer"),
-        on_delete=models.RESTRICT,
-        related_name="billing_history",
-    )
     mileage = models.DecimalField(
         _("Total Mileage"),
         max_digits=10,
@@ -670,6 +809,13 @@ class BillingHistory(GenericModel):
         help_text=_("Total Mileage"),
         blank=True,
         null=True,
+    )
+    worker = models.ForeignKey(
+        "worker.Worker",
+        on_delete=models.RESTRICT,
+        related_name="billing_history",
+        help_text=_("Assigned worker to the billing history"),
+        verbose_name=_("Worker"),
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -691,13 +837,7 @@ class BillingHistory(GenericModel):
         blank=True,
         help_text=_("Consignee Reference Number"),
     )
-    worker = models.ForeignKey(
-        "worker.Worker",
-        on_delete=models.RESTRICT,
-        related_name="billing_history",
-        help_text=_("Assigned worker to the billing history"),
-        verbose_name=_("Worker"),
-    )
+
     other_charge_total = models.DecimalField(
         _("Other Charge Total"),
         max_digits=10,
@@ -725,17 +865,20 @@ class BillingHistory(GenericModel):
         null=True,
         help_text=_("Total amount for Order"),
     )
-    pieces = models.PositiveIntegerField(
-        _("Pieces"),
-        help_text=_("Total Piece Count of the Order"),
-        default=0,
+    is_summary = models.BooleanField(
+        _("Is Summary"),
+        default=False,
+        help_text=_("Is the invoice going to be a summary bill."),
     )
-    weight = models.DecimalField(
-        _("Weight"),
-        max_digits=10,
-        decimal_places=2,
-        help_text=_("Total Weight of the Order"),
-        default=0,
+    is_cancelled = models.BooleanField(
+        _("Is Cancelled"),
+        default=False,
+        help_text=_("Is the invoice cancelled."),
+    )
+    bol_number = models.CharField(
+        _("BOL Number"),
+        max_length=255,
+        help_text=_("BOL Number"),
     )
     user = models.ForeignKey(
         "accounts.User",
@@ -782,47 +925,31 @@ class BillingHistory(GenericModel):
                 },
             )
 
-    def save(self, **kwargs: Any) -> None:
-        """Save method for the BillingHistory model.
+    def delete(self, *args: Any, **kwargs: Any) -> None:
+        """Billing History Delete method.
+
+        Disallowing deletion of any records in this model.
 
         Args:
+            *args (Any): Arguments
             **kwargs (Any): Keyword Arguments
 
         Returns:
             None
+
+        Raises:
+            ValidationError: if organization `remove_billing_history` is false & user
+            is deleting a record from billing history.
         """
 
-        self.full_clean()
+        # TODO (WOLFRED): Write Test for this validation.
+        if self.organization.billing_control.remove_billing_history is False:
+            raise ValidationError(
+                _("Records are not allowed to be removed from billing history."),
+                code="billing_history_removal",
+            )
 
-        # If order has `pieces`, set `pieces` to order `pieces`
-        if self.order.pieces and self.pieces:
-            self.pieces = self.order.pieces
-
-        # If order has `weight`, set `weight` to order `weight`
-        if self.order.weight and not self.weight:
-            self.weight = self.order.weight
-
-        # If order has `mileage` and the user did not set the mileage, set `mileage` to order `mileage`
-        if self.order.mileage and not self.mileage:
-            self.mileage = self.order.mileage
-
-        # If order has `revenue_code` and the user did not set the `revenue_code`, set `revenue_code` to
-        # order `revenue_code`
-        if self.order.revenue_code and not self.revenue_code:
-            self.revenue_code = self.order.revenue_code
-
-        # if order has `consignee_ref_number` and the user did not set the consignee_ref_number, set the
-        # `consignee_ref_number` to the order `consignee_ref_number`
-        if self.order.consignee_ref_number and not self.consignee_ref_number:
-            self.consignee_ref_number = self.order.consignee_ref_number
-
-        self.order_type = self.order.order_type
-        self.customer = self.order.customer
-        self.other_charge_total = self.order.other_charge_amount
-        self.freight_charge_amount = self.order.freight_charge_amount
-        self.total_amount = self.order.sub_total
-
-        super().save(**kwargs)
+        super().delete(*args, **kwargs)
 
 
 class BillingException(GenericModel):
