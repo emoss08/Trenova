@@ -12,6 +12,9 @@ labels:
     action: close
     delay: 15s
     comment: "Will not be fixed! Closing in $DELAY . . ."
+  'deploying soon':
+    delay: 15s
+    comment: "This enhancement will be deployed in the next release! Thank you!"
   invalid: close
   'merge when passing': merge
   'squash when passing': merge
