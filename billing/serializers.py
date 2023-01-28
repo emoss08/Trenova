@@ -148,15 +148,12 @@ class AccessorialChargeSerializer(GenericSerializer):
     representation of the `AccessorialCharge` model.
     """
 
-    method = serializers.ChoiceField(choices=models.FuelMethodChoices.choices)
-
     class Meta:
         """
         A class representing the metadata for the `AccessorialChargeSerializer` class.
         """
 
         model = models.AccessorialCharge
-        extra_fields = ("method",)
 
 
 class DocumentClassificationSerializer(GenericSerializer):
