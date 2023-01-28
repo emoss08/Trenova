@@ -29,3 +29,4 @@ staticfiles
 media
 .data
 .tox
+django_config.md
