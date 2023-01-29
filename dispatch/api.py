@@ -91,7 +91,8 @@ class DispatchControlViewSet(OrganizationMixin):
 
     queryset = models.DispatchControl.objects.all()
     serializer_class = serializers.DispatchControlSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["get", "put", "patch", "head", "options"]
 
 
 # TODO: Write comment type serializer

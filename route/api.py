@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from rest_framework import permissions
 
 from route import models, serializers
 from utils.views import OrganizationMixin
@@ -53,3 +54,5 @@ class RouteControlViewSet(OrganizationMixin):
 
     queryset = models.RouteControl.objects.all()
     serializer_class = serializers.RouteControlSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["get", "put", "patch", "head", "options"]
