@@ -68,7 +68,7 @@ class BillingExceptionChoices(models.TextChoices):
 class BillingControl(GenericModel):
     """Stores the billing control information for a related :model: `organization.Organization`
 
-    The BillingControl model stores the billing control information for a related organizaiton.
+    The BillingControl model stores the billing control information for a related organization.
     It is used to store information such as whether to auto-bill invoices, or if users can or
     cannot delete records from billing history and more.
 
@@ -794,6 +794,15 @@ class BillingQueue(GenericModel):
 
         super().save(**kwargs)
 
+    def get_absolute_url(self) -> str:
+        """Billing Queue absolute url
+
+        Returns:
+            Absolute url for the billing queue object. For example,
+            `/billing_queue/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-queue-detail", kwargs={"pk": self.pk})
+
 
 class BillingHistory(GenericModel):
     """
@@ -1015,6 +1024,15 @@ class BillingHistory(GenericModel):
             )
 
         super().delete(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        """Billing History absolute url
+
+        Returns:
+            Absolute url for the billing history object. For example,
+            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-history-detail", kwargs={"pk": self.pk})
 
 
 class BillingException(GenericModel):

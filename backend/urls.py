@@ -96,6 +96,9 @@ router.register(
 router.register(
     r"billing_queue", billing_api.BillingQueueViewSet, basename="billing-queue"
 )
+router.register(
+    r"billing_history", billing_api.BillingHistoryViewSet, basename="billing-history"
+)
 router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")
 router.register(
     r"accessorial_charges",

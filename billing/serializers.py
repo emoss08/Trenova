@@ -116,6 +116,73 @@ class BillingQueueSerializer(GenericSerializer):
             "user",
         )
 
+class BillingHistorySerializer(GenericSerializer):
+    """A serializer for the `BillingHistory` model.
+
+    A serializer class for the BillingHistory Model. This serializer is used
+    to convert the BillingHistory model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        order_type (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the type of the BillingQueue.
+        revenue_code (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the revenue code of the BillingQueue.
+        customer (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the customer of the BillingQueue.
+        worker (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the worker of BillingQueue.
+        commodity (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the commodity of the BillingQueue.
+        user (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the user that entered the BillingQueue.
+    """
+
+    order_type = serializers.PrimaryKeyRelatedField(
+        queryset=OrderType.objects.all(),
+    )
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=Order.objects.all(),
+    )
+    revenue_code = serializers.PrimaryKeyRelatedField(
+        queryset=RevenueCode.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    customer = serializers.PrimaryKeyRelatedField(
+        queryset=Customer.objects.all(),
+    )
+    worker = serializers.PrimaryKeyRelatedField(
+        queryset=Worker.objects.all(),
+    )
+    commodity = serializers.PrimaryKeyRelatedField(
+        queryset=Commodity.objects.all(), required=False, allow_null=True
+    )
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=False, allow_null=True
+    )
+
+    class Meta:
+        """Metaclass for BillingHistorySerializer
+
+        Attributes:
+            model (models.BillingHistory): The model that the serializer is for.
+            extra_fields (tuple): A tuple of extra fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.BillingHistory
+        extra_fields = (
+            "order_type",
+            "order",
+            "revenue_code",
+            "customer",
+            "worker",
+            "commodity",
+            "user",
+        )
+
 
 class ChargeTypeSerializer(GenericSerializer):
     """
