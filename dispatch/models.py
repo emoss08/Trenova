@@ -131,7 +131,7 @@ class DispatchControl(GenericModel):
 
         verbose_name = _("Dispatch Control")
         verbose_name_plural = _("Dispatch Controls")
-        ordering: list[str] = ["organization"]
+        ordering = ["organization"]
 
     def __str__(self) -> str:
         """Dispatch control string representation
