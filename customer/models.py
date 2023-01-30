@@ -328,8 +328,7 @@ class CustomerRuleProfile(GenericModel):
     )
     document_class = models.ManyToManyField(
         DocumentClassification,
-        related_name="billing_profiles",
-        related_query_name="billing_profile",
+        related_name="customer_rule_profile",
         verbose_name=_("Document Class"),
         help_text=_("Document class"),
     )

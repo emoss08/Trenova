@@ -63,22 +63,3 @@ services:
     depends_on:
       - redis
     restart: always
-
-  monta:
-    build: .
-    command: python manage.py migrate
-    volumes:
-      - .:/code
-      - ./logs:/code/logs
-      - ./static:/code/static
-      - ./media:/code/media
-      - ./config:/code/config
-      - ./scripts:/code/scripts
-    ports:
-        - "8000:8000"
-    depends_on:
-        - db
-        - redis
-        - redis-slave
-        - broker
-    restart: always

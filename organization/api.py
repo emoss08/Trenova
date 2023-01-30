@@ -20,9 +20,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import viewsets
+from rest_framework import permissions, viewsets
 
 from organization import models, serializers
+from utils.views import OrganizationMixin
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -61,22 +62,13 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         ),
     ]
 )
-class DepotViewSet(viewsets.ModelViewSet):
+class DepotViewSet(OrganizationMixin):
     """
     Depot ViewSet to manage requests to the depot endpoint
     """
 
     serializer_class = serializers.DepotSerializer
     queryset = models.Depot.objects.all()
-
-    def get_queryset(self) -> QuerySet[models.Depot]:
-        """Filter the queryset to only include the current user
-
-        Returns:
-            QuerySet[models.Depot]: Filtered queryset
-        """
-
-        return self.queryset.filter(organization=self.request.user.organization.id)  # type: ignore
 
 
 @extend_schema(
@@ -86,7 +78,7 @@ class DepotViewSet(viewsets.ModelViewSet):
         ),
     ]
 )
-class DepartmentViewSet(viewsets.ModelViewSet):
+class DepartmentViewSet(OrganizationMixin):
     """
     Department ViewSet to manage requests to the department endpoint
     """
@@ -94,11 +86,22 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.DepartmentSerializer
     queryset = models.Department.objects.all()
 
-    def get_queryset(self) -> QuerySet[models.Department]:
-        """Filter the queryset to only include the current user
 
-        Returns:
-            QuerySet[models.Depot]: Filtered queryset
-        """
+class EmailProfileViewSet(OrganizationMixin):
+    """
+    EmailProfile ViewSet to manage requests to the Email profile endpoint
+    """
 
-        return self.queryset.filter(organization=self.request.user.organization.id)  # type: ignore
+    serializer_class = serializers.EmailProfileSerializer
+    queryset = models.EmailProfile.objects.all()
+
+
+class EmailControlViewSet(OrganizationMixin):
+    """
+    EmailControl ViewSet to manage requests to the email control endpoint
+    """
+
+    queryset = models.EmailControl.objects.all()
+    serializer_class = serializers.EmailControlSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["get", "put", "patch", "head", "options"]

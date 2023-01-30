@@ -98,22 +98,9 @@ class DispatchControlSerializer(GenericSerializer):
     Filtering is also available, with the ability to filter by ID, and name.
     """
 
-    record_service_incident = serializers.ChoiceField(
-        choices=models.DispatchControl.ServiceIncidentControlChoices.choices,
-        default=models.DispatchControl.ServiceIncidentControlChoices.NEVER,
-    )
-    distance_method = serializers.ChoiceField(
-        choices=models.DispatchControl.DistanceMethodChoices.choices,
-        default=models.DispatchControl.DistanceMethodChoices.MONTA,
-    )
-
     class Meta:
         """
         A class representing the metadata for the `DispatchControlSerializer` class.
         """
 
         model = models.DispatchControl
-        extra_fields = (
-            "record_service_incident",
-            "distance_method",
-        )

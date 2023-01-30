@@ -120,7 +120,7 @@ class Organization(TimeStampedModel):
 
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """
@@ -177,7 +177,7 @@ class Depot(TimeStampedModel):
 
         verbose_name = _("Depot")
         verbose_name_plural = _("Depots")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Depot string representation.
@@ -277,7 +277,7 @@ class DepotDetail(TimeStampedModel):
 
         verbose_name = _("Depot Detail")
         verbose_name_plural = _("Depot Details")
-        ordering: list[str] = ["depot"]
+        ordering = ["depot"]
 
     def __str__(self) -> str:
         """DepotDetail string representation.
@@ -363,3 +363,156 @@ class Department(models.Model):
         """
 
         return reverse("organization:department-detail", kwargs={"pk": self.pk})
+
+
+class EmailProfile(TimeStampedModel):
+    """
+    Stores the email control information for a related :model:`organization.Organization`
+    """
+
+    @final
+    class EmailProtocolChoices(models.TextChoices):
+        """
+        Choices that will be used for Email Protocol
+        """
+
+        SMTP = "SMTP", _("SMTP")
+        UNENCRYPTED = "UNENCRYPTED", _("Unencrypted SMTP")
+        STARTTLS = "STARTTLS", _("STARTTLS")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("The name of the Email Profile."),
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="email_profiles",
+        help_text=_("The organization that the email profile belongs to."),
+    )
+    email = models.EmailField(
+        _("Email"),
+        max_length=255,
+        help_text=_("The email address that will be used for outgoing email."),
+    )
+    protocol = models.CharField(
+        _("Protocol"),
+        choices=EmailProtocolChoices.choices,
+        help_text=_("The protocol that will be used for outgoing email."),
+        blank=True,
+        max_length=12,
+    )
+    host = models.CharField(
+        _("Host"),
+        max_length=255,
+        help_text=_("The host that will be used for outgoing email."),
+        blank=True,
+    )
+    port = models.PositiveIntegerField(
+        _("Port"),
+        help_text=_("The port that will be used for outgoing email."),
+        blank=True,
+        null=True,
+    )
+    username = models.CharField(
+        _("Username"),
+        max_length=255,
+        help_text=_("The username that will be used for outgoing email."),
+        blank=True,
+    )
+    password = models.CharField(
+        _("Password"),
+        max_length=255,
+        help_text=_("The password that will be used for outgoing email."),
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the EmailProfile model
+        """
+
+        verbose_name = _("Email Profile")
+        verbose_name_plural = _("Email Profiles")
+        ordering = ["email"]
+
+    def __str__(self) -> str:
+        """EmailProfile string representation.
+
+        Returns:
+            str: String representation of the email profile.
+        """
+
+        return textwrap.wrap(self.email, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """EmailProfile absolute URL
+
+        Returns:
+            str: The absolute url for the email profile.
+        """
+
+        return reverse("organization:email-profile-detail", kwargs={"pk": self.pk})
+
+
+class EmailControl(TimeStampedModel):
+    """
+    Stores the email control information for a related :model:`organization.Organization`
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="email_control",
+        help_text=_("The organization that the email control belongs to."),
+    )
+    billing_email_profile = models.ForeignKey(
+        EmailProfile,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Billing Email Profile"),
+        related_name="billing_email_control",
+        help_text=_("The email profile that will be used for billing emails."),
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the EmailControl model
+        """
+
+        verbose_name = _("Email Control")
+        verbose_name_plural = _("Email Controls")
+
+    def __str__(self) -> str:
+        """EmailControl string representation.
+
+        Returns:
+            str: String representation of the email control.
+        """
+
+        return textwrap.wrap(self.organization.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """EmailControl absolute URL
+
+        Returns:
+            str: The absolute url for the email control.
+        """
+
+        return reverse("organization:email-control-detail", kwargs={"pk": self.pk})
