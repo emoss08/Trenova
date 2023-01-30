@@ -99,7 +99,6 @@ class BillingHistoryViewSet(OrganizationMixin):
     http_method_names = ["get", "head", "options"]
 
 
-
 class ChargeTypeViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing charge types in the system.

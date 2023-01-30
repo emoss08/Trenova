@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import viewsets, permissions
+from rest_framework import permissions, viewsets
 
 from organization import models, serializers
 from utils.views import OrganizationMixin
@@ -71,7 +71,6 @@ class DepotViewSet(OrganizationMixin):
     queryset = models.Depot.objects.all()
 
 
-
 @extend_schema(
     parameters=[
         OpenApiParameter(
@@ -87,6 +86,7 @@ class DepartmentViewSet(OrganizationMixin):
     serializer_class = serializers.DepartmentSerializer
     queryset = models.Department.objects.all()
 
+
 class EmailProfileViewSet(OrganizationMixin):
     """
     EmailProfile ViewSet to manage requests to the Email profile endpoint
@@ -94,6 +94,7 @@ class EmailProfileViewSet(OrganizationMixin):
 
     serializer_class = serializers.EmailProfileSerializer
     queryset = models.EmailProfile.objects.all()
+
 
 class EmailControlViewSet(OrganizationMixin):
     """

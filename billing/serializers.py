@@ -116,6 +116,7 @@ class BillingQueueSerializer(GenericSerializer):
             "user",
         )
 
+
 class BillingHistorySerializer(GenericSerializer):
     """A serializer for the `BillingHistory` model.
 

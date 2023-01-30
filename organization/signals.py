@@ -94,10 +94,10 @@ def create_order_control(
 
 @receiver(post_save, sender=models.Organization)
 def create_email_control(
-        sender: models.Organization,
-        instance: models.Organization,
-        created: bool,
-        **kwargs: Any,
+    sender: models.Organization,
+    instance: models.Organization,
+    created: bool,
+    **kwargs: Any,
 ) -> None:
     """Create Email Control Information
 

@@ -364,6 +364,7 @@ class Department(models.Model):
 
         return reverse("organization:department-detail", kwargs={"pk": self.pk})
 
+
 class EmailProfile(TimeStampedModel):
     """
     Stores the email control information for a related :model:`organization.Organization`
@@ -374,6 +375,7 @@ class EmailProfile(TimeStampedModel):
         """
         Choices that will be used for Email Protocol
         """
+
         SMTP = "SMTP", _("SMTP")
         UNENCRYPTED = "UNENCRYPTED", _("Unencrypted SMTP")
         STARTTLS = "STARTTLS", _("STARTTLS")

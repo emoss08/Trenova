@@ -32,9 +32,9 @@ def total_piece_count_for_order(*, order: Order) -> int:
     Returns:
         int: Total piece count for an order
     """
-    return Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
+    return Stop.objects.filter(movement__order__exact=order).aggregate(Sum("pieces"))[
+        "pieces__sum"
+    ]
 
 
 def total_weight_for_order(*, order: Order) -> int:

@@ -81,14 +81,22 @@ class DepartmentAdmin(GenericAdmin[models.Department]):
     list_filter = ("name",)
     search_fields = ("name",)
 
+
 @admin.register(models.EmailProfile)
 class EmailProfileAdmin(GenericAdmin[models.EmailProfile]):
     """
     Email Profile Admin
     """
 
-    list_display = ("name", "email",)
-    search_fields = ("name", "email",)
+    list_display = (
+        "name",
+        "email",
+    )
+    search_fields = (
+        "name",
+        "email",
+    )
+
 
 @admin.register(models.EmailControl)
 class EmailControlAdmin(GenericAdmin[models.EmailControl]):
@@ -97,4 +105,3 @@ class EmailControlAdmin(GenericAdmin[models.EmailControl]):
     """
 
     autocomplete = False
-

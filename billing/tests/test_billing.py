@@ -18,7 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
-
+from django.core import mail
 from django.test import RequestFactory
 from django.utils import timezone
 
@@ -26,16 +26,15 @@ from billing.models import BillingQueue
 from billing.services import BillingService
 from customer.factories import CustomerBillingProfileFactory
 from order.tests.factories import OrderFactory
-from django.core import mail
 
 pytestmark = pytest.mark.django_db
 
 
 def test_bill_orders(
-        organization,
-        customer,
-        user,
-        worker,
+    organization,
+    customer,
+    user,
+    worker,
 ) -> None:
     order = OrderFactory(status="C")
     BillingQueue.objects.create(
@@ -60,6 +59,7 @@ def test_bill_orders(
     assert order.billed is True
     assert order.bill_date == timezone.now().date()
     assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
-    assert mail.outbox[0].body == f"Please see attached invoice for invoice: {order.pro_number}"
-
-
+    assert (
+        mail.outbox[0].body
+        == f"Please see attached invoice for invoice: {order.pro_number}"
+    )

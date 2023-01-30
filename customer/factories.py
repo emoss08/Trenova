@@ -65,7 +65,7 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerContact"
-        django_get_or_create = ("organization","customer")
+        django_get_or_create = ("organization", "customer")
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
@@ -127,6 +127,7 @@ class CustomerRuleProfileFactory(factory.django.DjangoModelFactory):
             for document_class in extracted:
                 self.document_class.add(document_class)
 
+
 class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
     """
     Customer Billing Profile factory
@@ -138,7 +139,12 @@ class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerBillingProfile"
-        django_get_or_create = ("organization", "customer", "email_profile", "rule_profile")
+        django_get_or_create = (
+            "organization",
+            "customer",
+            "email_profile",
+            "rule_profile",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)

@@ -123,6 +123,7 @@ class DepartmentSerializer(GenericSerializer):
             "description",
         )
 
+
 class EmailControlSerializer(GenericSerializer):
     """
     Email Control Serializer
@@ -132,7 +133,9 @@ class EmailControlSerializer(GenericSerializer):
         """
         Metaclass for Email Control
         """
+
         model = models.EmailControl
+
 
 class EmailProfileSerializer(GenericSerializer):
     """
@@ -143,4 +146,5 @@ class EmailProfileSerializer(GenericSerializer):
         """
         Metaclass for Email Profile
         """
+
         model = models.EmailProfile

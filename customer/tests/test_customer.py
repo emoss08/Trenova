@@ -55,5 +55,3 @@ def test_customer_code_exists(customer):
     generate_customer_code pre_save signal
     """
     assert customer.code is not None
-
-

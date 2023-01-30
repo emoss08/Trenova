@@ -98,7 +98,6 @@ class DispatchControlSerializer(GenericSerializer):
     Filtering is also available, with the ability to filter by ID, and name.
     """
 
-
     class Meta:
         """
         A class representing the metadata for the `DispatchControlSerializer` class.

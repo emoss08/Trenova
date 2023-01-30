@@ -52,6 +52,7 @@ class DepotFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("company", locale="en_US")
     organization = factory.SubFactory(OrganizationFactory)
 
+
 class EmailProfileFactory(factory.django.DjangoModelFactory):
     """
     Email Profile factory class

@@ -26,7 +26,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from billing import models
-from customer.models import CustomerBillingProfile, CustomerContact, Customer
+from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from order.models import Order
 
 

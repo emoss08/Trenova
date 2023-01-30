@@ -17,7 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Generator, Any
+from typing import Any
+from collections.abc import Generator
 
 import pytest
 
