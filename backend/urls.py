@@ -76,6 +76,8 @@ organization_router.register(
 organization_router.register(
     r"departments", org_api.DepartmentViewSet, basename="organization-department"
 )
+router.register(r"email_control", org_api.EmailControlViewSet, basename="email-control")
+router.register(r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles")
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
