@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
 from customer.services import generation
 
-from .models import Customer, CustomerBillingProfile
+from .models import Customer
 
 
 @receiver(pre_save, sender=Customer)
@@ -43,27 +43,3 @@ def generate_customer_code(sender: Customer, instance: Customer, **kwargs: Any) 
     """
     if not instance.code:
         instance.code = generation.CustomerGenerationService.customer_code(instance)
-
-
-@receiver(post_save, sender=Customer)
-def create_customer_billing_profile(
-    sender: CustomerBillingProfile,
-    instance: CustomerBillingProfile,
-    created: bool,
-    **kwargs: Any,
-) -> None:
-    """Create Customer Billing Profile
-
-    Args:
-        sender (CustomerBillingProfile): Customer Billing Profile.
-        instance (EquipmentType): The CustomerBillingProfile instance.
-        created (bool): if the Customer Billing Profile was created
-        **kwargs (Any): Keyword Arguments
-
-    Returns:
-        None
-    """
-    if created:
-        CustomerBillingProfile.objects.create(
-            customer=instance, organization=instance.organization
-        )

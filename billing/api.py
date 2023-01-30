@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from rest_framework import permissions
 
 from billing import models, serializers
@@ -52,9 +53,9 @@ class BillingQueueViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing billing queue in the system.
 
-    The viewset provides default operations for creating, updating, and deleting charge types,
-    as well as listing and retrieving charge types. It uses the `BillingQueueSerializer` class to
-    convert the charge type instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating, and deleting records in
+    billing queue,as well as listing and retrieving charge types. It uses the `BillingQueueSerializer`
+    class to convert the charge type instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
     Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
@@ -70,6 +71,32 @@ class BillingQueueViewSet(OrganizationMixin):
         "revenue_code__code",
         "order_type",
     )
+    http_method_names = ["get", "put", "patch", "post", "head", "options"]
+
+
+class BillingHistoryViewSet(OrganizationMixin):
+    """
+    A viewset for viewing and editing billing history in the system.
+
+    The viewset provides default operation for viewing billing history,
+    as well as listing and retrieving charge types. It uses the `BillingHistorySerializer` class to
+    convert the charge type instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
+    code, `revenue_code` code and `order_type` id.
+    """
+
+    queryset = models.BillingHistory.objects.all()
+    serializer_class = serializers.BillingHistorySerializer
+    filterset_fields = (
+        "order__pro_number",
+        "worker__code",
+        "customer__code",
+        "revenue_code__code",
+        "order_type",
+    )
+    http_method_names = ["get", "head", "options"]
 
 
 class ChargeTypeViewSet(OrganizationMixin):

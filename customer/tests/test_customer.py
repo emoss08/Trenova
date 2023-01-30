@@ -55,12 +55,3 @@ def test_customer_code_exists(customer):
     generate_customer_code pre_save signal
     """
     assert customer.code is not None
-
-
-@pytest.mark.django_db
-def test_customer_billing_profile_creation(customer):
-    """
-    Test customer billing profile is created from
-    create_customer_billing_profile post_save signal
-    """
-    assert customer.billing_profile is not None

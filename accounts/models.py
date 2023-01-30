@@ -61,7 +61,7 @@ class UserManager(BaseUserManager):
         Create and save a user with the given email and password.
 
         Args:
-            user_name (str): Username of the user.
+            username (str): Username of the user.
             email (str): Email address of the user.
             password (str | None, optional): Password for the user. Defaults to None.
             **extra_fields (Any): Extra fields for the user.

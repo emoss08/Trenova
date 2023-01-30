@@ -90,3 +90,25 @@ def create_order_control(
     """
     if created:
         OrderControl.objects.create(organization=instance)
+
+
+@receiver(post_save, sender=models.Organization)
+def create_email_control(
+    sender: models.Organization,
+    instance: models.Organization,
+    created: bool,
+    **kwargs: Any,
+) -> None:
+    """Create Email Control Information
+
+    Args:
+        sender (Organization): Organization
+        instance (Organization): The Organization instance.
+        created (bool): if the Organization was created
+        **kwargs (Any): Keyword Arguments
+
+    Returns:
+        None
+    """
+    if created:
+        models.EmailControl.objects.create(organization=instance)

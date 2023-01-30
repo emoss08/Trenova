@@ -76,6 +76,10 @@ organization_router.register(
 organization_router.register(
     r"departments", org_api.DepartmentViewSet, basename="organization-department"
 )
+router.register(r"email_control", org_api.EmailControlViewSet, basename="email-control")
+router.register(
+    r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles"
+)
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
@@ -95,6 +99,9 @@ router.register(
 )
 router.register(
     r"billing_queue", billing_api.BillingQueueViewSet, basename="billing-queue"
+)
+router.register(
+    r"billing_history", billing_api.BillingHistoryViewSet, basename="billing-history"
 )
 router.register(r"charge_types", billing_api.ChargeTypeViewSet, basename="charge-type")
 router.register(
