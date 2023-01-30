@@ -46,10 +46,9 @@ class BillingService:
     def __init__(self, *, request: AuthenticatedHTTPRequest):
         self.request = request
         self.order_document_ids: list[uuid.UUID] = []
-        self.billing_requirements = []
+        self.billing_requirements: list = []
         self.billing_queue: Iterable[models.BillingQueue] = []
         self.bill_orders()
-        print(type(self.billing_requirements))
 
     @staticmethod
     def create_billing_exception(

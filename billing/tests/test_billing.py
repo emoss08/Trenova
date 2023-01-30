@@ -24,6 +24,7 @@ from django.utils import timezone
 
 from billing.models import BillingQueue
 from billing.services import BillingService
+from customer.factories import CustomerBillingProfileFactory
 from order.tests.factories import OrderFactory
 from django.core import mail
 
@@ -33,8 +34,6 @@ pytestmark = pytest.mark.django_db
 def test_bill_orders(
         organization,
         customer,
-        customer_contact,
-        customer_billing_profile,
         user,
         worker,
 ) -> None:
