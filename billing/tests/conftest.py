@@ -18,12 +18,15 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from typing import Generator, Any
 
 from accounting.tests.factories import RevenueCodeFactory
 from billing.tests.factories import ChargeTypeFactory, DocumentClassificationFactory
 from commodities.factories import CommodityFactory
-from customer.factories import CustomerFactory
-from order.tests.factories import OrderFactory, OrderTypeFactory
+from order.tests.factories import OrderTypeFactory
+from customer.factories import CustomerContactFactory, CustomerBillingProfileFactory, CustomerFactory
+from order.tests.factories import OrderFactory
+from organization.factories import EmailProfileFactory
 from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
@@ -91,3 +94,40 @@ def commodity():
     Commodity Fixture
     """
     yield CommodityFactory()
+
+
+@pytest.fixture
+def email_profile() -> Generator[Any, Any, None]:
+    """
+    Email Profile fixture
+    """
+    yield EmailProfileFactory()
+
+
+@pytest.fixture
+def order() -> Generator[Any, Any, None]:
+    """
+    Order fixture
+    """
+    yield OrderFactory()
+
+@pytest.fixture
+def customer() -> Generator[Any, Any, None]:
+    """
+    Customer fixture
+    """
+    yield CustomerFactory()
+
+@pytest.fixture
+def customer_contact() -> Generator[Any, Any, None]:
+    """
+    Customer Contact fixture
+    """
+    yield CustomerContactFactory()
+
+@pytest.fixture
+def customer_billing_profile() -> Generator[Any, Any, None]:
+    """
+    Customer Billing Profile fixture
+    """
+    yield CustomerBillingProfileFactory()
