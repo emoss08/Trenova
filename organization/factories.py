@@ -51,3 +51,28 @@ class DepotFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("company", locale="en_US")
     organization = factory.SubFactory(OrganizationFactory)
+
+class EmailProfileFactory(factory.django.DjangoModelFactory):
+    """
+    Email Profile factory class
+    """
+
+    class Meta:
+        """
+        Metaclass for EmailProfileFactory
+        """
+
+        model = "organization.EmailProfile"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory(OrganizationFactory)
+    name = factory.Faker("name", locale="en_US")
+    email = factory.Faker("email", locale="en_US")
+    protocol = factory.Faker(
+        "random_element",
+        elements=("SMTP", "UNENCRYPTED", "STARTTLS"),
+    )
+    host = "127.0.0.1"
+    port = 20
+    username = factory.Faker("name", locale="en_US")
+    password = factory.Faker("password")

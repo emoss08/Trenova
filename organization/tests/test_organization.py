@@ -19,32 +19,59 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
-
-@pytest.mark.django_db
-def test_organization_creation(organization):
-    """
-    Test organization creation
-    """
-    assert organization is not None
+pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.django_db
-def test_organization_update(organization):
+class TestOrganization:
     """
-    Test organization update
+    Class to test Organization
     """
-    organization.name = "New Name"
-    organization.scac_code = "NEW"
-    organization.save()
-    assert organization.name == "New Name"
-    assert organization.scac_code == "NEW"
+
+    def test_organization_creation(self, organization):
+        """
+        Test organization creation
+        """
+        assert organization is not None
+
+    def test_organization_update(self, organization):
+        """
+        Test organization update
+        """
+        organization.name = "New Name"
+        organization.scac_code = "NEW"
+        organization.save()
+        assert organization.name == "New Name"
+        assert organization.scac_code == "NEW"
+
+    def test_order_control_creation(self, organization):
+        """
+        Test dispatch control is created from create_order_control post_save signal
+        """
+        assert organization.order_control.auto_rate_orders is True
+        assert organization.order_control.organization == organization
 
 
-@pytest.mark.django_db
-def test_order_control_creation(organization):
+class TestDepot:
     """
-    Test dispatch control is created from
-    create_order_control post_save signal
+    Class to test Depot
     """
-    assert organization.order_control.auto_rate_orders is True
-    assert organization.order_control.organization == organization
+
+    def test_depot_creation(self, depot) -> None:
+        """
+        Test depot creation
+        """
+        assert depot is not None
+
+    def test_depot_update(self, depot) -> None:
+        """
+        Test depot update
+        """
+        depot.name = "New Name"
+        depot.save()
+        assert depot.name == "New Name"
+
+    def test_depot_organization(self, depot) -> None:
+        """
+        Test dispatch control is created from create_depot_detail post_save signal
+        """
+        assert depot.details.organization == depot.organization

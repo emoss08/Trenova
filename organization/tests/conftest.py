@@ -16,3 +16,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+from typing import Generator, Any
+
+import pytest
+
+from organization.factories import DepotFactory
+
+
+@pytest.fixture
+def depot() -> Generator[Any, Any, None]:
+    """
+    Depot fixture
+    """
+    yield DepotFactory()

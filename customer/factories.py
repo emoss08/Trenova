@@ -37,6 +37,23 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("name", locale="en_US")
 
 
+class DocumentClassificationFactory(factory.django.DjangoModelFactory):
+    """
+    Document Classification factory
+    """
+
+    class Meta:
+        """
+        Metaclass for DocumentClassificationFactory
+        """
+
+        model = "billing.DocumentClassification"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("name", locale="en_US")
+
+
 class CustomerContactFactory(factory.django.DjangoModelFactory):
     """
     Customer contact factory
@@ -48,7 +65,7 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerContact"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization","customer")
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
@@ -56,3 +73,74 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
     email = factory.Faker("email", locale="en_US")
     title = factory.Faker("word", locale="en_US")
     is_payable_contact = True
+
+
+class CustomerEmailProfileFactory(factory.django.DjangoModelFactory):
+    """
+    Customer Email Profile Factory
+    """
+
+    class Meta:
+        """
+        Metaclass for CustomerEmailProfileFactory
+        """
+
+        model = "customer.CustomerEmailProfile"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")
+    subject = factory.Faker("word", locale="en_US")
+    comment = factory.Faker("word", locale="en_US")
+    from_address = factory.Faker("email", locale="en_US")
+    blind_copy = factory.Faker("email", locale="en_US")
+    read_receipt = False
+    attachment_name = factory.Faker("word", locale="en_US")
+
+
+class CustomerRuleProfileFactory(factory.django.DjangoModelFactory):
+    """
+    Customer rule profile factory
+    """
+
+    class Meta:
+        """
+        Metaclass for CustomerRuleProfileFactory
+        """
+
+        model = "customer.CustomerRuleProfile"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    name = factory.Faker("word", locale="en_US")
+
+    @factory.post_generation
+    def document_class(self, create, extracted, **kwargs):
+        """
+        Post generation method for document classes
+        """
+
+        if not create:
+            return
+
+        if extracted:
+            for document_class in extracted:
+                self.document_class.add(document_class)
+
+class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
+    """
+    Customer Billing Profile factory
+    """
+
+    class Meta:
+        """
+        Metaclass for CustomerBillingFactory
+        """
+
+        model = "customer.CustomerBillingProfile"
+        django_get_or_create = ("organization", "customer", "email_profile", "rule_profile")
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    customer = factory.SubFactory(CustomerFactory)
+    email_profile = factory.SubFactory(CustomerEmailProfileFactory)
+    rule_profile = factory.SubFactory(CustomerRuleProfileFactory)
