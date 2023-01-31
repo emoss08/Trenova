@@ -576,6 +576,8 @@ class BillingQueue(GenericModel):
         related_name="billing_queue",
         help_text=_("Assigned worker to the billing queue"),
         verbose_name=_("Worker"),
+        blank=True,
+        null=True,
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -759,6 +761,10 @@ class BillingQueue(GenericModel):
         if self.order.pieces and not self.pieces:
             self.pieces = self.order.pieces
 
+        # Set order `order_type` to `order_type` if it is not set
+        if not self.order_type:
+            self.order_type = self.order.order_type
+
         # If order has `weight`, set `weight` to order `weight`
         if self.order.weight and not self.weight:
             self.weight = self.order.weight
@@ -822,6 +828,8 @@ class BillingHistory(GenericModel):
         verbose_name=_("Order Type"),
         related_name="billing_history",
         help_text=_("Assigned order type to the billing history"),
+        blank=True,
+        null=True,
     )
     order = models.ForeignKey(
         "order.Order",
@@ -844,6 +852,9 @@ class BillingHistory(GenericModel):
         verbose_name=_("Customer"),
         on_delete=models.RESTRICT,
         related_name="billing_history",
+        help_text=_("Assigned customer to the billing history"),
+        blank=True,
+        null=True,
     )
     invoice_number = models.CharField(
         _("Invoice Number"),
@@ -855,6 +866,8 @@ class BillingHistory(GenericModel):
         _("Pieces"),
         help_text=_("Total Piece Count of the Order"),
         default=0,
+        blank=True,
+        null=True,
     )
     weight = models.DecimalField(
         _("Weight"),
@@ -862,6 +875,8 @@ class BillingHistory(GenericModel):
         decimal_places=2,
         help_text=_("Total Weight of the Order"),
         default=0,
+        blank=True,
+        null=True,
     )
     bill_type = ChoiceField(
         _("Bill Type"),
@@ -890,6 +905,8 @@ class BillingHistory(GenericModel):
         related_name="billing_history",
         help_text=_("Assigned worker to the billing history"),
         verbose_name=_("Worker"),
+        blank=True,
+        null=True,
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -953,6 +970,7 @@ class BillingHistory(GenericModel):
         _("BOL Number"),
         max_length=255,
         help_text=_("BOL Number"),
+        blank=True,
     )
     user = models.ForeignKey(
         "accounts.User",
@@ -980,6 +998,63 @@ class BillingHistory(GenericModel):
             str: BillingHistory string representation
         """
         return textwrap.wrap(self.order.pro_number, 50)[0]
+
+    def save(self, **kwargs: Any) -> None:
+        """Save method for the BillingHistory model.
+
+        Args:
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None
+        """
+        self.full_clean()
+
+        # If order has `pieces`, set `pieces` to order `pieces`
+        if self.order.pieces and not self.pieces:
+            self.pieces = self.order.pieces
+
+        # Set order `order_type` to `order_type` if it is not set
+        if not self.order_type:
+            self.order_type = self.order.order_type
+
+        # If order has `weight`, set `weight` to order `weight`
+        if self.order.weight and not self.weight:
+            self.weight = self.order.weight
+
+        # If order has `mileage`, set `mileage` to order `mileage`
+        if self.order.mileage and not self.weight:
+            self.mileage = self.order.mileage
+
+        # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
+        if self.order.revenue_code and not self.revenue_code:
+            self.revenue_code = self.order.revenue_code
+
+        if not self.commodity and self.order.commodity:
+            self.commodity = self.order.commodity
+
+        # If commodity `description` is set, set `commodity_descr` to the description of the commodity
+        if self.commodity and self.commodity.description:
+            self.commodity_descr = self.commodity.description
+
+        # if order has `bol_number`, set `bol_number` to `bol_number`
+        if self.order.bol_number and not self.bol_number:
+            self.bol_number = self.order.bol_number
+
+        # If `bill_type` is not set, set `bill_type` to `INVOICE`
+        if not self.bill_type:
+            self.bill_type = BillingQueue.BillTypeChoices.INVOICE
+
+        # If order has `consignee_ref_number`
+        if self.order.consignee_ref_number and not self.consignee_ref_number:
+            self.consignee_ref_number = self.order.consignee_ref_number
+
+        self.customer = self.order.customer
+        self.other_charge_total = self.order.other_charge_amount
+        self.freight_charge_amount = self.order.freight_charge_amount
+        self.total_amount = self.order.sub_total
+
+        super().save(**kwargs)
 
     def clean(self) -> None:
         """Clean method for the BillingHistory model.
