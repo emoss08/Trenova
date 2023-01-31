@@ -38,6 +38,14 @@ class AuthenticatedHTTPRequest(HttpRequest):
     user: User
 
 
+class BillingException(Exception):
+    """
+    Base Billing Exception
+    """
+
+    pass
+
+
 class BillingService:
     """
     Class to handle billing to customers
@@ -173,6 +181,35 @@ class BillingService:
         """
         billing_queue.delete()
 
+    def create_billing_history(self, *, order: Order) -> None:
+        """Create the billing history
+
+        Args:
+            order (Order): The order to create the billing history for
+
+        Returns:
+            None: None
+        """
+
+        order_movement = order.movements.first()
+        worker = order_movement.primary_worker if order_movement else None
+
+        try:
+            models.BillingHistory.objects.create(
+                organization=order.organization,
+                order=order,
+                worker=worker,
+                order_type=order.order_type,
+                customer=order.customer,
+                bol_number=order.bol_number,
+            )
+        except BillingException as e:
+            self.create_billing_exception(
+                exception_type="OTHER",
+                order=order,
+                exception_message=f"Error creating billing history: {e}",
+            )
+
     def send_billing_email(self, *, order: Order) -> None:
         """Send the billing email
 
@@ -213,9 +250,10 @@ class BillingService:
                 if self.check_billing_requirements():
                     self.set_order_billed(order=invoice.order)
                     self.send_billing_email(order=invoice.order)
+                    self.create_billing_history(order=invoice.order)
                 else:
                     self.create_billing_exception(
-                        exception_type="Billing Requirement Not Met",
+                        exception_type="PAPERWORK",
                         order=invoice.order,
                         exception_message="Billing requirement not met",
                     )
@@ -241,7 +279,7 @@ class BillingService:
                 self.send_billing_email(order=order)
             else:
                 self.create_billing_exception(
-                    exception_type="Billing Requirement Not Met",
+                    exception_type="PAPERWORK",
                     order=order,
                     exception_message="Billing requirement not met",
                 )
