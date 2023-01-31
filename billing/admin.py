@@ -23,9 +23,35 @@ from billing.models import (
     AccessorialCharge,
     BillingControl,
     ChargeType,
-    DocumentClassification,
+    DocumentClassification, BillingHistory, BillingQueue,
 )
 from utils.admin import GenericAdmin
+
+@admin.register(BillingQueue)
+class BillingQueueAdmin(GenericAdmin[BillingQueue]):
+    """
+    Billing Queue Admin
+    """
+    model = BillingQueue
+    list_display = (
+        "order",
+        "bol_number",
+        "invoice_number",
+    )
+    search_fields = ("invoice_number", "order", "bol_number")
+
+@admin.register(BillingHistory)
+class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
+    """
+    Billing History Admin
+    """
+    model = BillingHistory
+    list_display = (
+        "order",
+        "bol_number",
+        "invoice_number",
+    )
+    search_fields = ("invoice_number", "order", "bol_number")
 
 
 @admin.register(BillingControl)
