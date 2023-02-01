@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
+from django.http import HttpRequest
 
 from organization import models
 from utils.admin import GenericAdmin, GenericStackedInline
@@ -105,3 +106,50 @@ class EmailControlAdmin(GenericAdmin[models.EmailControl]):
     """
 
     autocomplete = False
+
+
+@admin.register(models.EmailLog)
+class EmailLogAdmin(GenericAdmin[models.EmailLog]):
+    """
+    Email Log Admin
+    """
+
+    list_display = (
+        "to_email",
+        "subject",
+    )
+    readonly_fields = (
+        "to_email",
+        "subject",
+        "organization",
+        "error",
+    )
+    search_fields = (
+        "subject",
+        "to_email",
+    )
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: models.EmailLog | None = None
+    ) -> bool:
+        """Has permission to delete.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+            obj (): Object to be deleted (if any).
+
+        Returns:
+            bool: True if the user has permission to delete the given object, False otherwise.
+        """
+        return False
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        """Has permissions to add.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+
+        Returns:
+            bool: True if the user has permission to add an object, False otherwise.
+        """
+        return False

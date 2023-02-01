@@ -105,3 +105,13 @@ class EmailControlViewSet(OrganizationMixin):
     serializer_class = serializers.EmailControlSerializer
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "put", "patch", "head", "options"]
+
+class EmailLogViewSet(OrganizationMixin):
+    """
+    EmailLog ViewSet to manage requests to the email log endpoint
+    """
+
+    queryset = models.EmailLog.objects.all()
+    serializer_class = serializers.EmailLogSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["get", "head", "options"]

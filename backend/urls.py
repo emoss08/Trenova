@@ -80,6 +80,9 @@ router.register(r"email_control", org_api.EmailControlViewSet, basename="email-c
 router.register(
     r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles"
 )
+router.register(
+    r"email_log", org_api.EmailLogViewSet, basename="email-log"
+)
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
