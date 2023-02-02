@@ -109,7 +109,7 @@ class EmailControlAdmin(GenericAdmin[models.EmailControl]):
 
 
 @admin.register(models.EmailLog)
-class EmailLogAdmin(GenericAdmin[models.EmailLog]):
+class EmailLogAdmin(admin.ModelAdmin[models.EmailLog]):
     """
     Email Log Admin
     """
@@ -117,16 +117,18 @@ class EmailLogAdmin(GenericAdmin[models.EmailLog]):
     list_display = (
         "to_email",
         "subject",
+        "created"
     )
     readonly_fields = (
         "to_email",
         "subject",
-        "organization",
         "error",
+        "created"
     )
     search_fields = (
         "subject",
         "to_email",
+        "created"
     )
 
     def has_delete_permission(

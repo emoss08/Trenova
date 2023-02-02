@@ -155,7 +155,6 @@ class CustomerBillingProfile(GenericModel):
         Customer,
         on_delete=models.CASCADE,
         related_name="billing_profile",
-        related_query_name="billing_profiles",
         help_text=_("Customer"),
         verbose_name=_("Customer"),
     )
@@ -170,8 +169,7 @@ class CustomerBillingProfile(GenericModel):
     email_profile = models.ForeignKey(
         "CustomerEmailProfile",
         on_delete=models.CASCADE,
-        related_name="billing_profiles",
-        related_query_name="billing_profiles",
+        related_name="billing_profile",
         help_text=_("Customer Email Profile"),
         verbose_name=_("Customer Email Profile"),
         blank=True,
@@ -180,8 +178,7 @@ class CustomerBillingProfile(GenericModel):
     rule_profile = models.ForeignKey(
         "CustomerRuleProfile",
         on_delete=models.CASCADE,
-        related_name="billing_profiles",
-        related_query_name="billing_profile",
+        related_name="billing_profile",
         help_text=_("Rule Profile"),
         verbose_name=_("Rule Profile"),
         blank=True,

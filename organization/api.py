@@ -106,6 +106,7 @@ class EmailControlViewSet(OrganizationMixin):
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "put", "patch", "head", "options"]
 
+
 class EmailLogViewSet(OrganizationMixin):
     """
     EmailLog ViewSet to manage requests to the email log endpoint

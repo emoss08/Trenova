@@ -517,10 +517,12 @@ class EmailControl(TimeStampedModel):
 
         return reverse("organization:email-control-detail", kwargs={"pk": self.pk})
 
+
 class EmailLog(TimeStampedModel):
     """
     Stores the email log information for a related :model:`organization.Organization`
     """
+
     subject = models.CharField(
         _("Subject"),
         max_length=255,
@@ -535,13 +537,6 @@ class EmailLog(TimeStampedModel):
         _("Error"),
         blank=True,
         help_text=_("The error that was returned from the email server."),
-    )
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        verbose_name=_("Organization"),
-        related_name="email_logs",
-        help_text=_("The organization that the email log belongs to."),
     )
 
     class Meta:
