@@ -851,6 +851,7 @@ class BillingTransferLog(GenericModel):
     class Meta:
         """
         Metaclass for the BillingTransferLog model.
+        Metaclass for the BillingTransferLog model.
         """
 
         verbose_name = _("Billing Transfer Log")

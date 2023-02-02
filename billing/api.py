@@ -99,6 +99,28 @@ class BillingHistoryViewSet(OrganizationMixin):
     http_method_names = ["get", "head", "options"]
 
 
+class BillingTransferLogViewSet(OrganizationMixin):
+    """
+    A viewset for viewing billing transfers in the system.
+
+    The viewset provides default operation for viewing billing history,
+    as well as listing and retrieving charge types. It uses the `BillingTransferLogSerializer`
+    class to convert the charge type instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by `order` pro_number, & `user` username.
+    """
+
+    queryset = models.BillingTransferLog.objects.all()
+    serializer_class = serializers.BillingTransferLogSerializer
+    filterset_fields = (
+        "order__pro_number",
+        "transferred_by__username",
+    )
+    http_method_names = ["get", "head", "options"]
+
+
+
 class ChargeTypeViewSet(OrganizationMixin):
     """
     A viewset for viewing and editing charge types in the system.
