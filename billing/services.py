@@ -22,7 +22,7 @@ from collections.abc import Iterable
 from typing import Iterator
 
 from django.core.mail import send_mail
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
 
@@ -58,8 +58,8 @@ class BillingService:
 
     def __init__(self, *, request: AuthenticatedHTTPRequest):
         self.request = request
-        self.order_document_ids: list[uuid.UUID] = []
-        self.customer_billing_requirements: list = []
+        self.order_document_ids: list[str] = []
+        self.customer_billing_requirements: list[str] = []
         self.billing_queue: Iterable[models.BillingQueue] = []
 
     def create_billing_exception(
@@ -104,26 +104,20 @@ class BillingService:
         Returns:
             None: None
         """
-
         try:
-            for doc in customer.billing_profile.rule_profile.document_class.all():
-                if doc:
-                    self.customer_billing_requirements.append(doc.name)
-                else:
-                    return None
+            self.customer_billing_requirements.extend(
+                [
+                    doc.name
+                    for doc in customer.billing_profile.rule_profile.document_class.all()
+                    if doc.name
+                ]
+            )
         except CustomerBillingProfile.DoesNotExist:
-            msg = f"""
-            Customer Billing Profile Not found for Customer {customer.name},
-            or Customer does not have a valid email address. No need to worry, we've
-            sent the invoices to {self.request.user.email}. Please update the
-            Customer Billing Profile for {customer.name} and try again.
-            """
             self.create_billing_exception(
                 exception_type="OTHER",
                 order=order,
-                exception_message=msg,
+                exception_message=f"Customer: {customer.name} does not have a billing profile",
             )
-
         return
 
     def set_order_document_ids(self, *, order: Order) -> None:
@@ -136,11 +130,11 @@ class BillingService:
             None: None
         """
 
-        for document in order.order_documentation.all():
-            if document:
-                self.order_document_ids.append(document.document_class.name)
-            else:
-                return None
+        self.order_document_ids = [
+            document.document_class.name
+            for document in order.order_documentation.all()
+            if document.document_class.name
+        ]
 
     def get_billing_queue(self) -> Iterable[models.BillingQueue]:
         """Get the billing queue for the organization
@@ -153,15 +147,25 @@ class BillingService:
         )
         return self.billing_queue
 
-    def check_billing_requirements(self) -> bool:
+    def check_billing_requirements(self, *, order: Order) -> bool:
         """Check if the billing requirements are met
 
         Returns:
             bool: True if the billing requirements are met, False otherwise
         """
-        return set(self.customer_billing_requirements).issubset(
+        is_match = set(self.customer_billing_requirements).issubset(
             set(self.order_document_ids)
         )
+        if not is_match:
+            missing_documents = list(
+                set(self.customer_billing_requirements) - set(self.order_document_ids)
+            )
+            self.create_billing_exception(
+                exception_type="PAPERWORK",
+                order=order,
+                exception_message=f"Missing customer required documents: {missing_documents}",
+            )
+        return is_match
 
     @staticmethod
     def set_order_billed(*, order: Order) -> None:
@@ -248,11 +252,7 @@ class BillingService:
             f"New invoice from {self.request.user.organization.name}",
             f"Please see attached invoice for invoice: {order.pro_number}",
             f"{billing_profile.email if billing_profile else self.request.user.email}",
-            [
-                customer_contact.email
-                if customer_contact
-                else self.request.user.email
-            ],
+            [customer_contact.email if customer_contact else self.request.user.email],
             fail_silently=False,
         )
 
@@ -279,20 +279,18 @@ class BillingService:
                     customer=invoice.order.customer, order=invoice.order
                 )
                 self.set_order_document_ids(order=invoice.order)
-                if self.check_billing_requirements():
-                    self.set_order_billed(order=invoice.order)
+                if self.check_billing_requirements(order=invoice.order):
+                    with transaction.atomic():
+                        self.set_order_billed(order=invoice.order)
+                        self.create_billing_history(order=invoice.order)
+                        self.delete_billing_queue(billing_queue=invoice)
                     self.send_billing_email(order=invoice.order)
-                    self.create_billing_history(order=invoice.order)
-                else:
-                    self.create_billing_exception(
-                        exception_type="PAPERWORK",
-                        order=invoice.order,
-                        exception_message="Billing requirement not met",
-                    )
             else:
-                self.set_order_billed(order=invoice.order)
-
-            self.delete_billing_queue(billing_queue=invoice)
+                with transaction.atomic():
+                    self.set_order_billed(order=invoice.order)
+                    self.create_billing_history(order=invoice.order)
+                    self.delete_billing_queue(billing_queue=invoice)
+                self.send_billing_email(order=invoice.order)
 
     def bill_order(self, *, order: Order) -> None:
         """Bill a single order by performing multiple operations.
@@ -314,7 +312,7 @@ class BillingService:
         if self._check_billing_control():
             self.set_billing_requirements(customer=order.customer, order=order)
             self.set_order_document_ids(order=order)
-            if self.check_billing_requirements():
+            if self.check_billing_requirements(order=order):
                 self.set_order_billed(order=order)
                 self.send_billing_email(order=order)
             else:
@@ -326,7 +324,7 @@ class BillingService:
         else:
             self.set_order_billed(order=order)
 
-    @silk_profile(name="Transfer To Billing Queue")
+    @silk_profile(name="Transfer To Billing Queue")  # type: ignore
     def transfer_to_billing_queue(self) -> None:
         """
         Transfer billable orders to the billing queue for the current organization.
