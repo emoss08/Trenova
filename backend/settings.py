@@ -32,7 +32,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = True
-ALLOWED_HOSTS = []  # type: ignore
 CORS_ORIGIN_ALLOW_ALL = True
 INTERNAL_IPS = [
     "127.0.0.1",
@@ -210,8 +209,38 @@ CACHES = {
     },
 }
 
+# Session Configurations
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
+
+# Logging Configurations
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
+        },
+        "simple": {"format": "%(levelname)s %(message)s"},
+    },
+    "handlers": {
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "billing.log",
+            "maxBytes": 15728640,  # 15MB
+            "backupCount": 10,
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "billing": {
+            "handlers": ["file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}
 
 # Cacheops configurations
 CACHEOPS_REDIS = {
@@ -268,6 +297,7 @@ CELERY_CACHE_BACKEND = "celery"
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
+# Django Rest Framework Spectacular Configurations
 SPECTACULAR_SETTINGS = {
     "TITLE": "Monta API",
     "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
@@ -277,3 +307,10 @@ SPECTACULAR_SETTINGS = {
         "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
     },
 }
+
+# Django Email Backend
+# EMAIL_BACKEND = "backend.email_backend.DatabaseEmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+SILKY_PYTHON_PROFILER = True
+SILKY_PYTHON_PROFILER_BINARY = True
