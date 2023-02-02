@@ -19,15 +19,20 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import uuid
 from collections.abc import Iterable
+from typing import Iterator
 
 from django.core.mail import send_mail
+from django.db import IntegrityError
 from django.http import HttpRequest
 from django.utils import timezone
 
 from accounts.models import User
 from billing import models
+from billing.models import DocumentClassification
+from billing.selectors import get_billable_orders
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from order.models import Order
+from silk.profiling.profiler import silk_profile
 
 
 class AuthenticatedHTTPRequest(HttpRequest):
@@ -54,26 +59,24 @@ class BillingService:
     def __init__(self, *, request: AuthenticatedHTTPRequest):
         self.request = request
         self.order_document_ids: list[uuid.UUID] = []
-        self.billing_requirements: list = []
+        self.customer_billing_requirements: list = []
         self.billing_queue: Iterable[models.BillingQueue] = []
-        self.bill_orders()
 
-    @staticmethod
     def create_billing_exception(
-        *, exception_type: str, order: Order, exception_message: str
+        self, *, exception_type: str, order: Order | None, exception_message: str
     ) -> None:
         """Create a billing Exception
 
         Args:
             exception_type (str): The type of exception
-            order (Order): The order that caused the exception
+            order (Order | None): The order that caused the exception
             exception_message (str): Description of the Exception
 
         Returns:
             None: None
         """
         models.BillingException.objects.create(
-            organization=order.organization,
+            organization=self.request.user.organization,
             exception_type=exception_type,
             order=order,
             exception_message=exception_message,
@@ -101,10 +104,13 @@ class BillingService:
         Returns:
             None: None
         """
+
         try:
-            customer_billing_profile = CustomerBillingProfile.objects.get(
-                customer=customer, organization=customer.organization
-            )
+            for doc in customer.billing_profile.rule_profile.document_class.all():
+                if doc:
+                    self.customer_billing_requirements.append(doc.name)
+                else:
+                    return None
         except CustomerBillingProfile.DoesNotExist:
             msg = f"""
             Customer Billing Profile Not found for Customer {customer.name},
@@ -117,11 +123,8 @@ class BillingService:
                 order=order,
                 exception_message=msg,
             )
-            return
 
-        self.billing_requirements.extend(
-            customer_billing_profile.values_list("document_class", flat=True)
-        )
+        return
 
     def set_order_document_ids(self, *, order: Order) -> None:
         """Set the order document ids for the order
@@ -132,9 +135,12 @@ class BillingService:
         Returns:
             None: None
         """
-        self.order_document_ids.extend(
-            document.document_class.id for document in order.order_documentation.all()
-        )
+
+        for document in order.order_documentation.all():
+            if document:
+                self.order_document_ids.append(document.document_class.name)
+            else:
+                return None
 
     def get_billing_queue(self) -> Iterable[models.BillingQueue]:
         """Get the billing queue for the organization
@@ -153,7 +159,9 @@ class BillingService:
         Returns:
             bool: True if the billing requirements are met, False otherwise
         """
-        return set(self.billing_requirements).issubset(set(self.order_document_ids))
+        return set(self.customer_billing_requirements).issubset(
+            set(self.order_document_ids)
+        )
 
     @staticmethod
     def set_order_billed(*, order: Order) -> None:
@@ -182,15 +190,18 @@ class BillingService:
         billing_queue.delete()
 
     def create_billing_history(self, *, order: Order) -> None:
-        """Create the billing history
+        """Create billing history for the given order.
 
         Args:
-            order (Order): The order to create the billing history for
+            order (Order): The order to create the billing history for.
 
         Returns:
-            None: None
-        """
+            None
 
+        Raises:
+            BillingException: If there is an error creating the billing history.
+
+        """
         order_movement = order.movements.first()
         worker = order_movement.primary_worker if order_movement else None
 
@@ -202,6 +213,7 @@ class BillingService:
                 order_type=order.order_type,
                 customer=order.customer,
                 bol_number=order.bol_number,
+                user=self.request.user,
             )
         except BillingException as e:
             self.create_billing_exception(
@@ -211,13 +223,17 @@ class BillingService:
             )
 
     def send_billing_email(self, *, order: Order) -> None:
-        """Send the billing email
+        """Sends billing email to the customer contact.
+
+        This function is used to send an email with the billing invoice to the customer contact,
+        which is either set as the payable contact in the customer organization or the default
+        contact email of the organization.
 
         Args:
-            order (Order): The order to send the billing email for
+            order (Order): The order for which the billing email is sent.
 
         Returns:
-            None: None
+            None: This function does not return any value.
         """
         customer_contact = CustomerContact.objects.filter(
             customer=order.customer,
@@ -227,16 +243,32 @@ class BillingService:
         billing_profile = (
             self.request.user.organization.email_control.billing_email_profile
         )
+
         send_mail(
             f"New invoice from {self.request.user.organization.name}",
             f"Please see attached invoice for invoice: {order.pro_number}",
             f"{billing_profile.email if billing_profile else self.request.user.email}",
-            [customer_contact.email if customer_contact else self.request.user.email],
+            [
+                customer_contact.email
+                if customer_contact
+                else self.request.user.email
+            ],
             fail_silently=False,
         )
 
+    @silk_profile(name="Bill Orders")  # type: ignore
     def bill_orders(self) -> None:
-        """Bill orders to customers
+        """Bill a list of orders to their respective customers
+
+        This function bills a list of orders to their respective customers.
+        For each order in the billing queue, the function first checks if
+        the billing control is enabled. If it is, it sets the billing requirements
+        for the customer and order, sets the order document IDs, and checks if the
+        billing requirements are met. If the requirements are met, it sets the order
+        as billed, sends a billing email to the customer, and creates a billing history
+        record. If the requirements are not met, a billing exception is created. If the
+        billing control is not enabled, the order is simply set as billed. Finally, the
+        invoice is deleted from the billing queue.
 
         Returns:
             None: None
@@ -263,13 +295,21 @@ class BillingService:
             self.delete_billing_queue(billing_queue=invoice)
 
     def bill_order(self, *, order: Order) -> None:
-        """Bill a single order
+        """Bill a single order by performing multiple operations.
+
+        This function checks if the billing control is valid, sets the billing requirements,
+        sets the order document IDs, checks if the billing requirements are met, sets the order
+        as billed, and sends a billing email if the requirements are met. If the billing control is
+        not valid, or if the billing requirements are not met, an exception is created.
 
         Args:
             order (Order): The order to bill
 
         Returns:
             None: None
+
+        Raises:
+            None
         """
         if self._check_billing_control():
             self.set_billing_requirements(customer=order.customer, order=order)
@@ -285,3 +325,64 @@ class BillingService:
                 )
         else:
             self.set_order_billed(order=order)
+
+    @silk_profile(name="Transfer To Billing Queue")
+    def transfer_to_billing_queue(self) -> None:
+        """
+        Transfer billable orders to the billing queue for the current organization.
+
+        This function retrieves the billable orders for the current organization and transfers them
+        to the billing queue. The transferred orders are marked as `transferred_to_billing` and their
+        `billing_transfer_date` is set to the current date and time.
+
+        Returns:
+            None: This function returns `None`.
+        """
+
+        billable_orders: Iterator[Order] | None = get_billable_orders(
+            organization=self.request.user.organization
+        )
+
+        if not billable_orders:
+            # TODO: Decide if we want to log this, or give this information to the user.
+            return
+
+        order_ids = [order.id for order in billable_orders]
+        now = timezone.now()
+
+        Order.objects.filter(id__in=order_ids).update(
+            transferred_to_billing=True, billing_transfer_date=now
+        )
+
+        try:
+            billing_queue_entries = [
+                models.BillingQueue(
+                    organization=self.request.user.organization, order_id=order_id
+                )
+                for order_id in order_ids
+            ]
+            models.BillingQueue.objects.bulk_create(billing_queue_entries)
+
+            bill_transfer_logs = [
+                models.BillingTransferLog(
+                    organization=self.request.user.organization,
+                    order_id=order_id,
+                    transferred_at=now,
+                    transferred_by=self.request.user,
+                )
+                for order_id in order_ids
+            ]
+            models.BillingTransferLog.objects.bulk_create(bill_transfer_logs)
+
+        except IntegrityError as int_err:
+            self.create_billing_exception(
+                exception_type="OTHER",
+                order=None,
+                exception_message=f"Error transferring orders to billing queue: {int_err}",
+            )
+        except BillingException as bill_err:
+            self.create_billing_exception(
+                exception_type="OTHER",
+                order=None,
+                exception_message=f"Error transferring orders to billing queue: {bill_err}",
+            )
