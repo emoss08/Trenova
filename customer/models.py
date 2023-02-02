@@ -172,8 +172,6 @@ class CustomerBillingProfile(GenericModel):
         related_name="billing_profile",
         help_text=_("Customer Email Profile"),
         verbose_name=_("Customer Email Profile"),
-        blank=True,
-        null=True,
     )
     rule_profile = models.ForeignKey(
         "CustomerRuleProfile",
@@ -181,8 +179,6 @@ class CustomerBillingProfile(GenericModel):
         related_name="billing_profile",
         help_text=_("Rule Profile"),
         verbose_name=_("Rule Profile"),
-        blank=True,
-        null=True,
     )
 
     class Meta:
