@@ -51,7 +51,7 @@ def test_bill_orders(
     request = RequestFactory().get("/")
     request.user = user
 
-    BillingService(request=request)
+    BillingService(request=request).bill_orders()
 
     billing_queue = BillingQueue.objects.all()
     billing_history = BillingHistory.objects.get(order=order)

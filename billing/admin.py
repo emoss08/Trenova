@@ -23,15 +23,19 @@ from billing.models import (
     AccessorialCharge,
     BillingControl,
     ChargeType,
-    DocumentClassification, BillingHistory, BillingQueue,
+    DocumentClassification,
+    BillingHistory,
+    BillingQueue, BillingException, BillingTransferLog,
 )
 from utils.admin import GenericAdmin
+
 
 @admin.register(BillingQueue)
 class BillingQueueAdmin(GenericAdmin[BillingQueue]):
     """
     Billing Queue Admin
     """
+
     model = BillingQueue
     list_display = (
         "order",
@@ -40,11 +44,13 @@ class BillingQueueAdmin(GenericAdmin[BillingQueue]):
     )
     search_fields = ("invoice_number", "order", "bol_number")
 
+
 @admin.register(BillingHistory)
 class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
     """
     Billing History Admin
     """
+
     model = BillingHistory
     list_display = (
         "order",
@@ -52,6 +58,34 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
         "invoice_number",
     )
     search_fields = ("invoice_number", "order", "bol_number")
+
+@admin.register(BillingTransferLog)
+class BillingTransferLogAdmin(GenericAdmin[BillingTransferLog]):
+    """
+    Billing Transfer Log Admin
+    """
+
+    model = BillingTransferLog
+    list_display = (
+        "order",
+        "transferred_at",
+        "transferred_by",
+    )
+    search_fields = ("invoice_number", "transferred_by", "transferred_at")
+    readonly_fields = ("transferred_at", "transferred_by", "order")
+
+@admin.register(BillingException)
+class BillingExceptionAdmin(GenericAdmin[BillingException]):
+    """
+    Billing Exception Admin
+    """
+
+    model = BillingException
+    list_display = (
+        "order",
+        "exception_type",
+    )
+    search_fields = ("exception_type", "order",)
 
 
 @admin.register(BillingControl)

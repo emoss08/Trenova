@@ -21,9 +21,11 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from utils.models import ChoiceField, GenericModel, StatusChoices
@@ -502,6 +504,8 @@ class BillingQueue(GenericModel):
         verbose_name=_("Order Type"),
         related_name="billing_queue",
         help_text=_("Assigned order type to the billing queue"),
+        null=True,
+        blank=True,
     )
     order = models.ForeignKey(
         "order.Order",
@@ -525,6 +529,8 @@ class BillingQueue(GenericModel):
         related_name="billing_queue",
         help_text=_("Assigned customer to the billing queue"),
         verbose_name=_("Customer"),
+        null=True,
+        blank=True,
     )
     invoice_number = models.CharField(
         _("Invoice Number"),
@@ -640,6 +646,7 @@ class BillingQueue(GenericModel):
         _("BOL Number"),
         max_length=255,
         help_text=_("BOL Number"),
+        blank=True,
     )
     user = models.ForeignKey(
         "accounts.User",
@@ -706,7 +713,7 @@ class BillingQueue(GenericModel):
         # If billing control `order_transfer_criteria` is `READY_AND_COMPLETE` and order `status` is not `COMPLETED`
         # and order `ready_to_bill` is `False` raise ValidationError
         if (
-            self.organization.billing_control.order_transfer_criteria
+            self.order.organization.billing_control.order_transfer_criteria
             == BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
             and self.order.status != StatusChoices.COMPLETED
             and self.order.ready_to_bill is False
@@ -720,7 +727,7 @@ class BillingQueue(GenericModel):
         # If billing control `order_transfer_criteria` is `COMPLETED` and order `status` is not `COMPLETED`
         # raise ValidationError
         if (
-            self.organization.billing_control.order_transfer_criteria
+            self.order.organization.billing_control.order_transfer_criteria
             == BillingControl.OrderTransferCriteriaChoices.COMPLETED
             and self.order.status != StatusChoices.COMPLETED
         ):
@@ -733,7 +740,7 @@ class BillingQueue(GenericModel):
         # if billing control `order_transfer_criteria` is `READY_TO_BILL` and order `ready_to_bill` is false
         # raise ValidationError
         if (
-            self.organization.billing_control.order_transfer_criteria
+            self.order.organization.billing_control.order_transfer_criteria
             == BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
             and self.order.ready_to_bill is False
         ):
@@ -808,6 +815,69 @@ class BillingQueue(GenericModel):
             `/billing_queue/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
         """
         return reverse("billing-queue-detail", kwargs={"pk": self.pk})
+
+
+class BillingTransferLog(GenericModel):
+    """
+    Class for storing information about the billing transfer log.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text=_("Unique identifier for the billing history"),
+    )
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.RESTRICT,
+        related_name="billing_transfer_log",
+        help_text=_("Assigned order to the billing transfer log"),
+        verbose_name=_("Order"),
+    )
+    transferred_at = models.DateTimeField(
+        verbose_name=_("Transferred At"),
+        help_text=_("Date and time when the order was transferred to billing"),
+    )
+    transferred_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.RESTRICT,
+        related_name="billing_transfer_log",
+        help_text=_("User who transferred the order to billing"),
+        verbose_name=_("Transferred By"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the BillingTransferLog model.
+        """
+
+        verbose_name = _("Billing Transfer Log")
+        verbose_name_plural = _("Billing Transfer Logs")
+        ordering = ["-transferred_at"]
+
+    def __str__(self) -> str:
+        """
+        String representation for the BillingTransferLog model.
+
+        Returns:
+            String representation for the BillingTransferLog model.
+        """
+        return textwrap.shorten(
+            f"{self.order} transferred to billing at {self.transferred_at}",
+            width=100,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """Billing Transfer Log absolute url
+
+        Returns:
+            Absolute url for the billing transfer log object. For example,
+            `/billing_transfer_log/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
 class BillingHistory(GenericModel):
@@ -1045,6 +1115,10 @@ class BillingHistory(GenericModel):
         if not self.bill_type:
             self.bill_type = BillingQueue.BillTypeChoices.INVOICE
 
+        # If not `bill_date`, set `bill_date` to `timezone.now().date()`
+        if not self.bill_date:
+            self.bill_date = timezone.now().date()
+
         # If order has `consignee_ref_number`
         if self.order.consignee_ref_number and not self.consignee_ref_number:
             self.consignee_ref_number = self.order.consignee_ref_number
@@ -1161,6 +1235,8 @@ class BillingException(GenericModel):
         on_delete=models.RESTRICT,
         related_name="billing_exception",
         help_text=_("Assigned order to the billing exception"),
+        blank=True,
+        null=True,
     )
     exception_message = models.TextField(
         _("Exception Message"),
@@ -1183,4 +1259,8 @@ class BillingException(GenericModel):
         Returns:
             str: BillingException string representation
         """
-        return textwrap.wrap(self.order.pro_number, 50)[0]
+        return textwrap.shorten(
+            f"{self.exception_type} - {self.exception_message}",
+            width=50,
+            placeholder="...",
+        )
