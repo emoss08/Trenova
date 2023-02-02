@@ -17,10 +17,12 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import List
+from typing import Sequence
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import EmailMessage
 from django.db import transaction
+
+from smtplib import SMTPException
 
 from organization.models import EmailLog
 
@@ -29,7 +31,7 @@ class DatabaseEmailBackend(BaseEmailBackend):
     """
     A custom email backend that logs email failures to a database.
     """
-    def send_messages(self, email_messages: List[EmailMessage]) -> int:
+    def send_messages(self, email_messages: Sequence[EmailMessage]) -> int:
         """
         Sends the provided list of email messages.
 
@@ -44,17 +46,18 @@ class DatabaseEmailBackend(BaseEmailBackend):
         Returns:
             The number of sent messages.
         """
+
         num_sent = 0
         with transaction.atomic():
             for message in email_messages:
                 try:
                     message.send()
                     num_sent += 1
-                except Exception as e:
+                except SMTPException as email_error:
                     email_log = EmailLog(
                         subject=message.subject,
                         to_email=", ".join(message.to),
-                        error=str(e)
+                        error=str(email_error)
                     )
                     email_log.save()
         return num_sent
