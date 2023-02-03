@@ -114,22 +114,9 @@ class EmailLogAdmin(admin.ModelAdmin[models.EmailLog]):
     Email Log Admin
     """
 
-    list_display = (
-        "to_email",
-        "subject",
-        "created"
-    )
-    readonly_fields = (
-        "to_email",
-        "subject",
-        "error",
-        "created"
-    )
-    search_fields = (
-        "subject",
-        "to_email",
-        "created"
-    )
+    list_display = ("to_email", "subject", "created")
+    readonly_fields = ("to_email", "subject", "error", "created")
+    search_fields = ("subject", "to_email", "created")
 
     def has_delete_permission(
         self, request: HttpRequest, obj: models.EmailLog | None = None

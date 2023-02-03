@@ -23,12 +23,12 @@ from django.http import HttpRequest
 from billing.models import (
     AccessorialCharge,
     BillingControl,
-    ChargeType,
-    DocumentClassification,
+    BillingException,
     BillingHistory,
     BillingQueue,
-    BillingException,
     BillingTransferLog,
+    ChargeType,
+    DocumentClassification,
 )
 from utils.admin import GenericAdmin
 

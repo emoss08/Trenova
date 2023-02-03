@@ -23,7 +23,7 @@ from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.utils import timezone
 
-from billing.models import BillingQueue, BillingHistory
+from billing.models import BillingHistory, BillingQueue
 from billing.services.order_billing import BillingService
 from order.tests.factories import OrderFactory
 

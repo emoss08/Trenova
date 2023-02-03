@@ -17,7 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from django.utils import timezone
+
 from billing import models
+
 
 class TransferOrderDetails:
     """
@@ -30,7 +32,7 @@ class TransferOrderDetails:
         self.save()
 
     def save(self) -> None:
-        """ Save order details to BillingHistory & BillingQueue models.
+        """Save order details to BillingHistory & BillingQueue models.
 
         Returns:
             None
@@ -75,7 +77,10 @@ class TransferOrderDetails:
             self.model.bill_date = timezone.now().date()
 
         # If order has `consignee_ref_number`
-        if self.model.order.consignee_ref_number and not self.model.consignee_ref_number:
+        if (
+            self.model.order.consignee_ref_number
+            and not self.model.consignee_ref_number
+        ):
             self.model.consignee_ref_number = self.model.order.consignee_ref_number
 
         self.model.customer = self.model.order.customer

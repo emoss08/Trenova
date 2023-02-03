@@ -118,7 +118,7 @@ router.register(
 router.register(
     r"billing_transfer_logs",
     billing_api.BillingTransferLogViewSet,
-    basename="billing-transfer-logs"
+    basename="billing-transfer-logs",
 )
 
 # Commodity Routing

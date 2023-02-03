@@ -48,8 +48,11 @@ def create_billing_control(
     if created:
         models.BillingControl.objects.create(organization=instance)
 
+
 @receiver(pre_save, sender=models.BillingQueue)
-def save_billing_queue_order_details(sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any) -> None:
+def save_billing_queue_order_details(
+    sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any
+) -> None:
     """Save order details
 
     Call the transfer_order_details service, select order details and save them to billingqueue objects.
@@ -64,8 +67,11 @@ def save_billing_queue_order_details(sender: models.BillingQueue, instance: mode
     """
     TransferOrderDetails(model=instance)
 
+
 @receiver(pre_save, sender=models.BillingHistory)
-def save_billing_history_order_details(sender: models.BillingHistory, instance: models.BillingHistory, **kwargs: Any) -> None:
+def save_billing_history_order_details(
+    sender: models.BillingHistory, instance: models.BillingHistory, **kwargs: Any
+) -> None:
     """Save order details
 
     Call the transfer_order_details service, select order details and save them to billingqueue objects.

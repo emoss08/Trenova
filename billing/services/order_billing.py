@@ -18,19 +18,19 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from collections.abc import Iterable
-from typing import Iterator
+from collections.abc import Iterator
 
 from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
+from silk.profiling.profiler import silk_profile
 
 from accounts.models import User
 from billing import models
 from billing.selectors import get_billable_orders
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from order.models import Order
-from silk.profiling.profiler import silk_profile
 
 
 class AuthenticatedHTTPRequest(HttpRequest):
@@ -46,8 +46,6 @@ class BillingException(Exception):
     Base Billing Exception
     """
 
-    pass
-
 
 class BillingService:
     """
@@ -61,7 +59,7 @@ class BillingService:
         self.billing_queue: Iterable[models.BillingQueue] = []
 
     def create_billing_exception(
-            self, *, exception_type: str, order: Order | None, exception_message: str
+        self, *, exception_type: str, order: Order | None, exception_message: str
     ) -> None:
         """Create a billing Exception
 
@@ -355,7 +353,7 @@ class BillingService:
             for order in order_ids:
                 models.BillingQueue.objects.create(
                     organization=self.request.user.organization, order_id=order
-            )
+                )
 
             bill_transfer_logs = [
                 models.BillingTransferLog(
