@@ -23,7 +23,7 @@ from django.core.exceptions import ValidationError
 pytestmark = pytest.mark.django_db
 
 
-def test_auto_bill_criteria_required_when_auto_bill_true(organization):
+def test_auto_bill_criteria_required_when_auto_bill_true(organization) -> None:
     """
     Test if `auto_bill_orders` is true & `auto_bill_criteria` is blank
     that a ValidationError is thrown.
@@ -40,10 +40,10 @@ def test_auto_bill_criteria_required_when_auto_bill_true(organization):
     ]
 
 
-def test_auto_bill_criteria_choices_is_invalid(organization):
+def test_auto_bill_criteria_choices_is_invalid(organization) -> None:
     """
-    Test when passing invalid choice to `auto_bill_criteria`
-    that a ValidationError is thrown.
+    Test when passing invalid choice to `auto_bill_criteria` that a
+    ValidationError is thrown.
     """
 
     billing_control = organization.billing_control

@@ -516,3 +516,52 @@ class EmailControl(TimeStampedModel):
         """
 
         return reverse("organization:email-control-detail", kwargs={"pk": self.pk})
+
+
+class EmailLog(TimeStampedModel):
+    """
+    Stores the email log information for a related :model:`organization.Organization`
+    """
+
+    subject = models.CharField(
+        _("Subject"),
+        max_length=255,
+        help_text=_("The subject of the email."),
+    )
+    to_email = models.EmailField(
+        _("To Email"),
+        max_length=255,
+        help_text=_("The email address that the email was sent to."),
+    )
+    error = models.TextField(
+        _("Error"),
+        blank=True,
+        help_text=_("The error that was returned from the email server."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the EmailLog model
+        """
+
+        verbose_name = _("Email Log")
+        verbose_name_plural = _("Email Logs")
+        ordering = ["-created"]
+
+    def __str__(self) -> str:
+        """EmailLog string representation.
+
+        Returns:
+            str: String representation of the email log.
+        """
+
+        return textwrap.wrap(self.subject, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """EmailLog absolute URL
+
+        Returns:
+            str: The absolute url for the email log.
+        """
+
+        return reverse("email-log-detail", kwargs={"pk": self.pk})

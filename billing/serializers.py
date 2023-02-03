@@ -49,6 +49,42 @@ class BillingControlSerializer(GenericSerializer):
         model = models.BillingControl
 
 
+class BillingTransferLogSerializer(GenericSerializer):
+    """A serializer for the `BillingTransferLog` model.
+
+    A serializer class for the BillingTransferLog Model. This serializer is used
+    to convert the BillingTransferLog model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    Attributes:
+        order (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the order of the BillingTransferLog.
+        transferred_by (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the transferred_by of the BillingTransferLog.
+    """
+
+    order = serializers.PrimaryKeyRelatedField(
+        queryset=Order.objects.all(),
+    )
+    transferred_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+    )
+
+    class Meta:
+        """Metaclass for BillingTransferLogSerializer
+
+        Attributes:
+            model (models.BillingTransferLog): The model that the serializer is for.
+        """
+
+        model = models.BillingTransferLog
+        extra_fields = (
+            "order",
+            "transferred_by",
+        )
+
+
 class BillingQueueSerializer(GenericSerializer):
     """A serializer for the `BillingQueue` model.
 

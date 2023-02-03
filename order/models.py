@@ -498,6 +498,12 @@ class Order(GenericModel):
         blank=True,
         help_text=_("Planning Comment"),
     )
+    voided_comm = models.CharField(
+        _("Voided Comment"),
+        max_length=100,
+        blank=True,
+        help_text=_("Voided Comment"),
+    )
 
     class Meta:
         """

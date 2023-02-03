@@ -19,12 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 from django.core import mail
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.utils import timezone
 
-from billing.models import BillingQueue
-from billing.services import BillingService
-from customer.factories import CustomerBillingProfileFactory
+from billing.models import BillingHistory, BillingQueue
+from billing.services.order_billing import BillingService
 from order.tests.factories import OrderFactory
 
 pytestmark = pytest.mark.django_db
@@ -51,10 +51,20 @@ def test_bill_orders(
     request = RequestFactory().get("/")
     request.user = user
 
-    BillingService(request=request)
+    BillingService(request=request).bill_orders()
 
     billing_queue = BillingQueue.objects.all()
+    billing_history = BillingHistory.objects.get(order=order)
+
     assert billing_queue.count() == 0
+    assert billing_history.order == order
+    assert billing_history.organization == order.organization
+    assert billing_history.order_type == order.order_type
+    assert billing_history.revenue_code == order.revenue_code
+    assert billing_history.customer == order.customer
+    assert billing_history.commodity == order.commodity
+    assert billing_history.bol_number == order.bol_number
+
     order.refresh_from_db()
     assert order.billed is True
     assert order.bill_date == timezone.now().date()
@@ -63,3 +73,20 @@ def test_bill_orders(
         mail.outbox[0].body
         == f"Please see attached invoice for invoice: {order.pro_number}"
     )
+
+
+def test_unbilled_order_in_billing_history(order) -> None:
+    """
+    Test ValidationError is thrown when adding an order in billing history
+    that hasn't billed.
+    """
+
+    with pytest.raises(ValidationError) as excinfo:
+        BillingHistory.objects.create(
+            organization=order.organization,
+            order=order,
+        )
+
+    assert excinfo.value.message_dict["order"] == [
+        "Order has not been billed. Please try again with a different order."
+    ]

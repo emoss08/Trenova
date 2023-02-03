@@ -22,16 +22,16 @@ import pytest
 from billing.tests.factories import AccessorialChargeFactory
 
 
-@pytest.fixture()
-def accessorial_charge():
+@pytest.fixture
+def accessorial_charge() -> None:
     """
     Accessorial charge fixture
     """
-    return AccessorialChargeFactory()
+    yield AccessorialChargeFactory()
 
 
 @pytest.mark.django_db
-def test_accessorial_charge_creation(accessorial_charge):
+def test_accessorial_charge_creation(accessorial_charge) -> None:
     """
     Test accessorial charge creation
     """
@@ -39,7 +39,7 @@ def test_accessorial_charge_creation(accessorial_charge):
 
 
 @pytest.mark.django_db
-def test_accessorial_charge_update(accessorial_charge):
+def test_accessorial_charge_update(accessorial_charge) -> None:
     """
     Test accessorial charge update
     """

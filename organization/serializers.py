@@ -148,3 +148,16 @@ class EmailProfileSerializer(GenericSerializer):
         """
 
         model = models.EmailProfile
+
+
+class EmailLogSerializer(GenericSerializer):
+    """
+    Email Log Serializer
+    """
+
+    class Meta:
+        """
+        Metaclass for Email Log
+        """
+
+        model = models.EmailLog
