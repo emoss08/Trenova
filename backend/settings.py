@@ -309,7 +309,6 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Django Email Backend
-# EMAIL_BACKEND = "backend.email_backend.DatabaseEmailBackend"
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 SILKY_PYTHON_PROFILER = True

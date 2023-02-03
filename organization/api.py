@@ -107,7 +107,7 @@ class EmailControlViewSet(OrganizationMixin):
     http_method_names = ["get", "put", "patch", "head", "options"]
 
 
-class EmailLogViewSet(OrganizationMixin):
+class EmailLogViewSet(viewsets.ModelViewSet):
     """
     EmailLog ViewSet to manage requests to the email log endpoint
     """

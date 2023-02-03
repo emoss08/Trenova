@@ -138,7 +138,7 @@ class EmailLogAdmin(admin.ModelAdmin[models.EmailLog]):
 
         Args:
             request (HttpRequest): Request object from the view function that called this method (if any).
-            obj (): Object to be deleted (if any).
+            obj (models.EmailLog | None): Object to be deleted (if any).
 
         Returns:
             bool: True if the user has permission to delete the given object, False otherwise.

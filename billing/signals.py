@@ -19,10 +19,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from billing import models
+from billing.services.transfer_order_details import TransferOrderDetails
 from organization.models import Organization
 
 
@@ -46,3 +47,22 @@ def create_billing_control(
     """
     if created:
         models.BillingControl.objects.create(organization=instance)
+
+@receiver(pre_save, sender=models.BillingQueue)
+def save_order_details(sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any) -> None:
+    """Save order details
+
+    Call the transfer_order_details service, select order details and save them to billingqueue objects.
+
+    Args:
+        sender (models.BillingQueue): BillingQueue
+        instance (models.BillingQueue): The BillingQueue instance.
+        **kwargs (): Keyword Arguments
+
+    Returns:
+        None
+    """
+    print("I'm being called.")
+    TransferOrderDetails(model=instance)
+
+

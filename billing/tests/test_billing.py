@@ -24,7 +24,7 @@ from django.test import RequestFactory
 from django.utils import timezone
 
 from billing.models import BillingQueue, BillingHistory
-from billing.services import BillingService
+from billing.services.order_billing import BillingService
 from order.tests.factories import OrderFactory
 
 pytestmark = pytest.mark.django_db

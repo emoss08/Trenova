@@ -28,6 +28,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from billing.services.transfer_order_details import TransferOrderDetails
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -697,12 +698,12 @@ class BillingQueue(GenericModel):
             )
 
         # If order is already transferred to billing raise ValidationError
-        if self.order.transferred_to_billing:
-            errors.append(
-                _(
-                    "Order has already been transferred to billing. Please try again with a different order."
-                )
-            )
+        # if self.order.transferred_to_billing:
+        #     errors.append(
+        #         _(
+        #             "Order has already been transferred to billing. Please try again with a different order."
+        #         )
+        #     )
 
         # If order is voided raise ValidationError
         if self.order.status == StatusChoices.VOIDED:
@@ -763,48 +764,7 @@ class BillingQueue(GenericModel):
             None
         """
         self.full_clean()
-
-        # If order has `pieces`, set `pieces` to order `pieces`
-        if self.order.pieces and not self.pieces:
-            self.pieces = self.order.pieces
-
-        # Set order `order_type` to `order_type` if it is not set
-        if not self.order_type:
-            self.order_type = self.order.order_type
-
-        # If order has `weight`, set `weight` to order `weight`
-        if self.order.weight and not self.weight:
-            self.weight = self.order.weight
-
-        # If order has `mileage`, set `mileage` to order `mileage`
-        if self.order.mileage and not self.weight:
-            self.mileage = self.order.mileage
-
-        # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
-        if self.order.revenue_code and not self.revenue_code:
-            self.revenue_code = self.order.revenue_code
-
-        # If commodity `description` is set, set `commodity_descr` to the description of the commodity
-        if self.commodity and self.commodity.description:
-            self.commodity_descr = self.commodity.description
-
-        # if order has `bol_number`, set `bol_number` to `bol_number`
-        if self.order.bol_number and not self.bol_number:
-            self.bol_number = self.order.bol_number
-
-        # If `bill_type` is not set, set `bill_type` to `INVOICE`
-        if not self.bill_type:
-            self.bill_type = self.BillTypeChoices.INVOICE
-
-        # If order has `consignee_ref_number`
-        if self.order.consignee_ref_number and not self.consignee_ref_number:
-            self.consignee_ref_number = self.order.consignee_ref_number
-
-        self.customer = self.order.customer
-        self.other_charge_total = self.order.other_charge_amount
-        self.freight_charge_amount = self.order.freight_charge_amount
-        self.total_amount = self.order.sub_total
-
+        # TransferOrderDetails(model=self)
         super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
@@ -1081,53 +1041,7 @@ class BillingHistory(GenericModel):
         """
         self.full_clean()
 
-        # If order has `pieces`, set `pieces` to order `pieces`
-        if self.order.pieces and not self.pieces:
-            self.pieces = self.order.pieces
-
-        # Set order `order_type` to `order_type` if it is not set
-        if not self.order_type:
-            self.order_type = self.order.order_type
-
-        # If order has `weight`, set `weight` to order `weight`
-        if self.order.weight and not self.weight:
-            self.weight = self.order.weight
-
-        # If order has `mileage`, set `mileage` to order `mileage`
-        if self.order.mileage and not self.weight:
-            self.mileage = self.order.mileage
-
-        # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
-        if self.order.revenue_code and not self.revenue_code:
-            self.revenue_code = self.order.revenue_code
-
-        if not self.commodity and self.order.commodity:
-            self.commodity = self.order.commodity
-
-        # If commodity `description` is set, set `commodity_descr` to the description of the commodity
-        if self.commodity and self.commodity.description:
-            self.commodity_descr = self.commodity.description
-
-        # if order has `bol_number`, set `bol_number` to `bol_number`
-        if self.order.bol_number and not self.bol_number:
-            self.bol_number = self.order.bol_number
-
-        # If `bill_type` is not set, set `bill_type` to `INVOICE`
-        if not self.bill_type:
-            self.bill_type = BillingQueue.BillTypeChoices.INVOICE
-
-        # If not `bill_date`, set `bill_date` to `timezone.now().date()`
-        if not self.bill_date:
-            self.bill_date = timezone.now().date()
-
-        # If order has `consignee_ref_number`
-        if self.order.consignee_ref_number and not self.consignee_ref_number:
-            self.consignee_ref_number = self.order.consignee_ref_number
-
-        self.customer = self.order.customer
-        self.other_charge_total = self.order.other_charge_amount
-        self.freight_charge_amount = self.order.freight_charge_amount
-        self.total_amount = self.order.sub_total
+        TransferOrderDetails(model=self)
 
         super().save(**kwargs)
 
