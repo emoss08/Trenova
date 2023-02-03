@@ -25,10 +25,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from billing.services.transfer_order_details import TransferOrderDetails
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -698,12 +696,12 @@ class BillingQueue(GenericModel):
             )
 
         # If order is already transferred to billing raise ValidationError
-        # if self.order.transferred_to_billing:
-        #     errors.append(
-        #         _(
-        #             "Order has already been transferred to billing. Please try again with a different order."
-        #         )
-        #     )
+        if self.order.transferred_to_billing:
+            errors.append(
+                _(
+                    "Order has already been transferred to billing. Please try again with a different order."
+                )
+            )
 
         # If order is voided raise ValidationError
         if self.order.status == StatusChoices.VOIDED:
@@ -753,19 +751,6 @@ class BillingQueue(GenericModel):
 
         if errors:
             raise ValidationError({"order": errors})
-
-    def save(self, **kwargs: Any) -> None:
-        """Save method for the BillingQueue model.
-
-        Args:
-            **kwargs (Any): Keyword Arguments
-
-        Returns:
-            None
-        """
-        self.full_clean()
-        # TransferOrderDetails(model=self)
-        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
@@ -1029,21 +1014,6 @@ class BillingHistory(GenericModel):
             str: BillingHistory string representation
         """
         return textwrap.wrap(self.order.pro_number, 50)[0]
-
-    def save(self, **kwargs: Any) -> None:
-        """Save method for the BillingHistory model.
-
-        Args:
-            **kwargs (Any): Keyword Arguments
-
-        Returns:
-            None
-        """
-        self.full_clean()
-
-        TransferOrderDetails(model=self)
-
-        super().save(**kwargs)
 
     def clean(self) -> None:
         """Clean method for the BillingHistory model.

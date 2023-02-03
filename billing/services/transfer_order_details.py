@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from django.utils import timezone
-
+from billing import models
 
 class TransferOrderDetails:
     """
@@ -25,11 +25,16 @@ class TransferOrderDetails:
     & BillingQueue models.
     """
 
-    def __init__(self, *, model):
+    def __init__(self, *, model: models.BillingHistory | models.BillingQueue) -> None:
         self.model = model
         self.save()
 
-    def save(self):
+    def save(self) -> None:
+        """ Save order details to BillingHistory & BillingQueue models.
+
+        Returns:
+            None
+        """
         # If order has `pieces`, set `pieces` to order `pieces`
         if self.model.order.pieces and not self.model.pieces:
             self.model.pieces = self.model.order.pieces
