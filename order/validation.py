@@ -30,10 +30,31 @@ class OrderValidation:
 
     def __init__(self, *, order):
         self.order = order
+        self.errors = {}
+        self.validate()
+
+    def validate(self) -> None:
+        """Validate order.
+
+        Validate the order model based on the organization's order control
+        and rating method. For example, if the organization has enforce_rev_code
+        as `TRUE` and the revenue_code is not entered throw a ValidationError.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If any of the order_control params are true and the associated fields
+            are do not fall within the criteria.
+        """
+
         self.validate_rating_method()
         self.validate_order_control()
         self.validate_ready_to_bill()
         self.validate_order_locations()
+
+        if self.errors:
+            raise ValidationError(self.errors)
 
     def validate_rating_method(self) -> None:
         """Validate rating method.
@@ -55,27 +76,16 @@ class OrderValidation:
             self.order.rate_method == RatingMethodChoices.FLAT
             and not self.order.freight_charge_amount
         ):
-            raise ValidationError(
-                {
-                    "freight_charge_amount": _(
-                        "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["freight_charge_amount"] = _(
+                "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
             )
-
         # Validate 'mileage' is entered if 'rate_method' is 'PER_MILE'
         if (
             self.order.rate_method == RatingMethodChoices.PER_MILE
             and not self.order.mileage
         ):
-            raise ValidationError(
-                {
-                    "mileage": _(
-                        "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["mileage"] = _(
+                "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
             )
 
     def validate_order_control(self) -> None:
@@ -101,13 +111,8 @@ class OrderValidation:
             and self.order.destination_location
             and self.order.origin_location == self.order.destination_location
         ):
-            raise ValidationError(
-                {
-                    "origin_location": _(
-                        "Origin and Destination locations cannot be the same. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["origin_location"] = _(
+                "Origin and Destination locations cannot be the same. Please try again."
             )
 
         # Validate revenue code is entered if Order Control requires it for the organization.
@@ -115,9 +120,8 @@ class OrderValidation:
             self.order.organization.order_control.enforce_rev_code
             and not self.order.revenue_code
         ):
-            raise ValidationError(
-                {"revenue_code": _("Revenue code is required. Please try again.")},
-                code="invalid",
+            self.errors["revenue_code"] = _(
+                "Revenue code is required. Please try again."
             )
 
         # Validate commodity is entered if Order Control requires it for the organization.
@@ -125,9 +129,15 @@ class OrderValidation:
             self.order.organization.order_control.enforce_commodity
             and not self.order.commodity
         ):
-            raise ValidationError(
-                {"commodity": _("Commodity is required. Please try again.")},
-                code="invalid",
+            self.errors["commodity"] = _("Commodity is required. Please try again.")
+
+        if (
+            self.order.organization.order_control.enforce_voided_comm
+            and self.order.status == StatusChoices.VOIDED
+            and not self.order.voided_comm
+        ):
+            self.errors["voided_comm"] = _(
+                "Voided Comment is required. Please try again."
             )
 
     def validate_ready_to_bill(self) -> None:
@@ -148,13 +158,8 @@ class OrderValidation:
 
         # Validate order not marked 'ready_to_bill' if 'status' is not COMPLETED
         if self.order.ready_to_bill and self.order.status != StatusChoices.COMPLETED:
-            raise ValidationError(
-                {
-                    "ready_to_bill": _(
-                        "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["ready_to_bill"] = _(
+                "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
             )
 
     def validate_order_locations(self) -> None:
@@ -176,22 +181,12 @@ class OrderValidation:
 
         # Validate that origin_location or origin_address is provided.
         if not self.order.origin_location and not self.order.origin_address:
-            raise ValidationError(
-                {
-                    "origin_address": _(
-                        "Origin Location or Address is required. Please try again."
-                    ),
-                },
-                code="invalid",
+            self.errors["origin_address"] = _(
+                "Origin Location or Address is required. Please try again."
             )
 
         # Validate that destination_location or destination_address is provided.
         if not self.order.destination_location and not self.order.destination_address:
-            raise ValidationError(
-                {
-                    "destination_address": _(
-                        "Destination Location or Address is required. Please try again."
-                    ),
-                },
-                code="invalid",
+            self.errors["destination_address"] = _(
+                "Destination Location or Address is required. Please try again."
             )

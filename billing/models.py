@@ -21,6 +21,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -502,6 +503,8 @@ class BillingQueue(GenericModel):
         verbose_name=_("Order Type"),
         related_name="billing_queue",
         help_text=_("Assigned order type to the billing queue"),
+        null=True,
+        blank=True,
     )
     order = models.ForeignKey(
         "order.Order",
@@ -525,6 +528,8 @@ class BillingQueue(GenericModel):
         related_name="billing_queue",
         help_text=_("Assigned customer to the billing queue"),
         verbose_name=_("Customer"),
+        null=True,
+        blank=True,
     )
     invoice_number = models.CharField(
         _("Invoice Number"),
@@ -576,6 +581,8 @@ class BillingQueue(GenericModel):
         related_name="billing_queue",
         help_text=_("Assigned worker to the billing queue"),
         verbose_name=_("Worker"),
+        blank=True,
+        null=True,
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -638,6 +645,7 @@ class BillingQueue(GenericModel):
         _("BOL Number"),
         max_length=255,
         help_text=_("BOL Number"),
+        blank=True,
     )
     user = models.ForeignKey(
         "accounts.User",
@@ -704,7 +712,7 @@ class BillingQueue(GenericModel):
         # If billing control `order_transfer_criteria` is `READY_AND_COMPLETE` and order `status` is not `COMPLETED`
         # and order `ready_to_bill` is `False` raise ValidationError
         if (
-            self.organization.billing_control.order_transfer_criteria
+            self.order.organization.billing_control.order_transfer_criteria
             == BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
             and self.order.status != StatusChoices.COMPLETED
             and self.order.ready_to_bill is False
@@ -718,7 +726,7 @@ class BillingQueue(GenericModel):
         # If billing control `order_transfer_criteria` is `COMPLETED` and order `status` is not `COMPLETED`
         # raise ValidationError
         if (
-            self.organization.billing_control.order_transfer_criteria
+            self.order.organization.billing_control.order_transfer_criteria
             == BillingControl.OrderTransferCriteriaChoices.COMPLETED
             and self.order.status != StatusChoices.COMPLETED
         ):
@@ -731,7 +739,7 @@ class BillingQueue(GenericModel):
         # if billing control `order_transfer_criteria` is `READY_TO_BILL` and order `ready_to_bill` is false
         # raise ValidationError
         if (
-            self.organization.billing_control.order_transfer_criteria
+            self.order.organization.billing_control.order_transfer_criteria
             == BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
             and self.order.ready_to_bill is False
         ):
@@ -744,56 +752,6 @@ class BillingQueue(GenericModel):
         if errors:
             raise ValidationError({"order": errors})
 
-    def save(self, **kwargs: Any) -> None:
-        """Save method for the BillingQueue model.
-
-        Args:
-            **kwargs (Any): Keyword Arguments
-
-        Returns:
-            None
-        """
-        self.full_clean()
-
-        # If order has `pieces`, set `pieces` to order `pieces`
-        if self.order.pieces and not self.pieces:
-            self.pieces = self.order.pieces
-
-        # If order has `weight`, set `weight` to order `weight`
-        if self.order.weight and not self.weight:
-            self.weight = self.order.weight
-
-        # If order has `mileage`, set `mileage` to order `mileage`
-        if self.order.mileage and not self.weight:
-            self.mileage = self.order.mileage
-
-        # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
-        if self.order.revenue_code and not self.revenue_code:
-            self.revenue_code = self.order.revenue_code
-
-        # If commodity `description` is set, set `commodity_descr` to the description of the commodity
-        if self.commodity and self.commodity.description:
-            self.commodity_descr = self.commodity.description
-
-        # if order has `bol_number`, set `bol_number` to `bol_number`
-        if self.order.bol_number and not self.bol_number:
-            self.bol_number = self.order.bol_number
-
-        # If `bill_type` is not set, set `bill_type` to `INVOICE`
-        if not self.bill_type:
-            self.bill_type = self.BillTypeChoices.INVOICE
-
-        # If order has `consignee_ref_number`
-        if self.order.consignee_ref_number and not self.consignee_ref_number:
-            self.consignee_ref_number = self.order.consignee_ref_number
-
-        self.customer = self.order.customer
-        self.other_charge_total = self.order.other_charge_amount
-        self.freight_charge_amount = self.order.freight_charge_amount
-        self.total_amount = self.order.sub_total
-
-        super().save(**kwargs)
-
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
 
@@ -802,6 +760,70 @@ class BillingQueue(GenericModel):
             `/billing_queue/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
         """
         return reverse("billing-queue-detail", kwargs={"pk": self.pk})
+
+
+class BillingTransferLog(GenericModel):
+    """
+    Class for storing information about the billing transfer log.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text=_("Unique identifier for the billing history"),
+    )
+    order = models.ForeignKey(
+        "order.Order",
+        on_delete=models.RESTRICT,
+        related_name="billing_transfer_log",
+        help_text=_("Assigned order to the billing transfer log"),
+        verbose_name=_("Order"),
+    )
+    transferred_at = models.DateTimeField(
+        verbose_name=_("Transferred At"),
+        help_text=_("Date and time when the order was transferred to billing"),
+    )
+    transferred_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.RESTRICT,
+        related_name="billing_transfer_log",
+        help_text=_("User who transferred the order to billing"),
+        verbose_name=_("Transferred By"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the BillingTransferLog model.
+        Metaclass for the BillingTransferLog model.
+        """
+
+        verbose_name = _("Billing Transfer Log")
+        verbose_name_plural = _("Billing Transfer Logs")
+        ordering = ["-transferred_at"]
+
+    def __str__(self) -> str:
+        """
+        String representation for the BillingTransferLog model.
+
+        Returns:
+            String representation for the BillingTransferLog model.
+        """
+        return textwrap.shorten(
+            f"{self.order} transferred to billing at {self.transferred_at}",
+            width=100,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """Billing Transfer Log absolute url
+
+        Returns:
+            Absolute url for the billing transfer log object. For example,
+            `/billing_transfer_log/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
 class BillingHistory(GenericModel):
@@ -822,6 +844,8 @@ class BillingHistory(GenericModel):
         verbose_name=_("Order Type"),
         related_name="billing_history",
         help_text=_("Assigned order type to the billing history"),
+        blank=True,
+        null=True,
     )
     order = models.ForeignKey(
         "order.Order",
@@ -844,6 +868,9 @@ class BillingHistory(GenericModel):
         verbose_name=_("Customer"),
         on_delete=models.RESTRICT,
         related_name="billing_history",
+        help_text=_("Assigned customer to the billing history"),
+        blank=True,
+        null=True,
     )
     invoice_number = models.CharField(
         _("Invoice Number"),
@@ -890,6 +917,8 @@ class BillingHistory(GenericModel):
         related_name="billing_history",
         help_text=_("Assigned worker to the billing history"),
         verbose_name=_("Worker"),
+        blank=True,
+        null=True,
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
@@ -953,6 +982,7 @@ class BillingHistory(GenericModel):
         _("BOL Number"),
         max_length=255,
         help_text=_("BOL Number"),
+        blank=True,
     )
     user = models.ForeignKey(
         "accounts.User",
@@ -1086,6 +1116,8 @@ class BillingException(GenericModel):
         on_delete=models.RESTRICT,
         related_name="billing_exception",
         help_text=_("Assigned order to the billing exception"),
+        blank=True,
+        null=True,
     )
     exception_message = models.TextField(
         _("Exception Message"),
@@ -1108,4 +1140,8 @@ class BillingException(GenericModel):
         Returns:
             str: BillingException string representation
         """
-        return textwrap.wrap(self.order.pro_number, 50)[0]
+        return textwrap.shorten(
+            f"{self.exception_type} - {self.exception_message}",
+            width=50,
+            placeholder="...",
+        )
