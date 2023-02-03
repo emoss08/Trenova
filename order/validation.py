@@ -85,7 +85,7 @@ class OrderValidation:
             and not self.order.mileage
         ):
             self.errors["mileage"] = _(
-                "Freight Rate Method is Per Mile but Mileage is not set. Please try again."
+                "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
             )
 
     def validate_order_control(self) -> None:

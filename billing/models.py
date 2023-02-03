@@ -882,8 +882,6 @@ class BillingHistory(GenericModel):
         _("Pieces"),
         help_text=_("Total Piece Count of the Order"),
         default=0,
-        blank=True,
-        null=True,
     )
     weight = models.DecimalField(
         _("Weight"),
@@ -891,8 +889,6 @@ class BillingHistory(GenericModel):
         decimal_places=2,
         help_text=_("Total Weight of the Order"),
         default=0,
-        blank=True,
-        null=True,
     )
     bill_type = ChoiceField(
         _("Bill Type"),
