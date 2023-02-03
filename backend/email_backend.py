@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from smtplib import SMTPException
 from collections.abc import Sequence
+from smtplib import SMTPException
 
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import EmailMessage
