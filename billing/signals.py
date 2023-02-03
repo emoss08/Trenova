@@ -65,7 +65,7 @@ def save_billing_queue_order_details(
     Returns:
         None
     """
-    TransferOrderDetails(model=instance)
+    TransferOrderDetails(instance=instance)
 
 
 @receiver(pre_save, sender=models.BillingHistory)
@@ -84,4 +84,4 @@ def save_billing_history_order_details(
     Returns:
         None
     """
-    TransferOrderDetails(model=instance)
+    TransferOrderDetails(instance=instance)
