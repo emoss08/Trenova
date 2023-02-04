@@ -87,6 +87,7 @@ class TestOrderTypeAPI:
         response = api_client.get(
             reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]})
         )
+
         assert response.status_code == 200
         assert response.data["name"] == "Foo Bar"
         assert response.data["description"] == "Foo Bar"
@@ -100,6 +101,7 @@ class TestOrderTypeAPI:
             reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]}),
             {"name": "New Name", "description": "New Description", "is_active": False},
         )
+
         assert response.status_code == 200
         assert response.data["name"] == "New Name"
         assert response.data["description"] == "New Description"

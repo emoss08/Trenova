@@ -28,17 +28,50 @@ from worker.models import WorkerProfile
 
 
 class MovementValidation:
-    """
-    Class to Validate the movement model.
+    """Class to validate the movement model.
+
+    This class validates a movement model and raises a `ValidationError` if any
+    validation fails. The validation includes checking regulatory compliance, worker
+    commodity compatibility, movement stop status, worker comparison, and movement worker.
+
+    Attributes:
+        movement: The movement model to be validated.
+        errors: A dictionary that stores the validation error messages.
+
+    Raises:
+        ValidationError: If any validation fails.
     """
 
     def __init__(self, *, movement):
+        """Initialize the `MovementValidation` class.
+
+        Args:
+            movement: The movement model to be validated.
+        """
         self.movement = movement
+        self.errors = {}
+        self.validate()
+
+    def validate(self) -> None:
+        """Validate the movement model.
+
+        The `validate` method calls several other validation methods to perform
+        all the necessary validations.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If any validation fails.
+        """
         self.validate_regulatory()
         self.validate_worker_commodity()
         self.validate_movement_stop_status()
         self.validate_worker_compare()
         self.validate_movement_worker()
+
+        if self.errors:
+            raise ValidationError(self.errors)
 
     def validate_regulatory(self) -> None:
         """Validate Worker regulatory.
@@ -72,14 +105,9 @@ class MovementValidation:
             and self.movement.primary_worker.profile.license_expiration_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Cannot assign a worker with an expired license. Please update the worker's"
-                        " profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Cannot assign a worker with an expired license. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -87,14 +115,9 @@ class MovementValidation:
             and self.movement.primary_worker.profile.physical_due_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Cannot assign a worker with an expired physical. Please update the worker's"
-                        " profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Cannot assign a worker with an expired physical. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -102,14 +125,9 @@ class MovementValidation:
             and self.movement.primary_worker.profile.medical_cert_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Cannot assign a worker with an expired medical certificate. Please update the worker's"
-                        " profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Cannot assign a worker with an expired medical certificate. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -117,14 +135,9 @@ class MovementValidation:
             and self.movement.primary_worker.profile.medical_cert_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Cannot assign a worker with an expired medical certificate. Please update the worker's"
-                        " profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Cannot assign a worker with an expired medical certificate. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -132,24 +145,14 @@ class MovementValidation:
             and self.movement.primary_worker.profile.mvr_due_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Cannot assign a worker with an expired MVR. Please update the worker's"
-                        " profile and try again."
-                    ),
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Cannot assign a worker with an expired MVR. Please update the worker's"
+                " profile and try again."
             )
 
         if self.movement.primary_worker.profile.termination_date:
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Cannot assign a terminated worker. Please update the worker's profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Cannot assign a terminated worker. Please update the worker's profile and try again."
             )
 
     def validate_secondary_worker_regulatory(self):
@@ -167,14 +170,9 @@ class MovementValidation:
             and self.movement.secondary_worker.profile.license_expiration_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "secondary_worker": _(
-                        "Cannot assign a worker with an expired license. Please update the worker's"
-                        " profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["secondary_worker"] = _(
+                "Cannot assign a worker with an expired license. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -182,14 +180,9 @@ class MovementValidation:
             and self.movement.secondary_worker.profile.physical_due_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "secondary_worker": _(
-                        "Cannot assign a worker with an expired physical. Please update the worker's"
-                        " profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["secondary_worker"] = _(
+                "Cannot assign a worker with an expired physical. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -197,14 +190,9 @@ class MovementValidation:
             and self.movement.secondary_worker.profile.medical_cert_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "secondary_worker": _(
-                        "Cannot assign a worker with an expired medical certificate. Please update the"
-                        " worker's profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["secondary_worker"] = _(
+                "Cannot assign a worker with an expired medical certificate. Please update the worker's"
+                " profile and try again."
             )
 
         if (
@@ -212,24 +200,14 @@ class MovementValidation:
             and self.movement.secondary_worker.profile.mvr_due_date
             < timezone.now().date()
         ):
-            raise ValidationError(
-                {
-                    "secondary_worker": _(
-                        "Cannot assign a worker with an expired MVR. Please update the worker's"
-                        " profile and try again."
-                    ),
-                },
-                code="invalid",
+            self.errors["secondary_worker"] = _(
+                "Cannot assign a worker with an expired MVR. Please update the worker's"
+                " profile and try again."
             )
 
         if self.movement.secondary_worker.profile.termination_date:
-            raise ValidationError(
-                {
-                    "secondary_worker": _(
-                        "Cannot assign a terminated worker. Please update the worker's profile and try again."
-                    )
-                },
-                code="invalid",
+            self.errors["secondary_worker"] = _(
+                "Cannot assign a terminated worker. Please update the worker's profile and try again."
             )
 
     def validate_worker_compare(self) -> None:
@@ -247,13 +225,8 @@ class MovementValidation:
             and self.movement.secondary_worker
             and self.movement.primary_worker == self.movement.secondary_worker
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Primary worker cannot be the same as secondary worker. Please try again."
-                    ),
-                },
-                code="invalid",
+            self.errors["primary_worker"] = _(
+                "Primary worker cannot be the same as secondary worker. Please try again."
             )
 
     def validate_worker_commodity(self) -> None:
@@ -276,13 +249,8 @@ class MovementValidation:
                 WorkerProfile.EndorsementChoices.HAZMAT,
                 WorkerProfile.EndorsementChoices.X,
             ]:
-                raise ValidationError(
-                    {
-                        "primary_worker": _(
-                            "Worker must be hazmat certified to haul this order. Please try again."
-                        ),
-                    },
-                    code="invalid",
+                self.errors["primary_worker"] = _(
+                    "Worker must be hazmat certified to haul this order. Please try again."
                 )
 
             if (
@@ -290,13 +258,8 @@ class MovementValidation:
                 and self.movement.primary_worker.profile.hazmat_expiration_date
                 < datetime.date.today()
             ):
-                raise ValidationError(
-                    {
-                        "primary_worker": _(
-                            "Worker hazmat certification has expired. Please try again."
-                        ),
-                    },
-                    code="invalid",
+                self.errors["primary_worker"] = _(
+                    "Worker hazmat certification has expired. Please try again."
                 )
 
         # Validation for the secondary_worker.
@@ -305,13 +268,8 @@ class MovementValidation:
                 WorkerProfile.EndorsementChoices.HAZMAT,
                 WorkerProfile.EndorsementChoices.X,
             ]:
-                raise ValidationError(
-                    {
-                        "secondary_worker": _(
-                            "Worker must be hazmat certified to haul this order. Please try again."
-                        ),
-                    },
-                    code="invalid",
+                self.errors["secondary_worker"] = _(
+                    "Worker must be hazmat certified to haul this order. Please try again."
                 )
 
             if (
@@ -319,13 +277,8 @@ class MovementValidation:
                 and self.movement.secondary_worker.profile.hazmat_expiration_date
                 < datetime.date.today()
             ):
-                raise ValidationError(
-                    {
-                        "secondary_worker": _(
-                            "Worker hazmat certification has expired. Please try again."
-                        ),
-                    },
-                    code="invalid",
+                self.errors["secondary_worker"] = _(
+                    "Worker hazmat certification has expired. Please try again."
                 )
 
     def validate_movement_stop_status(self) -> None:
@@ -344,14 +297,9 @@ class MovementValidation:
             self.movement.status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]
             and self.movement.stops.filter(status=StatusChoices.NEW).exists()
         ):
-            raise ValidationError(
-                {
-                    "status": _(
-                        "Cannot change status to anything other than `NEW` if any of the stops are"
-                        " not in progress. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["status"] = _(
+                "Cannot change status to anything other than `NEW` if any of the stops are"
+                " not in progress. Please try again."
             )
         elif (
             self.movement.status == StatusChoices.NEW
@@ -359,14 +307,9 @@ class MovementValidation:
                 status__in=[StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]
             ).exists()
         ):
-            raise ValidationError(
-                {
-                    "status": _(
-                        "Cannot change status to `NEW` if any of the stops are in progress or"
-                        " completed. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["status"] = _(
+                "Cannot change status to `NEW` if any of the stops are in progress or"
+                " completed. Please try again."
             )
 
         if (
@@ -375,14 +318,9 @@ class MovementValidation:
                 status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS]
             ).exists()
         ):
-            raise ValidationError(
-                {
-                    "status": _(
-                        "Cannot change status to `COMPLETED` if any of the stops are in"
-                        " progress or new. Please try again."
-                    )
-                },
-                code="invalid",
+            self.errors["status"] = _(
+                "Cannot change status to `COMPLETED` if any of the stops are in"
+                " progress or new. Please try again."
             )
 
     def validate_movement_worker(self) -> None:
@@ -404,16 +342,11 @@ class MovementValidation:
             and not self.movement.primary_worker
             and not self.movement.equipment
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Primary worker is required before movement status can be changed"
-                        " to `In Progress` or `Completed`. Please try again."
-                    ),
-                    "equipment": _(
-                        "Equipment is required before movement status can be changed to"
-                        " `In Progress` or `Completed`. Please try again."
-                    ),
-                },
-                code="invalid_worker_and_equipment",
+            self.errors["primary_worker"] = _(
+                "Primary worker is required before movement status can be changed to"
+                " `In Progress` or `Completed`. Please try again."
+            )
+            self.errors["equipment"] = _(
+                "Equipment is required before movement status can be changed to"
+                " `In Progress` or `Completed`. Please try again."
             )
