@@ -196,6 +196,9 @@ router.register(
 router.register(
     r"service_incidents", stops_api.ServiceIncidentViewSet, basename="service-incidents"
 )
+router.register(
+    r"stops", stops_api.StopViewSet, basename="stops"
+)
 
 # Order Routing
 router.register(
