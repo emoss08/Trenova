@@ -99,9 +99,9 @@ class StopSerializer(GenericSerializer):
     """
 
     stop_comments = serializers.PrimaryKeyRelatedField(
-        many=True,
         queryset=models.StopComment.objects.all(),
         allow_null=True,
+        required=False,
     )
 
     class Meta:
@@ -112,6 +112,7 @@ class StopSerializer(GenericSerializer):
         """
 
         model = models.Stop
+        extra_fields = ("stop_comments",)
 
 
 class ServiceIncidentSerializer(GenericSerializer):
@@ -130,7 +131,9 @@ class ServiceIncidentSerializer(GenericSerializer):
         queryset=models.Stop.objects.all(),
     )
     delay_code = serializers.PrimaryKeyRelatedField(
-        queryset=DelayCode.objects.all(), allow_null=True
+        queryset=DelayCode.objects.all(),
+        allow_null=True,
+        required=False,
     )
 
     class Meta:
