@@ -17,15 +17,16 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 
 import pytest
 from django.utils import timezone
 
 from location.factories import LocationFactory
 from movements.tests.factories import MovementFactory
-from stops.tests.factories import StopFactory
 from stops import models
+from stops.tests.factories import StopFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -53,14 +54,19 @@ def location() -> Generator[Any, Any, None]:
     """
     yield LocationFactory()
 
+
 @pytest.fixture
 def stop_api(api_client, movement, location) -> Generator[Any, Any, None]:
     """
     Stop API fixture
     """
-    yield api_client.post("/api/stops/", {
-        "movement": f"{movement.id}",
-        "location": f"{location.id}",
-        "appointment_time": f"{timezone.now()}",
-        "stop_type": models.StopChoices.PICKUP
-    }, format="json")
+    yield api_client.post(
+        "/api/stops/",
+        {
+            "movement": f"{movement.id}",
+            "location": f"{location.id}",
+            "appointment_time": f"{timezone.now()}",
+            "stop_type": models.StopChoices.PICKUP,
+        },
+        format="json",
+    )

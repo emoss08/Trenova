@@ -50,4 +50,3 @@ class StopFactory(factory.django.DjangoModelFactory):
         "date_time", tzinfo=timezone.get_current_timezone()
     )
     stop_type = "P"
-

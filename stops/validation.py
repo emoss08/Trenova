@@ -164,7 +164,8 @@ class StopValidation:
             )
 
         if (
-            self.stop.departure_time and self.stop.arrival_time
+            self.stop.departure_time
+            and self.stop.arrival_time
             and self.stop.departure_time < self.stop.arrival_time
         ):
             self.errors["departure_time"] = _(

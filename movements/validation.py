@@ -41,6 +41,7 @@ class MovementValidation:
     Raises:
         ValidationError: If any validation fails.
     """
+
     def __init__(self, *, movement):
         """Initialize the `MovementValidation` class.
 
