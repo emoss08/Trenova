@@ -214,6 +214,7 @@ class Stop(GenericModel):
                 if self.departure_time
                 else StatusChoices.IN_PROGRESS
             )
+
         # If the location code is entered and not the address_line then autofill address_line
         # with the location combination (address_line_1, address_line_2, city, state & zip_code)
         if self.location and not self.address_line:

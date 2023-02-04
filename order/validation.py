@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
+from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from utils.models import RatingMethodChoices, StatusChoices
@@ -30,7 +31,7 @@ class OrderValidation:
 
     def __init__(self, *, order):
         self.order = order
-        self.errors = {}
+        self.errors: dict[str, Promise] = {}
         self.validate()
 
     def validate(self) -> None:
@@ -79,6 +80,7 @@ class OrderValidation:
             self.errors["freight_charge_amount"] = _(
                 "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
             )
+
         # Validate 'mileage' is entered if 'rate_method' is 'PER_MILE'
         if (
             self.order.rate_method == RatingMethodChoices.PER_MILE
