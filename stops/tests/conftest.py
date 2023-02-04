@@ -17,64 +17,50 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import os
-import shutil
-from pathlib import Path
+from typing import Any, Generator
 
 import pytest
+from django.utils import timezone
 
+from location.factories import LocationFactory
+from movements.tests.factories import MovementFactory
 from stops.tests.factories import StopFactory
+from stops import models
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def stop():
+def stop() -> Generator[Any, Any, None]:
     """
     Stop Fixture
     """
     yield StopFactory()
 
 
-def remove_media_directory(file_path: str) -> None:
-    """Remove Media Directory after test tear down.
-
-    Primary usage is when tests are performing file uploads.
-    This method deletes the media directory after the test.
-    This is to prevent the media directory from filling up
-    with test files.
-
-    Args:
-        file_path (str): path to directory in media folder.
-
-    Returns:
-        None
+@pytest.fixture
+def movement() -> Generator[Any, Any, None]:
     """
-
-    base_dir: Path = Path(__file__).resolve().parent.parent
-    media_dir: str = os.path.join(base_dir, f"media/{file_path}")
-
-    if os.path.exists(media_dir):
-        shutil.rmtree(media_dir, ignore_errors=True, onerror=None)
-
-
-def remove_file(file_path: str) -> None:
-    """Remove File after test tear down.
-
-    Primary usage is when tests are performing file uplaods.
-    This method deletes the file after the test.
-    This is to prevent the media directory from filling up
-    with test files.
-
-    Args:
-        file_path (str): path to file in media folder.
-
-    Returns:
-        None
+    Movement Fixture
     """
+    yield MovementFactory()
 
-    base_dir: Path = Path(__file__).resolve().parent.parent
-    file: str = os.path.join(base_dir, f"media/{file_path}")
 
-    if os.path.exists(file):
-        os.remove(file)
+@pytest.fixture
+def location() -> Generator[Any, Any, None]:
+    """
+    Location Fixture
+    """
+    yield LocationFactory()
+
+@pytest.fixture
+def stop_api(api_client, movement, location) -> Generator[Any, Any, None]:
+    """
+    Stop API fixture
+    """
+    yield api_client.post("/api/stops/", {
+        "movement": f"{movement.id}",
+        "location": f"{location.id}",
+        "appointment_time": f"{timezone.now()}",
+        "stop_type": models.StopChoices.PICKUP
+    }, format="json")

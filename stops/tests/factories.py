@@ -39,10 +39,15 @@ class StopFactory(factory.django.DjangoModelFactory):
         )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    status = "N"
+    sequence = 1
     movement = factory.SubFactory("movements.tests.factories.MovementFactory")
     location = factory.SubFactory("location.factories.LocationFactory")
+    pieces = factory.Faker("pyint", min_value=1, max_value=100)
+    weight = factory.Faker("pyint", min_value=1, max_value=100)
+    address_line = factory.Faker("street_address", locale="en_US")
     appointment_time = factory.Faker(
         "date_time", tzinfo=timezone.get_current_timezone()
     )
-    sequence = 1
     stop_type = "P"
+

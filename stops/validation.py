@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.core.exceptions import ValidationError
+from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from utils.models import StatusChoices
@@ -42,7 +43,7 @@ class StopValidation:
             errors (dict): A dictionary to store any validation errors that are found.
         """
         self.stop = stop
-        self.errors = {}
+        self.errors: dict[str, Promise] = {}
         self.validate()
 
         if self.errors:
@@ -163,7 +164,7 @@ class StopValidation:
             )
 
         if (
-            self.stop.departure_time
+            self.stop.departure_time and self.stop.arrival_time
             and self.stop.departure_time < self.stop.arrival_time
         ):
             self.errors["departure_time"] = _(
