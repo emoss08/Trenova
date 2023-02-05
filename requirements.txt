@@ -42,6 +42,8 @@ pytest-cov==4.0.0
 pytest-django==4.5.2
 pytest-html==3.2.0
 redis==4.4.2
-rich==13.0.0
+rich==13.3.1
 tox==4.4.4
 whitenoise==6.3.0
+django-auditlog==2.2.2
+django-lifecycle==1.0.0
