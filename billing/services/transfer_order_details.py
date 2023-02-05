@@ -39,7 +39,7 @@ class TransferOrderDetails:
     """
 
     def __init__(
-        self, *, instance: models.BillingHistory | models.BillingQueue
+        self, *, instance
     ) -> None:
         self.instance = instance
         self.save()

@@ -26,7 +26,15 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import (
+    LifecycleModelMixin,
+    hook,
+    AFTER_SAVE,
+    BEFORE_SAVE,
+    BEFORE_DELETE,
+)
 
+from billing.services.transfer_order_details import TransferOrderDetails
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -450,7 +458,7 @@ class DocumentClassification(GenericModel):
         self.save()
 
 
-class BillingQueue(GenericModel):
+class BillingQueue(LifecycleModelMixin, GenericModel):
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -752,6 +760,15 @@ class BillingQueue(GenericModel):
         if errors:
             raise ValidationError({"order": errors})
 
+    @hook(BEFORE_SAVE)
+    def save_order_details_to_billing_queue_on_change(self) -> None:
+        """Transfer order details after save.
+
+        Returns:
+            None: None
+        """
+        TransferOrderDetails(instance=self)
+
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
 
@@ -826,7 +843,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(GenericModel):
+class BillingHistory(LifecycleModelMixin, GenericModel):
     """
     Class for storing information about the billing history.
     """
@@ -1029,31 +1046,30 @@ class BillingHistory(GenericModel):
                 },
             )
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
-        """Billing History Delete method.
-
-        Disallowing deletion of any records in this model.
-
-        Args:
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+    @hook(
+        BEFORE_DELETE,
+        when="organization.billing_control.remove_billing_history",
+        is_now=False,
+    )
+    def on_delete(self) -> None:
+        """Delete the billing history record.
 
         Returns:
             None
-
-        Raises:
-            ValidationError: if organization `remove_billing_history` is false & user
-            is deleting a record from billing history.
         """
+        raise ValidationError(
+            _("Records are not allowed to be removed from billing history."),
+            code="billing_history_removal",
+        )
 
-        # TODO (WOLFRED): Write Test for this validation.
-        if self.organization.billing_control.remove_billing_history is False:
-            raise ValidationError(
-                _("Records are not allowed to be removed from billing history."),
-                code="billing_history_removal",
-            )
+    @hook(BEFORE_SAVE)
+    def save_order_details_to_billing_history_after_save(self) -> None:
+        """Transfer order details after save.
 
-        super().delete(*args, **kwargs)
+        Returns:
+            None: None
+        """
+        TransferOrderDetails(instance=self)
 
     def get_absolute_url(self) -> str:
         """Billing History absolute url
