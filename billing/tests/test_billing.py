@@ -64,6 +64,7 @@ def test_bill_orders(
     assert billing_history.customer == order.customer
     assert billing_history.commodity == order.commodity
     assert billing_history.bol_number == order.bol_number
+    assert billing_history.invoice_number == f"{user.organization.scac_code}00001"
 
     order.refresh_from_db()
     assert order.billed is True
