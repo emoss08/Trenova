@@ -130,7 +130,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    @hook(AFTER_SAVE, when="created")
+    @hook(AFTER_SAVE, when="created")  # type: ignore
     def create_dispatch_control_after_save(self) -> None:
         """Create a dispatch control after the organization is created.
 
@@ -141,7 +141,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not DispatchControl.objects.filter(organization=self).exists():
             DispatchControl.objects.create(organization=self)
 
-    @hook(AFTER_SAVE, when="created")
+    @hook(AFTER_SAVE, when="created")  # type: ignore
     def create_order_control_after_save(self) -> None:
         """Create an order control after the organization is created.
 
@@ -152,7 +152,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not OrderControl.objects.filter(organization=self).exists():
             OrderControl.objects.create(organization=self)
 
-    @hook(AFTER_SAVE, when="created")
+    @hook(AFTER_SAVE, when="created")  # type: ignore
     def create_billing_control_after_save(self) -> None:
         """Create a billing control after the organization is created.
 
@@ -163,7 +163,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not BillingControl.objects.filter(organization=self).exists():
             BillingControl.objects.create(organization=self)
 
-    @hook(AFTER_SAVE, when="created")
+    @hook(AFTER_SAVE, when="created")  # type: ignore
     def create_email_control_after_save(self) -> None:
         """Create an email control after the organization is created.
 
@@ -231,7 +231,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    @hook(AFTER_SAVE, when="created")
+    @hook(AFTER_SAVE, when="created")  # type: ignore
     def create_depot_details_after_save(self) -> None:
         """Create a depot detail after the depot is created.
 
