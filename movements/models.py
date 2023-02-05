@@ -118,7 +118,7 @@ class Movement(LifecycleModelMixin, GenericModel):
         """
         MovementValidation(movement=self)
 
-    @hook(AFTER_SAVE, when="created")
+    @hook(AFTER_SAVE, when="created")  # type: ignore
     def generate_initial_stops_post_save(self) -> None:
         """Generate initial movements stops.
 
@@ -135,7 +135,7 @@ class Movement(LifecycleModelMixin, GenericModel):
             StopService.create_initial_stops(movement=self, order=self.order)
 
 
-    @hook(BEFORE_SAVE)
+    @hook(BEFORE_SAVE)  # type: ignore
     def generate_ref_num_before_save(self) -> None:
         """Generate the ref_num before saving the Movement
 
