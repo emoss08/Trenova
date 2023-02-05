@@ -24,17 +24,16 @@ from typing import Any, final
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import (
     LifecycleModelMixin,
     hook,
-    AFTER_SAVE,
     BEFORE_SAVE,
     BEFORE_DELETE,
 )
 
-from billing.services.transfer_order_details import TransferOrderDetails
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -359,7 +358,7 @@ class AccessorialCharge(GenericModel):
         return reverse("billing:other_charge_detail", kwargs={"pk": self.pk})
 
 
-class DocumentClassification(GenericModel):
+class DocumentClassification(LifecycleModelMixin, GenericModel):
     """
     Stores Document Classification information.
     """
@@ -419,27 +418,32 @@ class DocumentClassification(GenericModel):
                 },
             )
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
-        """DocumentClassification Delete Method
+    @hook(
+        BEFORE_DELETE,
+        when="name",
+        is_now="CON"
+    )
+    def on_delete(self) -> None:
+        """Prevent deletion of document classification.
 
-        Args:
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+        If the document classification is CON, it cannot be deleted.If the user
+        attempts to delete the document classification, a ValidationError is raised.
 
         Returns:
             None
-        """
 
-        if self.name == "CON":
-            raise ValidationError(
-                {
-                    "name": _(
-                        "Document classification with this name cannot be deleted. Please try again."
-                    ),
-                },
-                code="invalid",
-            )
-        super().delete(*args, **kwargs)
+        Raises:
+            ValidationError: If the document classification is CON is being deleted.
+        """
+        raise ValidationError(
+            {
+                "name": _(
+                    "Document classification with this name cannot be deleted. Please try again."
+                ),
+            },
+            code="invalid",
+        )
+
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance
@@ -767,6 +771,8 @@ class BillingQueue(LifecycleModelMixin, GenericModel):
         Returns:
             None: None
         """
+        from billing.services.transfer_order_details import TransferOrderDetails
+
         TransferOrderDetails(instance=self)
 
     def get_absolute_url(self) -> str:
@@ -1069,6 +1075,8 @@ class BillingHistory(LifecycleModelMixin, GenericModel):
         Returns:
             None: None
         """
+        from billing.services.transfer_order_details import TransferOrderDetails
+
         TransferOrderDetails(instance=self)
 
     def get_absolute_url(self) -> str:
