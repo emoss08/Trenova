@@ -26,29 +26,29 @@ class InvoiceNumberService:
     Generate a unique invoice
     """
 
-    @staticmethod
-    def invoice_number(instance: models.BillingQueue) -> str:
-        """Generate a unique invoice number
+    def __init__(self, *, instance: models.BillingQueue):
+        self.instance = instance
+        self.invoice_number = self.invoice_number()
 
-        Args:
-            instance (models.BillingQueue): BillingQueue instance
+    def invoice_number(self) -> str:
+        """Generate a unique invoice number
 
         Returns:
             str: Invoice number
         """
-        if not instance.invoice_number:
+        if not self.instance.invoice_number:
             if latest_invoice := models.BillingQueue.objects.order_by(
                 "invoice_number"
             ).last():
                 latest_invoice_number = int(
                     latest_invoice.invoice_number.split(
-                        instance.organization.scac_code
+                        self.instance.organization.scac_code
                     )[-1]
                 )
-                instance.invoice_number = "{0}{1:05d}".format(
-                    instance.organization.scac_code, latest_invoice_number + 1
+                self.instance.invoice_number = "{0}{1:05d}".format(
+                    self.instance.organization.scac_code, latest_invoice_number + 1
                 )
             else:
-                instance.invoice_number = f"{instance.organization.scac_code}00001"
+                self.instance.invoice_number = f"{self.instance.organization.scac_code}00001"
 
-            return instance.invoice_number
+        return self.instance.invoice_number

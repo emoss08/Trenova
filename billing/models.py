@@ -24,7 +24,6 @@ from typing import Any, final
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import (
@@ -418,7 +417,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
                 },
             )
 
-    @hook(
+    @hook(  # type: ignore
         BEFORE_DELETE,
         when="name",
         is_now="CON"
@@ -764,7 +763,7 @@ class BillingQueue(LifecycleModelMixin, GenericModel):
         if errors:
             raise ValidationError({"order": errors})
 
-    @hook(BEFORE_SAVE)
+    @hook(BEFORE_SAVE)  # type: ignore
     def save_order_details_to_billing_queue_on_change(self) -> None:
         """Transfer order details after save.
 
@@ -774,6 +773,16 @@ class BillingQueue(LifecycleModelMixin, GenericModel):
         from billing.services.transfer_order_details import TransferOrderDetails
 
         TransferOrderDetails(instance=self)
+
+    @hook(BEFORE_SAVE)  # type: ignore
+    def generate_invoice_number(self) -> None:
+        """Generate invoice number before save.
+
+        Returns:
+            None: None
+        """
+        from billing.services.invoice_number import InvoiceNumberService
+        InvoiceNumberService(instance=self)
 
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
@@ -1052,7 +1061,7 @@ class BillingHistory(LifecycleModelMixin, GenericModel):
                 },
             )
 
-    @hook(
+    @hook(  # type: ignore
         BEFORE_DELETE,
         when="organization.billing_control.remove_billing_history",
         is_now=False,
@@ -1068,7 +1077,7 @@ class BillingHistory(LifecycleModelMixin, GenericModel):
             code="billing_history_removal",
         )
 
-    @hook(BEFORE_SAVE)
+    @hook(BEFORE_SAVE)  # type: ignore
     def save_order_details_to_billing_history_after_save(self) -> None:
         """Transfer order details after save.
 
