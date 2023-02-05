@@ -28,7 +28,7 @@ class InvoiceNumberService:
 
     def __init__(self, *, instance: models.BillingQueue):
         self.instance = instance
-        self.invoice_number = self.invoice_number()
+        self.invoice_number()
 
     def invoice_number(self) -> str:
         """Generate a unique invoice number

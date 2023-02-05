@@ -1078,7 +1078,7 @@ class BillingHistory(LifecycleModelMixin, GenericModel):
         )
 
     @hook(BEFORE_SAVE)  # type: ignore
-    def get_and_save_invoice_number(self) -> None:
+    def get_and_save_invoice_number_before_save(self) -> None:
         """Get and save the invoice number.
 
         Returns:
@@ -1090,7 +1090,7 @@ class BillingHistory(LifecycleModelMixin, GenericModel):
             self.invoice_number = billing_queue.invoice_number
 
     @hook(BEFORE_SAVE)  # type: ignore
-    def save_order_details_to_billing_history_after_save(self) -> None:
+    def save_order_details_to_billing_history_before_save(self) -> None:
         """Transfer order details after save.
 
         Returns:
