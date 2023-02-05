@@ -50,6 +50,27 @@ class TestOrganization:
         assert organization.order_control.auto_rate_orders is True
         assert organization.order_control.organization == organization
 
+    def test_billing_control_hook(self, organization) -> None:
+        """
+        Test that the billing control hook is created when a new organization is
+        created.
+        """
+        assert organization.billing_control is not None
+
+    def test_order_control_hook(self, organization) -> None:
+        """
+        Test that the order control hook is created when a new organization is
+        created.
+        """
+        assert organization.order_control is not None
+
+    def test_dispatch_control_hook(self, organization) -> None:
+        """
+        Test that the dispatch control hook is created when a new organization is
+        created.
+        """
+        assert organization.dispatch_control is not None
+
 
 class TestDepot:
     """
@@ -75,3 +96,10 @@ class TestDepot:
         Test dispatch control is created from create_depot_detail post_save signal
         """
         assert depot.details.organization == depot.organization
+
+    def test_depot_details_hook(self, depot) -> None:
+        """
+        Test that the depot details hook is created when a new depot is
+        created.
+        """
+        assert depot.details is not None
