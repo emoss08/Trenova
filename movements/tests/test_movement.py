@@ -26,6 +26,8 @@ from commodities.factories import CommodityFactory, HazardousMaterialFactory
 from movements import models
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory
+from stops.models import Stop
+from stops.services.generation import StopService
 from stops.tests.factories import StopFactory
 from worker.factories import WorkerFactory
 
@@ -72,6 +74,32 @@ class TestMovement:
 
         assert add_movement is not None
         assert add_movement.equipment == equipment
+
+    def test_initial_stop_creation_hook(self, worker, equipment) -> None:
+        """
+        Test that an initial stop is created when a movement is created.
+        """
+        order = OrderFactory(
+            origin_appointment=timezone.now(),
+            destination_appointment=timezone.now() + timedelta(days=2),
+        )
+
+        movement = models.Movement.objects.create(
+            organization=order.organization,
+            order=order,
+            equipment=equipment,
+            primary_worker=worker,
+        )
+
+        StopService.create_initial_stops(movement=movement, order=order)
+
+        assert movement.stops.count() == 2
+
+    def test_movement_ref_num_hook(self, movement) -> None:
+        """
+        Test that a movement reference number is created when a movement is created.
+        """
+        assert movement.ref_num is not None
 
 
 class TestMovementAPI:
