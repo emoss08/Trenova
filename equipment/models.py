@@ -25,6 +25,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import LifecycleModelMixin, AFTER_CREATE, hook
 from localflavor.us.models import USStateField
 
 from equipment.validators import us_vin_number_validator
@@ -32,7 +33,7 @@ from utils.models import ChoiceField, GenericModel
 from worker.models import Worker
 
 
-class EquipmentType(GenericModel):
+class EquipmentType(LifecycleModelMixin, GenericModel):
     """
     Stores the equipment type information that can later be used to
     create :model:`equipment.Equipment` objects.
@@ -74,6 +75,19 @@ class EquipmentType(GenericModel):
             str: Absolute URL of the Equipment Type Model
         """
         return reverse("equipment:equipment-type-detail", kwargs={"pk": self.pk})
+
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_equipment_type_details_after_create(self) -> None:
+        """Create Equipment Type details
+
+        After the initial creation of the Equipment Type, if equipment_type_details doesn't
+        exist then create it.
+
+        Returns:
+            None: None
+        """
+        EquipmentTypeDetail.objects.create(equipment_type=self, organization=self.organization)
 
 
 class EquipmentTypeDetail(GenericModel):
@@ -203,7 +217,7 @@ class EquipmentTypeDetail(GenericModel):
         Returns:
             str: Absolute URL of the Equipment Type Detail Model
         """
-        return reverse("equipment:equipment-type-details", kwargs={"pk": self.pk})
+        return reverse("equipment-type-details", kwargs={"pk": self.pk})
 
 
 class EquipmentManufacturer(GenericModel):
