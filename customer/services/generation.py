@@ -27,7 +27,7 @@ class CustomerGenerationService:
     """
 
     @staticmethod
-    def customer_code(instance: Customer) -> str:
+    def customer_code(*, instance: Customer) -> str:
         """Generate a unique code for the customer
 
         Args:
