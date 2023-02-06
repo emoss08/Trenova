@@ -22,6 +22,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from location.factories import LocationFactory
+from movements.models import Movement
 from order import models
 from order.tests.factories import OrderFactory
 
@@ -97,6 +98,39 @@ class TestOrder:
         assert n_order.pieces == 12
         assert n_order.weight == 20_000
 
+    def test_create_initial_movement_hook(
+        self,
+        organization,
+        order_type,
+        revenue_code,
+        origin_location,
+        destination_location,
+        customer,
+        equipment_type,
+        user,
+    ) -> None:
+        """
+        Test create initial movement hook when order is created.
+        """
+
+        order = models.Order.objects.create(
+            organization=organization,
+            order_type=order_type,
+            revenue_code=revenue_code,
+            origin_location=origin_location,
+            origin_appointment=timezone.now(),
+            destination_location=destination_location,
+            destination_appointment=timezone.now(),
+            customer=customer,
+            freight_charge_amount=100.00,
+            equipment_type=equipment_type,
+            entered_by=user,
+            bol_number="1234567890",
+        )
+
+        movement_count = Movement.objects.filter(order=order).count()
+
+        assert movement_count == 1
 
 class TestOrderAPI:
     """

@@ -29,6 +29,7 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import LifecycleModelMixin, BEFORE_SAVE, hook, AFTER_CREATE
 
 from order.validation import OrderValidation
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
@@ -256,7 +257,7 @@ class OrderType(GenericModel):
         return reverse("order-types-detail", kwargs={"pk": self.pk})
 
 
-class Order(GenericModel):
+class Order(LifecycleModelMixin, GenericModel):
     """
     Stores order information related to a :model:`organization.Organization`.
     """
@@ -536,16 +537,27 @@ class Order(GenericModel):
 
         super().clean()
 
-    def save(self, **kwargs: Any) -> None:
-        """Order save method
+    @hook(BEFORE_SAVE)  # type: ignore
+    def before_save(self, **kwargs: Any) -> None:
+        """
 
         Args:
-            kwargs (Any): Keyword Arguments
+            **kwargs ():
 
         Returns:
             None
         """
-        self.full_clean()
+        from order.services.pro_number_service import set_pro_number
+        from stops.selectors import total_piece_count_for_order, total_weight_for_order
+
+        # If the order is marked as completed, set the total piece count and weight.
+        if self.status == StatusChoices.COMPLETED:
+            self.pieces = total_piece_count_for_order(order=self)
+            self.weight = total_weight_for_order(order=self)
+
+        # If the order does not have a pro number, set one.
+        if not self.pro_number:
+            self.pro_number = set_pro_number()
 
         # If order marked 'ready_to_bill' and organization order control 'auto_order_total' is set.
         # Calculate the total for the order and save it as the 'sub_total'.
@@ -564,7 +576,21 @@ class Order(GenericModel):
         if self.commodity and self.commodity.hazmat:
             self.hazmat = self.commodity.hazmat
 
-        super().save(**kwargs)
+    @hook(AFTER_CREATE)
+    def create_initial_movement_after_create(self) -> None:
+        """Create the initial movement for the order.
+
+        If the order is just created, create the initial movement for the order.
+
+        Returns:
+            None: None
+        """
+
+        from movements.services.generation import MovementService
+        from movements.models import Movement
+
+        if Movement.objects.filter(order=self).exists() is False:
+            MovementService.create_initial_movement(order=self)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order
