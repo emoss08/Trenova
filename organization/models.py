@@ -153,6 +153,17 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             OrderControl.objects.create(organization=self)
 
     @hook(AFTER_CREATE)  # type: ignore
+    def create_route_control_after_create(self) -> None:
+        """Create a route control after the organization is created.
+
+        Returns:
+            None
+        """
+
+        from route.models import RouteControl
+        if not RouteControl.objects.filter(organization=self).exists():
+            RouteControl.objects.create(organization=self)
+    @hook(AFTER_CREATE)  # type: ignore
     def create_billing_control_after_crate(self) -> None:
         """Create a billing control after the organization is created.
 
