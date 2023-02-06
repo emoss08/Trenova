@@ -23,7 +23,7 @@ import uuid
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, hook, BEFORE_SAVE, AFTER_SAVE
+from django_lifecycle import LifecycleModelMixin, hook, BEFORE_SAVE, AFTER_SAVE, AFTER_CREATE, BEFORE_CREATE
 
 from movements.validation import MovementValidation
 from utils.models import ChoiceField, GenericModel, StatusChoices
@@ -118,11 +118,11 @@ class Movement(LifecycleModelMixin, GenericModel):
         """
         MovementValidation(movement=self)
 
-    @hook(AFTER_SAVE, when="created")  # type: ignore
-    def generate_initial_stops_post_save(self) -> None:
+    @hook(AFTER_CREATE) # type: ignore
+    def generate_initial_stops_after_create(self) -> None:
         """Generate initial movements stops.
 
-        This signal should only be fired if the first movement is being added to the order.
+        This hook should only be fired if the first movement is being added to the order.
         Its purpose is to create the initial stops for the movement, by taking the origin
         and destination from the order. This is done by calling the StopService. This
         service will then create the stops and sequence them.
@@ -135,8 +135,8 @@ class Movement(LifecycleModelMixin, GenericModel):
             StopService.create_initial_stops(movement=self, order=self.order)
 
 
-    @hook(BEFORE_SAVE)  # type: ignore
-    def generate_ref_num_before_save(self) -> None:
+    @hook(BEFORE_CREATE) # type: ignore
+    def generate_ref_num_before_create(self) -> None:
         """Generate the ref_num before saving the Movement
 
         Returns:
