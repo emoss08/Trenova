@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "pgtrigger",
     "nested_inline",
     "drf_spectacular",
+    "auditlog",
     # Monta Apps
     "backend",
     "core",
@@ -97,7 +98,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "core.middleware.organization_middleware.OrganizationMiddleware",
+    "auditlog.middleware.AuditlogMiddleware",
 ]
 ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
@@ -311,5 +312,10 @@ SPECTACULAR_SETTINGS = {
 # Django Email Backend
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# Silk Configurations
 SILKY_PYTHON_PROFILER = True
 SILKY_PYTHON_PROFILER_BINARY = True
+
+# Django Audit Log Configurations
+AUDITLOG_INCLUDE_ALL_MODELS = True
+AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("created", "modified")
