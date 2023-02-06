@@ -25,7 +25,7 @@ class MovementService:
     """Service to manage all movement actions"""
 
     @staticmethod
-    def create_initial_movement(order: Order) -> None:
+    def create_initial_movement(*, order: Order) -> None:
         """Create the initial movement for the given order.
 
         Args:

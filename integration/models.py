@@ -25,6 +25,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 
 from utils.models import ChoiceField, GenericModel
 
@@ -51,7 +52,7 @@ class IntegrationAuthTypes(models.TextChoices):
     BASIC_AUTH = "basic_auth", _("Basic Auth")
 
 
-class IntegrationVendor(GenericModel):
+class IntegrationVendor(LifecycleModelMixin, GenericModel):
     """
     Stores Integration vendor information related to an :model:`organization.Organization`.
     """
@@ -90,6 +91,17 @@ class IntegrationVendor(GenericModel):
             str: Name of the integration vendor.
         """
         return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_integration_after_create(self) -> None:
+        """Creates an Integration after creating an IntegrationVendor.
+
+        Returns:
+            None: None
+        """
+        Integration.objects.create(
+            integration_vendor=self, organization=self.organization
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the absolute url for the integration vendor.
@@ -170,7 +182,7 @@ class Integration(GenericModel):
 
         verbose_name = _("Integration")
         verbose_name_plural = _("Integrations")
-        ordering: list[str] = ["integration_vendor"]
+        ordering = ["integration_vendor"]
 
     def __str__(self) -> str:
         """String representation of the Integration Model
@@ -189,7 +201,6 @@ class Integration(GenericModel):
         Raises:
             ValidationError: Validation Errors for the Integration Model
         """
-
         if (
             self.integration_vendor.name  # type: ignore
             in [
@@ -260,13 +271,12 @@ class Integration(GenericModel):
                 }
             )
 
-
-def get_absolute_url(self) -> str:
-    """
-    Returns:
-        str: Absolute URL for the Integration
-    """
-    return reverse("integration:integration-detail", kwargs={"pk": self.pk})
+    def get_absolute_url(self) -> str:
+        """
+        Returns:
+            str: Absolute URL for the Integration
+        """
+        return reverse("integration:integration-detail", kwargs={"pk": self.pk})
 
 
 class GoogleAPI(GenericModel):

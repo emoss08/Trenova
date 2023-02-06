@@ -31,6 +31,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import datetime
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 
@@ -41,7 +42,7 @@ from utils.models import ChoiceField, GenericModel
 User = settings.AUTH_USER_MODEL
 
 
-class Worker(GenericModel):
+class Worker(LifecycleModelMixin, GenericModel):
     """
     Stores the equipment information that can be used later to
     assign an order to a movement.
@@ -210,6 +211,35 @@ class Worker(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
+
+    @hook(BEFORE_SAVE)  # type: ignore
+    def create_worker_code_before_save(self) -> None:
+        """Create worker code.
+
+        If the worker does not have an existing code, create one.
+        Otherwise, ignore.
+
+        Returns:
+            None: None
+        """
+        from worker.services.generation import WorkerGenerationService
+
+        if not self.code:
+            self.code = WorkerGenerationService.generate_worker_code(instance=self)
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_worker_profile_after_create(self) -> None:
+        """Create worker profile.
+
+        If the worker does not have an existing profile, create one.
+        Otherwise, ignore.
+
+        Returns:
+            None: None
+        """
+
+        if not WorkerProfile.objects.filter(worker=self).exists():
+            WorkerProfile.objects.create(worker=self, organization=self.organization)
 
 
 class WorkerProfile(GenericModel):

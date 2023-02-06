@@ -49,9 +49,9 @@ def test_customer_update(customer):
 
 
 @pytest.mark.django_db
-def test_customer_code_exists(customer):
+def test_customer_code_exists(customer) -> None:
     """
-    Test customer code is added from
-    generate_customer_code pre_save signal
+    Test customer code is added from set_code_before_create BEFORE_CREATE hook
     """
+
     assert customer.code is not None

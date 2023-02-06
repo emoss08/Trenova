@@ -64,6 +64,7 @@ def test_bill_orders(
     assert billing_history.customer == order.customer
     assert billing_history.commodity == order.commodity
     assert billing_history.bol_number == order.bol_number
+    assert billing_history.invoice_number == f"{user.organization.scac_code}00001"
 
     order.refresh_from_db()
     assert order.billed is True
@@ -73,6 +74,61 @@ def test_bill_orders(
         mail.outbox[0].body
         == f"Please see attached invoice for invoice: {order.pro_number}"
     )
+
+
+def test_invoice_number_generation(organization, customer, user, worker) -> None:
+    """
+    Test that invoice number is generated for each new invoice
+    """
+    order = OrderFactory(status="C")
+    invoice = BillingQueue.objects.create(
+        organization=user.organization,
+        order_type=order.order_type,
+        order=order,
+        revenue_code=order.revenue_code,
+        customer=customer,
+        worker=worker,
+        commodity=order.commodity,
+        bol_number=order.bol_number,
+        user=user,
+    )
+    assert invoice.invoice_number is not None
+    assert invoice.invoice_number == f"{user.organization.scac_code}00001"
+
+
+def test_invoice_number_increments(organization, customer, user, worker) -> None:
+    """
+    Test that invoice number increments by 1 for each new invoice
+    """
+    order = OrderFactory(status="C")
+    order_2 = OrderFactory(status="C")
+    invoice = BillingQueue.objects.create(
+        organization=user.organization,
+        order_type=order.order_type,
+        order=order,
+        revenue_code=order.revenue_code,
+        customer=customer,
+        worker=worker,
+        commodity=order.commodity,
+        bol_number=order.bol_number,
+        user=user,
+    )
+    second_invoice = BillingQueue.objects.create(
+        organization=user.organization,
+        order_type=order_2.order_type,
+        order=order_2,
+        revenue_code=order_2.revenue_code,
+        customer=customer,
+        worker=worker,
+        commodity=order_2.commodity,
+        bol_number=order_2.bol_number,
+        user=user,
+    )
+
+    assert invoice.invoice_number is not None
+    assert invoice.invoice_number == f"{user.organization.scac_code}00001"
+    assert second_invoice.invoice_number is not None
+    assert second_invoice.invoice_number == f"{user.organization.scac_code}00002"
 
 
 def test_unbilled_order_in_billing_history(order) -> None:

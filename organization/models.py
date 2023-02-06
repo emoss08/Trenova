@@ -25,13 +25,14 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .validators.organization import validate_org_timezone
 
 
-class Organization(TimeStampedModel):
+class Organization(LifecycleModelMixin, TimeStampedModel):
     """
     Organization Model Fields
     """
@@ -129,6 +130,65 @@ class Organization(TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_dispatch_control_after_create(self) -> None:
+        """Create a dispatch control after the organization is created.
+
+        Returns:
+            None
+        """
+        from dispatch.models import DispatchControl
+
+        if not DispatchControl.objects.filter(organization=self).exists():
+            DispatchControl.objects.create(organization=self)
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_order_control_after_create(self) -> None:
+        """Create an order control after the organization is created.
+
+        Returns:
+            None
+        """
+        from order.models import OrderControl
+
+        if not OrderControl.objects.filter(organization=self).exists():
+            OrderControl.objects.create(organization=self)
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_route_control_after_create(self) -> None:
+        """Create a route control after the organization is created.
+
+        Returns:
+            None
+        """
+
+        from route.models import RouteControl
+
+        if not RouteControl.objects.filter(organization=self).exists():
+            RouteControl.objects.create(organization=self)
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_billing_control_after_crate(self) -> None:
+        """Create a billing control after the organization is created.
+
+        Returns:
+            None
+        """
+        from billing.models import BillingControl
+
+        if not BillingControl.objects.filter(organization=self).exists():
+            BillingControl.objects.create(organization=self)
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_email_control_after_create(self) -> None:
+        """Create an email control after the organization is created.
+
+        Returns:
+            None: None
+        """
+        if not EmailControl.objects.filter(organization=self).exists():
+            EmailControl.objects.create(organization=self)
+
     def get_absolute_url(self) -> str:
         """
         Returns:
@@ -137,7 +197,7 @@ class Organization(TimeStampedModel):
         return reverse("organization:details", kwargs={"pk": self.pk})
 
 
-class Depot(TimeStampedModel):
+class Depot(LifecycleModelMixin, TimeStampedModel):
     """
     Stores information about a specific depot inside a :model:`organization.Organization`
     Depots are commonly known as terminals or yards.
@@ -186,6 +246,16 @@ class Depot(TimeStampedModel):
             str: String representation of the depot.
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_depot_details_after_save(self) -> None:
+        """Create a depot detail after the depot is created.
+
+        Returns:
+            None
+        """
+        if not DepotDetail.objects.filter(depot=self).exists():
+            DepotDetail.objects.create(organization=self.organization, depot=self)
 
     def get_absolute_url(self) -> str:
         """Depot absolute URL

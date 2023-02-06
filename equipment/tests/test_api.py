@@ -32,6 +32,14 @@ def equipment_type():
 
 
 @pytest.mark.django_db
+def test_equipment_type_detail_hook(equipment_type) -> None:
+    """
+    Test equipment type detail is added from create_equipment_type_details_after_create Hook
+    """
+    assert equipment_type.equipment_type_details is not None
+
+
+@pytest.mark.django_db
 def test_create_equipment_type(api_client):
     """
     Test create equipment type
@@ -42,6 +50,7 @@ def test_create_equipment_type(api_client):
         "id": "test_equipment_type",
         "description": "Test Equipment Type Description",
     }
+
     response = api_client.post(url, data, format="json")
     assert response.status_code == 201
     assert response.data["id"] == "test_equipment_type"
@@ -141,7 +150,7 @@ def test_update_equipment_details(api_client):
     api_client.post(url, post_data, format="json")
 
     put_data = {
-        "id": "test_updated",
+        "id": "test_equipment_type",
         "description": "Test Equipment Updated",
         "equipment_type_details": {
             "equipment_class": "TRAILER",
@@ -160,7 +169,7 @@ def test_update_equipment_details(api_client):
     )
 
     assert response.status_code == 200
-    assert response.data["id"] == "test_updated"
+    assert response.data["id"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Updated"
     assert response.data["equipment_type_details"]["equipment_class"] == "TRAILER"
     assert response.data["equipment_type_details"]["fixed_cost"] == "1.0000"

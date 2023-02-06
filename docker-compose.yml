@@ -63,3 +63,16 @@ services:
     depends_on:
       - redis
     restart: always
+
+  redis-sentinel:
+    container_name: monta-cache-sentinel
+    image: redis:latest
+    ports:
+      - "26379:26379"
+    command: redis-sentinel /etc/redis/sentinel.conf --sentinel
+    volumes:
+      - "./.data:/data"
+    depends_on:
+      - redis
+      - redis-slave
+    restart: always
