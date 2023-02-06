@@ -20,8 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import pytest
 from django.core.exceptions import ValidationError
 
-from worker.factories import WorkerFactory
-
 pytestmark = pytest.mark.django_db
 
 
@@ -32,18 +30,16 @@ def test_worker_creation(worker):
     assert worker is not None
 
 
-def test_worker_code(worker):
+def test_worker_code_hook(worker):
     """
-    Test worker code is generated from
-    generate_worker_code pre_save signal
+    Test worker code is generated from create_worker_code_before_save BEFORE_SAVE hook
     """
     assert worker.code is not None
 
 
 def test_worker_type_choices(worker):
     """
-    Test Worker Type choices throws ValidationError
-    when the passed choice is not valid.
+    Test Worker Type choices throws ValidationError when the passed choice is not valid.
     """
     with pytest.raises(ValidationError) as excinfo:
         worker.worker_type = "invalid"
@@ -54,10 +50,9 @@ def test_worker_type_choices(worker):
     ]
 
 
-def test_worker_profile(worker):
+def test_worker_profile_hook(worker):
     """
-    Test worker code is generated from
-    create_worker_profile post_save signal
+    Test worker code is generated from create_worker_profile_after_create AFTER_CREATE hook
     """
     assert worker.profile is not None
 
