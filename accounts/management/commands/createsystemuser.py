@@ -20,6 +20,7 @@ from typing import Any
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
+from django.db.transaction import atomic
 
 from accounts.models import User
 from organization.models import Organization
@@ -29,6 +30,7 @@ class Command(BaseCommand):
     """
     Django command to create system user.
     """
+
     help = "Create system user account and organization."
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -67,6 +69,7 @@ class Command(BaseCommand):
             default="sys",
         )
 
+    @atomic(using="default")
     def handle(self, *args: Any, **options: Any) -> None:
         """
         Handle the command.
@@ -84,33 +87,15 @@ class Command(BaseCommand):
         password = options["password"]
         organization = options["organization"]
 
-        self.stdout.write("Checking for system organization...")
-
         if not Organization.objects.filter(name=organization).exists():
-            self.stdout.write("Creating system organization...")
-            try:
-                Organization.objects.create(name=organization)
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Error creating system organization: {e}"))
-                return
-            self.stdout.write(self.style.SUCCESS("System organization created!"))
-        else:
-            self.stdout.write(self.style.SUCCESS("System organization already exists!"))
+            Organization.objects.create(name=organization)
 
         # Create system user account.
-        self.stdout.write("Checking for system user account...")
         if not User.objects.filter(username=username).exists():
-            self.stdout.write("Creating system user account...")
-            try:
-                User.objects.create_superuser(
-                    username=username,
-                    email=email,
-                    password=password,
-                    organization=Organization.objects.get(name=organization),
-                )
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f"Error creating system user account: {e}"))
-                return
-            self.stdout.write(self.style.SUCCESS("System user account created!"))
-        else:
-            self.stdout.write(self.style.SUCCESS("System user account already exists!"))
+            User.objects.create_superuser(
+                username=username,
+                email=email,
+                password=password,
+                organization=Organization.objects.get(name=organization),
+            )
+        self.stdout.write(self.style.SUCCESS("System user account created!"))
