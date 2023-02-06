@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounting", "0005_alter_generalledgeraccount_account_number"),
         ("order", "0012_alter_order_mileage"),

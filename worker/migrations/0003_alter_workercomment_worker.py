@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("worker", "0002_worker_entered_by_alter_workerprofile_hire_date"),
     ]

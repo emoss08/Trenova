@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0012_alter_order_mileage"),
         ("commodities", "0003_alter_hazardousmaterial_name"),

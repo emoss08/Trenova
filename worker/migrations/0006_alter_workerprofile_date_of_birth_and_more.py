@@ -7,7 +7,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("worker", "0005_alter_worker_code_and_more"),
     ]

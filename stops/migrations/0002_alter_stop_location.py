@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("location", "0003_alter_locationcontact_location"),
         ("stops", "0001_initial"),

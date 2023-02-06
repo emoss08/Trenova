@@ -10,7 +10,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0002_alter_depotdetail_depot"),
         ("equipment", "0002_alter_equipmenttype_id_delete_equipmenttypedetail"),

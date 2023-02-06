@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("commodities", "0003_alter_hazardousmaterial_name"),
         ("location", "0003_alter_locationcontact_location"),

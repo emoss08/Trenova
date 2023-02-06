@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0008_remove_ordercontrol_enforce_cancel_comm_and_more"),
     ]

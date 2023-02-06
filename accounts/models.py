@@ -56,7 +56,6 @@ class UserManager(BaseUserManager):
         password: str | None = None,
         **extra_fields: Any,
     ) -> User:
-
         """
         Create and save a user with the given email and password.
 
@@ -91,7 +90,6 @@ class UserManager(BaseUserManager):
         password: str | None = None,
         **extra_fields: Any,
     ) -> User:
-
         """Create and save a superuser with the given username, email and password.
 
         Args:
