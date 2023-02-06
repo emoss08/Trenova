@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("worker", "0006_alter_workerprofile_date_of_birth_and_more"),
     ]

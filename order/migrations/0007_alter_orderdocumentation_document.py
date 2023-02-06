@@ -7,7 +7,6 @@ import order.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0006_alter_ordercomment_options_and_more"),
     ]

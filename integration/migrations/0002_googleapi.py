@@ -10,7 +10,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0002_alter_depotdetail_depot"),
         ("integration", "0001_initial"),

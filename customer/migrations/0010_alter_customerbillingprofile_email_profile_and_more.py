@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("customer", "0009_alter_customerbillingprofile_customer_and_more"),
     ]

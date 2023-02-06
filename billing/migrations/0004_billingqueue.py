@@ -10,7 +10,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0012_alter_order_mileage"),
         ("organization", "0004_alter_organization_name"),

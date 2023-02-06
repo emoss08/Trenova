@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("commodities", "0002_alter_hazardousmaterial_is_active"),
     ]

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0013_billingcontrol_enforce_customer_billing"),
         ("customer", "0007_alter_customerruleprofile_name"),
