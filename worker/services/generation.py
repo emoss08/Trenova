@@ -27,7 +27,7 @@ class WorkerGenerationService:
     """
 
     @staticmethod
-    def generate_worker_code(instance: Worker) -> str:
+    def generate_worker_code(*, instance: Worker) -> str:
         """Generate a unique code for the worker
 
         Args:
