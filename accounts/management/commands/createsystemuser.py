@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from typing import Any
-import unicodedata
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
@@ -31,6 +30,7 @@ class Command(BaseCommand):
     """
     Django command to create system user.
     """
+
     help = "Create system user account and organization."
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -93,9 +93,9 @@ class Command(BaseCommand):
         # Create system user account.
         if not User.objects.filter(username=username).exists():
             User.objects.create_superuser(
-                    username=username,
-                    email=email,
-                    password=password,
-                    organization=Organization.objects.get(name=organization),
-                )
+                username=username,
+                email=email,
+                password=password,
+                organization=Organization.objects.get(name=organization),
+            )
         self.stdout.write(self.style.SUCCESS("System user account created!"))
