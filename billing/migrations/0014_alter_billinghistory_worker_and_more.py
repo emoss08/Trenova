@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("worker", "0010_alter_workercomment_comment_type_and_more"),
         ("billing", "0013_billingcontrol_enforce_customer_billing"),

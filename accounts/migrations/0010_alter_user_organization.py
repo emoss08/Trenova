@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0008_remove_emaillog_organization"),
         ("accounts", "0009_alter_user_organization"),

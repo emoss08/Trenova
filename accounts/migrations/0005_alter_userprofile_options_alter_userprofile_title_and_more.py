@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0004_alter_userprofile_options_alter_userprofile_title_and_more"),
     ]

@@ -10,7 +10,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0004_alter_organization_name"),
         ("billing", "0009_remove_billinghistory_batch_name_and_more"),

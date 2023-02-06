@@ -6,7 +6,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("equipment", "0004_alter_equipmenttype_options_and_more"),
     ]

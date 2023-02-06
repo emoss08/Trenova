@@ -6,7 +6,6 @@ import equipment.validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("equipment", "0005_alter_equipmenttypedetail_equipment_class"),
     ]

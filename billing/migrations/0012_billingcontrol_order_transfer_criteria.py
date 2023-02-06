@@ -6,7 +6,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0011_rename_auto_bill_order_billingcontrol_auto_bill_orders"),
     ]
