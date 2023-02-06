@@ -92,7 +92,7 @@ class IntegrationVendor(LifecycleModelMixin, GenericModel):
         """
         return textwrap.shorten(self.name, width=50, placeholder="...")
 
-    @hook(AFTER_CREATE)
+    @hook(AFTER_CREATE)  # type: ignore
     def create_integration_after_create(self) -> None:
         """Creates an Integration after creating an IntegrationVendor.
 
