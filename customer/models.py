@@ -122,7 +122,7 @@ class Customer(LifecycleModelMixin, GenericModel):
         """
         return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
 
-    @hook(BEFORE_CREATE)
+    @hook(BEFORE_CREATE)  # type: ignore
     def set_code_before_create(self) -> None:
         """Set customer code before creating customer
 

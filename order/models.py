@@ -29,7 +29,13 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, BEFORE_SAVE, hook, AFTER_CREATE
+from django_lifecycle import (
+    LifecycleModelMixin,
+    BEFORE_SAVE,
+    hook,
+    AFTER_CREATE,
+    AFTER_SAVE,
+)
 
 from order.validation import OrderValidation
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
@@ -532,28 +538,31 @@ class Order(LifecycleModelMixin, GenericModel):
         Raises:
             ValidationError: If the Order is not valid
         """
-
         OrderValidation(order=self)
-
         super().clean()
 
-    @hook(BEFORE_SAVE)  # type: ignore
-    def before_save(self, **kwargs: Any) -> None:
-        """
-
-        Args:
-            **kwargs ():
+    @hook(AFTER_SAVE)  # type: ignore
+    def after_save(self) -> None:
+        """After Order save hook
 
         Returns:
             None
         """
-        from order.services.pro_number_service import set_pro_number
         from stops.selectors import total_piece_count_for_order, total_weight_for_order
 
         # If the order is marked as completed, set the total piece count and weight.
         if self.status == StatusChoices.COMPLETED:
             self.pieces = total_piece_count_for_order(order=self)
             self.weight = total_weight_for_order(order=self)
+
+    @hook(BEFORE_SAVE)  # type: ignore
+    def before_save(self) -> None:
+        """Before Order save hook
+
+        Returns:
+            None
+        """
+        from order.services.pro_number_service import set_pro_number
 
         # If the order does not have a pro number, set one.
         if not self.pro_number:
@@ -576,7 +585,7 @@ class Order(LifecycleModelMixin, GenericModel):
         if self.commodity and self.commodity.hazmat:
             self.hazmat = self.commodity.hazmat
 
-    @hook(AFTER_CREATE)
+    @hook(AFTER_CREATE)  # type: ignore
     def create_initial_movement_after_create(self) -> None:
         """Create the initial movement for the order.
 
