@@ -22,6 +22,7 @@ from django.contrib import admin
 from stops import models
 from utils.admin import GenericAdmin
 
+
 @admin.register(models.QualifierCode)
 class QualifierCodeAdmin(GenericAdmin[models.QualifierCode]):
     """
@@ -66,4 +67,3 @@ class ServiceIncidentAdmin(GenericAdmin[models.ServiceIncident]):
         "delay_time",
     )
     search_fields = ("id",)
-

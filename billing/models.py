@@ -26,12 +26,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import (
-    LifecycleModelMixin,
-    hook,
-    BEFORE_SAVE,
-    BEFORE_DELETE,
-)
+from django_lifecycle import BEFORE_DELETE, BEFORE_SAVE, LifecycleModelMixin, hook
 
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
@@ -417,11 +412,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
                 },
             )
 
-    @hook(  # type: ignore
-        BEFORE_DELETE,
-        when="name",
-        is_now="CON"
-    )
+    @hook(BEFORE_DELETE, when="name", is_now="CON")  # type: ignore
     def on_delete(self) -> None:
         """Prevent deletion of document classification.
 
@@ -442,7 +433,6 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
             },
             code="invalid",
         )
-
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance
@@ -782,6 +772,7 @@ class BillingQueue(LifecycleModelMixin, GenericModel):
             None: None
         """
         from billing.services.invoice_number import InvoiceNumberService
+
         InvoiceNumberService(instance=self)
 
     def get_absolute_url(self) -> str:

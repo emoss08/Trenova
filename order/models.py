@@ -30,11 +30,11 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import (
-    LifecycleModelMixin,
-    BEFORE_SAVE,
-    hook,
     AFTER_CREATE,
     AFTER_SAVE,
+    BEFORE_SAVE,
+    LifecycleModelMixin,
+    hook,
 )
 
 from order.validation import OrderValidation
@@ -595,8 +595,8 @@ class Order(LifecycleModelMixin, GenericModel):
             None: None
         """
 
-        from movements.services.generation import MovementService
         from movements.models import Movement
+        from movements.services.generation import MovementService
 
         if Movement.objects.filter(order=self).exists() is False:
             MovementService.create_initial_movement(order=self)

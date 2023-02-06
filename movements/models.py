@@ -23,7 +23,7 @@ import uuid
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, hook, BEFORE_SAVE, AFTER_SAVE, AFTER_CREATE, BEFORE_CREATE
+from django_lifecycle import AFTER_CREATE, BEFORE_CREATE, LifecycleModelMixin, hook
 
 from movements.validation import MovementValidation
 from utils.models import ChoiceField, GenericModel, StatusChoices
@@ -118,7 +118,7 @@ class Movement(LifecycleModelMixin, GenericModel):
         """
         MovementValidation(movement=self)
 
-    @hook(AFTER_CREATE) # type: ignore
+    @hook(AFTER_CREATE)  # type: ignore
     def generate_initial_stops_after_create(self) -> None:
         """Generate initial movements stops.
 
@@ -131,11 +131,11 @@ class Movement(LifecycleModelMixin, GenericModel):
             None
         """
         from stops.services.generation import StopService
+
         if self.order.status == StatusChoices.NEW and self.order.movements.count() == 1:
             StopService.create_initial_stops(movement=self, order=self.order)
 
-
-    @hook(BEFORE_CREATE) # type: ignore
+    @hook(BEFORE_CREATE)  # type: ignore
     def generate_ref_num_before_create(self) -> None:
         """Generate the ref_num before saving the Movement
 

@@ -25,7 +25,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, hook, AFTER_CREATE
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 
 from utils.models import ChoiceField, GenericModel
 
@@ -99,7 +99,9 @@ class IntegrationVendor(LifecycleModelMixin, GenericModel):
         Returns:
             None: None
         """
-        Integration.objects.create(integration_vendor=self, organization=self.organization)
+        Integration.objects.create(
+            integration_vendor=self, organization=self.organization
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the absolute url for the integration vendor.

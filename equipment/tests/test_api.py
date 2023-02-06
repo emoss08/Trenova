@@ -30,6 +30,7 @@ def equipment_type():
 
     return EquipmentTypeFactory()
 
+
 @pytest.mark.django_db
 def test_equipment_type_detail_hook(equipment_type) -> None:
     """

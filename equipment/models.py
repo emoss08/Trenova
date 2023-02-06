@@ -25,7 +25,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, AFTER_CREATE, hook
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField
 
 from equipment.validators import us_vin_number_validator
@@ -76,7 +76,6 @@ class EquipmentType(LifecycleModelMixin, GenericModel):
         """
         return reverse("equipment:equipment-type-detail", kwargs={"pk": self.pk})
 
-
     @hook(AFTER_CREATE)  # type: ignore
     def create_equipment_type_details_after_create(self) -> None:
         """Create Equipment Type details
@@ -87,7 +86,9 @@ class EquipmentType(LifecycleModelMixin, GenericModel):
         Returns:
             None: None
         """
-        EquipmentTypeDetail.objects.create(equipment_type=self, organization=self.organization)
+        EquipmentTypeDetail.objects.create(
+            equipment_type=self, organization=self.organization
+        )
 
 
 class EquipmentTypeDetail(GenericModel):

@@ -39,9 +39,7 @@ class TransferOrderDetails:
         None
     """
 
-    def __init__(
-        self, *, instance: BillingQueue | BillingHistory
-    ) -> None:
+    def __init__(self, *, instance: BillingQueue | BillingHistory) -> None:
         self.instance = instance
         self.save()
 

@@ -25,7 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import LifecycleModelMixin, hook, AFTER_CREATE
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -138,6 +138,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             None
         """
         from dispatch.models import DispatchControl
+
         if not DispatchControl.objects.filter(organization=self).exists():
             DispatchControl.objects.create(organization=self)
 
@@ -149,6 +150,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             None
         """
         from order.models import OrderControl
+
         if not OrderControl.objects.filter(organization=self).exists():
             OrderControl.objects.create(organization=self)
 
@@ -161,8 +163,10 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         """
 
         from route.models import RouteControl
+
         if not RouteControl.objects.filter(organization=self).exists():
             RouteControl.objects.create(organization=self)
+
     @hook(AFTER_CREATE)  # type: ignore
     def create_billing_control_after_crate(self) -> None:
         """Create a billing control after the organization is created.
@@ -171,6 +175,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             None
         """
         from billing.models import BillingControl
+
         if not BillingControl.objects.filter(organization=self).exists():
             BillingControl.objects.create(organization=self)
 

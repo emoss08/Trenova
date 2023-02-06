@@ -58,6 +58,7 @@ def get_billable_orders(*, organization: Organization) -> Iterator[Order] | None
         )
     return None
 
+
 def get_billing_queue_information(*, order: Order) -> BillingQueue | None:
     """Returns the billing history for a given order.
 

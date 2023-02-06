@@ -31,7 +31,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import datetime
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, hook, AFTER_CREATE, BEFORE_SAVE
+from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 

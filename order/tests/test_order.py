@@ -132,6 +132,7 @@ class TestOrder:
 
         assert movement_count == 1
 
+
 class TestOrderAPI:
     """
     Test for Reason Code API

@@ -95,6 +95,7 @@ def test_invoice_number_generation(organization, customer, user, worker) -> None
     assert invoice.invoice_number is not None
     assert invoice.invoice_number == f"{user.organization.scac_code}00001"
 
+
 def test_invoice_number_increments(organization, customer, user, worker) -> None:
     """
     Test that invoice number increments by 1 for each new invoice
@@ -128,6 +129,7 @@ def test_invoice_number_increments(organization, customer, user, worker) -> None
     assert invoice.invoice_number == f"{user.organization.scac_code}00001"
     assert second_invoice.invoice_number is not None
     assert second_invoice.invoice_number == f"{user.organization.scac_code}00002"
+
 
 def test_unbilled_order_in_billing_history(order) -> None:
     """

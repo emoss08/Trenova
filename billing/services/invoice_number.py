@@ -45,10 +45,12 @@ class InvoiceNumberService:
                         self.instance.organization.scac_code
                     )[-1]
                 )
-                self.instance.invoice_number = "{0}{1:05d}".format(
+                self.instance.invoice_number = "{}{:05d}".format(
                     self.instance.organization.scac_code, latest_invoice_number + 1
                 )
             else:
-                self.instance.invoice_number = f"{self.instance.organization.scac_code}00001"
+                self.instance.invoice_number = (
+                    f"{self.instance.organization.scac_code}00001"
+                )
 
         return self.instance.invoice_number
