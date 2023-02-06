@@ -25,7 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import LifecycleModelMixin, hook, AFTER_SAVE
+from django_lifecycle import LifecycleModelMixin, hook, AFTER_CREATE
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -130,8 +130,8 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    @hook(AFTER_SAVE, when="created")  # type: ignore
-    def create_dispatch_control_after_save(self) -> None:
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_dispatch_control_after_create(self) -> None:
         """Create a dispatch control after the organization is created.
 
         Returns:
@@ -141,8 +141,8 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not DispatchControl.objects.filter(organization=self).exists():
             DispatchControl.objects.create(organization=self)
 
-    @hook(AFTER_SAVE, when="created")  # type: ignore
-    def create_order_control_after_save(self) -> None:
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_order_control_after_create(self) -> None:
         """Create an order control after the organization is created.
 
         Returns:
@@ -152,8 +152,8 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not OrderControl.objects.filter(organization=self).exists():
             OrderControl.objects.create(organization=self)
 
-    @hook(AFTER_SAVE, when="created")  # type: ignore
-    def create_billing_control_after_save(self) -> None:
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_billing_control_after_crate(self) -> None:
         """Create a billing control after the organization is created.
 
         Returns:
@@ -163,8 +163,8 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not BillingControl.objects.filter(organization=self).exists():
             BillingControl.objects.create(organization=self)
 
-    @hook(AFTER_SAVE, when="created")  # type: ignore
-    def create_email_control_after_save(self) -> None:
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_email_control_after_create(self) -> None:
         """Create an email control after the organization is created.
 
         Returns:
@@ -231,7 +231,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    @hook(AFTER_SAVE, when="created")  # type: ignore
+    @hook(AFTER_CREATE)  # type: ignore
     def create_depot_details_after_save(self) -> None:
         """Create a depot detail after the depot is created.
 
