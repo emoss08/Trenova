@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from django.db import IntegrityError
 
 from movements.models import Movement
 from order.models import Order
@@ -31,7 +32,7 @@ class StopService:
 
     @staticmethod
     def create_initial_stops(
-        movement: Movement, order: Order
+        *, movement: Movement, order: Order
     ) -> tuple[models.Stop, models.Stop]:
         """Create Initial Stops for Orders
 
@@ -41,26 +42,34 @@ class StopService:
 
         Returns:
             None
+
+        Raises:
+            IntegrityError: If the stop cannot be created.
         """
 
-        origin_stop: models.Stop = models.Stop.objects.create(
-            organization=movement.organization,
-            movement=movement,
-            sequence=1,
-            stop_type=StopChoices.PICKUP,
-            location=order.origin_location,
-            address_line=order.origin_address,
-            appointment_time=order.origin_appointment,
-        )
-        destination_stop: models.Stop = models.Stop.objects.create(
-            organization=movement.organization,
-            movement=movement,
-            sequence=2,
-            stop_type=StopChoices.DELIVERY,
-            location=order.destination_location,
-            address_line=order.destination_address,
-            appointment_time=order.destination_appointment,
-        )
+        try:
+            origin_stop: models.Stop = models.Stop.objects.create(
+                organization=movement.organization,
+                movement=movement,
+                sequence=1,
+                stop_type=StopChoices.PICKUP,
+                location=order.origin_location,
+                address_line=order.origin_address,
+                appointment_time=order.origin_appointment,
+            )
+            destination_stop: models.Stop = models.Stop.objects.create(
+                organization=movement.organization,
+                movement=movement,
+                sequence=2,
+                stop_type=StopChoices.DELIVERY,
+                location=order.destination_location,
+                address_line=order.destination_address,
+                appointment_time=order.destination_appointment,
+            )
+
+        except IntegrityError as stop_creation_error:
+            raise stop_creation_error
+
         return origin_stop, destination_stop
 
     @staticmethod

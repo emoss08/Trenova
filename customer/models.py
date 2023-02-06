@@ -26,6 +26,7 @@ from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -44,7 +45,7 @@ class FuelMethodChoices(models.TextChoices):
     PERCENTAGE = "P", _("Percentage")
 
 
-class Customer(GenericModel):
+class Customer(LifecycleModelMixin, GenericModel):
     """
     Stores customer information for billing and invoicing
     """
@@ -120,6 +121,18 @@ class Customer(GenericModel):
             str: Customer string representation
         """
         return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
+
+    @hook(BEFORE_CREATE)  # type: ignore
+    def set_code_before_create(self) -> None:
+        """Set customer code before creating customer
+
+        Returns:
+            None: None
+        """
+        from customer.services.generation import CustomerGenerationService
+
+        if not self.code:
+            self.code = CustomerGenerationService.customer_code(instance=self)
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer instance

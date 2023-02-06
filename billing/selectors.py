@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from billing.models import BillingControl
+from billing.models import BillingControl, BillingQueue
 from order.models import Order
 from organization.models import Organization
 from utils.models import StatusChoices
@@ -57,3 +57,15 @@ def get_billable_orders(*, organization: Organization) -> Iterator[Order] | None
             billing_transfer_date__isnull=True,
         )
     return None
+
+
+def get_billing_queue_information(*, order: Order) -> BillingQueue | None:
+    """Returns the billing history for a given order.
+
+    Args:
+        order: The order for which the billing history should be returned.
+
+    Returns:
+        The billing history for the order, or `None` if no billing history is found.
+    """
+    return BillingQueue.objects.filter(order=order).last()

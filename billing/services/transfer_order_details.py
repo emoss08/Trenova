@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.utils import timezone
 
 from billing import models
+from billing.models import BillingHistory, BillingQueue
 
 
 class TransferOrderDetails:
@@ -38,9 +39,7 @@ class TransferOrderDetails:
         None
     """
 
-    def __init__(
-        self, *, instance: models.BillingHistory | models.BillingQueue
-    ) -> None:
+    def __init__(self, *, instance: BillingQueue | BillingHistory) -> None:
         self.instance = instance
         self.save()
 

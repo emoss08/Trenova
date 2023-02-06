@@ -159,7 +159,7 @@ class TestDocumentationClassificationValidation:
     Test for Document Classification Validation
     """
 
-    def test_cannot_delete_con(self, document_classification):
+    def test_cannot_delete_con_hook(self, document_classification):
         """
         Test for cannot delete consolidated document classification
         """

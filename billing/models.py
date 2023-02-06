@@ -26,6 +26,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import BEFORE_DELETE, BEFORE_SAVE, LifecycleModelMixin, hook
 
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
@@ -351,7 +352,7 @@ class AccessorialCharge(GenericModel):
         return reverse("billing:other_charge_detail", kwargs={"pk": self.pk})
 
 
-class DocumentClassification(GenericModel):
+class DocumentClassification(LifecycleModelMixin, GenericModel):
     """
     Stores Document Classification information.
     """
@@ -411,27 +412,27 @@ class DocumentClassification(GenericModel):
                 },
             )
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
-        """DocumentClassification Delete Method
+    @hook(BEFORE_DELETE, when="name", is_now="CON")  # type: ignore
+    def on_delete(self) -> None:
+        """Prevent deletion of document classification.
 
-        Args:
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+        If the document classification is CON, it cannot be deleted.If the user
+        attempts to delete the document classification, a ValidationError is raised.
 
         Returns:
             None
-        """
 
-        if self.name == "CON":
-            raise ValidationError(
-                {
-                    "name": _(
-                        "Document classification with this name cannot be deleted. Please try again."
-                    ),
-                },
-                code="invalid",
-            )
-        super().delete(*args, **kwargs)
+        Raises:
+            ValidationError: If the document classification is CON is being deleted.
+        """
+        raise ValidationError(
+            {
+                "name": _(
+                    "Document classification with this name cannot be deleted. Please try again."
+                ),
+            },
+            code="invalid",
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance
@@ -450,7 +451,7 @@ class DocumentClassification(GenericModel):
         self.save()
 
 
-class BillingQueue(GenericModel):
+class BillingQueue(LifecycleModelMixin, GenericModel):
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -752,6 +753,28 @@ class BillingQueue(GenericModel):
         if errors:
             raise ValidationError({"order": errors})
 
+    @hook(BEFORE_SAVE)  # type: ignore
+    def save_order_details_to_billing_queue_on_change(self) -> None:
+        """Transfer order details after save.
+
+        Returns:
+            None: None
+        """
+        from billing.services.transfer_order_details import TransferOrderDetails
+
+        TransferOrderDetails(instance=self)
+
+    @hook(BEFORE_SAVE)  # type: ignore
+    def generate_invoice_number(self) -> None:
+        """Generate invoice number before save.
+
+        Returns:
+            None: None
+        """
+        from billing.services.invoice_number import InvoiceNumberService
+
+        InvoiceNumberService(instance=self)
+
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
 
@@ -826,7 +849,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(GenericModel):
+class BillingHistory(LifecycleModelMixin, GenericModel):
     """
     Class for storing information about the billing history.
     """
@@ -1029,31 +1052,44 @@ class BillingHistory(GenericModel):
                 },
             )
 
-    def delete(self, *args: Any, **kwargs: Any) -> None:
-        """Billing History Delete method.
-
-        Disallowing deletion of any records in this model.
-
-        Args:
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+    @hook(  # type: ignore
+        BEFORE_DELETE,
+        when="organization.billing_control.remove_billing_history",
+        is_now=False,
+    )
+    def on_delete(self) -> None:
+        """Delete the billing history record.
 
         Returns:
             None
-
-        Raises:
-            ValidationError: if organization `remove_billing_history` is false & user
-            is deleting a record from billing history.
         """
+        raise ValidationError(
+            _("Records are not allowed to be removed from billing history."),
+            code="billing_history_removal",
+        )
 
-        # TODO (WOLFRED): Write Test for this validation.
-        if self.organization.billing_control.remove_billing_history is False:
-            raise ValidationError(
-                _("Records are not allowed to be removed from billing history."),
-                code="billing_history_removal",
-            )
+    @hook(BEFORE_SAVE)  # type: ignore
+    def get_and_save_invoice_number_before_save(self) -> None:
+        """Get and save the invoice number.
 
-        super().delete(*args, **kwargs)
+        Returns:
+            None
+        """
+        from billing.selectors import get_billing_queue_information
+
+        if billing_queue := get_billing_queue_information(order=self.order):
+            self.invoice_number = billing_queue.invoice_number
+
+    @hook(BEFORE_SAVE)  # type: ignore
+    def save_order_details_to_billing_history_before_save(self) -> None:
+        """Transfer order details after save.
+
+        Returns:
+            None: None
+        """
+        from billing.services.transfer_order_details import TransferOrderDetails
+
+        TransferOrderDetails(instance=self)
 
     def get_absolute_url(self) -> str:
         """Billing History absolute url

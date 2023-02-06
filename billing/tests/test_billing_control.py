@@ -23,6 +23,14 @@ from django.core.exceptions import ValidationError
 pytestmark = pytest.mark.django_db
 
 
+def test_billing_control_hook(organization) -> None:
+    """
+    Test that the billing control hook is created when a new organization is
+    created.
+    """
+    assert organization.billing_control is not None
+
+
 def test_auto_bill_criteria_required_when_auto_bill_true(organization) -> None:
     """
     Test if `auto_bill_orders` is true & `auto_bill_criteria` is blank

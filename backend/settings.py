@@ -214,33 +214,33 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
 
 # Logging Configurations
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
-        },
-        "simple": {"format": "%(levelname)s %(message)s"},
-    },
-    "handlers": {
-        "file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.RotatingFileHandler",
-            "filename": "billing.log",
-            "maxBytes": 15728640,  # 15MB
-            "backupCount": 10,
-            "formatter": "verbose",
-        },
-    },
-    "loggers": {
-        "billing": {
-            "handlers": ["file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "verbose": {
+#             "format": "%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s"
+#         },
+#         "simple": {"format": "%(levelname)s %(message)s"},
+#     },
+#     "handlers": {
+#         "file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.RotatingFileHandler",
+#             "filename": "billing.log",
+#             "maxBytes": 15728640,  # 15MB
+#             "backupCount": 10,
+#             "formatter": "verbose",
+#         },
+#     },
+#     "loggers": {
+#         "billing": {
+#             "handlers": ["file"],
+#             "level": "DEBUG",
+#             "propagate": True,
+#         },
+#     },
+# }
 
 # Cacheops configurations
 CACHEOPS_REDIS = {

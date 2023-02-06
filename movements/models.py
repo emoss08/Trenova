@@ -23,12 +23,13 @@ import uuid
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import AFTER_CREATE, BEFORE_CREATE, LifecycleModelMixin, hook
 
 from movements.validation import MovementValidation
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
-class Movement(GenericModel):
+class Movement(LifecycleModelMixin, GenericModel):
     """
     Stores movement information related to a :model:`order.Order`.
     """
@@ -116,6 +117,35 @@ class Movement(GenericModel):
             None
         """
         MovementValidation(movement=self)
+
+    @hook(AFTER_CREATE)  # type: ignore
+    def generate_initial_stops_after_create(self) -> None:
+        """Generate initial movements stops.
+
+        This hook should only be fired if the first movement is being added to the order.
+        Its purpose is to create the initial stops for the movement, by taking the origin
+        and destination from the order. This is done by calling the StopService. This
+        service will then create the stops and sequence them.
+
+        Returns:
+            None
+        """
+        from stops.services.generation import StopService
+
+        if self.order.status == StatusChoices.NEW and self.order.movements.count() == 1:
+            StopService.create_initial_stops(movement=self, order=self.order)
+
+    @hook(BEFORE_CREATE)  # type: ignore
+    def generate_ref_num_before_create(self) -> None:
+        """Generate the ref_num before saving the Movement
+
+        Returns:
+            None
+        """
+        from movements.services.generation import MovementService
+
+        if not self.ref_num:
+            self.ref_num = MovementService.set_ref_number()
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement
