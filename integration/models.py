@@ -109,7 +109,7 @@ class IntegrationVendor(LifecycleModelMixin, GenericModel):
         Returns:
             str: Absolute url for the integration vendor.
         """
-        return reverse("integration:integration_vendor_detail", kwargs={"pk": self.pk})
+        return reverse("integration-vendors-detail", kwargs={"pk": self.pk})
 
 
 class Integration(GenericModel):
@@ -126,7 +126,7 @@ class Integration(GenericModel):
     integration_vendor = models.OneToOneField(
         IntegrationVendor,
         on_delete=models.CASCADE,
-        related_name="integration",
+        related_name="integration_vendor",
         verbose_name=_("Integration Vendor"),
         help_text=_("Integration Vendor for the Integration"),
         blank=True,
@@ -201,6 +201,9 @@ class Integration(GenericModel):
         Raises:
             ValidationError: Validation Errors for the Integration Model
         """
+
+        errors = {}
+
         if (
             self.integration_vendor.name  # type: ignore
             in [
@@ -209,14 +212,7 @@ class Integration(GenericModel):
             ]
             and self.auth_type != IntegrationAuthTypes.API_KEY
         ):
-            raise ValidationError(
-                {
-                    "auth_type": ValidationError(
-                        _("API Key is required for Google Integrations"),
-                        code="invalid",
-                    )
-                }
-            )
+            errors["auth_type"] = _("API Key is required for Google Integrations")
 
         if (
             self.auth_type
@@ -226,57 +222,32 @@ class Integration(GenericModel):
             ]
             and not self.auth_token
         ):
-            raise ValidationError(
-                {
-                    "auth_token": ValidationError(
-                        _("Auth Token required for Authentication Type."),
-                        code="required",
-                    )
-                }
+            errors["auth_token"] = _(
+                "Auth Token required for Authentication Type."
             )
 
         if self.auth_type == IntegrationAuthTypes.BASIC_AUTH and (
             not self.username or not self.password
         ):
-            raise ValidationError(
-                {
-                    "username": ValidationError(
-                        _("Username and Password required for Authentication Type."),
-                        code="required",
-                    ),
-                    "password": ValidationError(
-                        _("Username and Password required for Authentication Type."),
-                        code="required",
-                    ),
-                }
-            )
+            errors["username"] = _("Username and Password required for Authentication Type.")
+            errors["password"] = _("Username and Password required for Authentication Type.")
 
         if self.auth_type == IntegrationAuthTypes.NO_AUTH and (
             self.auth_token or self.username or self.password
         ):
-            raise ValidationError(
-                {
-                    "auth_token": ValidationError(
-                        _("Auth Token not required for Authentication Type."),
-                        code="invalid",
-                    ),
-                    "username": ValidationError(
-                        _("Username not required for Authentication Type."),
-                        code="invalid",
-                    ),
-                    "password": ValidationError(
-                        _("Password not required for Authentication Type."),
-                        code="invalid",
-                    ),
-                }
-            )
+            errors["auth_token"] = _("Auth Token not required for Authentication Type.")
+            errors["username"] = _("Username not required for Authentication Type.")
+            errors["password"] = _("Password not required for Authentication Type.")
+
+        if errors:
+            raise ValidationError(errors)
 
     def get_absolute_url(self) -> str:
         """
         Returns:
             str: Absolute URL for the Integration
         """
-        return reverse("integration:integration-detail", kwargs={"pk": self.pk})
+        return reverse("integrations-detail", kwargs={"pk": self.pk})
 
 
 class GoogleAPI(GenericModel):
@@ -355,7 +326,6 @@ class GoogleAPI(GenericModel):
 
         verbose_name = _("Google API")
         verbose_name_plural = _("Google APIs")
-        ordering: list[str] = ["organization"]
 
     def __str__(self) -> str:
         """Google API string representation
@@ -371,4 +341,4 @@ class GoogleAPI(GenericModel):
         Returns:
             str: Google API absolute url
         """
-        return reverse("google_api:detail", kwargs={"pk": self.pk})
+        return reverse("google-api-detail", kwargs={"pk": self.pk})
