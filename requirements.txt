@@ -27,7 +27,7 @@ django-timezone-field~=5.0
 django_compressor==4.3.1
 djangorestframework~=3.14.0
 djangorestframework-stubs[compatible-mypy]
-drf-nested-routers
+drf-nested-routers==0.93.4
 drf-spectacular==0.25.1
 factory_boy==3.2.1
 hiredis==2.2.1
@@ -47,3 +47,4 @@ redis==4.4.2
 rich==13.3.1
 tox==4.4.4
 whitenoise==6.3.0
+django-money==3.0.0

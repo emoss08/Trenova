@@ -36,6 +36,7 @@ from django_lifecycle import (
     LifecycleModelMixin,
     hook,
 )
+from djmoney.models.fields import MoneyField
 
 from order.validation import OrderValidation
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
@@ -358,19 +359,21 @@ class Order(LifecycleModelMixin, GenericModel):
         blank=True,
         null=True,
     )
-    other_charge_amount = models.DecimalField(
+    other_charge_amount = MoneyField(
         _("Additional Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Additional Charge Amount"),
+        default_currency="USD",
     )
-    freight_charge_amount = models.DecimalField(
+    freight_charge_amount = MoneyField(
         _("Freight Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Freight Charge Amount"),
+        default_currency="USD",
         blank=True,
         null=True,
     )
@@ -427,12 +430,13 @@ class Order(LifecycleModelMixin, GenericModel):
         blank=True,
         help_text=_("Billing Transfer Date"),
     )
-    sub_total = models.DecimalField(
+    sub_total = MoneyField(
         _("Sub Total Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Sub Total Amount"),
+        default_currency="USD",
     )
 
     # Dispatch Information

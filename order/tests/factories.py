@@ -95,7 +95,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
     )
     destination_location = factory.SubFactory("location.factories.LocationFactory")
     rate_method = RatingMethodChoices.FLAT
-    freight_charge_amount = FuzzyDecimal(10, 1000, 2)
+    freight_charge_amount = FuzzyDecimal(10, 1000000, 4)
     destination_appointment = factory.Faker(
         "date_time", tzinfo=timezone.get_current_timezone()
     )
