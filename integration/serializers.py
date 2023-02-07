@@ -30,12 +30,14 @@ class IntegrationVendorSerializer(GenericSerializer):
     creating, updating and deleting `IntegrationVendors`, as well as listing
     and retrieving them.
     """
+
     is_active = serializers.BooleanField(default=True)
 
     class Meta:
         """
         Metaclass for IntegrationVendorSerializer
         """
+
         model = models.IntegrationVendor
         extra_fields = ("is_active",)
 

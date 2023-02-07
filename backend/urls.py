@@ -176,7 +176,9 @@ router.register(
 
 # Integration Routing
 router.register(
-    r"integration_vendors", integration_api.IntegrationVendorViewSet, basename="integration-vendors"
+    r"integration_vendors",
+    integration_api.IntegrationVendorViewSet,
+    basename="integration-vendors",
 )
 router.register(
     r"integrations", integration_api.IntegrationViewSet, basename="integrations"

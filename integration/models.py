@@ -222,15 +222,17 @@ class Integration(GenericModel):
             ]
             and not self.auth_token
         ):
-            errors["auth_token"] = _(
-                "Auth Token required for Authentication Type."
-            )
+            errors["auth_token"] = _("Auth Token required for Authentication Type.")
 
         if self.auth_type == IntegrationAuthTypes.BASIC_AUTH and (
             not self.username or not self.password
         ):
-            errors["username"] = _("Username and Password required for Authentication Type.")
-            errors["password"] = _("Username and Password required for Authentication Type.")
+            errors["username"] = _(
+                "Username and Password required for Authentication Type."
+            )
+            errors["password"] = _(
+                "Username and Password required for Authentication Type."
+            )
 
         if self.auth_type == IntegrationAuthTypes.NO_AUTH and (
             self.auth_token or self.username or self.password
