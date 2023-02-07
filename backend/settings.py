@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     "nested_inline",
     "drf_spectacular",
     "auditlog",
+    "djmoney",
     # Monta Apps
     "backend",
     "core",
@@ -132,7 +133,8 @@ DATABASES = {
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "US/Eastern"
+# TIME_ZONE = "UTC" if DEBUG else TIME_ZONE
 USE_I18N = True
 USE_TZ = True
 
@@ -292,9 +294,10 @@ REST_FRAMEWORK = {
 
 # Celery Configurations
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/2"
-CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
+CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "celery"
-
+CELERY_RESULT_EXTENDED = True
+CELERY_TASK_TRACK_STARTED = True
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 

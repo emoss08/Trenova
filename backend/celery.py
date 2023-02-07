@@ -29,6 +29,10 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 app.autodiscover_tasks()
 
+app.conf.task_routes = {
+    "core.tasks.delete_audit_log_records": {"queue": "audit_log"},
+}
+
 
 @app.task(bind=True)
 def debug_task(self):
