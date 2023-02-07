@@ -32,7 +32,10 @@ class IntegrationAdmin(
 
     model: type[models.Integration] = models.Integration
     fieldsets = (
-        ("Basic Credentials", {"fields": ("auth_token", "client_id", "client_secret")}),
+        (
+            "Basic Credentials",
+            {"fields": ("auth_type", "auth_token", "client_id", "client_secret")},
+        ),
         (
             "Advanced Credentials",
             {"fields": ("login_url", "username", "password")},

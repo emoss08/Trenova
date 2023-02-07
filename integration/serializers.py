@@ -23,6 +23,25 @@ from integration import models
 from utils.serializers import GenericSerializer
 
 
+class IntegrationVendorSerializer(GenericSerializer):
+    """A serializer class for the `IntegrationVendor` model
+
+    The `IntegrationVendorSerializer` class provides default operations for
+    creating, updating and deleting `IntegrationVendors`, as well as listing
+    and retrieving them.
+    """
+
+    is_active = serializers.BooleanField(default=True)
+
+    class Meta:
+        """
+        Metaclass for IntegrationVendorSerializer
+        """
+
+        model = models.IntegrationVendor
+        extra_fields = ("is_active",)
+
+
 class IntegrationSerializer(GenericSerializer):
     """A serializer class for the Integration model
 
@@ -32,7 +51,11 @@ class IntegrationSerializer(GenericSerializer):
     """
 
     is_active = serializers.BooleanField(default=True)
-    name = serializers.ChoiceField(choices=models.IntegrationChoices.choices)
+    integration_vendor = serializers.PrimaryKeyRelatedField(
+        queryset=models.IntegrationVendor.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     auth_type = serializers.ChoiceField(
         choices=models.IntegrationAuthTypes.choices,
         default=models.IntegrationAuthTypes.NO_AUTH,
@@ -40,12 +63,12 @@ class IntegrationSerializer(GenericSerializer):
 
     class Meta:
         """
-        A class representing the metadata for the `EquipmentTypeDetailSerializer`
+        A class representing the metadata for the `IntegrationSerializer`
         class.
         """
 
         model = models.Integration
-        extra_fields = ("is_active", "name", "auth_type")
+        extra_fields = ("is_active", "integration_vendor", "auth_type")
 
 
 class GoogleAPISerializer(GenericSerializer):
