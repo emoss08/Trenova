@@ -21,6 +21,18 @@ from integration import models, serializers
 from utils.views import OrganizationMixin
 
 
+class IntegrationVendorViewSet(OrganizationMixin):
+    """A viewset for viewing and editing Integration Vendor information in the system.
+
+    This viewset provides default operations for creating, updating, and deleting Integration
+    Vendors, as well as listing and retrieving information. It uses the `IntegrationVendorSerializer`
+    class to convert the integration vendor instances to and from JSON-formatted data.
+    """
+
+    queryset = models.IntegrationVendor.objects.all()
+    serializer_class = serializers.IntegrationVendorSerializer
+
+
 class IntegrationViewSet(OrganizationMixin):
     """A viewset for viewing and editing integration information in the system.
 
