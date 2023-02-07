@@ -16,6 +16,7 @@ django-extensions==3.2.1
 django-filter==22.1
 django-lifecycle==1.0.0
 django-localflavor==3.1
+django-money==3.0.0
 django-nested-inline==0.4.5
 django-pgtrigger==4.6.0
 django-phonenumber-field==7.0.2
@@ -47,4 +48,3 @@ redis==4.4.2
 rich==13.3.1
 tox==4.4.4
 whitenoise==6.3.0
-django-money==3.0.0

@@ -22,6 +22,7 @@ from celery import shared_task
 from django.core.management import call_command
 from django.utils import timezone
 
+
 def get_cutoff_date() -> datetime.datetime:
     """Get the cutoff date for deleting audit log records.
 
@@ -30,6 +31,7 @@ def get_cutoff_date() -> datetime.datetime:
     """
 
     return timezone.now() - timezone.timedelta(days=30)
+
 
 @shared_task
 def delete_audit_log_records() -> str:

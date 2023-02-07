@@ -57,10 +57,14 @@ class TestCreateSystemUser:
         """
 
         out = self.call_command(
-            "--username", "sys",
-            "--email", "system@monta.io",
-            "--password", "password",
-            "--organization", "Monta",
+            "--username",
+            "sys",
+            "--email",
+            "system@monta.io",
+            "--password",
+            "password",
+            "--organization",
+            "Monta",
         )
 
         assert out == "\x1b[32;1mSystem user account created!\x1b[0m\n"

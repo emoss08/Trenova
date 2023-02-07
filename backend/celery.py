@@ -33,6 +33,7 @@ app.conf.task_routes = {
     "core.tasks.delete_audit_log_records": {"queue": "audit_log"},
 }
 
+
 @app.task(bind=True)
 def debug_task(self):
     print(f"Request: {self.request!r}")

@@ -99,7 +99,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'auditlog.middleware.AuditlogMiddleware',
+    "auditlog.middleware.AuditlogMiddleware",
 ]
 ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
@@ -134,7 +134,7 @@ DATABASES = {
 # Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "US/Eastern"
-#TIME_ZONE = "UTC" if DEBUG else TIME_ZONE
+# TIME_ZONE = "UTC" if DEBUG else TIME_ZONE
 USE_I18N = True
 USE_TZ = True
 
@@ -294,7 +294,7 @@ REST_FRAMEWORK = {
 
 # Celery Configurations
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/2"
-CELERY_RESULT_BACKEND = 'django-db'
+CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "celery"
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
@@ -322,4 +322,3 @@ SILKY_PYTHON_PROFILER_BINARY = True
 # Django Audit Log Configurations
 AUDITLOG_INCLUDE_ALL_MODELS = True
 AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("created", "modified")
-
