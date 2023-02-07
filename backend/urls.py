@@ -176,6 +176,9 @@ router.register(
 
 # Integration Routing
 router.register(
+    r"integration_vendors", integration_api.IntegrationVendorViewSet, basename="integration-vendors"
+)
+router.register(
     r"integrations", integration_api.IntegrationViewSet, basename="integrations"
 )
 router.register(r"google_api", integration_api.GoogleAPIViewSet, basename="google-api")
@@ -255,3 +258,8 @@ urlpatterns = [
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
+
+
+import pprint
+
+pprint.pprint(router.get_urls())
