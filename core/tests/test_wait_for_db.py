@@ -40,5 +40,6 @@ class TestWaitForDB:
             [Psycopg2OperationalError] * 2 + [OperationalError] * 3 + [True]
         )
         call_command("wait_for_db")
+        assert patched_sleep.call_count == 5
         assert patched_check.call_count == 6
         patched_check.assert_called_with(databases=["default"])
