@@ -191,7 +191,7 @@ class GeneralLedgerAccount(GenericModel):
             str: GeneralLedgerAccount absolute url
         """
         return reverse(
-            "accounting:general_ledger_account_detail", kwargs={"pk": self.pk}
+            "gl-accounts-detail", kwargs={"pk": self.pk}
         )
 
     def update_gl_account(self, **kwargs):
@@ -420,6 +420,8 @@ class DivisionCode(GenericModel):
             None
         """
 
+        errors = {}
+
         super().clean()
 
         if (
@@ -427,12 +429,8 @@ class DivisionCode(GenericModel):
             and self.cash_account.account_classification
             != GeneralLedgerAccount.AccountClassificationChoices.CASH
         ):
-            raise ValidationError(
-                {
-                    "cash_account": _(
-                        "Entered account is not an cash account. Please try again."
-                    )
-                }
+            errors["cash_account"] = _(
+                "Entered account is not an cash account. Please try again."
             )
 
         if (
@@ -440,12 +438,8 @@ class DivisionCode(GenericModel):
             and self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
-            raise ValidationError(
-                {
-                    "expense_account": _(
-                        "Entered account is not an expense account. Please try again."
-                    )
-                }
+            errors["expense_account"] = _(
+                "Entered account is not an expense account. Please try again."
             )
 
         if (
@@ -453,13 +447,12 @@ class DivisionCode(GenericModel):
             and self.ap_account.account_classification
             != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
         ):
-            raise ValidationError(
-                {
-                    "ap_account": _(
-                        "Entered account is not an accounts payable account. Please try again."
-                    )
-                }
+            errors["ap_account"] = _(
+                "Entered account is not an accounts payable account. Please try again."
             )
+
+        if errors:
+            raise ValidationError(errors)
 
     def get_absolute_url(self) -> str:
         """DivisionCode absolute url
@@ -467,4 +460,4 @@ class DivisionCode(GenericModel):
         Returns:
             str: DivisionCode absolute url
         """
-        return reverse("accounting:division_code_detail", kwargs={"pk": self.pk})
+        return reverse("division-codes-detail", kwargs={"pk": self.pk})

@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import Any, Generator
 
 import pytest
 from django.urls import reverse
@@ -31,7 +32,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def revenue_code():
+def revenue_code() -> Generator[Any, Any, None]:
     """
     Revenue Code Fixture
     """
@@ -39,7 +40,7 @@ def revenue_code():
 
 
 @pytest.fixture
-def general_ledger_account():
+def general_ledger_account() -> Generator[Any, Any, None]:
     """
     Expense Account Fixture
     """
@@ -47,7 +48,7 @@ def general_ledger_account():
 
 
 @pytest.fixture
-def revenue_code():
+def revenue_code() -> Generator[Any, Any, None]:
     """
     Revenue Code Fixture
     """
@@ -55,7 +56,7 @@ def revenue_code():
 
 
 @pytest.fixture
-def expense_account():
+def expense_account() -> Generator[Any, Any, None]:
     """
     Expense Code General Ledger Account Fixture
     """
@@ -65,7 +66,7 @@ def expense_account():
 
 
 @pytest.fixture
-def revenue_account():
+def revenue_account() -> Generator[Any, Any, None]:
     """
     Revenue Code General Ledger Account Fixture
     """
@@ -75,7 +76,7 @@ def revenue_account():
 
 
 @pytest.fixture
-def division_code():
+def division_code() -> Generator[Any, Any, None]:
     """
     Division Code Factory
     """
@@ -83,7 +84,7 @@ def division_code():
 
 
 @pytest.fixture
-def cash_account():
+def cash_account() -> Generator[Any, Any, None]:
     """
     Cash Account from GL Account Factory
     """
@@ -93,7 +94,7 @@ def cash_account():
 
 
 @pytest.fixture
-def ap_account():
+def ap_account() -> Generator[Any, Any, None]:
     """
     AP Account from GL Account Factory
     """
@@ -103,12 +104,12 @@ def ap_account():
 
 
 @pytest.fixture
-def gl_account_api(api_client, organization):
+def gl_account_api(api_client, organization) -> Generator[Any, Any, None]:
     """
     GL account fixture for API
     """
     yield api_client.post(
-        reverse("general_ledger_accounts-list"),
+        reverse("gl-accounts-list"),
         {
             "organization": f"{organization.id}",
             "account_number": "1234-1234-1234-1234",
