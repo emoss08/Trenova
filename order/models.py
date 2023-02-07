@@ -36,6 +36,7 @@ from django_lifecycle import (
     LifecycleModelMixin,
     hook,
 )
+from djmoney.models.fields import MoneyField
 
 from order.validation import OrderValidation
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
@@ -192,7 +193,7 @@ class OrderControl(GenericModel):
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
-class OrderType(GenericModel):
+class OrderType(GenericModel):  # type: ignore
     """Stores the order type information for a related :model:`organization.Organization`.
 
     The OrderType model stores information about an order type, such as its name,
@@ -263,7 +264,7 @@ class OrderType(GenericModel):
         return reverse("order-types-detail", kwargs={"pk": self.pk})
 
 
-class Order(LifecycleModelMixin, GenericModel):
+class Order(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Stores order information related to a :model:`organization.Organization`.
     """
@@ -358,19 +359,21 @@ class Order(LifecycleModelMixin, GenericModel):
         blank=True,
         null=True,
     )
-    other_charge_amount = models.DecimalField(
+    other_charge_amount = MoneyField(
         _("Additional Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Additional Charge Amount"),
+        default_currency="USD",
     )
-    freight_charge_amount = models.DecimalField(
+    freight_charge_amount = MoneyField(
         _("Freight Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Freight Charge Amount"),
+        default_currency="USD",
         blank=True,
         null=True,
     )
@@ -427,12 +430,13 @@ class Order(LifecycleModelMixin, GenericModel):
         blank=True,
         help_text=_("Billing Transfer Date"),
     )
-    sub_total = models.DecimalField(
+    sub_total = MoneyField(
         _("Sub Total Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Sub Total Amount"),
+        default_currency="USD",
     )
 
     # Dispatch Information
@@ -634,7 +638,7 @@ class Order(LifecycleModelMixin, GenericModel):
         ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
-        return self.freight_charge_amount  # type: ignore
+        return self.freight_charge_amount
 
 
 class OrderDocumentation(GenericModel):

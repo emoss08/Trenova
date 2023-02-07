@@ -16,6 +16,7 @@ django-extensions==3.2.1
 django-filter==22.1
 django-lifecycle==1.0.0
 django-localflavor==3.1
+django-money==3.0.0
 django-nested-inline==0.4.5
 django-pgtrigger==4.6.0
 django-phonenumber-field==7.0.2
@@ -27,7 +28,7 @@ django-timezone-field~=5.0
 django_compressor==4.3.1
 djangorestframework~=3.14.0
 djangorestframework-stubs[compatible-mypy]
-drf-nested-routers
+drf-nested-routers==0.93.4
 drf-spectacular==0.25.1
 factory_boy==3.2.1
 hiredis==2.2.1

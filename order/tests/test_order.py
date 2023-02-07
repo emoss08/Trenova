@@ -208,7 +208,6 @@ class TestOrderAPI:
                 "bol_number": "anotherbol",
             },
         )
-
         assert response.status_code == 200
         assert response.data["origin_location"] == origin_location.id
         assert (

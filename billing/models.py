@@ -27,6 +27,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import BEFORE_DELETE, BEFORE_SAVE, LifecycleModelMixin, hook
+from djmoney.models.fields import MoneyField
 
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
@@ -451,7 +452,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
         self.save()
 
 
-class BillingQueue(LifecycleModelMixin, GenericModel):
+class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -605,32 +606,35 @@ class BillingQueue(LifecycleModelMixin, GenericModel):
         blank=True,
         help_text=_("Consignee Reference Number"),
     )
-    other_charge_total = models.DecimalField(
+    other_charge_total = MoneyField(
         _("Other Charge Total"),
-        max_digits=10,
-        decimal_places=2,
-        default=0.00,
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Other charge total for Order"),
         blank=True,
         null=True,
-        help_text=_("Other charge total for Order"),
+        default_currency="USD",
     )
-    freight_charge_amount = models.DecimalField(
+    freight_charge_amount = MoneyField(
         _("Freight Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Freight Charge Amount"),
         blank=True,
         null=True,
+        default_currency="USD",
     )
-    total_amount = models.DecimalField(
+    total_amount = MoneyField(
         _("Total Amount"),
-        max_digits=10,
-        decimal_places=2,
-        default=0.00,
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Total amount for Order"),
         blank=True,
         null=True,
-        help_text=_("Total amount for Order"),
+        default_currency="USD",
     )
     is_summary = models.BooleanField(
         _("Is Summary"),
@@ -849,7 +853,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(LifecycleModelMixin, GenericModel):
+class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Class for storing information about the billing history.
     """
@@ -963,33 +967,35 @@ class BillingHistory(LifecycleModelMixin, GenericModel):
         blank=True,
         help_text=_("Consignee Reference Number"),
     )
-
-    other_charge_total = models.DecimalField(
+    other_charge_total = MoneyField(
         _("Other Charge Total"),
-        max_digits=10,
-        decimal_places=2,
-        default=0.00,
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Other charge total for Order"),
         blank=True,
         null=True,
-        help_text=_("Other charge total for Order"),
+        default_currency="USD",
     )
-    freight_charge_amount = models.DecimalField(
+    freight_charge_amount = MoneyField(
         _("Freight Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
         default=0,
         help_text=_("Freight Charge Amount"),
         blank=True,
         null=True,
+        default_currency="USD",
     )
-    total_amount = models.DecimalField(
+    total_amount = MoneyField(
         _("Total Amount"),
-        max_digits=10,
-        decimal_places=2,
-        default=0.00,
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Total amount for Order"),
         blank=True,
         null=True,
-        help_text=_("Total amount for Order"),
+        default_currency="USD",
     )
     is_summary = models.BooleanField(
         _("Is Summary"),
