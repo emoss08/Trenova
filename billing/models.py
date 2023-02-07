@@ -452,7 +452,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
         self.save()
 
 
-class BillingQueue(LifecycleModelMixin, GenericModel):
+class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -853,7 +853,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(LifecycleModelMixin, GenericModel):
+class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Class for storing information about the billing history.
     """

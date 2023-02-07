@@ -33,7 +33,7 @@ from utils.models import ChoiceField, GenericModel
 from worker.models import Worker
 
 
-class EquipmentType(LifecycleModelMixin, GenericModel):
+class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Stores the equipment type information that can later be used to
     create :model:`equipment.Equipment` objects.

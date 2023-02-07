@@ -193,7 +193,7 @@ class OrderControl(GenericModel):
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
-class OrderType(GenericModel):
+class OrderType(GenericModel):  # type: ignore
     """Stores the order type information for a related :model:`organization.Organization`.
 
     The OrderType model stores information about an order type, such as its name,
@@ -264,7 +264,7 @@ class OrderType(GenericModel):
         return reverse("order-types-detail", kwargs={"pk": self.pk})
 
 
-class Order(LifecycleModelMixin, GenericModel):
+class Order(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Stores order information related to a :model:`organization.Organization`.
     """
@@ -638,7 +638,7 @@ class Order(LifecycleModelMixin, GenericModel):
         ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
-        return self.freight_charge_amount  # type: ignore
+        return self.freight_charge_amount
 
 
 class OrderDocumentation(GenericModel):

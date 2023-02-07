@@ -42,7 +42,7 @@ from utils.models import ChoiceField, GenericModel
 User = settings.AUTH_USER_MODEL
 
 
-class Worker(LifecycleModelMixin, GenericModel):
+class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Stores the equipment information that can be used later to
     assign an order to a movement.

@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 from utils.models import ChoiceField, GenericModel
 
 
-class HazardousMaterial(GenericModel):
+class HazardousMaterial(GenericModel):  # type: ignore
     """
     A class representing a hazardous material.
 
@@ -164,7 +164,7 @@ class HazardousMaterial(GenericModel):
         return reverse("order:hazardousmaterial_detail", kwargs={"pk": self.pk})
 
 
-class Commodity(GenericModel):
+class Commodity(GenericModel):  # type: ignore
     """A class representing a commodity.
 
     This class inherits from the `GenericModel` class and defines several fields that are used to store

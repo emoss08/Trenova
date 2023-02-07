@@ -45,7 +45,7 @@ class FuelMethodChoices(models.TextChoices):
     PERCENTAGE = "P", _("Percentage")
 
 
-class Customer(LifecycleModelMixin, GenericModel):
+class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Stores customer information for billing and invoicing
     """

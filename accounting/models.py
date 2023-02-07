@@ -206,7 +206,7 @@ class GeneralLedgerAccount(GenericModel):
         self.save(**kwargs)
 
 
-class RevenueCode(GenericModel):
+class RevenueCode(GenericModel):  # type: ignore
     """
     Stores revenue code information for related :model:`organization.Organization`.
     """
