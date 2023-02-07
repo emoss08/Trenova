@@ -348,7 +348,6 @@ class BillingService:
         )
 
         try:
-
             for order in order_ids:
                 models.BillingQueue.objects.create(
                     organization=self.request.user.organization, order_id=order

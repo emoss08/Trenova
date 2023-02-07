@@ -9,7 +9,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0012_alter_order_mileage"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

@@ -31,6 +31,7 @@ class Command(BaseCommand):
     """
     Django command to create system user.
     """
+
     help = "Create system user account and organization."
 
     def add_arguments(self, parser: CommandParser) -> None:

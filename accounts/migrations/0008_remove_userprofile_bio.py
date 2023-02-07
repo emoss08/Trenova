@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0007_remove_token_description_alter_userprofile_user"),
     ]

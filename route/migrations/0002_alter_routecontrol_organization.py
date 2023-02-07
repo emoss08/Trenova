@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0002_alter_depotdetail_depot"),
         ("route", "0001_initial"),

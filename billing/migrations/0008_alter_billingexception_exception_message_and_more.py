@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0007_billingqueue_bill_date_billingqueue_bol_number_and_more"),
     ]

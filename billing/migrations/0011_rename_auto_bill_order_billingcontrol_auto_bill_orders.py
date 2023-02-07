@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0010_billinghistory_bol_number_and_more"),
     ]

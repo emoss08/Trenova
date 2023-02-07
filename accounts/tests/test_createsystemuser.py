@@ -26,7 +26,6 @@ pytestmark = pytest.mark.django_db
 
 
 class TestCreateSystemUser:
-
     def call_command(self, *args, **kwargs) -> str:
         out = StringIO()
         call_command(

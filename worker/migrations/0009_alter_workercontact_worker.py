@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("worker", "0008_alter_workercomment_comment_type_and_more"),
     ]
