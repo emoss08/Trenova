@@ -24,120 +24,85 @@ from billing import models
 pytestmark = pytest.mark.django_db
 
 
-class TestChargeType:
+def test_list(charge_type):
     """
-    Test for Charge Types
+    Test Charge Type List
     """
-
-    def test_list(self, charge_type):
-        """
-        Test Charge Type List
-        """
-        assert charge_type is not None
-
-    def test_create(self, organization):
-        """
-        Test Create Charge Type
-        """
-        charge_type = models.ChargeType.objects.create(
-            organization=organization,
-            name="test",
-            description="Test Description",
-        )
-
-        assert charge_type is not None
-        assert charge_type.name == "test"
-        assert charge_type.description == "Test Description"
-
-    def test_update(self, charge_type):
-        """
-        Test Charge Type update
-        """
-
-        char_type = models.ChargeType.objects.get(id=charge_type.id)
-
-        char_type.name = "maybe"
-        char_type.save()
-
-        assert char_type is not None
-        assert char_type.name == "maybe"
+    assert charge_type is not None
 
 
-class TestChargeTypeApi:
+def test_create(organization):
     """
-    Test for Charge Type API
+    Test Create Charge Type
+    """
+    charge_type = models.ChargeType.objects.create(
+        organization=organization,
+        name="test",
+        description="Test Description",
+    )
+
+    assert charge_type is not None
+    assert charge_type.name == "test"
+    assert charge_type.description == "Test Description"
+
+
+def test_update(charge_type):
+    """
+    Test Charge Type update
     """
 
-    def test_get(self, api_client):
-        """
-        Test get Charge Type
-        """
-        response = api_client.get("/api/charge_types/")
-        assert response.status_code == 200
+    char_type = models.ChargeType.objects.get(id=charge_type.id)
 
-    def test_get_by_id(self, api_client, organization):
-        """
-        Test get Charge Type by ID
-        """
+    char_type.name = "maybe"
+    char_type.save()
 
-        _response = api_client.post(
-            "/api/charge_types/",
-            {
-                "organization": f"{organization}",
-                "name": "foob",
-                "description": "Test Description",
-            },
-            format="json",
-        )
+    assert char_type is not None
+    assert char_type.name == "maybe"
 
-        response = api_client.get(f"/api/charge_types/{_response.data['id']}/")
 
-        assert response.status_code == 200
-        assert response.data["name"] == "foob"
-        assert response.data["description"] == "Test Description"
+def test_get(api_client):
+    """
+    Test get Charge Type
+    """
+    response = api_client.get("/api/charge_types/")
+    assert response.status_code == 200
 
-    def test_put(self, api_client, organization):
-        """
-        Test put Charge Type
-        """
 
-        _response = api_client.post(
-            "/api/charge_types/",
-            {
-                "organization": f"{organization}",
-                "name": "foob",
-                "description": "Test Description",
-            },
-            format="json",
-        )
+def test_get_by_id(api_client, organization, charge_type_api):
+    """
+    Test get Charge Type by ID
+    """
 
-        response = api_client.put(
-            f"/api/charge_types/{_response.data['id']}/",
-            {"name": "foo bar"},
-            format="json",
-        )
+    response = api_client.get(f"/api/charge_types/{charge_type_api.data['id']}/")
 
-        assert response.status_code == 200
-        assert response.data["name"] == "foo bar"
+    assert response.status_code == 200
+    assert response.data["name"] == "foob"
+    assert response.data["description"] == "Test Description"
 
-    def test_delete(self, api_client, organization):
-        """
-        Test Delete Charge Type
-        """
 
-        _response = api_client.post(
-            "/api/charge_types/",
-            {
-                "organization": f"{organization}",
-                "name": "foob",
-                "description": "Test Description",
-            },
-            format="json",
-        )
+def test_put(api_client, organization, charge_type_api):
+    """
+    Test put Charge Type
+    """
 
-        response = api_client.delete(
-            f"/api/charge_types/{_response.data['id']}/",
-        )
+    response = api_client.put(
+        f"/api/charge_types/{charge_type_api.data['id']}/",
+        {"name": "foo bar"},
+        format="json",
+    )
 
-        assert response.status_code == 200
-        assert response.data is None
+    assert response.status_code == 200
+    assert response.data["name"] == "foo bar"
+
+
+def test_delete(api_client, organization, charge_type_api):
+    """
+    Test Delete Charge Type
+    """
+
+    response = api_client.delete(
+        f"/api/charge_types/{charge_type_api.data['id']}/",
+    )
+
+    assert response.status_code == 200
+    assert response.data is None

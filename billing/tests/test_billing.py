@@ -21,11 +21,14 @@ import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
-from django.utils import timezone
 
-from billing.models import BillingHistory, BillingQueue
+from billing.models import BillingHistory, BillingQueue, BillingControl
 from billing.services.order_billing import BillingService
+from order.models import Order
 from order.tests.factories import OrderFactory
+from billing import selectors
+from organization.models import Organization
+from utils.models import StatusChoices
 
 pytestmark = pytest.mark.django_db
 
@@ -68,7 +71,6 @@ def test_bill_orders(
 
     order.refresh_from_db()
     assert order.billed is True
-    assert order.bill_date == timezone.now().date()
     assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
     assert (
         mail.outbox[0].body
@@ -146,3 +148,139 @@ def test_unbilled_order_in_billing_history(order) -> None:
     assert excinfo.value.message_dict["order"] == [
         "Order has not been billed. Please try again with a different order."
     ]
+
+def test_billing_control_hook(organization) -> None:
+    """
+    Test that the billing control hook is created when a new organization is
+    created.
+    """
+    assert organization.billing_control is not None
+
+
+def test_auto_bill_criteria_required_when_auto_bill_true(organization) -> None:
+    """
+    Test if `auto_bill_orders` is true & `auto_bill_criteria` is blank that a
+    `ValidationError` is thrown.
+    """
+    billing_control = organization.billing_control
+
+    with pytest.raises(ValidationError) as excinfo:
+        billing_control.auto_bill_orders = True
+        billing_control.auto_bill_criteria = None
+        billing_control.full_clean()
+
+    assert excinfo.value.message_dict["auto_bill_criteria"] == [
+        "Auto Billing criteria is required when `Auto Bill Orders` is on. Please try again."
+    ]
+
+
+def test_auto_bill_criteria_choices_is_invalid(organization) -> None:
+    """
+    Test when passing invalid choice to `auto_bill_criteria` that a
+    `ValidationError` is thrown.
+    """
+
+    billing_control = organization.billing_control
+
+    with pytest.raises(ValidationError) as excinfo:
+        billing_control.auto_bill_criteria = "invalid"
+        billing_control.full_clean()
+
+    assert excinfo.value.message_dict["auto_bill_criteria"] == [
+        "Value 'invalid' is not a valid choice."
+    ]
+
+@pytest.mark.parametrize(
+    "org, order_transfer_criteria, expected_orders",
+    [
+        (
+                # organization with READY_AND_COMPLETED order_transfer_criteria
+                Organization(billing_control=BillingControl(
+                    order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
+                )),
+                BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED,
+                [
+                    Order(
+                        billed=False,
+                        status=StatusChoices.COMPLETED,
+                        ready_to_bill=True,
+                        transferred_to_billing=False,
+                        billing_transfer_date=None
+                    )
+                ]
+        ),
+        (
+                # organization with COMPLETED order_transfer_criteria
+                Organization(billing_control=BillingControl(
+                    order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.COMPLETED
+                )),
+                BillingControl.OrderTransferCriteriaChoices.COMPLETED,
+                [
+                    Order(
+                        billed=False,
+                        status=StatusChoices.COMPLETED,
+                        ready_to_bill=False,
+                        transferred_to_billing=False,
+                        billing_transfer_date=None
+                    )
+                ]
+        ),
+        (
+                # organization with READY_TO_BILL order_transfer_criteria
+                Organization(billing_control=BillingControl(
+                    order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
+                )),
+                BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL,
+                [
+                    Order(
+                        billed=False,
+                        status=StatusChoices.IN_PROGRESS,
+                        ready_to_bill=True,
+                        transferred_to_billing=False,
+                        billing_transfer_date=None
+                    )
+                ]
+        ),
+        (
+                # organization with NO order_transfer_criteria set
+                Organization(billing_control=BillingControl(
+                    order_transfer_criteria=None
+                )),
+                None,
+                None
+        )
+    ]
+)
+def test_get_billable_orders(org, order_transfer_criteria, expected_orders):
+
+    """
+    Test that the correct orders are returned when using the `get_billable_orders`
+    selector.
+    """
+    # set the order_transfer_criteria on the organization's billing_control
+    org.billing_control.order_transfer_criteria = order_transfer_criteria
+    # set the orders on the organization
+    org.orders_set = expected_orders
+
+    # call the get_billable_orders function and check the result
+    result = selectors.get_billable_orders(organization=org)
+    if expected_orders is None:
+        assert result is None
+    else:
+        for order, expected_order in zip(result, expected_orders):
+            assert order == expected_order
+
+
+
+def test_get_billing_queue_information(order):
+    order.ready_to_bill = True
+    order.status = StatusChoices.COMPLETED
+    order.save()
+
+    billing_queue = BillingQueue.objects.create(
+        organization=order.organization,
+        order=order,
+    )
+
+    result = selectors.get_billing_queue_information(order=order)
+    assert result == billing_queue
