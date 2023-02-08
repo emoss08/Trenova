@@ -67,3 +67,9 @@ class InvalidTokenException(TokenException):
     """
     Exception for invalid token errors
     """
+
+
+class DjangoCommandException(Exception):
+    """
+    Exception for Django Commands
+    """

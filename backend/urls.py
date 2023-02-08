@@ -54,7 +54,7 @@ router.register(r"job_titles", accounts_api.JobTitleViewSet, basename="job-title
 router.register(
     r"gl_accounts",
     accounting_api.GeneralLedgerAccountViewSet,
-    basename="general_ledger_accounts",
+    basename="gl-accounts",
 )
 router.register(
     r"revenue_codes", accounting_api.RevenueCodeViewSet, basename="revenue-codes"
@@ -260,8 +260,3 @@ urlpatterns = [
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
-
-
-import pprint
-
-pprint.pprint(router.get_urls())

@@ -23,7 +23,11 @@ from typing import Any
 import pytest
 
 from accounting.tests.factories import RevenueCodeFactory
-from billing.tests.factories import ChargeTypeFactory, DocumentClassificationFactory
+from billing.tests.factories import (
+    AccessorialChargeFactory,
+    ChargeTypeFactory,
+    DocumentClassificationFactory,
+)
 from commodities.factories import CommodityFactory
 from customer.factories import (
     CustomerBillingProfileFactory,
@@ -38,7 +42,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def document_classification():
+def document_classification() -> Generator[Any, Any, None]:
     """
     Document classification fixture
     """
@@ -46,7 +50,7 @@ def document_classification():
 
 
 @pytest.fixture
-def charge_type():
+def charge_type() -> Generator[Any, Any, None]:
     """
     Charge type fixture
     """
@@ -54,7 +58,7 @@ def charge_type():
 
 
 @pytest.fixture
-def order_type():
+def order_type() -> Generator[Any, Any, None]:
     """
     Order Type Fixture
     """
@@ -62,7 +66,7 @@ def order_type():
 
 
 @pytest.fixture
-def order():
+def order() -> Generator[Any, Any, None]:
     """
     Order Fixture
     """
@@ -70,7 +74,7 @@ def order():
 
 
 @pytest.fixture
-def revenue_code():
+def revenue_code() -> Generator[Any, Any, None]:
     """
     Revenue Code Fixture
     """
@@ -78,7 +82,7 @@ def revenue_code():
 
 
 @pytest.fixture
-def customer():
+def customer() -> Generator[Any, Any, None]:
     """
     Customer Fixture
     """
@@ -86,7 +90,7 @@ def customer():
 
 
 @pytest.fixture
-def worker():
+def worker() -> Generator[Any, Any, None]:
     """
     Worker Fixture
     """
@@ -94,7 +98,7 @@ def worker():
 
 
 @pytest.fixture
-def commodity():
+def commodity() -> Generator[Any, Any, None]:
     """
     Commodity Fixture
     """
@@ -139,3 +143,27 @@ def customer_billing_profile() -> Generator[Any, Any, None]:
     Customer Billing Profile fixture
     """
     yield CustomerBillingProfileFactory()
+
+
+@pytest.fixture
+def accessorial_charge() -> Generator[Any, Any, None]:
+    """
+    Accessorial charge fixture
+    """
+    yield AccessorialChargeFactory()
+
+
+@pytest.fixture
+def charge_type_api(api_client, organization) -> Generator[Any, Any, None]:
+    """
+    Charge type fixture
+    """
+    yield api_client.post(
+        "/api/charge_types/",
+        {
+            "organization": f"{organization}",
+            "name": "foob",
+            "description": "Test Description",
+        },
+        format="json",
+    )

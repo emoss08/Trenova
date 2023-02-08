@@ -758,7 +758,7 @@ class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
             raise ValidationError({"order": errors})
 
     @hook(BEFORE_SAVE)  # type: ignore
-    def save_order_details_to_billing_queue_on_change(self) -> None:
+    def save_order_details_to_billing_queue_before_save(self) -> None:
         """Transfer order details after save.
 
         Returns:
@@ -769,7 +769,7 @@ class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
         TransferOrderDetails(instance=self)
 
     @hook(BEFORE_SAVE)  # type: ignore
-    def generate_invoice_number(self) -> None:
+    def generate_invoice_number_before_save(self) -> None:
         """Generate invoice number before save.
 
         Returns:
@@ -1069,9 +1069,8 @@ class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
         Returns:
             None
         """
-        raise ValidationError(
+        raise ValueError(
             _("Records are not allowed to be removed from billing history."),
-            code="billing_history_removal",
         )
 
     @hook(BEFORE_SAVE)  # type: ignore
