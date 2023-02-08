@@ -91,7 +91,7 @@ class TransferOrderDetails:
         if not self.instance.bill_date:
             self.instance.bill_date = timezone.now().date()
 
-        # If order has `consignee_ref_number`
+        # If order has `consignee_ref_number`, set `consignee_ref_number` to order `consignee_ref_number`
         if (
             self.instance.order.consignee_ref_number
             and not self.instance.consignee_ref_number

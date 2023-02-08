@@ -252,7 +252,6 @@ def test_auto_bill_criteria_choices_is_invalid(organization) -> None:
     ]
 )
 def test_get_billable_orders(org, order_transfer_criteria, expected_orders):
-
     """
     Test that the correct orders are returned when using the `get_billable_orders`
     selector.
@@ -273,6 +272,10 @@ def test_get_billable_orders(org, order_transfer_criteria, expected_orders):
 
 
 def test_get_billing_queue_information(order):
+    """
+    Test that the correct billing queue is returned when using the
+    `get_billing_queue_information` selector.
+    """
     order.ready_to_bill = True
     order.status = StatusChoices.COMPLETED
     order.save()
@@ -284,3 +287,85 @@ def test_get_billing_queue_information(order):
 
     result = selectors.get_billing_queue_information(order=order)
     assert result == billing_queue
+
+def test_cannot_delete_billing_history(organization, order) -> None:
+    """
+    Test that if the organization has remove_billing_history as false that
+    the billing history cannot be deleted.
+    """
+    organization.billing_control.remove_billing_history = False
+    organization.billing_control.save()
+
+    order.billed = True
+    order.save()
+
+
+    billing_history = BillingHistory.objects.create(
+        organization=organization,
+        order=order
+    )
+
+    with pytest.raises(ValueError) as excinfo:
+        billing_history.delete()
+
+    assert excinfo.value.__str__() == "Records are not allowed to be removed from billing history."
+
+def test_can_delete_billing_history(organization, order) -> None:
+    """
+    Test that if the organization has remove_billing_history as true that the billing
+    history can be deleted.
+    """
+    organization.billing_control.remove_billing_history = True
+    organization.billing_control.save()
+
+    order.billed = True
+    order.save()
+
+    billing_history = BillingHistory.objects.create(
+        organization=organization,
+        order=order
+    )
+
+    billing_history.delete()
+
+    assert BillingHistory.objects.count() == 0
+
+def test_generate_invoice_number_before_save(order) -> None:
+    """
+    Test that the invoice number is generated before the save method is called.
+    """
+
+    order.status = StatusChoices.COMPLETED
+    order.ready_to_bill = True
+
+    billing_queue = BillingQueue.objects.create(
+        organization=order.organization,
+        order=order
+    )
+
+    assert billing_queue.invoice_number == f"{order.organization.scac_code}00001"
+
+def test_save_order_details_to_billing_history_before_save(order) -> None:
+    """
+    Test that the order details are saved to the billing history before the
+    save method is called.
+    """
+    order.billed = True
+    order.save()
+
+    billing_history = BillingHistory.objects.create(
+        organization=order.organization,
+        order=order
+    )
+
+    assert billing_history.pieces == order.pieces
+    assert billing_history.order_type == order.order_type
+    assert billing_history.weight == order.weight
+    assert billing_history.mileage == order.mileage
+    assert billing_history.revenue_code == order.revenue_code
+    assert billing_history.commodity == order.commodity
+    assert billing_history.bol_number == order.bol_number
+    assert billing_history.customer == order.customer
+    assert billing_history.other_charge_total == order.other_charge_amount
+    assert billing_history.freight_charge_amount == order.freight_charge_amount
+    assert billing_history.total_amount == order.sub_total
