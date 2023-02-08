@@ -22,11 +22,11 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 
-from billing.models import BillingHistory, BillingQueue, BillingControl
+from billing import selectors
+from billing.models import BillingControl, BillingHistory, BillingQueue
 from billing.services.order_billing import BillingService
 from order.models import Order
 from order.tests.factories import OrderFactory
-from billing import selectors
 from organization.models import Organization
 from utils.models import StatusChoices
 
@@ -149,6 +149,7 @@ def test_unbilled_order_in_billing_history(order) -> None:
         "Order has not been billed. Please try again with a different order."
     ]
 
+
 def test_billing_control_hook(organization) -> None:
     """
     Test that the billing control hook is created when a new organization is
@@ -190,66 +191,71 @@ def test_auto_bill_criteria_choices_is_invalid(organization) -> None:
         "Value 'invalid' is not a valid choice."
     ]
 
+
 @pytest.mark.parametrize(
     "org, order_transfer_criteria, expected_orders",
     [
         (
-                # organization with READY_AND_COMPLETED order_transfer_criteria
-                Organization(billing_control=BillingControl(
+            # organization with READY_AND_COMPLETED order_transfer_criteria
+            Organization(
+                billing_control=BillingControl(
                     order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
-                )),
-                BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED,
-                [
-                    Order(
-                        billed=False,
-                        status=StatusChoices.COMPLETED,
-                        ready_to_bill=True,
-                        transferred_to_billing=False,
-                        billing_transfer_date=None
-                    )
-                ]
+                )
+            ),
+            BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED,
+            [
+                Order(
+                    billed=False,
+                    status=StatusChoices.COMPLETED,
+                    ready_to_bill=True,
+                    transferred_to_billing=False,
+                    billing_transfer_date=None,
+                )
+            ],
         ),
         (
-                # organization with COMPLETED order_transfer_criteria
-                Organization(billing_control=BillingControl(
+            # organization with COMPLETED order_transfer_criteria
+            Organization(
+                billing_control=BillingControl(
                     order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.COMPLETED
-                )),
-                BillingControl.OrderTransferCriteriaChoices.COMPLETED,
-                [
-                    Order(
-                        billed=False,
-                        status=StatusChoices.COMPLETED,
-                        ready_to_bill=False,
-                        transferred_to_billing=False,
-                        billing_transfer_date=None
-                    )
-                ]
+                )
+            ),
+            BillingControl.OrderTransferCriteriaChoices.COMPLETED,
+            [
+                Order(
+                    billed=False,
+                    status=StatusChoices.COMPLETED,
+                    ready_to_bill=False,
+                    transferred_to_billing=False,
+                    billing_transfer_date=None,
+                )
+            ],
         ),
         (
-                # organization with READY_TO_BILL order_transfer_criteria
-                Organization(billing_control=BillingControl(
+            # organization with READY_TO_BILL order_transfer_criteria
+            Organization(
+                billing_control=BillingControl(
                     order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
-                )),
-                BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL,
-                [
-                    Order(
-                        billed=False,
-                        status=StatusChoices.IN_PROGRESS,
-                        ready_to_bill=True,
-                        transferred_to_billing=False,
-                        billing_transfer_date=None
-                    )
-                ]
+                )
+            ),
+            BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL,
+            [
+                Order(
+                    billed=False,
+                    status=StatusChoices.IN_PROGRESS,
+                    ready_to_bill=True,
+                    transferred_to_billing=False,
+                    billing_transfer_date=None,
+                )
+            ],
         ),
         (
-                # organization with NO order_transfer_criteria set
-                Organization(billing_control=BillingControl(
-                    order_transfer_criteria=None
-                )),
-                None,
-                None
-        )
-    ]
+            # organization with NO order_transfer_criteria set
+            Organization(billing_control=BillingControl(order_transfer_criteria=None)),
+            None,
+            None,
+        ),
+    ],
 )
 def test_get_billable_orders(org, order_transfer_criteria, expected_orders):
     """
@@ -270,7 +276,6 @@ def test_get_billable_orders(org, order_transfer_criteria, expected_orders):
             assert order == expected_order
 
 
-
 def test_get_billing_queue_information(order):
     """
     Test that the correct billing queue is returned when using the
@@ -288,6 +293,7 @@ def test_get_billing_queue_information(order):
     result = selectors.get_billing_queue_information(order=order)
     assert result == billing_queue
 
+
 def test_cannot_delete_billing_history(organization, order) -> None:
     """
     Test that if the organization has remove_billing_history as false that
@@ -299,16 +305,18 @@ def test_cannot_delete_billing_history(organization, order) -> None:
     order.billed = True
     order.save()
 
-
     billing_history = BillingHistory.objects.create(
-        organization=organization,
-        order=order
+        organization=organization, order=order
     )
 
     with pytest.raises(ValueError) as excinfo:
         billing_history.delete()
 
-    assert excinfo.value.__str__() == "Records are not allowed to be removed from billing history."
+    assert (
+        excinfo.value.__str__()
+        == "Records are not allowed to be removed from billing history."
+    )
+
 
 def test_can_delete_billing_history(organization, order) -> None:
     """
@@ -322,13 +330,13 @@ def test_can_delete_billing_history(organization, order) -> None:
     order.save()
 
     billing_history = BillingHistory.objects.create(
-        organization=organization,
-        order=order
+        organization=organization, order=order
     )
 
     billing_history.delete()
 
     assert BillingHistory.objects.count() == 0
+
 
 def test_generate_invoice_number_before_save(order) -> None:
     """
@@ -339,11 +347,11 @@ def test_generate_invoice_number_before_save(order) -> None:
     order.ready_to_bill = True
 
     billing_queue = BillingQueue.objects.create(
-        organization=order.organization,
-        order=order
+        organization=order.organization, order=order
     )
 
     assert billing_queue.invoice_number == f"{order.organization.scac_code}00001"
+
 
 def test_save_order_details_to_billing_history_before_save(order) -> None:
     """
@@ -354,8 +362,7 @@ def test_save_order_details_to_billing_history_before_save(order) -> None:
     order.save()
 
     billing_history = BillingHistory.objects.create(
-        organization=order.organization,
-        order=order
+        organization=order.organization, order=order
     )
 
     assert billing_history.pieces == order.pieces

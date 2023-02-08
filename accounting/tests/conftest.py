@@ -16,7 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 import pytest
 from django.urls import reverse
@@ -119,6 +120,7 @@ def gl_account_api(api_client, organization) -> Generator[Any, Any, None]:
         format="json",
     )
 
+
 @pytest.fixture
 def division_code_api(api_client, organization) -> Generator[Any, Any, None]:
     """
@@ -134,6 +136,7 @@ def division_code_api(api_client, organization) -> Generator[Any, Any, None]:
         },
         format="json",
     )
+
 
 @pytest.fixture
 def revenue_code_api(api_client, organization) -> Generator[Any, Any, None]:

@@ -17,11 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from pydantic import BaseModel
-import uuid
+
 from accounting import models
 from accounting.tests.factories import GeneralLedgerAccountFactory
 

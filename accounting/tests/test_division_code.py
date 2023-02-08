@@ -17,12 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import uuid
+
 import pytest
 from django.core.exceptions import ValidationError
+from pydantic import BaseModel
 
 from accounting import models
-from pydantic import BaseModel
-import uuid
 
 pytestmark = pytest.mark.django_db
 

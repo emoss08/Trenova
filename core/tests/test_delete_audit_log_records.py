@@ -17,12 +17,14 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import pytest
 import datetime
 from unittest.mock import patch
+
+import pytest
 from celery.exceptions import Retry
 
-from core.tasks import get_cutoff_date, delete_audit_log_records
+from core.tasks import delete_audit_log_records, get_cutoff_date
+
 
 def test_get_cutoff_date():
     """
@@ -30,6 +32,7 @@ def test_get_cutoff_date():
     """
     cutoff_date: datetime.datetime = get_cutoff_date()
     assert isinstance(cutoff_date, datetime.datetime)
+
 
 @patch("core.tasks.call_command")
 def test_delete_audit_log_records(patched_call_command):
@@ -56,5 +59,6 @@ def test_delete_audit_log_records_retry(patched_call_command):
     patched_call_command.side_effect = Retry()
     with pytest.raises(Retry):
         delete_audit_log_records()
+
 
 # Path: core\tests\test_delete_audit_log_records.py

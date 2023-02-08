@@ -23,7 +23,6 @@ from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
 
-
 def django_error_handler(exc: Any, context: Any) -> Response | None:
     """Django error handler
 

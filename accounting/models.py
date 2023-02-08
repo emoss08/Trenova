@@ -190,9 +190,7 @@ class GeneralLedgerAccount(GenericModel):
         Returns:
             str: GeneralLedgerAccount absolute url
         """
-        return reverse(
-            "gl-accounts-detail", kwargs={"pk": self.pk}
-        )
+        return reverse("gl-accounts-detail", kwargs={"pk": self.pk})
 
     def update_gl_account(self, **kwargs):
         """Update the General Ledger account
