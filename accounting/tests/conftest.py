@@ -16,8 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Any
 from collections.abc import Generator
+from typing import Any
 
 import pytest
 from django.urls import reverse
