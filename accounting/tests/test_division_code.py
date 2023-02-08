@@ -187,12 +187,12 @@ def test_division_code_clean_method_with_invalid_cash_account(
 
 
 def test_division_code_clean_method_with_invalid_expense_account(
-    division_code, ap_account
+    division_code, cash_account
 ) -> None:
     """
     Test Division Code Clean Method with invalid expense account
     """
-    division_code.expense_account = ap_account
+    division_code.expense_account = cash_account
     with pytest.raises(ValidationError) as excinfo:
         division_code.clean()
 
