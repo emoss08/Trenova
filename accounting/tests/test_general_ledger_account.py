@@ -191,7 +191,8 @@ def test_gl_account_get_absolute_url(general_ledger_account) -> None:
     Test GL Account Get Absolute URL
     """
     assert (
-            general_ledger_account.get_absolute_url() == f"/api/gl_accounts/{general_ledger_account.id}/"
+        general_ledger_account.get_absolute_url()
+        == f"/api/gl_accounts/{general_ledger_account.id}/"
     )
 
 
@@ -239,13 +240,13 @@ def test_update(general_ledger_account) -> None:
     assert general_ledger_account.account_number == "1234-1234-1234-1234"
 
 
-
 def test_api_get(api_client) -> None:
     """
     Test get General Ledger accounts
     """
     response = api_client.get(reverse("gl-accounts-list"))
     assert response.status_code == 200
+
 
 def test_api_get_by_id(api_client, gl_account_api) -> None:
     """
@@ -261,6 +262,7 @@ def test_api_get_by_id(api_client, gl_account_api) -> None:
     assert response.data["account_number"] == gl_account_api.data["account_number"]
     assert response.data["account_type"] == gl_account_api.data["account_type"]
     assert response.data["description"] == gl_account_api.data["description"]
+
 
 def test_api_put(api_client, gl_account_api) -> None:
     """
@@ -300,6 +302,7 @@ def test_api_put(api_client, gl_account_api) -> None:
         == models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_RECEIVABLE
     )
 
+
 def test_api_delete(api_client, gl_account_api) -> None:
     """
     Test delete general Ledger account
@@ -315,7 +318,6 @@ def test_api_delete(api_client, gl_account_api) -> None:
     assert not response.data
 
 
-
 def test_account_number(general_ledger_account) -> None:
     """
     Test Whether the validation error is thrown if the entered account_number value is not a
@@ -329,6 +331,7 @@ def test_account_number(general_ledger_account) -> None:
     assert excinfo.value.message_dict["account_number"] == [
         "Account number must be in the format 0000-0000-0000-0000."
     ]
+
 
 def test_unique_account_numer(general_ledger_account) -> None:
     """
