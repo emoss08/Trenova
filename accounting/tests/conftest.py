@@ -111,10 +111,41 @@ def gl_account_api(api_client, organization) -> Generator[Any, Any, None]:
     yield api_client.post(
         reverse("gl-accounts-list"),
         {
-            "organization": f"{organization.id}",
+            "organization": str(organization),
             "account_number": "1234-1234-1234-1234",
-            "account_type": f"{GeneralLedgerAccount.AccountTypeChoices.REVENUE}",
+            "account_type": GeneralLedgerAccount.AccountTypeChoices.REVENUE,
             "description": "Test General Ledger Account",
+        },
+        format="json",
+    )
+
+@pytest.fixture
+def division_code_api(api_client, organization) -> Generator[Any, Any, None]:
+    """
+    Division Code API Fixture
+    """
+    yield api_client.post(
+        reverse("division-codes-list"),
+        {
+            "organization": str(organization),
+            "is_active": True,
+            "code": "Test",
+            "description": "Test Description",
+        },
+        format="json",
+    )
+
+@pytest.fixture
+def revenue_code_api(api_client, organization) -> Generator[Any, Any, None]:
+    """
+    Revenue Code API Fixture
+    """
+    yield api_client.post(
+        reverse("revenue-codes-list"),
+        {
+            "organization": str(organization),
+            "code": "Test",
+            "description": "Test Description",
         },
         format="json",
     )

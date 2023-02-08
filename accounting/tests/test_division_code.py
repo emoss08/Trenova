@@ -265,25 +265,17 @@ def test_api_get(api_client) -> None:
     """
     Test get Division Code
     """
+
     response = api_client.get("/api/division_codes/")
     assert response.status_code == 200
 
 
-def test_api_get_by_id(api_client, organization) -> None:
+def test_api_get_by_id(api_client, organization, division_code_api) -> None:
     """
     Test get Division Code by ID
     """
-    _response = api_client.post(
-        "/api/division_codes/",
-        {
-            "organization": f"{organization}",
-            "is_active": True,
-            "code": "Test",
-            "description": "Test Description",
-        },
-        format="json",
-    )
-    response = api_client.get(f"/api/division_codes/{_response.data['id']}/")
+
+    response = api_client.get(f"/api/division_codes/{division_code_api.data['id']}/")
 
     assert response.status_code == 200
     assert response.data["is_active"] is True
@@ -291,7 +283,7 @@ def test_api_get_by_id(api_client, organization) -> None:
     assert response.data["description"] == "Test Description"
 
 
-def test_api_put(api_client, organization) -> None:
+def test_api_put(api_client, organization, division_code_api) -> None:
     """
     Test put Division Code
     """
@@ -308,19 +300,8 @@ def test_api_put(api_client, organization) -> None:
         format="json",
     )
 
-    _response = api_client.post(
-        "/api/division_codes/",
-        {
-            "organization": f"{organization}",
-            "is_active": True,
-            "code": "Test",
-            "description": "Test Description",
-        },
-        format="json",
-    )
-
     response = api_client.put(
-        f"/api/division_codes/{_response.data['id']}/",
+        f"/api/division_codes/{division_code_api.data['id']}/",
         {
             "code": "foob",
             "is_active": False,
@@ -336,21 +317,11 @@ def test_api_put(api_client, organization) -> None:
     assert response.data["description"] == "Another Description"
 
 
-def test_api_delete(api_client, organization) -> None:
+def test_api_delete(api_client, organization, division_code_api) -> None:
     """
     Test Delete Division Code
     """
 
-    _response = api_client.post(
-        "/api/division_codes/",
-        {
-            "organization": f"{organization}",
-            "is_active": True,
-            "code": "Test",
-            "description": "Test Description",
-        },
-        format="json",
-    )
-    response = api_client.delete(f"/api/division_codes/{_response.data['id']}/")
+    response = api_client.delete(f"/api/division_codes/{division_code_api.data['id']}/")
     assert response.status_code == 200
     assert response.data is None
