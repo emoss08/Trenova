@@ -16,11 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import datetime
 
 from celery import shared_task
 from django.core.management import call_command
 from django.utils import timezone
+from kombu.exceptions import OperationalError
 
 
 def get_cutoff_date() -> datetime.datetime:
@@ -33,8 +35,8 @@ def get_cutoff_date() -> datetime.datetime:
     return timezone.now() - timezone.timedelta(days=30)
 
 
-@shared_task
-def delete_audit_log_records() -> str:
+@shared_task(bind=True)
+def delete_audit_log_records(self) -> str:
     """Delete audit log records older than 30 days.
 
     This task uses the Django management command `auditlogflush` to delete
@@ -42,13 +44,19 @@ def delete_audit_log_records() -> str:
     subtracting 30 days from the current date, and the `strftime` method is used
     to format the date in a usable format for the command.
 
+    Args:
+        self (celery.app.task.Task): The task object
+
     Returns:
-    str: The message "Audit log records deleted." upon successful completion of the task.
+        str: The message "Audit log records deleted." upon successful completion of the task.
     """
 
-    cutoff_date = get_cutoff_date()
-    formatted_date = cutoff_date.strftime("%Y-%m-%d")
+    cutoff_date: datetime.datetime = get_cutoff_date()
+    formatted_date: str = cutoff_date.strftime("%Y-%m-%d")
 
-    call_command("auditlogflush", "-b", formatted_date, "-y")
+    try:
+        call_command("auditlogflush", "-b", formatted_date, "-y")
+    except OperationalError as exc:
+        raise self.retry(exc=exc) from exc
 
     return f"Successfully deleted audit log records. older than {formatted_date}."

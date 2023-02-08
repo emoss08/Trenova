@@ -34,7 +34,7 @@ class LocationCategoryFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
+    name = factory.Faker("pystr", max_chars=100)
 
 
 class LocationFactory(factory.django.DjangoModelFactory):

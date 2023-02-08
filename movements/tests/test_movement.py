@@ -26,7 +26,6 @@ from commodities.factories import CommodityFactory, HazardousMaterialFactory
 from movements import models
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory
-from stops.models import Stop
 from stops.services.generation import StopService
 from stops.tests.factories import StopFactory
 from worker.factories import WorkerFactory
@@ -281,11 +280,12 @@ class TestMovementValidation:
         worker = WorkerFactory()
         worker.profile.endorsements = "H"
         worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(
-            days=1
+            days=30
         )
+        worker.profile.save()
 
         with pytest.raises(ValidationError) as excinfo:
-            MovementFactory(order=order, primary_worker=worker)
+            MovementFactory(order=order, primary_worker=worker, secondary_worker=None)
 
         assert excinfo.value.message_dict["primary_worker"] == [
             "Worker hazmat certification has expired. Please try again."
@@ -434,8 +434,9 @@ class TestMovementValidation:
         worker = WorkerFactory()
         worker.profile.endorsements = "H"
         worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(
-            days=1
+            days=30
         )
+        worker.profile.save()
 
         with pytest.raises(ValidationError) as excinfo:
             MovementFactory(
@@ -493,8 +494,8 @@ class TestMovementValidation:
         """
         movement = MovementFactory()
 
-        stop_1 = StopFactory(movement=movement)
-        stop_2 = StopFactory(movement=movement)
+        StopFactory(movement=movement)
+        StopFactory(movement=movement)
 
         with pytest.raises(ValidationError) as excinfo:
             movement.status = "P"
@@ -511,8 +512,8 @@ class TestMovementValidation:
         """
         movement = MovementFactory()
 
-        stop_1 = StopFactory(movement=movement, status="P")
-        stop_2 = StopFactory(movement=movement, status="P")
+        StopFactory(movement=movement, status="P")
+        StopFactory(movement=movement, status="P")
 
         with pytest.raises(ValidationError) as excinfo:
             movement.status = "N"
@@ -529,8 +530,8 @@ class TestMovementValidation:
         """
         movement = MovementFactory()
 
-        stop_1 = StopFactory(movement=movement, status="P")
-        stop_2 = StopFactory(movement=movement, status="P")
+        StopFactory(movement=movement, status="P")
+        StopFactory(movement=movement, status="P")
 
         with pytest.raises(ValidationError) as excinfo:
             movement.status = "C"

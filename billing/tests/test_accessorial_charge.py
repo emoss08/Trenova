@@ -16,21 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 import pytest
 
-from billing.tests.factories import AccessorialChargeFactory
+pytestmark = pytest.mark.django_db
 
 
-@pytest.fixture
-def accessorial_charge() -> None:
-    """
-    Accessorial charge fixture
-    """
-    yield AccessorialChargeFactory()
-
-
-@pytest.mark.django_db
 def test_accessorial_charge_creation(accessorial_charge) -> None:
     """
     Test accessorial charge creation
@@ -38,7 +28,6 @@ def test_accessorial_charge_creation(accessorial_charge) -> None:
     assert accessorial_charge is not None
 
 
-@pytest.mark.django_db
 def test_accessorial_charge_update(accessorial_charge) -> None:
     """
     Test accessorial charge update

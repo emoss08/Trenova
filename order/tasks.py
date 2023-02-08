@@ -18,24 +18,32 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from celery import shared_task
+from django.core.exceptions import ObjectDoesNotExist
 
 from order.models import Order
 from order.services.consolidate_pdf import combine_pdfs
 
 
-@shared_task  # type: ignore
-def consolidate_order_documentation(order_id: str) -> None:
+@shared_task(bind=True)
+def consolidate_order_documentation(self, order_id: str) -> None:
     """Consolidate Order
 
     Query the database for the Order and call the consolidate_pdf
     service to combine the PDFs into a single PDF.
 
     Args:
+        self (celery.app.task.Task): The task object
         order_id (str): Order ID
 
     Returns:
-        None
+        None: None
+
+    Raises:
+        ObjectDoesNotExist: If the Order does not exist in the database.
     """
 
-    order: Order = Order.objects.get(id=order_id)
-    combine_pdfs(order=order)
+    try:
+        order: Order = Order.objects.get(id=order_id)
+        combine_pdfs(order=order)
+    except ObjectDoesNotExist as exc:
+        raise self.retry(exc=exc) from exc
