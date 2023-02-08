@@ -47,4 +47,3 @@ def consolidate_order_documentation(self, order_id: str) -> None:
         combine_pdfs(order=order)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
-

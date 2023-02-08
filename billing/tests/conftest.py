@@ -23,7 +23,11 @@ from typing import Any
 import pytest
 
 from accounting.tests.factories import RevenueCodeFactory
-from billing.tests.factories import ChargeTypeFactory, DocumentClassificationFactory, AccessorialChargeFactory
+from billing.tests.factories import (
+    AccessorialChargeFactory,
+    ChargeTypeFactory,
+    DocumentClassificationFactory,
+)
 from commodities.factories import CommodityFactory
 from customer.factories import (
     CustomerBillingProfileFactory,
@@ -147,6 +151,7 @@ def accessorial_charge() -> Generator[Any, Any, None]:
     Accessorial charge fixture
     """
     yield AccessorialChargeFactory()
+
 
 @pytest.fixture
 def charge_type_api(api_client, organization) -> Generator[Any, Any, None]:
