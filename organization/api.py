@@ -134,10 +134,14 @@ class EmailLogViewSet(viewsets.ModelViewSet):
             "type": "object",
             "properties": {
                 "cache_backend": {
-                    "type": "object",
-                    "properties": {
-                        "status": {"type": "string"},
-                        "time": {"type": "number"},
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": {"type": "string"},
+                            "status": {"type": "string"},
+                            "time": {"type": "number"},
+                        },
                     },
                 },
                 "storage": {
@@ -158,6 +162,9 @@ class EmailLogViewSet(viewsets.ModelViewSet):
                     "type": "object",
                     "properties": {
                         "status": {"type": "string"},
+                        "total": {"type": "number"},
+                        "used": {"type": "number"},
+                        "free": {"type": "number"},
                         "time": {"type": "number"},
                     },
                 },

@@ -255,9 +255,9 @@ urlpatterns = [
         accounts_api.UpdatePasswordView.as_view(),
         name="change-password",
     ),
+    path("api/system_health/", org_api.health_check, name="system-health"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
-urlpatterns += [path("api/system_health/", org_api.health_check, name="system_health")]
