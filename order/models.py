@@ -165,6 +165,11 @@ class OrderControl(GenericModel):
             "Compare and validate that origin and destination are not the same."
         ),
     )
+    check_for_duplicate_bol = models.BooleanField(
+        _("Check for Duplicate BOL"),
+        default=False,
+        help_text=_("Check for duplicate BOL numbers when entering an order."),
+    )
 
     class Meta:
         """
@@ -193,7 +198,7 @@ class OrderControl(GenericModel):
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
-class OrderType(GenericModel):  # type: ignore
+class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
     """Stores the order type information for a related :model:`organization.Organization`.
 
     The OrderType model stores information about an order type, such as its name,
@@ -242,10 +247,10 @@ class OrderType(GenericModel):  # type: ignore
         """
         Metaclass for OrderType model
         """
-
         verbose_name = _("Order Type")
         verbose_name_plural = _("Order Types")
         ordering = ["name"]
+
 
     def __str__(self) -> str:
         """Order Type String Representation
@@ -254,6 +259,7 @@ class OrderType(GenericModel):  # type: ignore
             str: Order Type Name
         """
         return textwrap.wrap(self.name, 50)[0]
+
 
     def get_absolute_url(self) -> str:
         """Order Type Absolute URL

@@ -53,6 +53,7 @@ class OrderValidation:
         self.validate_order_control()
         self.validate_ready_to_bill()
         self.validate_order_locations()
+        self.validate_duplicate_order_bol()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -133,6 +134,7 @@ class OrderValidation:
         ):
             self.errors["commodity"] = _("Commodity is required. Please try again.")
 
+        # Validate voided comment is entered if Order Control requires it for the organization.
         if (
             self.order.organization.order_control.enforce_voided_comm
             and self.order.status == StatusChoices.VOIDED
@@ -191,4 +193,35 @@ class OrderValidation:
         if not self.order.destination_location and not self.order.destination_address:
             self.errors["destination_address"] = _(
                 "Destination Location or Address is required. Please try again."
+            )
+
+    def validate_duplicate_order_bol(self) -> None:
+        """Validate duplicate order BOL number.
+
+        Validate that the BOL number is not a duplicate. For example, if the user
+        enters a BOL number that is already in use by another order, a ValidationError
+        will be thrown and the pro_numbers of the duplicate orders will be returned to the user.
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the BOL number is a duplicate. The error message will include the pro_numbers of the duplicate orders.
+        """
+
+        # Validate BOL number is not a duplicate.
+        duplicates = self.order.organization.orders.filter(
+            bol_number=self.order.bol_number,
+            status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS],
+        ).exclude(id=self.order.id)
+
+        if (
+            self.order.organization.order_control.check_for_duplicate_bol
+            and self.order.bol_number
+            and self.order.status in [StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            and duplicates.exists()
+        ):
+            pro_numbers = ", ".join([str(order.pro_number) for order in duplicates])
+            self.errors["bol_number"] = _(
+                f"Duplicate BOL Number found in orders with PRO numbers: {pro_numbers}. If this is a new order, please change the BOL Number."
             )

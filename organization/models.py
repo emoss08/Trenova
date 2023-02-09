@@ -25,7 +25,12 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
+from django_lifecycle import (
+    AFTER_CREATE,
+    LifecycleModelMixin,
+    hook,
+    BEFORE_SAVE,
+)
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -70,6 +75,50 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         max_length=4,
         verbose_name=_("SCAC Code"),
         help_text=_("The SCAC code for the organization."),
+    )
+    dot_number = models.PositiveIntegerField(
+        _("DOT Number"),
+        null=True,
+        blank=True,
+        help_text=_("The DOT number for the organization."),
+    )
+    address_line_1 = models.CharField(
+        _("Address line 1"),
+        max_length=255,
+        help_text=_("The address line 1 of the organization."),
+        blank=True,
+    )
+    address_line_2 = models.CharField(
+        _("Address line 2"),
+        max_length=255,
+        blank=True,
+        help_text=_("The address line 2 of the organization."),
+    )
+    city = models.CharField(
+        _("City"),
+        max_length=255,
+        help_text=_("The city of the organization."),
+        blank=True,
+    )
+    state = USStateField(
+        _("State"),
+        help_text=_("The state of the organization."),
+        blank=True,
+    )
+    zip_code = USZipCodeField(
+        _("zip code"),
+        help_text=_("The zip code of the organization."),
+        blank=True,
+    )
+    phone_number = PhoneNumberField(
+        _("Phone Number"),
+        help_text=_("The phone number of the organization."),
+        blank=True,
+    )
+    website = models.URLField(
+        _("Website"),
+        blank=True,
+        help_text=_("The website of the organization."),
     )
     org_type = models.CharField(
         max_length=10,
@@ -129,6 +178,17 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             str: String representation of the organization.
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    @hook(BEFORE_SAVE)  # type: ignore
+    def before_create(self) -> None:
+        """Actions before saving an Organization instance.
+
+        Returns:
+            None: None
+        """
+
+        # Upper case the scac code before saving
+        self.scac_code = self.scac_code.upper()
 
     @hook(AFTER_CREATE)  # type: ignore
     def create_dispatch_control_after_create(self) -> None:
