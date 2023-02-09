@@ -21,7 +21,6 @@ import locale
 import shutil
 import socket
 from timeit import default_timer as timer
-from typing import Tuple, Union
 
 host = socket.gethostname()
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
