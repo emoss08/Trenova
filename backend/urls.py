@@ -255,6 +255,7 @@ urlpatterns = [
         accounts_api.UpdatePasswordView.as_view(),
         name="change-password",
     ),
+    path("api/system_health/", org_api.health_check, name="system-health"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
