@@ -18,7 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from timeit import default_timer as timer
+
 from celery.exceptions import TaskRevokedError, TimeoutError
+
 from .tasks import add
 
 
@@ -40,9 +42,7 @@ class CeleryHealthCheck:
         """
         start = timer()
         try:
-            result = add.apply_async(
-                args=[4, 4], expires=3
-            )
+            result = add.apply_async(args=[4, 4], expires=3)
             result.get(timeout=3)
             end = timer()
             result_time = end - start

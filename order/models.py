@@ -247,10 +247,10 @@ class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
         """
         Metaclass for OrderType model
         """
+
         verbose_name = _("Order Type")
         verbose_name_plural = _("Order Types")
         ordering = ["name"]
-
 
     def __str__(self) -> str:
         """Order Type String Representation
@@ -259,7 +259,6 @@ class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
             str: Order Type Name
         """
         return textwrap.wrap(self.name, 50)[0]
-
 
     def get_absolute_url(self) -> str:
         """Order Type Absolute URL

@@ -18,8 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from timeit import default_timer as timer
+
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+
 
 class FileStorageHealthCheck:
     """
@@ -51,7 +53,7 @@ class FileStorageHealthCheck:
             if content != test_file_content:
                 end = timer()
                 return {"status": "corrupted", "time": end - start}
-        except Exception as e:
+        except Exception:
             end = timer()
             return {"status": "offline", "time": end - start}
         finally:

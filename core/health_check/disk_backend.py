@@ -17,11 +17,11 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from timeit import default_timer as timer
 import locale
-import socket
 import shutil
-from typing import Union, Tuple
+import socket
+from timeit import default_timer as timer
+from typing import Tuple, Union
 
 host = socket.gethostname()
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
@@ -33,7 +33,7 @@ class DiskUsageHealthCheck:
     """
 
     @staticmethod
-    def compare_disk_usage() -> Tuple[int, int, int]:
+    def compare_disk_usage() -> tuple[int, int, int]:
         """
         Get the total, used, and free disk space in gigabytes.
 
@@ -46,7 +46,7 @@ class DiskUsageHealthCheck:
         free = free // (2**30)
         return total, used, free
 
-    def check_disk_usage(self) -> dict[str, Union[str, int, int, int]]:
+    def check_disk_usage(self) -> dict[str, str | int | int | int]:
         """
         Check the disk usage and return a dictionary indicating the status and disk usage information.
 
@@ -62,7 +62,7 @@ class DiskUsageHealthCheck:
             else {"status": "working", "total": total, "used": used, "free": free}
         )
 
-    def check_disk_usage_and_time(self) -> dict[str, Union[str, int, int, int, float]]:
+    def check_disk_usage_and_time(self) -> dict[str, str | int | int | int | float]:
         """
         Check the disk usage and time taken to get the disk usage information and return a dictionary indicating the status, disk usage information, and time taken.
 

@@ -18,8 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from timeit import default_timer as timer
-from django.core.cache import caches
+
 from django.conf import settings
+from django.core.cache import caches
 
 
 class CacheBackendHealthCheck:
@@ -62,4 +63,3 @@ class CacheBackendHealthCheck:
             result = CacheBackendHealthCheck.check_cache(cache_name, cache)
             results.append(result)
         return results
-

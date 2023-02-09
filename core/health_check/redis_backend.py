@@ -18,8 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from timeit import default_timer as timer
+
 from django.conf import settings
 from redis import exceptions, from_url
+
 
 class RedisHealthCheck:
     """
@@ -51,4 +53,3 @@ class RedisHealthCheck:
         except exceptions.TimeoutError:
             end = timer()
             return {"status": "slow", "time": end - start}
-

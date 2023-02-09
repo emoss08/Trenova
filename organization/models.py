@@ -25,12 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import (
-    AFTER_CREATE,
-    LifecycleModelMixin,
-    hook,
-    BEFORE_SAVE,
-)
+from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 

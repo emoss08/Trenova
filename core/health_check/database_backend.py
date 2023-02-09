@@ -18,8 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from timeit import default_timer as timer
-from django.db import connections
-from django.db import DatabaseError
+
+from django.db import DatabaseError, connections
+
 
 class DatabaseHealthCheck:
     """
