@@ -17,11 +17,11 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import TypeAlias
 import locale
 import shutil
 import socket
 from timeit import default_timer as timer
+from typing import TypeAlias
 
 host = socket.gethostname()
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")

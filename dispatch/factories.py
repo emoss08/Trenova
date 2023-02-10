@@ -103,7 +103,9 @@ class RateFactory(factory.django.DjangoModelFactory):
     expiration_date = timezone.now().date() + timezone.timedelta(days=365)
     commodity = factory.SubFactory("commodities.factories.CommodityFactory")
     order_type = factory.SubFactory("order.tests.factories.OrderTypeFactory")
-    equipment_type = factory.SubFactory("equipment.tests.factories.EquipmentTypeFactory")
+    equipment_type = factory.SubFactory(
+        "equipment.tests.factories.EquipmentTypeFactory"
+    )
 
     class Meta:
         """
@@ -111,4 +113,9 @@ class RateFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.Rate"
-        django_get_or_create = ("organization", "commodity", "order_type", "equipment_type")
+        django_get_or_create = (
+            "organization",
+            "commodity",
+            "order_type",
+            "equipment_type",
+        )

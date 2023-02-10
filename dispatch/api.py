@@ -66,6 +66,7 @@ class FleetCodeViewSet(OrganizationMixin):
     serializer_class = serializers.FleetCodeSerializer
     filterset_fields = ("is_active",)
 
+
 class DispatchControlViewSet(OrganizationMixin):
     """A viewset for viewing and editing Dispatch Control in the system.
 

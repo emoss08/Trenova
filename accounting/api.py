@@ -47,7 +47,10 @@ class RevenueCodeViewSet(OrganizationMixin):
 
     serializer_class = serializers.RevenueCodeSerializer
     queryset = models.RevenueCode.objects.all()
-    filterset_fields = ("expense_account", "revenue_account",)
+    filterset_fields = (
+        "expense_account",
+        "revenue_account",
+    )
 
 
 class DivisionCodeViewSet(OrganizationMixin):
@@ -57,7 +60,12 @@ class DivisionCodeViewSet(OrganizationMixin):
 
     serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
-    filterset_fields = ("is_active", "cash_account", "ap_account", "expense_account",)
+    filterset_fields = (
+        "is_active",
+        "cash_account",
+        "ap_account",
+        "expense_account",
+    )
 
     def get_queryset(self) -> QuerySet[models.DivisionCode]:
         """Filter the queryset to only include the current user's organization

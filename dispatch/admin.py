@@ -75,6 +75,7 @@ class CommentTypeAdmin(GenericAdmin[models.CommentType]):
     list_display = ("name",)
     search_fields = ("name",)
 
+
 @admin.register(models.Rate)
 class RateAdmin(GenericAdmin[models.Rate]):
     """

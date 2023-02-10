@@ -591,13 +591,19 @@ class EquipmentMaintenancePlan(GenericModel):
             )
 
         if self.by_distance and not self.miles:
-            errors["miles"] = _("Miles must be set if the maintenance plan is by distance. Please try again.")
+            errors["miles"] = _(
+                "Miles must be set if the maintenance plan is by distance. Please try again."
+            )
 
         if self.by_time and not self.months:
-            errors["months"] = _("Months must be set if the maintenance plan is by time. Please try again.")
+            errors["months"] = _(
+                "Months must be set if the maintenance plan is by time. Please try again."
+            )
 
         if self.by_engine_hours and not self.engine_hours:
-            errors["engine_hours"] = _("Engine hours must be set if the maintenance plan is by engine hours. Please try again.")
+            errors["engine_hours"] = _(
+                "Engine hours must be set if the maintenance plan is by engine hours. Please try again."
+            )
 
         if errors:
             raise ValidationError(errors)

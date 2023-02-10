@@ -26,7 +26,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, hook, BEFORE_CREATE
+from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook
 
 from integration.models import IntegrationChoices
 from organization.models import Organization

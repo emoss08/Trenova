@@ -19,10 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections.abc import Generator
 from typing import Any
+
 import pytest
+
 from dispatch import factories
 
 pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def rate() -> Generator[Any, Any, None]:

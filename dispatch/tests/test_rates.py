@@ -18,9 +18,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 import datetime
 import uuid
+
 import pytest
 from django.utils import timezone
 from pydantic import BaseModel
+
 from dispatch import factories
 
 pytestmark = pytest.mark.django_db
@@ -30,6 +32,7 @@ class RateBase(BaseModel):
     """
     Rate Base Schema
     """
+
     organization_id: uuid.UUID
     rate_number: str
     customer: uuid.UUID | None
@@ -39,17 +42,22 @@ class RateBase(BaseModel):
     order_type_id: uuid.UUID | None
     equipment_type_id: uuid.UUID | None
 
+
 class RateCreate(RateBase):
     """
     Rate Create Schema
     """
+
     pass
+
 
 class RateUpdate(RateBase):
     """
     Rate Update Schema
     """
+
     id: uuid.UUID
+
 
 def test_create_schema() -> None:
     """
@@ -77,6 +85,7 @@ def test_create_schema() -> None:
     assert rate["commodity_id"] is not None
     assert rate["order_type_id"] is not None
     assert rate["equipment_type_id"] is not None
+
 
 def test_update_schema() -> None:
     """
@@ -106,6 +115,7 @@ def test_update_schema() -> None:
     assert rate["order_type_id"] is not None
     assert rate["equipment_type_id"] is not None
 
+
 def test_delete_schema() -> None:
     """
     Test Rate Delete Schema
@@ -130,7 +140,7 @@ def test_delete_schema() -> None:
             commodity_id=uuid.uuid4(),
             order_type_id=uuid.uuid4(),
             equipment_type_id=uuid.uuid4(),
-        )
+        ),
     ]
 
     rate_store = rates.copy()
@@ -142,6 +152,7 @@ def test_delete_schema() -> None:
     assert rate_store[0].rate_number == "R00002"
     assert rates[0].rate_number == "R00001"
 
+
 def test_rate_str_representation(rate) -> None:
     """
     Test the rate string representation.
@@ -149,11 +160,13 @@ def test_rate_str_representation(rate) -> None:
 
     assert str(rate) == "R00001"
 
+
 def test_list(rate) -> None:
     """
     Test the list method.
     """
     assert rate is not None
+
 
 def test_set_rate_number_before_create_hook(rate) -> None:
     """
@@ -161,6 +174,7 @@ def test_set_rate_number_before_create_hook(rate) -> None:
     """
     assert rate.rate_number is not None
     assert rate.rate_number == "R00001"
+
 
 def test_set_rate_number_increment_hook(rate) -> None:
     """
