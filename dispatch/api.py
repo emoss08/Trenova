@@ -24,75 +24,61 @@ from utils.views import OrganizationMixin
 
 
 class CommentTypeViewSet(OrganizationMixin):
-    """A viewset for viewing and editing customer information in the system.
+    """A viewset for viewing and editing Comment Type information in the system.
 
-    The viewset provides default operations for creating, updating, and deleting customers,
-    as well as listing and retrieving customers. It uses the `CustomerSerializer`
+    The viewset provides default operations for creating, updating, and deleting Comment
+    Types, as well as listing and retrieving Comment Types. It uses the `CommentTypeSerializer`
     class to convert the customer instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
     """
 
     queryset = models.CommentType.objects.all()
     serializer_class = serializers.CommentTypeSerializer
-    filterset_fields = (
-        "id",
-        "name",
-    )
 
 
 class DelayCodeViewSet(OrganizationMixin):
-    """A viewset for viewing and editing customer information in the system.
+    """A viewset for viewing and editing Delay Code information in the system.
 
-    The viewset provides default operations for creating, updating, and deleting customers,
-    as well as listing and retrieving customers. It uses the `CustomerSerializer`
+    The viewset provides default operations for creating, updating, and deleting Delay
+    Codes, as well as listing and retrieving Delay Codes. It uses the `DelayCodeSerializer`
     class to convert the customer instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
     """
 
     queryset = models.DelayCode.objects.all()
     serializer_class = serializers.DelayCodeSerializer
-    filterset_fields = ("code",)
 
 
 class FleetCodeViewSet(OrganizationMixin):
-    """A viewset for viewing and editing customer information in the system.
+    """A viewset for viewing and editing Fleet Code information in the system.
 
-    The viewset provides default operations for creating, updating, and deleting customers,
-    as well as listing and retrieving customers. It uses the `CustomerSerializer`
-    class to convert the customer instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating, and deleting Fleet Codes,
+    as well as listing and retrieving Fleet Codes. It uses the `FleetCodeSerializer`
+    class to convert the Fleet Codes instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
+    Filtering is also available, with the ability to filter by is active.
     """
 
     queryset = models.FleetCode.objects.all()
     serializer_class = serializers.FleetCodeSerializer
-    filterset_fields = ("code",)
+    filterset_fields = ("is_active",)
 
 
 class DispatchControlViewSet(OrganizationMixin):
-    """A viewset for viewing and editing customer information in the system.
+    """A viewset for viewing and editing Dispatch Control in the system.
 
-    The viewset provides default operations for creating, updating, and deleting customers,
-    as well as listing and retrieving customers. It uses the `CustomerSerializer`
-    class to convert the customer instances to and from JSON-formatted data.
+    The viewset provides default operations for updating, as well as listing and retrieving
+    Dispatch Control. It uses the `DispatchControlSerializer` class to convert the Dispatch
+    Control instances to and from JSON-formatted data.
 
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
+    Only get, put, patch, head and options HTTP methods are allowed when using this viewset.
+    Only Admin users are allowed to access the views provided by this viewset.
     """
 
     queryset = models.DispatchControl.objects.all()
     serializer_class = serializers.DispatchControlSerializer
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "put", "patch", "head", "options"]
-
-
-# TODO: Write comment type serializer

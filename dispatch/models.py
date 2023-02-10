@@ -24,7 +24,9 @@ from typing import final
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook
 
 from integration.models import IntegrationChoices
 from organization.models import Organization
@@ -151,21 +153,20 @@ class DispatchControl(GenericModel):
             ValidationError: If the dispatch control is not valid.
         """
         super().clean()
+
         if self.distance_method == self.DistanceMethodChoices.GOOGLE and all(
             integration.integration_type != IntegrationChoices.GOOGLE_MAPS
             for integration in self.organization.integrations.all()
         ):
             raise ValidationError(
-                ValidationError(
-                    {
-                        "distance_method": _(
-                            "Google Maps integration is not configured for the organization."
-                            " Please configure the integration before selecting Google as "
-                            "the distance method."
-                        ),
-                    },
-                    code="invalid",
-                )
+                {
+                    "distance_method": _(
+                        "Google Maps integration is not configured for the organization."
+                        " Please configure the integration before selecting Google as "
+                        "the distance method."
+                    ),
+                },
+                code="invalid",
             )
 
     def get_absolute_url(self) -> str:
@@ -174,7 +175,7 @@ class DispatchControl(GenericModel):
         Returns:
             str: Dispatch control absolute URL
         """
-        return reverse("dispatch:dispatch-control-detail", kwargs={"pk": self.pk})
+        return reverse("dispatch-control-detail", kwargs={"pk": self.pk})
 
 
 class DelayCode(GenericModel):
@@ -223,7 +224,7 @@ class DelayCode(GenericModel):
         Returns:
             str: Delay code absolute URL
         """
-        return reverse("dispatch:delay-code-detail", kwargs={"pk": self.pk})
+        return reverse("delay-codes-detail", kwargs={"pk": self.pk})
 
 
 class FleetCode(GenericModel):
@@ -293,7 +294,7 @@ class FleetCode(GenericModel):
         Returns:
             str: Fleet code absolute URL
         """
-        return reverse("dispatch:fleet-code-detail", kwargs={"pk": self.pk})
+        return reverse("fleet-codes-detail", kwargs={"pk": self.pk})
 
 
 class CommentType(GenericModel):
@@ -341,4 +342,121 @@ class CommentType(GenericModel):
         Returns:
             str: Comment type absolute url
         """
-        return reverse("dispatch:comment_type:detail", kwargs={"pk": self.pk})
+        return reverse("comment-types-detail", kwargs={"pk": self.pk})
+
+
+class Rate(LifecycleModelMixin, GenericModel):
+    """Stores the Rate information for a related :model:`customer.Customer`.
+
+    The rate model stores the rate information for a related Customer. It is used to
+    store information such as general billing information, lane specific billing information,
+    commodity specific billing information and more.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    rate_number = models.CharField(
+        _("Rate Number"),
+        max_length=10,
+        unique=True,
+        editable=False,
+        help_text=_("Rate Number for Rate"),
+    )
+    customer = models.ForeignKey(
+        "customer.Customer",
+        on_delete=models.SET_NULL,
+        verbose_name=_("Customer"),
+        related_name="rates",
+        null=True,
+        blank=True,
+        help_text=_("Customer for Rate"),
+    )
+    effective_date = models.DateField(
+        _("Effective Date"),
+        help_text=_("Effective Date for Rate"),
+        default=timezone.now,
+    )
+    expiration_date = models.DateField(
+        _("Expiration Date"),
+        help_text=_("Expiration Date for Rate"),
+        default=timezone.now,
+    )
+    commodity = models.ForeignKey(
+        "commodities.Commodity",
+        on_delete=models.SET_NULL,
+        verbose_name=_("Commodity"),
+        related_name="rates",
+        null=True,
+        blank=True,
+        help_text=_("Commodity for Rate"),
+    )
+    order_type = models.ForeignKey(
+        "order.OrderType",
+        on_delete=models.SET_NULL,
+        verbose_name=_("Order Type"),
+        related_name="rates",
+        null=True,
+        blank=True,
+    )
+    equipment_type = models.ForeignKey(
+        "equipment.EquipmentType",
+        on_delete=models.SET_NULL,
+        verbose_name=_("Equipment Type"),
+        related_name="rates",
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for Rate
+        """
+
+        verbose_name = _("Rate")
+        verbose_name_plural = _("Rates")
+        ordering = ["rate_number"]
+
+    def __str__(self) -> str:
+        """Rate string representation
+
+        Returns:
+            str: Rate string representation
+        """
+        return textwrap.wrap(self.rate_number, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Rate absolute url
+
+        Returns:
+            str: Rate absolute url
+        """
+        return reverse("rates-detail", kwargs={"pk": self.pk})
+
+    @hook(BEFORE_CREATE)
+    def set_rate_number_before_create(self) -> None:
+        """Set rate number before create
+
+        Returns:
+            None
+        """
+        self.rate_number = self.generate_rate_number()
+
+    @staticmethod
+    def generate_rate_number() -> str:
+        """Rate number generator
+
+        Returns:
+            str: Rate number
+        """
+        count = Rate.objects.count() + 1
+        rate_number = f"R{count:05d}"
+
+        while Rate.objects.filter(rate_number=rate_number).exists():
+            count += 1
+            rate_number = f"R{count:05d}"
+
+        return rate_number

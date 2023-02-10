@@ -104,5 +104,5 @@ def test_delete(api_client, organization, charge_type_api):
         f"/api/charge_types/{charge_type_api.data['id']}/",
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 204
     assert response.data is None

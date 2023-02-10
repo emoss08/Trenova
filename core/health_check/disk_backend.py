@@ -21,9 +21,15 @@ import locale
 import shutil
 import socket
 from timeit import default_timer as timer
+from typing import TypeAlias
 
 host = socket.gethostname()
 locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
+
+# Type aliases
+HealthStatus: TypeAlias = dict[str, str | int | int | int]
+HealthStatusAndTime: TypeAlias = dict[str, str | int | int | int | float | float]
+DiskUsage: TypeAlias = tuple[int, int, int]
 
 
 class DiskUsageHealthCheck:
@@ -32,7 +38,7 @@ class DiskUsageHealthCheck:
     """
 
     @staticmethod
-    def compare_disk_usage() -> tuple[int, int, int]:
+    def compare_disk_usage() -> DiskUsage:
         """
         Get the total, used, and free disk space in gigabytes.
 
@@ -45,12 +51,12 @@ class DiskUsageHealthCheck:
         free = free // (2**30)
         return total, used, free
 
-    def check_disk_usage(self) -> dict[str, str | int | int | int]:
+    def check_disk_usage(self) -> HealthStatus:
         """
         Check the disk usage and return a dictionary indicating the status and disk usage information.
 
         Returns:
-            Dict[str, Union[str, int, int, int]]: A dictionary containing the disk usage status and the total, used, and free disk space in gigabytes.
+            HealthStatus: A dictionary containing the disk usage status and the total, used, and free disk space in gigabytes.
         """
         total, used, free = self.compare_disk_usage()
         if free < 5:
@@ -61,12 +67,14 @@ class DiskUsageHealthCheck:
             else {"status": "working", "total": total, "used": used, "free": free}
         )
 
-    def check_disk_usage_and_time(self) -> dict[str, str | int | int | int | float]:
+    def check_disk_usage_and_time(self) -> HealthStatusAndTime:
         """
-        Check the disk usage and time taken to get the disk usage information and return a dictionary indicating the status, disk usage information, and time taken.
+        Check the disk usage and time taken to get the disk usage information and return a dictionary
+        indicating the status, disk usage information, and time taken.
 
         Returns:
-            Dict[str, Union[str, int, int, int, float]]: A dictionary containing the disk usage status, the total, used, and free disk space in gigabytes, and the time taken to get the disk usage information.
+            HealthStatusAndTime: A dictionary containing the disk usage status, the total,
+            used, and free disk space in gigabytes, and the time taken to get the disk usage information.
         """
         start = timer()
         total, used, free = self.compare_disk_usage()

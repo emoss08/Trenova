@@ -51,7 +51,7 @@ class CustomerViewSet(OrganizationMixin):
             )
             .select_related(
                 "organization",
-                "billing_profiles",
+                "billing_profile",
             )
             .prefetch_related(
                 "contacts",

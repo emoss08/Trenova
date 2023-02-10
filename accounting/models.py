@@ -273,30 +273,28 @@ class RevenueCode(GenericModel):  # type: ignore
 
         super().clean()
 
+        errors = {}
+
         if (
             self.expense_account
             and self.expense_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
-            raise ValidationError(
-                {
-                    "expense_account": _(
-                        "Entered account is not an expense account. Please try again."
-                    )
-                }
+            errors["expense_account"] = _(
+                "Entered account is not an expense account. Please try again."
             )
+
         if (
             self.revenue_account
             and self.revenue_account.account_type
             != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
-            raise ValidationError(
-                {
-                    "revenue_account": _(
-                        "Entered account is not a revenue account. Please try again."
-                    )
-                }
+            errors["revenue_account"] = _(
+                "Entered account is not a revenue account. Please try again."
             )
+
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """RevenueCode save method

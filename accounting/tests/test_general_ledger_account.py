@@ -316,7 +316,7 @@ def test_api_delete(api_client, gl_account_api) -> None:
         )
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 204
     assert not response.data
 
 

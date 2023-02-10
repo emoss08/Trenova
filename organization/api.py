@@ -22,6 +22,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import permissions, viewsets
 from rest_framework.decorators import api_view
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.health_check.cache_backend import CacheBackendHealthCheck
@@ -187,7 +188,7 @@ class EmailLogViewSet(viewsets.ModelViewSet):
     },
 )
 @api_view(["GET"])
-def health_check(request) -> Response:
+def health_check(request: Request) -> Response:
     """
     Health check endpoint that returns the health status of various components of the system.
 
@@ -203,4 +204,5 @@ def health_check(request) -> Response:
         "celery": CeleryHealthCheck.check_celery(),
         "database": DatabaseHealthCheck.check_database(),
     }
+
     return Response(health_status)
