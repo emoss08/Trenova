@@ -36,7 +36,7 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("word", locale="en_US")
+    id = factory.Faker("pystr", max_chars=50)
     description = "Test Equipment Type Description"
 
 
@@ -51,7 +51,7 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
         """
 
         model = "equipment.EquipmentTypeDetail"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "equipment_type",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
@@ -72,7 +72,7 @@ class EquipmentManufacturerFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("word", locale="en_US")
+    id = factory.Faker("pystr", max_chars=50)
     description = factory.Faker("text")
 
 
@@ -94,6 +94,6 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
         )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    id = factory.Faker("word", locale="en_US")
+    id = factory.Faker("pystr", max_chars=50)
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)
