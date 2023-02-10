@@ -33,7 +33,8 @@ class DatabaseHealthCheck:
         Check the health of the database by sending a ping request.
 
         Returns:
-            Dict[str, Union[str, float]]: A dictionary indicating the health of the database, including the status and time taken to perform the check. The status will be either "online", "offline", or "slow".
+            dict: A dictionary indicating the health of the database, including the status and time taken
+            to perform the check.The status will be either "online", "offline", or "slow".
 
         Raises:
             ConnectionError: If the database is not reachable.

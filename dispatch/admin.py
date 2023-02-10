@@ -74,3 +74,16 @@ class CommentTypeAdmin(GenericAdmin[models.CommentType]):
     model: type[models.CommentType] = models.CommentType
     list_display = ("name",)
     search_fields = ("name",)
+
+@admin.register(models.Rate)
+class RateAdmin(GenericAdmin[models.Rate]):
+    """
+    Rate Admin
+    """
+
+    model: type[models.Rate] = models.Rate
+    list_display = (
+        "rate_number",
+        "customer",
+    )
+    search_fields = ("rate_number",)

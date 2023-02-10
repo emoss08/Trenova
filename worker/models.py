@@ -403,6 +403,8 @@ class WorkerProfile(GenericModel):
 
         super().clean()
 
+        # TODO(Wolfred): Rewrite this to raise the validation all at once.
+
         if (
             self.endorsements
             in [
