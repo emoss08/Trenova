@@ -193,7 +193,9 @@ def test_division_code_clean_method_with_invalid_expense_account(
     """
     Test Division Code Clean Method with invalid expense account
     """
+
     division_code.expense_account = cash_account
+
     with pytest.raises(ValidationError) as excinfo:
         division_code.clean()
 
@@ -324,5 +326,5 @@ def test_api_delete(api_client, organization, division_code_api) -> None:
     """
 
     response = api_client.delete(f"/api/division_codes/{division_code_api.data['id']}/")
-    assert response.status_code == 200
+    assert response.status_code == 204
     assert response.data is None

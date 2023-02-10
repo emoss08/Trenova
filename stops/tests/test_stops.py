@@ -194,7 +194,7 @@ class TestStopAPI:
             reverse("stops-detail", kwargs={"pk": stop_api.data["id"]})
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 204
         assert not response.data
 
 

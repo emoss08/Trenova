@@ -209,7 +209,7 @@ class TestOrderDocumentationApi:
             f"/api/order_documents/{order_documentation_api.data['id']}/"
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 204
         assert response.data is None
 
         if os.path.exists("testfile.txt"):
