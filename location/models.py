@@ -302,7 +302,7 @@ class LocationContact(GenericModel):
         Returns:
             str: LocationContact absolute URL
         """
-        return reverse("location:locationcontact_detail", kwargs={"pk": self.pk})
+        return reverse("location-contacts-detail", kwargs={"pk": self.pk})
 
 
 class LocationComment(GenericModel):
@@ -375,4 +375,4 @@ class LocationComment(GenericModel):
         Returns:
             str: LocationComment absolute URL
         """
-        return reverse("location:locationcomment_detail", kwargs={"pk": self.pk})
+        return reverse("location-comments-detail", kwargs={"pk": self.pk})

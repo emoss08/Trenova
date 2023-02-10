@@ -105,3 +105,4 @@ class LocationSerializer(GenericSerializer):
 
         model = models.Location
         extra_fields = ("location_category", "location_contacts", "location_comments")
+
