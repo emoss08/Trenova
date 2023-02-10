@@ -36,7 +36,31 @@ from utils.models import ChoiceField, GenericModel
 
 class DispatchControl(GenericModel):
     """
-    Stores the dispatch control information for a related :model:`organization.Organization`.
+    Stores dispatch control information for a related :model:organization.Organization.
+
+    The DispatchControl model stores dispatch control information for a related organization. It is used to store information such as the record
+    service incident control, grace period, deadhead target, driver assign, trailer continuity, distance method, duplicate trailer check,
+    regulatory check, prevention of orders on hold, and the generation of routes.
+
+    Attributes:
+    id (UUIDField): Primary key and default value is a randomly generated UUID. Editable and unique.
+    organization (OneToOneField): ForeignKey to the related organization model with a CASCADE on delete. Has a verbose name of "Organization" and related
+    names of "dispatch_control" and "dispatch_controls".
+    record_service_incident (ChoiceField): ChoiceField that selects the record service incident control from the available choices
+    (Never, Pickup, Delivery, Pickup and Delivery, All except shipper). Default value is "Never".
+    grace_period (PositiveIntegerField): Positive integer field that stores the grace period for the service incident in minutes. Default value is 0.
+    deadhead_target (DecimalField): Decimal field that stores the deadhead target mileage for the company. Default value is 0.00.
+    driver_assign (BooleanField): Boolean field that enforces driver assign to orders for the company. Default value is True.
+    trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default value is False.
+    distance_method (ChoiceField): ChoiceField that selects the distance method from the available choices (Google, Monta). Default value is "Monta".
+    dupe_trailer_check (BooleanField): Boolean field that enforces the duplicate trailer check for the company. Default value is False.
+    regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default value is False.
+    prev_orders_on_hold (BooleanField): Boolean field that prevents dispatch of orders on hold for the company. Default value is False.
+    generate_routes (BooleanField): Boolean field that indicates whether routes should be generated for the company. Default value is False.
+
+    Methods:
+    get_absolute_url(self) -> str:
+        Returns the URL for this object's detail view.
     """
 
     @final
@@ -181,7 +205,26 @@ class DispatchControl(GenericModel):
 
 class DelayCode(GenericModel):
     """
-    Store Delay code information that can be used by :model:`ServiceIncident`.
+    A model to store delay codes for a service incident.
+
+    The DelayCode model stores codes and descriptions for a delay that occurs during a service incident. The fault of the delay
+    can be recorded as either the fault of the carrier or driver.
+
+    Attributes:
+        code (CharField): The primary key, unique, and four character code for the delay. Help text is "Delay code for the service incident."
+        description (CharField): A 100 character description for the delay code. Help text is "Description for the delay code."
+        f_carrier_or_driver (BooleanField): A boolean value indicating if the fault of the delay is the carrier or driver. Default value is False.
+        Help text is "Fault is carrier or driver."
+
+    Class Attributes:
+        Meta (class): A metaclass for the DelayCode model with verbose name "Delay Code" and verbose name plural "Delay Codes".
+        The ordering is based on the code attribute.
+
+    Methods:
+        str(self) -> str:
+            Returns the string representation of the DelayCode instance, which is the first 50 characters of the code attribute.
+        get_absolute_url(self) -> str:
+            Returns the URL for the DelayCode instance's detail view.
     """
 
     code = models.CharField(
@@ -230,7 +273,32 @@ class DelayCode(GenericModel):
 
 class FleetCode(GenericModel):
     """
-    Stores the Fleet Code information.
+    Model for storing fleet codes for service incidents.
+
+    A FleetCode instance represents a code used to identify a fleet of vehicles for service incidents.
+    This allows for tracking and reporting on specific fleets of vehicles, including their revenue goals,
+    deadhead goals, and mileage goals.
+
+    Attributes:
+        code (CharField): Fleet code for the service incident.
+            Has a max length of 4 characters, is the primary key and unique, with help text of "Fleet code for the service incident.".
+        description (CharField): Description for the fleet code.
+            Has a max length of 100 characters and help text of "Description for the fleet code.".
+        is_active (BooleanField): Whether the fleet code is active.
+            Has a default value of True and help text of "Is the fleet code active.".
+        revenue_goal (DecimalField): Revenue goal for the fleet code.
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Revenue goal for the fleet code.".
+        deadhead_goal (DecimalField): Deadhead goal for the fleet code.
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Deadhead goal for the fleet code.".
+        mileage_goal (DecimalField): Mileage goal for the fleet code.
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Mileage goal for the fleet code.".
+
+    Methods:
+        __str__(self) -> str:
+            Returns a string representation of the fleet code, wrapped to a maximum of 50 characters.
+
+        get_absolute_url(self) -> str:
+            Returns the URL for this object's detail view.
     """
 
     code = models.CharField(
@@ -282,25 +350,33 @@ class FleetCode(GenericModel):
         ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
-        """Fleet code string representation
-
-        Returns:
-            str: Fleet code string representation
-        """
         return textwrap.wrap(self.code, 50)[0]
 
     def get_absolute_url(self) -> str:
-        """Fleet code absolute URL
-
-        Returns:
-            str: Fleet code absolute URL
-        """
         return reverse("fleet-codes-detail", kwargs={"pk": self.pk})
 
 
 class CommentType(GenericModel):
     """
-    Stores the comment type information for a related :model:`organization.Organization`.
+    Model for storing different types of comments.
+
+    A CommentType instance represents a type of comment that can be associated with a comment.
+    This allows for categorization and grouping of comments based on their type.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID.
+            Editable and unique.
+        name (CharField): Name of the comment type.
+            Has a max length of 255 characters and help text of "Comment type name".
+        description (TextField): Description of the comment type.
+            Has a max length of 255 characters and help text of "Comment type description".
+
+    Methods:
+        __str__(self) -> str:
+            Returns a string representation of the comment type, wrapped to a maximum of 50 characters.
+
+        get_absolute_url(self) -> str:
+            Returns the URL for this object's detail view.
     """
 
     id = models.UUIDField(
@@ -322,26 +398,30 @@ class CommentType(GenericModel):
 
     class Meta:
         """
-        Metaclass for CommentType
+        Metaclass for the Rate model.
+
+        The Meta class defines some options for the Rate model.
         """
 
         verbose_name = _("Comment Type")
         verbose_name_plural = _("Comment Types")
-        ordering: list[str] = ["organization"]
+        ordering = ["organization"]
 
     def __str__(self) -> str:
-        """Comment type string representation
+        """
+        Return a string representation of the CommentType instance.
 
         Returns:
-            str: Comment type string representation
+            str: A string representation of the CommentType instance, wrapped to a maximum of 50 characters.
         """
         return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
-        """Comment type absolute url
+        """
+        Return the absolute URL for the CommentType instance's detail view.
 
         Returns:
-            str: Comment type absolute url
+            str: The absolute URL for the CommentType instance's detail view.
         """
         return reverse("comment-types-detail", kwargs={"pk": self.pk})
 
@@ -393,7 +473,7 @@ class Rate(LifecycleModelMixin, GenericModel):
     ...     equipment_type=equipment_type,
     ... )
     >>> rate
-    <Rate: 0000000001>
+    <Rate: R00001>
     """
 
     id = models.UUIDField(
@@ -459,7 +539,6 @@ class Rate(LifecycleModelMixin, GenericModel):
         Metaclass for the Rate model.
 
         The Meta class defines some options for the Rate model.
-
         """
 
         verbose_name = _("Rate")
@@ -494,6 +573,7 @@ class Rate(LifecycleModelMixin, GenericModel):
         Returns:
             None
         """
+
         self.rate_number = self.generate_rate_number()
 
     @staticmethod
@@ -501,11 +581,13 @@ class Rate(LifecycleModelMixin, GenericModel):
         """
         Generate a unique rate number for a Rate instance.
 
-        This method generates a unique rate number by finding the highest rate number and incrementing it by 1.
+        This method generates a unique rate number by finding the highest rate number and
+        incrementing it by 1.
 
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
+
         if rate_number := Rate.objects.aggregate(Max("rate_number"))[
             "rate_number__max"
         ]:
