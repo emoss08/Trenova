@@ -51,7 +51,10 @@ class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):
         """
 
         model = "equipment.EquipmentTypeDetail"
-        django_get_or_create = ("organization", "equipment_type",)
+        django_get_or_create = (
+            "organization",
+            "equipment_type",
+        )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
