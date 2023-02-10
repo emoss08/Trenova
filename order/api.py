@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions
 
 from order import models, serializers
@@ -128,6 +129,18 @@ class OrderViewSet(OrganizationMixin):
         "entered_by",
         "hazmat",
     )
+
+    def get_queryset(self) -> QuerySet[models.Order]:
+        """Get the queryset for the viewset.
+
+        The queryset is filtered by the organization of the user making the request.
+
+        Returns:
+            The filtered queryset.
+        """
+        return self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).prefetch_related(Prefetch("movements"))
 
 
 class OrderDocumentationViewSet(OrganizationMixin):

@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import factory
+from django.utils import timezone
 
 
 class DispatchControlFactory(factory.django.DjangoModelFactory):
@@ -89,3 +90,32 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
 
         model = "dispatch.CommentType"
         django_get_or_create = ("organization",)
+
+
+class RateFactory(factory.django.DjangoModelFactory):
+    """
+    Rate Factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    customer = factory.SubFactory("customer.factories.CustomerFactory")
+    effective_date = timezone.now().date()
+    expiration_date = timezone.now().date() + timezone.timedelta(days=365)
+    commodity = factory.SubFactory("commodities.factories.CommodityFactory")
+    order_type = factory.SubFactory("order.tests.factories.OrderTypeFactory")
+    equipment_type = factory.SubFactory(
+        "equipment.tests.factories.EquipmentTypeFactory"
+    )
+
+    class Meta:
+        """
+        Metaclass for RateFactory
+        """
+
+        model = "dispatch.Rate"
+        django_get_or_create = (
+            "organization",
+            "commodity",
+            "order_type",
+            "equipment_type",
+        )

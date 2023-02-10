@@ -90,18 +90,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
         """
 
         try:
-            token = (
-                self.model.objects.select_related("user", "user__organization")
-                .only(
-                    "user__id",
-                    "user__organization",
-                    "key",
-                    "expires",
-                    "id",
-                    "last_used",
-                )
-                .get(key=key)
-            )
+            token = self.model.objects.get(key=key)
         except self.model.DoesNotExist as e:
             raise exceptions.AuthenticationFailed("Invalid token.") from e
 

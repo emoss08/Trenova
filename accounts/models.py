@@ -19,9 +19,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import annotations
 
+import secrets
 import textwrap
 import uuid
-from hashlib import sha1
 from typing import Any
 
 from django.conf import settings
@@ -35,7 +35,6 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
@@ -312,6 +311,7 @@ class UserProfile(GenericModel):
         Raises:
             ValidationError: Validation error for the UserProfile Model
         """
+
         if self.title and self.title.is_active is False:
             raise ValidationError(
                 {
@@ -320,7 +320,6 @@ class UserProfile(GenericModel):
                     )
                 },
                 code="invalid",
-                params={"value": self.title},
             )
 
     def get_absolute_url(self) -> str:
@@ -501,7 +500,7 @@ class Token(models.Model):
         """
         Generates a new key for a token.
         """
-        return sha1(get_random_string(40).encode("utf-8")).hexdigest()
+        return secrets.token_hex(20)
 
     @property
     def is_expired(self) -> bool:

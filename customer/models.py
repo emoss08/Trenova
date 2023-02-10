@@ -465,18 +465,16 @@ class CustomerContact(GenericModel):
         Raises:
             ValidationError: If the customer contact is not valid.
         """
+        super().clean()
+
         if self.is_payable_contact and not self.email:
             raise ValidationError(
                 {
-                    "email": ValidationError(
-                        _(
-                            "Payable contact must have an email address. Please Try Again."
-                        ),
-                        code="invalid",
-                    )
+                    "email": _(
+                        "Payable contact must have an email address. Please Try Again."
+                    ),
                 }
             )
-        super().clean()
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer contact instance
@@ -653,18 +651,17 @@ class CustomerFuelProfile(GenericModel):
             ValidationError: If the Customer Fuel Profile is not valid.
 
         """
+        super().clean()
+
         if self.fsc_method == CustomerFuelProfile.TableChoices.TABLE:
             raise ValidationError(
-                ValidationError(
-                    {
-                        "customer_fuel_table": _(
-                            "Customer Fuel Table is required if the FSC Method is Table. Please try again."
-                        )
-                    },
-                    code="required",
-                )
+                {
+                    "customer_fuel_table": _(
+                        "Customer Fuel Table is required if the FSC Method is Table. Please try again."
+                    )
+                },
+                code="required",
             )
-        super().clean()
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer fuel profile instance

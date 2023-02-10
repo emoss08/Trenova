@@ -475,13 +475,11 @@ class Equipment(GenericModel):
         Raises:
             ValidationError: If the Equipment is leased and the leased date is not set
         """
+
+        errors = {}
         if self.leased and not self.leased_date:
-            raise ValidationError(
-                {
-                    "leased_date": _(
-                        "Leased date must be set if the equipment is leased. Please try again."
-                    )
-                }
+            errors["leased_date"] = _(
+                "Leased date must be set if the equipment is leased. Please try again."
             )
 
         if (
@@ -489,13 +487,12 @@ class Equipment(GenericModel):
             and self.secondary_worker
             and self.primary_worker == self.secondary_worker
         ):
-            raise ValidationError(
-                {
-                    "primary_worker": _(
-                        "Primary worker and secondary worker cannot be the same. Please try again."
-                    )
-                }
+            errors["primary_worker"] = _(
+                "Primary worker and secondary worker cannot be the same. Please try again."
             )
+
+        if errors:
+            raise ValidationError(errors)
 
     def get_absolute_url(self) -> str:
         """Equipment absolute URL
@@ -583,44 +580,33 @@ class EquipmentMaintenancePlan(GenericModel):
         Raises:
             ValidationError: Validation Errors for the EquipmentMaintenancePlan Model
         """
+        super().clean()
+
+        errors = {}
+
         if not self.by_distance and not self.by_time and not self.by_engine_hours:
-            raise ValidationError(
-                {
-                    "by_distance": _(
-                        "At least one of the fields must be checked: "
-                        "By Distance, By Time, By Engine Hours. Please try again."
-                    )
-                }
+            errors["by_distance"] = _(
+                "At least one of the fields must be checked: "
+                "By Distance, By Time, By Engine Hours. Please try again."
             )
 
         if self.by_distance and not self.miles:
-            raise ValidationError(
-                {
-                    "miles": _(
-                        "Miles must be set if the maintenance plan is by distance. Please try again."
-                    )
-                }
+            errors["miles"] = _(
+                "Miles must be set if the maintenance plan is by distance. Please try again."
             )
 
         if self.by_time and not self.months:
-            raise ValidationError(
-                {
-                    "months": _(
-                        "Months must be set if the maintenance plan is by time. Please try again."
-                    )
-                }
+            errors["months"] = _(
+                "Months must be set if the maintenance plan is by time. Please try again."
             )
 
         if self.by_engine_hours and not self.engine_hours:
-            raise ValidationError(
-                {
-                    "engine_hours": _(
-                        "Engine hours must be set if the maintenance plan is by engine hours. Please try again."
-                    )
-                }
+            errors["engine_hours"] = _(
+                "Engine hours must be set if the maintenance plan is by engine hours. Please try again."
             )
 
-        super().clean()
+        if errors:
+            raise ValidationError(errors)
 
     def get_absolute_url(self) -> str:
         """Equipment Maintenance Plan absolute URL
