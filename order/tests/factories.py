@@ -82,7 +82,6 @@ class OrderFactory(factory.django.DjangoModelFactory):
             "origin_location",
             "destination_location",
             "customer",
-            "equipment_type",
         )
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

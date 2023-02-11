@@ -161,3 +161,15 @@ class EmailLogSerializer(GenericSerializer):
         """
 
         model = models.EmailLog
+
+class TaxRateSerializer(GenericSerializer):
+    """
+    Tax Rate Serializer
+    """
+
+    class Meta:
+        """
+        Metaclass for Tax Rate
+        """
+
+        model = models.TaxRate

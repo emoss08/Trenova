@@ -72,7 +72,7 @@ class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
         Returns:
             str: String representation of the Equipment Type Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Type absolute URL
@@ -206,7 +206,7 @@ class EquipmentTypeDetail(GenericModel):
         Returns:
             str: String representation of the Equipment Type Detail Model
         """
-        return textwrap.wrap(self.equipment_type.id, 50)[0]
+        return textwrap.wrap(self.equipment_type.name, 50)[0]
 
     def update_details(self, **kwargs) -> None:
         """Updates the Equipment Type Detail Model
@@ -266,7 +266,7 @@ class EquipmentManufacturer(GenericModel):
         Returns:
             str: String representation of the Equipment Manufacturer Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Manufacturer absolute URL
@@ -477,7 +477,7 @@ class Equipment(GenericModel):
 
         verbose_name = _("Equipment")
         verbose_name_plural = _("Equipment")
-        ordering: list[str] = ["id"]
+        ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
         """Equipment string representation
@@ -485,7 +485,7 @@ class Equipment(GenericModel):
         Returns:
             str: String representation of the Equipment Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.code, 50)[0]
 
     def clean(self) -> None:
         """Equipment Model clean method

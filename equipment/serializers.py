@@ -107,7 +107,7 @@ class EquipmentTypeSerializer(GenericSerializer):
 
         detail_data = validated_data.pop("equipment_type_details", {})
 
-        instance.id = validated_data.get("id", instance.id)
+        instance.name = validated_data.get("name", instance.name)
         instance.description = validated_data.get("description", instance.description)
         instance.save()
 

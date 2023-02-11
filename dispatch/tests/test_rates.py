@@ -461,7 +461,7 @@ def test_rate_billing_table_api_post(api_client, organization, rate) -> None:
     data = {
         "organization": organization.id,
         "rate": rate.id,
-        "charge_code": charge_code.code,
+        "charge_code": charge_code.id,
         "description": "Test Rate Billing Table",
         "units": 1,
     }
@@ -472,7 +472,7 @@ def test_rate_billing_table_api_post(api_client, organization, rate) -> None:
     assert response.status_code == status.HTTP_201_CREATED
     assert models.RateBillingTable.objects.count() == 1
     assert billing_table.description == data["description"]
-    assert billing_table.charge_code.code == data["charge_code"]
+    assert billing_table.charge_code.id == data["charge_code"]
     assert billing_table.units == data["units"]
 
 
@@ -487,12 +487,13 @@ def test_rate_billing_table_api_update(
     data = {
         "organization": organization.id,
         "rate": rate.id,
-        "charge_code": charge_code.code,
+        "charge_code": charge_code.id,
         "description": "Test Rate Billing Table",
         "units": 1,
         "charge_amount": 100.00,
         "sub_total": 100.00,
     }
+
 
     response = api_client.put(
         reverse(

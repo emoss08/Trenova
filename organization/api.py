@@ -206,3 +206,12 @@ def health_check(request: Request) -> Response:
     }
 
     return Response(health_status)
+
+
+class TaxRateViewSet(OrganizationMixin):
+    """
+    TaxRate ViewSet to manage requests to the tax rate endpoint
+    """
+
+    serializer_class = serializers.TaxRateSerializer
+    queryset = models.TaxRate.objects.all()

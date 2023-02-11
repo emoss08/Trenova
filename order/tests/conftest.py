@@ -198,7 +198,7 @@ def additional_charge_api(api_client, user, organization, order, accessorial_cha
         {
             "organization": f"{organization.id}",
             "order": f"{order.id}",
-            "charge": f"{accessorial_charge.code}",
+            "charge": f"{accessorial_charge.id}",
             "charge_amount": 123.00,
             "unit": 2,
             "entered_by": f"{user.id}",

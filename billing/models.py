@@ -166,6 +166,12 @@ class BillingControl(GenericModel):
             "Define if customer billing requirements will be enforced when billing."
         ),
     )
+    invoice_number_prefix = models.CharField(
+        _("Invoice Number Prefix"),
+        max_length=10,
+        help_text=_("Define a prefix for invoice numbers."),
+        default="INV-"
+    )
 
     class Meta:
         """
