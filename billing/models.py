@@ -304,11 +304,16 @@ class AccessorialCharge(GenericModel):  # type: ignore
         ordering (List[str]): The default ordering for instances of the other charge model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     code = models.CharField(
         _("Code"),
         max_length=50,
         unique=True,
-        primary_key=True,
     )
     is_detention = models.BooleanField(
         _("Is Detention"),

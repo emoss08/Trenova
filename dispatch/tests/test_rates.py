@@ -356,24 +356,8 @@ def test_rate_table_get_absolute_url(rate_table) -> None:
     Test the rate table get_absolute_url method.
     """
 
-    assert rate_table.get_absolute_url() == f"/api/rate_tables/{rate_table.id}/"
-
-
-def test_rate_billing_table_before_save_hook() -> None:
-    """
-    Test the Rate billing Table BEFORE_SAVE hook properly set values
-    """
-
-    accessorial_charge = AccessorialChargeFactory()
-    rate_billing_table = RateBillingTableFactory(
-        charge_code=accessorial_charge,
-        charge_amount=0,
-    )
-
-    assert rate_billing_table.charge_amount == accessorial_charge.charge_amount
-    assert (
-        rate_billing_table.sub_total
-        == accessorial_charge.charge_amount * rate_billing_table.units
+    assert rate_table.get_absolute_url() == reverse(
+        "rate-tables-detail", kwargs={"pk": rate_table.id}
     )
 
 
@@ -535,3 +519,21 @@ def test_rate_billing_table_delete(api_client, rate_billing_table_api) -> None:
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert response.data is None
     assert models.RateBillingTable.objects.count() == 0
+
+
+def test_rate_billing_table_before_save_hook() -> None:
+    """
+    Test the Rate billing Table BEFORE_SAVE hook properly set values
+    """
+
+    accessorial_charge = AccessorialChargeFactory()
+    rate_billing_table = RateBillingTableFactory(
+        charge_code=accessorial_charge,
+        charge_amount=0,
+    )
+
+    assert rate_billing_table.charge_amount == accessorial_charge.charge_amount
+    assert (
+        rate_billing_table.sub_total
+        == accessorial_charge.charge_amount * rate_billing_table.units
+    )

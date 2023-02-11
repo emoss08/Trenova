@@ -39,11 +39,17 @@ class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
     create :model:`equipment.Equipment` objects.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment type"),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        unique=True,
+        help_text=_("Name of the equipment type"),
     )
     description = models.TextField(
         _("Description"),
@@ -227,11 +233,17 @@ class EquipmentManufacturer(GenericModel):
     create :model:`equipment.Equipment` objects.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment manufacturer."),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        unique=True,
+        help_text=_("Name of the equipment manufacturer."),
     )
     description = models.TextField(
         _("Description"),
@@ -283,11 +295,17 @@ class Equipment(GenericModel):
         BUNK = "bunk-heater", _("Bunk Heater")
         HYBRID = "hybrid", _("Hybrid")
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment."),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    code = models.CharField(
+        _("Code"),
+        max_length=50,
+        unique=True,
+        help_text=_("Code of the equipment."),
     )
     equipment_type = models.ForeignKey(
         EquipmentType,
@@ -509,11 +527,17 @@ class EquipmentMaintenancePlan(GenericModel):
     `equipment.EquipmentType` model.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment maintenance plan."),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        unique=True,
+        help_text=_("Name of the equipment maintenance plan."),
     )
     equipment_types = models.ManyToManyField(
         EquipmentType,
