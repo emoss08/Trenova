@@ -82,3 +82,52 @@ class DispatchControlViewSet(OrganizationMixin):
     serializer_class = serializers.DispatchControlSerializer
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "put", "patch", "head", "options"]
+
+
+class RateViewSet(OrganizationMixin):
+    """A viewset for viewing and editing Rate information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting Rates,
+    as well as listing and retrieving Rates. It uses the `RateSerializer`
+    class to convert the Rate instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by is active.
+    """
+
+    queryset = models.Rate.objects.all()
+    serializer_class = serializers.RateSerializer
+
+class RateTableViewSet(OrganizationMixin):
+    """
+    Django Rest Framework ViewSet for the RateTable model.
+
+    The RateTableViewSet class provides the CRUD operation for the RateTable model
+    through the Django Rest Framework. The class is a subclass of OrganizationMixin,
+    which provides the organization-related functionality.
+
+    Attributes:
+        queryset (models.RateTable.objects.all()): The default queryset for the viewset.
+        serializer_class (serializers.RateTableSerializer): The serializer class for the viewset.
+        filterset_fields (tuple): The fields to use for filtering the queryset.
+    """
+    queryset = models.RateTable.objects.all()
+    serializer_class = serializers.RateTableSerializer
+    filterset_fields = ("rate", "origin_location", "destination_location",)
+
+class RateBillingTableViewSet(OrganizationMixin):
+    """
+    Django Rest Framework ViewSet for the RateBillingTable model.
+
+    The RateBillingTableViewSet class provides the CRUD operation for the RateBillingTable model
+    through the Django Rest Framework. The class is a subclass of OrganizationMixin,
+    which provides the organization-related functionality.
+
+    Attributes:
+        queryset (models.RateBillingTable.objects.all()): The default queryset for the viewset.
+        serializer_class (serializers.RateBillingTableSerializer): The serializer class for the viewset.
+        filterset_fields (tuple): The fields to use for filtering the queryset.
+    """
+    queryset = models.RateBillingTable.objects.all()
+    serializer_class = serializers.RateBillingTableSerializer
+    filterset_fields = ("rate",)

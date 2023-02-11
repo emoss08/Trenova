@@ -19,7 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from rest_framework import serializers
 
+from billing.models import AccessorialCharge
+from commodities.models import Commodity
+from customer.models import Customer
 from dispatch import models
+from equipment.models import EquipmentType
+from location.models import Location
+from order.models import OrderType
 from utils.serializers import GenericSerializer
 
 
@@ -104,3 +110,101 @@ class DispatchControlSerializer(GenericSerializer):
         """
 
         model = models.DispatchControl
+
+
+class RateSerializer(GenericSerializer):
+    """Serializer class for the Rate model.
+
+    This class extends the `GenericSerializer` class and serializes the `Rate` model,
+    including fields for the related `Customer`, `Commodity`, `OrderType`, and `EquipmentType` models.
+
+    Attributes:
+        customer (serializers.PrimaryKeyRelatedField): The related `Customer` model, with a queryset of all `Customer` objects and
+        the option to allow `None` values.
+        commodity (serializers.PrimaryKeyRelatedField): The related `Commodity` model, with a queryset of all `Commodity` objects and
+        the option to allow `None` values.
+        order_type (serializers.PrimaryKeyRelatedField): The related `OrderType` model, with a queryset of all `OrderType` objects and
+        the option to allow `None` values.
+        equipment_type (serializers.PrimaryKeyRelatedField): The related `EquipmentType` model, with a queryset of all `EquipmentType`
+        objects and the option to allow `None` values.
+    """
+    customer = serializers.PrimaryKeyRelatedField(
+        queryset=Customer.objects.all(), required=False, allow_null=True
+    )
+    commodity = serializers.PrimaryKeyRelatedField(
+        queryset=Commodity.objects.all(), required=False, allow_null=True
+    )
+    order_type = serializers.PrimaryKeyRelatedField(
+        queryset=OrderType.objects.all(), required=False, allow_null=True
+    )
+    equipment_type = serializers.PrimaryKeyRelatedField(
+        queryset=EquipmentType.objects.all(), required=False, allow_null=True
+    )
+
+    class Meta:
+        """
+        A class representing the metadata for the `RateSerializer` class.
+        """
+        model = models.Rate
+        extra_fields = (
+            "customer",
+            "commodity",
+            "order_type",
+            "equipment_type",
+        )
+
+
+class RateTableSerializer(GenericSerializer):
+    """Serializer class for the RateTable model.
+
+    This class extends the `GenericSerializer` class and serializes the `RateTable` model,
+    including fields for the related `Rate` and `Location` models.
+
+    Attributes:
+        rate (serializers.PrimaryKeyRelatedField): The related `Rate` model, with a queryset of all `Rate` objects.
+        origin_location (serializers.PrimaryKeyRelatedField): The related `Location` model for the origin, with a
+        queryset of all `Location` objects and the option to allow `None` values.
+        destination_location (serializers.PrimaryKeyRelatedField): The related `Location` model for the destination,
+        with a queryset of all `Location` objects and the option to allow `None` values.
+    """
+    rate = serializers.PrimaryKeyRelatedField(queryset=models.Rate.objects.all())
+    origin_location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), required=False, allow_null=True
+    )
+    destination_location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(), required=False, allow_null=True
+    )
+
+    class Meta:
+        """
+        A class representing the metadata for the `RateTableSerializer` class.
+        """
+        model = models.RateTable
+        extra_fields = (
+            "rate",
+            "origin_location",
+            "destination_location",
+        )
+
+
+class RateBillingTableSerializer(GenericSerializer):
+    """Serializer class for the RateBillingTable model.
+
+    This class extends the `GenericSerializer` class and serializes the `RateBillingTable` model,
+    including fields for the related `Rate` and `AccessorialCharge` models.
+
+    Attributes:
+        rate (serializers.PrimaryKeyRelatedField): The related `Rate` model, with a queryset of all `Rate` objects.
+        charge_code (serializers.PrimaryKeyRelatedField): The related `AccessorialCharge` model, with a queryset of
+        all `AccessorialCharge` objects.
+    """
+    rate = serializers.PrimaryKeyRelatedField(queryset=models.Rate.objects.all())
+    charge_code = serializers.PrimaryKeyRelatedField(
+        queryset=AccessorialCharge.objects.all()
+    )
+
+    class Meta:
+        """
+        A class representing the metadata for the `RateBillingTableSerializer` class.
+        """
+        model = models.RateBillingTable

@@ -21,8 +21,13 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from django.utils import timezone
 
+from commodities.factories import CommodityFactory
+from customer.factories import CustomerFactory
 from dispatch import factories
+from equipment.tests.factories import EquipmentTypeFactory
+from order.tests.factories import OrderTypeFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -33,3 +38,43 @@ def rate() -> Generator[Any, Any, None]:
     Rate Fixture
     """
     yield factories.RateFactory()
+
+@pytest.fixture
+def rate_table() -> Generator[Any, Any, None]:
+    """
+    Rate Table Fixture
+    """
+    yield factories.RateTableFactory()
+
+@pytest.fixture
+def rate_billing_table() -> Generator[Any, Any, None]:
+    """
+    Rate Billing Table
+    """
+    yield factories.RateBillingTableFactory()
+
+@pytest.fixture
+def rate_api(api_client, organization) -> Generator[Any, Any, None]:
+    """
+    Rate API
+    """
+    customer = CustomerFactory()
+    commodity = CommodityFactory()
+    order_type = OrderTypeFactory()
+    equipment_type = EquipmentTypeFactory()
+
+    data = {
+        "organization": organization.id,
+        "customer": customer.id,
+        "effective_date": timezone.now().date(),
+        "expiration_date": timezone.now().date(),
+        "commodity": commodity.id,
+        "order_type": order_type.id,
+        "equipment_type": equipment_type.id,
+        "comments": "Test Rate",
+    }
+
+    yield api_client.post(
+        "/api/rates/",
+        data,
+    )

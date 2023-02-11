@@ -20,10 +20,18 @@ import datetime
 import uuid
 
 import pytest
+from django.urls import reverse
 from django.utils import timezone
 from pydantic import BaseModel
+from rest_framework import status
 
-from dispatch import factories
+from billing.tests.factories import AccessorialChargeFactory
+from commodities.factories import CommodityFactory
+from customer.factories import CustomerFactory
+from dispatch import factories, models, serializers
+from dispatch.factories import RateBillingTableFactory
+from equipment.tests.factories import EquipmentTypeFactory
+from order.tests.factories import OrderTypeFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -158,7 +166,7 @@ def test_rate_str_representation(rate) -> None:
     Test the rate string representation.
     """
 
-    assert str(rate) == "R00001"
+    assert str(rate) == rate.rate_number
 
 
 def test_list(rate) -> None:
@@ -166,6 +174,130 @@ def test_list(rate) -> None:
     Test the list method.
     """
     assert rate is not None
+
+
+def test_rate_create(organization) -> None:
+    customer = CustomerFactory()
+    commodity = CommodityFactory()
+    order_type = OrderTypeFactory()
+    equipment_type = EquipmentTypeFactory()
+
+    rate = models.Rate.objects.create(
+        organization=organization,
+        customer=customer,
+        effective_date=timezone.now().date(),
+        expiration_date=timezone.now().date(),
+        commodity=commodity,
+        order_type=order_type,
+        equipment_type=equipment_type,
+        comments="Test Rate",
+    )
+
+    assert rate is not None
+    assert rate.organization == organization
+    assert rate.rate_number == "R00001"
+    assert rate.customer == customer
+    assert rate.commodity == commodity
+    assert rate.order_type == order_type
+    assert rate.equipment_type == equipment_type
+    assert rate.comments == "Test Rate"
+
+
+def test_rate_update(rate) -> None:
+    """
+    Test the update method.
+    """
+    customer = CustomerFactory()
+    commodity = CommodityFactory()
+    order_type = OrderTypeFactory()
+    equipment_type = EquipmentTypeFactory()
+
+    rate.customer = customer
+    rate.commodity = commodity
+    rate.order_type = order_type
+    rate.equipment_type = equipment_type
+    rate.comments = "Test Rate Update"
+
+    rate.save()
+
+    assert rate is not None
+    assert rate.customer == customer
+    assert rate.commodity == commodity
+    assert rate.order_type == order_type
+    assert rate.equipment_type == equipment_type
+    assert rate.comments == "Test Rate Update"
+
+
+def test_rate_api_get(api_client, organization) -> None:
+    """
+    Test the get method.
+    """
+
+    response = api_client.get(reverse("rates-list"))
+    assert response.status_code == status.HTTP_200_OK
+
+def test_rate_api_create(api_client, organization) -> None:
+    """
+    Test the create method.
+    """
+    customer = CustomerFactory()
+    commodity = CommodityFactory()
+    order_type = OrderTypeFactory()
+    equipment_type = EquipmentTypeFactory()
+
+    data = {
+        "organization": organization.id,
+        "customer": customer.id,
+        "effective_date": timezone.now().date(),
+        "expiration_date": timezone.now().date(),
+        "commodity": commodity.id,
+        "order_type": order_type.id,
+        "equipment_type": equipment_type.id,
+        "comments": "Test Rate",
+    }
+
+    response = api_client.post(reverse("rates-list"), data=data)
+    assert response.status_code == status.HTTP_201_CREATED
+    assert models.Rate.objects.count() == 1
+    assert models.Rate.objects.get().customer.id == data["customer"]
+
+def test_rate_api_update(api_client, rate_api) -> None:
+    """
+    Test the update method.
+    """
+    customer = CustomerFactory()
+    commodity = CommodityFactory()
+    order_type = OrderTypeFactory()
+    equipment_type = EquipmentTypeFactory()
+
+    data = {
+        "customer": customer.id,
+        "commodity": commodity.id,
+        "order_type": order_type.id,
+        "equipment_type": equipment_type.id,
+        "comments": "Test Rate Update",
+    }
+
+    response = api_client.patch(
+        reverse("rates-detail", kwargs={"pk": rate_api.data["id"]}), data=data
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert models.Rate.objects.count() == 1
+    assert models.Rate.objects.get().customer.id == data["customer"]
+    assert models.Rate.objects.get().commodity.id == data["commodity"]
+    assert models.Rate.objects.get().order_type.id == data["order_type"]
+    assert models.Rate.objects.get().equipment_type.id == data["equipment_type"]
+    assert models.Rate.objects.get().comments == data["comments"]
+
+def test_rate_api_delete(api_client, rate_api) -> None:
+    """
+    Test the delete method.
+    """
+
+    response = api_client.delete(reverse("rates-detail", kwargs={"pk": rate_api.data["id"]}))
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.data is None
+    assert models.Rate.objects.count() == 0
 
 
 def test_set_rate_number_before_create_hook(rate) -> None:
@@ -186,3 +318,38 @@ def test_set_rate_number_increment_hook(rate) -> None:
     assert rate.rate_number == "R00001"
     assert rate2.rate_number is not None
     assert rate2.rate_number == "R00002"
+
+
+def test_rate_table_str_representation(rate_table) -> None:
+    """
+    Test the rate table string representation.
+    """
+
+    assert str(rate_table) == rate_table.description
+
+
+#
+# def test_rate_table_get_absolute_url(rate_table) -> None:
+#     """
+#     Test the rate table get_absolute_url method.
+#     """
+#
+#     assert rate_table.get_absolute_url() == f"/api/rate_tables/{rate_table.id}/"
+
+
+def test_rate_billing_table_before_save_hook() -> None:
+    """
+    Test the Rate billing Table BEFORE_SAVE hook properly set values
+    """
+
+    accessorial_charge = AccessorialChargeFactory()
+    rate_billing_table = RateBillingTableFactory(
+        charge_code=accessorial_charge,
+        charge_amount=0,
+    )
+
+    assert rate_billing_table.charge_amount == accessorial_charge.charge_amount
+    assert (
+        rate_billing_table.sub_total
+        == accessorial_charge.charge_amount * rate_billing_table.units
+    )

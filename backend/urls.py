@@ -183,6 +183,21 @@ router.register(
     dispatch_api.DispatchControlViewSet,
     basename="dispatch-control",
 )
+router.register(
+    r"rates",
+    dispatch_api.RateViewSet,
+    basename="rates"
+)
+router.register(
+    r"rate_tables",
+    dispatch_api.RateTableViewSet,
+    basename="rate-tables"
+)
+router.register(
+    r"rate_billing_tables",
+    dispatch_api.RateBillingTableViewSet,
+    basename="rate-billing-tables"
+)
 
 # Integration Routing
 router.register(
@@ -271,3 +286,4 @@ urlpatterns = [
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
+
