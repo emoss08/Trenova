@@ -43,6 +43,7 @@ def rate() -> Generator[Any, Any, None]:
     """
     yield factories.RateFactory()
 
+
 @pytest.fixture
 def rate_table() -> Generator[Any, Any, None]:
     """
@@ -50,12 +51,14 @@ def rate_table() -> Generator[Any, Any, None]:
     """
     yield factories.RateTableFactory()
 
+
 @pytest.fixture
 def rate_billing_table() -> Generator[Any, Any, None]:
     """
     Rate Billing Table
     """
     yield factories.RateBillingTableFactory()
+
 
 @pytest.fixture
 def rate_api(api_client, organization) -> Generator[Any, Any, None]:
@@ -83,6 +86,7 @@ def rate_api(api_client, organization) -> Generator[Any, Any, None]:
         data,
     )
 
+
 @pytest.fixture
 def rate_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
     """
@@ -105,6 +109,7 @@ def rate_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
         reverse("rate-tables-list"),
         data,
     )
+
 
 @pytest.fixture
 def rate_billing_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:

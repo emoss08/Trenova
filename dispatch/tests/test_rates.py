@@ -494,7 +494,6 @@ def test_rate_billing_table_api_update(
         "sub_total": 100.00,
     }
 
-
     response = api_client.put(
         reverse(
             "rate-billing-tables-detail",

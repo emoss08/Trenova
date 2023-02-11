@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 
 from django.contrib.auth.backends import ModelBackend
+
 from .models import User
 
 UserModel: type[User] = User

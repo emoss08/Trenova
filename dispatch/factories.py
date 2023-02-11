@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import factory
 from django.utils import timezone
-from dispatch import models
+
 from utils.models import RatingMethodChoices
 
 
@@ -121,10 +121,12 @@ class RateFactory(factory.django.DjangoModelFactory):
             "equipment_type",
         )
 
+
 class RateTableFactory(factory.django.DjangoModelFactory):
     """
     Rate Table Factory
     """
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     rate = factory.SubFactory(RateFactory)
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
@@ -146,16 +148,19 @@ class RateTableFactory(factory.django.DjangoModelFactory):
             "destination_location",
         )
 
+
 class RateBillingTableFactory(factory.django.DjangoModelFactory):
     """
     Rate Billing Table Factory
     """
+
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     rate = factory.SubFactory(RateFactory)
     charge_code = factory.SubFactory("billing.factories.AccessorialChargeFactory")
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
     units = 1
     charge_amount = 100.00
+
     class Meta:
         """
         Metaclass for RateBillingTableFactory

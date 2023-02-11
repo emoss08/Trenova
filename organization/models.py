@@ -691,6 +691,7 @@ class EmailLog(TimeStampedModel):
 
         return reverse("email-log-detail", kwargs={"pk": self.pk})
 
+
 class TaxRate(TimeStampedModel):
     """
     Stores the tax rate information for a related :model:`organization.Organization`

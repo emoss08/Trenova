@@ -88,7 +88,6 @@ def test_api_get_by_id(
         f"/api/additional_charges/{additional_charge_api.data['id']}/"
     )
 
-
     assert response.status_code == 200
     assert response.data is not None
     assert response.data["order"] == order.id

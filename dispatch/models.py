@@ -27,12 +27,7 @@ from django.db.models.aggregates import Max
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import (
-    BEFORE_CREATE,
-    LifecycleModelMixin,
-    hook,
-    BEFORE_SAVE,
-)
+from django_lifecycle import BEFORE_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from djmoney.models.fields import MoneyField
 
 from integration.models import IntegrationChoices

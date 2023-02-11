@@ -174,16 +174,14 @@ def test_division_code_clean_method_with_valid_data(division_code) -> None:
         pytest.fail("clean method raised ValidationError unexpectedly")
 
 
-def test_division_code_clean_method_with_invalid_cash_account(
-    division_code
-) -> None:
+def test_division_code_clean_method_with_invalid_cash_account(division_code) -> None:
     """
     Test Division Code Clean Method with invalid cash account
     """
 
     random_account = GeneralLedgerAccountFactory(
         account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
-        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
     )
 
     division_code.cash_account = random_account
@@ -195,15 +193,13 @@ def test_division_code_clean_method_with_invalid_cash_account(
     }
 
 
-def test_division_code_clean_method_with_invalid_expense_account(
-    division_code
-) -> None:
+def test_division_code_clean_method_with_invalid_expense_account(division_code) -> None:
     """
     Test Division Code Clean Method with invalid expense account
     """
     random_account = GeneralLedgerAccountFactory(
         account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
-        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
     )
     division_code.expense_account = random_account
 
@@ -247,7 +243,7 @@ def test_create(organization, expense_account, cash_account) -> None:
     """
     random_account = GeneralLedgerAccountFactory(
         account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
-        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
     )
 
     div_code = models.DivisionCode.objects.create(

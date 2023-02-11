@@ -91,7 +91,7 @@ def cash_account() -> Generator[Any, Any, None]:
     """
     yield GeneralLedgerAccountFactory(
         account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
-        account_classification=GeneralLedgerAccount.AccountClassificationChoices.CASH
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.CASH,
     )
 
 

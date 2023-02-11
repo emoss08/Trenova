@@ -183,20 +183,12 @@ router.register(
     dispatch_api.DispatchControlViewSet,
     basename="dispatch-control",
 )
-router.register(
-    r"rates",
-    dispatch_api.RateViewSet,
-    basename="rates"
-)
-router.register(
-    r"rate_tables",
-    dispatch_api.RateTableViewSet,
-    basename="rate-tables"
-)
+router.register(r"rates", dispatch_api.RateViewSet, basename="rates")
+router.register(r"rate_tables", dispatch_api.RateTableViewSet, basename="rate-tables")
 router.register(
     r"rate_billing_tables",
     dispatch_api.RateBillingTableViewSet,
-    basename="rate-billing-tables"
+    basename="rate-billing-tables",
 )
 
 # Integration Routing

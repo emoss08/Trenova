@@ -170,7 +170,7 @@ class BillingControl(GenericModel):
         _("Invoice Number Prefix"),
         max_length=10,
         help_text=_("Define a prefix for invoice numbers."),
-        default="INV-"
+        default="INV-",
     )
 
     class Meta:

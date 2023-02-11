@@ -26,6 +26,7 @@ from equipment.tests.factories import EquipmentTypeFactory
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture
 def equipment_type() -> Generator[Any, Any, None]:
     """

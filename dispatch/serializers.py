@@ -128,6 +128,7 @@ class RateSerializer(GenericSerializer):
         equipment_type (serializers.PrimaryKeyRelatedField): The related `EquipmentType` model, with a queryset of all `EquipmentType`
         objects and the option to allow `None` values.
     """
+
     customer = serializers.PrimaryKeyRelatedField(
         queryset=Customer.objects.all(), required=False, allow_null=True
     )
@@ -145,6 +146,7 @@ class RateSerializer(GenericSerializer):
         """
         A class representing the metadata for the `RateSerializer` class.
         """
+
         model = models.Rate
         extra_fields = (
             "customer",
@@ -167,6 +169,7 @@ class RateTableSerializer(GenericSerializer):
         destination_location (serializers.PrimaryKeyRelatedField): The related `Location` model for the destination,
         with a queryset of all `Location` objects and the option to allow `None` values.
     """
+
     rate = serializers.PrimaryKeyRelatedField(queryset=models.Rate.objects.all())
     origin_location = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.all(), required=False, allow_null=True
@@ -179,6 +182,7 @@ class RateTableSerializer(GenericSerializer):
         """
         A class representing the metadata for the `RateTableSerializer` class.
         """
+
         model = models.RateTable
         extra_fields = (
             "rate",
@@ -198,6 +202,7 @@ class RateBillingTableSerializer(GenericSerializer):
         charge_code (serializers.PrimaryKeyRelatedField): The related `AccessorialCharge` model, with a queryset of
         all `AccessorialCharge` objects.
     """
+
     rate = serializers.PrimaryKeyRelatedField(queryset=models.Rate.objects.all())
     charge_code = serializers.PrimaryKeyRelatedField(
         queryset=AccessorialCharge.objects.all()
@@ -207,4 +212,5 @@ class RateBillingTableSerializer(GenericSerializer):
         """
         A class representing the metadata for the `RateBillingTableSerializer` class.
         """
+
         model = models.RateBillingTable

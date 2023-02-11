@@ -67,7 +67,10 @@ def test_bill_orders(
     assert billing_history.customer == order.customer
     assert billing_history.commodity == order.commodity
     assert billing_history.bol_number == order.bol_number
-    assert billing_history.invoice_number == f"{user.organization.billing_control.invoice_number_prefix}00001"
+    assert (
+        billing_history.invoice_number
+        == f"{user.organization.billing_control.invoice_number_prefix}00001"
+    )
 
     order.refresh_from_db()
     assert order.billed is True
@@ -95,7 +98,10 @@ def test_invoice_number_generation(organization, customer, user, worker) -> None
         user=user,
     )
     assert invoice.invoice_number is not None
-    assert invoice.invoice_number == f"{user.organization.billing_control.invoice_number_prefix}00001"
+    assert (
+        invoice.invoice_number
+        == f"{user.organization.billing_control.invoice_number_prefix}00001"
+    )
 
 
 def test_invoice_number_increments(organization, customer, user, worker) -> None:
@@ -128,9 +134,15 @@ def test_invoice_number_increments(organization, customer, user, worker) -> None
     )
 
     assert invoice.invoice_number is not None
-    assert invoice.invoice_number == f"{user.organization.billing_control.invoice_number_prefix}00001"
+    assert (
+        invoice.invoice_number
+        == f"{user.organization.billing_control.invoice_number_prefix}00001"
+    )
     assert second_invoice.invoice_number is not None
-    assert second_invoice.invoice_number == f"{user.organization.billing_control.invoice_number_prefix}00002"
+    assert (
+        second_invoice.invoice_number
+        == f"{user.organization.billing_control.invoice_number_prefix}00002"
+    )
 
 
 def test_unbilled_order_in_billing_history(order) -> None:
@@ -350,7 +362,10 @@ def test_generate_invoice_number_before_save(order) -> None:
         organization=order.organization, order=order
     )
 
-    assert billing_queue.invoice_number == f"{order.organization.billing_control.invoice_number_prefix}00001"
+    assert (
+        billing_queue.invoice_number
+        == f"{order.organization.billing_control.invoice_number_prefix}00001"
+    )
 
 
 def test_save_order_details_to_billing_history_before_save(order) -> None:

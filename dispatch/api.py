@@ -98,6 +98,7 @@ class RateViewSet(OrganizationMixin):
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
 
+
 class RateTableViewSet(OrganizationMixin):
     """
     Django Rest Framework ViewSet for the RateTable model.
@@ -111,9 +112,15 @@ class RateTableViewSet(OrganizationMixin):
         serializer_class (serializers.RateTableSerializer): The serializer class for the viewset.
         filterset_fields (tuple): The fields to use for filtering the queryset.
     """
+
     queryset = models.RateTable.objects.all()
     serializer_class = serializers.RateTableSerializer
-    filterset_fields = ("rate", "origin_location", "destination_location",)
+    filterset_fields = (
+        "rate",
+        "origin_location",
+        "destination_location",
+    )
+
 
 class RateBillingTableViewSet(OrganizationMixin):
     """
@@ -128,6 +135,7 @@ class RateBillingTableViewSet(OrganizationMixin):
         serializer_class (serializers.RateBillingTableSerializer): The serializer class for the viewset.
         filterset_fields (tuple): The fields to use for filtering the queryset.
     """
+
     queryset = models.RateBillingTable.objects.all()
     serializer_class = serializers.RateBillingTableSerializer
     filterset_fields = ("rate",)

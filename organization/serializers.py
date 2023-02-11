@@ -162,6 +162,7 @@ class EmailLogSerializer(GenericSerializer):
 
         model = models.EmailLog
 
+
 class TaxRateSerializer(GenericSerializer):
     """
     Tax Rate Serializer
