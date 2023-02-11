@@ -29,7 +29,7 @@ from rest_framework import status
 from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
-from dispatch import factories, models, serializers
+from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
