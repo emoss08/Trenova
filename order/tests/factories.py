@@ -171,6 +171,6 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     charge = factory.SubFactory("billing.tests.factories.AccessorialChargeFactory")
-    charge_amount = FuzzyDecimal(low=10.00, high=100000.00, precision=2)
-    sub_total = FuzzyDecimal(low=10.00, high=100000.00, precision=2)
+    charge_amount = FuzzyDecimal(low=10.00, high=100000.00, precision=4)
+    sub_total = FuzzyDecimal(low=10.00, high=100000.00, precision=4)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
