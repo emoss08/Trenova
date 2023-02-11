@@ -295,7 +295,6 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Silk Configurations
 SILKY_PYTHON_PROFILER = True
-SILKY_PYTHON_PROFILER_BINARY = True
 
 # Django Audit Log Configurations
 AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("created", "modified")
