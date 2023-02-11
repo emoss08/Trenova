@@ -279,7 +279,7 @@ class ChargeType(GenericModel):
         return reverse("billing:charge_type_detail", kwargs={"pk": self.pk})
 
 
-class AccessorialCharge(GenericModel):
+class AccessorialCharge(GenericModel):  # type: ignore
     """Class for storing information about other charges.
 
     Attributes:

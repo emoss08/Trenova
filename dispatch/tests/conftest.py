@@ -21,13 +21,16 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from django.urls import reverse
 from django.utils import timezone
 
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories
 from equipment.tests.factories import EquipmentTypeFactory
+from location.factories import LocationFactory
 from order.tests.factories import OrderTypeFactory
+from utils.models import RatingMethodChoices
 
 pytestmark = pytest.mark.django_db
 
@@ -76,5 +79,28 @@ def rate_api(api_client, organization) -> Generator[Any, Any, None]:
 
     yield api_client.post(
         "/api/rates/",
+        data,
+    )
+
+@pytest.fixture
+def rate_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
+    """
+    Rate Table API
+    """
+    origin_location = LocationFactory()
+    destination_location = LocationFactory()
+
+    data = {
+        "organization": organization.id,
+        "rate": rate.id,
+        "description": "Test Rate Table",
+        "origin_location": origin_location.id,
+        "destination_location": destination_location.id,
+        "rate_method": RatingMethodChoices.FLAT,
+        "rate_amount": 100.00,
+    }
+
+    yield api_client.post(
+        reverse("rate-tables-list"),
         data,
     )

@@ -494,7 +494,7 @@ class CommentType(GenericModel):
         return reverse("comment-types-detail", kwargs={"pk": self.pk})
 
 
-class Rate(LifecycleModelMixin, GenericModel):
+class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Class: Rate
 
@@ -637,6 +637,22 @@ class Rate(LifecycleModelMixin, GenericModel):
             str: The absolute URL for the detail view of the Rate instance.
         """
         return reverse("rates-detail", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        """
+        Clean the Rate instance.
+
+        Returns:
+            None: None
+        """
+        if self.expiration_date < self.effective_date:
+            raise ValidationError(
+                {
+                    "expiration_date": _(
+                        "Expiration Date must be after Effective Date. Please correct and try again."
+                    )
+                }
+            )
 
     @hook(BEFORE_CREATE)
     def set_rate_number_before_create(self) -> None:
@@ -791,7 +807,7 @@ class RateTable(GenericModel):
         return reverse("rate-tables-detail", kwargs={"pk": self.pk})
 
 
-class RateBillingTable(LifecycleModelMixin, GenericModel):
+class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
     """
     Class: RateBillingTable
 

@@ -117,7 +117,6 @@ class RateFactory(factory.django.DjangoModelFactory):
         model = "dispatch.Rate"
         django_get_or_create = (
             "organization",
-            "commodity",
             "order_type",
             "equipment_type",
         )
