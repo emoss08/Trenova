@@ -14,8 +14,6 @@ server/server.iml
 scripts/startup.sh
 /design/
 */__pycache__
-templates
-static/
 frontend/node_modules/
 *.local
 logs
