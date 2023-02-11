@@ -314,12 +314,13 @@ class AccessorialCharge(GenericModel):
         _("Is Detention"),
         default=False,
     )
-    charge_amount = models.DecimalField(
-        _("Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
-        default=1.00,
-        help_text=_("Charge Amount"),
+    charge_amount = MoneyField(
+        _("Additional Charge Amount"),
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Additional Charge Amount"),
+        default_currency="USD",
     )
     method = ChoiceField(
         _("Method"),
