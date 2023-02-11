@@ -827,7 +827,7 @@ class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
         get_absolute_url: Return the absolute URL for the detail view of a RateBillingTable instance.
         __str__: Return the string representation of a RateBillingTable instance.
 
-    Typical Usage:
+    Examples:
         >>> rate_billing_table = RateBillingTable.objects.create(
         ...        rate=rate,
         ...        charge_code=charge_code,
@@ -837,7 +837,6 @@ class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
         ...    )
         >>> rate_billing_table
         <RateBillingTable: Rate Billing Table 1>
-
     """
 
     id = models.UUIDField(
