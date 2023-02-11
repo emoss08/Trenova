@@ -24,6 +24,7 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 
+from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories
@@ -102,5 +103,25 @@ def rate_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
 
     yield api_client.post(
         reverse("rate-tables-list"),
+        data,
+    )
+
+@pytest.fixture
+def rate_billing_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
+    """
+    Rate Billing Table API
+    """
+    charge_code = AccessorialChargeFactory()
+
+    data = {
+        "organization": organization.id,
+        "rate": rate.id,
+        "charge_code": charge_code.code,
+        "description": "Test Rate Billing Table",
+        "units": 1,
+    }
+
+    yield api_client.post(
+        reverse("rate-billing-tables-list"),
         data,
     )

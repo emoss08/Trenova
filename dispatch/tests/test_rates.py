@@ -433,9 +433,9 @@ def test_rate_table_api_put(api_client, rate_table_api, organization) -> None:
         "rate_amount": 100.00,
     }
 
-
     response = api_client.put(
-        reverse("rate-tables-detail", kwargs={"pk": rate_table_api.data["id"]}), data=data
+        reverse("rate-tables-detail", kwargs={"pk": rate_table_api.data["id"]}),
+        data=data,
     )
 
     assert response.status_code == status.HTTP_200_OK
@@ -447,6 +447,7 @@ def test_rate_table_api_put(api_client, rate_table_api, organization) -> None:
         == data["destination_location"]
     )
 
+
 def test_rate_table_api_delete(api_client, rate_table_api) -> None:
     """
     Test Rate Table API Delete Method.
@@ -457,3 +458,80 @@ def test_rate_table_api_delete(api_client, rate_table_api) -> None:
     assert response.status_code == status.HTTP_204_NO_CONTENT
     assert response.data is None
     assert models.RateTable.objects.count() == 0
+
+
+def test_rate_billing_table_api_get(api_client) -> None:
+    """
+    Test Rate Billing Table API GET method.
+    """
+    response = api_client.get(reverse("rate-billing-tables-list"))
+    assert response.status_code == status.HTTP_200_OK
+
+
+def test_rate_billing_table_api_post(api_client, organization, rate) -> None:
+    """
+    Test Rate Billing Table API POST method.
+    """
+    charge_code = AccessorialChargeFactory()
+
+    data = {
+        "organization": organization.id,
+        "rate": rate.id,
+        "charge_code": charge_code.code,
+        "description": "Test Rate Billing Table",
+        "units": 1,
+    }
+
+    response = api_client.post(reverse("rate-billing-tables-list"), data=data)
+
+    billing_table = models.RateBillingTable.objects.get(id=response.data["id"])
+    assert response.status_code == status.HTTP_201_CREATED
+    assert models.RateBillingTable.objects.count() == 1
+    assert billing_table.description == data["description"]
+    assert billing_table.charge_code.code == data["charge_code"]
+    assert billing_table.units == data["units"]
+
+
+def test_rate_billing_table_api_update(
+    api_client, organization, rate, rate_billing_table_api
+) -> None:
+    """
+    Test Rate Billing Table API PUT method.
+    """
+    charge_code = AccessorialChargeFactory()
+
+    data = {
+        "organization": organization.id,
+        "rate": rate.id,
+        "charge_code": charge_code.code,
+        "description": "Test Rate Billing Table",
+        "units": 1,
+        "charge_amount": 100.00,
+        "sub_total": 100.00,
+    }
+
+    response = api_client.put(
+        reverse(
+            "rate-billing-tables-detail",
+            kwargs={"pk": rate_billing_table_api.data["id"]},
+        ),
+        data=data,
+    )
+    assert response.status_code == status.HTTP_200_OK
+    assert models.RateBillingTable.objects.count() == 1
+
+
+def test_rate_billing_table_delete(api_client, rate_billing_table_api) -> None:
+    """
+    Test Rate Billing Table API DELETE method.
+    """
+    response = api_client.delete(
+        reverse(
+            "rate-billing-tables-detail",
+            kwargs={"pk": rate_billing_table_api.data["id"]},
+        )
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    assert response.data is None
+    assert models.RateBillingTable.objects.count() == 0
