@@ -105,7 +105,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -275,6 +275,7 @@ CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "celery"
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
+
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
@@ -294,8 +295,78 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Silk Configurations
 SILKY_PYTHON_PROFILER = True
-SILKY_PYTHON_PROFILER_BINARY = True
 
 # Django Audit Log Configurations
-AUDITLOG_INCLUDE_ALL_MODELS = True
 AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("created", "modified")
+AUDITLOG_INCLUDE_TRACKING_MODELS = (
+    "accounts.User",
+    "accounts.UserProfile",
+    "accounts.JobTitle",
+    "accounts.Token",
+    "accounting.GeneralLedgerAccount",
+    "accounting.RevenueCode",
+    "accounting.DivisionCode",
+    "billing.BillingControl",
+    "billing.ChargeType",
+    "billing.AccessorialCharge",
+    "billing.DocumentClassification",
+    "billing.BillingQueue",
+    "billing.BillingTransferLog",
+    "billing.BillingHistory",
+    "billing.BillingException",
+    "commodities.HazardousMaterial",
+    "commodities.Commodity",
+    "customer.Customer",
+    "customer.CustomerBillingProfile",
+    "customer.CustomerEmailProfile",
+    "customer.CustomerRuleProfile",
+    "customer.CustomerContact",
+    "customer.CustomerRuleProfile",
+    "customer.CustomerFuelProfile",
+    "customer.CustomerFuelTable",
+    "customer.CustomerFuelTableDetail",
+    "dispatch.DispatchControl",
+    "dispatch.DelayCode",
+    "dispatch.FleetCode",
+    "dispatch.CommentType",
+    "dispatch.Rate",
+    "dispatch.RateTable",
+    "dispatch.RateBillingTable",
+    "equipment.EquipmentType",
+    "equipment.EquipmentTypeDetail",
+    "equipment.EquipmentManufacturer",
+    "fuel.FuelVendor",
+    "fuel.FuelVendorFuelDetail",
+    "integration.IntegrationVendor",
+    "integration.Integration",
+    "integration.GoogleAPI",
+    "location.LocationCategory",
+    "location.Location",
+    "location.LocationContact",
+    "location.LocationComment",
+    "movement.Movement",
+    "order.OrderControl",
+    "order.OrderType",
+    "order.Order",
+    "order.OrderDocumentation",
+    "order.OrderComment",
+    "order.AdditionalCharge",
+    "order.ReasonCode",
+    "organization.Organization",
+    "organization.Depot",
+    "organization.DepotDetail",
+    "organization.Department",
+    "organization.EmailProfile",
+    "organization.EmailControl",
+    "organization.EmailLog",
+    "route.Route",
+    "route.RouteControl",
+    "stops.QualifierCode",
+    "stops.Stop",
+    "stops.StopComment",
+    "stops.ServiceIncident",
+    "worker.Worker",
+    "worker.WorkerProfile",
+    "worker.WorkerContact",
+    "worker.WorkerComment",
+)

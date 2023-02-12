@@ -20,6 +20,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 import factory
 from django.utils import timezone
 
+from utils.models import RatingMethodChoices
+
 
 class DispatchControlFactory(factory.django.DjangoModelFactory):
     """
@@ -115,7 +117,58 @@ class RateFactory(factory.django.DjangoModelFactory):
         model = "dispatch.Rate"
         django_get_or_create = (
             "organization",
-            "commodity",
             "order_type",
             "equipment_type",
+        )
+
+
+class RateTableFactory(factory.django.DjangoModelFactory):
+    """
+    Rate Table Factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    rate = factory.SubFactory(RateFactory)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    origin_location = factory.SubFactory("location.factories.LocationFactory")
+    destination_location = factory.SubFactory("location.factories.LocationFactory")
+    rate_method = RatingMethodChoices.FLAT
+    rate_amount = 100.00
+
+    class Meta:
+        """
+        Metaclass for RateTableFactory
+        """
+
+        model = "dispatch.RateTable"
+        django_get_or_create = (
+            "organization",
+            "rate",
+            "origin_location",
+            "destination_location",
+        )
+
+
+class RateBillingTableFactory(factory.django.DjangoModelFactory):
+    """
+    Rate Billing Table Factory
+    """
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    rate = factory.SubFactory(RateFactory)
+    charge_code = factory.SubFactory("billing.factories.AccessorialChargeFactory")
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
+    units = 1
+    charge_amount = 100.00
+
+    class Meta:
+        """
+        Metaclass for RateBillingTableFactory
+        """
+
+        model = "dispatch.RateBillingTable"
+        django_get_or_create = (
+            "organization",
+            "rate",
+            "charge_code",
         )

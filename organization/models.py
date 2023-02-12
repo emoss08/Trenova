@@ -501,9 +501,9 @@ class EmailProfile(TimeStampedModel):
         Choices that will be used for Email Protocol
         """
 
-        SMTP = "SMTP", _("SMTP")
+        TLS = "TLS", _("TLS")
+        SSL = "SSL", _("SSL")
         UNENCRYPTED = "UNENCRYPTED", _("Unencrypted SMTP")
-        STARTTLS = "STARTTLS", _("STARTTLS")
 
     id = models.UUIDField(
         primary_key=True,
@@ -690,3 +690,61 @@ class EmailLog(TimeStampedModel):
         """
 
         return reverse("email-log-detail", kwargs={"pk": self.pk})
+
+
+class TaxRate(TimeStampedModel):
+    """
+    Stores the tax rate information for a related :model:`organization.Organization`
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="tax_rates",
+        help_text=_("The organization that the tax rate belongs to."),
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=255,
+        help_text=_("The name of the tax rate."),
+    )
+    rate = models.DecimalField(
+        _("Rate"),
+        max_digits=5,
+        decimal_places=2,
+        help_text=_("The rate of the tax rate."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the TaxRate model
+        """
+
+        verbose_name = _("Tax Rate")
+        verbose_name_plural = _("Tax Rates")
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        """TaxRate string representation.
+
+        Returns:
+            str: String representation of the tax rate.
+        """
+
+        return textwrap.wrap(self.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """TaxRate absolute URL
+
+        Returns:
+            str: The absolute url for the tax rate.
+        """
+
+        return reverse("tax-rate-detail", kwargs={"pk": self.pk})

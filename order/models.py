@@ -384,6 +384,7 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
     )
     rate_method = ChoiceField(
         _("Rating Method"),
+        blank=True,
         choices=RatingMethodChoices.choices,
         default=RatingMethodChoices.FLAT,
         help_text=_("Rating Method"),
@@ -770,7 +771,7 @@ class OrderComment(GenericModel):
         return reverse("order-comment-detail", kwargs={"pk": self.pk})
 
 
-class AdditionalCharge(GenericModel):
+class AdditionalCharge(GenericModel):  # type: ignore
     """
     Stores Additional Charge related to a :model:`order.Order`.
     """
@@ -796,25 +797,28 @@ class AdditionalCharge(GenericModel):
         verbose_name=_("Charge"),
         help_text=_("Charge"),
     )
-    charge_amount = models.DecimalField(
+    charge_amount = MoneyField(
         _("Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
+        max_digits=19,
+        decimal_places=4,
+        default_currency="USD",
+        help_text=_("Charge Amount"),
         null=True,
         blank=True,
-        help_text=_("Charge Amount"),
     )
     unit = models.PositiveIntegerField(
         _("Unit"),
         default=1,
         help_text=_("Number of units to be charged"),
     )
-    sub_total = models.DecimalField(
-        _("Sub Total Amount"),
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        help_text=_("Sub Total Amount"),
+    sub_total = MoneyField(
+        _("Sub Total"),
+        max_digits=19,
+        decimal_places=4,
+        default_currency="USD",
+        help_text=_("Sub Total"),
+        null=True,
+        blank=True,
     )
     entered_by = models.ForeignKey(
         User,

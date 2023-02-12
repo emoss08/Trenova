@@ -18,20 +18,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.urls import reverse
 
-from equipment.tests.factories import EquipmentTypeFactory
-
-
-@pytest.fixture
-def equipment_type():
-    """
-    EquipmentType Fixture
-    """
-
-    return EquipmentTypeFactory()
+pytestmark = pytest.mark.django_db
 
 
-@pytest.mark.django_db
 def test_equipment_type_detail_hook(equipment_type) -> None:
     """
     Test equipment type detail is added from create_equipment_type_details_after_create Hook
@@ -39,7 +30,6 @@ def test_equipment_type_detail_hook(equipment_type) -> None:
     assert equipment_type.equipment_type_details is not None
 
 
-@pytest.mark.django_db
 def test_create_equipment_type(api_client):
     """
     Test create equipment type
@@ -47,17 +37,16 @@ def test_create_equipment_type(api_client):
 
     url = "/api/equipment_types/"
     data = {
-        "id": "test_equipment_type",
+        "name": "test_equipment_type",
         "description": "Test Equipment Type Description",
     }
 
     response = api_client.post(url, data, format="json")
     assert response.status_code == 201
-    assert response.data["id"] == "test_equipment_type"
+    assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Type Description"
 
 
-@pytest.mark.django_db
 def test_create_equip_type_with_detail(api_client):
     """
     Test create equipment type with detail
@@ -65,7 +54,7 @@ def test_create_equip_type_with_detail(api_client):
 
     url = "/api/equipment_types/"
     data = {
-        "id": "test_equipment_type",
+        "name": "test_equipment_type",
         "description": "Test Equipment Type Description",
         "equipment_type_details": {
             "equipment_class": "TRACTOR",
@@ -81,7 +70,7 @@ def test_create_equip_type_with_detail(api_client):
     }
     response = api_client.post(url, data, format="json")
     assert response.status_code == 201
-    assert response.data["id"] == "test_equipment_type"
+    assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Type Description"
     assert response.data["equipment_type_details"]["equipment_class"] == "TRACTOR"
     assert response.data["equipment_type_details"]["exempt_from_tolls"] is True
@@ -94,7 +83,6 @@ def test_create_equip_type_with_detail(api_client):
     assert response.data["equipment_type_details"]["idling_fuel_usage"] == "10.0000"
 
 
-@pytest.mark.django_db
 def test_detail_signal_fire(api_client):
     """
     Test detail signal fire
@@ -102,55 +90,43 @@ def test_detail_signal_fire(api_client):
 
     url = "/api/equipment_types/"
     data = {
-        "id": "test_equipment_type",
+        "name": "test_equipment_type",
         "description": "Test Equipment Type Description",
     }
     response = api_client.post(url, data, format="json")
     assert response.status_code == 201
-    assert response.data["id"] == "test_equipment_type"
+    assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Type Description"
     assert response.data["equipment_type_details"] is not None
 
 
-@pytest.mark.django_db
-def test_update_equipment_type(api_client):
+def test_update_equipment_type(api_client, equipment_type_api):
     """
     Test update equipment type
     """
 
-    url = "/api/equipment_types/"
-    post_data = {
-        "id": "test_equipment_type",
-        "description": "Test Equipment Type Description",
-    }
-    api_client.post(url, post_data, format="json")
-
     put_data = {
-        "id": "test_updated",
+        "name": "test_updated",
         "description": "Test Equipment Type Description Updated",
     }
     response = api_client.put(
-        "/api/equipment_types/test_equipment_type/", put_data, format="json"
+        reverse("equipment-types-detail", kwargs={"pk": equipment_type_api.data["id"]}),
+        put_data,
+        format="json",
     )
+
     assert response.status_code == 200
-    assert response.data["id"] == "test_updated"
+    assert response.data["name"] == "test_updated"
     assert response.data["description"] == "Test Equipment Type Description Updated"
 
 
-@pytest.mark.django_db
-def test_update_equipment_details(api_client):
+def test_update_equipment_details(api_client, equipment_type_api):
     """
     Test update equipment details
     """
-    url = "/api/equipment_types/"
-    post_data = {
-        "id": "test_equipment_type",
-        "description": "Test Equipment Type Description",
-    }
-    api_client.post(url, post_data, format="json")
 
     put_data = {
-        "id": "test_equipment_type",
+        "name": "test_equipment_type",
         "description": "Test Equipment Updated",
         "equipment_type_details": {
             "equipment_class": "TRAILER",
@@ -165,11 +141,13 @@ def test_update_equipment_details(api_client):
         },
     }
     response = api_client.put(
-        "/api/equipment_types/test_equipment_type/", put_data, format="json"
+        reverse("equipment-types-detail", kwargs={"pk": equipment_type_api.data["id"]}),
+        put_data,
+        format="json",
     )
 
     assert response.status_code == 200
-    assert response.data["id"] == "test_equipment_type"
+    assert response.data["name"] == "test_equipment_type"
     assert response.data["description"] == "Test Equipment Updated"
     assert response.data["equipment_type_details"]["equipment_class"] == "TRAILER"
     assert response.data["equipment_type_details"]["fixed_cost"] == "1.0000"

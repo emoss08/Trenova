@@ -42,7 +42,6 @@ class UserBackend(ModelBackend):
         Returns:
             User | None: Returns a user object if the user is authenticated.
         """
-
         try:
             user = (
                 UserModel._default_manager.only("id")
@@ -51,4 +50,5 @@ class UserBackend(ModelBackend):
             )
         except UserModel.DoesNotExist:
             return None
+
         return user if self.user_can_authenticate(user) else None

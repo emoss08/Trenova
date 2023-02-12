@@ -24,6 +24,8 @@ from django.core.exceptions import ValidationError
 from pydantic import BaseModel
 
 from accounting import models
+from accounting.models import GeneralLedgerAccount
+from accounting.tests.factories import GeneralLedgerAccountFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -172,13 +174,17 @@ def test_division_code_clean_method_with_valid_data(division_code) -> None:
         pytest.fail("clean method raised ValidationError unexpectedly")
 
 
-def test_division_code_clean_method_with_invalid_cash_account(
-    division_code, ap_account
-) -> None:
+def test_division_code_clean_method_with_invalid_cash_account(division_code) -> None:
     """
     Test Division Code Clean Method with invalid cash account
     """
-    division_code.cash_account = ap_account
+
+    random_account = GeneralLedgerAccountFactory(
+        account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
+    )
+
+    division_code.cash_account = random_account
     with pytest.raises(ValidationError) as excinfo:
         division_code.clean()
 
@@ -187,14 +193,15 @@ def test_division_code_clean_method_with_invalid_cash_account(
     }
 
 
-def test_division_code_clean_method_with_invalid_expense_account(
-    division_code, cash_account
-) -> None:
+def test_division_code_clean_method_with_invalid_expense_account(division_code) -> None:
     """
     Test Division Code Clean Method with invalid expense account
     """
-
-    division_code.expense_account = cash_account
+    random_account = GeneralLedgerAccountFactory(
+        account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
+    )
+    division_code.expense_account = random_account
 
     with pytest.raises(ValidationError) as excinfo:
         division_code.clean()
@@ -230,10 +237,14 @@ def test_list(division_code) -> None:
     assert division_code is not None
 
 
-def test_create(organization, ap_account, expense_account, cash_account) -> None:
+def test_create(organization, expense_account, cash_account) -> None:
     """
     Test Division Code Creation
     """
+    random_account = GeneralLedgerAccountFactory(
+        account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
+    )
 
     div_code = models.DivisionCode.objects.create(
         organization=organization,
@@ -241,7 +252,7 @@ def test_create(organization, ap_account, expense_account, cash_account) -> None
         code="NEW",
         description="Test Description",
         cash_account=cash_account,
-        ap_account=ap_account,
+        ap_account=random_account,
         expense_account=expense_account,
     )
 

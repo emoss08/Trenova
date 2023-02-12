@@ -52,6 +52,7 @@ class AccessorialChargeFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("word", locale="en_US")
+    charge_amount = 100.0
 
 
 class DocumentClassificationFactory(factory.django.DjangoModelFactory):

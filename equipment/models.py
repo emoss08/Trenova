@@ -39,11 +39,17 @@ class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
     create :model:`equipment.Equipment` objects.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment type"),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        unique=True,
+        help_text=_("Name of the equipment type"),
     )
     description = models.TextField(
         _("Description"),
@@ -66,7 +72,7 @@ class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
         Returns:
             str: String representation of the Equipment Type Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Type absolute URL
@@ -200,7 +206,7 @@ class EquipmentTypeDetail(GenericModel):
         Returns:
             str: String representation of the Equipment Type Detail Model
         """
-        return textwrap.wrap(self.equipment_type.id, 50)[0]
+        return textwrap.wrap(self.equipment_type.name, 50)[0]
 
     def update_details(self, **kwargs) -> None:
         """Updates the Equipment Type Detail Model
@@ -227,11 +233,17 @@ class EquipmentManufacturer(GenericModel):
     create :model:`equipment.Equipment` objects.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment manufacturer."),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        unique=True,
+        help_text=_("Name of the equipment manufacturer."),
     )
     description = models.TextField(
         _("Description"),
@@ -254,7 +266,7 @@ class EquipmentManufacturer(GenericModel):
         Returns:
             str: String representation of the Equipment Manufacturer Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Equipment Manufacturer absolute URL
@@ -283,11 +295,17 @@ class Equipment(GenericModel):
         BUNK = "bunk-heater", _("Bunk Heater")
         HYBRID = "hybrid", _("Hybrid")
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment."),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    code = models.CharField(
+        _("Code"),
+        max_length=50,
+        unique=True,
+        help_text=_("Code of the equipment."),
     )
     equipment_type = models.ForeignKey(
         EquipmentType,
@@ -459,7 +477,7 @@ class Equipment(GenericModel):
 
         verbose_name = _("Equipment")
         verbose_name_plural = _("Equipment")
-        ordering: list[str] = ["id"]
+        ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
         """Equipment string representation
@@ -467,7 +485,7 @@ class Equipment(GenericModel):
         Returns:
             str: String representation of the Equipment Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.code, 50)[0]
 
     def clean(self) -> None:
         """Equipment Model clean method
@@ -509,11 +527,17 @@ class EquipmentMaintenancePlan(GenericModel):
     `equipment.EquipmentType` model.
     """
 
-    id = models.CharField(
-        _("ID"),
-        max_length=50,
+    id = models.UUIDField(
         primary_key=True,
-        help_text=_("ID of the equipment maintenance plan."),
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        unique=True,
+        help_text=_("Name of the equipment maintenance plan."),
     )
     equipment_types = models.ManyToManyField(
         EquipmentType,
@@ -564,7 +588,7 @@ class EquipmentMaintenancePlan(GenericModel):
 
         verbose_name = _("Equipment Maintenance Plan")
         verbose_name_plural = _("Equipment Maintenance Plans")
-        ordering: list[str] = ["id"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Equipment Maintenance Plan string representation
@@ -572,7 +596,7 @@ class EquipmentMaintenancePlan(GenericModel):
         Returns:
             str: String representation of the EquipmentMaintenancePlan Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
         """Equipment Maintenance Plan clean method
