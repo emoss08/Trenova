@@ -90,17 +90,8 @@ def cash_account() -> Generator[Any, Any, None]:
     Cash Account from GL Account Factory
     """
     yield GeneralLedgerAccountFactory(
-        account_classification=GeneralLedgerAccount.AccountClassificationChoices.CASH
-    )
-
-
-@pytest.fixture
-def ap_account() -> Generator[Any, Any, None]:
-    """
-    AP Account from GL Account Factory
-    """
-    yield GeneralLedgerAccountFactory(
-        account_classification=GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        account_type=GeneralLedgerAccount.AccountTypeChoices.REVENUE,
+        account_classification=GeneralLedgerAccount.AccountClassificationChoices.CASH,
     )
 
 

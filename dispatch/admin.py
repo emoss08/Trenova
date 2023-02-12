@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.contrib import admin
 
 from dispatch import models
-from utils.admin import GenericAdmin
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
 @admin.register(models.DispatchControl)
@@ -76,6 +76,28 @@ class CommentTypeAdmin(GenericAdmin[models.CommentType]):
     search_fields = ("name",)
 
 
+class RateTableAdmin(GenericStackedInline[models.Rate, models.RateTable]):
+    """
+    Rate Table Admin
+    """
+
+    model: type[models.RateTable] = models.RateTable
+    extra = 0
+    exclude = ("organization",)
+    autocomplete_fields = ("origin_location", "destination_location")
+
+
+class RateBillingTableAdmin(GenericStackedInline[models.Rate, models.RateBillingTable]):
+    """
+    Rate Billing Table Admin
+    """
+
+    model: type[models.RateBillingTable] = models.RateBillingTable
+    extra = 0
+    exclude = ("organization",)
+    autocomplete_fields = ("charge_code",)
+
+
 @admin.register(models.Rate)
 class RateAdmin(GenericAdmin[models.Rate]):
     """
@@ -88,3 +110,7 @@ class RateAdmin(GenericAdmin[models.Rate]):
         "customer",
     )
     search_fields = ("rate_number",)
+    inlines = (
+        RateTableAdmin,
+        RateBillingTableAdmin,
+    )

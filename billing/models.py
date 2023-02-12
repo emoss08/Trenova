@@ -166,6 +166,12 @@ class BillingControl(GenericModel):
             "Define if customer billing requirements will be enforced when billing."
         ),
     )
+    invoice_number_prefix = models.CharField(
+        _("Invoice Number Prefix"),
+        max_length=10,
+        help_text=_("Define a prefix for invoice numbers."),
+        default="INV-",
+    )
 
     class Meta:
         """
@@ -279,7 +285,7 @@ class ChargeType(GenericModel):
         return reverse("billing:charge_type_detail", kwargs={"pk": self.pk})
 
 
-class AccessorialCharge(GenericModel):
+class AccessorialCharge(GenericModel):  # type: ignore
     """Class for storing information about other charges.
 
     Attributes:
@@ -304,22 +310,28 @@ class AccessorialCharge(GenericModel):
         ordering (List[str]): The default ordering for instances of the other charge model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     code = models.CharField(
         _("Code"),
         max_length=50,
         unique=True,
-        primary_key=True,
     )
     is_detention = models.BooleanField(
         _("Is Detention"),
         default=False,
     )
-    charge_amount = models.DecimalField(
-        _("Charge Amount"),
-        max_digits=10,
-        decimal_places=2,
-        default=1.00,
-        help_text=_("Charge Amount"),
+    charge_amount = MoneyField(
+        _("Additional Charge Amount"),
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Additional Charge Amount"),
+        default_currency="USD",
     )
     method = ChoiceField(
         _("Method"),

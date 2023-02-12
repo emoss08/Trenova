@@ -23,19 +23,60 @@ from typing import final
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.aggregates import Max
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook
+from django_lifecycle import BEFORE_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
+from djmoney.models.fields import MoneyField
 
 from integration.models import IntegrationChoices
 from organization.models import Organization
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, RatingMethodChoices
 
 
 class DispatchControl(GenericModel):
     """
-    Stores the dispatch control information for a related :model:`organization.Organization`.
+    Class: DispatchControl
+
+    Stores dispatch control information for a related :model:organization.Organization.
+
+    The DispatchControl model stores dispatch control information for a related organization. It is used to store information such as the record
+    service incident control, grace period, deadhead target, driver assign, trailer continuity, distance method, duplicate trailer check,
+    regulatory check, prevention of orders on hold, and the generation of routes.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID. Editable and unique.
+        organization (OneToOneField): ForeignKey to the related organization model with a CASCADE on delete. Has a verbose name of "Organization" and related
+        names of "dispatch_control" and "dispatch_controls".
+        record_service_incident (ChoiceField): ChoiceField that selects the record service incident control from the available choices
+        (Never, Pickup, Delivery, Pickup and Delivery, All except shipper). Default value is "Never".
+        grace_period (PositiveIntegerField): Positive integer field that stores the grace period for the service incident in minutes. Default value is 0.
+        deadhead_target (DecimalField): Decimal field that stores the deadhead target mileage for the company. Default value is 0.00.
+        driver_assign (BooleanField): Boolean field that enforces driver assign to orders for the company. Default value is True.
+        trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default value is False.
+        distance_method (ChoiceField): ChoiceField that selects the distance method from the available choices (Google, Monta). Default value is "Monta".
+        dupe_trailer_check (BooleanField): Boolean field that enforces the duplicate trailer check for the company. Default value is False.
+        regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default value is False.
+        prev_orders_on_hold (BooleanField): Boolean field that prevents dispatch of orders on hold for the company. Default value is False.
+        generate_routes (BooleanField): Boolean field that indicates whether routes should be generated for the company. Default value is False.
+
+    Methods:
+        meta: Meta class for the DispatchControl model.
+        __str__(self) -> str:
+            Returns the string representation of the DispatchControl model.
+        get_absolute_url(self) -> str:
+            Returns the URL for this object's detail view.
+
+    Examples:
+    >>> dispatch_control = DispatchControl.objects.update(
+        ...    record_service_incident=DispatchControl.ServiceIncidentControlChoices.NEVER,
+        ...    grace_period=0,
+        ...    deadhead_target=0.00,
+        ...    driver_assign=True,
+        ...    trailer_continuity=False,
+        ...    distance_method=DispatchControl.DistanceMethodChoices.MONTA,
+        ... )
     """
 
     @final
@@ -180,7 +221,36 @@ class DispatchControl(GenericModel):
 
 class DelayCode(GenericModel):
     """
-    Store Delay code information that can be used by :model:`ServiceIncident`.
+    Class: DelayCode
+
+    A model to store delay codes for a service incident.
+
+    The DelayCode model stores codes and descriptions for a delay that occurs during a service incident. The fault of the delay
+    can be recorded as either the fault of the carrier or driver.
+
+    Attributes:
+        code (CharField): The primary key, unique, and four character code for the delay. Help text is "Delay code for the service incident."
+        description (CharField): A 100-character description for the delay code. Help text is "Description for the delay code."
+        f_carrier_or_driver (BooleanField): A boolean value indicating if the fault of the delay is the carrier or driver. Default value is False.
+        Help text is "Fault is carrier or driver."
+
+    Class Attributes:
+        Meta (class): A metaclass for the DelayCode model with verbose name "Delay Code" and verbose name plural "Delay Codes".
+        The ordering is based on the code attribute.
+
+    Methods:
+        str(self) -> str:
+            Returns the string representation of the DelayCode instance, which is the first 50 characters of the code attribute.
+        get_absolute_url(self) -> str:
+            Returns the URL for the DelayCode instance's detail view.
+
+    References:
+        https://docs.djangoproject.com/en/4.2/ref/models/instances/#
+
+    Examples:
+        >>> delay_code = DelayCode.objects.get(code="0001")
+        >>> delay_code.code
+        "0001"
     """
 
     code = models.CharField(
@@ -229,7 +299,47 @@ class DelayCode(GenericModel):
 
 class FleetCode(GenericModel):
     """
-    Stores the Fleet Code information.
+    Class: FleetCode
+
+    Model for storing fleet codes for service incidents.
+
+    A FleetCode instance represents a code used to identify a fleet of vehicles for service incidents.
+    This allows for tracking and reporting on specific fleets of vehicles, including their revenue goals,
+    deadhead goals, and mileage goals.
+
+    Attributes:
+        code (CharField): Fleet code for the service incident.
+            Has a max length of 4 characters, is the primary key and unique, with help text of "Fleet code for the service incident.".
+        description (CharField): Description for the fleet code.
+            Has a max length of 100 characters and help text of "Description for the fleet code.".
+        is_active (BooleanField): Whether the fleet code is active.
+            Has a default value of True and help text of "Is the fleet code active.".
+        revenue_goal (DecimalField): Revenue goal for the fleet code.
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Revenue goal for the fleet code.".
+        deadhead_goal (DecimalField): Deadhead goal for the fleet code.
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Deadhead goal for the fleet code.".
+        mileage_goal (DecimalField): Mileage goal for the fleet code.
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Mileage goal for the fleet code.".
+
+    Methods:
+        __str__(self) -> str:
+            Returns a string representation of the fleet code, wrapped to a maximum of 50 characters.
+
+        get_absolute_url(self) -> str:
+            Returns the URL for this object's detail view.
+
+    Examples:
+        >>> fleet_code = FleetCode.objects.create(
+        ...     code="FLEET",
+        ...     description="Fleet Code",
+        ...     revenue_goal=1000.00,
+        ...     deadhead_goal=100.00,
+        ...     mileage_goal=1000.00,
+        ... )
+        >>> fleet_code.code
+        "FLEET"
+        >>> fleet_code.description
+        "Fleet Code"
     """
 
     code = models.CharField(
@@ -281,25 +391,55 @@ class FleetCode(GenericModel):
         ordering: list[str] = ["code"]
 
     def __str__(self) -> str:
-        """Fleet code string representation
+        """
+        Return a string representation of the FleetCode instance.
 
         Returns:
-            str: Fleet code string representation
+            str: A string representation of the FleetCode instance, wrapped to a maximum of 4 characters.
         """
-        return textwrap.wrap(self.code, 50)[0]
+        return textwrap.wrap(self.code, 4)[0]
 
     def get_absolute_url(self) -> str:
-        """Fleet code absolute URL
+        """
+        Return the absolute URL for the FleetCode instance's detail view.
 
         Returns:
-            str: Fleet code absolute URL
+            str: The absolute URL for the FleetCode instance's detail view.
         """
         return reverse("fleet-codes-detail", kwargs={"pk": self.pk})
 
 
 class CommentType(GenericModel):
     """
-    Stores the comment type information for a related :model:`organization.Organization`.
+    Class: CommentType
+
+    Model for storing different types of comments.
+
+    A CommentType instance represents a type of comment that can be associated with a comment.
+    This allows for categorization and grouping of comments based on their type.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID.
+            Editable and unique.
+        name (CharField): Name of the comment type.
+            Has a max length of 255 characters and help text of "Comment type name".
+        description (TextField): Description of the comment type.
+            Has a max length of 255 characters and help text of "Comment type description".
+
+    Methods:
+        __str__(self) -> str:
+            Returns a string representation of the comment type, wrapped to a maximum of 50 characters.
+
+        get_absolute_url(self) -> str:
+            Returns the URL for this object's detail view.
+
+    Typical Usage Example:
+        >>> comment_type = CommentType.objects.create(
+        ...     name="Test Comment Type",
+        ...     description="Test Comment Type Description",
+        ... )
+        >>> comment_type
+        <CommentType: Test Comment Type>
     """
 
     id = models.UUIDField(
@@ -321,36 +461,83 @@ class CommentType(GenericModel):
 
     class Meta:
         """
-        Metaclass for CommentType
+        Metaclass for the Rate model.
+
+        The Meta class defines some options for the Rate model.
         """
 
         verbose_name = _("Comment Type")
         verbose_name_plural = _("Comment Types")
-        ordering: list[str] = ["organization"]
+        ordering = ["organization"]
 
     def __str__(self) -> str:
-        """Comment type string representation
+        """
+        Return a string representation of the CommentType instance.
 
         Returns:
-            str: Comment type string representation
+            str: A string representation of the CommentType instance, wrapped to a maximum of 50 characters.
         """
         return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
-        """Comment type absolute url
+        """
+        Return the absolute URL for the CommentType instance's detail view.
 
         Returns:
-            str: Comment type absolute url
+            str: The absolute URL for the CommentType instance's detail view.
         """
         return reverse("comment-types-detail", kwargs={"pk": self.pk})
 
 
-class Rate(LifecycleModelMixin, GenericModel):
-    """Stores the Rate information for a related :model:`customer.Customer`.
+class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
+    """
+    Class: Rate
 
-    The rate model stores the rate information for a related Customer. It is used to
-    store information such as general billing information, lane specific billing information,
-    commodity specific billing information and more.
+    Django model representing a Rate. This model stores information about the rates for a related customer,
+    commodity, order type, and equipment type.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID. Not editable and unique.
+        rate_number (CharField): A unique identifier for the rate, with max length of 10 characters.
+        customer (ForeignKey): A foreign key to the customer model, with a related name of "rates".
+        effective_date (DateField): The date when the rate becomes effective.
+        expiration_date (DateField): The date when the rate expires.
+        commodity (ForeignKey): A foreign key to the commodity model, with a related name of "rates".
+        order_type (ForeignKey): A foreign key to the order type model, with a related name of "rates".
+        equipment_type (ForeignKey): A foreign key to the equipment type model, with a related name of "rates".
+        comments (TextField): Comments about the rate.
+
+    Methods:
+        str(self) -> str:
+            Returns the string representation of the Rate instance, which is the first 10 characters of the rate_number
+            field.
+
+        get_absolute_url(self) -> str:
+            Returns the absolute URL for the detail view of this Rate instance.
+
+        set_rate_number_before_create(self) -> None:
+            Sets the rate_number field with the result of the generate_rate_number method before the instance is created.
+
+        generate_rate_number() -> str:
+            Returns a new rate number that has not been used before, generated by incrementing the count of all previous
+            Rate instances.
+
+        Class Meta:
+            verbose_name (str): "Rate".
+            verbose_name_plural (str): "Rates".
+            ordering (list): Orders the Rate instances by the rate_number field.
+
+    Typical Usage:
+    >>> rate = Rate.objects.create(
+        ...     customer=customer,
+        ...     effective_date=timezone.now(),
+        ...     expiration_date=timezone.now() + timedelta(days=30),
+        ...     commodity=commodity,
+        ...     order_type=order_type,
+        ...     equipment_type=equipment_type,
+        ... )
+        >>> rate
+        <Rate: R00001>
     """
 
     id = models.UUIDField(
@@ -410,10 +597,18 @@ class Rate(LifecycleModelMixin, GenericModel):
         null=True,
         blank=True,
     )
+    comments = models.TextField(
+        _("Comments"),
+        max_length=255,
+        blank=True,
+        help_text=_("Comments for Rate"),
+    )
 
     class Meta:
         """
-        Metaclass for Rate
+        Metaclass for the Rate model.
+
+        The Meta class defines some options for the Rate model.
         """
 
         verbose_name = _("Rate")
@@ -421,42 +616,309 @@ class Rate(LifecycleModelMixin, GenericModel):
         ordering = ["rate_number"]
 
     def __str__(self) -> str:
-        """Rate string representation
+        """
+        Return the string representation of a Rate instance.
 
         Returns:
-            str: Rate string representation
+            str: The first 10 characters of the rate_number field.
         """
-        return textwrap.wrap(self.rate_number, 50)[0]
+        return textwrap.wrap(self.rate_number, 10)[0]
 
     def get_absolute_url(self) -> str:
-        """Rate absolute url
+        """
+        Return the absolute URL for the detail view of a Rate instance.
 
         Returns:
-            str: Rate absolute url
+            str: The absolute URL for the detail view of the Rate instance.
         """
         return reverse("rates-detail", kwargs={"pk": self.pk})
 
+    def clean(self) -> None:
+        """
+        Clean the Rate instance.
+
+        Returns:
+            None: None
+        """
+        if self.expiration_date < self.effective_date:
+            raise ValidationError(
+                {
+                    "expiration_date": _(
+                        "Expiration Date must be after Effective Date. Please correct and try again."
+                    )
+                }
+            )
+
     @hook(BEFORE_CREATE)
     def set_rate_number_before_create(self) -> None:
-        """Set rate number before create
+        """
+        Set the rate_number field of a Rate instance before it is created.
+
+        This method sets the rate_number field of the Rate instance to the result of the `generate_rate_number` method.
 
         Returns:
             None
         """
+
         self.rate_number = self.generate_rate_number()
 
     @staticmethod
     def generate_rate_number() -> str:
-        """Rate number generator
+        """
+        Generate a unique rate number for a Rate instance.
+
+        This method generates a unique rate number by finding the highest rate number and
+        incrementing it by 1.
 
         Returns:
-            str: Rate number
+            str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        count = Rate.objects.count() + 1
-        rate_number = f"R{count:05d}"
 
-        while Rate.objects.filter(rate_number=rate_number).exists():
-            count += 1
-            rate_number = f"R{count:05d}"
+        if rate_number := Rate.objects.aggregate(Max("rate_number"))[
+            "rate_number__max"
+        ]:
+            count = int(rate_number[1:]) + 1
+        else:
+            count = 1
 
-        return rate_number
+        return f"R{count:05d}"
+
+
+class RateTable(GenericModel):
+    """
+    Class: RateTable
+
+    The `RateTable` model represents a table that stores the rate details for a specific origin and destination location
+    and their respective rate method, rate amount and distance override.
+
+    Attributes:
+        id (UUIDField): A unique identifier for the rate table instance.
+        rate (ForeignKey): A foreign key to the `Rate` model, representing the rate for the rate table.
+        description (CharField): A description for the rate table.
+        origin_location (ForeignKey): A foreign key to the `Location` model, representing the origin location for the rate table.
+        destination_location (ForeignKey): A foreign key to the `Location` model, representing the destination location for the rate table.
+        rate_method (ChoiceField): The rate method for the rate table, chosen from the `RatingMethodChoices` choices.
+        rate_amount (PositiveIntegerField): The rate amount for the rate table.
+        distance_override (PositiveIntegerField): The distance override for the rate table.
+
+    Methods:
+        meta (Meta): The Meta class defines some options for the RateTable model.
+        __str__ (str): Return the string representation of a RateTable instance.
+        get_absolute_url (str): Return the absolute URL for the detail view of a RateTable instance.
+
+    Typical Usage:
+        >>> rate_table = RateTable.objects.create(
+        ...     rate=rate,
+        ...     description="Rate Table 1",
+        ...     origin_location=origin_location,
+        ...     destination_location=destination_location,
+        ...     rate_method=RatingMethodChoices.FLAT,
+        ...     rate_amount=100,
+        ...     distance_override=100,
+        ... )
+        >>> rate_table
+        <RateTable: Rate Table 1>
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    rate = models.ForeignKey(
+        Rate,
+        on_delete=models.PROTECT,
+        related_name="rate_tables",
+        verbose_name=_("Rate"),
+        help_text=_("Rate for Rate Table"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description for Rate Table"),
+        blank=True,
+    )
+    origin_location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.PROTECT,
+        related_name="origin_rate_tables",
+        verbose_name=_("Origin Location"),
+        help_text=_("Origin Location for Rate Table"),
+        blank=True,
+        null=True,
+    )
+    destination_location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.PROTECT,
+        related_name="destination_rate_tables",
+        verbose_name=_("Destination Location"),
+        help_text=_("Destination Location for Rate Table"),
+        blank=True,
+        null=True,
+    )
+    rate_method = ChoiceField(
+        _("Rate Method"),
+        choices=RatingMethodChoices.choices,
+        default=RatingMethodChoices.FLAT,
+        help_text=_("Rate Method for Rate Table"),
+    )
+    rate_amount = models.PositiveIntegerField(
+        _("Rate"),
+        help_text=_("Rate for Rate Table"),
+    )
+    distance_override = models.PositiveIntegerField(
+        _("Distance Override"),
+        help_text=_("Distance Override for Rate Table"),
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the RateTable model.
+        """
+
+        verbose_name = _("Rate Table")
+        verbose_name_plural = _("Rate Tables")
+        ordering = ["rate", "origin_location", "destination_location"]
+
+    def __str__(self) -> str:
+        """
+        Return the string representation of a RateTable instance.
+
+        Returns:
+            str: The description field of the RateTable instance.
+        """
+        return self.description
+
+    def get_absolute_url(self) -> str:
+        """
+        Return the absolute URL for the detail view of a RateTable instance.
+
+        Returns:
+            str: The absolute URL for the detail view of the RateTable instance.
+        """
+        return reverse("rate-tables-detail", kwargs={"pk": self.pk})
+
+
+class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
+    """
+    Class: RateBillingTable
+
+    Django model representing a RateBillingTable. This model stores Billing Table information for a related :model:`rates.Rate`.
+
+    Attributes:
+        id (UUIDField): The primary key for the rate billing table instance.
+        rate (ForeignKey): The rate associated with the rate billing table instance.
+        charge_code (ForeignKey): The charge code associated with the rate billing table instance.
+        description (CharField): The description for the rate billing table instance.
+        units (PositiveIntegerField): The number of units for the rate billing table instance.
+        charge_amount (MoneyField): The charge amount for the rate billing table instance.
+        sub_total (MoneyField): The sub_total for the rate billing table instance.
+
+    Methods:
+        meta: Return the meta options for the RateBillingTable model.
+        get_absolute_url: Return the absolute URL for the detail view of a RateBillingTable instance.
+        __str__: Return the string representation of a RateBillingTable instance.
+
+    Examples:
+        >>> rate_billing_table = RateBillingTable.objects.create(
+        ...        rate=rate,
+        ...        charge_code=charge_code,
+        ...        description="Rate Billing Table 1",
+        ...        units=100,
+        ...        charge_amount=100,
+        ...    )
+        >>> rate_billing_table
+        <RateBillingTable: Rate Billing Table 1>
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    rate = models.ForeignKey(
+        Rate,
+        on_delete=models.PROTECT,
+        related_name="rate_billing_tables",
+        verbose_name=_("Rate"),
+        help_text=_("Rate for Rate Billing Table"),
+    )
+    charge_code = models.ForeignKey(
+        "billing.AccessorialCharge",
+        on_delete=models.PROTECT,
+        related_name="rate_billing_tables",
+        verbose_name=_("Charge Code"),
+        help_text=_("Charge Code for Rate Billing Table"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description for Rate Billing Table"),
+        blank=True,
+    )
+    units = models.PositiveIntegerField(
+        _("Units"),
+        help_text=_("Units for Rate Billing Table"),
+    )
+    charge_amount = MoneyField(
+        _("Charge Amount"),
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        default_currency="USD",
+        help_text=_("Charge Amount for Rate Billing Table"),
+    )
+    sub_total = MoneyField(
+        _("Total"),
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        default_currency="USD",
+        help_text=_("Total for Rate Billing Table"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the RateBillingTable model.
+        """
+
+        verbose_name = _("Rate Billing Table")
+        verbose_name_plural = _("Rate Billing Tables")
+        ordering = ["rate", "charge_code"]
+
+    def __str__(self) -> str:
+        """
+        Return the string representation of a RateBillingTable instance.
+
+        The string representation of a RateBillingTable instance is the value of its description field.
+
+        Returns:
+            str: The description field of the RateBillingTable instance.
+        """
+        return self.description
+
+    @hook(BEFORE_SAVE)
+    def before_save(self) -> None:
+        """
+        Set the charge amount for the rate billing table instance.
+
+        Returns:
+            None: None
+        """
+        if not self.charge_amount:
+            self.charge_amount = self.charge_code.charge_amount
+
+        self.sub_total = self.charge_amount * self.units
+
+    def get_absolute_url(self) -> str:
+        """
+        Return the absolute URL for the detail view of a RateBillingTable instance.
+
+        Returns:
+            str: The absolute URL for the detail view of the RateBillingTable instance.
+        """
+        return reverse("rate-billing-tables-detail", kwargs={"pk": self.pk})
