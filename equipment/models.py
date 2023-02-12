@@ -588,7 +588,7 @@ class EquipmentMaintenancePlan(GenericModel):
 
         verbose_name = _("Equipment Maintenance Plan")
         verbose_name_plural = _("Equipment Maintenance Plans")
-        ordering: list[str] = ["id"]
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """Equipment Maintenance Plan string representation
@@ -596,7 +596,7 @@ class EquipmentMaintenancePlan(GenericModel):
         Returns:
             str: String representation of the EquipmentMaintenancePlan Model
         """
-        return textwrap.wrap(self.id, 50)[0]
+        return textwrap.wrap(self.name, 50)[0]
 
     def clean(self) -> None:
         """Equipment Maintenance Plan clean method
