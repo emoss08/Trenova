@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "auditlog",
     "djmoney",
+    "notifications",
     # Monta Apps
     "backend",
     "core",
@@ -85,6 +86,7 @@ INSTALLED_APPS = [
     "movements",
     "commodities",
     "fuel",
+    "invoicing",
 ]
 
 # Middleware configurations
@@ -370,3 +372,4 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "worker.WorkerContact",
     "worker.WorkerComment",
 )
+

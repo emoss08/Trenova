@@ -27,7 +27,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from rest_framework_nested import routers
-
+import notifications.urls
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
@@ -43,7 +43,7 @@ from organization import api as org_api
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
-
+from invoicing import api as invoicing_api
 router = routers.DefaultRouter()
 
 # Accounts Routing
@@ -242,6 +242,9 @@ router.register(
 # Movement Routing
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")
 
+# Invoicing Routing
+router.register(r"invoice_control", invoicing_api.InvoiceControlViewSet, basename="invoice_control")
+
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("admin/doc/", include("django.contrib.admindocs.urls")),
@@ -273,6 +276,8 @@ urlpatterns = [
         name="change-password",
     ),
     path("api/system_health/", org_api.health_check, name="system-health"),
+    path("api/bill_order", billing_api.bill_order_view, name="bill-order"),
+    path("api/mass_bill_orders", billing_api.mass_order_bill, name="bill-order"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

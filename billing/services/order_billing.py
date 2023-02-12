@@ -23,12 +23,12 @@ from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
-from silk.profiling.profiler import silk_profile
-
+from notifications.signals import notify
 from accounts.models import User
 from billing import models
 from billing.selectors import get_billable_orders
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
+from movements.models import Movement
 from order.models import Order
 
 
@@ -51,8 +51,9 @@ class BillingService:
     Class to handle billing to customers
     """
 
-    def __init__(self, *, request: AuthenticatedHTTPRequest):
-        self.request = request
+    def __init__(self, *, task_id: str, user_id: str):
+        self.user = User.objects.get(pk=user_id)
+        self.task_id = task_id
         self.order_document_ids: list[str] = []
         self.customer_billing_requirements: list[str] = []
         self.billing_queue: Iterable[models.BillingQueue] = []
@@ -71,7 +72,7 @@ class BillingService:
             None: None
         """
         models.BillingException.objects.create(
-            organization=self.request.user.organization,
+            organization=self.user.organization,
             exception_type=exception_type,
             order=order,
             exception_message=exception_message,
@@ -85,9 +86,7 @@ class BillingService:
         Returns:
             bool: True if billing control is set to True, False otherwise
         """
-        return bool(
-            self.request.user.organization.billing_control.enforce_customer_billing
-        )
+        return bool(self.user.organization.billing_control.enforce_customer_billing)
 
     def set_billing_requirements(self, *, customer: Customer, order: Order) -> None:
         """Set the billing requirements for the customer
@@ -113,7 +112,6 @@ class BillingService:
                 order=order,
                 exception_message=f"Customer: {customer.name} does not have a billing profile",
             )
-        return
 
     def set_order_document_ids(self, *, order: Order) -> None:
         """Set the order document ids for the order
@@ -138,8 +136,17 @@ class BillingService:
             QuerySet: The billing queue queryset
         """
         self.billing_queue = models.BillingQueue.objects.filter(
-            organization=self.request.user.organization
+            organization=self.user.organization
         )
+        if not self.billing_queue:
+            notify.send(
+                self.user,
+                organization=self.user.organization,
+                recipient=self.user,
+                level="info",
+                verb="Order Billing Exception",
+                description=f"No Orders in the billing queue for task: {self.task_id}",
+            )
         return self.billing_queue
 
     def check_billing_requirements(self, *, order: Order) -> bool:
@@ -201,7 +208,8 @@ class BillingService:
             BillingException: If there is an error creating the billing history.
 
         """
-        order_movement = order.movements.first()
+
+        order_movement = Movement.objects.filter(order=order).first()
         worker = order_movement.primary_worker if order_movement else None
 
         try:
@@ -212,7 +220,7 @@ class BillingService:
                 order_type=order.order_type,
                 customer=order.customer,
                 bol_number=order.bol_number,
-                user=self.request.user,
+                user=self.user,
             )
         except BillingException as e:
             self.create_billing_exception(
@@ -236,22 +244,19 @@ class BillingService:
         """
         customer_contact = CustomerContact.objects.filter(
             customer=order.customer,
-            organization=self.request.user.organization,
+            organization=self.user.organization,
             is_payable_contact=True,
         ).first()
-        billing_profile = (
-            self.request.user.organization.email_control.billing_email_profile
-        )
+        billing_profile = self.user.organization.email_control.billing_email_profile
 
         send_mail(
-            f"New invoice from {self.request.user.organization.name}",
+            f"New invoice from {self.user.organization.name}",
             f"Please see attached invoice for invoice: {order.pro_number}",
-            f"{billing_profile.email if billing_profile else self.request.user.email}",
-            [customer_contact.email if customer_contact else self.request.user.email],
+            f"{billing_profile.email if billing_profile else self.user.email}",
+            [customer_contact.email if customer_contact else self.user.email],
             fail_silently=False,
         )
 
-    @silk_profile(name="Bill Orders")  # type: ignore
     def bill_orders(self) -> None:
         """Bill a list of orders to their respective customers
 
@@ -276,16 +281,31 @@ class BillingService:
                 self.set_order_document_ids(order=invoice.order)
                 if self.check_billing_requirements(order=invoice.order):
                     with transaction.atomic():
-                        self.set_order_billed(order=invoice.order)
-                        self.create_billing_history(order=invoice.order)
-                        self.delete_billing_queue(billing_queue=invoice)
+                        self.order_billing_actions(invoice)
                     self.send_billing_email(order=invoice.order)
             else:
                 with transaction.atomic():
-                    self.set_order_billed(order=invoice.order)
-                    self.create_billing_history(order=invoice.order)
-                    self.delete_billing_queue(billing_queue=invoice)
+                    self.order_billing_actions(invoice)
                 self.send_billing_email(order=invoice.order)
+
+    def order_billing_actions(self, invoice):
+        """Perform billing actions for a single order.
+
+        This function performs the billing actions for a single order, including
+        setting the order as billed, creating a billing history, and deleting
+        the invoice from the billing queue.
+
+        Args:
+            invoice (models.BillingQueue): The invoice to perform the billing actions for.
+
+        Returns:
+            None: None
+        """
+        print("actions fired", invoice.order.pro_number)
+
+        self.set_order_billed(order=invoice.order)
+        self.create_billing_history(order=invoice.order)
+        self.delete_billing_queue(billing_queue=invoice)
 
     def bill_order(self, *, order: Order) -> None:
         """Bill a single order by performing multiple operations.
@@ -319,7 +339,6 @@ class BillingService:
         else:
             self.set_order_billed(order=order)
 
-    @silk_profile(name="Transfer To Billing Queue")  # type: ignore
     def transfer_to_billing_queue(self) -> None:
         """
         Transfer billable orders to the billing queue for the current organization.
@@ -333,11 +352,17 @@ class BillingService:
         """
 
         billable_orders: Iterator[Order] | None = get_billable_orders(
-            organization=self.request.user.organization
+            organization=self.user.organization
         )
 
         if not billable_orders:
-            # TODO: Decide if we want to log this, or give this information to the user.
+            notify.send(
+                self.user,
+                recipient=self.user,
+                level="info",
+                verb="Billing Transfer Exception",
+                description="No Billable Orders were found for the current organization.",
+            )
             return
 
         order_ids = [order.id for order in billable_orders]
@@ -350,15 +375,15 @@ class BillingService:
         try:
             for order in order_ids:
                 models.BillingQueue.objects.create(
-                    organization=self.request.user.organization, order_id=order
+                    organization=self.user.organization, order_id=order
                 )
 
             bill_transfer_logs = [
                 models.BillingTransferLog(
-                    organization=self.request.user.organization,
+                    organization=self.user.organization,
                     order_id=order_id,
                     transferred_at=now,
-                    transferred_by=self.request.user,
+                    transferred_by=self.user,
                 )
                 for order_id in order_ids
             ]
