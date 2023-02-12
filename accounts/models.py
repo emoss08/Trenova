@@ -38,7 +38,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
-
+from notifications.base.models import AbstractNotification
 from utils.models import GenericModel
 from utils.validators import ImageSizeValidator
 
