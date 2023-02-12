@@ -24,7 +24,6 @@ from django.core.management import call_command
 from django.utils import timezone
 from kombu.exceptions import OperationalError
 
-
 def get_cutoff_date() -> datetime.datetime:
     """Get the cutoff date for deleting audit log records.
 
