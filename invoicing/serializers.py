@@ -17,20 +17,25 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.contrib import admin
-from utils.admin import GenericAdmin
-
+from utils.serializers import GenericSerializer
 from invoicing import models
 
+class InvoiceControlSerializer(GenericSerializer):
+    """A serializer for the `InvoiceControl` model.
 
-@admin.register(models.InvoiceControl)
-class BillingControlAdmin(GenericAdmin[models.InvoiceControl]):
+    A serializer class for the InvoiceControl model. This serializer is used
+    to convert InvoiceControl model instances into a Python dictionary format
+    that can be rendered into a JSON response. It also defined the fields that
+    should be included in the serialized representation of the model
     """
-    Billing Control Admin
-    """
 
-    autocomplete = False
+    class Meta:
+        """
+        Metaclass for the InvoiceControlSerializer
 
-    model: type[models.InvoiceControl] = models.InvoiceControl
-    list_display = ("organization", "invoice_number_prefix")
+        Attributes:
+            model (InvoiceControl): The model that the serializer is for.
+        """
+
+        model = models.InvoiceControl
 
