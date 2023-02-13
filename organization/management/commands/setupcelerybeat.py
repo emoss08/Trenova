@@ -61,4 +61,6 @@ class Command(BaseCommand):
         IntervalSchedule.objects.bulk_create(hour_objs)
         IntervalSchedule.objects.bulk_create(day_objs)
 
-        self.stdout.write(self.style.SUCCESS("Celery beat configurations created successfully."))
+        self.stdout.write(
+            self.style.SUCCESS("Celery beat configurations created successfully.")
+        )

@@ -16,8 +16,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from unittest.mock import patch
 
 import pytest
+from django.core.management import call_command
+from django.test import TransactionTestCase
+from django_celery_beat.models import IntervalSchedule
 
 pytestmark = pytest.mark.django_db
 
@@ -103,3 +107,19 @@ class TestDepot:
         created.
         """
         assert depot.details is not None
+
+def test_setup_celery_beat_command() -> None:
+    """
+    Test setup celery beat command
+    """
+
+class TestCreateCeleryBeatConfigurationsCommand(TransactionTestCase):
+    def test_handle_creates_configurations(self):
+        # Ensure there are no initial configurations
+        self.assertEqual(IntervalSchedule.objects.count(), 0)
+
+        # Call the command to create configurations
+        call_command('setupcelerybeat')
+
+        # Check that configurations have been created
+        self.assertEqual(IntervalSchedule.objects.count() > 0, True)
