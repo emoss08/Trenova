@@ -16,17 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
-from collections.abc import Iterable, Iterator
+from typing import Iterable
 
 from django.core.mail import send_mail
-from django.db import IntegrityError, transaction
 from django.http import HttpRequest
 from django.utils import timezone
 from notifications.signals import notify
 from accounts.models import User
 from billing import models
-from billing.selectors import get_billable_orders
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from movements.models import Movement
 from order.models import Order
@@ -81,15 +78,11 @@ def check_billing_control(*, user: User) -> bool:
     return bool(user.organization.billing_control.enforce_customer_billing)
 
 
-def set_billing_requirements(
-    *, user: User, customer: Customer, order: Order
-) -> list[str] | bool:
+def set_billing_requirements(*, customer: Customer) -> list[str] | bool:
     """Set the billing requirements for the customer
 
     Args:
-        user (User): The user that caused the exception
         customer (Customer): The customer to set the billing requirements for
-        order (Order): The order to set the billing requirements for
 
     Returns:
         None: None
@@ -134,9 +127,7 @@ def get_billing_queue(*, user: User, task_id: str) -> Iterable[models.BillingQue
     Returns:
         QuerySet: The billing queue queryset
     """
-    billing_queue = models.BillingQueue.objects.filter(
-        organization=user.organization
-    )
+    billing_queue = models.BillingQueue.objects.filter(organization=user.organization)
     if not billing_queue:
         notify.send(
             user,
@@ -156,9 +147,7 @@ def check_billing_requirements(*, order: Order, user: User) -> bool:
         bool: True if the billing requirements are met, False otherwise
     """
 
-    customer_billing_requirements = set_billing_requirements(
-        user=user, customer=order.customer, order=order
-    )
+    customer_billing_requirements = set_billing_requirements(customer=order.customer)
 
     if not customer_billing_requirements:
         create_billing_exception(
@@ -171,12 +160,12 @@ def check_billing_requirements(*, order: Order, user: User) -> bool:
 
     order_document_ids = set_order_documents(order=order)
 
-    is_match = set(customer_billing_requirements).issubset(
+    is_match = set(customer_billing_requirements).issubset(  # type: ignore
         set(order_document_ids)
     )
     if not is_match:
         missing_documents = list(
-            set(customer_billing_requirements) - set(order_document_ids)
+            set(customer_billing_requirements) - set(order_document_ids)  # type: ignore
         )
         create_billing_exception(
             user=user,
@@ -185,6 +174,7 @@ def check_billing_requirements(*, order: Order, user: User) -> bool:
             exception_message=f"Missing customer required documents: {missing_documents}",
         )
     return is_match
+
 
 def set_order_billed(*, order: Order) -> None:
     """Set the order billed
@@ -198,6 +188,7 @@ def set_order_billed(*, order: Order) -> None:
     order.billed = True
     order.bill_date = timezone.now()
     order.save()
+
 
 def delete_billing_queue(*, billing_queue: models.BillingQueue) -> None:
     """Delete the billing queue
@@ -246,7 +237,6 @@ def create_billing_history(*, order: Order, user: User) -> None:
             order=order,
             exception_message=f"Error creating billing history: {e}",
         )
-
 
 
 def send_billing_email(*, order: Order, user: User) -> None:

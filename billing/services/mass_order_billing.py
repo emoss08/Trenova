@@ -79,9 +79,7 @@ def mass_order_billing_service(*, user_id: str, task_id: str) -> None:
 
     for invoice in get_billing_queue(user=user, task_id=task_id):
         if check_billing_control(user=user):
-            set_billing_requirements(
-                user=user, customer=invoice.order.customer, order=invoice.order
-            )
+            set_billing_requirements(customer=invoice.order.customer)
             set_order_documents(order=invoice.order)
             if check_billing_requirements(order=invoice.order, user=user):
                 order_billing_actions(user=user, invoice=invoice)

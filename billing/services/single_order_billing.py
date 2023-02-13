@@ -53,7 +53,7 @@ def bill_order(*, user_id: str, order: Order) -> None:
     user: User = get_object_or_404(User, id=user_id)
 
     if check_billing_control(user=user):
-        set_billing_requirements(user=user, customer=order.customer, order=order)
+        set_billing_requirements(customer=order.customer)
         set_order_documents(order=order)
         if check_billing_requirements(user=user, order=order):
             set_order_billed(order=order)
