@@ -371,5 +371,14 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "worker.WorkerProfile",
     "worker.WorkerContact",
     "worker.WorkerComment",
+    "django_celery_beat.PeriodicTask",
+    "django_celery_beat.CrontabSchedule",
+    "django_celery_beat.IntervalSchedule",
+    "django_celery_beat.SolarSchedule",
+    "django_celery_beat.ClockedSchedule",
+    "django_celery_beat.PeriodicTasks",
+    "django_celery_beat.PeriodicTask",
+    "django_celery_beat.CrontabSchedule",
+
 )
 
