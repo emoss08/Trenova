@@ -1,4 +1,4 @@
-from collections.abc import Iterator
+from typing import Iterable
 
 from billing.models import BillingControl, BillingQueue
 from order.models import Order
@@ -6,7 +6,7 @@ from organization.models import Organization
 from utils.models import StatusChoices
 
 
-def get_billable_orders(*, organization: Organization) -> Iterator[Order] | None:
+def get_billable_orders(*, organization: Organization) -> Iterable[Order] | None:
     """Returns an iterator of orders that are billable for a given organization.
 
     The billable orders are determined based on the `order_transfer_criteria`

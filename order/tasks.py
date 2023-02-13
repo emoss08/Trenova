@@ -21,11 +21,10 @@ from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 
 from accounts.models import User
-from billing.services.order_billing import BillingService
 from order.models import Order
 from order.services.consolidate_pdf import combine_pdfs
 from organization.models import Organization
-
+from billing.services import mass_order_billing, single_order_billing
 
 @shared_task(bind=True)
 def consolidate_order_documentation(self, order_id: str) -> None:
@@ -72,7 +71,7 @@ def bill_order_task(self, user_id: str, order_id: str) -> None:
 
     try:
         order: Order = Order.objects.get(pk=order_id)
-        BillingService(user_id=user_id, task_id=self.request.id).bill_order(order=order)
+        single_order_billing.bill_order(order=order, user_id=user_id)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
 
@@ -92,7 +91,7 @@ def mass_order_bill_task(self, user_id: str) -> None:
         ObjectDoesNotExist: If the Order does not exist in the database.
     """
     try:
-        BillingService(user_id=user_id, task_id=self.request.id).bill_orders()
+        mass_order_billing.mass_order_billing_service(user_id=user_id, task_id=self.request.id)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
 
@@ -111,7 +110,7 @@ def automate_mass_order_billing(self) -> str:
     results = []
     for organization in organizations:
         try:
-            BillingService(user_id=system_user.id, task_id=self.request.id).bill_orders()
+            mass_order_billing.mass_order_billing_service(user_id=str(system_user.id), task_id=self.request.id)
             results.append(f"Automated Mass Billing Task for {organization.name} was successful.")
         except ObjectDoesNotExist as exc:
             raise self.retry(exc=exc) from exc
