@@ -276,8 +276,8 @@ urlpatterns = [
         name="change-password",
     ),
     path("api/system_health/", org_api.health_check, name="system-health"),
-    path("api/bill_order", billing_api.bill_order_view, name="bill-order"),
-    path("api/mass_bill_orders", billing_api.mass_order_bill, name="bill-order"),
+    path("api/bill_order/", billing_api.bill_order_view, name="bill-order"),
+    path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

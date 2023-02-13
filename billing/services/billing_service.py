@@ -50,7 +50,7 @@ class BillingException(Exception):
 
 def create_billing_exception(
     *, user: User, exception_type: str, order: Order | None, exception_message: str
-) -> models.BillingException:
+) -> None:
     """Create a billing Exception
 
     Args:
@@ -62,7 +62,7 @@ def create_billing_exception(
     Returns:
         None: None
     """
-    return models.BillingException.objects.create(
+    models.BillingException.objects.create(
         organization=user.organization,
         exception_type=exception_type,
         order=order,
@@ -83,7 +83,7 @@ def check_billing_control(*, user: User) -> bool:
 
 def set_billing_requirements(
     *, user: User, customer: Customer, order: Order
-) -> list[str]:
+) -> list[str] | bool:
     """Set the billing requirements for the customer
 
     Args:
@@ -106,19 +106,7 @@ def set_billing_requirements(
             ]
         )
     except CustomerBillingProfile.DoesNotExist:
-        create_billing_exception(
-            user=user,
-            exception_type="OTHER",
-            order=order,
-            exception_message=f"Customer: {customer.name} does not have a billing profile",
-        )
-    except CustomerBillingProfile.MultipleObjectsReturned:
-        create_billing_exception(
-            user=user,
-            exception_type="OTHER",
-            order=order,
-            exception_message=f"Customer: {customer.name} has multiple billing profiles",
-        )
+        return False
 
     return customer_billing_requirements
 
@@ -171,6 +159,15 @@ def check_billing_requirements(*, order: Order, user: User) -> bool:
     customer_billing_requirements = set_billing_requirements(
         user=user, customer=order.customer, order=order
     )
+
+    if not customer_billing_requirements:
+        create_billing_exception(
+            user=user,
+            exception_type="OTHER",
+            order=order,
+            exception_message=f"Customer: {order.customer.name} does not have a billing profile",
+        )
+        return False
 
     order_document_ids = set_order_documents(order=order)
 

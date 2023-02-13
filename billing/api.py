@@ -192,6 +192,8 @@ def bill_order_view(request: Request) -> Response:
         Response: A response object containing the result of the operation.
     """
     order_id = request.data.get("order_id")
+
+    print(order_id)
     if not order_id:
         return Response(
             {"message": "Order ID is required. Please Try Again."},

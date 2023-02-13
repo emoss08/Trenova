@@ -130,6 +130,8 @@ DATABASES = {
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": "localhost",
         "PORT": 5432,
+        "ATOMIC_REQUESTS": True,
+        "CONN_HEALTH_CHECK": True,
     }
 }
 
@@ -243,7 +245,13 @@ CACHEOPS = {
     "auth.*": {"ops": ("fetch", "get"), "timeout": 60 * 15},
     "auth.permission": {"ops": "all", "timeout": 60 * 60},
     "accounts.*": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "billing.billingcontrol": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "billing.billinghistory": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "billing.billingexception": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "organization.organization": {"ops": ("fetch", "get"), "timeout": 60 * 60},
 }
+
+CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
