@@ -25,7 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import GenericModel, ChoiceField
+from utils.models import ChoiceField, GenericModel
 
 
 class InvoiceControl(GenericModel):
@@ -73,7 +73,6 @@ class InvoiceControl(GenericModel):
         DD_MM_YYYY = "%d/%m/%Y", _("DD/MM/YYYY")
         YYYY_DD_MM = "%Y/%d/%m", _("YYYY/DD/MM")
         YYYY_MM_DD = "%Y/%m/%d", _("YYYY/MM/DD")
-
 
     id = models.UUIDField(
         primary_key=True,

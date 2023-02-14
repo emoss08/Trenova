@@ -18,11 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from io import BytesIO
 
+from django.http import HttpRequest, HttpResponse
 from django.template.loader import get_template
-
-
-from weasyprint import HTML, CSS
-from django.http import HttpResponse, HttpRequest
+from weasyprint import CSS, HTML
 
 
 def render_to_pdf(
