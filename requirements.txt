@@ -2,7 +2,7 @@ art==5.8
 celery~=5.2.7
 channels==4.0.0
 daphne==4.0.0
-django==4.1.6
+django==4.1.7
 django-adminactions==2.0.0
 django-auditlog==2.2.2
 django-braces==1.15.0
@@ -19,7 +19,6 @@ django-lifecycle==1.0.0
 django-localflavor==3.1
 django-money==3.0.0
 django-nested-inline==0.4.5
-django-notifications-hq==1.7.0
 django-notifications-hq==1.7.0
 django-pgtrigger==4.6.0
 django-phonenumber-field==7.0.2
@@ -54,3 +53,5 @@ rich==13.3.1
 tox==4.4.5
 types-redis==4.5.1.0
 whitenoise==6.3.0
+xhtml2pdf==0.2.9
+weasyprint==57.2
