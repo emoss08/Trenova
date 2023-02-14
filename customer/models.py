@@ -25,6 +25,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import AFTER_CREATE, BEFORE_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
@@ -121,6 +122,30 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
             str: Customer string representation
         """
         return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
+
+    @cached_property
+    def get_address_combination(self) -> str:
+        """
+        Returns:
+            str: String representation of the customer address.
+        """
+        return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
+
+    @cached_property
+    def get_address(self) -> str:
+        """
+        Returns:
+            str: String representation of the customer address.
+        """
+        return f"{self.address_line_1} {self.address_line_2}"
+
+    @cached_property
+    def get_city_state_zip(self) -> str:
+        """
+        Returns:
+            str: String representation of the customer address.
+        """
+        return f"{self.city}, {self.state} {self.zip_code}"
 
     @hook(BEFORE_CREATE)  # type: ignore
     def set_code_before_create(self) -> None:
