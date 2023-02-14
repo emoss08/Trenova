@@ -88,7 +88,7 @@ class Command(BaseCommand):
         organization = options["organization"]
 
         if not Organization.objects.filter(name=organization).exists():
-            Organization.objects.create(name=organization)
+            Organization.objects.create(name=organization, scac_code=organization[:4])
 
         # Create system user account.
         if not User.objects.filter(username=username).exists():

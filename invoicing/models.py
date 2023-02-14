@@ -19,12 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import textwrap
 import uuid
+from typing import final
 
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import GenericModel
+from utils.models import GenericModel, ChoiceField
 
 
 class InvoiceControl(GenericModel):
@@ -55,6 +56,24 @@ class InvoiceControl(GenericModel):
         invoice_logo (ImageField): ImageField with a default value of None and blank set to True.
             Has a verbose name of "Invoice Logo", and help text of "Define invoice logo."
     """
+
+    @final
+    class DateFormatChoices(models.TextChoices):
+        """Invoice Date Format Choices
+
+        The Invoice Date Format Choices class is a TextChoices class that defines the
+        invoice date format choices.
+
+        Attributes:
+            MM_DD_YYYY (str): MM/DD/YYYY
+            DD_MM_YYYY (str): DD/MM/YYYY
+        """
+
+        MM_DD_YYYY = "%m/%d/%Y", _("MM/DD/YYYY")
+        DD_MM_YYYY = "%d/%m/%Y", _("DD/MM/YYYY")
+        YYYY_DD_MM = "%Y/%d/%m", _("YYYY/DD/MM")
+        YYYY_MM_DD = "%Y/%m/%d", _("YYYY/MM/DD")
+
 
     id = models.UUIDField(
         primary_key=True,
@@ -114,6 +133,12 @@ class InvoiceControl(GenericModel):
         _("Show Invoice Due Date"),
         default=True,
         help_text=_("Show the invoice due date on the invoice."),
+    )
+    invoice_date_format = ChoiceField(
+        _("Invoice Date Format"),
+        choices=DateFormatChoices.choices,
+        default=DateFormatChoices.MM_DD_YYYY,
+        help_text=_("Define the invoice date format."),
     )
     show_amount_due = models.BooleanField(
         _("Show Amount Due"),
