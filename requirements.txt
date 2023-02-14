@@ -19,6 +19,8 @@ django-lifecycle==1.0.0
 django-localflavor==3.1
 django-money==3.0.0
 django-nested-inline==0.4.5
+django-notifications-hq==1.7.0
+django-notifications-hq==1.7.0
 django-pgtrigger==4.6.0
 django-phonenumber-field==7.0.2
 django-redis==5.2.0
@@ -32,15 +34,16 @@ djangorestframework-stubs[compatible-mypy]
 drf-nested-routers==0.93.4
 drf-spectacular==0.25.1
 factory_boy==3.2.1
-hiredis==2.2.1
+hiredis==2.2.2
 httpx==0.23.3
 isort==5.12.0
 kafka-python==2.0.2
 msgpack==1.0.4
-phonenumbers==8.13.5
+phonenumbers==8.13.6
 Pillow==9.4.0
 psycopg2==2.9.5
 pydantic==1.10.4
+pypdf==3.4.1
 pytest~=7.2.1
 pytest-bdd==6.1.1
 pytest-cov==4.0.0
@@ -49,5 +52,5 @@ pytest-html==3.2.0
 redis==4.5.1
 rich==13.3.1
 tox==4.4.5
-types-redis==4.4.0.6
+types-redis==4.5.1.0
 whitenoise==6.3.0

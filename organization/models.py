@@ -244,6 +244,19 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         if not EmailControl.objects.filter(organization=self).exists():
             EmailControl.objects.create(organization=self)
 
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_invoice_control_after_create(self) -> None:
+        """Create an invoice control after the organization is created.
+
+        Returns:
+            None: Nonez
+        """
+
+        from invoicing.models import InvoiceControl
+
+        if not InvoiceControl.objects.filter(organization=self).exists():
+            InvoiceControl.objects.create(organization=self)
+
     def get_absolute_url(self) -> str:
         """
         Returns:

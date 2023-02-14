@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "auditlog",
     "djmoney",
+    "notifications",
     # Monta Apps
     "backend",
     "core",
@@ -85,6 +86,7 @@ INSTALLED_APPS = [
     "movements",
     "commodities",
     "fuel",
+    "invoicing",
 ]
 
 # Middleware configurations
@@ -128,6 +130,8 @@ DATABASES = {
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": "localhost",
         "PORT": 5432,
+        "ATOMIC_REQUESTS": True,
+        "CONN_HEALTH_CHECK": True,
     }
 }
 
@@ -241,7 +245,13 @@ CACHEOPS = {
     "auth.*": {"ops": ("fetch", "get"), "timeout": 60 * 15},
     "auth.permission": {"ops": "all", "timeout": 60 * 60},
     "accounts.*": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "billing.billingcontrol": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "billing.billinghistory": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "billing.billingexception": {"ops": ("fetch", "get"), "timeout": 60 * 60},
+    "organization.organization": {"ops": ("fetch", "get"), "timeout": 60 * 60},
 }
+
+CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
@@ -369,4 +379,12 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "worker.WorkerProfile",
     "worker.WorkerContact",
     "worker.WorkerComment",
+    "django_celery_beat.PeriodicTask",
+    "django_celery_beat.CrontabSchedule",
+    "django_celery_beat.IntervalSchedule",
+    "django_celery_beat.SolarSchedule",
+    "django_celery_beat.ClockedSchedule",
+    "django_celery_beat.PeriodicTasks",
+    "django_celery_beat.PeriodicTask",
+    "django_celery_beat.CrontabSchedule",
 )

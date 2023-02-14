@@ -20,8 +20,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 
+from accounts.models import User
+from billing.services import mass_order_billing, single_order_billing
 from order.models import Order
 from order.services.consolidate_pdf import combine_pdfs
+from organization.models import Organization
 
 
 @shared_task(bind=True)
@@ -47,3 +50,79 @@ def consolidate_order_documentation(self, order_id: str) -> None:
         combine_pdfs(order=order)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
+
+
+@shared_task(bind=True)
+def bill_order_task(self, user_id: str, order_id: str) -> None:
+    """Bill Order
+
+    Query the database for the Order and call the bill_order
+    service to bill the order.
+
+    Args:
+        self (celery.app.task.Task): The task object
+        user_id (str): User ID
+        order_id (str): Order ID
+
+    Returns:
+        None: None
+
+    Raises:
+        ObjectDoesNotExist: If the Order does not exist in the database.
+    """
+
+    try:
+        order: Order = Order.objects.get(pk=order_id)
+        single_order_billing.bill_order(order=order, user_id=user_id)
+    except ObjectDoesNotExist as exc:
+        raise self.retry(exc=exc) from exc
+
+
+@shared_task(bind=True)
+def mass_order_bill_task(self, user_id: str) -> None:
+    """Bill Order
+
+    Args:
+        self (celery.app.task.Task): The task object
+        user_id (str): User ID
+
+    Returns:
+        None: None
+
+    Raises:
+        ObjectDoesNotExist: If the Order does not exist in the database.
+    """
+    try:
+        mass_order_billing.mass_order_billing_service(
+            user_id=user_id, task_id=self.request.id
+        )
+    except ObjectDoesNotExist as exc:
+        raise self.retry(exc=exc) from exc
+
+
+@shared_task(bind=True)
+def automate_mass_order_billing(self) -> str:
+    """Automated Mass Billing Tasks, that uses system user to bill orders.
+
+    Args:
+        self (celery.app.task.Task): The task object
+
+    Returns:
+        None: None
+    """
+    system_user = User.objects.get(username="sys")
+    organizations = Organization.objects.filter(billing_control__auto_bill_orders=True)
+    results = []
+    for organization in organizations:
+        try:
+            mass_order_billing.mass_order_billing_service(
+                user_id=str(system_user.id), task_id=self.request.id
+            )
+            results.append(
+                f"Automated Mass Billing Task for {organization.name} was successful."
+            )
+        except ObjectDoesNotExist as exc:
+            raise self.retry(exc=exc) from exc
+    if results:
+        return "\n".join(results)
+    return "No organizations have auto billing enabled."

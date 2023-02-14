@@ -42,14 +42,14 @@ class InvoiceNumberService:
             ).last():
                 latest_invoice_number = int(
                     latest_invoice.invoice_number.split(
-                        self.instance.organization.billing_control.invoice_number_prefix
+                        self.instance.organization.invoice_control.invoice_number_prefix
                     )[-1]
                 )
                 self.instance.invoice_number = "{}{:05d}".format(
-                    self.instance.organization.billing_control.invoice_number_prefix,
+                    self.instance.organization.invoice_control.invoice_number_prefix,
                     latest_invoice_number + 1,
                 )
             else:
-                self.instance.invoice_number = f"{self.instance.organization.billing_control.invoice_number_prefix}00001"
+                self.instance.invoice_number = f"{self.instance.organization.invoice_control.invoice_number_prefix}00001"
 
         return self.instance.invoice_number
