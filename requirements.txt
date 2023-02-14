@@ -32,7 +32,7 @@ djangorestframework-stubs[compatible-mypy]
 drf-nested-routers==0.93.4
 drf-spectacular==0.25.1
 factory_boy==3.2.1
-hiredis==2.2.1
+hiredis==2.2.2
 httpx==0.23.3
 isort==5.12.0
 kafka-python==2.0.2
@@ -52,3 +52,4 @@ tox==4.4.5
 types-redis==4.5.1.0
 whitenoise==6.3.0
 django-notifications-hq==1.7.0
+pypdf==3.4.1

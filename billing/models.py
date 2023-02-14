@@ -276,7 +276,7 @@ class ChargeType(GenericModel):
         Returns:
             str: Charge Type absolute URL
         """
-        return reverse("billing:charge_type_detail", kwargs={"pk": self.pk})
+        return reverse("charge-type-detail", kwargs={"pk": self.pk})
 
 
 class AccessorialCharge(GenericModel):  # type: ignore
