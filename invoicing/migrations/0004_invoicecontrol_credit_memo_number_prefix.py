@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("invoicing", "0003_invoicecontrol_invoice_logo_width_and_more"),
     ]

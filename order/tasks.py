@@ -21,10 +21,11 @@ from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 
 from accounts.models import User
+from billing.services import mass_order_billing, single_order_billing
 from order.models import Order
 from order.services.consolidate_pdf import combine_pdfs
 from organization.models import Organization
-from billing.services import mass_order_billing, single_order_billing
+
 
 @shared_task(bind=True)
 def consolidate_order_documentation(self, order_id: str) -> None:
@@ -49,6 +50,7 @@ def consolidate_order_documentation(self, order_id: str) -> None:
         combine_pdfs(order=order)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
+
 
 @shared_task(bind=True)
 def bill_order_task(self, user_id: str, order_id: str) -> None:
@@ -91,9 +93,12 @@ def mass_order_bill_task(self, user_id: str) -> None:
         ObjectDoesNotExist: If the Order does not exist in the database.
     """
     try:
-        mass_order_billing.mass_order_billing_service(user_id=user_id, task_id=self.request.id)
+        mass_order_billing.mass_order_billing_service(
+            user_id=user_id, task_id=self.request.id
+        )
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
+
 
 @shared_task(bind=True)
 def automate_mass_order_billing(self) -> str:
@@ -110,12 +115,14 @@ def automate_mass_order_billing(self) -> str:
     results = []
     for organization in organizations:
         try:
-            mass_order_billing.mass_order_billing_service(user_id=str(system_user.id), task_id=self.request.id)
-            results.append(f"Automated Mass Billing Task for {organization.name} was successful.")
+            mass_order_billing.mass_order_billing_service(
+                user_id=str(system_user.id), task_id=self.request.id
+            )
+            results.append(
+                f"Automated Mass Billing Task for {organization.name} was successful."
+            )
         except ObjectDoesNotExist as exc:
             raise self.retry(exc=exc) from exc
     if results:
         return "\n".join(results)
     return "No organizations have auto billing enabled."
-
-

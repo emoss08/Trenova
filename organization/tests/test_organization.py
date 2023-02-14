@@ -108,10 +108,12 @@ class TestDepot:
         """
         assert depot.details is not None
 
+
 def test_setup_celery_beat_command() -> None:
     """
     Test setup celery beat command
     """
+
 
 class TestCreateCeleryBeatConfigurationsCommand(TransactionTestCase):
     def test_handle_creates_configurations(self):
@@ -119,7 +121,7 @@ class TestCreateCeleryBeatConfigurationsCommand(TransactionTestCase):
         self.assertEqual(IntervalSchedule.objects.count(), 0)
 
         # Call the command to create configurations
-        call_command('setupcelerybeat')
+        call_command("setupcelerybeat")
 
         # Check that configurations have been created
         self.assertEqual(IntervalSchedule.objects.count() > 0, True)

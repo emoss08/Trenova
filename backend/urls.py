@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -27,7 +28,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from rest_framework_nested import routers
-import notifications.urls
+
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
@@ -36,6 +37,7 @@ from customer import api as customer_api
 from dispatch import api as dispatch_api
 from equipment import api as equipment_api
 from integration import api as integration_api
+from invoicing import api as invoicing_api
 from location import api as location_api
 from movements import api as movement_api
 from order import api as order_api
@@ -43,7 +45,7 @@ from organization import api as org_api
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
-from invoicing import api as invoicing_api
+
 router = routers.DefaultRouter()
 
 # Accounts Routing
@@ -243,7 +245,9 @@ router.register(
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")
 
 # Invoicing Routing
-router.register(r"invoice_control", invoicing_api.InvoiceControlViewSet, basename="invoice_control")
+router.register(
+    r"invoice_control", invoicing_api.InvoiceControlViewSet, basename="invoice_control"
+)
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),

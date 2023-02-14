@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0006_remove_billingcontrol_invoice_due_after_days_and_more"),
         ("customer", "0003_alter_customerruleprofile_document_class"),

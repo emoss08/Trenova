@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
@@ -26,10 +26,11 @@ from notifications.signals import notify
 
 from accounts.models import User
 from billing import models
+from billing.exceptions import BillingException
 from billing.selectors import get_billable_orders
 from billing.services.billing_service import create_billing_exception
 from order.models import Order
-from billing.exceptions import BillingException
+
 
 def transfer_to_billing_queue(user_id: str) -> None:
     """

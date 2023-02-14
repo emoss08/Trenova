@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0004_alter_billingcontrol_invoice_number_prefix"),
     ]

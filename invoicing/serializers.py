@@ -17,8 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from utils.serializers import GenericSerializer
 from invoicing import models
+from utils.serializers import GenericSerializer
+
 
 class InvoiceControlSerializer(GenericSerializer):
     """A serializer for the `InvoiceControl` model.
@@ -38,4 +39,3 @@ class InvoiceControlSerializer(GenericSerializer):
         """
 
         model = models.InvoiceControl
-
