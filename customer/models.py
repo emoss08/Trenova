@@ -26,7 +26,7 @@ from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook
+from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook, AFTER_CREATE
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -134,6 +134,26 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
         if not self.code:
             self.code = CustomerGenerationService.customer_code(instance=self)
 
+    @hook(AFTER_CREATE)  # type: ignore
+    def create_customer_billing_profile(self) -> None:
+        """Create customer billing profile after creating customer
+
+        Returns:
+            None: None
+        """
+
+        default_rule_profile, created = CustomerRuleProfile.objects.get_or_create(
+            organization=self.organization,
+            name="Default",
+        )
+        if not CustomerBillingProfile.objects.filter(customer=self).exists() and created:
+            CustomerBillingProfile.objects.create(
+                organization=self.organization,
+                customer=self,
+                is_active=True,
+                rule_profile=default_rule_profile,
+            )
+
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer instance
 
@@ -185,6 +205,8 @@ class CustomerBillingProfile(GenericModel):
         related_name="billing_profile",
         help_text=_("Customer Email Profile"),
         verbose_name=_("Customer Email Profile"),
+        null=True,
+        blank=True,
     )
     rule_profile = models.ForeignKey(
         "CustomerRuleProfile",
@@ -192,6 +214,8 @@ class CustomerBillingProfile(GenericModel):
         related_name="billing_profile",
         help_text=_("Rule Profile"),
         verbose_name=_("Rule Profile"),
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -337,6 +361,7 @@ class CustomerRuleProfile(GenericModel):
         related_name="customer_rule_profile",
         verbose_name=_("Document Class"),
         help_text=_("Document class"),
+        blank=True,
     )
 
     class Meta:

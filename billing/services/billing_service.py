@@ -148,8 +148,7 @@ def check_billing_requirements(*, order: Order, user: User) -> bool:
     """
 
     customer_billing_requirements = set_billing_requirements(customer=order.customer)
-
-    if not customer_billing_requirements:
+    if customer_billing_requirements is False:
         create_billing_exception(
             user=user,
             exception_type="OTHER",

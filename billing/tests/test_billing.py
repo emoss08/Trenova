@@ -21,11 +21,11 @@ import uuid
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.test import RequestFactory
 
 from billing import selectors
 from billing.services import mass_order_billing
-from billing.models import BillingControl, BillingHistory, BillingQueue
+from billing.models import BillingControl, BillingHistory, BillingQueue, BillingException
+from customer.factories import CustomerFactory, CustomerBillingProfileFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
@@ -33,13 +33,16 @@ from utils.models import StatusChoices
 
 pytestmark = pytest.mark.django_db
 
+
 def test_bill_orders(
     organization,
-    customer,
     user,
     worker,
 ) -> None:
     order = OrderFactory(status="C")
+
+    customer = CustomerFactory(organization=organization)
+
     BillingQueue.objects.create(
         organization=user.organization,
         order_type=order.order_type,
@@ -51,13 +54,15 @@ def test_bill_orders(
         bol_number=order.bol_number,
         user=user,
     )
-    request = RequestFactory().get("/")
-    request.user = user
 
-    mass_order_billing.mass_order_billing_service(task_id=str(uuid.uuid4()), user_id=str(user.id))
+    mass_order_billing.mass_order_billing_service(
+        task_id=str(uuid.uuid4()), user_id=str(user.id)
+    )
 
     billing_queue = BillingQueue.objects.all()
     billing_history = BillingHistory.objects.get(order=order)
+
+    billing_history.refresh_from_db()
 
     assert billing_queue.count() == 0
     assert billing_history.order == order
