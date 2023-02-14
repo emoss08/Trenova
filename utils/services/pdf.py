@@ -49,7 +49,7 @@ def render_to_pdf(
         It sets the PDF content type to "application/pdf".
     """
 
-    if not isinstance(template_src, str) or not template_src.strip():
+    if not isinstance(template_src, str):
         raise ValueError("Invalid template name")
 
     if context_dict is None:
@@ -67,5 +67,5 @@ def render_to_pdf(
     response = HttpResponse(pdf_file.getvalue(), content_type="application/pdf")
     response[
         "Content-Disposition"
-    ] = f'attachment; filename="{template.template.name.split("/")[-1]}.pdf"'
+    ] = 'attachment; filename="generated_document.pdf"'
     return response
