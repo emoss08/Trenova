@@ -83,6 +83,7 @@ router.register(
     r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles"
 )
 router.register(r"email_log", org_api.EmailLogViewSet, basename="email-log")
+router.register(r"tax_rates", org_api.TaxRateViewSet, basename="tax-rates")
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")
