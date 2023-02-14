@@ -25,12 +25,7 @@ from notifications.signals import notify
 
 from accounts.models import User
 from billing import models
-from customer.models import (
-    Customer,
-    CustomerBillingProfile,
-    CustomerContact,
-    CustomerRuleProfile,
-)
+from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from movements.models import Movement
 from order.models import Order
 
