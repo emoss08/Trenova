@@ -63,7 +63,5 @@ def render_to_pdf(
     )
 
     response = HttpResponse(pdf_file.getvalue(), content_type="application/pdf")
-    response[
-        "Content-Disposition"
-    ] = 'attachment; filename="generated_document.pdf"'
+    response["Content-Disposition"] = 'attachment; filename="generated_document.pdf"'
     return response
