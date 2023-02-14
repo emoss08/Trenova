@@ -364,7 +364,6 @@ class CustomerRuleProfile(GenericModel):
         related_name="customer_rule_profile",
         verbose_name=_("Document Class"),
         help_text=_("Document class"),
-        blank=True,
     )
 
     class Meta:

@@ -25,7 +25,12 @@ from notifications.signals import notify
 
 from accounts.models import User
 from billing import models
-from customer.models import Customer, CustomerBillingProfile, CustomerContact
+from customer.models import (
+    Customer,
+    CustomerBillingProfile,
+    CustomerContact,
+    CustomerRuleProfile,
+)
 from movements.models import Movement
 from order.models import Order
 
@@ -90,6 +95,9 @@ def set_billing_requirements(*, customer: Customer) -> list[str] | bool:
     customer_billing_requirements = []
 
     try:
+        if not customer.billing_profile.rule_profile:
+            return False
+
         customer_billing_requirements.extend(
             [
                 doc.name
