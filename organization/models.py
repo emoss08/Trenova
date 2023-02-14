@@ -760,4 +760,4 @@ class TaxRate(TimeStampedModel):
             str: The absolute url for the tax rate.
         """
 
-        return reverse("tax-rate-detail", kwargs={"pk": self.pk})
+        return reverse("tax-rates-detail", kwargs={"pk": self.pk})
