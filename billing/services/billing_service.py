@@ -16,12 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import Iterable
+from collections.abc import Iterable
 
 from django.core.mail import send_mail
 from django.http import HttpRequest
 from django.utils import timezone
 from notifications.signals import notify
+
 from accounts.models import User
 from billing import models
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
@@ -41,8 +42,6 @@ class BillingException(Exception):
     """
     Base Billing Exception
     """
-
-    pass
 
 
 def create_billing_exception(

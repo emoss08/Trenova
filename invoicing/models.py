@@ -19,11 +19,12 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import textwrap
 import uuid
+
 from django.db import models
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 
 from utils.models import GenericModel
-from django.utils.translation import gettext_lazy as _
 
 
 class InvoiceControl(GenericModel):

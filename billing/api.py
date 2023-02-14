@@ -23,9 +23,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from billing import models, serializers
-from utils.views import OrganizationMixin
-
 from order.tasks import bill_order_task, mass_order_bill_task
+from utils.views import OrganizationMixin
 
 
 class BillingControlViewSet(OrganizationMixin):

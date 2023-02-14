@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("billing", "0005_billingcontrol_invoice_due_after_days"),
     ]

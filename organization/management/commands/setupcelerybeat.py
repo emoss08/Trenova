@@ -20,7 +20,6 @@ from typing import Any
 
 from django.core.management import BaseCommand
 from django.db.transaction import atomic
-
 from django_celery_beat.models import IntervalSchedule
 
 

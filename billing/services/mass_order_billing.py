@@ -21,16 +21,16 @@ from django.shortcuts import get_object_or_404
 
 from accounts.models import User
 from billing.services.billing_service import (
-    get_billing_queue,
-    set_billing_requirements,
-    set_order_documents,
-    check_billing_requirements,
-    send_billing_email,
-    set_order_billed,
-    delete_billing_queue,
-    create_billing_history,
-    create_billing_exception,
     check_billing_control,
+    check_billing_requirements,
+    create_billing_exception,
+    create_billing_history,
+    delete_billing_queue,
+    get_billing_queue,
+    send_billing_email,
+    set_billing_requirements,
+    set_order_billed,
+    set_order_documents,
 )
 
 

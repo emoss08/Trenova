@@ -18,9 +18,9 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
-from utils.admin import GenericAdmin
 
 from invoicing import models
+from utils.admin import GenericAdmin
 
 
 @admin.register(models.InvoiceControl)
@@ -33,4 +33,3 @@ class BillingControlAdmin(GenericAdmin[models.InvoiceControl]):
 
     model: type[models.InvoiceControl] = models.InvoiceControl
     list_display = ("organization", "invoice_number_prefix")
-

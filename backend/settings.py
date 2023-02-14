@@ -387,6 +387,4 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "django_celery_beat.PeriodicTasks",
     "django_celery_beat.PeriodicTask",
     "django_celery_beat.CrontabSchedule",
-
 )
-

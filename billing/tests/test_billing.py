@@ -23,9 +23,14 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 
 from billing import selectors
+from billing.models import (
+    BillingControl,
+    BillingException,
+    BillingHistory,
+    BillingQueue,
+)
 from billing.services import mass_order_billing
-from billing.models import BillingControl, BillingHistory, BillingQueue, BillingException
-from customer.factories import CustomerFactory, CustomerBillingProfileFactory
+from customer.factories import CustomerBillingProfileFactory, CustomerFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization

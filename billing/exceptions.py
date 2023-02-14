@@ -22,4 +22,3 @@ class BillingException(Exception):
     """
     Base Billing Exception
     """
-    pass

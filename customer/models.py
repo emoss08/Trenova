@@ -26,7 +26,7 @@ from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import BEFORE_CREATE, LifecycleModelMixin, hook, AFTER_CREATE
+from django_lifecycle import AFTER_CREATE, BEFORE_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -146,7 +146,10 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
             organization=self.organization,
             name="Default",
         )
-        if not CustomerBillingProfile.objects.filter(customer=self).exists() and created:
+        if (
+            not CustomerBillingProfile.objects.filter(customer=self).exists()
+            and created
+        ):
             CustomerBillingProfile.objects.create(
                 organization=self.organization,
                 customer=self,
