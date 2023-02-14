@@ -23,6 +23,7 @@ from typing import final
 
 from django.db import models
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
@@ -109,6 +110,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         _("Phone Number"),
         help_text=_("The phone number of the organization."),
         blank=True,
+        region="US",
     )
     website = models.URLField(
         _("Website"),
@@ -173,6 +175,30 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             str: String representation of the organization.
         """
         return textwrap.wrap(self.name, 50)[0]
+
+    @cached_property
+    def get_address_combination(self) -> str:
+        """
+        Returns:
+            str: String representation of the organization address.
+        """
+        return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
+
+    @cached_property
+    def get_address(self) -> str:
+        """
+        Returns:
+            str: String representation of the organization address.
+        """
+        return f"{self.address_line_1} {self.address_line_2}"
+
+    @cached_property
+    def get_city_state_zip(self) -> str:
+        """
+        Returns:
+            str: String representation of the organization address.
+        """
+        return f"{self.city}, {self.state} {self.zip_code}"
 
     @hook(BEFORE_SAVE)  # type: ignore
     def before_create(self) -> None:

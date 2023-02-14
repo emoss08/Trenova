@@ -315,6 +315,11 @@ class AccessorialCharge(GenericModel):  # type: ignore
         max_length=50,
         unique=True,
     )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("Description of the other charge."),
+    )
     is_detention = models.BooleanField(
         _("Is Detention"),
         default=False,
