@@ -17,9 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from rest_framework import permissions
+from rest_framework import permissions, status
+from rest_framework.decorators import api_view
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from billing import models, serializers
+from order.tasks import bill_order_task, mass_order_bill_task
 from utils.views import OrganizationMixin
 
 
@@ -173,3 +177,51 @@ class DocumentClassificationViewSet(OrganizationMixin):
     queryset = models.DocumentClassification.objects.all()
     serializer_class = serializers.DocumentClassificationSerializer
     filterset_fields = ("name",)
+
+
+@api_view(["POST"])
+def bill_order_view(request: Request) -> Response:
+    """
+    Bill an order.
+
+    Args:
+        request (Request): The request object.
+
+    Returns:
+        Response: A response object containing the result of the operation.
+    """
+    order_id = request.data.get("order_id")
+
+    print(order_id)
+    if not order_id:
+        return Response(
+            {"message": "Order ID is required. Please Try Again."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    bill_order_task.delay(user_id=request.user.id, order_id=order_id)
+    return Response({"message": "Billing task started."}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def mass_order_bill(request: Request) -> Response:
+    """
+    Mass bill orders.
+
+    Args:
+        request (Request): The request object.
+
+    Returns:
+        Response: A response object containing the result of the operation.
+    """
+    if request.data:
+        return Response(
+            {"message": "Mass billing does not accept any data. Please Try Again."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    mass_order_bill_task.delay(user_id=request.user.id)
+
+    return Response(
+        {"message": "Mass Billing task started."}, status=status.HTTP_200_OK
+    )

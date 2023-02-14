@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -36,6 +37,7 @@ from customer import api as customer_api
 from dispatch import api as dispatch_api
 from equipment import api as equipment_api
 from integration import api as integration_api
+from invoicing import api as invoicing_api
 from location import api as location_api
 from movements import api as movement_api
 from order import api as order_api
@@ -242,6 +244,11 @@ router.register(
 # Movement Routing
 router.register(r"movements", movement_api.MovementViewSet, basename="movements")
 
+# Invoicing Routing
+router.register(
+    r"invoice_control", invoicing_api.InvoiceControlViewSet, basename="invoice_control"
+)
+
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("admin/doc/", include("django.contrib.admindocs.urls")),
@@ -273,6 +280,8 @@ urlpatterns = [
         name="change-password",
     ),
     path("api/system_health/", org_api.health_check, name="system-health"),
+    path("api/bill_order/", billing_api.bill_order_view, name="bill-order"),
+    path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

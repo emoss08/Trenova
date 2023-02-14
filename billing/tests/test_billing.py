@@ -16,15 +16,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+import uuid
 
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.test import RequestFactory
 
 from billing import selectors
-from billing.models import BillingControl, BillingHistory, BillingQueue
-from billing.services.order_billing import BillingService
+from billing.models import (
+    BillingControl,
+    BillingException,
+    BillingHistory,
+    BillingQueue,
+)
+from billing.services import mass_order_billing
+from customer.factories import CustomerBillingProfileFactory, CustomerFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
@@ -35,11 +41,13 @@ pytestmark = pytest.mark.django_db
 
 def test_bill_orders(
     organization,
-    customer,
     user,
     worker,
 ) -> None:
     order = OrderFactory(status="C")
+
+    customer = CustomerFactory(organization=organization)
+
     BillingQueue.objects.create(
         organization=user.organization,
         order_type=order.order_type,
@@ -51,13 +59,15 @@ def test_bill_orders(
         bol_number=order.bol_number,
         user=user,
     )
-    request = RequestFactory().get("/")
-    request.user = user
 
-    BillingService(request=request).bill_orders()
+    mass_order_billing.mass_order_billing_service(
+        task_id=str(uuid.uuid4()), user_id=str(user.id)
+    )
 
     billing_queue = BillingQueue.objects.all()
     billing_history = BillingHistory.objects.get(order=order)
+
+    billing_history.refresh_from_db()
 
     assert billing_queue.count() == 0
     assert billing_history.order == order
@@ -69,7 +79,7 @@ def test_bill_orders(
     assert billing_history.bol_number == order.bol_number
     assert (
         billing_history.invoice_number
-        == f"{user.organization.billing_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
     )
 
     order.refresh_from_db()
@@ -100,7 +110,7 @@ def test_invoice_number_generation(organization, customer, user, worker) -> None
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.billing_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
     )
 
 
@@ -136,12 +146,12 @@ def test_invoice_number_increments(organization, customer, user, worker) -> None
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.billing_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
     )
     assert second_invoice.invoice_number is not None
     assert (
         second_invoice.invoice_number
-        == f"{user.organization.billing_control.invoice_number_prefix}00002"
+        == f"{user.organization.invoice_control.invoice_number_prefix}00002"
     )
 
 
@@ -364,7 +374,7 @@ def test_generate_invoice_number_before_save(order) -> None:
 
     assert (
         billing_queue.invoice_number
-        == f"{order.organization.billing_control.invoice_number_prefix}00001"
+        == f"{order.organization.invoice_control.invoice_number_prefix}00001"
     )
 
 

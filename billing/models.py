@@ -166,12 +166,6 @@ class BillingControl(GenericModel):
             "Define if customer billing requirements will be enforced when billing."
         ),
     )
-    invoice_number_prefix = models.CharField(
-        _("Invoice Number Prefix"),
-        max_length=10,
-        help_text=_("Define a prefix for invoice numbers."),
-        default="INV-",
-    )
 
     class Meta:
         """
@@ -282,7 +276,7 @@ class ChargeType(GenericModel):
         Returns:
             str: Charge Type absolute URL
         """
-        return reverse("billing:charge_type_detail", kwargs={"pk": self.pk})
+        return reverse("charge-type-detail", kwargs={"pk": self.pk})
 
 
 class AccessorialCharge(GenericModel):  # type: ignore
@@ -1198,3 +1192,12 @@ class BillingException(GenericModel):
             width=50,
             placeholder="...",
         )
+
+    def get_absolute_url(self) -> str:
+        """Billing Exception absolute url
+
+        Returns:
+            Absolute url for the billing exception object. For example,
+            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-exception-detail", kwargs={"pk": self.pk})
