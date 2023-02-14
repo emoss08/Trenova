@@ -20,7 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -205,7 +205,7 @@ def health_check(request: Request) -> Response:
         "database": DatabaseHealthCheck.check_database(),
     }
 
-    return Response(health_status)
+    return Response(health_status, status=status.HTTP_200_OK)
 
 
 class TaxRateViewSet(OrganizationMixin):
