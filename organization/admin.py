@@ -30,17 +30,31 @@ class OrganizationAdmin(admin.ModelAdmin[models.Organization]):
     Organization Admin
     """
 
-    list_display: tuple[str, ...] = (
+    list_display = (
         "name",
         "scac_code",
         "org_type",
         "timezone",
     )
-    list_filter: tuple[str, ...] = ("org_type",)
-    search_fields: tuple[str, ...] = (
+    list_filter = ("org_type",)
+    search_fields = (
         "name",
         "scac_code",
     )
+
+    def has_delete_permission(
+            self, request: HttpRequest, obj: models.EmailLog | None = None
+    ) -> bool:
+        """Has permission to delete.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+            obj (models.EmailLog | None): Object to be deleted (if any).
+
+        Returns:
+            bool: True if the user has permission to delete the given object, False otherwise.
+        """
+        return False
 
 
 class DepotDetailInline(GenericStackedInline[models.Depot, models.DepotDetail]):
@@ -48,7 +62,7 @@ class DepotDetailInline(GenericStackedInline[models.Depot, models.DepotDetail]):
     Depot Detail Admin
     """
 
-    model: type[models.DepotDetail] = models.DepotDetail
+    model = models.DepotDetail
     can_delete = False
     verbose_name_plural = "Depot Details"
     fk_name = "depot"
@@ -66,7 +80,7 @@ class DepotAdmin(GenericAdmin[models.Depot]):
     )
     list_filter = ("name",)
     search_fields = ("name",)
-    inlines: tuple[type[DepotDetailInline]] = (DepotDetailInline,)
+    inlines = (DepotDetailInline,)
 
 
 @admin.register(models.Department)
@@ -142,3 +156,17 @@ class EmailLogAdmin(admin.ModelAdmin[models.EmailLog]):
             bool: True if the user has permission to add an object, False otherwise.
         """
         return False
+
+
+@admin.register(models.TaxRate)
+class TaxRateAdmin(GenericAdmin[models.TaxRate]):
+    """
+    Tax Rate Admin
+    """
+
+    list_display = (
+        "name",
+        "rate",
+    )
+    list_filter = ("name",)
+    search_fields = ("name",)
