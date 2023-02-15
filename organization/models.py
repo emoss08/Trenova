@@ -275,7 +275,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         """Create an invoice control after the organization is created.
 
         Returns:
-            None: Nonez
+            None: None
         """
 
         from invoicing.models import InvoiceControl

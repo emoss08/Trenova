@@ -548,6 +548,7 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
         Raises:
             ValidationError: If the Order is not valid
         """
+
         OrderValidation(order=self)
         super().clean()
 

@@ -18,20 +18,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
-from nested_inline.admin import (
-    NestedModelAdmin,
-    NestedStackedInline,
-    NestedTabularInline,
-)
 
-from movements.models import Movement
 from order import models
-from stops.models import Stop
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
 class OrderDocumentationInline(
-    NestedTabularInline[models.OrderDocumentation, models.Order]
+    GenericStackedInline[models.OrderDocumentation, models.Order]
 ):
     """
     Order documentation inline
@@ -56,24 +49,6 @@ class AdditionalChargeInline(
     """
 
     model: type[models.AdditionalCharge] = models.AdditionalCharge
-
-
-class StopInline(NestedStackedInline):
-    """
-    Order Stop Inline
-    """
-
-    model = Stop
-    extra = 1
-
-
-class MovementInline(NestedStackedInline):
-    """
-    Order Movement Inline
-    """
-
-    model: type[Movement] = Movement
-    inlines = [StopInline]
 
 
 @admin.register(models.OrderType)
@@ -116,7 +91,7 @@ class OrderControlAdmin(GenericAdmin[models.OrderControl]):
 
 
 @admin.register(models.Order)
-class OrderAdmin(NestedModelAdmin):
+class OrderAdmin(GenericAdmin[models.Order]):
     """
     Order Admin
     """
@@ -127,6 +102,7 @@ class OrderAdmin(NestedModelAdmin):
         "origin_location",
         "destination_location",
     )
+    exclude = ()
     search_fields = ("pro_number",)
     fieldsets = (
         (
@@ -186,11 +162,13 @@ class OrderAdmin(NestedModelAdmin):
                     "bol_number",
                     "consignee_ref_number",
                     "comment",
+                    "voided_comm",
                 )
             },
         ),
     )
     inlines = (
-        MovementInline,
         OrderDocumentationInline,
+        OrderCommentInline,
+        AdditionalChargeInline,
     )
