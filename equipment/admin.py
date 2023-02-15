@@ -31,11 +31,11 @@ class EquipmentManufacturerAdmin(GenericAdmin[models.EquipmentManufacturer]):
 
     model: type[models.EquipmentManufacturer] = models.EquipmentManufacturer
     list_display: tuple[str, ...] = (
-        "id",
+        "name",
         "description",
     )
     search_fields: tuple[str, ...] = (
-        "id",
+        "name",
         "description",
     )
 
@@ -60,8 +60,8 @@ class EquipmentTypeAdmin(GenericAdmin[models.EquipmentType]):
     """
 
     model: type[models.EquipmentType] = models.EquipmentType
-    list_display: tuple[str, ...] = ("id", "description")
-    search_fields: tuple[str, ...] = ("id", "description")
+    list_display: tuple[str, ...] = ("name", "description")
+    search_fields: tuple[str, ...] = ("name", "description")
     inlines = (EquipmentTypeDetailAdmin,)
 
 
@@ -73,12 +73,12 @@ class EquipmentAdmin(GenericAdmin[models.Equipment]):
 
     model: type[models.Equipment] = models.Equipment
     list_display: tuple[str, ...] = (
-        "id",
+        "code",
         "description",
         "license_plate_number",
     )
     search_fields: tuple[str, ...] = (
-        "id",
+        "code",
         "description",
         "license_plate_number",
     )
@@ -88,7 +88,7 @@ class EquipmentAdmin(GenericAdmin[models.Equipment]):
             {
                 "fields": (
                     "is_active",
-                    "id",
+                    "code",
                     "equipment_type",
                     "description",
                 )
@@ -142,11 +142,11 @@ class EquipmentMaintenancePlanAdmin(GenericAdmin[models.EquipmentMaintenancePlan
 
     model: type[models.EquipmentMaintenancePlan] = models.EquipmentMaintenancePlan
     list_display: tuple[str, ...] = (
-        "id",
+        "name",
         "description",
     )
     search_fields: tuple[str, ...] = (
-        "id",
+        "name",
         "description",
         "equipment_types",
     )
