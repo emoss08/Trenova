@@ -54,6 +54,8 @@ class OrderValidation:
         self.validate_ready_to_bill()
         self.validate_order_locations()
         self.validate_duplicate_order_bol()
+        self.validate_order_movement_in_progress()
+        self.validate_order_movements_completed()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -209,7 +211,6 @@ class OrderValidation:
             ValidationError: If the BOL number is a duplicate. The error message will include the pro_numbers of the duplicate orders.
         """
 
-        # Validate BOL number is not a duplicate.
         duplicates = self.order.organization.orders.filter(
             bol_number=self.order.bol_number,
             status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS],
@@ -224,4 +225,48 @@ class OrderValidation:
             pro_numbers = ", ".join([str(order.pro_number) for order in duplicates])
             self.errors["bol_number"] = _(
                 f"Duplicate BOL Number found in orders with PRO numbers: {pro_numbers}. If this is a new order, please change the BOL Number."
+            )
+
+    def validate_order_movements_completed(self) -> None:
+        """Validate that an order cannot be marked as 'COMPLETED' if all of its movements are not 'COMPLETED'.
+
+        This function is used as a validation function in a Django form or model to ensure that if
+        an order's status is set to 'COMPLETED', all movements related to the order have a status
+        of 'COMPLETED' as well. If not, a validation error is raised.
+
+        Args:
+            self: The validation function is called on an instance of a Django form or model.
+
+        Raises:
+            ValidationError: If the order status is 'COMPLETED' and not all movements are 'COMPLETED'.
+        """
+
+        if self.order.status == StatusChoices.COMPLETED and all(
+            movement.status != StatusChoices.COMPLETED
+            for movement in self.order.movements.all()
+        ):
+            self.errors["status"] = _(
+                "Cannot mark order as 'COMPLETED' if all movements are not 'COMPLETED'. Please try again."
+            )
+
+    def validate_order_movement_in_progress(self) -> None:
+        """Validate that an order cannot be marked as 'IN PROGRESS' if none of its movements are 'IN PROGRESS'.
+
+        This function is used as a validation function in a Django form or model to ensure that if
+        an order's status is set to 'IN PROGRESS', at least one movement related to the order has
+        a status of 'IN PROGRESS'. If not, a validation error is raised.
+
+        Args:
+            self: The validation function is called on an instance of a Django form or model.
+
+        Raises:
+            ValidationError: If the order status is 'IN PROGRESS' and none of the movements are 'IN PROGRESS'.
+        """
+
+        if self.order.status == StatusChoices.IN_PROGRESS and any(
+            movement.status != StatusChoices.IN_PROGRESS
+            for movement in self.order.movements.all()
+        ):
+            self.errors["status"] = _(
+                "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please try again."
             )
