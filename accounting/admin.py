@@ -79,12 +79,10 @@ class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
 
     model: type[RevenueCode] = RevenueCode
     list_display: tuple[str, ...] = (
-        "id",
         "code",
         "description",
     )
     search_fields: tuple[str, ...] = (
-        "id",
         "code",
         "description",
     )
