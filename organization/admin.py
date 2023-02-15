@@ -43,7 +43,7 @@ class OrganizationAdmin(admin.ModelAdmin[models.Organization]):
     )
 
     def has_delete_permission(
-            self, request: HttpRequest, obj: models.EmailLog | None = None
+        self, request: HttpRequest, obj: models.EmailLog | None = None
     ) -> bool:
         """Has permission to delete.
 

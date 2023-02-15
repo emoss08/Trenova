@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
+
 from order import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
@@ -161,7 +162,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
                     "bol_number",
                     "consignee_ref_number",
                     "comment",
-                    "voided_comm"
+                    "voided_comm",
                 )
             },
         ),
