@@ -41,7 +41,6 @@ from phonenumber_field.modelfields import PhoneNumberField
 from .services.psql_triggers import drop_trigger_and_function
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators.organization import validate_org_timezone
-from .services.table_choices import TABLE_NAME_CHOICES
 
 
 class Organization(LifecycleModelMixin, TimeStampedModel):
@@ -808,7 +807,7 @@ class TaxRate(TimeStampedModel):
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
 
 
-class TableChangeAlert(TimeStampedModel):
+class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
     """
     Stores the table change alert information for a related :model:`organization.Organization`
     """
@@ -840,6 +839,7 @@ class TableChangeAlert(TimeStampedModel):
             "listener": "new_or_updated",
         },
     }
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -920,38 +920,7 @@ class TableChangeAlert(TimeStampedModel):
         blank=True,
         null=True,
     )
-    table = models.CharField(
-        _("Table"),
-        max_length=50,
-        help_text=_("The table that the table change alert is for."),
-        choices=TABLE_NAME_CHOICES,
-    )
-    description = models.TextField(
-        _("Description"),
-        blank=True,
-        help_text=_("The description of the table change alert."),
-    )
-    email_profile = models.ForeignKey(
-        EmailProfile,
-        on_delete=models.CASCADE,
-        verbose_name=_("Email Profile"),
-        related_name="table_change_alerts",
-        help_text=_("The email profile that the table change alert will use."),
-        blank=True,
-        null=True,
-    )
-    effective_date = models.DateField(
-        _("Effective Date"),
-        help_text=_("The effective date of the table change alert."),
-        blank=True,
-        null=True,
-    )
-    expiration_date = models.DateField(
-        _("Expiration Date"),
-        help_text=_("The expiration date of the table change alert."),
-        blank=True,
-        null=True,
-    )
+
     class Meta:
         """
         Metaclass for the TableChangeAlert model
