@@ -30,9 +30,6 @@ media
 .data
 .tox
 django_config.md
-<<<<<<< HEAD
 postgres
 celerybeat-schedule
-=======
 postgres
->>>>>>> 80910b9 (CHANGE: get column names to return list)
