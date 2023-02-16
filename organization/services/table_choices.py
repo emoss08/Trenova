@@ -94,8 +94,12 @@ class TableChoiceService:
                 names.remove(table_name)
         return names
 
+<<<<<<< HEAD
     def get_table_columns(self, table_name) -> str:
 >>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
+=======
+    def get_table_columns(self, table_name) -> list[str]:
+>>>>>>> 80910b9 (CHANGE: get column names to return list)
         """Gets the names of all columns in a specified table.
 
         Args:
@@ -124,10 +128,12 @@ table_names: list[str] = TableChoiceService().get_all_table_names()
 =======
 
         """
-        for column in self.connection.introspection.get_table_description(
-            self.cursor, table_name
-        ):
-            return column.name
+        return [
+            column.name
+            for column in self.connection.introspection.get_table_description(
+                self.cursor, table_name
+            )
+        ]
 
 
 table_names = TableChoiceService().get_all_table_names()
