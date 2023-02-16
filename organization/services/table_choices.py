@@ -1,5 +1,9 @@
 """
+<<<<<<< HEAD
 COPYRIGHT 2023 MONTA
+=======
+COPYRIGHT 2022 MONTA
+>>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
 
 This file is part of Monta.
 
@@ -17,7 +21,12 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+<<<<<<< HEAD
 from django.db import connection
+=======
+from django.db import connections, DEFAULT_DB_ALIAS
+from django.conf import settings
+>>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
 
 
 class TableChoiceService:
@@ -27,7 +36,13 @@ class TableChoiceService:
     database, as well as the names of the columns in a specific table.
 
     Attributes:
+<<<<<<< HEAD
         connection (django.db.Connection): The database connection.
+=======
+        engine (str): The name of the database engine being used.
+        connection (django.db.Connection): The database connection.
+        cursor (django.db.Cursor): The database cursor.
+>>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
 
     """
 
@@ -38,7 +53,13 @@ class TableChoiceService:
         Django settings.
 
         """
+<<<<<<< HEAD
         self.connection = connection
+=======
+        self.engine = settings.DATABASES[DEFAULT_DB_ALIAS]["ENGINE"]
+        self.connection = connections[DEFAULT_DB_ALIAS]
+        self.cursor = self.connection.cursor()
+>>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
 
     def get_all_table_names(self) -> list[str]:
         """Gets the names of all tables in the database.
@@ -49,6 +70,7 @@ class TableChoiceService:
 
         """
 
+<<<<<<< HEAD
         names: list[str] = self.connection.introspection.table_names()
         for table_name in names:
             excluded_names = (
@@ -64,6 +86,16 @@ class TableChoiceService:
         return names
 
     def get_column_names(self, *, table_name: str) -> list[str]:
+=======
+        names = self.connection.introspection.table_names()
+        for table_name in names:
+            excluded_tables = ("silk_", "django_")
+            if table_name.startswith(excluded_tables):
+                names.remove(table_name)
+        return names
+
+    def get_table_columns(self, table_name) -> str:
+>>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
         """Gets the names of all columns in a specified table.
 
         Args:
@@ -72,6 +104,7 @@ class TableChoiceService:
 
         Returns:
             str: The name of the first column in the table.
+<<<<<<< HEAD
         """
 
         # NOTE: You have to pass an open cursor to the get_table_description otherwise,
@@ -88,4 +121,15 @@ class TableChoiceService:
 
 
 table_names: list[str] = TableChoiceService().get_all_table_names()
+=======
+
+        """
+        for column in self.connection.introspection.get_table_description(
+            self.cursor, table_name
+        ):
+            return column.name
+
+
+table_names = TableChoiceService().get_all_table_names()
+>>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
 TABLE_NAME_CHOICES = [(table_name, table_name) for table_name in table_names]
