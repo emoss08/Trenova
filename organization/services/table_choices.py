@@ -61,7 +61,7 @@ class TableChoiceService:
                 names.remove(table_name)
         return names
 
-    def get_table_columns(self, table_name) -> str:
+    def get_table_columns(self, table_name) -> list[str]:
         """Gets the names of all columns in a specified table.
 
         Args:
@@ -72,10 +72,12 @@ class TableChoiceService:
             str: The name of the first column in the table.
 
         """
-        for column in self.connection.introspection.get_table_description(
-            self.cursor, table_name
-        ):
-            return column.name
+        return [
+            column.name
+            for column in self.connection.introspection.get_table_description(
+                self.cursor, table_name
+            )
+        ]
 
 
 table_names = TableChoiceService().get_all_table_names()
