@@ -195,7 +195,6 @@ def health_check(request: Request) -> Response:
     Returns:
         Response: A dictionary that contains the health status of the cache backend, storage backend, redis, disk usage, celery, and database.
     """
-
     health_status = {
         "cache_backend": CacheBackendHealthCheck.check_caches_and_time(),
         "storage": FileStorageHealthCheck.check_file_storage(),

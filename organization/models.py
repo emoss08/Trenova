@@ -31,7 +31,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .validators.organization import validate_org_timezone
-
+from .services.table_choices import TABLE_NAME_CHOICES
 
 class Organization(LifecycleModelMixin, TimeStampedModel):
     """
@@ -787,3 +787,62 @@ class TaxRate(TimeStampedModel):
         """
 
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
+
+class TableChangeAlert(TimeStampedModel):
+    """
+    Stores the table change alert information for a related :model:`organization.Organization`
+    """
+
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="table_change_alerts",
+        help_text=_("The organization that the tax rate belongs to."),
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        help_text=_("The name of the table change alert."),
+    )
+    table = models.CharField(
+        _("Table"),
+        max_length=50,
+        help_text=_("The table that the table change alert is for."),
+        choices=TABLE_NAME_CHOICES,
+    )
+
+
+
+    class Meta:
+        """
+        Metaclass for the TableChangeAlert model
+        """
+
+        verbose_name = _("Table Change Alert")
+        verbose_name_plural = _("Table Change Alerts")
+
+    def __str__(self) -> str:
+        """TableChangeAlert string representation.
+
+        Returns:
+            str: String representation of the table change alert.
+        """
+
+        return textwrap.wrap(self.name, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """TableChangeAlert absolute URL
+
+        Returns:
+            str: The absolute url for the table change alert.
+        """
+
+        return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})
