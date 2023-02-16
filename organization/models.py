@@ -33,6 +33,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from .validators.organization import validate_org_timezone
 from .services.table_choices import TABLE_NAME_CHOICES
 
+
 class Organization(LifecycleModelMixin, TimeStampedModel):
     """
     Organization Model Fields
@@ -787,6 +788,7 @@ class TaxRate(TimeStampedModel):
         """
 
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
+
 
 class TableChangeAlert(TimeStampedModel):
     """
