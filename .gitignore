@@ -31,3 +31,4 @@ media
 .tox
 django_config.md
 postgres
+celerybeat-schedule
