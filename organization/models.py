@@ -793,7 +793,6 @@ class TableChangeAlert(TimeStampedModel):
     Stores the table change alert information for a related :model:`organization.Organization`
     """
 
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -807,6 +806,11 @@ class TableChangeAlert(TimeStampedModel):
         related_name="table_change_alerts",
         help_text=_("The organization that the tax rate belongs to."),
     )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Whether the table change alert is active."),
+    )
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -818,8 +822,32 @@ class TableChangeAlert(TimeStampedModel):
         help_text=_("The table that the table change alert is for."),
         choices=TABLE_NAME_CHOICES,
     )
-
-
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("The description of the table change alert."),
+    )
+    email_profile = models.ForeignKey(
+        EmailProfile,
+        on_delete=models.CASCADE,
+        verbose_name=_("Email Profile"),
+        related_name="table_change_alerts",
+        help_text=_("The email profile that the table change alert will use."),
+        blank=True,
+        null=True,
+    )
+    effective_date = models.DateField(
+        _("Effective Date"),
+        help_text=_("The effective date of the table change alert."),
+        blank=True,
+        null=True,
+    )
+    expiration_date = models.DateField(
+        _("Expiration Date"),
+        help_text=_("The expiration date of the table change alert."),
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         """
@@ -828,6 +856,7 @@ class TableChangeAlert(TimeStampedModel):
 
         verbose_name = _("Table Change Alert")
         verbose_name_plural = _("Table Change Alerts")
+        ordering = ["name"]
 
     def __str__(self) -> str:
         """TableChangeAlert string representation.
