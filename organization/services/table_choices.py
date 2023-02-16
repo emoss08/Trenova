@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2022 MONTA
+COPYRIGHT 2023 MONTA
 
 This file is part of Monta.
 
@@ -61,7 +61,7 @@ class TableChoiceService:
                 names.remove(table_name)
         return names
 
-    def get_table_columns(self, table_name) -> list[str]:
+    def get_column_names(self, table_name) -> list[str]:
         """Gets the names of all columns in a specified table.
 
         Args:

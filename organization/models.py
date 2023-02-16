@@ -30,6 +30,7 @@ from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hoo
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
+from .services.psql_triggers import create_insert_trigger
 from .validators.organization import validate_org_timezone
 from .services.table_choices import TABLE_NAME_CHOICES
 
@@ -795,6 +796,16 @@ class TableChangeAlert(TimeStampedModel):
     Stores the table change alert information for a related :model:`organization.Organization`
     """
 
+    @final
+    class DatabaseActionChoices(models.TextChoices):
+        """
+        Database action choices
+        """
+
+        INSERT = "INSERT", _("Insert")
+        UPDATE = "UPDATE", _("Update")
+        BOTH = "BOTH", _("Both")
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -818,6 +829,13 @@ class TableChangeAlert(TimeStampedModel):
         max_length=50,
         help_text=_("The name of the table change alert."),
     )
+    database_action = models.CharField(
+        _("Database Action"),
+        max_length=50,
+        help_text=_("The database action that the table change alert is for."),
+        choices=DatabaseActionChoices.choices,
+        default=DatabaseActionChoices.INSERT,
+    )
     table = models.CharField(
         _("Table"),
         max_length=50,
@@ -837,6 +855,21 @@ class TableChangeAlert(TimeStampedModel):
         help_text=_("The email profile that the table change alert will use."),
         blank=True,
         null=True,
+    )
+    function_name = models.CharField(
+        _("Function Name"),
+        max_length=50,
+        help_text=_("The function name that the table change alert will use."),
+    )
+    trigger_name = models.CharField(
+        _("Trigger Name"),
+        max_length=50,
+        help_text=_("The trigger name that the table change alert will use."),
+    )
+    listener_name = models.CharField(
+        _("Listener Name"),
+        max_length=50,
+        help_text=_("The listener name that the table change alert will use."),
     )
     effective_date = models.DateField(
         _("Effective Date"),
@@ -868,6 +901,21 @@ class TableChangeAlert(TimeStampedModel):
         """
 
         return textwrap.wrap(self.name, 50)[0]
+
+    def save(self, **kwargs):
+        """Saves the table change alert.
+
+        Args:
+            **kwargs: Keyword arguments.
+        """
+        print("creating triggers")
+        create_insert_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+            listener_name=self.listener_name,
+        )
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL
