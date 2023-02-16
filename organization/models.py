@@ -806,17 +806,11 @@ class TaxRate(TimeStampedModel):
 
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
 
-<<<<<<< HEAD
-
-class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
-=======
 class TableChangeAlert(TimeStampedModel):
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
     """
     Stores the table change alert information for a related :model:`organization.Organization`
     """
 
-<<<<<<< HEAD
     @final
     class DatabaseActionChoices(models.TextChoices):
         """
@@ -844,9 +838,6 @@ class TableChangeAlert(TimeStampedModel):
             "listener": "new_or_updated",
         },
     }
-=======
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -860,20 +851,16 @@ class TableChangeAlert(TimeStampedModel):
         related_name="table_change_alerts",
         help_text=_("The organization that the tax rate belongs to."),
     )
-<<<<<<< HEAD
     is_active = models.BooleanField(
         _("Is Active"),
         default=True,
         help_text=_("Whether the table change alert is active."),
     )
-=======
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
     name = models.CharField(
         _("Name"),
         max_length=50,
         help_text=_("The name of the table change alert."),
     )
-<<<<<<< HEAD
     database_action = models.CharField(
         _("Database Action"),
         max_length=50,
@@ -931,17 +918,38 @@ class TableChangeAlert(TimeStampedModel):
         blank=True,
         null=True,
     )
-=======
     table = models.CharField(
         _("Table"),
         max_length=50,
         help_text=_("The table that the table change alert is for."),
         choices=TABLE_NAME_CHOICES,
     )
-
-
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
-
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("The description of the table change alert."),
+    )
+    email_profile = models.ForeignKey(
+        EmailProfile,
+        on_delete=models.CASCADE,
+        verbose_name=_("Email Profile"),
+        related_name="table_change_alerts",
+        help_text=_("The email profile that the table change alert will use."),
+        blank=True,
+        null=True,
+    )
+    effective_date = models.DateField(
+        _("Effective Date"),
+        help_text=_("The effective date of the table change alert."),
+        blank=True,
+        null=True,
+    )
+    expiration_date = models.DateField(
+        _("Expiration Date"),
+        help_text=_("The expiration date of the table change alert."),
+        blank=True,
+        null=True,
+    )
     class Meta:
         """
         Metaclass for the TableChangeAlert model
@@ -949,11 +957,8 @@ class TableChangeAlert(TimeStampedModel):
 
         verbose_name = _("Table Change Alert")
         verbose_name_plural = _("Table Change Alerts")
-<<<<<<< HEAD
         ordering = ("name",)
         db_table = "table_change_alert"
-=======
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
 
     def __str__(self) -> str:
         """TableChangeAlert string representation.
@@ -964,7 +969,6 @@ class TableChangeAlert(TimeStampedModel):
 
         return textwrap.wrap(self.name, 50)[0]
 
-<<<<<<< HEAD
     @hook(BEFORE_SAVE)
     def save_trigger_name_requirements(self) -> None:
         """Save trigger name requirements.
@@ -1014,8 +1018,6 @@ class TableChangeAlert(TimeStampedModel):
             function_name=self.function_name,
         )
 
-=======
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL
 
@@ -1023,8 +1025,4 @@ class TableChangeAlert(TimeStampedModel):
             str: The absolute url for the table change alert.
         """
 
-<<<<<<< HEAD
         return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})
-=======
-        return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
