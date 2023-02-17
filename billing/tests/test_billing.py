@@ -25,12 +25,12 @@ from django.core.exceptions import ValidationError
 from billing import selectors
 from billing.models import (
     BillingControl,
-    BillingException,
     BillingHistory,
     BillingQueue,
 )
 from billing.services import mass_order_billing
-from customer.factories import CustomerBillingProfileFactory, CustomerFactory
+from customer.factories import CustomerFactory
+from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
@@ -44,7 +44,13 @@ def test_bill_orders(
     user,
     worker,
 ) -> None:
-    order = OrderFactory(status="C")
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.save()
 
     customer = CustomerFactory(organization=organization)
 
@@ -95,7 +101,14 @@ def test_invoice_number_generation(organization, customer, user, worker) -> None
     """
     Test that invoice number is generated for each new invoice
     """
-    order = OrderFactory(status="C")
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.save()
+
     invoice = BillingQueue.objects.create(
         organization=user.organization,
         order_type=order.order_type,
@@ -118,8 +131,22 @@ def test_invoice_number_increments(organization, customer, user, worker) -> None
     """
     Test that invoice number increments by 1 for each new invoice
     """
-    order = OrderFactory(status="C")
-    order_2 = OrderFactory(status="C")
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.save()
+
+    order_2 = OrderFactory()
+
+    order_2_movements = order_2.movements.all()
+    order_2_movements.update(status="C")
+
+    order_2.status = "C"
+    order_2.save()
+
     invoice = BillingQueue.objects.create(
         organization=user.organization,
         order_type=order.order_type,
@@ -303,8 +330,15 @@ def test_get_billing_queue_information(order):
     Test that the correct billing queue is returned when using the
     `get_billing_queue_information` selector.
     """
+
+
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
     order.ready_to_bill = True
-    order.status = StatusChoices.COMPLETED
+    order.status = "C"
     order.save()
 
     billing_queue = BillingQueue.objects.create(
