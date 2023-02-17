@@ -16,27 +16,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 from __future__ import absolute_import
 
-import os
+from celery import shared_task
+from django.core.management import call_command
 
-from celery import Celery
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-
-app = Celery("backend")
-
-app.config_from_object("django.conf:settings", namespace="CELERY")
-
-app.autodiscover_tasks()
-
-app.conf.task_routes = {
-    "core.tasks.delete_audit_log_records": {"queue": "audit_log", "routing_key": "audit_log"},
-    "organization.tasks.table_change_alerts": {"queue": "table_changes", "routing_key": "table_changes"},
-}
+from kombu.exceptions import OperationalError
 
 
-@app.task(bind=True)
-def debug_task(self):
-    print(f"Request: {self.request!r}")
+
+
+@shared_task(bind=True)
+def table_change_alerts(self) -> None:
+    try:
+        call_command("listen")
+    except OperationalError as exc:
+        raise self.retry(exc=exc) from exc
+
+

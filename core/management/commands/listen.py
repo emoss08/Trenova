@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2023 MONTA
+COPYRIGHT 2022 MONTA
 
 This file is part of Monta.
 
@@ -17,26 +17,12 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from __future__ import absolute_import
+from typing import Any
+from django.core.management.base import BaseCommand
 
-import os
-
-from celery import Celery
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-
-app = Celery("backend")
-
-app.config_from_object("django.conf:settings", namespace="CELERY")
-
-app.autodiscover_tasks()
-
-app.conf.task_routes = {
-    "core.tasks.delete_audit_log_records": {"queue": "audit_log", "routing_key": "audit_log"},
-    "organization.tasks.table_change_alerts": {"queue": "table_changes", "routing_key": "table_changes"},
-}
+from organization.services.psql_listen import psql_listner
 
 
-@app.task(bind=True)
-def debug_task(self):
-    print(f"Request: {self.request!r}")
+class Command(BaseCommand):
+    def handle(self, *args: Any, **options: Any) -> None:
+        psql_listner()
