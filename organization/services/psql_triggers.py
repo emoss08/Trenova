@@ -39,12 +39,18 @@ def create_field_string(fields: list[str]) -> str:
 
     """
     excluded_fields = ["id", "created", "modified", "organization_id"]
-    field_strings = [f"'{field}', new.{field}" for field in fields if field not in excluded_fields]
-    return ", ".join(field_strings[:-1]) + (", " if len(field_strings) > 1 else "") + field_strings[-1]
+    field_strings = [
+        f"'{field}', new.{field}" for field in fields if field not in excluded_fields
+    ]
+    return (
+        ", ".join(field_strings[:-1])
+        + (", " if len(field_strings) > 1 else "")
+        + field_strings[-1]
+    )
 
 
 def create_insert_function(
-        *, listener_name: str, function_name: str, fields: list[str]
+    *, listener_name: str, function_name: str, fields: list[str]
 ) -> None:
     """Creates a PL/pgSQL trigger function that sends a notification on INSERT.
 
@@ -91,7 +97,7 @@ def create_insert_function(
 
 
 def create_insert_trigger(
-        *, trigger_name: str, table_name: str, function_name: str, listener_name: str
+    *, trigger_name: str, table_name: str, function_name: str, listener_name: str
 ) -> None:
     """Creates a PL/pgSQL trigger and function for sending a notification on INSERT.
 
@@ -129,5 +135,31 @@ def create_insert_trigger(
             ON {table_name}
             FOR EACH ROW
             EXECUTE PROCEDURE {function_name}();
+            """
+        )
+
+
+def drop_trigger(*, trigger_name: str, function_name: str, table_name: str) -> None:
+    """Deletes a PL/pgSQL trigger and function.
+
+    This function drops a PL/pgSQL trigger and function from the database.
+
+    Args:
+        trigger_name (str): The name of the trigger to delete.
+        function_name (str): The name of the function to delete.
+        table_name (str): The name of the table the trigger is associated with.
+
+    Returns:
+        None: This function has no return value.
+
+    Raises:
+        django.db.utils.DatabaseError: If there is an error executing the SQL query.
+
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            DROP TRIGGER IF EXISTS {trigger_name} ON {table_name};
+            DROP FUNCTION IF EXISTS {function_name}();
             """
         )

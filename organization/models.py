@@ -26,11 +26,17 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
+from django_lifecycle import (
+    AFTER_CREATE,
+    BEFORE_SAVE,
+    LifecycleModelMixin,
+    hook,
+    AFTER_SAVE, BEFORE_DELETE,
+)
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from .services.psql_triggers import create_insert_trigger
+from .services.psql_triggers import create_insert_trigger, drop_trigger
 from .validators.organization import validate_org_timezone
 from .services.table_choices import TABLE_NAME_CHOICES
 
@@ -791,7 +797,7 @@ class TaxRate(TimeStampedModel):
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
 
 
-class TableChangeAlert(TimeStampedModel):
+class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
     """
     Stores the table change alert information for a related :model:`organization.Organization`
     """
@@ -805,6 +811,24 @@ class TableChangeAlert(TimeStampedModel):
         INSERT = "INSERT", _("Insert")
         UPDATE = "UPDATE", _("Update")
         BOTH = "BOTH", _("Both")
+
+    ACTION_NAMES = {
+        "INSERT": {
+            "function": "notify_new",
+            "trigger": "after_insert",
+            "listener": "new_added",
+        },
+        "UPDATE": {
+            "function": "notify_updated",
+            "trigger": "after_update",
+            "listener": "updated",
+        },
+        "BOTH": {
+            "function": "notify_new_or_updated",
+            "trigger": "after_insert_or_update",
+            "listener": "new_or_updated",
+        },
+    }
 
     id = models.UUIDField(
         primary_key=True,
@@ -860,16 +884,19 @@ class TableChangeAlert(TimeStampedModel):
         _("Function Name"),
         max_length=50,
         help_text=_("The function name that the table change alert will use."),
+        blank=True,
     )
     trigger_name = models.CharField(
         _("Trigger Name"),
         max_length=50,
         help_text=_("The trigger name that the table change alert will use."),
+        blank=True,
     )
     listener_name = models.CharField(
         _("Listener Name"),
         max_length=50,
         help_text=_("The listener name that the table change alert will use."),
+        blank=True,
     )
     effective_date = models.DateField(
         _("Effective Date"),
@@ -902,20 +929,36 @@ class TableChangeAlert(TimeStampedModel):
 
         return textwrap.wrap(self.name, 50)[0]
 
-    def save(self, **kwargs):
-        """Saves the table change alert.
+    @hook(BEFORE_SAVE)
+    def before_save(self) -> None:
+        """Before save hook.
 
-        Args:
-            **kwargs: Keyword arguments.
+        Returns:
+            None
         """
-        print("creating triggers")
+        action_names = self.ACTION_NAMES[self.database_action]
+
+        self.function_name = f"{action_names['function']}_{self.table}"
+        self.trigger_name = f"{action_names['trigger']}_{self.table}"
+        self.listener_name = f"{action_names['listener']}_{self.table}"
+
+    @hook(AFTER_SAVE)
+    def after_save(self) -> None:
         create_insert_trigger(
             trigger_name=self.trigger_name,
             table_name=self.table,
             function_name=self.function_name,
             listener_name=self.listener_name,
         )
-        super().save(**kwargs)
+
+    @hook(BEFORE_DELETE)
+    def before_delete(self) -> None:
+        """Before delete hook.
+
+        Returns:
+            None
+        """
+        drop_trigger(trigger_name=self.trigger_name, table_name=self.table, function_name=self.function_name)
 
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL
