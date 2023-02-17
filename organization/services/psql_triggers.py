@@ -16,12 +16,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import List
 
 from django.db import connection
 from .table_choices import TableChoiceService
 
 
-def create_field_string(fields: list[str]) -> str:
+def create_field_string(fields: List[str]) -> str:
     """Creates a comma-separated string of field names for a SQL query.
 
     This function takes a list of field names and creates a string that can be used
@@ -38,8 +39,8 @@ def create_field_string(fields: list[str]) -> str:
         representing the specified fields.
 
     """
-    excluded_fields = ["id", "created", "modified", "organization_id"]
-    field_strings = [
+    excluded_fields: List[str] = ["id", "created", "modified", "organization_id"]
+    field_strings: List[str] = [
         f"'{field}', new.{field}" for field in fields if field not in excluded_fields
     ]
     return (
@@ -73,7 +74,7 @@ def create_insert_function(
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
 
     """
-    fields_string = create_field_string(fields)
+    fields_string: str = create_field_string(fields)
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
@@ -120,7 +121,7 @@ def create_insert_trigger(
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
 
     """
-    fields = TableChoiceService().get_column_names(table_name)
+    fields: List[str] = TableChoiceService().get_column_names(table_name)
     create_insert_function(
         function_name=function_name,
         fields=fields,
@@ -137,7 +138,6 @@ def create_insert_trigger(
             EXECUTE PROCEDURE {function_name}();
             """
         )
-
 
 def drop_trigger(*, trigger_name: str, function_name: str, table_name: str) -> None:
     """Deletes a PL/pgSQL trigger and function.

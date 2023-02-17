@@ -65,7 +65,6 @@ class TableChoiceService:
                 "notifications_",
             )
             if table_name.startswith(excluded_names):
-                print(f"Removing {table_name} from table names.")
                 names.remove(table_name)
         return names
 

@@ -424,7 +424,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
                 },
             )
 
-    @hook(BEFORE_DELETE, when="name", is_now="CON")  # type: ignore
+    @hook(BEFORE_DELETE, when="name", is_now="CON")
     def on_delete(self) -> None:
         """Prevent deletion of document classification.
 

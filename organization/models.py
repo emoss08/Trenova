@@ -32,7 +32,8 @@ from django_lifecycle import (
     LifecycleModelMixin,
     hook,
     AFTER_SAVE,
-    BEFORE_DELETE, BEFORE_UPDATE,
+    BEFORE_DELETE,
+    BEFORE_UPDATE,
 )
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -950,6 +951,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
+
         drop_trigger(
             trigger_name=self.trigger_name,
             table_name=self.table,
@@ -963,7 +965,6 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
             listener_name=self.listener_name,
         )
 
-
     @hook(AFTER_SAVE)
     def after_save(self) -> None:
         """After save hook.
@@ -971,6 +972,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
+
         create_insert_trigger(
             trigger_name=self.trigger_name,
             table_name=self.table,
@@ -985,6 +987,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
+
         drop_trigger(
             trigger_name=self.trigger_name,
             table_name=self.table,
