@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from __future__ import absolute_import
 
 from celery import shared_task
@@ -24,13 +25,26 @@ from django.core.management import call_command
 from kombu.exceptions import OperationalError
 
 
-
-
 @shared_task(bind=True)
 def table_change_alerts(self) -> None:
+    """
+    A Celery task that listens for table change notifications from a PostgreSQL database and retries on errors.
+
+    This task invokes the `psql_listener` management command using Django's `call_command` function, which sets up
+    a PostgreSQL listener using the `psycopg2` library, and listens for notifications on the channels defined in
+    the `TableChangeAlert` model. If an `OperationalError` is raised during the process, the task will retry the
+    operation with exponential backoff.
+
+    Args:
+        self: A reference to the task instance.
+
+    Returns:
+        None.
+
+    Raises:
+        None.
+    """
     try:
-        call_command("listen")
+        call_command("psql_listener")
     except OperationalError as exc:
         raise self.retry(exc=exc) from exc
-
-

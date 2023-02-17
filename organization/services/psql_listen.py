@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 
 import psycopg2
+from django.db import connection
 from environ import environ
 
 from organization.selectors import get_active_table_alerts
@@ -28,47 +29,77 @@ env = environ.Env()
 ENV_DIR = Path(__file__).parent.parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
 
-conn = psycopg2.connect(
-    host=env("DB_HOST"),
-    database=env("DB_NAME"),
-    user=env("DB_USER"),
-    password=env("DB_PASSWORD"),
-    port=env("DB_PORT"),
-)
 
-
-def pgsql_listener() -> str | None:
+class PSQLListener:
     """
-    Listens for table change notifications from the PostgreSQL database and prints them to the console.
+    Listens for table change notifications from a PostgreSQL database and prints them to the console.
 
-    This function retrieves a list of active TableChangeAlert objects from the database, and sets up a
-    PostgreSQL connection using the psycopg2 library. It then iterates over the list of alerts and
-    registers a PostgreSQL listener for each one, using the alert's 'listener_name' attribute as the
-    channel name. When a notification is received on a channel, the function prints the notification
-    details to the console.
+    This class provides a `listen()` method that retrieves a list of active table change alerts from the database
+    using the `get_active_table_alerts()` function. It then sets up a PostgreSQL connection using the `connect()`
+    method, and registers a PostgreSQL listener for each alert. When a notification is received on a channel, the
+    `listen()` method prints the notification details to the console.
 
-    Returns:
-        str | None: A string indicating that no active table change alerts were found, or None if
-        active alerts were found.
-
-    Raises:
-        None.
+    The `connect()` method is a class method that creates a connection to the PostgreSQL database using the
+    `psycopg2.connect()` function, and sets the `autocommit` attribute to `True`.
 
     Example usage:
-        psql_listener()
+    >>>    listener = PSQLListener()
+    >>>    listener.listen()
     """
-    table_changes = get_active_table_alerts()
 
-    if not table_changes:
-        return "No active table change alerts."
+    @classmethod
+    def connect(cls)-> connection:
+        """
+        Creates a connection to a PostgreSQL database.
 
-    with conn.cursor() as cur:
-        for change in table_changes:
-            cur.execute(f"LISTEN {change.listener_name};")
-            conn.commit()
+        Returns:
+            psycopg2.connection: A connection to the PostgreSQL database.
 
-        while True:
-            conn.poll()
-            while conn.notifies:
-                notify = conn.notifies.pop(0)
-                print("Got NOTIFY:", notify.pid, notify.channel, notify.payload)
+        Raises:
+            None.
+        """
+        conn = psycopg2.connect(
+            host=env("DB_HOST"),
+            database=env("DB_NAME"),
+            user=env("DB_USER"),
+            password=env("DB_PASSWORD"),
+            port=env("DB_PORT"),
+        )
+        conn.autocommit = True
+        return conn
+
+    @classmethod
+    def listen(cls) -> None:
+        """
+        Listens for table change notifications and prints them to the console.
+
+        This method retrieves a list of active table change alerts from the database using the
+        `get_active_table_alerts()` function. It then sets up a PostgreSQL connection using the `connect()`
+        method, and registers a PostgreSQL listener for each alert. When a notification is received on a channel,
+        the method prints the notification details to the console.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        conn = cls.connect()
+        table_changes = get_active_table_alerts()
+
+        if not table_changes:
+            print("No active table change alerts.")
+            conn.close()
+            return
+
+        with conn.cursor() as cur:
+            for change in table_changes:
+                cur.execute(f"LISTEN {change.listener_name};")
+
+            while True:
+                conn.poll()
+                while conn.notifies:
+                    notify = conn.notifies.pop(0)
+                    print(
+                        f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}"
+                    )
