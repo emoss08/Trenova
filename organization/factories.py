@@ -78,7 +78,6 @@ class EmailProfileFactory(factory.django.DjangoModelFactory):
     username = factory.Faker("name", locale="en_US")
     password = factory.Faker("password")
 
-
 class TableChangeAlertFactory(factory.django.DjangoModelFactory):
     """
     Table Change Alert factory class
@@ -101,9 +100,5 @@ class TableChangeAlertFactory(factory.django.DjangoModelFactory):
     )
     table = factory.Faker(
         "random_element",
-        elements=(
-            "organization",
-            "depot",
-            "email_profile",
-        ),
+        elements=("organization_organization", "organization_depot", "organization_emailprofile"),
     )

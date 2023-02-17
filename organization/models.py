@@ -864,7 +864,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
     )
     table = models.CharField(
         _("Table"),
-        max_length=50,
+        max_length=255,
         help_text=_("The table that the table change alert is for."),
         choices=TABLE_NAME_CHOICES,
     )
