@@ -56,8 +56,16 @@ class TableChoiceService:
 
         names = self.connection.introspection.table_names()
         for table_name in names:
-            excluded_tables = ("silk_", "django_")
-            if table_name.startswith(excluded_tables):
+            excluded_names = (
+                "silk_",
+                "django_",
+                "auth_",
+                "contenttypes_",
+                "sessions_",
+                "notifications_",
+            )
+            if table_name.startswith(excluded_names):
+                print(f"Removing {table_name} from table names.")
                 names.remove(table_name)
         return names
 

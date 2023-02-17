@@ -31,7 +31,8 @@ from django_lifecycle import (
     BEFORE_SAVE,
     LifecycleModelMixin,
     hook,
-    AFTER_SAVE, BEFORE_DELETE,
+    AFTER_SAVE,
+    BEFORE_DELETE, BEFORE_UPDATE,
 )
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -942,8 +943,34 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         self.trigger_name = f"{action_names['trigger']}_{self.table}"
         self.listener_name = f"{action_names['listener']}_{self.table}"
 
+    @hook(BEFORE_UPDATE, when="table", has_changed=True)
+    def delete_and_add_new_trigger(self) -> None:
+        """Delete and add new trigger.
+
+        Returns:
+            None: This function has no return value.
+        """
+        drop_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+        )
+
+        create_insert_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+            listener_name=self.listener_name,
+        )
+
+
     @hook(AFTER_SAVE)
     def after_save(self) -> None:
+        """After save hook.
+
+        Returns:
+            None: This function has no return value.
+        """
         create_insert_trigger(
             trigger_name=self.trigger_name,
             table_name=self.table,
@@ -956,9 +983,13 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         """Before delete hook.
 
         Returns:
-            None
+            None: This function has no return value.
         """
-        drop_trigger(trigger_name=self.trigger_name, table_name=self.table, function_name=self.function_name)
+        drop_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+        )
 
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL
