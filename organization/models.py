@@ -28,19 +28,19 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from django_lifecycle import (
     AFTER_CREATE,
-    AFTER_SAVE,
-    BEFORE_DELETE,
     BEFORE_SAVE,
-    BEFORE_UPDATE,
     LifecycleModelMixin,
     hook,
+    AFTER_SAVE,
+    BEFORE_DELETE,
+    BEFORE_UPDATE,
 )
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from .services.psql_triggers import drop_trigger_and_function
-from .services.table_choices import TABLE_NAME_CHOICES
+from .services.psql_triggers import create_insert_trigger, drop_trigger
 from .validators.organization import validate_org_timezone
+from .services.table_choices import TABLE_NAME_CHOICES
 
 
 class Organization(LifecycleModelMixin, TimeStampedModel):
@@ -178,7 +178,6 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
         ordering = ["name"]
-        db_table = "organization"
 
     def __str__(self) -> str:
         """
@@ -299,7 +298,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         Returns:
             str: The absolute url for the organization.
         """
-        return reverse("organizations-detail", kwargs={"pk": self.pk})
+        return reverse("organization:details", kwargs={"pk": self.pk})
 
 
 class Depot(LifecycleModelMixin, TimeStampedModel):
@@ -343,7 +342,6 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Depot")
         verbose_name_plural = _("Depots")
         ordering = ["name"]
-        db_table = "depot"
 
     def __str__(self) -> str:
         """Depot string representation.
@@ -369,7 +367,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         Returns:
             str: The absolute url for the depot.
         """
-        return reverse("organization-depot-detail", kwargs={"pk": self.pk})
+        return reverse("organization:depot-detail", kwargs={"pk": self.pk})
 
 
 class DepotDetail(TimeStampedModel):
@@ -454,7 +452,6 @@ class DepotDetail(TimeStampedModel):
         verbose_name = _("Depot Detail")
         verbose_name_plural = _("Depot Details")
         ordering = ["depot"]
-        db_table = "depot_detail"
 
     def __str__(self) -> str:
         """DepotDetail string representation.
@@ -472,7 +469,7 @@ class DepotDetail(TimeStampedModel):
             str: The absolute url for the depot detail.
         """
 
-        return reverse("organization-depot-detail", kwargs={"pk": self.depot.pk})
+        return reverse("organization:depot-details", kwargs={"pk": self.depot.pk})
 
 
 class Department(models.Model):
@@ -522,7 +519,6 @@ class Department(models.Model):
 
         verbose_name = _("Department")
         verbose_name_plural = _("Departments")
-        db_table = "department"
 
     def __str__(self) -> str:
         """Department string representation
@@ -540,7 +536,7 @@ class Department(models.Model):
             str: Get the absolute url of the Department
         """
 
-        return reverse("organization-department-detail", kwargs={"pk": self.pk})
+        return reverse("organization:department-detail", kwargs={"pk": self.pk})
 
 
 class EmailProfile(TimeStampedModel):
@@ -621,7 +617,6 @@ class EmailProfile(TimeStampedModel):
         verbose_name = _("Email Profile")
         verbose_name_plural = _("Email Profiles")
         ordering = ["email"]
-        db_table = "email_profile"
 
     def __str__(self) -> str:
         """EmailProfile string representation.
@@ -639,7 +634,7 @@ class EmailProfile(TimeStampedModel):
             str: The absolute url for the email profile.
         """
 
-        return reverse("email-profiles-detail", kwargs={"pk": self.pk})
+        return reverse("organization:email-profile-detail", kwargs={"pk": self.pk})
 
 
 class EmailControl(TimeStampedModel):
@@ -677,7 +672,6 @@ class EmailControl(TimeStampedModel):
 
         verbose_name = _("Email Control")
         verbose_name_plural = _("Email Controls")
-        db_table = "email_control"
 
     def __str__(self) -> str:
         """EmailControl string representation.
@@ -695,7 +689,7 @@ class EmailControl(TimeStampedModel):
             str: The absolute url for the email control.
         """
 
-        return reverse("email-control-detail", kwargs={"pk": self.pk})
+        return reverse("organization:email-control-detail", kwargs={"pk": self.pk})
 
 
 class EmailLog(TimeStampedModel):
@@ -727,7 +721,6 @@ class EmailLog(TimeStampedModel):
         verbose_name = _("Email Log")
         verbose_name_plural = _("Email Logs")
         ordering = ["-created"]
-        db_table = "email_log"
 
     def __str__(self) -> str:
         """EmailLog string representation.
@@ -786,7 +779,6 @@ class TaxRate(TimeStampedModel):
         verbose_name = _("Tax Rate")
         verbose_name_plural = _("Tax Rates")
         ordering = ["name"]
-        db_table = "tax_rate"
 
     def __str__(self) -> str:
         """TaxRate string representation.
@@ -872,7 +864,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
     )
     table = models.CharField(
         _("Table"),
-        max_length=255,
+        max_length=50,
         help_text=_("The table that the table change alert is for."),
         choices=TABLE_NAME_CHOICES,
     )
@@ -929,7 +921,6 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Table Change Alert")
         verbose_name_plural = _("Table Change Alerts")
         ordering = ("name",)
-        db_table = "table_change_alert"
 
     def __str__(self) -> str:
         """TableChangeAlert string representation.
@@ -941,18 +932,17 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         return textwrap.wrap(self.name, 50)[0]
 
     @hook(BEFORE_SAVE)
-    def save_trigger_name_requirements(self) -> None:
-        """Save trigger name requirements.
-
-        This function is called before the table change alert is saved. It is responsible for
-        setting the function name, trigger name, and listener name.
+    def before_save(self) -> None:
+        """Before save hook.
 
         Returns:
             None
         """
-        from organization.services.table_change import set_trigger_name_requirements
+        action_names = self.ACTION_NAMES[self.database_action]
 
-        set_trigger_name_requirements(instance=self)
+        self.function_name = f"{action_names['function']}_{self.table}"
+        self.trigger_name = f"{action_names['trigger']}_{self.table}"
+        self.listener_name = f"{action_names['listener']}_{self.table}"
 
     @hook(BEFORE_UPDATE, when="table", has_changed=True)
     def delete_and_add_new_trigger(self) -> None:
@@ -961,9 +951,19 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
-        from organization.services.table_change import drop_trigger_and_create
 
-        drop_trigger_and_create(instance=self)
+        drop_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+        )
+
+        create_insert_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+            listener_name=self.listener_name,
+        )
 
     @hook(AFTER_SAVE)
     def after_save(self) -> None:
@@ -972,9 +972,13 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
-        from organization.services.table_change import create_trigger_based_on_db_action
 
-        create_trigger_based_on_db_action(instance=self)
+        create_insert_trigger(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+            listener_name=self.listener_name,
+        )
 
     @hook(BEFORE_DELETE)
     def before_delete(self) -> None:
@@ -983,7 +987,8 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
-        drop_trigger_and_function(
+
+        drop_trigger(
             trigger_name=self.trigger_name,
             table_name=self.table,
             function_name=self.function_name,

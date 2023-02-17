@@ -20,9 +20,42 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any
 from django.core.management.base import BaseCommand
 
-from organization.services.psql_listen import psql_listner
+from organization.services.psql_listen import pgsql_listener
 
 
 class Command(BaseCommand):
+    """
+    A Django management command that listens for PostgreSQL notifications and logs them to the console.
+
+    This command sets up a PostgreSQL listener using the `psycopg2` library, and listens for notifications on
+    the channels defined in the `TableChangeAlert` model. When a notification is received, it is logged to the
+    console using Django's built-in logging system.
+
+    Example usage:
+        python manage.py psql_listener
+
+    Returns:
+        None.
+    """
+
+    help = "Listens for PostgreSQL notifications and logs them to the console."
+
     def handle(self, *args: Any, **options: Any) -> None:
-        psql_listner()
+        """
+        Runs the main body of the command.
+
+        This method invokes the `psql_listener` function, which sets up a PostgreSQL listener using the
+        `psycopg2` library, and listens for notifications on the channels defined in the `TableChangeAlert`
+        model. When a notification is received, it is logged to the console using Django's built-in logging system.
+
+        Args:
+            args: A list of positional arguments.
+            options: A dictionary of keyword arguments.
+
+        Returns:
+            None.
+
+        Raises:
+            None.
+        """
+        pgsql_listener()
