@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2022 MONTA
+COPYRIGHT 2023 MONTA
 
 This file is part of Monta.
 
@@ -16,6 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
+from __future__ import absolute_import
 
 import datetime
 
