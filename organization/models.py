@@ -920,7 +920,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
 
         verbose_name = _("Table Change Alert")
         verbose_name_plural = _("Table Change Alerts")
-        ordering = ["name"]
+        ordering = ("name",)
 
     def __str__(self) -> str:
         """TableChangeAlert string representation.
