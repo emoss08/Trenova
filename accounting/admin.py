@@ -25,7 +25,7 @@ from django.http import HttpRequest
 
 from utils.admin import GenericAdmin
 
-from .models import GeneralLedgerAccount, RevenueCode
+from .models import GeneralLedgerAccount, RevenueCode, DivisionCode
 
 
 @admin.register(GeneralLedgerAccount)
@@ -78,6 +78,23 @@ class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
     """
 
     model: type[RevenueCode] = RevenueCode
+    list_display: tuple[str, ...] = (
+        "code",
+        "description",
+    )
+    search_fields: tuple[str, ...] = (
+        "code",
+        "description",
+    )
+
+
+@admin.register(DivisionCode)
+class DivisionCodeAdmin(GenericAdmin[DivisionCode]):
+    """
+    Division Code Admin
+    """
+
+    model: type[DivisionCode] = DivisionCode
     list_display: tuple[str, ...] = (
         "code",
         "description",

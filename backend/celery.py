@@ -32,8 +32,14 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.task_routes = {
-    "core.tasks.delete_audit_log_records": {"queue": "audit_log", "routing_key": "audit_log"},
-    "organization.tasks.table_change_alerts": {"queue": "table_changes", "routing_key": "table_changes"},
+    "core.tasks.delete_audit_log_records": {
+        "queue": "audit_log",
+        "routing_key": "audit_log",
+    },
+    "organization.tasks.table_change_alerts": {
+        "queue": "table_changes",
+        "routing_key": "table_changes",
+    },
 }
 
 

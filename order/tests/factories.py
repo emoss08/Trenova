@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2022 MONTA
+COPYRIGHT 2023 MONTA
 
 This file is part of Monta.
 
