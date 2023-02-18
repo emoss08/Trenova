@@ -214,3 +214,11 @@ class TaxRateViewSet(OrganizationMixin):
 
     serializer_class = serializers.TaxRateSerializer
     queryset = models.TaxRate.objects.all()
+
+class TableChangeAlertViewSet(OrganizationMixin):
+    """
+    TableChangeAlert ViewSet to manage requests to the table change alert endpoint
+    """
+
+    serializer_class = serializers.TableChangeAlertSerializer
+    queryset = models.TableChangeAlert.objects.all()
