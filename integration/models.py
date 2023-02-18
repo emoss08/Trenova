@@ -83,6 +83,7 @@ class IntegrationVendor(LifecycleModelMixin, GenericModel):
         verbose_name = _("Integration Vendor")
         verbose_name_plural = _("Integration Vendors")
         ordering = ["name"]
+        db_table = "integration_vendor"
 
     def __str__(self) -> str:
         """Returns the name of the integration vendor.
@@ -183,6 +184,7 @@ class Integration(GenericModel):
         verbose_name = _("Integration")
         verbose_name_plural = _("Integrations")
         ordering = ["integration_vendor"]
+        db_table = "integration"
 
     def __str__(self) -> str:
         """String representation of the Integration Model
@@ -328,6 +330,7 @@ class GoogleAPI(GenericModel):
 
         verbose_name = _("Google API")
         verbose_name_plural = _("Google APIs")
+        db_table = "google_api"
 
     def __str__(self) -> str:
         """Google API string representation

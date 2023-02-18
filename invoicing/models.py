@@ -157,6 +157,7 @@ class InvoiceControl(GenericModel):
 
         verbose_name = _("Invoice Control")
         verbose_name_plural = _("Invoice Controls")
+        db_table = "invoice_control"
 
     def __str__(self) -> str:
         """

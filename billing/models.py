@@ -174,6 +174,7 @@ class BillingControl(GenericModel):
 
         verbose_name = _("Billing Control")
         verbose_name_plural = _("Billing Controls")
+        db_table = "billing_control"
 
     def __str__(self) -> str:
         """Billing control string representation
@@ -261,6 +262,7 @@ class ChargeType(GenericModel):
         verbose_name = _("Charge Type")
         verbose_name_plural = _("Charge Types")
         ordering = ["name"]
+        db_table = "charge_type"
 
     def __str__(self) -> str:
         """Charge Type string representation
@@ -346,6 +348,7 @@ class AccessorialCharge(GenericModel):  # type: ignore
         verbose_name = _("Other Charge")
         verbose_name_plural = _("Other Charges")
         ordering = ["code"]
+        db_table = "other_charge"
 
     def __str__(self) -> str:
         """Other Charge string representation
@@ -394,6 +397,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
         verbose_name = _("Document Classification")
         verbose_name_plural = _("Document Classifications")
         ordering = ["name"]
+        db_table = "document_classification"
 
     def __str__(self) -> str:
         """Document classification string representation
@@ -681,6 +685,7 @@ class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Billing Queue")
         verbose_name_plural = _("Billing Queues")
         ordering = ["order"]
+        db_table = "billing_queue"
 
     def __str__(self) -> str:
         """String Representation of the BillingQueue model
@@ -834,12 +839,12 @@ class BillingTransferLog(GenericModel):
     class Meta:
         """
         Metaclass for the BillingTransferLog model.
-        Metaclass for the BillingTransferLog model.
         """
 
         verbose_name = _("Billing Transfer Log")
         verbose_name_plural = _("Billing Transfer Logs")
         ordering = ["-transferred_at"]
+        db_table = "billing_transfer_log"
 
     def __str__(self) -> str:
         """
@@ -1042,6 +1047,7 @@ class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Billing History")
         verbose_name_plural = _("Billing Histories")
         ordering = ["order"]
+        db_table = "billing_history"
 
     def __str__(self) -> str:
         """String Representation of the BillingHistory model
@@ -1185,6 +1191,7 @@ class BillingException(GenericModel):
         verbose_name = _("Billing Exception")
         verbose_name_plural = _("Billing Exceptions")
         ordering = ["order"]
+        db_table = "billing_exception"
 
     def __str__(self) -> str:
         """String Representation of the BillingException model
