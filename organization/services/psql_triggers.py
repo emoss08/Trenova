@@ -263,7 +263,9 @@ def create_update_trigger(
         )
 
 
-def drop_trigger_and_function(*, trigger_name: str, function_name: str, table_name: str) -> None:
+def drop_trigger_and_function(
+    *, trigger_name: str, function_name: str, table_name: str
+) -> None:
     """Deletes a PL/pgSQL trigger and function.
 
     This function drops a PL/pgSQL trigger and function from the database.
@@ -287,3 +289,30 @@ def drop_trigger_and_function(*, trigger_name: str, function_name: str, table_na
             DROP FUNCTION IF EXISTS {function_name}();
             """
         )
+
+
+def check_trigger_exists(*, table_name: str, trigger_name: str) -> bool:
+    """
+    Check if a trigger with the given name exists on the specified table in the database.
+
+    Args:
+        table_name (str): The name of the table to check for the trigger.
+        trigger_name (str): The name of the trigger to check for.
+
+    Returns:
+        bool: True if the trigger exists on the table, False otherwise.
+
+    Raises:
+        django.db.utils.DatabaseError: If there is an error executing the SQL query.
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            SELECT EXISTS(
+            SELECT 1 FROM information_schema.triggers
+            WHERE event_object_table = '{table_name}'
+            AND trigger_name = '{trigger_name}')
+            """
+        )
+        return cursor.fetchone()[0]
