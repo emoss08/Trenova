@@ -17,10 +17,13 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 from django.db.models import Q
+from django.db import connection, DEFAULT_DB_ALIAS
+from django.conf import settings
 from django.utils import timezone
+from utils.db import DATABASE_ENGINE_CHOICES
 
 from organization.models import TableChangeAlert
 
@@ -45,11 +48,28 @@ def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
         for alert in alerts:
             # Do something with the alert object
     """
-    query = (
-            Q(is_active=True) &
-            Q(effective_date__lte=timezone.now()) &
-            Q(Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True))
-    )
+    query = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
+        effective_date__isnull=True
+    ) & Q(Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True))
 
     active_alerts = TableChangeAlert.objects.filter(query)
     return active_alerts if active_alerts.exists() else None
+
+def get_active_triggers() -> Optional[Iterable[Tuple]]:
+    """
+    Returns a list of active triggers in the PostgreSQL database.
+
+    Raises:
+        NotImplementedError: If the database engine is not PostgreSQL.
+
+    Returns:
+        List[Tuple]: A list of tuples representing the rows from the result set.
+        If the query returns an empty result set, this function returns `None`.
+    """
+    engine = settings['DATABASES'][DEFAULT_DB_ALIAS]['ENGINE']
+    if engine != DATABASE_ENGINE_CHOICES['postgresql']:
+        raise NotImplementedError(f"get_active_triggers() is not supported with database engine {engine}")
+
+    with connection.cursor() as conn:
+        conn.execute("SELECT * FROM information_schema.triggers")
+        return conn.fetchall()

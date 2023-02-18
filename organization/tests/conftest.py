@@ -32,6 +32,7 @@ def depot() -> Generator[Any, Any, None]:
     """
     yield DepotFactory()
 
+
 def table_alert_change() -> Generator[Any, Any, None]:
     """
     Table alert change fixture

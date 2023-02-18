@@ -38,7 +38,10 @@ from django_lifecycle import (
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from .services.psql_triggers import create_insert_trigger, drop_trigger
+from .services.psql_triggers import (
+    create_insert_trigger,
+    drop_trigger_and_function,
+)
 from .validators.organization import validate_org_timezone
 from .services.table_choices import TABLE_NAME_CHOICES
 
@@ -932,17 +935,18 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         return textwrap.wrap(self.name, 50)[0]
 
     @hook(BEFORE_SAVE)
-    def before_save(self) -> None:
-        """Before save hook.
+    def save_trigger_name_requirements(self) -> None:
+        """Save trigger name requirements.
+
+        This function is called before the table change alert is saved. It is responsible for
+        setting the function name, trigger name, and listener name.
 
         Returns:
             None
         """
-        action_names = self.ACTION_NAMES[self.database_action]
+        from organization.services.table_change import set_trigger_name_requirements
 
-        self.function_name = f"{action_names['function']}_{self.table}"
-        self.trigger_name = f"{action_names['trigger']}_{self.table}"
-        self.listener_name = f"{action_names['listener']}_{self.table}"
+        set_trigger_name_requirements(instance=self)
 
     @hook(BEFORE_UPDATE, when="table", has_changed=True)
     def delete_and_add_new_trigger(self) -> None:
@@ -951,19 +955,9 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
+        from organization.services.table_change import drop_trigger_and_create
 
-        drop_trigger(
-            trigger_name=self.trigger_name,
-            table_name=self.table,
-            function_name=self.function_name,
-        )
-
-        create_insert_trigger(
-            trigger_name=self.trigger_name,
-            table_name=self.table,
-            function_name=self.function_name,
-            listener_name=self.listener_name,
-        )
+        drop_trigger_and_create(instance=self)
 
     @hook(AFTER_SAVE)
     def after_save(self) -> None:
@@ -972,13 +966,9 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
+        from organization.services.table_change import create_trigger_based_on_db_action
 
-        create_insert_trigger(
-            trigger_name=self.trigger_name,
-            table_name=self.table,
-            function_name=self.function_name,
-            listener_name=self.listener_name,
-        )
+        create_trigger_based_on_db_action(instance=self)
 
     @hook(BEFORE_DELETE)
     def before_delete(self) -> None:
@@ -987,8 +977,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         Returns:
             None: This function has no return value.
         """
-
-        drop_trigger(
+        drop_trigger_and_function(
             trigger_name=self.trigger_name,
             table_name=self.table,
             function_name=self.function_name,
