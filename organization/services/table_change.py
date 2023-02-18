@@ -93,8 +93,8 @@ def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
         "INSERT": create_insert_trigger,
         "UPDATE": create_update_trigger,
         "BOTH": lambda **kwargs: (
-            create_insert_trigger(**kwargs),
-            create_update_trigger(**kwargs),
+            create_insert_trigger(**kwargs), # type: ignore
+            create_update_trigger(**kwargs), # type: ignore
         ),
     }
 
@@ -102,7 +102,7 @@ def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
     if action is None:
         raise ValueError(f"Invalid database action: {instance.database_action}")
     else:
-        action(
+        action( # type: ignore
             trigger_name=instance.trigger_name,
             function_name=instance.function_name,
             listener_name=instance.listener_name,
