@@ -39,7 +39,6 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .services.psql_triggers import (
-    create_insert_trigger,
     drop_trigger_and_function,
 )
 from .validators.organization import validate_org_timezone
@@ -301,7 +300,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         Returns:
             str: The absolute url for the organization.
         """
-        return reverse("organization:details", kwargs={"pk": self.pk})
+        return reverse("organizations-detail", kwargs={"pk": self.pk})
 
 
 class Depot(LifecycleModelMixin, TimeStampedModel):
@@ -370,7 +369,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         Returns:
             str: The absolute url for the depot.
         """
-        return reverse("organization:depot-detail", kwargs={"pk": self.pk})
+        return reverse("organization-depot-detail", kwargs={"pk": self.pk})
 
 
 class DepotDetail(TimeStampedModel):
@@ -472,7 +471,7 @@ class DepotDetail(TimeStampedModel):
             str: The absolute url for the depot detail.
         """
 
-        return reverse("organization:depot-details", kwargs={"pk": self.depot.pk})
+        return reverse("organization-depot-detail", kwargs={"pk": self.depot.pk})
 
 
 class Department(models.Model):
@@ -539,7 +538,7 @@ class Department(models.Model):
             str: Get the absolute url of the Department
         """
 
-        return reverse("organization:department-detail", kwargs={"pk": self.pk})
+        return reverse("organization-department-detail", kwargs={"pk": self.pk})
 
 
 class EmailProfile(TimeStampedModel):
@@ -637,7 +636,7 @@ class EmailProfile(TimeStampedModel):
             str: The absolute url for the email profile.
         """
 
-        return reverse("organization:email-profile-detail", kwargs={"pk": self.pk})
+        return reverse("email-profiles-detail", kwargs={"pk": self.pk})
 
 
 class EmailControl(TimeStampedModel):
@@ -692,7 +691,7 @@ class EmailControl(TimeStampedModel):
             str: The absolute url for the email control.
         """
 
-        return reverse("organization:email-control-detail", kwargs={"pk": self.pk})
+        return reverse("email-control-detail", kwargs={"pk": self.pk})
 
 
 class EmailLog(TimeStampedModel):

@@ -26,16 +26,21 @@ from django.utils import timezone
 from utils.db import DATABASE_ENGINE_CHOICES
 
 from organization.models import TableChangeAlert
+from cacheops import cached_as
 
-
+@cached_as(TableChangeAlert, timeout=60, keep_fresh=True)
 def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
     """
     Returns an iterable of active TableChangeAlert objects, or None if no alerts are active.
 
     An alert is considered active if it meets the following conditions:
     - The 'is_active' flag is True
-    - The 'effective_date' is less than or equal to the current time
+    - The 'effective_date' is less than or equal to the current time, or is null
     - The 'expiration_date' is greater than or equal to the current time, or is null
+
+    This function is decorated with the `cached_as()` decorator from the `cacheops` package. This decorator
+    caches the result of this function for 60 seconds, and keeps the cache fresh by invalidating the cache
+    whenever a TableChangeAlert object is saved or deleted.
 
     Returns:
         An iterable of active TableChangeAlert objects, or None if no alerts are active.
@@ -48,6 +53,7 @@ def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
         for alert in alerts:
             # Do something with the alert object
     """
+
     query = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
         effective_date__isnull=True
     ) & Q(Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True))
