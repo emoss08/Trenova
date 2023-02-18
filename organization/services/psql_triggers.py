@@ -16,13 +16,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-from typing import List
+
+from typing import List, Set
 
 from django.db import connection
 from .table_choices import TableChoiceService
 
+table_service = TableChoiceService()
 
-def create_field_string(fields: List[str]) -> str:
+
+def create_insert_field_string(fields: List[str]) -> str:
     """Creates a comma-separated string of field names for a SQL query.
 
     This function takes a list of field names and creates a string that can be used
@@ -74,7 +77,7 @@ def create_insert_function(
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
 
     """
-    fields_string: str = create_field_string(fields)
+    fields_string: str = create_insert_field_string(fields)
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
@@ -121,7 +124,8 @@ def create_insert_trigger(
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
 
     """
-    fields: List[str] = TableChoiceService().get_column_names(table_name)
+
+    fields: List[str] = table_service.get_column_names(table_name=table_name)
     create_insert_function(
         function_name=function_name,
         fields=fields,
@@ -139,7 +143,127 @@ def create_insert_trigger(
             """
         )
 
-def drop_trigger(*, trigger_name: str, function_name: str, table_name: str) -> None:
+
+def create_update_field_string(fields: List[str]) -> str:
+    """
+    Returns a SQL WHERE clause string that compares old and new field values for use in an UPDATE statement.
+
+    Args:
+        fields: A list of field names to compare. The list should be in the same order as the corresponding columns
+            in the database table.
+
+    Returns:
+        A string containing a SQL WHERE clause that compares the old and new values for each field not excluded.
+        Each field comparison is separated by ' OR '.
+
+    The resulting SQL WHERE clause can be used in an UPDATE or UPDATE Trigger statement to update a table with
+    only the fields that have changed. The clause only includes comparisons for fields that are not excluded.
+
+    For example, if `fields` is `["name", "email", "phone"]`, the resulting SQL WHERE clause string might be:
+
+    (OLD.name IS DISTINCT FROM NEW.name OR OLD.email IS DISTINCT FROM NEW.email OR OLD.phone IS DISTINCT FROM NEW.phone)
+
+    This would compare the old and new values for all three fields, since none of them are excluded.
+
+    Raises:
+        None.
+    """
+    excluded: Set[str] = {"id", "created", "modified", "organization_id"}
+    return f"({' OR '.join(f'OLD.{f} IS DISTINCT FROM NEW.{f}' for f in fields if f not in excluded)})"
+
+
+def create_update_function(
+    *, listener_name: str, function_name: str, fields: list[str]
+) -> None:
+    """
+    Creates a PL/pgSQL trigger function that sends a notification on UPDATE.
+
+    This function creates a PL/pgSQL trigger function that sends a JSON notification
+    containing the specified fields whenever a row is updated in the associated
+    table. The function is created or replaced in the database using the provided
+    function_name and trigger_name. The notification is sent to a channel named
+    listener_name, which can be used to listen for notifications in a separate
+    process.
+
+    Args:
+        listener_name (str): The name of the channel to send notifications to.
+        function_name (str): The name of the function to create or replace.
+        fields (list of str): A list of field names to include in the notification.
+
+    Returns:
+        None: This function has no return value.
+
+    Raises:
+        django.db.utils.DatabaseError: If there is an error executing the SQL query.
+
+    """
+    fields_string: str = create_insert_field_string(fields)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+                CREATE or REPLACE FUNCTION {function_name}()
+                RETURNS trigger
+                LANGUAGE 'plpgsql'
+                as $BODY$
+                declare
+                begin
+                    if (tg_op = 'UPDATE') then
+                    perform pg_notify('{listener_name}',
+                    json_build_object(
+                        {fields_string}
+                    )::text);
+                    end if;
+                    return null;
+                end
+                $BODY$;
+                """
+        )
+
+
+def create_update_trigger(
+    *, trigger_name: str, table_name: str, function_name: str, listener_name: str
+) -> None:
+    """Creates a PL/pgSQL trigger and function for sending a notification on UPDATE.
+
+    This function creates a PL/pgSQL trigger and function that sends a JSON notification
+    containing the names and values of all fields in the specified table whenever a row
+    is updated in the table. The function and trigger are created or replaced in the
+    database using the provided names. The notification is sent to a channel named
+    listener_name, which can be used to listen for notifications in a separate process.
+
+    Args:
+        trigger_name (str): The name of the trigger to create or replace.
+        table_name (str): The name of the table to monitor for UPDATEs.
+        function_name (str): The name of the function to create or replace.
+        listener_name (str): The name of the channel to send notifications to.
+
+    Returns:
+        None: This function has no return value.
+
+    Raises:
+        django.db.utils.DatabaseError: If there is an error executing the SQL query.
+
+    """
+    fields: List[str] = table_service.get_column_names(table_name=table_name)
+
+    create_update_function(
+        function_name=function_name,
+        fields=fields,
+        listener_name=listener_name,
+    )
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+            CREATE or REPLACE TRIGGER {trigger_name}
+            AFTER UPDATE ON {table_name}
+            FOR EACH ROW
+            EXECUTE PROCEDURE {function_name}();
+            """
+        )
+
+
+def drop_trigger_and_function(*, trigger_name: str, function_name: str, table_name: str) -> None:
     """Deletes a PL/pgSQL trigger and function.
 
     This function drops a PL/pgSQL trigger and function from the database.

@@ -21,14 +21,14 @@ import pytest
 from celery.exceptions import Retry
 from django.core.management import call_command
 from io import StringIO
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from kombu.exceptions import OperationalError
 
 from organization import models, factories
-from organization.services.psql_listen import PSQLListener
 from organization.services.table_choices import TABLE_NAME_CHOICES
 from django.db import connection
+
 
 from organization.tasks import table_change_alerts
 
@@ -57,7 +57,7 @@ def test_create_table_charge_alert(organization):
     assert table_charge.table == TABLE_NAME_CHOICES[0][0]
 
 
-def test_table_change_insert_database_action_save(organization):
+def test_table_change_insert_database_action_save():
     """
     Tests the creation of a table change alert with INSERT Action adds the proper function,
     trigger, and listener name.

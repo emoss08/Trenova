@@ -16,11 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import os
 from pathlib import Path
 
 import psycopg2
-from django.db import connection
 from environ import environ
 
 from organization.selectors import get_active_table_alerts
@@ -48,7 +48,7 @@ class PSQLListener:
     """
 
     @classmethod
-    def connect(cls)-> connection:
+    def connect(cls):
         """
         Creates a connection to a PostgreSQL database.
 
