@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 import uuid
 
 import pytest
@@ -30,7 +31,6 @@ from billing.models import (
 )
 from billing.services import mass_order_billing
 from customer.factories import CustomerFactory
-from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
@@ -330,7 +330,6 @@ def test_get_billing_queue_information(order):
     Test that the correct billing queue is returned when using the
     `get_billing_queue_information` selector.
     """
-
 
     order = OrderFactory()
 
