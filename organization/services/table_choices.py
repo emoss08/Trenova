@@ -31,7 +31,6 @@ class TableChoiceService:
     Attributes:
         engine (str): The name of the database engine being used.
         connection (django.db.Connection): The database connection.
-        cursor (django.db.Cursor): The database cursor.
 
     """
 
@@ -44,7 +43,6 @@ class TableChoiceService:
         """
         self.engine = settings.DATABASES[DEFAULT_DB_ALIAS]["ENGINE"]
         self.connection = connections[DEFAULT_DB_ALIAS]
-        self.cursor = self.connection.cursor()
 
     def get_all_table_names(self) -> List[str]:
         """Gets the names of all tables in the database.
@@ -69,7 +67,7 @@ class TableChoiceService:
                 names.remove(table_name)
         return names
 
-    def get_column_names(self, table_name: str) -> List[str]:
+    def get_column_names(self, *, table_name: str) -> List[str]:
         """Gets the names of all columns in a specified table.
 
         Args:
@@ -80,13 +78,18 @@ class TableChoiceService:
             str: The name of the first column in the table.
 
         """
+
+        # NOTE: You have to pass an open cursor to the get_table_description otherwise,
+        # you will get an error like this:
+        # django.db.utils.ProgrammingError: cursor already closed
+        # This is because the cursor is closed when the connection is closed.
+
         return [
             column.name
             for column in self.connection.introspection.get_table_description(
-                self.cursor, table_name
+                self.connection.cursor(), table_name
             )
         ]
-
 
 table_names: List[str] = TableChoiceService().get_all_table_names()
 TABLE_NAME_CHOICES = [(table_name, table_name) for table_name in table_names]
