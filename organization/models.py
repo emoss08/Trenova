@@ -180,6 +180,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
         ordering = ["name"]
+        db_table = "organization"
 
     def __str__(self) -> str:
         """
@@ -344,6 +345,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Depot")
         verbose_name_plural = _("Depots")
         ordering = ["name"]
+        db_table = "depot"
 
     def __str__(self) -> str:
         """Depot string representation.
@@ -454,6 +456,7 @@ class DepotDetail(TimeStampedModel):
         verbose_name = _("Depot Detail")
         verbose_name_plural = _("Depot Details")
         ordering = ["depot"]
+        db_table = "depot_detail"
 
     def __str__(self) -> str:
         """DepotDetail string representation.
@@ -521,6 +524,7 @@ class Department(models.Model):
 
         verbose_name = _("Department")
         verbose_name_plural = _("Departments")
+        db_table = "department"
 
     def __str__(self) -> str:
         """Department string representation
@@ -619,6 +623,7 @@ class EmailProfile(TimeStampedModel):
         verbose_name = _("Email Profile")
         verbose_name_plural = _("Email Profiles")
         ordering = ["email"]
+        db_table = "email_profile"
 
     def __str__(self) -> str:
         """EmailProfile string representation.
@@ -674,6 +679,7 @@ class EmailControl(TimeStampedModel):
 
         verbose_name = _("Email Control")
         verbose_name_plural = _("Email Controls")
+        db_table = "email_control"
 
     def __str__(self) -> str:
         """EmailControl string representation.
@@ -723,6 +729,7 @@ class EmailLog(TimeStampedModel):
         verbose_name = _("Email Log")
         verbose_name_plural = _("Email Logs")
         ordering = ["-created"]
+        db_table = "email_log"
 
     def __str__(self) -> str:
         """EmailLog string representation.
@@ -781,6 +788,7 @@ class TaxRate(TimeStampedModel):
         verbose_name = _("Tax Rate")
         verbose_name_plural = _("Tax Rates")
         ordering = ["name"]
+        db_table = "tax_rate"
 
     def __str__(self) -> str:
         """TaxRate string representation.
@@ -923,6 +931,7 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Table Change Alert")
         verbose_name_plural = _("Table Change Alerts")
         ordering = ("name",)
+        db_table = "table_change_alert"
 
     def __str__(self) -> str:
         """TableChangeAlert string representation.
