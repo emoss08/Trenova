@@ -28,7 +28,6 @@ class TableChoiceService:
     database, as well as the names of the columns in a specific table.
 
     Attributes:
-        engine (str): The name of the database engine being used.
         connection (django.db.Connection): The database connection.
 
     """

@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import uuid
+from typing import Iterable
 
 import pytest
 from django.core import mail
@@ -25,15 +26,12 @@ from django.core.exceptions import ValidationError
 
 from billing import selectors
 from billing.models import (
-    BillingControl,
     BillingHistory,
     BillingQueue,
 )
 from billing.services import mass_order_billing
 from customer.factories import CustomerFactory
-from order.models import Order
 from order.tests.factories import OrderFactory
-from organization.models import Organization
 from utils.models import StatusChoices
 
 pytestmark = pytest.mark.django_db
@@ -241,91 +239,98 @@ def test_auto_bill_criteria_choices_is_invalid(organization) -> None:
     ]
 
 
-@pytest.mark.parametrize(
-    "org, order_transfer_criteria, expected_orders",
-    [
-        (
-            # organization with READY_AND_COMPLETED order_transfer_criteria
-            Organization(
-                billing_control=BillingControl(
-                    order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
-                )
-            ),
-            BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED,
-            [
-                Order(
-                    billed=False,
-                    status=StatusChoices.COMPLETED,
-                    ready_to_bill=True,
-                    transferred_to_billing=False,
-                    billing_transfer_date=None,
-                )
-            ],
-        ),
-        (
-            # organization with COMPLETED order_transfer_criteria
-            Organization(
-                billing_control=BillingControl(
-                    order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.COMPLETED
-                )
-            ),
-            BillingControl.OrderTransferCriteriaChoices.COMPLETED,
-            [
-                Order(
-                    billed=False,
-                    status=StatusChoices.COMPLETED,
-                    ready_to_bill=False,
-                    transferred_to_billing=False,
-                    billing_transfer_date=None,
-                )
-            ],
-        ),
-        (
-            # organization with READY_TO_BILL order_transfer_criteria
-            Organization(
-                billing_control=BillingControl(
-                    order_transfer_criteria=BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
-                )
-            ),
-            BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL,
-            [
-                Order(
-                    billed=False,
-                    status=StatusChoices.IN_PROGRESS,
-                    ready_to_bill=True,
-                    transferred_to_billing=False,
-                    billing_transfer_date=None,
-                )
-            ],
-        ),
-        (
-            # organization with NO order_transfer_criteria set
-            Organization(billing_control=BillingControl(order_transfer_criteria=None)),
-            None,
-            None,
-        ),
-    ],
-)
-def test_get_billable_orders(org, order_transfer_criteria, expected_orders):
+def test_get_billable_orders_completed() -> None:
     """
-    Test that the correct orders are returned when using the `get_billable_orders`
-    selector.
+    Test that get_billable_orders returns orders that are completed and not
+    billed. When the billing_control.order_transfer_criteria is set to
+    "COMPLETED".
     """
+    # create an order that is ready to bill
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.billed = False
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.save()
+
     # set the order_transfer_criteria on the organization's billing_control
-    org.billing_control.order_transfer_criteria = order_transfer_criteria
-    # set the orders on the organization
-    org.orders_set = expected_orders
+    order.organization.billing_control.order_transfer_criteria = "COMPLETED"
+    order.organization.billing_control.save()
+    billable_orders = selectors.get_billable_orders(organization=order.organization)
 
-    # call the get_billable_orders function and check the result
-    result = selectors.get_billable_orders(organization=org)
-    if expected_orders is None:
-        assert result is None
-    else:
-        for order, expected_order in zip(result, expected_orders):
-            assert order == expected_order
+    for order in billable_orders:
+        assert order.status == "C"
+        assert not order.billed
+        assert not order.transferred_to_billing
+        assert order.billing_transfer_date is None
+
+def test_get_billable_orders_ready_and_completed():
+    """
+    Test that get_billable_orders returns orders that are completed and not
+    billed. When the billing_control.order_transfer_criteria is set to
+    "READY_AND_COMPLETED".
+    """
+    # create an order that is ready to bill
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.billed = False
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.ready_to_bill = True
+    order.save()
+
+    # set the order_transfer_criteria on the organization's billing_control
+    order.organization.billing_control.order_transfer_criteria = "READY_AND_COMPLETED"
+    order.organization.billing_control.save()
+    billable_orders = selectors.get_billable_orders(organization=order.organization)
+
+    for order in billable_orders:
+        assert order.status == "C"
+        assert not order.billed
+        assert not order.transferred_to_billing
+        assert order.billing_transfer_date is None
 
 
-def test_get_billing_queue_information(order):
+def test_get_billable_orders_ready() -> None:
+    """
+    Test that get_billable_orders returns orders that are completed and not
+    billed. When the billing_control.order_transfer_criteria is set to
+    "READY_AND_COMPLETED".
+    """
+    # create an order that is ready to bill
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.billed = False
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.ready_to_bill = True
+    order.save()
+
+    # set the order_transfer_criteria on the organization's billing_control
+    order.organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    order.organization.billing_control.save()
+    billable_orders = selectors.get_billable_orders(organization=order.organization)
+
+    for order in billable_orders:
+        assert order.status == "C"
+        assert not order.billed
+        assert not order.transferred_to_billing
+        assert order.billing_transfer_date is None
+
+
+def test_get_billing_queue_information() -> None:
     """
     Test that the correct billing queue is returned when using the
     `get_billing_queue_information` selector.
