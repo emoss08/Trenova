@@ -18,8 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from typing import List
 
-from django.db import connection, DEFAULT_DB_ALIAS
-from django.conf import settings
+from django.db import connection
 
 
 class TableChoiceService:
@@ -75,7 +74,6 @@ class TableChoiceService:
 
         Returns:
             str: The name of the first column in the table.
-
         """
 
         # NOTE: You have to pass an open cursor to the get_table_description otherwise,
