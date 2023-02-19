@@ -47,18 +47,22 @@ def get_billable_orders(*, organization: Organization) -> Iterable[Order] | None
 
     # Map BillingControl.OrderTransferCriteriaChoices to the corresponding query
     criteria_to_query = {
-        BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED:
-            Q(status=StatusChoices.COMPLETED) & Q(ready_to_bill=True),
-        BillingControl.OrderTransferCriteriaChoices.COMPLETED:
-            Q(status=StatusChoices.COMPLETED),
-        BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL:
-            Q(ready_to_bill=True),
+        BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED: Q(
+            status=StatusChoices.COMPLETED
+        )
+        & Q(ready_to_bill=True),
+        BillingControl.OrderTransferCriteriaChoices.COMPLETED: Q(
+            status=StatusChoices.COMPLETED
+        ),
+        BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL: Q(
+            ready_to_bill=True
+        ),
     }
 
     query = (
-            Q(billed=False)
-            & Q(transferred_to_billing=False)
-            & Q(billing_transfer_date__isnull=True)
+        Q(billed=False)
+        & Q(transferred_to_billing=False)
+        & Q(billing_transfer_date__isnull=True)
     )
     order_criteria_query = criteria_to_query.get(
         organization.billing_control.order_transfer_criteria
