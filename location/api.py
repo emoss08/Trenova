@@ -81,4 +81,3 @@ class LocationCommentViewSet(OrganizationMixin):
 
     queryset = models.LocationContact.objects.all()
     serializer_class = serializers.LocationCommentSerializer
-    filterset_fields = ("comment_type__name",)
