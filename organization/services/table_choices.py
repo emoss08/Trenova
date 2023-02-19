@@ -18,7 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 from typing import List
 
-from django.db import connections, DEFAULT_DB_ALIAS
+from django.db import connection, DEFAULT_DB_ALIAS
 from django.conf import settings
 
 
@@ -41,8 +41,7 @@ class TableChoiceService:
         Django settings.
 
         """
-        self.engine = settings.DATABASES[DEFAULT_DB_ALIAS]["ENGINE"]
-        self.connection = connections[DEFAULT_DB_ALIAS]
+        self.connection = connection
 
     def get_all_table_names(self) -> List[str]:
         """Gets the names of all tables in the database.
