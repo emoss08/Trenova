@@ -20,12 +20,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Iterable, Optional, Tuple
 
 from django.db.models import Q
-from django.db import connection, DEFAULT_DB_ALIAS
-from django.conf import settings
+from django.db import connection
 from django.utils import timezone
-from utils.db import DATABASE_ENGINE_CHOICES
 
 from organization.models import TableChangeAlert
+
 
 def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
     """
@@ -58,6 +57,7 @@ def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
 
     active_alerts = TableChangeAlert.objects.filter(query)
     return active_alerts if active_alerts.exists() else None
+
 
 def get_active_triggers() -> Optional[Iterable[Tuple]]:
     """
