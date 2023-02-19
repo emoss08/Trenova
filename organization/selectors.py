@@ -26,9 +26,7 @@ from django.utils import timezone
 from utils.db import DATABASE_ENGINE_CHOICES
 
 from organization.models import TableChangeAlert
-from cacheops import cached_as
 
-@cached_as(TableChangeAlert, timeout=60, keep_fresh=True)
 def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
     """
     Returns an iterable of active TableChangeAlert objects, or None if no alerts are active.
@@ -72,10 +70,7 @@ def get_active_triggers() -> Optional[Iterable[Tuple]]:
         List[Tuple]: A list of tuples representing the rows from the result set.
         If the query returns an empty result set, this function returns `None`.
     """
-    engine = settings['DATABASES'][DEFAULT_DB_ALIAS]['ENGINE']
-    if engine != DATABASE_ENGINE_CHOICES['postgresql']:
-        raise NotImplementedError(f"get_active_triggers() is not supported with database engine {engine}")
 
     with connection.cursor() as conn:
         conn.execute("SELECT * FROM information_schema.triggers")
-        return conn.fetchall()
+        return conn.fetchall() if conn.rowcount > 0 else None
