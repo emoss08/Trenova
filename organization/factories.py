@@ -102,8 +102,8 @@ class TableChangeAlertFactory(factory.django.DjangoModelFactory):
     table = factory.Faker(
         "random_element",
         elements=(
-            "organization_organization",
-            "organization_depot",
-            "organization_emailprofile",
+            "organization",
+            "depot",
+            "email_profile",
         ),
     )
