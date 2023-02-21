@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0013_alter_tablechangealert_options_and_more"),
     ]

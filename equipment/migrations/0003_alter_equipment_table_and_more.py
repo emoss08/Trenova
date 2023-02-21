@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("equipment", "0002_alter_equipment_options_and_more"),
     ]

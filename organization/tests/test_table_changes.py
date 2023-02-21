@@ -17,19 +17,17 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import pytest
-from celery.exceptions import Retry
-from django.core.management import call_command
 from io import StringIO
 from unittest.mock import patch
 
+import pytest
+from celery.exceptions import Retry
+from django.core.management import call_command
+from django.db import connection
 from kombu.exceptions import OperationalError
 
-from organization import models, factories
+from organization import factories, models
 from organization.services.table_choices import TABLE_NAME_CHOICES
-from django.db import connection
-
-
 from organization.tasks import table_change_alerts
 
 pytestmark = pytest.mark.django_db
@@ -140,7 +138,6 @@ def test_table_change_alerts_success(mock_call_command):
 @patch("organization.tasks.call_command")
 @patch("organization.tasks.table_change_alerts.retry")
 def test_table_change_alerts_failure(mock_call_command, mock_retry):
-
     mock_call_command.side_effect = Retry()
     mock_retry.side_effect = OperationalError()
 

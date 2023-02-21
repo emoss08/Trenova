@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0014_alter_department_table_alter_depot_table_and_more"),
     ]

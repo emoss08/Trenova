@@ -84,7 +84,11 @@ router.register(
 )
 router.register(r"email_log", org_api.EmailLogViewSet, basename="email-log")
 router.register(r"tax_rates", org_api.TaxRateViewSet, basename="tax-rates")
-router.register(r"table_change_alerts", org_api.TableChangeAlertViewSet, basename="table-change-alerts")
+router.register(
+    r"table_change_alerts",
+    org_api.TableChangeAlertViewSet,
+    basename="table-change-alerts",
+)
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")

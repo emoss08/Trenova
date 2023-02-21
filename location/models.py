@@ -354,6 +354,7 @@ class LocationComment(GenericModel):
         verbose_name_plural = _("Location Comments")
         ordering: tuple[str] = ("location",)
         db_table = "location_comment"
+
     def __str__(self) -> str:
         """LocationComment string representation
 

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("invoicing", "0005_invoicecontrol_invoice_date_format"),
     ]

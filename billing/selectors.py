@@ -17,9 +17,10 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from django.db.models import Q
+
 from billing.models import BillingControl, BillingQueue
 from order.models import Order
 from organization.models import Organization

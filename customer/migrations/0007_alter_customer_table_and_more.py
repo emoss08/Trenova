@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("customer", "0006_alter_customerruleprofile_document_class"),
     ]

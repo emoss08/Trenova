@@ -25,7 +25,7 @@ from django.http import HttpRequest
 
 from utils.admin import GenericAdmin
 
-from .models import GeneralLedgerAccount, RevenueCode, DivisionCode
+from .models import DivisionCode, GeneralLedgerAccount, RevenueCode
 
 
 @admin.register(GeneralLedgerAccount)

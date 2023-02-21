@@ -20,12 +20,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import List, Set
 
 from django.db import connection
+
 from .table_choices import TableChoiceService
 
 table_service = TableChoiceService()
 
 
-def create_insert_field_string(fields: List[str]) -> str:
+def create_insert_field_string(fields: list[str]) -> str:
     """Creates a comma-separated string of field names for a SQL query.
 
     This function takes a list of field names and creates a string that can be used
@@ -42,8 +43,8 @@ def create_insert_field_string(fields: List[str]) -> str:
         representing the specified fields.
 
     """
-    excluded_fields: List[str] = ["id", "created", "modified", "organization_id"]
-    field_strings: List[str] = [
+    excluded_fields: list[str] = ["id", "created", "modified", "organization_id"]
+    field_strings: list[str] = [
         f"'{field}', new.{field}" for field in fields if field not in excluded_fields
     ]
     return (
@@ -125,7 +126,7 @@ def create_insert_trigger(
 
     """
 
-    fields: List[str] = table_service.get_column_names(table_name=table_name)
+    fields: list[str] = table_service.get_column_names(table_name=table_name)
     create_insert_function(
         function_name=function_name,
         fields=fields,
@@ -144,7 +145,7 @@ def create_insert_trigger(
         )
 
 
-def create_update_field_string(fields: List[str]) -> str:
+def create_update_field_string(fields: list[str]) -> str:
     """
     Returns a SQL WHERE clause string that compares old and new field values for use in an UPDATE statement.
 
@@ -168,7 +169,7 @@ def create_update_field_string(fields: List[str]) -> str:
     Raises:
         None.
     """
-    excluded: Set[str] = {"id", "created", "modified", "organization_id"}
+    excluded: set[str] = {"id", "created", "modified", "organization_id"}
     return f"({' OR '.join(f'OLD.{f} IS DISTINCT FROM NEW.{f}' for f in fields if f not in excluded)})"
 
 
@@ -244,7 +245,7 @@ def create_update_trigger(
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
 
     """
-    fields: List[str] = table_service.get_column_names(table_name=table_name)
+    fields: list[str] = table_service.get_column_names(table_name=table_name)
 
     create_update_function(
         function_name=function_name,
