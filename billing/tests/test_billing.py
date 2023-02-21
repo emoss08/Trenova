@@ -18,17 +18,14 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import uuid
-from typing import Iterable
+from collections.abc import Iterable
 
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
 
 from billing import selectors
-from billing.models import (
-    BillingHistory,
-    BillingQueue,
-)
+from billing.models import BillingHistory, BillingQueue
 from billing.services import mass_order_billing
 from customer.factories import CustomerFactory
 from order.tests.factories import OrderFactory
