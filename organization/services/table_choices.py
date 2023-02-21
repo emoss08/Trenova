@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import List
 
 from django.db import connection
 
@@ -40,7 +41,7 @@ class TableChoiceService:
         """
         self.connection = connection
 
-    def get_all_table_names(self) -> list[str]:
+    def get_all_table_names(self) -> List[str]:
         """Gets the names of all tables in the database.
 
         Returns:
@@ -49,7 +50,7 @@ class TableChoiceService:
 
         """
 
-        names: list[str] = self.connection.introspection.table_names()
+        names: List[str] = self.connection.introspection.table_names()
         for table_name in names:
             excluded_names = (
                 "silk_",
@@ -63,7 +64,7 @@ class TableChoiceService:
                 names.remove(table_name)
         return names
 
-    def get_column_names(self, *, table_name: str) -> list[str]:
+    def get_column_names(self, *, table_name: str) -> List[str]:
         """Gets the names of all columns in a specified table.
 
         Args:
@@ -87,5 +88,5 @@ class TableChoiceService:
         ]
 
 
-table_names: list[str] = TableChoiceService().get_all_table_names()
+table_names: List[str] = TableChoiceService().get_all_table_names()
 TABLE_NAME_CHOICES = [(table_name, table_name) for table_name in table_names]

@@ -340,6 +340,15 @@ class Equipment(GenericModel):
         help_text=_("VIN number of the equipment."),
         validators=[us_vin_number_validator],
     )
+    fleet = models.ForeignKey(
+        "dispatch.FleetCode",
+        on_delete=models.CASCADE,
+        related_name="equipment",
+        related_query_name="equipment",
+        verbose_name=_("Fleet"),
+        blank=True,
+        null=True,
+    )
     odometer = models.PositiveIntegerField(
         _("Odometer"),
         default=0,

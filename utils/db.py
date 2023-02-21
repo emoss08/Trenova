@@ -18,8 +18,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 DATABASE_ENGINE_CHOICES = {
-    "MYSQL": "django.db.backends.mysql",
-    "postgresql": "django.db.backends.postgresql",
-    "SQLITE": "django.db.backends.sqlite3",
-    "ORACLE": "django.db.backends.oracle",
+    'MYSQL': 'django.db.backends.mysql',
+    'postgresql': 'django.db.backends.postgresql',
+    'SQLITE': 'django.db.backends.sqlite3',
+    'ORACLE': 'django.db.backends.oracle',
 }

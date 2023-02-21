@@ -19,10 +19,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from organization.models import TableChangeAlert
 from organization.services.psql_triggers import (
-    check_trigger_exists,
     create_insert_trigger,
     create_update_trigger,
     drop_trigger_and_function,
+    check_trigger_exists,
 )
 
 ACTION_NAMES = {
@@ -93,8 +93,8 @@ def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
         "INSERT": create_insert_trigger,
         "UPDATE": create_update_trigger,
         "BOTH": lambda **kwargs: (
-            create_insert_trigger(**kwargs),  # type: ignore
-            create_update_trigger(**kwargs),  # type: ignore
+            create_insert_trigger(**kwargs), # type: ignore
+            create_update_trigger(**kwargs), # type: ignore
         ),
     }
 
@@ -102,7 +102,7 @@ def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
     if action is None:
         raise ValueError(f"Invalid database action: {instance.database_action}")
     else:
-        action(  # type: ignore
+        action( # type: ignore
             trigger_name=instance.trigger_name,
             function_name=instance.function_name,
             listener_name=instance.listener_name,
