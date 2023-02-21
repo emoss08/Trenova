@@ -136,6 +136,7 @@ class HazardousMaterial(GenericModel):  # type: ignore
         verbose_name = _("Hazardous Material")
         verbose_name_plural = _("Hazardous Materials")
         ordering = ["name"]
+        db_table = "hazardous_material"
 
     def __str__(self) -> str:
         """Hazardous Material String Representation
@@ -273,6 +274,7 @@ class Commodity(GenericModel):  # type: ignore
         verbose_name = _("Commodity")
         verbose_name_plural = _("Commodities")
         ordering = ["name"]
+        db_table = "commodity"
 
     def __str__(self) -> str:
         """Commodity String Representation

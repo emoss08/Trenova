@@ -99,6 +99,7 @@ class Movement(LifecycleModelMixin, GenericModel):
 
         verbose_name = _("Movement")
         verbose_name_plural = _("Movements")
+        db_table = "movement"
 
     def __str__(self) -> str:
         """String representation of the Movement

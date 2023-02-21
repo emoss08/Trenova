@@ -14,13 +14,15 @@ ENV FIELD_ENCRYPTION_KEY='cxvoIIUnDvcCE9IkjaS_l3pvUUjngSK0eRubxEBwkRs='
 
 RUN apt-get update \
     && apt-get -y install libpq-dev gcc \
-    && apt-get -y install git
+    && apt-get -y install git \
+     && apt-get clean \
+     && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/Monta-Application/Monta.git
 
 WORKDIR /Monta
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8080
 

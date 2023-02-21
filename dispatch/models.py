@@ -175,6 +175,7 @@ class DispatchControl(GenericModel):
         verbose_name = _("Dispatch Control")
         verbose_name_plural = _("Dispatch Controls")
         ordering = ["organization"]
+        db_table = "dispatch_control"
 
     def __str__(self) -> str:
         """Dispatch control string representation
@@ -279,6 +280,7 @@ class DelayCode(GenericModel):
         verbose_name = _("Delay Code")
         verbose_name_plural = _("Delay Codes")
         ordering: list[str] = ["code"]
+        db_table = "delay_code"
 
     def __str__(self) -> str:
         """Delay code string representation
@@ -389,6 +391,7 @@ class FleetCode(GenericModel):
         verbose_name = _("Fleet Code")
         verbose_name_plural = _("Fleet Codes")
         ordering: list[str] = ["code"]
+        db_table = "fleet_code"
 
     def __str__(self) -> str:
         """
@@ -469,6 +472,7 @@ class CommentType(GenericModel):
         verbose_name = _("Comment Type")
         verbose_name_plural = _("Comment Types")
         ordering = ["organization"]
+        db_table = "comment_type"
 
     def __str__(self) -> str:
         """
@@ -614,6 +618,7 @@ class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Rate")
         verbose_name_plural = _("Rates")
         ordering = ["rate_number"]
+        db_table = "rate"
 
     def __str__(self) -> str:
         """
@@ -782,6 +787,7 @@ class RateTable(GenericModel):
         verbose_name = _("Rate Table")
         verbose_name_plural = _("Rate Tables")
         ordering = ["rate", "origin_location", "destination_location"]
+        db_table = "rate_table"
 
     def __str__(self) -> str:
         """
@@ -889,6 +895,7 @@ class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Rate Billing Table")
         verbose_name_plural = _("Rate Billing Tables")
         ordering = ["rate", "charge_code"]
+        db_table = "rate_billing_table"
 
     def __str__(self) -> str:
         """

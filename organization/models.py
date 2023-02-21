@@ -26,10 +26,20 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
+from django_lifecycle import (
+    AFTER_CREATE,
+    AFTER_SAVE,
+    BEFORE_DELETE,
+    BEFORE_SAVE,
+    BEFORE_UPDATE,
+    LifecycleModelMixin,
+    hook,
+)
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
+from .services.psql_triggers import drop_trigger_and_function
+from .services.table_choices import TABLE_NAME_CHOICES
 from .validators.organization import validate_org_timezone
 
 
@@ -168,6 +178,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Organization")
         verbose_name_plural = _("Organizations")
         ordering = ["name"]
+        db_table = "organization"
 
     def __str__(self) -> str:
         """
@@ -288,7 +299,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         Returns:
             str: The absolute url for the organization.
         """
-        return reverse("organization:details", kwargs={"pk": self.pk})
+        return reverse("organizations-detail", kwargs={"pk": self.pk})
 
 
 class Depot(LifecycleModelMixin, TimeStampedModel):
@@ -332,6 +343,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         verbose_name = _("Depot")
         verbose_name_plural = _("Depots")
         ordering = ["name"]
+        db_table = "depot"
 
     def __str__(self) -> str:
         """Depot string representation.
@@ -357,7 +369,7 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         Returns:
             str: The absolute url for the depot.
         """
-        return reverse("organization:depot-detail", kwargs={"pk": self.pk})
+        return reverse("organization-depot-detail", kwargs={"pk": self.pk})
 
 
 class DepotDetail(TimeStampedModel):
@@ -442,6 +454,7 @@ class DepotDetail(TimeStampedModel):
         verbose_name = _("Depot Detail")
         verbose_name_plural = _("Depot Details")
         ordering = ["depot"]
+        db_table = "depot_detail"
 
     def __str__(self) -> str:
         """DepotDetail string representation.
@@ -459,7 +472,7 @@ class DepotDetail(TimeStampedModel):
             str: The absolute url for the depot detail.
         """
 
-        return reverse("organization:depot-details", kwargs={"pk": self.depot.pk})
+        return reverse("organization-depot-detail", kwargs={"pk": self.depot.pk})
 
 
 class Department(models.Model):
@@ -509,6 +522,7 @@ class Department(models.Model):
 
         verbose_name = _("Department")
         verbose_name_plural = _("Departments")
+        db_table = "department"
 
     def __str__(self) -> str:
         """Department string representation
@@ -526,7 +540,7 @@ class Department(models.Model):
             str: Get the absolute url of the Department
         """
 
-        return reverse("organization:department-detail", kwargs={"pk": self.pk})
+        return reverse("organization-department-detail", kwargs={"pk": self.pk})
 
 
 class EmailProfile(TimeStampedModel):
@@ -607,6 +621,7 @@ class EmailProfile(TimeStampedModel):
         verbose_name = _("Email Profile")
         verbose_name_plural = _("Email Profiles")
         ordering = ["email"]
+        db_table = "email_profile"
 
     def __str__(self) -> str:
         """EmailProfile string representation.
@@ -624,7 +639,7 @@ class EmailProfile(TimeStampedModel):
             str: The absolute url for the email profile.
         """
 
-        return reverse("organization:email-profile-detail", kwargs={"pk": self.pk})
+        return reverse("email-profiles-detail", kwargs={"pk": self.pk})
 
 
 class EmailControl(TimeStampedModel):
@@ -662,6 +677,7 @@ class EmailControl(TimeStampedModel):
 
         verbose_name = _("Email Control")
         verbose_name_plural = _("Email Controls")
+        db_table = "email_control"
 
     def __str__(self) -> str:
         """EmailControl string representation.
@@ -679,7 +695,7 @@ class EmailControl(TimeStampedModel):
             str: The absolute url for the email control.
         """
 
-        return reverse("organization:email-control-detail", kwargs={"pk": self.pk})
+        return reverse("email-control-detail", kwargs={"pk": self.pk})
 
 
 class EmailLog(TimeStampedModel):
@@ -711,6 +727,7 @@ class EmailLog(TimeStampedModel):
         verbose_name = _("Email Log")
         verbose_name_plural = _("Email Logs")
         ordering = ["-created"]
+        db_table = "email_log"
 
     def __str__(self) -> str:
         """EmailLog string representation.
@@ -769,6 +786,7 @@ class TaxRate(TimeStampedModel):
         verbose_name = _("Tax Rate")
         verbose_name_plural = _("Tax Rates")
         ordering = ["name"]
+        db_table = "tax_rate"
 
     def __str__(self) -> str:
         """TaxRate string representation.
@@ -787,3 +805,195 @@ class TaxRate(TimeStampedModel):
         """
 
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
+
+
+class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
+    """
+    Stores the table change alert information for a related :model:`organization.Organization`
+    """
+
+    @final
+    class DatabaseActionChoices(models.TextChoices):
+        """
+        Database action choices
+        """
+
+        INSERT = "INSERT", _("Insert")
+        UPDATE = "UPDATE", _("Update")
+        BOTH = "BOTH", _("Both")
+
+    ACTION_NAMES = {
+        "INSERT": {
+            "function": "notify_new",
+            "trigger": "after_insert",
+            "listener": "new_added",
+        },
+        "UPDATE": {
+            "function": "notify_updated",
+            "trigger": "after_update",
+            "listener": "updated",
+        },
+        "BOTH": {
+            "function": "notify_new_or_updated",
+            "trigger": "after_insert_or_update",
+            "listener": "new_or_updated",
+        },
+    }
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="table_change_alerts",
+        help_text=_("The organization that the tax rate belongs to."),
+    )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Whether the table change alert is active."),
+    )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        help_text=_("The name of the table change alert."),
+    )
+    database_action = models.CharField(
+        _("Database Action"),
+        max_length=50,
+        help_text=_("The database action that the table change alert is for."),
+        choices=DatabaseActionChoices.choices,
+        default=DatabaseActionChoices.INSERT,
+    )
+    table = models.CharField(
+        _("Table"),
+        max_length=255,
+        help_text=_("The table that the table change alert is for."),
+        choices=TABLE_NAME_CHOICES,
+    )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("The description of the table change alert."),
+    )
+    email_profile = models.ForeignKey(
+        EmailProfile,
+        on_delete=models.CASCADE,
+        verbose_name=_("Email Profile"),
+        related_name="table_change_alerts",
+        help_text=_("The email profile that the table change alert will use."),
+        blank=True,
+        null=True,
+    )
+    function_name = models.CharField(
+        _("Function Name"),
+        max_length=50,
+        help_text=_("The function name that the table change alert will use."),
+        blank=True,
+    )
+    trigger_name = models.CharField(
+        _("Trigger Name"),
+        max_length=50,
+        help_text=_("The trigger name that the table change alert will use."),
+        blank=True,
+    )
+    listener_name = models.CharField(
+        _("Listener Name"),
+        max_length=50,
+        help_text=_("The listener name that the table change alert will use."),
+        blank=True,
+    )
+    effective_date = models.DateField(
+        _("Effective Date"),
+        help_text=_("The effective date of the table change alert."),
+        blank=True,
+        null=True,
+    )
+    expiration_date = models.DateField(
+        _("Expiration Date"),
+        help_text=_("The expiration date of the table change alert."),
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the TableChangeAlert model
+        """
+
+        verbose_name = _("Table Change Alert")
+        verbose_name_plural = _("Table Change Alerts")
+        ordering = ("name",)
+        db_table = "table_change_alert"
+
+    def __str__(self) -> str:
+        """TableChangeAlert string representation.
+
+        Returns:
+            str: String representation of the table change alert.
+        """
+
+        return textwrap.wrap(self.name, 50)[0]
+
+    @hook(BEFORE_SAVE)
+    def save_trigger_name_requirements(self) -> None:
+        """Save trigger name requirements.
+
+        This function is called before the table change alert is saved. It is responsible for
+        setting the function name, trigger name, and listener name.
+
+        Returns:
+            None
+        """
+        from organization.services.table_change import set_trigger_name_requirements
+
+        set_trigger_name_requirements(instance=self)
+
+    @hook(BEFORE_UPDATE, when="table", has_changed=True)
+    def delete_and_add_new_trigger(self) -> None:
+        """Delete and add new trigger.
+
+        Returns:
+            None: This function has no return value.
+        """
+        from organization.services.table_change import drop_trigger_and_create
+
+        drop_trigger_and_create(instance=self)
+
+    @hook(AFTER_SAVE)
+    def after_save(self) -> None:
+        """After save hook.
+
+        Returns:
+            None: This function has no return value.
+        """
+        from organization.services.table_change import create_trigger_based_on_db_action
+
+        create_trigger_based_on_db_action(instance=self)
+
+    @hook(BEFORE_DELETE)
+    def before_delete(self) -> None:
+        """Before delete hook.
+
+        Returns:
+            None: This function has no return value.
+        """
+        drop_trigger_and_function(
+            trigger_name=self.trigger_name,
+            table_name=self.table,
+            function_name=self.function_name,
+        )
+
+    def get_absolute_url(self) -> str:
+        """TableChangeAlert absolute URL
+
+        Returns:
+            str: The absolute url for the table change alert.
+        """
+
+        return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})

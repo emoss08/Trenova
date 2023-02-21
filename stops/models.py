@@ -65,6 +65,7 @@ class QualifierCode(GenericModel):
         verbose_name = _("Qualifier Code")
         verbose_name_plural = _("Qualifier Codes")
         ordering = ["code"]
+        db_table = "qualifier_code"
 
     def __str__(self) -> str:
         """Qualifier Code String Representation
@@ -171,6 +172,7 @@ class Stop(GenericModel):
         verbose_name = _("Stop")
         verbose_name_plural = _("Stops")
         ordering = ["movement", "sequence"]
+        db_table = "stop"
 
     def __str__(self) -> str:
         """String representation of the Stop
@@ -290,6 +292,7 @@ class StopComment(GenericModel):
 
         verbose_name = _("Stop Comment")
         verbose_name_plural = _("Stop Comments")
+        db_table = "stop_comment"
 
     def __str__(self) -> str:
         """String representation for stop comment
@@ -365,6 +368,7 @@ class ServiceIncident(GenericModel):
 
         verbose_name = _("Service Incident")
         verbose_name_plural = _("Service Incidents")
+        db_table = "service_incident"
 
     def __str__(self) -> str:
         """String representation of the ServiceIncident

@@ -148,6 +148,7 @@ class GeneralLedgerAccount(GenericModel):
         verbose_name = _("General Ledger Account")
         verbose_name_plural = _("General Ledger Accounts")
         ordering = ["account_number"]
+        db_table = "general_ledger_account"
 
     def __str__(self) -> str:
         """GeneralLedgerAccount string representation
@@ -255,6 +256,7 @@ class RevenueCode(GenericModel):  # type: ignore
         verbose_name = _("Revenue Code")
         verbose_name_plural = _("Revenue Codes")
         ordering = ["code"]
+        db_table = "revenue_code"
 
     def __str__(self) -> str:
         """RevenueCode string representation
@@ -400,6 +402,7 @@ class DivisionCode(GenericModel):
         verbose_name = _("Division Code")
         verbose_name_plural = _("Division Codes")
         ordering = ["code"]
+        db_table = "division_code"
 
     def __str__(self) -> str:
         """DivisionCode string representation

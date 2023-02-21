@@ -63,6 +63,7 @@ class LocationCategory(GenericModel):
         verbose_name = _("Location Category")
         verbose_name_plural = _("Location Categories")
         ordering: tuple[str, ...] = ("name",)
+        db_table = "location_category"
 
     def __str__(self) -> str:
         """Location Category string representation
@@ -186,6 +187,7 @@ class Location(GenericModel):  # type: ignore
         verbose_name = _("Location")
         verbose_name_plural = _("Locations")
         ordering = ("code",)
+        db_table = "location"
 
     def __str__(self) -> str:
         """Location string representation
@@ -277,6 +279,7 @@ class LocationContact(GenericModel):
         indexes: list[models.Index] = [
             models.Index(fields=["name"]),
         ]
+        db_table = "location_contact"
 
     def __str__(self) -> str:
         """LocationContact string representation
@@ -350,6 +353,7 @@ class LocationComment(GenericModel):
         verbose_name = _("Location Comment")
         verbose_name_plural = _("Location Comments")
         ordering: tuple[str] = ("location",)
+        db_table = "location_comment"
 
     def __str__(self) -> str:
         """LocationComment string representation

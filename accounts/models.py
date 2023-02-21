@@ -171,6 +171,7 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         verbose_name = _("User")
         verbose_name_plural = _("Users")
         ordering: list[str] = ["-date_joined"]
+        db_table = "user"
 
     def __str__(self) -> str:
         """
@@ -281,6 +282,7 @@ class UserProfile(GenericModel):
         indexes: list[models.Index] = [
             models.Index(fields=["-created"]),
         ]
+        db_table = "user_profile"
 
     def __str__(self) -> str:
         """Profile string representation
@@ -409,6 +411,7 @@ class JobTitle(GenericModel):
         verbose_name = _("Job Title")
         verbose_name_plural = _("Job Titles")
         ordering: list[str] = ["name"]
+        db_table = "job_title"
 
     def __str__(self) -> str:
         """Job Title string representation.
@@ -475,6 +478,7 @@ class Token(models.Model):
 
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")
+        db_table = "token"
 
     def __str__(self) -> str:
         """Token string representation.

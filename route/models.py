@@ -77,6 +77,7 @@ class Route(GenericModel):
         indexes = [
             models.Index(fields=["total_mileage", "duration"]),
         ]
+        db_table = "route"
 
     def __str__(self) -> str:
         """Route string representation
@@ -183,6 +184,7 @@ class RouteControl(GenericModel):
         verbose_name = _("Route Control")
         verbose_name_plural = _("Route Controls")
         ordering = ("organization",)
+        db_table = "route_control"
 
     def __str__(self) -> str:
         """Route Control string representation
