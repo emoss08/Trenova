@@ -4,10 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-<<<<<<< HEAD
-=======
-
->>>>>>> 3c5b7e4 (ADD: Table Change Alert models)
     dependencies = [
         ("organization", "0004_tablechangealert"),
     ]
