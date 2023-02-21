@@ -87,5 +87,6 @@ class TableChoiceService:
             )
         ]
 
+
 table_names: List[str] = TableChoiceService().get_all_table_names()
 TABLE_NAME_CHOICES = [(table_name, table_name) for table_name in table_names]

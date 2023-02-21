@@ -83,6 +83,7 @@ class WorkerAdmin(GenericAdmin[models.Worker]):
                     "worker_type",
                     "depot",
                     "manager",
+                    "fleet",
                 )
             },
         ),
@@ -106,3 +107,14 @@ class WorkerAdmin(GenericAdmin[models.Worker]):
         WorkerContactAdmin,
         WorkerCommentAdmin,
     )
+
+
+@admin.register(models.WorkerTimeAway)
+class WorkerTimeAwayAdmin(GenericAdmin[models.WorkerTimeAway]):
+    """
+    Worker Time Away Admin
+    """
+
+    model = models.WorkerTimeAway
+    list_display = ("worker", "start_date", "end_date")
+    search_fields = ("worker", "start_date", "end_date")

@@ -116,6 +116,16 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         _("State"),
         help_text=_("The state of the worker."),
     )
+    fleet = models.ForeignKey(
+        "dispatch.FleetCode",
+        on_delete=models.CASCADE,
+        related_name="worker",
+        related_query_name="workers",
+        verbose_name=_("Fleet"),
+        help_text=_("The fleet of the worker."),
+        null=True,
+        blank=True,
+    )
     zip_code = USZipCodeField(
         _("zip code"),
         help_text=_("The zip code of the worker."),
@@ -137,8 +147,6 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         related_query_name="workers",
         verbose_name=_("Manager"),
         help_text=_("The manager of the worker."),
-        null=True,
-        blank=True,
     )
     entered_by = models.ForeignKey(
         User,
@@ -147,8 +155,6 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         related_query_name="workers_entered",
         verbose_name=_("Entered by"),
         help_text=_("The user who entered the worker."),
-        null=True,
-        blank=True,
     )
 
     class Meta:
@@ -654,3 +660,72 @@ class WorkerComment(GenericModel):
         """
 
         return reverse("worker:comment-detail", kwargs={"pk": self.pk})
+
+
+class WorkerTimeAway(GenericModel):
+    """
+    Stores Worker Time Off Request
+    """
+
+    @final
+    class LeaveTypeChoices(models.TextChoices):
+        """
+        Leave type Choices
+        """
+
+        VAC = "VAC", _("Vacation")
+        PER = "PERS", _("Personal")
+        HOL = "HOL", _("Holiday")
+        SICK = "SICK", _("Sick")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    worker = models.ForeignKey(
+        Worker,
+        on_delete=models.CASCADE,
+        related_name="worker_to",
+        related_query_name="worker_to",
+        verbose_name=_("worker"),
+        help_text=_("Related worker."),
+    )
+    start_date = models.DateField(
+        _("Start Date"), help_text=_("Start date for Worker Time Off")
+    )
+    end_date = models.DateField(
+        _("End Date"), help_text=_("End date for Worker Time Off")
+    )
+    leave_type = ChoiceField(
+        _("Leave Type"), choices=LeaveTypeChoices.choices, help_text=_("Type of Leave")
+    )
+
+    class Meta:
+        """
+        Metaclass for WorkerTimeAway
+        """
+
+        verbose_name = _("Worker Time Away")
+        verbose_name_plural = _("Worker Time Away")
+        ordering = ["worker"]
+        db_table = "worker_time_away"
+
+    def __str__(self) -> str:
+        """Worker Time Away string representation
+
+        Returns:
+            str: Worker Time Away string representation
+        """
+
+        return textwrap.wrap(self.worker.code, 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """Worker Time Away absolute url
+
+        Returns:
+            str: Worker Time Away absolute url
+        """
+
+        return reverse("worker-time-away-detail", kwargs={"pk": self.pk})
