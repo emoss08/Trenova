@@ -1,4 +1,25 @@
+"""
+COPYRIGHT 2022 MONTA
+
+This file is part of Monta.
+
+Monta is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Monta is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 from collections.abc import Iterable
+
+from django.db.models import Q
 
 from billing.models import BillingControl, BillingQueue
 from order.models import Order
@@ -25,38 +46,32 @@ def get_billable_orders(*, organization: Organization) -> Iterable[Order] | None
         orders are found.
     """
 
-    if (
-        organization.billing_control.order_transfer_criteria
-        == BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
-    ):
-        return organization.orders.filter(
-            billed=False,
-            status=StatusChoices.COMPLETED,
-            ready_to_bill=True,
-            transferred_to_billing=False,
-            billing_transfer_date__isnull=True,
+    # Map BillingControl.OrderTransferCriteriaChoices to the corresponding query
+    criteria_to_query = {
+        BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED: Q(
+            status=StatusChoices.COMPLETED
         )
-    elif (
+        & Q(ready_to_bill=True),
+        BillingControl.OrderTransferCriteriaChoices.COMPLETED: Q(
+            status=StatusChoices.COMPLETED
+        ),
+        BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL: Q(
+            ready_to_bill=True
+        ),
+    }
+
+    query = (
+        Q(billed=False)
+        & Q(transferred_to_billing=False)
+        & Q(billing_transfer_date__isnull=True)
+    )
+    order_criteria_query = criteria_to_query.get(
         organization.billing_control.order_transfer_criteria
-        == BillingControl.OrderTransferCriteriaChoices.COMPLETED
-    ):
-        return organization.orders.filter(
-            billed=False,
-            status=StatusChoices.COMPLETED,
-            transferred_to_billing=False,
-            billing_transfer_date__isnull=True,
-        )
-    elif (
-        organization.billing_control.order_transfer_criteria
-        == BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
-    ):
-        return organization.orders.filter(
-            billed=False,
-            ready_to_bill=True,
-            transferred_to_billing=False,
-            billing_transfer_date__isnull=True,
-        )
-    return None
+    )
+    if order_criteria_query is not None:
+        query &= order_criteria_query
+
+    return organization.orders.filter(query) or None
 
 
 def get_billing_queue_information(*, order: Order) -> BillingQueue | None:

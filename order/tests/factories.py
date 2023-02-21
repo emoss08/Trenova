@@ -1,5 +1,5 @@
 """
-COPYRIGHT 2022 MONTA
+COPYRIGHT 2023 MONTA
 
 This file is part of Monta.
 
@@ -39,7 +39,7 @@ class OrderTypeFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
+    name = factory.Faker("pystr", max_chars=255)
 
 
 class ReasonCodeFactory(factory.django.DjangoModelFactory):

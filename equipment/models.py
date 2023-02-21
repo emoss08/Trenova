@@ -65,6 +65,7 @@ class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Equipment Type")
         verbose_name_plural = _("Equipment Types")
         ordering = ["-id"]
+        db_table = "equipment_type"
 
     def __str__(self) -> str:
         """Equipment Type string representation
@@ -199,6 +200,7 @@ class EquipmentTypeDetail(GenericModel):
         verbose_name = _("Equipment Type Detail")
         verbose_name_plural = _("Equipment Type Details")
         ordering = ["-equipment_type"]
+        db_table = "equipment_type_detail"
 
     def __str__(self) -> str:
         """Equipment Type Detail string representation
@@ -259,6 +261,7 @@ class EquipmentManufacturer(GenericModel):
         verbose_name = _("Equipment Manufacturer")
         verbose_name_plural = _("Equipment Manufacturers")
         ordering: list[str] = ["-id"]
+        db_table = "equipment_manufacturer"
 
     def __str__(self) -> str:
         """Equipment Manufacturer string representation
@@ -478,6 +481,7 @@ class Equipment(GenericModel):
         verbose_name = _("Equipment")
         verbose_name_plural = _("Equipment")
         ordering: list[str] = ["code"]
+        db_table = "equipment"
 
     def __str__(self) -> str:
         """Equipment string representation
@@ -589,6 +593,7 @@ class EquipmentMaintenancePlan(GenericModel):
         verbose_name = _("Equipment Maintenance Plan")
         verbose_name_plural = _("Equipment Maintenance Plans")
         ordering = ["name"]
+        db_table = "equipment_maintenance_plan"
 
     def __str__(self) -> str:
         """Equipment Maintenance Plan string representation

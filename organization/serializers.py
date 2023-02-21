@@ -174,3 +174,24 @@ class TaxRateSerializer(GenericSerializer):
         """
 
         model = models.TaxRate
+
+
+class TableChangeAlertSerializer(GenericSerializer):
+    """
+    Table Change Alert Serializer
+    """
+
+    email_profile = serializers.PrimaryKeyRelatedField(
+        queryset=models.EmailProfile.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for Table Change Alert
+        """
+
+        model = models.TableChangeAlert
+        extra_fields = ("email_profile",)
+        extra_read_only_fields = ("function_name", "trigger_name", "listener_name")

@@ -77,3 +77,33 @@ class EmailProfileFactory(factory.django.DjangoModelFactory):
     port = 20
     username = factory.Faker("name", locale="en_US")
     password = factory.Faker("password")
+
+
+class TableChangeAlertFactory(factory.django.DjangoModelFactory):
+    """
+    Table Change Alert factory class
+    """
+
+    class Meta:
+        """
+        Metaclass for the TableChangeAlertFactory
+        """
+
+        model = "organization.TableChangeAlert"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory(OrganizationFactory)
+    is_active = True
+    name = factory.Faker("name", locale="en_US")
+    database_action = factory.Faker(
+        "random_element",
+        elements=("INSERT", "UPDATE", "BOTH"),
+    )
+    table = factory.Faker(
+        "random_element",
+        elements=(
+            "organization",
+            "depot",
+            "email_profile",
+        ),
+    )

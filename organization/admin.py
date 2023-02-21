@@ -170,3 +170,18 @@ class TaxRateAdmin(GenericAdmin[models.TaxRate]):
     )
     list_filter = ("name",)
     search_fields = ("name",)
+
+
+@admin.register(models.TableChangeAlert)
+class TableChangeAlertAdmin(GenericAdmin[models.TableChangeAlert]):
+    """
+    Table Change Alert Admin
+    """
+
+    list_display = (
+        "name",
+        "table",
+    )
+
+    list_filter = ("name",)
+    search_fields = ("name",)

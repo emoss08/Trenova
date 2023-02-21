@@ -179,6 +179,7 @@ class OrderControl(GenericModel):
         verbose_name = _("Order Control")
         verbose_name_plural = _("Order Controls")
         ordering = ["organization"]
+        db_table = "order_control"
 
     def __str__(self) -> str:
         """Order control string representation
@@ -251,6 +252,7 @@ class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Order Type")
         verbose_name_plural = _("Order Types")
         ordering = ["name"]
+        db_table = "order_type"
 
     def __str__(self) -> str:
         """Order Type String Representation
@@ -530,6 +532,7 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
         verbose_name = _("Order")
         verbose_name_plural = _("Orders")
         ordering = ["-pro_number"]
+        db_table = "order"
 
     def __str__(self) -> str:
         """String representation of the Order
@@ -685,6 +688,7 @@ class OrderDocumentation(GenericModel):
 
         verbose_name = _("Order Documentation")
         verbose_name_plural = _("Order Documentation")
+        db_table = "order_documentation"
 
     def __str__(self) -> str:
         """String representation of the OrderDocumentation
@@ -752,6 +756,7 @@ class OrderComment(GenericModel):
         verbose_name = _("Order Comment")
         verbose_name_plural = _("Order Comments")
         ordering = ["-created"]
+        db_table = "order_comment"
 
     def __str__(self) -> str:
         """String representation of the OrderComment
@@ -837,6 +842,7 @@ class AdditionalCharge(GenericModel):  # type: ignore
 
         verbose_name = _("Additional Charge")
         verbose_name_plural = _("Additional Charges")
+        db_table = "additional_charge"
 
     def __str__(self) -> str:
         """String representation of the AdditionalCharges
@@ -914,6 +920,7 @@ class ReasonCode(GenericModel):
         verbose_name = _("Reason Code")
         verbose_name_plural = _("Reason Codes")
         ordering = ["code"]
+        db_table = "reason_code"
 
     def __str__(self) -> str:
         """Reason Code String Representation

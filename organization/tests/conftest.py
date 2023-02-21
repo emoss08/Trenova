@@ -22,7 +22,7 @@ from typing import Any
 
 import pytest
 
-from organization.factories import DepotFactory
+from organization.factories import DepotFactory, TableChangeAlertFactory
 
 
 @pytest.fixture
@@ -31,3 +31,10 @@ def depot() -> Generator[Any, Any, None]:
     Depot fixture
     """
     yield DepotFactory()
+
+
+def table_alert_change() -> Generator[Any, Any, None]:
+    """
+    Table alert change fixture
+    """
+    yield TableChangeAlertFactory()

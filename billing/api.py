@@ -16,7 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
-
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import permissions, status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
@@ -179,6 +180,38 @@ class DocumentClassificationViewSet(OrganizationMixin):
     filterset_fields = ("name",)
 
 
+@extend_schema(
+    tags=["Bill Order"],
+    description="Starts the billing tasks for one order.",
+    parameters=[
+        OpenApiParameter(
+            name="order_id",
+            type=OpenApiTypes.UUID,
+            description="The order id to be billed.",
+        ),
+    ],
+    request=None,
+    responses={
+        (200, "application/json"): {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Order ID is required. Please Try Again.",
+                },
+            },
+        },
+        (400, "application/json"): {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Billing task started.",
+                },
+            },
+        },
+    },
+)
 @api_view(["POST"])
 def bill_order_view(request: Request) -> Response:
     """
@@ -192,7 +225,6 @@ def bill_order_view(request: Request) -> Response:
     """
     order_id = request.data.get("order_id")
 
-    print(order_id)
     if not order_id:
         return Response(
             {"message": "Order ID is required. Please Try Again."},
@@ -203,6 +235,31 @@ def bill_order_view(request: Request) -> Response:
     return Response({"message": "Billing task started."}, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Mass Billing Order"],
+    description="Starts the mass billing task.",
+    request=None,
+    responses={
+        (200, "application/json"): {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Mass Billing task started.",
+                },
+            },
+        },
+        (400, "application/json"): {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Mass billing does not accept any data. Please Try Again.",
+                },
+            },
+        },
+    },
+)
 @api_view(["POST"])
 def mass_order_bill(request: Request) -> Response:
     """

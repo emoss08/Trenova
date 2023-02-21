@@ -162,6 +162,7 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         indexes = [
             models.Index(fields=["first_name", "last_name"]),
         ]
+        db_table = "worker"
 
     def __str__(self) -> str:
         """Worker string representation
@@ -379,6 +380,7 @@ class WorkerProfile(GenericModel):
         verbose_name = _("Worker profile")
         verbose_name_plural = _("Worker profiles")
         ordering: list[str] = ["worker"]
+        db_table = "worker_profile"
 
     def __str__(self) -> str:
         """Worker Profile string representation
@@ -542,6 +544,7 @@ class WorkerContact(GenericModel):
         verbose_name = _("worker contact")
         verbose_name_plural = _("worker contacts")
         ordering: list[str] = ["worker"]
+        db_table = "worker_contact"
 
     def __str__(self) -> str:
         """Worker Contact string representation
@@ -621,6 +624,7 @@ class WorkerComment(GenericModel):
         verbose_name = _("worker comment")
         verbose_name_plural = _("worker comments")
         ordering: list[str] = ["worker"]
+        db_table = "worker_comment"
 
     def __str__(self) -> str:
         """Worker Comment string representation

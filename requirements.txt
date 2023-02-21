@@ -1,6 +1,7 @@
 art==5.8
 celery~=5.2.7
 channels==4.0.0
+confluent-kafka==2.0.2
 daphne==4.0.0
 django==4.1.7
 django-adminactions==2.0.0
@@ -36,7 +37,6 @@ factory_boy==3.2.1
 hiredis==2.2.2
 httpx==0.23.3
 isort==5.12.0
-kafka-python==2.0.2
 msgpack==1.0.4
 phonenumbers==8.13.6
 Pillow==9.4.0

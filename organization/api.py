@@ -32,6 +32,7 @@ from core.health_check.disk_backend import DiskUsageHealthCheck
 from core.health_check.redis_backend import RedisHealthCheck
 from core.health_check.storage_backend import FileStorageHealthCheck
 from organization import models, serializers
+from organization.selectors import get_active_triggers
 from utils.views import OrganizationMixin
 
 
@@ -130,6 +131,7 @@ class EmailLogViewSet(viewsets.ModelViewSet):
 @extend_schema(
     tags=["Health Check"],
     description="Returns the health status of various components of the system.",
+    request=None,
     responses={
         (200, "application/json"): {
             "type": "object",
@@ -195,7 +197,6 @@ def health_check(request: Request) -> Response:
     Returns:
         Response: A dictionary that contains the health status of the cache backend, storage backend, redis, disk usage, celery, and database.
     """
-
     health_status = {
         "cache_backend": CacheBackendHealthCheck.check_caches_and_time(),
         "storage": FileStorageHealthCheck.check_file_storage(),
@@ -208,6 +209,77 @@ def health_check(request: Request) -> Response:
     return Response(health_status, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Active Triggers"],
+    description="Get a list of current PostgreSQL triggers.",
+    request=None,
+    responses={
+        (200, "application/json"): {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "trigger_catalog": {"type": "string"},
+                    "trigger_schema": {"type": "string"},
+                    "trigger_name": {"type": "string"},
+                    "event_manipulation": {"type": "string"},
+                    "event_object_catalog": {"type": "string"},
+                    "event_object_schema": {"type": "string"},
+                    "event_object_table": {"type": "string"},
+                    "action_order": {"type": "integer"},
+                    "action_condition": {"type": "string"},
+                    "action_statement": {"type": "string"},
+                    "action_orientation": {"type": "string"},
+                    "action_timing": {"type": "string"},
+                },
+            },
+        },
+    },
+)
+@api_view(["GET"])
+def active_triggers(request: Request) -> Response:
+    """
+    View that retrieves a list of active triggers in the PostgreSQL database.
+
+    Returns a response containing a list of dictionaries, where each dictionary
+    represents a trigger and its metadata. The following fields are included in
+    each dictionary: trigger_catalog, trigger_schema, trigger_name, event_manipulation,
+    event_object_catalog, event_object_schema, event_object_table, action_order,
+    action_condition, action_statement, action_orientation, and action_timing.
+
+    Raises:
+        NotImplementedError: If the database engine is not PostgreSQL.
+
+    Returns:
+        A Response object containing a list of dictionaries representing the triggers,
+        with status code 200 (OK).
+    """
+    try:
+        results = get_active_triggers()
+        if results is None:
+            return Response([], status=status.HTTP_200_OK)
+        triggers = [
+            {
+                "trigger_catalog": result[0],
+                "trigger_schema": result[1],
+                "trigger_name": result[2],
+                "event_manipulation": result[3],
+                "event_object_catalog": result[4],
+                "event_object_schema": result[5],
+                "event_object_table": result[6],
+                "action_order": result[7],
+                "action_condition": result[8],
+                "action_statement": result[9],
+                "action_orientation": result[10],
+                "action_timing": result[11],
+            }
+            for result in results
+        ]
+        return Response(triggers, status=status.HTTP_200_OK)
+    except NotImplementedError as e:
+        return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
 class TaxRateViewSet(OrganizationMixin):
     """
     TaxRate ViewSet to manage requests to the tax rate endpoint
@@ -215,3 +287,12 @@ class TaxRateViewSet(OrganizationMixin):
 
     serializer_class = serializers.TaxRateSerializer
     queryset = models.TaxRate.objects.all()
+
+
+class TableChangeAlertViewSet(OrganizationMixin):
+    """
+    TableChangeAlert ViewSet to manage requests to the table change alert endpoint
+    """
+
+    serializer_class = serializers.TableChangeAlertSerializer
+    queryset = models.TableChangeAlert.objects.all()

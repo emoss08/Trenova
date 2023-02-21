@@ -136,8 +136,9 @@ class FuelVendor(GenericModel):
         Metaclass for Vendor
         """
 
-        verbose_name = _("Vendor")
-        verbose_name_plural = _("Vendors")
+        verbose_name = _("Fuel Vendor")
+        verbose_name_plural = _("Fuel Vendors")
+        db_table = "fuel_vendor"
 
     def __str__(self) -> str:
         """String representation of the Vendor model
@@ -204,8 +205,9 @@ class FuelVendorFuelDetail(GenericModel):
         Metaclass for Vendor
         """
 
-        verbose_name = _("Vendor Fuel Detail")
-        verbose_name_plural = _("Vendor Fuel Details")
+        verbose_name = _("Fuel Vendor Fuel Detail")
+        verbose_name_plural = _("Fuel Vendor Fuel Details")
+        db_table = "fuel_vendor_fuel_detail"
 
     def __str__(self) -> str:
         """String representation of the Vendor model
