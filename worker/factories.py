@@ -34,7 +34,7 @@ class WorkerFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    code = factory.Faker("pystr", locale="en_US", max_nb_chars=10)
+    code = factory.Faker("text", locale="en_US", max_nb_chars=10)
     first_name = factory.Faker("name")
     last_name = factory.Faker("name")
     worker_type = "EMPLOYEE"
