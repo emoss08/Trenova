@@ -75,9 +75,12 @@ def test_table_change_insert_adds_insert_trigger():
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
-    check = check_trigger_exists(table_name=table_change.table, trigger_name=table_change.trigger_name)
+    check = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
 
     assert check == True
+
 
 def test_delete_table_change_removes_trigger():
     """
@@ -85,13 +88,18 @@ def test_delete_table_change_removes_trigger():
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
-    check = check_trigger_exists(table_name=table_change.table, trigger_name=table_change.trigger_name)
+    check = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
     assert check == True
 
     table_change.delete()
 
-    check_2 = check_trigger_exists(table_name=table_change.table, trigger_name=table_change.trigger_name)
+    check_2 = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
     assert check_2 == False
+
 
 def test_command():
     with patch("psycopg2.connect"), patch(
