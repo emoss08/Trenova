@@ -33,6 +33,7 @@ def depot() -> Generator[Any, Any, None]:
     yield DepotFactory()
 
 
+@pytest.fixture
 def table_alert_change() -> Generator[Any, Any, None]:
     """
     Table alert change fixture

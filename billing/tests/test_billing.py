@@ -268,6 +268,7 @@ def test_get_billable_orders_completed() -> None:
         assert not order.transferred_to_billing
         assert order.billing_transfer_date is None
 
+
 def test_get_billable_orders_ready_and_completed():
     """
     Test that get_billable_orders returns orders that are completed and not

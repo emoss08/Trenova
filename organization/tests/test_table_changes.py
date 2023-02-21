@@ -17,19 +17,17 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import pytest
-from celery.exceptions import Retry
-from django.core.management import call_command
 from io import StringIO
 from unittest.mock import patch
 
+import pytest
+from celery.exceptions import Retry
+from django.core.management import call_command
 from kombu.exceptions import OperationalError
 
-from organization import models, factories
+from organization import factories, models
+from organization.services.psql_triggers import check_trigger_exists
 from organization.services.table_choices import TABLE_NAME_CHOICES
-from django.db import connection
-
-
 from organization.tasks import table_change_alerts
 
 pytestmark = pytest.mark.django_db
@@ -76,17 +74,11 @@ def test_table_change_insert_adds_insert_trigger():
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            SELECT trigger_name
-            FROM information_schema.triggers
-            WHERE trigger_name = '{table_change.trigger_name}'
-            """
-        )
-        trigger_name = cursor.fetchone()
+    check = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
 
-    assert trigger_name[0] == table_change.trigger_name
+    assert check == True
 
 
 def test_delete_table_change_removes_trigger():
@@ -95,31 +87,17 @@ def test_delete_table_change_removes_trigger():
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            SELECT trigger_name
-            FROM information_schema.triggers
-            WHERE trigger_name = '{table_change.trigger_name}'
-            """
-        )
-        trigger_name = cursor.fetchone()
-
-    assert trigger_name[0] == table_change.trigger_name
+    check = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
+    assert check == True
 
     table_change.delete()
 
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            SELECT trigger_name
-            FROM information_schema.triggers
-            WHERE trigger_name = '{table_change.trigger_name}'
-            """
-        )
-        trigger_name = cursor.fetchone()
-
-    assert trigger_name is None
+    check_2 = check_trigger_exists(
+        table_name=table_change.table, trigger_name=table_change.trigger_name
+    )
+    assert check_2 == False
 
 
 def test_command():
@@ -140,7 +118,6 @@ def test_table_change_alerts_success(mock_call_command):
 @patch("organization.tasks.call_command")
 @patch("organization.tasks.table_change_alerts.retry")
 def test_table_change_alerts_failure(mock_call_command, mock_retry):
-
     mock_call_command.side_effect = Retry()
     mock_retry.side_effect = OperationalError()
 

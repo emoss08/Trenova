@@ -37,6 +37,7 @@ from utils.models import ChoiceField, GenericModel, RatingMethodChoices
 
 User = settings.AUTH_USER_MODEL
 
+
 class DispatchControl(GenericModel):
     """
     Class: DispatchControl
@@ -171,7 +172,7 @@ class DispatchControl(GenericModel):
     enforce_driver_ta = models.BooleanField(
         _("Enforce Driver Time Away"),
         default=True,
-        help_text=_("Disallow assignments if the driver is on Time Away")
+        help_text=_("Disallow assignments if the driver is on Time Away"),
     )
 
     class Meta:
