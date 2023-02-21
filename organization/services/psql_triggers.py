@@ -134,15 +134,17 @@ def create_insert_trigger(
     )
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            CREATE or REPLACE TRIGGER {trigger_name}
+        e_table_name = connection.ops.quote_name(table_name)
+        e_trigger_name = connection.ops.quote_name(trigger_name)
+        e_function_name = connection.ops.quote_name(function_name)
+        query = f"""
+            CREATE or REPLACE TRIGGER {e_trigger_name}
             AFTER INSERT
-            ON {table_name}
+            ON {e_table_name}
             FOR EACH ROW
-            EXECUTE PROCEDURE {function_name}();
+            EXECUTE PROCEDURE {e_function_name}();
             """
-        )
+        cursor.execute(query)
 
 
 def create_update_field_string(fields: list[str]) -> str:
