@@ -20,7 +20,7 @@ RUN git clone https://github.com/Monta-Application/Monta.git
 
 WORKDIR /Monta
 
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8080
 
