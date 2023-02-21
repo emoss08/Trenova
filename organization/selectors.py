@@ -17,16 +17,16 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from collections.abc import Iterable
+from typing import Iterable, Optional, Tuple
 
-from django.db import connection
 from django.db.models import Q
+from django.db import connection
 from django.utils import timezone
 
 from organization.models import TableChangeAlert
 
 
-def get_active_table_alerts() -> Iterable[TableChangeAlert] | None:
+def get_active_table_alerts() -> Optional[Iterable[TableChangeAlert]]:
     """
     Returns an iterable of active TableChangeAlert objects, or None if no alerts are active.
 
@@ -59,7 +59,7 @@ def get_active_table_alerts() -> Iterable[TableChangeAlert] | None:
     return active_alerts if active_alerts.exists() else None
 
 
-def get_active_triggers() -> Iterable[tuple] | None:
+def get_active_triggers() -> Optional[Iterable[Tuple]]:
     """
     Returns a list of active triggers in the PostgreSQL database.
 

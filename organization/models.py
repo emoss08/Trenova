@@ -28,19 +28,21 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from django_lifecycle import (
     AFTER_CREATE,
-    AFTER_SAVE,
-    BEFORE_DELETE,
     BEFORE_SAVE,
-    BEFORE_UPDATE,
     LifecycleModelMixin,
     hook,
+    AFTER_SAVE,
+    BEFORE_DELETE,
+    BEFORE_UPDATE,
 )
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from .services.psql_triggers import drop_trigger_and_function
-from .services.table_choices import TABLE_NAME_CHOICES
+from .services.psql_triggers import (
+    drop_trigger_and_function,
+)
 from .validators.organization import validate_org_timezone
+from .services.table_choices import TABLE_NAME_CHOICES
 
 
 class Organization(LifecycleModelMixin, TimeStampedModel):

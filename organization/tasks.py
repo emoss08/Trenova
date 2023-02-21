@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import absolute_import
 
 from celery import shared_task
 from django.core.management import call_command
+
 from kombu.exceptions import OperationalError
 
 

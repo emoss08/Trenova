@@ -21,6 +21,7 @@ import textwrap
 import uuid
 from typing import final
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.aggregates import Max
@@ -34,6 +35,7 @@ from integration.models import IntegrationChoices
 from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices
 
+User = settings.AUTH_USER_MODEL
 
 class DispatchControl(GenericModel):
     """
@@ -165,6 +167,11 @@ class DispatchControl(GenericModel):
         _("Generate Routes"),
         default=False,
         help_text=_("Generate routes for the company."),
+    )
+    enforce_driver_ta = models.BooleanField(
+        _("Enforce Driver Time Away"),
+        default=True,
+        help_text=_("Disallow assignments if the driver is on Time Away")
     )
 
     class Meta:
@@ -381,6 +388,14 @@ class FleetCode(GenericModel):
         decimal_places=2,
         default=0.00,
         help_text=_("Mileage goal for the fleet code."),
+    )
+    manager = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="fleet_code_manager",
+        help_text=_("Manager for the fleet code."),
+        null=True,
+        blank=True,
     )
 
     class Meta:
