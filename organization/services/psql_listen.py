@@ -63,7 +63,7 @@ class PSQLListener:
             database=env("DB_NAME"),
             user=env("DB_USER"),
             password=env("DB_PASSWORD"),
-            port=env("DB_PORT"),
+            port=5432,
         )
         conn.autocommit = True
         return conn
