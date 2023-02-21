@@ -23,7 +23,6 @@ from unittest.mock import patch
 import pytest
 from celery.exceptions import Retry
 from django.core.management import call_command
-from django.db import connection
 from kombu.exceptions import OperationalError
 
 from organization import factories, models
