@@ -309,12 +309,11 @@ def check_trigger_exists(*, table_name: str, trigger_name: str) -> bool:
     """
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
-            SELECT EXISTS(
+        query = """
+                    SELECT EXISTS(
             SELECT 1 FROM information_schema.triggers
-            WHERE event_object_table = '{table_name}'
-            AND trigger_name = '{trigger_name}')
-            """
-        )
+            WHERE event_object_table = %s
+            AND trigger_name = %s)
+        """
+        cursor.execute(query, [table_name, trigger_name])
         return cursor.fetchone()[0]
