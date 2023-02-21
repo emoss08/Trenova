@@ -59,7 +59,7 @@ class PSQLListener:
             None.
         """
         conn = psycopg2.connect(
-            host=env("DB_HOST"),
+            host="localhost",
             database=env("DB_NAME"),
             user=env("DB_USER"),
             password=env("DB_PASSWORD"),
