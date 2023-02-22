@@ -664,13 +664,48 @@ class WorkerComment(GenericModel):
 
 class WorkerTimeAway(GenericModel):
     """
-    Stores Worker Time Off Request
+    A Django model representing a worker's time off.
+
+    Attributes:
+        id (UUIDField): The primary key field for the worker time away instance. This field is automatically generated using
+            the uuid4 function from the uuid module.
+        worker (ForeignKey): A foreign key that relates the worker to the worker time away. When a worker instance is deleted,
+            all related worker time away instances will be deleted as well.
+        start_date (DateField): The date field representing the start date of the time away.
+        end_date (DateField): The date field representing the end date of the time away.
+        leave_type (ChoiceField): The choice field representing the type of leave the worker is taking. It uses a nested class
+            LeaveTypeChoices that extends Django's built-in TextChoices class to provide a list of choices for the leave_type
+            field.
+
+    Methods:
+        __str__(): A method that returns a string representation of the worker time away. In this case, the code of the worker
+            associated with the time away is wrapped at 50 characters.
+        get_absolute_url(): A method that returns the URL to view the detail of the worker time away. It uses Django's reverse
+            function to generate the URL based on the view name and the primary key of the worker time away instance.
+
+    Meta:
+        verbose_name (str): A human-readable name for the model. In this case, "Worker Time Away".
+        verbose_name_plural (str): A human-readable plural name for the model. In this case, "Worker Time Away".
+        ordering (list): A list of fields to use when ordering the model instances. In this case, the instances are ordered
+            by the worker field.
+        db_table (str): The name of the database table to use for the model. In this case, "worker_time_away".
     """
 
     @final
     class LeaveTypeChoices(models.TextChoices):
         """
-        Leave type Choices
+        A class that defines the choices for the leave_type field in the WorkerTimeAway model.
+        The choices are defined as class constants that consist of a string value and a human-readable label.
+
+        Attributes:
+            VAC (str, str): A tuple that represents the "Vacation" leave type choice. The first element is
+             the string value "VAC", and the second element is the human-readable label "Vacation".
+            PER (str, str): A tuple that represents the "Personal" leave type choice. The first element is
+             the string value "PERS", and the second element is the human-readable label "Personal".
+            HOL (str, str): A tuple that represents the "Holiday" leave type choice. The first element is
+             the string value "HOL", and the second element is the human-readable label "Holiday".
+            SICK (str, str): A tuple that represents the "Sick" leave type choice. The first element is
+            the string value "SICK", and the second element is the human-readable label "Sick".
         """
 
         VAC = "VAC", _("Vacation")
@@ -703,8 +738,13 @@ class WorkerTimeAway(GenericModel):
     )
 
     class Meta:
-        """
-        Metaclass for WorkerTimeAway
+        """Model meta options for Worker Time Away.
+
+        Attributes:
+            verbose_name (str): A human-readable name for the model. The default value is "Worker Time Away".
+            verbose_name_plural (str): A human-readable plural name for the model. The default value is "Worker Time Away".
+            ordering (list of str): A list of model field names used to specify the default ordering of records. The default value is ["worker"].
+            db_table (str): The name of the database table to use for the model. The default value is "worker_time_away".
         """
 
         verbose_name = _("Worker Time Away")
@@ -713,19 +753,24 @@ class WorkerTimeAway(GenericModel):
         db_table = "worker_time_away"
 
     def __str__(self) -> str:
-        """Worker Time Away string representation
+        """
+        Returns the string representation of the Worker Time Away.
 
         Returns:
-            str: Worker Time Away string representation
-        """
+            String representation of the WorkerTimeAway model. For example,
+            "Worker Time Away: 2021-01-01 to 2021-01-02".
 
-        return textwrap.wrap(self.worker.code, 50)[0]
+        """
+        return textwrap.wrap(
+            f"Worker Time Away {self.start_date} to {self.end_date}", 50
+        )[0]
 
     def get_absolute_url(self) -> str:
-        """Worker Time Away absolute url
+        """
+        Returns the absolute URL to view the detail of the Worker Time Away.
 
         Returns:
-            str: Worker Time Away absolute url
+            Absolute URL for the WorkerTimeAway object. For Example,
+            `/worker_time_away/edd1e612-cdd4-43d9-b3f3-bc099872088b/`.
         """
-
         return reverse("worker-time-away-detail", kwargs={"pk": self.pk})
