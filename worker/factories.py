@@ -43,6 +43,8 @@ class WorkerFactory(factory.django.DjangoModelFactory):
     city = factory.Faker("city")
     state = "CA"
     zip_code = factory.Faker("zipcode")
+    manager = factory.SubFactory("accounts.tests.factories.UserFactory")
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
 
     @factory.post_generation
     def worker_contact(self, create, extracted, **kwargs):

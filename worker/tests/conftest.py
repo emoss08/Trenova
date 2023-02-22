@@ -49,7 +49,7 @@ def comment_type():
 
 
 @pytest.fixture
-def worker_api(organization):
+def worker_api(organization, user):
     """
     Worker Fixture
     """
@@ -65,6 +65,8 @@ def worker_api(organization):
         city="Sacramento",
         state="CA",
         zip_code="12345",
+        manager=user,
+        entered_by=user,
     )
 
 

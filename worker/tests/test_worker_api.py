@@ -73,6 +73,8 @@ class TestWorkerApi:
                 "city": "clark kent",
                 "state": "CA",
                 "zip_code": "12345",
+                "manager": user.id,
+                "entered_by": user.id,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",
@@ -143,6 +145,8 @@ class TestWorkerApi:
                 "city": "clark kent",
                 "state": "CA",
                 "zip_code": "12345",
+                "manager": user.id,
+                "entered_by": user.id,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",
@@ -234,6 +238,8 @@ class TestWorkerApi:
                 "city": "clark kent",
                 "state": "CA",
                 "zip_code": "12345",
+                "manager": user.id,
+                "entered_by": user.id,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",
