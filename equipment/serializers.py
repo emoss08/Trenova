@@ -149,3 +149,18 @@ class EquipmentSerializer(GenericSerializer):
 
         model = models.Equipment
         extra_fields = ("is_active",)
+
+class EquipmentMaintenancePlanSerializer(GenericSerializer):
+    """A serializer for the EquipmentMaintenancePlan model
+
+    The serializer provides default operations for creating, update and deleting
+    Equipment Maintenance Plan, as well as listing and retrieving them.
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `EquipmentMaintenancePlanSerializer`
+        class.
+        """
+
+        model = models.EquipmentMaintenancePlan

@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -161,7 +160,16 @@ router.register(
     r"equipment_types", equipment_api.EquipmentTypeViewSet, basename="equipment-types"
 )
 router.register(r"equipment", equipment_api.EquipmentViewSet, basename="equipment")
-
+router.register(
+    r"equipment_manufacturers",
+    equipment_api.EquipmentManufacturerViewSet,
+    basename="equipment-manufacturers",
+)
+router.register(
+    r"equipment_maintenance_plans",
+    equipment_api.EquipmentMaintenancePlanViewSet,
+    basename="equipment-maintenance-plans",
+)
 # Location Routing
 router.register(
     r"locations_categories",
