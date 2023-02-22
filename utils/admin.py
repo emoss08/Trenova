@@ -47,8 +47,10 @@ class GenericAdmin(admin.ModelAdmin[_M]):
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
+
         Args:
             request (HttpRequest): Request Object
+
         Returns:
             QuerySet[Model]: Queryset of Model
         """
@@ -67,11 +69,13 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         change: bool,
     ) -> None:
         """Save Model Instance
+
         Args:
             request (HttpRequest): Request Object
             obj (_M): Generic Model Object
             form (Type[BaseModelForm]): Form Class
             change (bool): If the model is being changed
+
         Returns:
             None
         """
@@ -82,11 +86,13 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
+
         Args:
             request (HttpRequest): Request Object
             form (Any): Form Object
             formset (Any): Formset Object
             change (Any): If the model is being changed
+
         Returns:
             None
         """
@@ -105,11 +111,13 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         **kwargs: Any,
     ) -> type[ModelForm[_M]]:
         """Get Form for Model
+
         Args:
             change (bool): If the model is being changed
             request (HttpRequest): Request Object
             obj (Optional[_M]): Model Object
             **kwargs (Any): Keyword Arguments
+
         Returns:
             Type[ModelForm[Any]]: Form Class
         """
@@ -123,8 +131,10 @@ class GenericAdmin(admin.ModelAdmin[_M]):
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
+
         Args:
             request (HttpRequest): Request Object
+
         Returns:
             Sequence[str]: Autocomplete Fields
         """
@@ -166,6 +176,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
+
         Returns:
             Sequence[str]: Autocomplete Fields
         """
