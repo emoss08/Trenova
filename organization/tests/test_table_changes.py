@@ -26,7 +26,7 @@ from django.core.management import call_command
 from kombu.exceptions import OperationalError
 
 from organization import factories, models
-from organization.services.psql_triggers import check_trigger_exists
+from organization.services.psql_triggers import check_trigger_exists, check_function_exists
 from organization.services.table_choices import TABLE_NAME_CHOICES
 from organization.tasks import table_change_alerts
 
@@ -74,11 +74,13 @@ def test_table_change_insert_adds_insert_trigger():
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
-    check = check_trigger_exists(
+    trigger_check = check_trigger_exists(
         table_name=table_change.table, trigger_name=table_change.trigger_name
     )
+    function_check = check_function_exists(function_name=table_change.function_name)
 
-    assert check == True
+    assert trigger_check == True
+    assert function_check == True
 
 
 def test_delete_table_change_removes_trigger():
@@ -87,17 +89,22 @@ def test_delete_table_change_removes_trigger():
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
-    check = check_trigger_exists(
+    trigger_check = check_trigger_exists(
         table_name=table_change.table, trigger_name=table_change.trigger_name
     )
-    assert check == True
+    function_check = check_function_exists(function_name=table_change.function_name)
+    assert trigger_check == True
+    assert function_check == True
 
     table_change.delete()
 
-    check_2 = check_trigger_exists(
+    trigger_check_2 = check_trigger_exists(
         table_name=table_change.table, trigger_name=table_change.trigger_name
     )
-    assert check_2 == False
+    function_check_2 = check_function_exists(function_name=table_change.function_name)
+
+    assert trigger_check_2 == False
+    assert function_check_2 == False
 
 
 def test_command():
