@@ -219,8 +219,6 @@ class UserProfile(GenericModel):
         related_name="profile",
         related_query_name="profiles",
         verbose_name=_("Job Title"),
-        blank=True,
-        null=True,
     )
     first_name = models.CharField(
         _("First Name"),
@@ -264,7 +262,7 @@ class UserProfile(GenericModel):
         _("Zip Code"),
         help_text=_("The zip code of the user"),
     )
-    phone = models.CharField(
+    phone_number = models.CharField(
         _("Phone Number"),
         max_length=15,
         blank=True,
