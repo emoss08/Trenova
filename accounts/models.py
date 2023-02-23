@@ -22,7 +22,7 @@ from __future__ import annotations
 import secrets
 import textwrap
 import uuid
-from typing import Any
+from typing import Any, final
 
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -39,7 +39,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from utils.models import GenericModel
+from utils.models import GenericModel, ChoiceField
 from utils.validators import ImageSizeValidator
 
 
@@ -312,7 +312,7 @@ class UserProfile(GenericModel):
             ValidationError: Validation error for the UserProfile Model
         """
 
-        if self.title and self.title.is_active is False:
+        if self.title.is_active is False:
             raise ValidationError(
                 {
                     "title": _(
@@ -376,7 +376,41 @@ class UserProfile(GenericModel):
 class JobTitle(GenericModel):
     """
     Stores the job title of a :model:`accounts.User`.
+
+    Attributes:
+        id (UUIDField): The primary key of the model
+        is_active (BooleanField): Whether the job title is active or not
+        name (CharField): The name of the job title
+        description (TextField): The description of the job title
+        job_function (CharField): The job function of the job title
+
+    Methods:
+        __str__ (str): String representation of the JobTitle model
+
     """
+    @final
+    class JobFunctionChoices(models.TextChoices):
+        """
+        A class representing the possible job function choices.
+
+        This class inherits from the `models.TextChoices` class and defines eight constants:
+        - MANAGER: represents the manager job function
+        - MANAGEMENT_TRAINEE: represents the management trainee job function
+        - SUPERVISOR: represents the supervisor job function
+        - DISPATCHER: represents the dispatcher job function
+        - BILLING: represents the billing job function
+        - FINANCE: represents the finance job function
+        - SAFETY: represents the safety job function
+        - SYS_ADMIN: represents the system administrator job function
+        """
+        MANAGER = "MANAGER", _("Manager")
+        MANAGEMENT_TRAINEE = "MANAGEMENT_TRAINEE", _("Management Trainee")
+        SUPERVISOR = "SUPERVISOR", _("Supervisor")
+        DISPATCHER = "DISPATCHER", _("Dispatcher")
+        BILLING = "BILLING", _("Billing")
+        FINANCE = "FINANCE", _("Finance")
+        SAFETY = "SAFETY", _("Safety")
+        SYS_ADMIN = "SYS_ADMIN", _("System Administrator")
 
     id = models.UUIDField(
         primary_key=True,
@@ -399,6 +433,11 @@ class JobTitle(GenericModel):
         _("Description"),
         blank=True,
         help_text=_("Description of the job title"),
+    )
+    job_function = ChoiceField(
+        _("Job Function"),
+        choices=JobFunctionChoices.choices,
+        help_text=_("Relevant job function of the job title.")
     )
 
     class Meta:

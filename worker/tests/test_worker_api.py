@@ -19,6 +19,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
 
+from dispatch.factories import FleetCodeFactory
+
 pytestmark = pytest.mark.django_db
 
 
@@ -38,6 +40,7 @@ class TestWorkerApi:
         """
         Test get Document classification by ID
         """
+        fleet = FleetCodeFactory()
 
         _response = api_client.post(
             "/api/workers/",
@@ -50,6 +53,7 @@ class TestWorkerApi:
                 "city": "clark kent",
                 "state": "CA",
                 "zip_code": "12345",
+                "fleet": fleet.code
             },
             format="json",
         )
@@ -61,6 +65,7 @@ class TestWorkerApi:
         """
         Test creating worker
         """
+        fleet = FleetCodeFactory()
 
         response = api_client.post(
             "/api/workers/",
@@ -75,6 +80,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "manager": user.id,
                 "entered_by": user.id,
+                "fleet": fleet.code,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",
@@ -133,6 +139,7 @@ class TestWorkerApi:
         Test creating worker with multiple inputs on comments,
         and contacts
         """
+        fleet = FleetCodeFactory()
 
         response = api_client.post(
             "/api/workers/",
@@ -147,6 +154,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "manager": user.id,
                 "entered_by": user.id,
+                "fleet": fleet.code,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",
@@ -226,6 +234,7 @@ class TestWorkerApi:
         """
         Test creating worker
         """
+        fleet = FleetCodeFactory()
 
         _response = api_client.post(
             "/api/workers/",
@@ -240,6 +249,7 @@ class TestWorkerApi:
                 "zip_code": "12345",
                 "manager": user.id,
                 "entered_by": user.id,
+                "fleet": fleet.code,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",
@@ -294,6 +304,7 @@ class TestWorkerApi:
                 "city": "clark kent",
                 "state": "CA",
                 "zip_code": "12345",
+                "fleet": fleet.code,
                 "profile": {
                     "race": "TEST",
                     "sex": "MALE",

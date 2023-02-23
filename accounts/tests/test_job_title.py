@@ -40,6 +40,7 @@ def test_create(job_title):
         is_active=True,
         name="TEST",
         description="Another Description",
+        job_function="SYS_ADMIN",
     )
 
     assert new_job_title is not None

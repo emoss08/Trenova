@@ -38,6 +38,7 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
     is_active = True
     name = factory.Faker("pystr", max_chars=100)
     description = factory.Faker("text")
+    job_function = "SYS_ADMIN"
 
 
 class UserFactory(factory.django.DjangoModelFactory):

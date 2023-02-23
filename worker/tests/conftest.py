@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from dispatch.factories import CommentTypeFactory
+from dispatch.factories import CommentTypeFactory, FleetCodeFactory
 from worker import models
 from worker.factories import WorkerFactory
 
@@ -53,6 +53,7 @@ def worker_api(organization, user):
     """
     Worker Fixture
     """
+    fleet = FleetCodeFactory()
     yield models.Worker.objects.create(
         organization=organization,
         code="Test",
@@ -67,6 +68,7 @@ def worker_api(organization, user):
         zip_code="12345",
         manager=user,
         entered_by=user,
+        fleet=fleet
     )
 
 

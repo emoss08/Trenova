@@ -53,6 +53,8 @@ def user_api(api_client, organization):
     """
     User Fixture
     """
+    job_title = JobTitleFactory()
+
     yield api_client.post(
         "/api/users/",
         {
@@ -68,6 +70,7 @@ def user_api(api_client, organization):
                 "city": "test",
                 "state": "NC",
                 "zip_code": "12345",
+                "title": job_title.id,
             },
         },
         format="json",

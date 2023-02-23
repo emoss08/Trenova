@@ -521,7 +521,7 @@ class Equipment(GenericModel):
                 "Primary worker and secondary worker cannot be the same. Please try again."
             )
 
-        if self.fleet and self.fleet != self.primary_worker.fleet:
+        if self.primary_worker and self.fleet != self.primary_worker.fleet:
             errors["primary_worker"] = _(
                 "Primary worker must be in the same fleet as the equipment. Please try again."
             )

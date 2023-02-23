@@ -99,3 +99,4 @@ class EquipmentFactory(factory.django.DjangoModelFactory):
     code = factory.Faker("pystr", max_chars=50)
     equipment_type = factory.SubFactory(EquipmentTypeFactory)
     manufacturer = factory.SubFactory(EquipmentManufacturerFactory)
+    fleet = factory.SubFactory("dispatch.factories.FleetCodeFactory")
