@@ -126,6 +126,7 @@ class Command(BaseCommand):
             organization=organization,
             name="System",
             defaults={"description": "System job title."},
+            job_function=JobTitle.JobFunctionChoices.SYS_ADMIN
         )
         return job_title
 

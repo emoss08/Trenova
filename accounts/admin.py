@@ -49,8 +49,8 @@ class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
     Profile inline
     """
 
-    model: type[models.UserProfile] = models.UserProfile
-    fk_name: str = "user"
+    model = models.UserProfile
+    fk_name = "user"
 
 
 @admin.register(models.User)
@@ -298,7 +298,6 @@ class JobTitleAdmin(GenericAdmin[models.JobTitle]):
     Job title admin
     """
 
-    fieldsets = ((None, {"fields": ("name", "is_active", "description")}),)
     search_fields = ("name",)
     list_display = ("name", "is_active", "description")
 
