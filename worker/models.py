@@ -123,8 +123,6 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         related_query_name="workers",
         verbose_name=_("Fleet"),
         help_text=_("The fleet of the worker."),
-        null=True,
-        blank=True,
     )
     zip_code = USZipCodeField(
         _("zip code"),
