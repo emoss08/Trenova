@@ -52,6 +52,7 @@ def create_insert_field_string(fields: list[str]) -> str:
         + field_strings[-1]
     )
 
+
 @transaction.atomic
 def create_insert_function(
     *, listener_name: str, function_name: str, fields: list[str]
@@ -98,6 +99,7 @@ def create_insert_function(
                 $BODY$;
                 """
         )
+
 
 @transaction.atomic
 def create_insert_trigger(

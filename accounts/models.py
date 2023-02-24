@@ -39,7 +39,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from utils.models import GenericModel, ChoiceField
+from utils.models import ChoiceField, GenericModel
 from utils.validators import ImageSizeValidator
 
 
@@ -388,6 +388,7 @@ class JobTitle(GenericModel):
         __str__ (str): String representation of the JobTitle model
 
     """
+
     @final
     class JobFunctionChoices(models.TextChoices):
         """
@@ -403,6 +404,7 @@ class JobTitle(GenericModel):
         - SAFETY: represents the safety job function
         - SYS_ADMIN: represents the system administrator job function
         """
+
         MANAGER = "MANAGER", _("Manager")
         MANAGEMENT_TRAINEE = "MANAGEMENT_TRAINEE", _("Management Trainee")
         SUPERVISOR = "SUPERVISOR", _("Supervisor")
@@ -437,7 +439,7 @@ class JobTitle(GenericModel):
     job_function = ChoiceField(
         _("Job Function"),
         choices=JobFunctionChoices.choices,
-        help_text=_("Relevant job function of the job title.")
+        help_text=_("Relevant job function of the job title."),
     )
 
     class Meta:

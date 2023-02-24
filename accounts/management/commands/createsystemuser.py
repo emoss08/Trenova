@@ -24,7 +24,7 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 from django.db.transaction import atomic
 
-from accounts.models import User, UserProfile, JobTitle
+from accounts.models import JobTitle, User, UserProfile
 from organization.models import Organization
 
 
@@ -49,6 +49,7 @@ class Command(BaseCommand):
         handle(*args, **options): Handles the command execution.
 
     """
+
     help = "Create system user account and organization."
 
     def add_arguments(self, parser: CommandParser) -> None:
@@ -126,7 +127,7 @@ class Command(BaseCommand):
             organization=organization,
             name="System",
             defaults={"description": "System job title."},
-            job_function=JobTitle.JobFunctionChoices.SYS_ADMIN
+            job_function=JobTitle.JobFunctionChoices.SYS_ADMIN,
         )
         return job_title
 

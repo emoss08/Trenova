@@ -58,6 +58,7 @@ class EquipmentViewSet(OrganizationMixin):
         "highway_use_tax",
     )
 
+
 class EquipmentManufacturerViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
@@ -72,6 +73,7 @@ class EquipmentManufacturerViewSet(OrganizationMixin):
 
     queryset = models.EquipmentManufacturer.objects.all()
     serializer_class = serializers.EquipmentManufacturerSerializer
+
 
 class EquipmentMaintenancePlanViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.

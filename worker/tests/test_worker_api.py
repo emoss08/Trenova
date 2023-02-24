@@ -53,7 +53,7 @@ class TestWorkerApi:
                 "city": "clark kent",
                 "state": "CA",
                 "zip_code": "12345",
-                "fleet": fleet.code
+                "fleet": fleet.code,
             },
             format="json",
         )

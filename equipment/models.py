@@ -277,9 +277,7 @@ class EquipmentManufacturer(GenericModel):
         Returns:
             str: Absolute URL of the Equipment Manufacturer Model
         """
-        return reverse(
-            "equipment-manufacturers-detail", kwargs={"pk": self.pk}
-        )
+        return reverse("equipment-manufacturers-detail", kwargs={"pk": self.pk})
 
 
 class Equipment(GenericModel):
@@ -656,6 +654,4 @@ class EquipmentMaintenancePlan(GenericModel):
         Returns:
             str: Absolute URL of the EquipmentMaintenancePlan Model
         """
-        return reverse(
-            "equipment-maintenance-plans-detail", kwargs={"pk": self.pk}
-        )
+        return reverse("equipment-maintenance-plans-detail", kwargs={"pk": self.pk})

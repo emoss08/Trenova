@@ -26,7 +26,10 @@ from django.core.management import call_command
 from kombu.exceptions import OperationalError
 
 from organization import factories, models
-from organization.services.psql_triggers import check_trigger_exists, check_function_exists
+from organization.services.psql_triggers import (
+    check_function_exists,
+    check_trigger_exists,
+)
 from organization.services.table_choices import TABLE_NAME_CHOICES
 from organization.tasks import table_change_alerts
 

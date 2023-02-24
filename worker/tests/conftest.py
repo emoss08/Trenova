@@ -68,7 +68,7 @@ def worker_api(organization, user):
         zip_code="12345",
         manager=user,
         entered_by=user,
-        fleet=fleet
+        fleet=fleet,
     )
 
 

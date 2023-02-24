@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from accounts.models import User
 from billing.services import mass_order_billing, single_order_billing
+from billing.services.transfer_to_billing import transfer_to_billing_queue_service
 from order.models import Order
 from order.services.consolidate_pdf import combine_pdfs
 from organization.models import Organization
@@ -96,6 +97,45 @@ def mass_order_bill_task(self, user_id: str) -> None:
         mass_order_billing.mass_order_billing_service(
             user_id=user_id, task_id=self.request.id
         )
+    except ObjectDoesNotExist as exc:
+        raise self.retry(exc=exc) from exc
+
+
+@shared_task(bind=True)
+def transfer_to_billing_task(self, *, user_id: str, order_pros: list[str]) -> None:
+    """
+    Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
+
+    Args:
+        self: The Celery task instance.
+        user_id: A string representing the ID of the user who initiated the transfer.
+        order_pros: A list of strings representing the order IDs to transfer.
+
+    Returns:
+        None.
+
+    Raises:
+        self.retry: If an ObjectDoesNotExist exception is raised while processing the task.
+
+    This Celery task function calls the `transfer_to_billing_queue_service` function to create BillingQueue objects
+    for each order in the provided list of order IDs, and updates the transfer status and transfer date of each order.
+
+    If an ObjectDoesNotExist exception is raised while processing the task, the Celery task will automatically retry
+    the task until it succeeds, with an exponential backoff strategy.
+
+    The function expects the following arguments:
+    - self: The Celery task instance.
+    - user_id: A string representing the ID of the user who initiated the transfer.
+    - order_pros: A list of strings representing the order IDs to transfer.
+
+    The `transfer_to_billing_queue_service` function is called to perform the actual transfer of the specified order(s).
+    If this operation raises an ObjectDoesNotExist exception, the function will retry the task with an exponential
+    backoff strategy until it succeeds.
+
+    Finally, the function returns None.
+    """
+    try:
+        transfer_to_billing_queue_service(user_id=user_id, order_pros=order_pros)
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
 

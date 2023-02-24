@@ -150,6 +150,7 @@ class EquipmentSerializer(GenericSerializer):
         model = models.Equipment
         extra_fields = ("is_active",)
 
+
 class EquipmentMaintenancePlanSerializer(GenericSerializer):
     """A serializer for the EquipmentMaintenancePlan model
 

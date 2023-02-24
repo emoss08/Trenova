@@ -297,7 +297,11 @@ urlpatterns = [
     path("api/bill_order/", billing_api.bill_order_view, name="bill-order"),
     path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
-    path("api/transfer_to_billing/", billing_api.transfer_to_billing, name="transfer-to-billing"),
+    path(
+        "api/transfer_to_billing/",
+        billing_api.transfer_to_billing,
+        name="transfer-to-billing",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
