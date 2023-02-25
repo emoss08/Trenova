@@ -531,7 +531,7 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
 
         verbose_name = _("Order")
         verbose_name_plural = _("Orders")
-        ordering = ["-pro_number"]
+        ordering = ["pro_number"]
         db_table = "order"
 
     def __str__(self) -> str:
