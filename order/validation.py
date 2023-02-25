@@ -162,8 +162,12 @@ class OrderValidation:
             completed.
         """
 
-        # Validate order not marked 'ready_to_bill' if 'status' is not COMPLETED
-        if self.order.ready_to_bill and self.order.status != StatusChoices.COMPLETED:
+        if (
+            self.order.organization.billing_control.order_transfer_criteria
+            == "READY_AND_COMPLETED"
+            and self.order.ready_to_bill
+            and self.order.status != StatusChoices.COMPLETED
+        ):
             self.errors["ready_to_bill"] = _(
                 "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
             )

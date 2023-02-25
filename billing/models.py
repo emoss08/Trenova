@@ -25,6 +25,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import BEFORE_DELETE, BEFORE_SAVE, LifecycleModelMixin, hook
 from djmoney.models.fields import MoneyField
@@ -817,6 +818,12 @@ class BillingTransferLog(GenericModel):
         unique=True,
         help_text=_("Unique identifier for the billing history"),
     )
+    task_id = models.CharField(
+        _("Task ID"),
+        max_length=255,
+        help_text=_("Task ID for the billing transfer log"),
+        blank=True,
+    )
     order = models.ForeignKey(
         "order.Order",
         on_delete=models.RESTRICT,
@@ -853,8 +860,14 @@ class BillingTransferLog(GenericModel):
         Returns:
             String representation for the BillingTransferLog model.
         """
+        user_tz = timezone.get_current_timezone()
+        transferred_at_local = timezone.localtime(
+            value=self.transferred_at, timezone=user_tz
+        )
+        transferred_at_str = transferred_at_local.strftime("%Y-%m-%d %H:%M:%S")
+
         return textwrap.shorten(
-            f"{self.order} transferred to billing at {self.transferred_at}",
+            f"{self.order} transferred to billing at {transferred_at_str}",
             width=100,
             placeholder="...",
         )

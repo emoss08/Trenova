@@ -19,9 +19,11 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from collections.abc import Iterable
 
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 
 from billing.models import BillingControl, BillingQueue
+from commodities.models import Commodity
+from customer.models import Customer
 from order.models import Order
 from organization.models import Organization
 from utils.models import StatusChoices
@@ -84,3 +86,48 @@ def get_billing_queue_information(*, order: Order) -> BillingQueue | None:
         The billing history for the order, or `None` if no billing history is found.
     """
     return BillingQueue.objects.filter(order=order).last()
+
+
+def get_transfer_to_billing_orders(*, order_pros: list[str]) -> Iterable[Order]:
+    return (
+        Order.objects.filter(pro_number__in=order_pros)
+        .only(
+            "id",
+            "organization_id",
+            "organization__name",
+            "pro_number",
+            "order_type_id",
+            "pieces",
+            "weight",
+            "ready_to_bill",
+            "status",
+            "billed",
+            "mileage",
+            "consignee_ref_number",
+            "other_charge_amount",
+            "other_charge_amount_currency",
+            "freight_charge_amount",
+            "freight_charge_amount_currency",
+            "sub_total",
+            "sub_total_currency",
+            "bol_number",
+            "transferred_to_billing",
+            "billing_transfer_date",
+            "revenue_code",
+            "customer_id",
+            "commodity_id",
+            "entered_by",
+        )
+        .select_related("revenue_code")
+        .prefetch_related(
+            Prefetch("customer", queryset=Customer.objects.only("id", "name")),
+            Prefetch(
+                "commodity",
+                queryset=Commodity.objects.only("id", "description"),
+            ),
+            Prefetch(
+                "organization",
+                queryset=Organization.objects.only("id", "name"),
+            ),
+        )
+    )

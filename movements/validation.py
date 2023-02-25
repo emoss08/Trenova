@@ -243,6 +243,7 @@ class MovementValidation:
 
         if not self.movement.order.hazmat:
             return
+
         # Validation for the primary_worker
         if self.movement.primary_worker:
             if self.movement.primary_worker.profile.endorsements not in [

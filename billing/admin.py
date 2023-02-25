@@ -101,8 +101,8 @@ class BillingTransferLogAdmin(GenericAdmin[BillingTransferLog]):
         "transferred_at",
         "transferred_by",
     )
-    search_fields = ("invoice_number", "transferred_by", "transferred_at")
-    readonly_fields = ("transferred_at", "transferred_by", "order")
+    search_fields = ("order", "task_id", "transferred_by", "transferred_at")
+    readonly_fields = ("task_id", "transferred_at", "transferred_by", "order")
 
     def has_delete_permission(
         self, request: HttpRequest, obj: BillingTransferLog | None = None

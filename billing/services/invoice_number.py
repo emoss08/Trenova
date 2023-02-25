@@ -37,9 +37,11 @@ class InvoiceNumberService:
             str: Invoice number
         """
         if not self.instance.invoice_number:
-            if latest_invoice := models.BillingQueue.objects.order_by(
-                "invoice_number"
-            ).last():
+            if (
+                latest_invoice := models.BillingQueue.objects.only("invoice_number")
+                .order_by("invoice_number")
+                .last()
+            ):
                 latest_invoice_number = int(
                     latest_invoice.invoice_number.split(
                         self.instance.organization.invoice_control.invoice_number_prefix
