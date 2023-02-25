@@ -37,7 +37,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
     restart: always
-    expose :
+    expose:
       - "5432"
 
 
