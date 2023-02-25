@@ -135,7 +135,9 @@ def transfer_to_billing_task(self, *, user_id: str, order_pros: list[str]) -> No
     Finally, the function returns None.
     """
     try:
-        transfer_to_billing_queue_service(user_id=user_id, order_pros=order_pros)
+        transfer_to_billing_queue_service(
+            user_id=user_id, order_pros=order_pros, task_id=self.request.id
+        )
     except ObjectDoesNotExist as exc:
         raise self.retry(exc=exc) from exc
 
@@ -148,7 +150,10 @@ def automate_mass_order_billing(self) -> str:
         self (celery.app.task.Task): The task object
 
     Returns:
-        None: None
+        str: A string containing the results of the automated mass billing tasks.
+
+    Raises:
+        ObjectDoesNotExist: If the Order does not exist in the database.
     """
     system_user = User.objects.get(username="sys")
     organizations = Organization.objects.filter(billing_control__auto_bill_orders=True)
