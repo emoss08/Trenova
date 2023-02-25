@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from django.db.models import Prefetch, QuerySet, Count
+from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions
 
 from movements.models import Movement
@@ -141,7 +141,11 @@ class OrderViewSet(OrganizationMixin):
         """
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
-        ).prefetch_related(Prefetch("movements", queryset=Movement.objects.only("id", "order_id").all()))
+        ).prefetch_related(
+            Prefetch(
+                "movements", queryset=Movement.objects.only("id", "order_id").all()
+            )
+        )
 
 
 class OrderDocumentationViewSet(OrganizationMixin):

@@ -6,7 +6,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0005_rename_phone_userprofile_phone_number_and_more"),
     ]

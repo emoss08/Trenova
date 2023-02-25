@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("dispatch", "0004_dispatchcontrol_enforce_driver_ta"),
         ("worker", "0003_workertimeaway"),

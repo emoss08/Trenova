@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("dispatch", "0006_alter_fleetcode_manager"),
         ("equipment", "0005_remove_equipment_fleet"),

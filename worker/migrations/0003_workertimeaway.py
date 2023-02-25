@@ -10,7 +10,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("organization", "0017_alter_tablechangealert_table"),
         (

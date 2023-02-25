@@ -18,7 +18,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from collections.abc import Iterable
-from typing import Optional, Tuple
 
 from django.db import connection
 from django.db.models import Q

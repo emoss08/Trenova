@@ -162,7 +162,7 @@ class Command(BaseCommand):
         )
         return user
 
-    def create_location(self, organization) -> Tuple[Location, Location]:
+    def create_location(self, organization) -> tuple[Location, Location]:
         """
         Creates two new `Location` objects associated with the specified organization.
 

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("dispatch", "0004_dispatchcontrol_enforce_driver_ta"),
         ("equipment", "0003_alter_equipment_table_and_more"),
