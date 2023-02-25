@@ -20,7 +20,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any
 
 from django.contrib.auth import authenticate, password_validation
-from django.utils.translation import gettext_lazy as _
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
@@ -300,7 +299,9 @@ class ChangePasswordSerializer(serializers.Serializer):
 
         user = self.context["request"].user
         if not user.check_password(value):
-            raise serializers.ValidationError(_("Old password is incorrect. Please try again."))  # type: ignore
+            raise serializers.ValidationError(
+                "Old password is incorrect. Please try again."
+            )
         return value
 
     def validate(self, attrs: Any) -> Any:
@@ -314,7 +315,9 @@ class ChangePasswordSerializer(serializers.Serializer):
         """
 
         if attrs["new_password"] != attrs["confirm_password"]:
-            raise serializers.ValidationError(_("Passwords do not match. Please try again."))  # type: ignore
+            raise serializers.ValidationError(
+                "Passwords do not match. Please try again."
+            )
         password_validation.validate_password(
             attrs["new_password"], self.context["request"].user
         )

@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions
 
+from movements.models import Movement
 from order import models, serializers
 from utils.views import OrganizationMixin
 
@@ -140,7 +141,11 @@ class OrderViewSet(OrganizationMixin):
         """
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
-        ).prefetch_related(Prefetch("movements"))
+        ).prefetch_related(
+            Prefetch(
+                "movements", queryset=Movement.objects.only("id", "order_id").all()
+            )
+        )
 
 
 class OrderDocumentationViewSet(OrganizationMixin):

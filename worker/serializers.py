@@ -19,7 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.utils.translation import gettext_lazy as _
+from django.db import OperationalError, transaction
 from rest_framework import serializers
 
 from accounts.models import User
@@ -168,74 +168,93 @@ class WorkerSerializer(GenericSerializer):
         return worker
 
     def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
-        """Update the worker
+        """Updates a worker instance.
 
         Args:
-            instance (models.Worker): Worker instance.
-            validated_data (Any): Validated data.
+            instance: A Worker instance to be updated.
+            validated_data: Validated data for updating the worker.
 
         Returns:
-            models.Worker: Worker instance.
-        """
+            The updated Worker instance.
 
+        Raises:
+            serializers.ValidationError: If any errors occur during the update process.
+
+        This function updates a worker instance by first updating the worker's profile,
+        comments, and contacts, and then updating the worker instance itself. If comments or
+        contacts are included in the validated data, the function will attempt to select and
+        lock the associated rows using `select_for_update()`. If `nowait=True`, the function
+        will raise a `serializers.ValidationError` immediately if the selected rows are
+        locked by another transaction, without waiting for the lock to be released. If any
+        errors occur during the update process, the function will raise a
+        `serializers.ValidationError` with a helpful error message.
+        """
         profile_data = validated_data.pop("profile", {})
         comments_data = validated_data.pop("comments", [])
         contacts_data = validated_data.pop("contacts", [])
 
-        # Update the worker profile.
-        if profile_data:
-            instance.profile.update_worker_profile(**profile_data)
+        with transaction.atomic():
+            if profile_data:
+                instance.profile.update_worker_profile(**profile_data)
 
-        # Update the worker comments.
-        if comments_data:
             for comment_data in comments_data:
-                if comment_id := comment_data.get("id", None):
-                    try:
-                        worker_comment = models.WorkerComment.objects.get(
+                comment_id = comment_data.get("id", None)
+                try:
+                    worker_comment = (
+                        models.WorkerComment.objects.select_for_update(nowait=True).get(
                             id=comment_id, worker=instance
                         )
-                    except models.WorkerComment.DoesNotExist as e:
-                        raise serializers.ValidationError(
-                            {
-                                "comments": (
-                                    _(
-                                        f"Worker comment with id '{comment_id}' does not exist. "
-                                        f"Delete the ID and try again."
-                                    )
-                                )
-                            }
-                        ) from e
+                        if comment_id
+                        else None
+                    )
+                except models.WorkerComment.DoesNotExist as e:
+                    raise serializers.ValidationError(
+                        {
+                            "comments": f"Worker comment with id '{comment_id}' does not exist. Delete the ID and try again."
+                        }
+                    ) from e
+                except OperationalError as e:
+                    raise serializers.ValidationError(
+                        {
+                            "comments": "Worker comment is locked by another transaction. Try again later."
+                        }
+                    ) from e
 
+                if worker_comment:
                     worker_comment.update_worker_comment(**comment_data)
                 else:
                     comment_data["organization"] = instance.organization
                     instance.comments.create(**comment_data)
 
-        # Update the worker contacts.
-        if contacts_data:
             for contact_data in contacts_data:
-                if contact_id := contact_data.get("id", None):
-                    try:
-                        worker_contact = models.WorkerContact.objects.get(
+                contact_id = contact_data.get("id", None)
+                try:
+                    worker_contact = (
+                        models.WorkerContact.objects.select_for_update(nowait=True).get(
                             id=contact_id, worker=instance
                         )
-                    except models.WorkerContact.DoesNotExist as exc:
-                        raise serializers.ValidationError(
-                            {
-                                "comments": (
-                                    _(
-                                        f"Worker contact with id '{contact_id}' does not exist. "
-                                        f"Delete the ID and try again."
-                                    )
-                                )
-                            }
-                        ) from exc
+                        if contact_id
+                        else None
+                    )
+                except models.WorkerContact.DoesNotExist as exc:
+                    raise serializers.ValidationError(
+                        {
+                            "contacts": f"Worker contact with id '{contact_id}' does not exist. Delete the ID and try again."
+                        }
+                    ) from exc
+                except OperationalError as exc:
+                    raise serializers.ValidationError(
+                        {
+                            "contacts": "Worker contact is locked by another transaction. Try again later."
+                        }
+                    ) from exc
 
+                if worker_contact:
                     worker_contact.update_worker_contact(**contact_data)
                 else:
                     contact_data["organization"] = instance.organization
                     instance.contacts.create(**contact_data)
 
-        instance.update_worker(**validated_data)
+            instance.update_worker(**validated_data)
 
         return instance

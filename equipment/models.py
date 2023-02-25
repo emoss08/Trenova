@@ -81,7 +81,7 @@ class EquipmentType(LifecycleModelMixin, GenericModel):  # type: ignore
         Returns:
             str: Absolute URL of the Equipment Type Model
         """
-        return reverse("equipment:equipment-type-detail", kwargs={"pk": self.pk})
+        return reverse("equipment-types-detail", kwargs={"pk": self.pk})
 
     @hook(AFTER_CREATE)  # type: ignore
     def create_equipment_type_details_after_create(self) -> None:
@@ -277,9 +277,7 @@ class EquipmentManufacturer(GenericModel):
         Returns:
             str: Absolute URL of the Equipment Manufacturer Model
         """
-        return reverse(
-            "equipment:equipment-manufacturer-detail", kwargs={"pk": self.pk}
-        )
+        return reverse("equipment-manufacturers-detail", kwargs={"pk": self.pk})
 
 
 class Equipment(GenericModel):
@@ -472,6 +470,14 @@ class Equipment(GenericModel):
         default=False,
         help_text=_("Equipment is IFTA Qualified."),
     )
+    fleet = models.ForeignKey(
+        "dispatch.FleetCode",
+        on_delete=models.CASCADE,
+        related_name="equipment",
+        related_query_name="equipment",
+        verbose_name=_("Fleet"),
+        help_text=_("Fleet of the equipment."),
+    )
 
     class Meta:
         """
@@ -480,7 +486,7 @@ class Equipment(GenericModel):
 
         verbose_name = _("Equipment")
         verbose_name_plural = _("Equipment")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
         db_table = "equipment"
 
     def __str__(self) -> str:
@@ -513,6 +519,11 @@ class Equipment(GenericModel):
                 "Primary worker and secondary worker cannot be the same. Please try again."
             )
 
+        if self.primary_worker and self.fleet != self.primary_worker.fleet:
+            errors["primary_worker"] = _(
+                "Primary worker must be in the same fleet as the equipment. Please try again."
+            )
+
         if errors:
             raise ValidationError(errors)
 
@@ -522,7 +533,7 @@ class Equipment(GenericModel):
         Returns:
             str: Absolute URL of the Equipment Model
         """
-        return reverse("equipment:equipment-detail", kwargs={"pk": self.pk})
+        return reverse("equipment-detail", kwargs={"pk": self.pk})
 
 
 class EquipmentMaintenancePlan(GenericModel):
@@ -643,6 +654,4 @@ class EquipmentMaintenancePlan(GenericModel):
         Returns:
             str: Absolute URL of the EquipmentMaintenancePlan Model
         """
-        return reverse(
-            "equipment:equipment-maintenance-plan-detail", kwargs={"pk": self.pk}
-        )
+        return reverse("equipment-maintenance-plans-detail", kwargs={"pk": self.pk})

@@ -17,8 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional, Tuple
-
 from collections.abc import Iterable
 
 from django.db import connection

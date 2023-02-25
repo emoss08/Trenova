@@ -16,9 +16,14 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+import threading
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import transaction
+
+from dispatch.factories import CommentTypeFactory
+from worker.models import WorkerComment
 
 pytestmark = pytest.mark.django_db
 

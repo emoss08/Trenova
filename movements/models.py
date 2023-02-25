@@ -108,7 +108,7 @@ class Movement(LifecycleModelMixin, GenericModel):
             str: String representation of the Movement
         """
         return textwrap.shorten(
-            f"{self.order} - {self.ref_num}", width=30, placeholder="..."
+            f"{self.status} - {self.ref_num}", width=30, placeholder="..."
         )
 
     def clean(self) -> None:

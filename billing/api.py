@@ -24,7 +24,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from billing import models, serializers
-from order.tasks import bill_order_task, mass_order_bill_task
+from order.tasks import bill_order_task, mass_order_bill_task, transfer_to_billing_task
 from utils.views import OrganizationMixin
 
 
@@ -281,4 +281,46 @@ def mass_order_bill(request: Request) -> Response:
 
     return Response(
         {"message": "Mass Billing task started."}, status=status.HTTP_200_OK
+    )
+
+
+@api_view(["POST"])
+def transfer_to_billing(request: Request) -> Response:
+    """
+    Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
+
+    Args:
+        request: A Django Request object that contains the order(s) to transfer to billing.
+
+    Returns:
+        A Django Response object with a success message and a 200 status code if the transfer task
+        was successfully started. If no order(s) are provided in the request, a 400 status code and
+        an error message will be returned.
+
+    Raises:
+        N/A
+
+    This view function expects a POST request containing an `order_pros` key in the request data,
+    which should be a list of order IDs to be transferred to billing. If no `order_pros` key is
+    provided, the function will return a response with a 400 status code and an error message.
+
+    If the request data is valid, the function will start a Celery task with the provided order IDs
+    and the ID of the currently logged-in user. The task will run in the background and transfer
+    the specified order(s) to billing.
+
+    Upon successfully starting the Celery task, the function will return a response with a 200 status
+    code and a success message indicating that the transfer task has been started.
+    """
+    order_pros = request.data.get("order_pros")
+
+    if not order_pros:
+        return Response(
+            {"message": "Order Pro(s) is required. Please Try Again."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    transfer_to_billing_task.delay(user_id=request.user.id, order_pros=order_pros)
+
+    return Response(
+        {"message": "Transfer to billing task started."}, status=status.HTTP_200_OK
     )

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("dispatch", "0003_alter_commenttype_table_alter_delaycode_table_and_more"),
     ]

@@ -18,7 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 
-from django.db import connection
+from django.db import connection, transaction
 
 from .table_choices import TableChoiceService
 
@@ -53,6 +53,7 @@ def create_insert_field_string(fields: list[str]) -> str:
     )
 
 
+@transaction.atomic
 def create_insert_function(
     *, listener_name: str, function_name: str, fields: list[str]
 ) -> None:
@@ -100,6 +101,7 @@ def create_insert_function(
         )
 
 
+@transaction.atomic
 def create_insert_trigger(
     *, trigger_name: str, table_name: str, function_name: str, listener_name: str
 ) -> None:
@@ -174,6 +176,7 @@ def create_update_field_string(fields: list[str]) -> str:
     return f"({' OR '.join(f'OLD.{f} IS DISTINCT FROM NEW.{f}' for f in fields if f not in excluded)})"
 
 
+@transaction.atomic
 def create_update_function(
     *, listener_name: str, function_name: str, fields: list[str]
 ) -> None:
@@ -222,6 +225,7 @@ def create_update_function(
         )
 
 
+@transaction.atomic
 def create_update_trigger(
     *, trigger_name: str, table_name: str, function_name: str, listener_name: str
 ) -> None:
@@ -265,6 +269,7 @@ def create_update_trigger(
         )
 
 
+@transaction.atomic
 def drop_trigger_and_function(
     *, trigger_name: str, function_name: str, table_name: str
 ) -> None:
@@ -282,14 +287,22 @@ def drop_trigger_and_function(
 
     Raises:
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
-
     """
-    with connection.cursor() as cursor:
-        cursor.execute(
-            f"""
+
+    trigger = check_trigger_exists(table_name=table_name, trigger_name=trigger_name)
+    function = check_function_exists(function_name=function_name)
+
+    if trigger and function:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
             DROP TRIGGER IF EXISTS {trigger_name} ON {table_name};
             DROP FUNCTION IF EXISTS {function_name}();
             """
+            )
+    else:
+        raise ValueError(
+            f"Trigger {trigger_name} or function {function_name} does not exist."
         )
 
 
@@ -316,4 +329,29 @@ def check_trigger_exists(*, table_name: str, trigger_name: str) -> bool:
             AND trigger_name = %s)
         """
         cursor.execute(query, [table_name, trigger_name])
+        return cursor.fetchone()[0]
+
+
+def check_function_exists(*, function_name: str) -> bool:
+    """
+    Check if a function with the given name exists in the database.
+
+    Args:
+        function_name (str): The name of the function to check for.
+
+    Returns:
+        bool: True if the function exists in the database, False otherwise.
+
+    Raises:
+        django.db.utils.DatabaseError: If there is an error executing the SQL query.
+    """
+
+    with connection.cursor() as cursor:
+        query = """
+            SELECT EXISTS (
+                SELECT 1 FROM pg_proc
+                WHERE proname = %s
+            )
+        """
+        cursor.execute(query, [function_name])
         return cursor.fetchone()[0]

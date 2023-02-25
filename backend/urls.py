@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -161,7 +160,16 @@ router.register(
     r"equipment_types", equipment_api.EquipmentTypeViewSet, basename="equipment-types"
 )
 router.register(r"equipment", equipment_api.EquipmentViewSet, basename="equipment")
-
+router.register(
+    r"equipment_manufacturers",
+    equipment_api.EquipmentManufacturerViewSet,
+    basename="equipment-manufacturers",
+)
+router.register(
+    r"equipment_maintenance_plans",
+    equipment_api.EquipmentMaintenancePlanViewSet,
+    basename="equipment-maintenance-plans",
+)
 # Location Routing
 router.register(
     r"locations_categories",
@@ -289,6 +297,11 @@ urlpatterns = [
     path("api/bill_order/", billing_api.bill_order_view, name="bill-order"),
     path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
+    path(
+        "api/transfer_to_billing/",
+        billing_api.transfer_to_billing,
+        name="transfer-to-billing",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

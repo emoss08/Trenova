@@ -57,3 +57,35 @@ class EquipmentViewSet(OrganizationMixin):
         "has_berth",
         "highway_use_tax",
     )
+
+
+class EquipmentManufacturerViewSet(OrganizationMixin):
+    """A viewset for viewing and editing customer information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting customers,
+    as well as listing and retrieving customers. It uses the `CustomerSerializer`
+    class to convert the customer instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by customer ID, name, and
+    code.
+    """
+
+    queryset = models.EquipmentManufacturer.objects.all()
+    serializer_class = serializers.EquipmentManufacturerSerializer
+
+
+class EquipmentMaintenancePlanViewSet(OrganizationMixin):
+    """A viewset for viewing and editing customer information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting customers,
+    as well as listing and retrieving customers. It uses the `CustomerSerializer`
+    class to convert the customer instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by customer ID, name, and
+    code.
+    """
+
+    queryset = models.EquipmentMaintenancePlan.objects.all()
+    serializer_class = serializers.EquipmentMaintenancePlanSerializer

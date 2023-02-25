@@ -22,6 +22,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 
 from accounts.serializers import UserSerializer
+from accounts.tests.factories import JobTitleFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -45,6 +46,7 @@ class TestUserAPI:
         """
         Test Create user
         """
+        job_title = JobTitleFactory()
 
         payload = {
             "username": "test_user",
@@ -57,6 +59,7 @@ class TestUserAPI:
                 "city": "test",
                 "state": "NC",
                 "zip_code": "12345",
+                "title": job_title.id,
             },
         }
 
