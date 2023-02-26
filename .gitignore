@@ -32,4 +32,7 @@ media
 django_config.md
 postgres
 celerybeat-schedule
-postgres
+monta_kafka/target
+monta_kafka/.idea
+monta_kafka/.vscode
+monta_kafka/Cargo.lock
