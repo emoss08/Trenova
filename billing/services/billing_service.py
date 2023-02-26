@@ -58,7 +58,7 @@ def create_billing_exception(
     Returns:
         None: None
     """
-    models.BillingException.objects.create(
+    models.BillingException.objects.create_billing_exception(
         organization=user.organization,
         exception_type=exception_type,
         order=order,

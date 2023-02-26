@@ -16,10 +16,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import Any, final
+from typing import Any, final, Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -30,6 +31,8 @@ from django.utils.translation import gettext_lazy as _
 from django_lifecycle import BEFORE_DELETE, BEFORE_SAVE, LifecycleModelMixin, hook
 from djmoney.models.fields import MoneyField
 
+from order.models import Order
+from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -1134,6 +1137,83 @@ class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
             `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
         """
         return reverse("billing-history-detail", kwargs={"pk": self.pk})
+
+
+class BillingExceptionManager(models.Manager):
+    """
+    A custom manager for the BillingException model that provides additional functionality for
+    managing BillingException instances.
+
+    This class inherits from Django's built-in `models.Manager` class, and is used to manage instances
+    of the `BillingException` model. It provides two methods to retrieve and create `BillingException`
+    instances with additional functionality.
+
+    Methods:
+        - get_most_recent_exception(order)
+        - create_billing_exception(organization, exception_type, order, exception_message)
+    """
+    def get_most_recent_exception(self, order: Order) -> Optional[BillingException]:
+        """
+        Retrieve the most recent BillingException instance associated with the provided Order.
+
+        This method queries the database for the most recent `BillingException` instance associated with
+        the provided `Order`. It takes one argument:
+        - `order` (type: `Order`): The `Order` object to retrieve the most recent `BillingException` for.
+
+        If a `BillingException` instance is found, it is returned. Otherwise, the method returns `None`.
+
+        Args:
+            order (Order): The Order object to retrieve the most recent BillingException for.
+
+        Returns:
+            Optional[BillingException]: The most recent BillingException instance associated with the provided Order,
+            or None if no BillingException instance is found.
+
+        Raises:
+            None
+        """
+        try:
+            return self.filter(order=order).latest("created_at")
+        except BillingException.DoesNotExist:
+            return None
+
+    def create_billing_exception(
+        self,
+        *,
+        organization: Organization,
+        exception_type: str,
+        order: Order,
+        exception_message: str,
+    ) -> BillingException:
+        """
+        Create a new BillingException instance with the provided information.
+
+        This method creates a new `BillingException` instance with the provided information. It takes the following arguments:
+        - `organization` (type: `Organization`): The `Organization` object associated with the `BillingException`.
+        - `exception_type` (type: `str`): A string representing the type of the `BillingException`.
+        - `order` (type: `Order`): The `Order` object associated with the `BillingException`.
+        - `exception_message` (type: `str`): A message describing the `BillingException`.
+
+        The method returns the newly created `BillingException` instance.
+
+        Args:
+            organization (Organization): The Organization object associated with the BillingException.
+            exception_type (str): A string representing the type of the BillingException.
+            order (Order): The Order object associated with the BillingException.
+            exception_message (str): A message describing the BillingException.
+
+        Returns:
+            BillingException: The new BillingException instance.
+
+        Raises:
+            None
+        """
+        return self.create(
+            organization=organization,
+            exception_type=exception_type,
+            order=order,
+            exception_message=exception_message,
+        )
 
 
 class BillingException(GenericModel):
