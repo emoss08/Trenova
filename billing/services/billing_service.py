@@ -45,7 +45,7 @@ class BillingException(Exception):
 
 
 def create_billing_exception(
-    *, user: User, exception_type: str, order: Order | None, exception_message: str
+    *, user: User, exception_type: str, order: Order, exception_message: str
 ) -> None:
     """Create a billing Exception
 
