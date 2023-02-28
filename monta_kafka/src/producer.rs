@@ -1,13 +1,7 @@
 use std::time::Duration;
 use kafka::producer::{Producer, Record, RequiredAcks};
-use serde::{Serialize};
-use serde_json;
+use crate::consumer::BillingMessage;
 
-#[derive(Serialize)]
-struct BillingMessage {
-    id: u32,
-    amount: f64,
-}
 
 pub(crate) fn produce() {
     let mut producer: Producer = Producer::from_hosts(vec!["localhost:9092".to_owned()])
