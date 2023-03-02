@@ -1,5 +1,6 @@
 art==5.8
 celery~=5.2.7
+celery-types==0.14.0
 channels==4.0.0
 confluent-kafka==2.0.2
 daphne==4.0.0
@@ -24,6 +25,7 @@ django-notifications-hq==1.7.0
 django-pgtrigger==4.6.0
 django-phonenumber-field==7.0.2
 django-redis==5.2.0
+django-rest-knox==4.2.0
 django-silk==5.0.3
 django-stubs==1.15.0
 django-stubs-ext==0.7.0
@@ -55,5 +57,3 @@ types-redis==4.5.1.4
 weasyprint==58.0
 whitenoise==6.4.0
 xhtml2pdf==0.2.9
-celery-types==0.14.0
-django-rest-knox==4.2.0

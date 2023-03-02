@@ -65,9 +65,11 @@ def api_client(token, organization):
         organization=organization,
         username="test",
         password="password",
-        email="testuser@testing.com"
+        email="testuser@testing.com",
     )
 
-    client.post(reverse('knox_login'), data={"username": user.username, "password": "password"})
+    client.post(
+        reverse("knox_login"), data={"username": user.username, "password": "password"}
+    )
     client.credentials(HTTP_AUTHORIZATION=f"Token {token.token_key}")
     yield client

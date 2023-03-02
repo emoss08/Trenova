@@ -24,14 +24,11 @@ from django.db.models import QuerySet
 from knox.views import LoginView as KnoxLoginView
 from rest_framework import permissions, status
 from rest_framework.authtoken.serializers import AuthTokenSerializer
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from accounts import models, serializers
-from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
 
 
@@ -127,7 +124,7 @@ class LoginView(KnoxLoginView):
 
     permission_classes = (permissions.AllowAny,)
 
-    def post(self, request: Request, format: Optional[str] = None) -> Response:
+    def post(self, request: Request, format: str | None = None) -> Response:
         """
         Handle user authentication and login using an HTTP POST request.
 
@@ -149,4 +146,4 @@ class LoginView(KnoxLoginView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         login(request, user)
-        return super(LoginView, self).post(request, format=None)
+        return super().post(request, format=None)

@@ -47,7 +47,9 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(
-            self.style.HTTP_INFO("Checking if celery beat configurations already exist...")
+            self.style.HTTP_INFO(
+                "Checking if celery beat configurations already exist..."
+            )
         )
         if IntervalSchedule.objects.all().exists():
             self.stdout.write(

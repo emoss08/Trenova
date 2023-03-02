@@ -119,7 +119,6 @@ class TestUserAPI:
             format="json",
         )
 
-
         assert response.status_code == 200
         assert response.data["username"] == "test2342"
         assert response.data["email"] == "test@test.com"

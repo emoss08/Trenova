@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import Any, Optional, final
+from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -1152,6 +1152,7 @@ class BillingExceptionManager(models.Manager):
         - get_most_recent_exception(order)
         - create_billing_exception(organization, exception_type, order, exception_message)
     """
+
     def get_most_recent_exception(self, order: Order) -> BillingException:
         """
         Retrieve the most recent BillingException instance associated with the provided Order.

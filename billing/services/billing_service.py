@@ -35,6 +35,7 @@ class AuthenticatedHTTPRequest(HttpRequest):
     """
     Authenticated HTTP Request
     """
+
     user: User
 
 
