@@ -38,7 +38,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import LifecycleModelMixin, hook, AFTER_CREATE
+from django_lifecycle import AFTER_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 
 from utils.models import ChoiceField, GenericModel

@@ -28,8 +28,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
-from django.utils.functional import cached_property
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from encrypted_model_fields.fields import EncryptedCharField
@@ -343,7 +343,7 @@ class WorkerProfile(GenericModel):
         blank=True,
         null=True,
         help_text=_("Date of hire."),
-        default=timezone.now().date(),
+        default=timezone.now,
     )
     termination_date = models.DateField(
         _("Termination Date"),

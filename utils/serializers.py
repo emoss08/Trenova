@@ -21,8 +21,9 @@ from typing import Any, TypeVar
 
 from django.db.models import Model
 from django.utils.functional import cached_property
-from rest_framework import serializers
 from knox.models import AuthToken
+from rest_framework import serializers
+
 from organization.models import Organization
 
 _MT = TypeVar("_MT", bound=Model)

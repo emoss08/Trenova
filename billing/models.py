@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import Any, final, Optional
+from typing import Any, Optional, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -34,6 +34,7 @@ from djmoney.models.fields import MoneyField
 from order.models import Order
 from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, StatusChoices
+
 
 @final
 class FuelMethodChoices(models.TextChoices):

@@ -21,16 +21,14 @@ from typing import Any, Optional
 
 from django.contrib.auth import login
 from django.db.models import QuerySet
-from rest_framework import status
+from knox.views import LoginView as KnoxLoginView
+from rest_framework import permissions, status
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.authtoken.serializers import AuthTokenSerializer
-from rest_framework import permissions
-
-from knox.views import LoginView as KnoxLoginView
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException

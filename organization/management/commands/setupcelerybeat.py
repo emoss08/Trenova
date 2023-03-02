@@ -43,6 +43,8 @@ class Command(BaseCommand):
             None: None
         """
 
+        IntervalSchedule.objects.all().delete()
+
         minute_objs = [
             IntervalSchedule(every=minute, period=IntervalSchedule.MINUTES)
             for minute in range(1, 60)

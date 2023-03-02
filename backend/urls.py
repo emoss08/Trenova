@@ -26,8 +26,9 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from rest_framework_nested import routers
 from knox import views as knox_views
+from rest_framework_nested import routers
+
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
