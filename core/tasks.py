@@ -33,7 +33,7 @@ def get_cutoff_date() -> datetime.datetime:
     str: The cutoff date for deleting audit log records.
     """
 
-    return timezone.now() - timezone.timedelta(days=30)
+    return timezone.now() - datetime.timedelta(days=30)
 
 
 @shared_task(bind=True)

@@ -26,6 +26,7 @@ from billing.services.transfer_to_billing import transfer_to_billing_queue_servi
 from order.models import Order
 from order.services.consolidate_pdf import combine_pdfs
 from organization.models import Organization
+from utils.types import MODEL_UUID
 
 
 @shared_task(bind=True)
@@ -54,7 +55,7 @@ def consolidate_order_documentation(self, order_id: str) -> None:
 
 
 @shared_task(bind=True)
-def bill_order_task(self, user_id: str, order_id: str) -> None:
+def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:
     """Bill Order
 
     Query the database for the Order and call the bill_order
@@ -80,7 +81,7 @@ def bill_order_task(self, user_id: str, order_id: str) -> None:
 
 
 @shared_task(bind=True)
-def mass_order_bill_task(self, user_id: str) -> None:
+def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:
     """Bill Order
 
     Args:
@@ -102,7 +103,7 @@ def mass_order_bill_task(self, user_id: str) -> None:
 
 
 @shared_task(bind=True)
-def transfer_to_billing_task(self, *, user_id: str, order_pros: list[str]) -> None:
+def transfer_to_billing_task(self, *, user_id: MODEL_UUID, order_pros: list[str]) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
 

@@ -233,35 +233,12 @@ CACHES = {
 # Session Configurations
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
-#
-# # Cacheops configurations
-# CACHEOPS_REDIS = {
-#     "host": "localhost",
-#     "port": "6379",
-#     "db": 3,
-# }
-#
-# CACHEOPS = {
-#     # "auth.user": {"ops": "get", "timeout": 60 * 15},
-#     # "auth.*": {"ops": ("fetch", "get"), "timeout": 60 * 15},
-#     # "auth.permission": {"ops": "all", "timeout": 60 * 60},
-#     # "accounts.*": {"ops": ("fetch", "get"), "timeout": 60 * 60},
-#     "billing.billingcontrol": {"ops": ("fetch", "get"), "timeout": 60 * 60},
-#     # "billing.billinghistory": {"ops": ("fetch", "get"), "timeout": 60 * 60},
-#     # "billing.billingexception": {"ops": ("fetch", "get"), "timeout": 60 * 60},
-#     "organization.organization": {"ops": ("fetch", "get"), "timeout": 60 * 60},
-#     "invoicing.*": {'ops': 'all', 'timeout': 60*60},
-#     # "order.*": {'ops': 'all', 'timeout': 60*60},
-# }
-#
-# CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        # "accounts.authentication.TokenAuthentication",
         "knox.auth.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -310,86 +287,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Silk Configurations
 SILKY_PYTHON_PROFILER = True
-#
-# # Django Audit Log Configurations
-# AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("created", "modified")
-# AUDITLOG_INCLUDE_TRACKING_MODELS = (
-#     "accounts.User",
-#     "accounts.UserProfile",
-#     "accounts.JobTitle",
-#     "accounts.Token",
-#     "accounting.GeneralLedgerAccount",
-#     "accounting.RevenueCode",
-#     "accounting.DivisionCode",
-#     "billing.BillingControl",
-#     "billing.ChargeType",
-#     "billing.AccessorialCharge",
-#     "billing.DocumentClassification",
-#     "billing.BillingQueue",
-#     "billing.BillingTransferLog",
-#     "billing.BillingHistory",
-#     "billing.BillingException",
-#     "commodities.HazardousMaterial",
-#     "commodities.Commodity",
-#     "customer.Customer",
-#     "customer.CustomerBillingProfile",
-#     "customer.CustomerEmailProfile",
-#     "customer.CustomerRuleProfile",
-#     "customer.CustomerContact",
-#     "customer.CustomerRuleProfile",
-#     "customer.CustomerFuelProfile",
-#     "customer.CustomerFuelTable",
-#     "customer.CustomerFuelTableDetail",
-#     "dispatch.DispatchControl",
-#     "dispatch.DelayCode",
-#     "dispatch.FleetCode",
-#     "dispatch.CommentType",
-#     "dispatch.Rate",
-#     "dispatch.RateTable",
-#     "dispatch.RateBillingTable",
-#     "equipment.EquipmentType",
-#     "equipment.EquipmentTypeDetail",
-#     "equipment.EquipmentManufacturer",
-#     "fuel.FuelVendor",
-#     "fuel.FuelVendorFuelDetail",
-#     "integration.IntegrationVendor",
-#     "integration.Integration",
-#     "integration.GoogleAPI",
-#     "location.LocationCategory",
-#     "location.Location",
-#     "location.LocationContact",
-#     "location.LocationComment",
-#     "movement.Movement",
-#     "order.OrderControl",
-#     "order.OrderType",
-#     "order.Order",
-#     "order.OrderDocumentation",
-#     "order.OrderComment",
-#     "order.AdditionalCharge",
-#     "order.ReasonCode",
-#     "organization.Organization",
-#     "organization.Depot",
-#     "organization.DepotDetail",
-#     "organization.Department",
-#     "organization.EmailProfile",
-#     "organization.EmailControl",
-#     "organization.EmailLog",
-#     "route.Route",
-#     "route.RouteControl",
-#     "stops.QualifierCode",
-#     "stops.Stop",
-#     "stops.StopComment",
-#     "stops.ServiceIncident",
-#     "worker.Worker",
-#     "worker.WorkerProfile",
-#     "worker.WorkerContact",
-#     "worker.WorkerComment",
-#     "django_celery_beat.PeriodicTask",
-#     "django_celery_beat.CrontabSchedule",
-#     "django_celery_beat.IntervalSchedule",
-#     "django_celery_beat.SolarSchedule",
-#     "django_celery_beat.ClockedSchedule",
-#     "django_celery_beat.PeriodicTasks",
-#     "django_celery_beat.PeriodicTask",
-#     "django_celery_beat.CrontabSchedule",
-# )
+
+REST_KNOX = {
+    "AUTO_REFRESH": True,
+}

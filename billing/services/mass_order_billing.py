@@ -32,6 +32,7 @@ from billing.services.billing_service import (
     set_order_billed,
     set_order_documents,
 )
+from utils.types import MODEL_UUID
 
 
 def order_billing_actions(*, invoice, user: User) -> None:
@@ -54,7 +55,7 @@ def order_billing_actions(*, invoice, user: User) -> None:
         delete_billing_queue(billing_queue=invoice)
 
 
-def mass_order_billing_service(*, user_id: str, task_id: str) -> None:
+def mass_order_billing_service(*, user_id: MODEL_UUID, task_id: str) -> None:
     """Bill a list of orders to their respective customers
 
     This function bills a list of orders to their respective customers.

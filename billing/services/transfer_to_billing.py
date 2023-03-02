@@ -26,10 +26,11 @@ from billing import models
 from billing.selectors import get_transfer_to_billing_orders
 from billing.services.billing_service import create_billing_exception
 from order.models import Order
+from utils.types import MODEL_UUID
 
 
 def transfer_to_billing_queue_service(
-    *, user_id: str, order_pros: list[str], task_id: str
+    *, user_id: MODEL_UUID, order_pros: list[str], task_id: str
 ) -> str:
     """
     Creates a new BillingQueue object for each order and updates the order's transfer status and transfer date.
@@ -76,8 +77,6 @@ def transfer_to_billing_queue_service(
 
     now = timezone.now()
     transfer_log = []
-    result = "Task completed successfully. See billing transfer log for details."
-
     with transaction.atomic():
         for order in orders:
             try:
@@ -112,4 +111,4 @@ def transfer_to_billing_queue_service(
             orders, ["transferred_to_billing", "billing_transfer_date"]
         )
 
-    return result
+    return "Task completed successfully. See billing transfer log for details."

@@ -19,54 +19,13 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import authenticate, password_validation
+from django.contrib.auth import password_validation
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
-from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 from accounts import models
 from organization.models import Department
 from utils.serializers import GenericSerializer
-
-
-class VerifyTokenSerializer(serializers.Serializer):
-    """A serializer for token verification.
-
-    The serializer provides a token field. The token field is used to verify the incoming token
-    from the user. If the given token is valid then the user is given back the token and the user
-    id in the response. Otherwise, the user is given an error message.
-
-    Attributes:
-        token (serializers.CharField): The token to be verified.
-
-    Methods:
-        validate(attrs: Any) -> Any: Validate the token.
-    """
-
-    token = serializers.CharField()
-
-    def validate(self, attrs: Any) -> Any:
-        """Validate the token.
-
-        Args:
-            attrs (Any): Attributes
-
-        Returns:
-            dict[str, Any]: Validated attributes
-        """
-
-        token = attrs.get("token")
-
-        if models.Token.objects.filter(key=token).exists():
-            return {
-                "token": token,
-                "user_id": models.Token.objects.get(key=token).user.id,
-            }
-        else:
-            raise serializers.ValidationError(
-                "Unable to validate given token. Please try again.",
-                code="authentication",
-            )
 
 
 class JobTitleSerializer(GenericSerializer):
@@ -243,7 +202,7 @@ class UserSerializer(GenericSerializer):
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:    # type: ignore
+    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
@@ -269,6 +228,7 @@ class UserSerializer(GenericSerializer):
         instance.update_user(**validated_data)
 
         return instance
+
 
 @extend_schema_serializer(
     examples=[
@@ -341,78 +301,3 @@ class ChangePasswordSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return user
-
-
-class TokenSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Token model
-    """
-
-    key = serializers.CharField(
-        min_length=40, max_length=40, allow_blank=True, required=False
-    )
-    user = UserSerializer()
-
-    class Meta:
-        """
-        Metaclass for TokenSerializer
-        """
-
-        model: type[models.Token] = models.Token
-        fields = ["id", "user", "created", "expires", "last_used", "key", "description"]
-
-
-@extend_schema_serializer(
-    examples=[
-        OpenApiExample(
-            "Token Provision Request",
-            summary="Token Provision Request",
-            value={
-                "username": "test",
-                "password": "test",
-            },
-            request_only=True,
-        ),
-        OpenApiExample(
-            "Token Provision Response",
-            summary="Token Provision Response",
-            value={
-                "user_id": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
-                "api_token": "756ab1e4e0d23ff3a7eda30e09ffda65cae2d623",
-            },
-            response_only=True,
-        ),
-    ]
-)
-class TokenProvisionSerializer(serializers.Serializer):
-    """
-    Token Provision Serializer
-    """
-
-    username = serializers.CharField()
-    password = serializers.CharField(
-        style={"input_type": "password"},
-        trim_whitespace=False,
-    )
-
-    def validate(self, attrs: Any) -> Any:
-        """Validate the data
-
-        Args:
-            attrs (Any): Data to validate
-
-        Returns:
-            Any
-        """
-        username = attrs.get("username")
-        password = attrs.get("password")
-
-        user = authenticate(username=username, password=password)
-
-        if not user:
-            raise serializers.ValidationError(
-                "User with the given credentials does not exist. Please try again.",
-                code="authorization",
-            )
-        attrs["user"] = user
-        return attrs

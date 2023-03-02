@@ -56,3 +56,4 @@ weasyprint==58.0
 whitenoise==6.4.0
 xhtml2pdf==0.2.9
 celery-types==0.14.0
+django-rest-knox==4.2.0

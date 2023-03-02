@@ -29,7 +29,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.utils.timezone import datetime
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from encrypted_model_fields.fields import EncryptedCharField
@@ -343,7 +343,7 @@ class WorkerProfile(GenericModel):
         blank=True,
         null=True,
         help_text=_("Date of hire."),
-        default=datetime.today,
+        default=timezone.now().date(),
     )
     termination_date = models.DateField(
         _("Termination Date"),
@@ -430,7 +430,7 @@ class WorkerProfile(GenericModel):
 
         if (
             self.date_of_birth
-            and (datetime.today().date() - self.date_of_birth).days < 6570
+            and (timezone.now().date() - self.date_of_birth).days < 6570
         ):
             raise ValidationError(
                 {

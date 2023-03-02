@@ -300,13 +300,3 @@ class JobTitleAdmin(GenericAdmin[models.JobTitle]):
 
     search_fields = ("name",)
     list_display = ("name", "is_active", "description")
-
-
-@admin.register(models.Token)
-class TokenAdmin(admin.ModelAdmin[models.Token]):
-    """
-    Token admin
-    """
-
-    list_display = ("key", "user", "created")
-    search_fields = ("key",)

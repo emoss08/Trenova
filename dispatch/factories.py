@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+import datetime
 
 import factory
 from django.utils import timezone
@@ -102,7 +103,7 @@ class RateFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory("customer.factories.CustomerFactory")
     effective_date = timezone.now().date()
-    expiration_date = timezone.now().date() + timezone.timedelta(days=365)
+    expiration_date = timezone.now().date() + datetime.timedelta(days=365)
     commodity = factory.SubFactory("commodities.factories.CommodityFactory")
     order_type = factory.SubFactory("order.tests.factories.OrderTypeFactory")
     equipment_type = factory.SubFactory(

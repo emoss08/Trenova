@@ -16,11 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+from typing import TypeAlias, Union, Any
+from uuid import UUID
 
+from django.db.models import UUIDField
 
-from celery import shared_task
-
-
-@shared_task(ignore_result=False)
-def add(x: int, y: int) -> int:
-    return x + y
+MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
