@@ -42,9 +42,27 @@ class Command(BaseCommand):
         Returns:
             None: None
         """
+        self.stdout.write(
+            self.style.HTTP_INFO("Creating celery beat configurations...")
+        )
 
-        IntervalSchedule.objects.all().delete()
+        self.stdout.write(
+            self.style.HTTP_INFO("Checking if celery beat configurations already exist...")
+        )
+        if IntervalSchedule.objects.all().exists():
+            self.stdout.write(
+                self.style.NOTICE("Celery beat configurations already exist.")
+            )
+            return
 
+        self.stdout.write(
+            self.style.NOTICE("Celery beat configurations do not exist. Creating...")
+        )
+
+        micro_second_objs = [
+            IntervalSchedule(every=micro_second, period=IntervalSchedule.MICROSECONDS)
+            for micro_second in range(1, 1000)
+        ]
         minute_objs = [
             IntervalSchedule(every=minute, period=IntervalSchedule.MINUTES)
             for minute in range(1, 60)
@@ -58,6 +76,7 @@ class Command(BaseCommand):
             for day in range(1, 7)
         ]
 
+        IntervalSchedule.objects.bulk_create(micro_second_objs)
         IntervalSchedule.objects.bulk_create(minute_objs)
         IntervalSchedule.objects.bulk_create(hour_objs)
         IntervalSchedule.objects.bulk_create(day_objs)
