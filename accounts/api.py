@@ -19,16 +19,16 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
+from django.contrib.auth import login
 from django.db.models import QuerySet
-from rest_framework import status
-from rest_framework.authtoken.views import ObtainAuthToken
+from knox.views import LoginView as KnoxLoginView
+from rest_framework import permissions, status
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from accounts import models, serializers
-from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
 
 
@@ -50,9 +50,9 @@ class UserViewSet(OrganizationMixin):
 
         return self.queryset.filter(organization=self.request.user.organization).select_related(  # type: ignore
             "organization",
-            "profile",
-            "profile__title",
-            "profile__user",
+            "profiles",
+            "profiles__title",
+            "profiles__user",
             "department",
         )
 
@@ -86,83 +86,6 @@ class UpdatePasswordView(UpdateAPIView):
         )
 
 
-class TokenProvisionView(ObtainAuthToken):
-    """
-    Rest API endpoint for users can create a token
-    """
-
-    throttle_scope = "auth"
-    permission_classes = []
-    serializer_class = serializers.TokenProvisionSerializer
-
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Handle Post requests
-
-        Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
-
-        Returns:
-            Response: Response of token and user id
-        """
-
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        token, created = models.Token.objects.get_or_create(user=user)
-
-        if token.is_expired:
-            token.delete()
-            token = models.Token.objects.create(user=user)
-
-        return Response(
-            {
-                "user_id": user.id,
-                "api_token": token.key,
-            }
-        )
-
-
-class TokenVerifyView(APIView):
-    """
-    Rest API endpoint for users can verify a token
-    """
-
-    permission_classes = []
-    serializer_class = serializers.VerifyTokenSerializer
-
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Handle Post requests
-
-        Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
-
-        Returns:
-            Response: Response of token and user id
-        """
-
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        token = serializer.data.get("token")
-
-        try:
-            token = models.Token.objects.get(key=token)
-        except models.Token.DoesNotExist as e:
-            raise InvalidTokenException("Token is invalid") from e
-
-        return Response(
-            {
-                "user_id": token.user.id,
-                "api_token": token.key,
-            },
-            status=status.HTTP_200_OK,
-        )
-
-
 class JobTitleViewSet(OrganizationMixin):
     """
     Job Title ViewSet to manage requests to the job title endpoint
@@ -182,3 +105,45 @@ class JobTitleViewSet(OrganizationMixin):
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).select_related("organization")
+
+
+class LoginView(KnoxLoginView):
+    """
+    A Django view that handles user authentication and login using token-based authentication provided by KnoxLoginView.
+
+    This view is accessible to all users, regardless of whether they are authenticated or not. It accepts HTTP POST requests
+    containing user data, validates the user data using the `AuthTokenSerializer`, logs the user in using Django's built-in
+    `login()` function, and returns an HTTP response object containing the authentication token.
+
+    Attributes:
+        permission_classes (tuple): A tuple of permission classes that allow any user to access this view.
+
+    Methods:
+        post(request, format=None): Handle user authentication and login using an HTTP POST request.
+    """
+
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request: Request, format: str | None = None) -> Response:
+        """
+        Handle user authentication and login using an HTTP POST request.
+
+        Args:
+            request (Request): The HTTP request object containing user data.
+            format (str, optional): The format of the response data (default=None).
+
+        Returns:
+            Response: The HTTP response object containing the authentication token.
+
+        Raises:
+            ValidationError: If the user data is invalid.
+
+        Notes:
+            This method validates the user data using the `AuthTokenSerializer` and logs the user in using Django's built-in
+            `login()` function. The method then returns an HTTP response object containing the authentication token.
+        """
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        login(request, user)
+        return super().post(request, format=None)

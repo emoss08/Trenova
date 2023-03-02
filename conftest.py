@@ -18,8 +18,10 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import pytest
+from django.urls import reverse
 from rest_framework.test import APIClient
 
+from accounts.models import User
 from accounts.tests.factories import TokenFactory, UserFactory
 from organization.factories import OrganizationFactory
 
@@ -51,12 +53,23 @@ def user():
 
 
 @pytest.fixture
-def api_client(token):
+def api_client(token, organization):
     """API client Fixture
 
     Returns:
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+
+    user = User.objects.create_user(
+        organization=organization,
+        username="test",
+        password="password",
+        email="testuser@testing.com",
+    )
+
+    client.post(
+        reverse("knox_login"), data={"username": user.username, "password": "password"}
+    )
+    client.credentials(HTTP_AUTHORIZATION=f"Token {token.token_key}")
     yield client

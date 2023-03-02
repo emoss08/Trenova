@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import Any, final, Optional
+from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -97,7 +97,7 @@ class BillingControl(GenericModel):
         This class inherits from the `models.TextChoices` class and defines three constants:
         - ORDER_DELIVERY: representing a criteria stating to auto bill orders on delivery.
         - TRANSFERRED_TO_BILL: representing a criteria stating to auto bill order when
-        orders are transferred to billing queue.
+        orders are transferred to bill queue.
         - CREDIT: representing a criteria stating to auto bill order when orders are
         marked ready to bill in the billing queue.
         """
@@ -1152,7 +1152,8 @@ class BillingExceptionManager(models.Manager):
         - get_most_recent_exception(order)
         - create_billing_exception(organization, exception_type, order, exception_message)
     """
-    def get_most_recent_exception(self, order: Order) -> Optional[BillingException]:
+
+    def get_most_recent_exception(self, order: Order) -> BillingException:
         """
         Retrieve the most recent BillingException instance associated with the provided Order.
 
@@ -1172,10 +1173,7 @@ class BillingExceptionManager(models.Manager):
         Raises:
             None
         """
-        try:
-            return self.filter(order=order).latest("created_at")
-        except BillingException.DoesNotExist:
-            return None
+        return self.filter(order=order).latest("created_at")  # type: ignore
 
     def create_billing_exception(
         self,
@@ -1208,7 +1206,7 @@ class BillingExceptionManager(models.Manager):
         Raises:
             None
         """
-        return self.create(
+        return self.create(  # type: ignore
             organization=organization,
             exception_type=exception_type,
             order=order,
@@ -1267,14 +1265,14 @@ class BillingException(GenericModel):
         on_delete=models.RESTRICT,
         related_name="billing_exception",
         help_text=_("Assigned order to the billing exception"),
-        blank=True,
-        null=True,
     )
     exception_message = models.TextField(
         _("Exception Message"),
         help_text=_("Message for the billing exception"),
         blank=True,
     )
+
+    objects = BillingExceptionManager()
 
     class Meta:
         """
@@ -1283,7 +1281,7 @@ class BillingException(GenericModel):
 
         verbose_name = _("Billing Exception")
         verbose_name_plural = _("Billing Exceptions")
-        ordering = ["order"]
+        ordering = ("order",)
         db_table = "billing_exception"
 
     def __str__(self) -> str:

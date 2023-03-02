@@ -21,6 +21,6 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from celery import shared_task
 
 
-@shared_task(ignore_result=False)  # type: ignore
+@shared_task(ignore_result=False)
 def add(x: int, y: int) -> int:
     return x + y
