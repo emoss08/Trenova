@@ -7,7 +7,7 @@ interface SystemHealthProps {
 }
 
 const statusToClass: Record<string, string> = {
-  working: "bg-green-100",
+  online: "bg-green-100",
   offline: "bg-red-100",
   // Add more status values as needed
 };

@@ -34,7 +34,7 @@ class DatabaseHealthCheck:
 
         Returns:
             dict: A dictionary indicating the health of the database, including the status and time taken
-            to perform the check.The status will be either "online", "offline", or "slow".
+            to perform the check.The status will be either "online", "Offline", or "slow".
 
         Raises:
             ConnectionError: If the database is not reachable.
@@ -47,11 +47,11 @@ class DatabaseHealthCheck:
                 if cursor.fetchone() != (1,):
                     end = timer()
                     result_time = end - start
-                    return {"status": "offline", "time": result_time}
+                    return {"status": "Offline", "time": result_time}
             end = timer()
             result_time = end - start
-            return {"status": "working", "time": result_time}
+            return {"status": "Online", "time": result_time}
         except DatabaseError:
             end = timer()
             result_time = end - start
-            return {"status": "offline", "time": result_time}
+            return {"status": "Offline", "time": result_time}

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { useSystemHealthStore } from "../stores/SystemHealthStore";
 import SystemHealth from "./SystemHealth";
 import SystemHealthLoader from "./SystemHealthLoader";
@@ -43,15 +43,17 @@ function SystemHealthPage() {
 function SystemHealthPageWrapper() {
   const { loading, fetchData } = useSystemHealthStore();
 
-  React.useEffect(() => {
-    fetchData();
+  const memoizedFetchData = useCallback(fetchData, [fetchData]);
+
+  useEffect(() => {
+    memoizedFetchData();
 
     const interval = setInterval(() => {
-      fetchData();
+      memoizedFetchData();
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [memoizedFetchData]);
 
   return loading ? <SystemHealthLoader /> : <SystemHealthPage />;
 }

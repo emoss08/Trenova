@@ -41,11 +41,11 @@ class CacheBackendHealthCheck:
         end = timer()
         result_time = end - start
         if cache.get("health_check") != "health_check":
-            return {"name": cache_name, "status": "offline", "time": result_time}
+            return {"name": cache_name, "status": "Offline", "time": result_time}
         if result_time > 0.01:
-            return {"name": cache_name, "status": "slow", "time": result_time}
+            return {"name": cache_name, "status": "Slow", "time": result_time}
         cache.delete("health_check")
-        return {"name": cache_name, "status": "working", "time": result_time}
+        return {"name": cache_name, "status": "Online", "time": result_time}
 
     @staticmethod
     def check_caches_and_time() -> list:

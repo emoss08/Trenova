@@ -52,14 +52,14 @@ class FileStorageHealthCheck:
             # Check the contents of the test file
             if content != test_file_content:
                 end = timer()
-                return {"status": "corrupted", "time": end - start}
+                return {"status": "Corrupted", "time": end - start}
         except Exception:
             end = timer()
-            return {"status": "offline", "time": end - start}
+            return {"status": "Offline", "time": end - start}
         finally:
             # Delete the test file
             if default_storage.exists(test_file_name):
                 default_storage.delete(test_file_name)
 
         end = timer()
-        return {"status": "working", "time": end - start}
+        return {"status": "Online", "time": end - start}

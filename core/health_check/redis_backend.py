@@ -46,10 +46,10 @@ class RedisHealthCheck:
             with from_url(redis_url) as redis:
                 redis.ping()
                 end = timer()
-                return {"status": "working", "time": end - start}
+                return {"status": "Online", "time": end - start}
         except exceptions.ConnectionError:
             end = timer()
-            return {"status": "offline", "time": end - start}
+            return {"status": "Offline", "time": end - start}
         except exceptions.TimeoutError:
             end = timer()
-            return {"status": "slow", "time": end - start}
+            return {"status": "Slow", "time": end - start}
