@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from django.shortcuts import get_object_or_404
 
 from accounts.models import User
@@ -29,9 +30,10 @@ from billing.services.billing_service import (
     set_order_documents,
 )
 from order.models import Order
+from utils.types import MODEL_UUID
 
 
-def bill_order(*, user_id: str, order: Order) -> None:
+def bill_order(*, user_id: MODEL_UUID, order: Order) -> None:
     """Bill a single order by performing multiple operations.
 
     This function checks if the billing control is valid, sets the billing requirements,

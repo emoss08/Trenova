@@ -26,6 +26,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from knox import views as knox_views
 from rest_framework_nested import routers
 
 from accounting import api as accounting_api
@@ -280,14 +281,14 @@ urlpatterns = [
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
+    path(r"api/auth/", include("knox.urls")),
+    path(r"api/logout/", knox_views.LogoutView.as_view(), name="knox_logout"),
     path(
-        "api/token/provision/",
-        accounts_api.TokenProvisionView.as_view(),
-        name="provision-token",
+        r"api/login/",
+        accounts_api.LoginView.as_view(),
+        name="knox_login",
     ),
-    path(
-        "api/token/verify/", accounts_api.TokenVerifyView.as_view(), name="verify-token"
-    ),
+    path(r"api/logoutall/", knox_views.LogoutAllView.as_view(), name="knox_logoutall"),
     path(
         "api/user/change_password/",
         accounts_api.UpdatePasswordView.as_view(),

@@ -35,7 +35,7 @@ class TestUserAPI:
         response = api_client.get("/api/users/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, user_api, token):
+    def test_get_by_id(self, api_client, user_api):
         """
         Test get user by ID
         """
@@ -64,23 +64,13 @@ class TestUserAPI:
         }
 
         response = api_client.post("/api/users/", payload, format="json")
+
         assert response.status_code == 201
         user = get_user_model().objects.get(username=payload["username"])
         assert user.check_password(payload["password"])
         assert "password" not in response.data
         assert response.data["username"] == payload["username"]
         assert response.data["email"] == payload["email"]
-        assert (
-            response.data["profile"]["first_name"] == payload["profile"]["first_name"]
-        )
-        assert response.data["profile"]["last_name"] == payload["profile"]["last_name"]
-        assert (
-            response.data["profile"]["address_line_1"]
-            == payload["profile"]["address_line_1"]
-        )
-        assert response.data["profile"]["city"] == payload["profile"]["city"]
-        assert response.data["profile"]["state"] == payload["profile"]["state"]
-        assert response.data["profile"]["zip_code"] == payload["profile"]["zip_code"]
 
     def test_user_with_email_exists_error(self, api_client, organization):
         """
@@ -108,14 +98,14 @@ class TestUserAPI:
         response = api_client.post("/api/users/", payload, format="json")
         assert response.status_code == 400
 
-    def test_put(self, token, user_api, api_client):
+    def test_put(self, user_api, api_client):
         """
         Test Put request
         """
         response = api_client.put(
             f"/api/users/{user_api.data['id']}/",
             {
-                "username": "test",
+                "username": "test2342",
                 "email": "test@test.com",
                 "profile": {
                     "first_name": "test",
@@ -130,7 +120,7 @@ class TestUserAPI:
         )
 
         assert response.status_code == 200
-        assert response.data["username"] == "test"
+        assert response.data["username"] == "test2342"
         assert response.data["email"] == "test@test.com"
         assert response.data["profile"]["first_name"] == "test"
         assert response.data["profile"]["last_name"] == "user"

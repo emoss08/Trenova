@@ -16,7 +16,7 @@ scripts/startup.sh
 */__pycache__
 templates
 static/
-frontend/node_modules/
+monta_frontend/node_modules
 *.local
 logs
 *.log
@@ -32,7 +32,3 @@ media
 django_config.md
 postgres
 celerybeat-schedule
-monta_kafka/target
-monta_kafka/.idea
-monta_kafka/.vscode
-monta_kafka/Cargo.lock

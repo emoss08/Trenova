@@ -42,7 +42,7 @@ class CeleryHealthCheck:
         """
         start = timer()
         try:
-            result = add.apply_async(args=[4, 4], expires=3)
+            result = add.delay(3, 5)
             result.get(timeout=3)
             end = timer()
             result_time = end - start
