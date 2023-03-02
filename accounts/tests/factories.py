@@ -110,7 +110,7 @@ class TokenFactory(factory.django.DjangoModelFactory):
         Metaclass for TokenFactory
         """
 
-        model = "accounts.Token"
+        model = "knox.AuthToken"
         django_get_or_create = ("user",)
 
     user = factory.SubFactory(UserFactory)

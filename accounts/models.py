@@ -22,6 +22,7 @@ from __future__ import annotations
 import secrets
 import textwrap
 import uuid
+from datetime import timedelta
 from typing import Any, final
 
 from django.conf import settings
@@ -37,6 +38,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django_lifecycle import LifecycleModelMixin, hook, AFTER_CREATE
 from localflavor.us.models import USStateField, USZipCodeField
 
 from utils.models import ChoiceField, GenericModel
@@ -211,6 +213,7 @@ class UserProfile(GenericModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="profile",
+        related_query_name="profiles",
         verbose_name=_("User"),
     )
     title = models.ForeignKey(
@@ -469,7 +472,7 @@ class JobTitle(GenericModel):
         return reverse("user:job-title-view", kwargs={"pk": self.pk})
 
 
-class Token(models.Model):
+class Token(LifecycleModelMixin, models.Model):
     """
     Stores the token for a :model:`accounts.User
     """
@@ -479,6 +482,15 @@ class Token(models.Model):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    organization = models.ForeignKey(
+        "organization.Organization",
+        on_delete=models.CASCADE,
+        related_name="tokens",
+        related_query_name="token",
+        help_text=_("The organization that the token belongs to"),
+        null=True,
+        blank=True,
     )
     user = models.ForeignKey(
         User,
@@ -535,14 +547,27 @@ class Token(models.Model):
         """
 
         if not self.key:
-            self.key = self.generate_key()
+            self.key = self.refresh()
+
+        if not self.organization:
+            self.organization = self.user.organization
         super().save(**kwargs)
 
-    @staticmethod
-    def generate_key() -> str:
+    @hook(AFTER_CREATE, on_commit=True)
+    def add_organization_to_token(self) -> None:
+        """Add the organization to the token
+
+        Returns:
+            None
         """
-        Generates a new key for a token.
+        self.organization = self.user.organization
+        self.save()
+
+    def refresh(self) -> str:
         """
+        Refreshes the token key.
+        """
+        self.expires = timezone.now() + timedelta(days=self.user.organization.token_expiration_days)
         return secrets.token_hex(20)
 
     @property

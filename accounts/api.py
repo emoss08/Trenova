@@ -19,6 +19,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
+from django.contrib.auth import login
 from django.db.models import QuerySet
 from rest_framework import status
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -26,6 +27,10 @@ from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework import permissions
+
+from knox.views import LoginView as KnoxLoginView
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
@@ -50,9 +55,9 @@ class UserViewSet(OrganizationMixin):
 
         return self.queryset.filter(organization=self.request.user.organization).select_related(  # type: ignore
             "organization",
-            "profile",
-            "profile__title",
-            "profile__user",
+            "profiles",
+            "profiles__title",
+            "profiles__user",
             "department",
         )
 
@@ -182,3 +187,14 @@ class JobTitleViewSet(OrganizationMixin):
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).select_related("organization")
+
+
+class LoginView(KnoxLoginView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request: Request, format=None) -> Response:
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        login(request, user)
+        return super(LoginView, self).post(request, format=None)

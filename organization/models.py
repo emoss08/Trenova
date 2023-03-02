@@ -169,6 +169,11 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
     logo = models.ImageField(
         _("Logo"), upload_to="organizations/logo/", null=True, blank=True
     )
+    token_expiration_days = models.PositiveIntegerField(
+        _("Token Expiration Days"),
+        default=30,
+        help_text=_("The number of days before a token expires."),
+    )
 
     class Meta:
         """

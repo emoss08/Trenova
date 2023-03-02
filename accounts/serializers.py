@@ -22,6 +22,7 @@ from typing import Any
 from django.contrib.auth import authenticate, password_validation
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
+from drf_writable_nested.serializers import WritableNestedModelSerializer
 
 from accounts import models
 from organization.models import Department
@@ -33,7 +34,7 @@ class VerifyTokenSerializer(serializers.Serializer):
 
     The serializer provides a token field. The token field is used to verify the incoming token
     from the user. If the given token is valid then the user is given back the token and the user
-    id in the response. Otherwise the user is given an error message.
+    id in the response. Otherwise, the user is given an error message.
 
     Attributes:
         token (serializers.CharField): The token to be verified.
@@ -196,7 +197,7 @@ class UserSerializer(GenericSerializer):
         allow_null=True,
         required=False,
     )
-    profile = UserProfileSerializer(required=False, allow_null=True)
+    profile = UserProfileSerializer(required=False)
 
     class Meta:
         """
@@ -204,7 +205,7 @@ class UserSerializer(GenericSerializer):
         """
 
         model = models.User
-        extra_fields = ("profile",)
+        extra_fields = ("profile", "department")
         extra_read_only_fields = ("groups", "user_permissions", "is_staff", "is_active")
         extra_kwargs = {
             "password": {"write_only": True, "required": False},
@@ -230,15 +231,19 @@ class UserSerializer(GenericSerializer):
         profile_data["organization"] = organization
 
         # Create the user
-        user: models.User = models.User.objects.create_user(**validated_data)
+        user: models.User = models.User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+            organization=organization,
+        )
 
         # Create the user profile
-        if profile_data:
-            models.UserProfile.objects.create(user=user, **profile_data)
+        models.UserProfile.objects.create(user=user, **profile_data)
 
         return user
 
-    def update(self, instance: models.User, validated_data: Any) -> models.User:  # type: ignore
+    def update(self, instance: models.User, validated_data: Any) -> models.User:    # type: ignore
         """Update a user
 
         From validated_data, pop the profile, and update the user profile
@@ -253,7 +258,6 @@ class UserSerializer(GenericSerializer):
         Returns:
             None
         """
-
         if profile_data := validated_data.pop("profile", None):
             instance.profile.update_profile(**profile_data)
 
@@ -265,7 +269,6 @@ class UserSerializer(GenericSerializer):
         instance.update_user(**validated_data)
 
         return instance
-
 
 @extend_schema_serializer(
     examples=[

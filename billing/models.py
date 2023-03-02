@@ -1279,7 +1279,7 @@ class BillingException(GenericModel):
 
         verbose_name = _("Billing Exception")
         verbose_name_plural = _("Billing Exceptions")
-        ordering = ["order"]
+        ordering = ("order",)
         db_table = "billing_exception"
 
     def __str__(self) -> str:

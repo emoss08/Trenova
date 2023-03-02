@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "auditlog",
     "djmoney",
     "notifications",
+    "knox",
     # Monta Apps
     "backend",
     "core",
@@ -260,7 +261,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        "accounts.authentication.TokenAuthentication",
+        # "accounts.authentication.TokenAuthentication",
+        "knox.auth.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
