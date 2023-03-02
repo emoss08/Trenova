@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+
 from collections.abc import Iterable
 
 from django.core.mail import send_mail
@@ -34,7 +35,6 @@ class AuthenticatedHTTPRequest(HttpRequest):
     """
     Authenticated HTTP Request
     """
-
     user: User
 
 
@@ -126,6 +126,10 @@ def set_order_documents(*, order: Order) -> list[str]:
 def get_billing_queue(*, user: User, task_id: str) -> Iterable[models.BillingQueue]:
     """Get the billing queue for the organization
 
+    Args:
+        user (User): The user that is requesting the billing queue
+        task_id (str): The task id for the billing queue
+
     Returns:
         QuerySet: The billing queue queryset
     """
@@ -144,6 +148,10 @@ def get_billing_queue(*, user: User, task_id: str) -> Iterable[models.BillingQue
 
 def check_billing_requirements(*, order: Order, user: User) -> bool:
     """Check if the billing requirements are met
+
+    Args:
+        order (Order): The order to check the billing requirements for
+        user (User): The user that is requesting the billing queue
 
     Returns:
         bool: True if the billing requirements are met, False otherwise
