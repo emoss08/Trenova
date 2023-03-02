@@ -60,11 +60,11 @@ class DiskUsageHealthCheck:
         """
         total, used, free = self.compare_disk_usage()
         if free < 5:
-            return {"status": "critical", "total": total, "used": used, "free": free}
+            return {"status": "Critical", "total": total, "used": used, "free": free}
         return (
-            {"status": "low", "total": total, "used": used, "free": free}
+            {"status": "Low", "total": total, "used": used, "free": free}
             if free < 10
-            else {"status": "working", "total": total, "used": used, "free": free}
+            else {"status": "Online", "total": total, "used": used, "free": free}
         )
 
     def check_disk_usage_and_time(self) -> HealthStatusAndTime:
@@ -81,7 +81,7 @@ class DiskUsageHealthCheck:
         end = timer()
         if free < 5:
             return {
-                "status": "critical",
+                "status": "Critical",
                 "total": total,
                 "used": used,
                 "free": free,
@@ -89,7 +89,7 @@ class DiskUsageHealthCheck:
             }
         if free < 10:
             return {
-                "status": "low",
+                "status": "Low",
                 "total": total,
                 "used": used,
                 "free": free,
@@ -97,7 +97,7 @@ class DiskUsageHealthCheck:
             }
         return (
             {
-                "status": "slow",
+                "status": "Slow",
                 "total": total,
                 "used": used,
                 "free": free,
@@ -105,7 +105,7 @@ class DiskUsageHealthCheck:
             }
             if end - start > 0.01
             else {
-                "status": "working",
+                "status": "Online",
                 "total": total,
                 "used": used,
                 "free": free,

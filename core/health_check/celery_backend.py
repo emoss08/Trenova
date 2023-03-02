@@ -34,7 +34,7 @@ class CeleryHealthCheck:
         """
         The `check_celery` method is used to check the health of a Celery instance.
         It returns a dictionary indicating the status and time taken to perform the check.
-        The status will be either `'working'` if it is working properly, `'offline'` if it is not working properly,
+        The status will be either `'Working'` if it is Working properly, `'Offline'` if it is not Working properly,
         or `'slow'` if it is taking too long to respond.
 
         Returns:
@@ -47,13 +47,13 @@ class CeleryHealthCheck:
             end = timer()
             result_time = end - start
             if result.result != 8:
-                return {"status": "offline", "time": result_time}
+                return {"status": "Offline", "time": result_time}
         except TimeoutError:
             end = timer()
             result_time = end - start
-            return {"status": "offline", "time": result_time}
+            return {"status": "Offline", "time": result_time}
         except TaskRevokedError:
             end = timer()
             result_time = end - start
-            return {"status": "offline", "time": result_time}
-        return {"status": "working", "time": result_time}
+            return {"status": "Offline", "time": result_time}
+        return {"status": "Working", "time": result_time}
