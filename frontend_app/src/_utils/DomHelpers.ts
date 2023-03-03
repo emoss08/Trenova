@@ -17,22 +17,13 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-import {createRoot} from 'react-dom/client'
-import './index.css'
-import App from './App'
-import reportWebVitals from './reportWebVitals'
-import {ErrorBoundary} from './_utils/AppHelpers'
+function getCSSVariableValue(variableName: string) {
+  let hex = getComputedStyle(document.documentElement).getPropertyValue(variableName)
+  if (hex && hex.length > 0) {
+    hex = hex.trim()
+  }
 
-const container = document.getElementById('root')
-if (container) {
-  createRoot(container).render(
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  )
+  return hex
 }
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals()
+
+export {getCSSVariableValue}

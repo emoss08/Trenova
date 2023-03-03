@@ -17,22 +17,21 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-import {createRoot} from 'react-dom/client'
-import './index.css'
-import App from './App'
-import reportWebVitals from './reportWebVitals'
-import {ErrorBoundary} from './_utils/AppHelpers'
+import React, {ErrorInfo, ReactNode} from 'react'
 
-const container = document.getElementById('root')
-if (container) {
-  createRoot(container).render(
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  )
+interface WithChildren {
+  children: ReactNode
 }
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals()
+
+class ErrorBoundary extends React.Component<WithChildren> {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error(error, errorInfo)
+  }
+
+  render() {
+    const {children, fallback} = this.props as any
+    return <React.Suspense fallback={fallback}>{children}</React.Suspense>
+  }
+}
+
+export {ErrorBoundary}
