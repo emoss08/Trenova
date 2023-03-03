@@ -17,22 +17,18 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-import {createRoot} from 'react-dom/client'
-import './index.css'
-import App from './App'
-import reportWebVitals from './reportWebVitals'
-import {ErrorBoundary} from './_utils/AppHelpers'
+import React, {lazy} from 'react'
+import {Navigate, Route, Routes} from 'react-router-dom'
 
-const container = document.getElementById('root')
-if (container) {
-  createRoot(container).render(
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+const PrivateRoutes = () => {
+  const SystemHealthPage = lazy(() => import('../pages/SystemHealthPage'))
+
+  return (
+    <Routes>
+      <Route path='system_health' element={<SystemHealthPage />}></Route>
+      {/* Page Not Found */}
+      <Route path='*' element={<Navigate to='/error/404' />} />
+    </Routes>
   )
 }
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals()
+export {PrivateRoutes}

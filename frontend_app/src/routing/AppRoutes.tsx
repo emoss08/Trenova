@@ -17,22 +17,18 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from 'react'
-import {createRoot} from 'react-dom/client'
-import './index.css'
-import App from './App'
-import reportWebVitals from './reportWebVitals'
-import {ErrorBoundary} from './_utils/AppHelpers'
+import {Routes, Route, BrowserRouter, Navigate} from 'react-router-dom'
+import {PrivateRoutes} from './PrivateRoutes'
 
-const container = document.getElementById('root')
-if (container) {
-  createRoot(container).render(
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+const AppRoutes = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path='/*' element={<PrivateRoutes />}></Route>
+        <Route index element={<Navigate to='/dashboard' />}></Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals()
+
+export {AppRoutes}
