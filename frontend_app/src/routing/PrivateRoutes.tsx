@@ -17,8 +17,9 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, {lazy, Suspense} from 'react'
+import React, {FC, lazy, Suspense} from 'react'
 import {Navigate, Route, Routes} from 'react-router-dom'
+import ProgressBar from '../_utils/ViewHelpers'
 // import SystemHealthPage from '../pages/SystemHealthPage'
 
 const PrivateRoutes = () => {
@@ -29,9 +30,9 @@ const PrivateRoutes = () => {
       <Route
         path='/system_health'
         element={
-          <Suspense fallback={<div>Loading...</div>}>
+          <SuspensedView fallback={<ProgressBar />}>
             <SystemHealthPage />
-          </Suspense>
+          </SuspensedView>
         }
       ></Route>
       {/* Page Not Found */}
@@ -39,4 +40,27 @@ const PrivateRoutes = () => {
     </Routes>
   )
 }
+
+interface Props {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+  color?: string
+}
+
+const SuspensedView: FC<Props> = ({children, fallback, color = '#7e42f5'}) => {
+  return (
+    <Suspense
+      fallback={
+        fallback || (
+          <div>
+            <ProgressBar color={color} />
+          </div>
+        )
+      }
+    >
+      {children}
+    </Suspense>
+  )
+}
+
 export {PrivateRoutes}
