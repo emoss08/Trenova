@@ -17,11 +17,16 @@
 #  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
 # --------------------------------------------------------------------------------------------------
 
+import base64
 from typing import Any, final
+import cryptography.fernet
 
 from django.core import checks
 from django.core.checks import CheckMessage, Error
 from django.db import models
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
+
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
@@ -41,7 +46,6 @@ class StatusChoices(models.TextChoices):
     HOLD = "H", _("Hold")
     BILLED = "B", _("Billed")
     VOIDED = "V", _("Voided")
-
 
 
 @final
@@ -108,7 +112,9 @@ class ChoiceField(CharField):
 
     description = _("Choice Field")
 
-    def __init__(self, *args: Any, db_collation=None, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, db_collation: str | None = None, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
         if self.choices:
@@ -152,3 +158,89 @@ class ChoiceField(CharField):
                 )
             ]
         return []
+
+
+def get_crypter() -> cryptography.fernet.MultiFernet:
+    """
+    Returns a MultiFernet object initialized with the encryption keys defined in the `FIELD_ENCRYPTION_KEY` setting.
+
+    Raises:
+        ImproperlyConfigured: If `FIELD_ENCRYPTION_KEY` is not defined or is defined incorrectly.
+
+    Returns:
+        cryptography.fernet.MultiFernet: A MultiFernet object initialized with the encryption keys.
+    """
+    configured_keys = getattr(settings, "FIELD_ENCRYPTION_KEY", None)
+
+    if configured_keys is None:
+        raise ImproperlyConfigured("FIELD_ENCRYPTION_KEY must be defined in settings")
+
+    try:
+        if isinstance(configured_keys, (tuple, list)):
+            keys = [
+                cryptography.fernet.Fernet(key.encode("utf-8"))
+                for key in configured_keys
+            ]
+        else:
+            keys = [
+                cryptography.fernet.Fernet(configured_keys.encode("utf-8")),
+            ]
+    except Exception as e:
+        raise ImproperlyConfigured(
+            f"FIELD_ENCRYPTION_KEY defined incorrectly: {str(e)}"
+        )
+
+    if len(keys) == 0:
+        raise ImproperlyConfigured("No keys defined in setting FIELD_ENCRYPTION_KEY")
+
+    return cryptography.fernet.MultiFernet(keys)
+
+
+CRYPTER: cryptography.fernet.MultiFernet = get_crypter()
+
+
+class EncryptedCharField(models.CharField):
+    """
+    A custom Django CharField that encrypts and decrypts its value using the encryption keys defined in the
+    `FIELD_ENCRYPTION_KEY` setting.
+
+    Attributes:
+        description (str): A description of the field for use in Django's admin interface.
+    """
+
+    description = "Encrypted CharField"
+
+    def get_prep_value(self, value: str) -> str:
+        """
+        Encrypts the given value using the configured encryption keys.
+
+        Args:
+            value (str): The value to encrypt.
+
+        Returns:
+            str: The encrypted value, encoded as a base64-encoded string.
+        """
+        value: str = super().get_prep_value(value)
+        if value is not None:
+            value_bytes: bytes = value.encode("utf-8")
+            encrypted_bytes: bytes = CRYPTER.encrypt(value_bytes)
+            value: str = base64.b64encode(encrypted_bytes).decode("utf-8")  # type: ignore
+        return value
+
+    def from_db_value(self, value: str, expression: object, connection: object) -> str:
+        """
+        Decrypts the given value using the configured encryption keys.
+
+        Args:
+            value (str): The value to decrypt.
+            expression (object): The query expression used to fetch the value.
+            connection (object): The database connection used to fetch the value.
+
+        Returns:
+            str: The decrypted value.
+        """
+        if value is not None:
+            value_bytes: bytes = base64.b64decode(value.encode("utf-8"))
+            decrypted_bytes: bytes = CRYPTER.decrypt(value_bytes)
+            value: str = decrypted_bytes.decode("utf-8")  # type: ignore
+        return super().from_db_value(value, expression, connection)
