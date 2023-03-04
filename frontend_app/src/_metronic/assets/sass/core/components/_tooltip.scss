@@ -1,0 +1,35 @@
+//
+//  Tooltip
+//
+
+// Base
+.tooltip {
+  .tooltip-inner {
+    box-shadow: var(--#{$prefix}tooltip-box-shadow);
+  }
+
+  &.tooltop-auto-width {
+    .tooltip-inner {
+      white-space: nowrap;
+      max-width: none;
+    }
+  }
+
+  // Inverse
+  &.tooltip-inverse {
+    @include tooltip-theme(
+      $bg-color: var(--#{$prefix}dark),
+      $color: var(--#{$prefix}dark-inverse),
+      $arrow-color: var(--#{$prefix}dark)
+    );
+  }
+}
+
+@if $enable-dark-mode {
+  @include color-mode(dark) {
+    .tooltip {
+      --#{$prefix}tooltip-bg: #{$tooltip-bg-dark};
+      --#{$prefix}tooltip-box-shadow: #{$tooltip-box-shadow-dark};
+    }
+  }
+}

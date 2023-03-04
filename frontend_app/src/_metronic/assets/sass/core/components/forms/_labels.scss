@@ -1,0 +1,7 @@
+//
+// Col form label
+//
+
+.col-form-label {
+  @include font-size($form-label-font-size);
+}
