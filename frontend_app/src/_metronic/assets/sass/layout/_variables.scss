@@ -1,0 +1,64 @@
+//
+// Layout Config
+//
+
+// Root font Sizes
+$root-font-size: 13px; // Root font size for desktop mode
+$root-font-size-lg: 13px; // Root font size for tablet mode
+$root-font-size-md: 12px; // Root font size for mobile mode
+
+// Page bg
+$page-bg: $gray-100 !default;
+$page-bg-dark: #151521 !default;
+
+// App blank bg color
+$app-blank-bg-color: $white;
+$app-blank-bg-color-dark: #151521;
+
+// Content border radius
+$content-border-radius: 1.5rem !default;
+
+// Content Spacing
+$content-spacing: (
+  desktop: 30px,
+  // Padding for desktop mode
+  tablet-and-mobile: 15px // Padding for tablet and mobile modes,
+) !default;
+
+// Header
+$header-config: (
+  height: (
+    desktop: 74px,
+    tablet-and-mobile: 55px,
+  ),
+  z-index: 100,
+  bg-color: $white,
+  bg-color-dark: #1e1e2d,
+  border-bottom: 0,
+  border-bottom-dark: 1px solid #2d2d43,
+  box-shadow: 0px 10px 30px 0px rgba(82, 63, 105, 0.05),
+  box-shadow-dark: none,
+) !default;
+
+// Aside
+$aside-config: (
+  width: 265px,
+  // Aside width for desktop mode
+  z-index: 101,
+  // Aside's z-index property
+  transition-speed: 0.3s,
+  // transition speed
+  padding-x: 25px,
+  footer-padding-x: 15px,
+  menu-padding-x: 10px,
+  menu-indention: 0.75rem,
+  bg-color: #1e1e2d,
+  scrollbar-color: #4d4d69,
+  scrollbar-hover-color: lighten(#4d4d69, 2%),
+) !default;
+
+// Aside
+$footer-config: (
+  bg-color: $white,
+  bg-color-dark: #1b1b28,
+) !default;

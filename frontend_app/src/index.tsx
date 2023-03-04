@@ -1,38 +1,50 @@
-/*
- * COPYRIGHT(c) 2023 MONTA
- *
- * This file is part of Monta.
- *
- * Monta is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Monta is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
- */
-
-import React from 'react'
 import {createRoot} from 'react-dom/client'
-import './index.css'
-import App from './App'
-import reportWebVitals from './reportWebVitals'
-import {ErrorBoundary} from './_utils/AppHelpers'
+// Axios
+import axios from 'axios'
+import {Chart, registerables} from 'chart.js'
+import {QueryClient, QueryClientProvider} from 'react-query'
+import {ReactQueryDevtools} from 'react-query/devtools'
+// Apps
+import {MetronicI18nProvider} from './_metronic/i18n/Metronici18n'
+/**
+ * TIP: Replace this style import with rtl styles to enable rtl mode
+ *
+ * import './_metronic/assets/css/style.rtl.css'
+ **/
+import 'nouislider/dist/nouislider.css'
+import './_metronic/assets/sass/style.scss'
+import './_metronic/assets/sass/plugins.scss'
+import './_metronic/assets/sass/style.react.scss'
+import {AppRoutes} from './app/routing/AppRoutes'
+import {AuthProvider, setupAxios} from './app/modules/auth'
+import {ThemeModeProvider} from './_metronic/partials/layout/theme-mode/ThemeModeProvider'
+/**
+ * Creates `axios-mock-adapter` instance for provided `axios` instance, add
+ * basic Metronic mocks and returns it.
+ *
+ * @see https://github.com/ctimmerm/axios-mock-adapter
+ */
+/**
+ * Inject Metronic interceptors for axios.
+ *
+ * @see https://github.com/axios/axios#interceptors
+ */
+setupAxios(axios)
+Chart.register(...registerables)
 
+const queryClient = new QueryClient()
 const container = document.getElementById('root')
 if (container) {
   createRoot(container).render(
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <MetronicI18nProvider>
+        <ThemeModeProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </ThemeModeProvider>
+      </MetronicI18nProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   )
 }
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals()
