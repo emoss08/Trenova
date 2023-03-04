@@ -28,15 +28,17 @@ import {
   SetStateAction,
 } from 'react'
 import {LayoutSplashScreen} from '../../../../_monta/layout/core'
-import {AuthModel, UserModel} from './_models'
+import {AuthModel, JobTitleModel, UserModel} from './_models'
 import * as authHelper from './AuthHelpers'
-import {getUserByToken} from './_requests'
+import {getJobTitle, getUserByToken} from './_requests'
 import {WithChildren} from '../../../../_monta/helpers'
 
 type AuthContextProps = {
   auth: AuthModel | undefined
   saveAuth: (auth: AuthModel | undefined) => void
   currentUser: UserModel | undefined
+  jobTitle: JobTitleModel | undefined
+  setJobTitle: Dispatch<SetStateAction<JobTitleModel | undefined>>
   setCurrentUser: Dispatch<SetStateAction<UserModel | undefined>>
   loadingUser: boolean
   setLoadingUser: Dispatch<SetStateAction<boolean>>
@@ -46,6 +48,8 @@ type AuthContextProps = {
 const initAuthContextPropsState = {
   auth: authHelper.getAuth(),
   saveAuth: () => {},
+  jobTitle: undefined,
+  setJobTitle: () => {},
   currentUser: undefined,
   setCurrentUser: () => {},
   logout: () => {},
@@ -63,6 +67,7 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
   const [auth, setAuth] = useState<AuthModel | undefined>(authHelper.getAuth())
   const [currentUser, setCurrentUser] = useState<UserModel | undefined>()
   const [loadingUser, setLoadingUser] = useState(false)
+  const [jobTitle, setJobTitle] = useState<JobTitleModel | undefined>()
   const saveAuth = (auth: AuthModel | undefined) => {
     setAuth(auth)
     if (auth) {
@@ -75,6 +80,7 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
   const logout = () => {
     saveAuth(undefined)
     setCurrentUser(undefined)
+    setJobTitle(undefined)
   }
 
   const contextValue = {
@@ -84,6 +90,8 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
     setCurrentUser,
     loadingUser,
     setLoadingUser,
+    jobTitle,
+    setJobTitle,
     logout,
   }
 
@@ -91,11 +99,22 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
 }
 
 const AuthInit: FC<WithChildren> = ({children}) => {
-  const {auth, logout, setCurrentUser, setLoadingUser} = useAuth()
+  const {auth, logout, setCurrentUser, setLoadingUser, setJobTitle} = useAuth()
   const didRequest = useRef(false)
   const [showSplashScreen, setShowSplashScreen] = useState(true)
 
   useEffect(() => {
+    const requestJobTitle = async (jobTitleId: string) => {
+      try {
+        const {data} = await getJobTitle(jobTitleId)
+        if (data) {
+          setJobTitle(data)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
     const requestUser = async (apiToken: string) => {
       try {
         setLoadingUser(true)
@@ -103,16 +122,19 @@ const AuthInit: FC<WithChildren> = ({children}) => {
           const {data} = await getUserByToken(apiToken)
           if (data) {
             setCurrentUser(data)
+            if (data.job_title_id) {
+              requestJobTitle(data.job_title_id)
+            }
           }
         }
       } catch (error) {
         console.error(error)
         if (!didRequest.current) {
-          setLoadingUser(true)
           logout()
         }
       } finally {
         setShowSplashScreen(false)
+        setLoadingUser(false)
       }
 
       return () => (didRequest.current = true)
@@ -123,6 +145,7 @@ const AuthInit: FC<WithChildren> = ({children}) => {
     } else {
       logout()
       setShowSplashScreen(false)
+      setLoadingUser(false)
     }
     // eslint-disable-next-line
   }, [])

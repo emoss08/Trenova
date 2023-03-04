@@ -18,14 +18,16 @@
  */
 
 import axios from 'axios'
-import {AuthModel, UserModel} from './_models'
+import {AuthModel, JobTitleModel, UserModel} from './_models'
 
 const API_URL = process.env.REACT_APP_API_URL
 
 export const GET_USER_BY_ACCESSTOKEN_URL = `${API_URL}/verify_token/`
 export const LOGIN_URL = `${API_URL}/login/`
 export const REGISTER_URL = `${API_URL}/register/`
-export const REQUEST_PASSWORD_URL = `${API_URL}/forgot_password`
+export const REQUEST_PASSWORD_URL = `${API_URL}/forgot_password/`
+
+export const JOB_TITLE_URL = `${API_URL}/job_titles/`
 
 // Server should return AuthModel
 export function login(username: string, password: string) {
@@ -67,4 +69,8 @@ export function getUserByToken(token: string) {
   return axios.post<UserModel>(GET_USER_BY_ACCESSTOKEN_URL, {
     token: token,
   })
+}
+
+export function getJobTitle(id?: string) {
+  return axios.get<JobTitleModel>(`${JOB_TITLE_URL}${id}/`)
 }

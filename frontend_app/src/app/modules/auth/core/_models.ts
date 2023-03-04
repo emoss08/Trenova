@@ -17,12 +17,14 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import {bool} from 'yup'
+
 export interface AuthModel {
   token: string
 }
 
 export interface UserModel {
-  id: number
+  id: string
   username: string
   email: string
   first_name: string
@@ -33,4 +35,12 @@ export interface UserModel {
   job_title_id?: string
   job_title?: string
   token: string
+}
+
+export interface JobTitleModel {
+  id: string
+  is_active: boolean
+  name: string
+  description: string
+  job_function: string
 }
