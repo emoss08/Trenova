@@ -46,11 +46,11 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     )
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: GeneralLedgerAccount | None = None,
-            change: bool = False,
-            **kwargs: Any,
+        self,
+        request: HttpRequest,
+        obj: GeneralLedgerAccount | None = None,
+        change: bool = False,
+        **kwargs: Any,
     ) -> type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 
