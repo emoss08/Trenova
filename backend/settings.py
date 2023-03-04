@@ -17,6 +17,25 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  Monta is free software: you can redistribute it and/or modify                                   -
+#  it under the terms of the GNU General Public License as published by                            -
+#  the Free Software Foundation, either version 3 of the License, or                               -
+#  (at your option) any later version.                                                             -
+#                                                                                                  -
+#  Monta is distributed in the hope that it will be useful,                                        -
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
+#  GNU General Public License for more details.                                                    -
+#                                                                                                  -
+#  You should have received a copy of the GNU General Public License                               -
+#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+# --------------------------------------------------------------------------------------------------
+
 import os
 from pathlib import Path
 
@@ -67,7 +86,6 @@ INSTALLED_APPS = [
     "auditlog",
     "djmoney",
     "notifications",
-    "knox",
     # Monta Apps
     "backend",
     "core",
@@ -236,14 +254,12 @@ SESSION_CACHE_ALIAS = "sessions"
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
-    # "DEFAULT_AUTHENTICATION_CLASSES": [
-    #     "rest_framework.authentication.BasicAuthentication",
-    #     "rest_framework.authentication.SessionAuthentication",
-    #     "knox.auth.TokenAuthentication",
-    # ],
-    # "DEFAULT_PERMISSION_CLASSES": [
-    #     "rest_framework.permissions.IsAuthenticated",
-    # ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "accounts.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -288,6 +304,3 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # Silk Configurations
 SILKY_PYTHON_PROFILER = True
 
-REST_KNOX = {
-    "AUTO_REFRESH": True,
-}
