@@ -24,7 +24,7 @@ import {AsideMenuContentLoader} from './AsideMenuContentLoader'
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 const AsideToolbar = () => {
-  const {currentUser, loadingUser} = useAuth()
+  const {currentUser, loadingUser, jobTitle} = useAuth()
 
   if (loadingUser) {
     return (
@@ -62,9 +62,7 @@ const AsideToolbar = () => {
               {/*end::Username*/}
 
               {/*begin::Description*/}
-              <span className='text-gray-600 fw-bold d-block fs-8 mb-1'>
-                {currentUser?.job_title_id}
-              </span>
+              <span className='text-gray-600 fw-bold d-block fs-8 mb-1'>{jobTitle?.name}</span>
               {/*end::Description*/}
 
               {/*begin::Label*/}
