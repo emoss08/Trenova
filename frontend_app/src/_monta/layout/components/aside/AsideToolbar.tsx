@@ -20,10 +20,24 @@
 import {useAuth} from '../../../../app/modules/auth'
 import {KTSVG, toAbsoluteUrl} from '../../../helpers'
 import {HeaderUserMenu, Search} from '../../../partials'
+import {AsideMenuContentLoader} from './AsideMenuContentLoader'
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 const AsideToolbar = () => {
-  const {currentUser} = useAuth()
+  const {currentUser, loadingUser} = useAuth()
+
+  if (loadingUser) {
+    return (
+      <>
+        <div className='aside-user d-flex align-items-sm-center justify-content-center py-5'>
+          <AsideMenuContentLoader />
+        </div>
+        <div className='aside-search py-5'>
+          <Search />
+        </div>
+      </>
+    )
+  }
 
   return (
     <>

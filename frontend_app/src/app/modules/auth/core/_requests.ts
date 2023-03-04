@@ -59,6 +59,10 @@ export function requestPassword(email: string) {
   })
 }
 
+/**
+ * Send a post request to GET_USER_BY_ACCESSTOKEN_URL to get
+ * @param token
+ */
 export function getUserByToken(token: string) {
   return axios.post<UserModel>(GET_USER_BY_ACCESSTOKEN_URL, {
     token: token,

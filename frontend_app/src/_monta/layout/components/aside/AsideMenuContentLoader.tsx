@@ -17,20 +17,13 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export interface AuthModel {
-  token: string
-}
+import ContentLoader from 'react-content-loader'
 
-export interface UserModel {
-  id: number
-  username: string
-  email: string
-  first_name: string
-  last_name: string
-  full_name: string
-  organization_id: string
-  department_id?: string
-  job_title_id?: string
-  job_title?: string
-  token: string
-}
+export const AsideMenuContentLoader = () => (
+  <ContentLoader viewBox='0 0 380 110' backgroundOpacity={0.1} foregroundOpacity={0.2}>
+    {/* Only SVG shapes */}
+    <rect x='0' y='0' rx='10' ry='10' width='100' height='100' />
+    <rect x='120' y='17' rx='5' ry='5' width='250' height='30' />
+    <rect x='120' y='60' rx='5' ry='5' width='150' height='20' />
+  </ContentLoader>
+)
