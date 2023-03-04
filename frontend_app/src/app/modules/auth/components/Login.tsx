@@ -24,7 +24,7 @@ import clsx from 'clsx'
 import {Link} from 'react-router-dom'
 import {useFormik} from 'formik'
 import {getUserByToken, login} from '../core/_requests'
-import {toAbsoluteUrl} from '../../../../_metronic/helpers'
+import {toAbsoluteUrl} from '../../../../_monta/helpers'
 import {useAuth} from '../core/Auth'
 
 const loginSchema = Yup.object().shape({
