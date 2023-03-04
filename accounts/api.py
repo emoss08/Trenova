@@ -51,33 +51,6 @@ from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
 
 
-class TokenProvisionView(ObtainAuthToken):
-    throttle_scope = "auth"
-    permission_classes = (permissions.AllowAny,)
-    serializer_class = serializers.TokenProvisionSerializer
-
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        token, _ = models.Token.objects.get_or_create(user=user)
-        if token.is_expired:
-            token.delete()
-            token = models.Token.objects.create(user=user)
-
-        return Response(
-            {
-                "id": user.id,
-                "first_name": user.profile.first_name,
-                "last_name": user.profile.last_name,
-                "email": user.email,
-                "organization_id": user.organization.id,
-                "department_id": user.department.id if user.department else None,
-                "token": token.key,
-            }
-        )
-
-
 class UserViewSet(OrganizationMixin):
     """
     User ViewSet to manage requests to the user endpoint
@@ -177,12 +150,21 @@ class TokenVerifyView(APIView):
         token = serializer.data.get("token")
 
         try:
-            token = models.Token.objects.get(key=token)
-        except models.Token.DoesNotExist:
-            raise InvalidTokenException("Token is invalid")
+            token = (
+                models.Token.objects.select_related("user")
+                .only("key", "user__id")
+                .get(key=token)
+            )
+        except models.Token.DoesNotExist as e:
+            raise InvalidTokenException("Token is invalid") from e
 
         user = (
-            models.User.objects.select_related("profiles", "organization", "department")
+            models.User.objects.select_related(
+                "profiles",
+                "profiles__title",
+                "organization",
+                "department",
+            )
             .only(
                 "id",
                 "username",
@@ -194,6 +176,7 @@ class TokenVerifyView(APIView):
                 "department__id",
                 "profiles__first_name",
                 "profiles__last_name",
+                "profiles__title_id",
             )
             .get(id=token.user.id)
         )
@@ -204,6 +187,53 @@ class TokenVerifyView(APIView):
                 "id": user.id,
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
+                "job_title_id": user.profile.title.id if user.profile.title else None,
+                "username": user.username,
+                "first_name": user.profile.first_name,
+                "last_name": user.profile.last_name,
+                "full_name": f"{user.profile.first_name} {user.profile.last_name}",
+                "email": user.email,
+            }
+        )
+
+
+class TokenProvisionView(ObtainAuthToken):
+    throttle_scope = "auth"
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = serializers.TokenProvisionSerializer
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user_obj = serializer.validated_data["user"]
+        token, _ = models.Token.objects.get_or_create(user=user_obj)
+        user = (
+            models.User.objects.select_related(
+                "profiles", "profiles__title", "organization", "department"
+            )
+            .only(
+                "id",
+                "organization__id",
+                "department__id",
+                "profiles__title__id",
+                "profiles__first_name",
+                "profiles__last_name",
+                "email",
+                "username",
+            )
+            .get(id=user_obj.id)
+        )
+        if token.is_expired:
+            token.delete()
+            token = models.Token.objects.create(user=user_obj)
+
+        return Response(
+            {
+                "token": token.key,
+                "id": user.id,
+                "organization_id": user.organization.id,
+                "department_id": user.department.id if user.department else None,
+                "job_title_id": user.profile.title.id if user.profile.title else None,
                 "username": user.username,
                 "first_name": user.profile.first_name,
                 "last_name": user.profile.last_name,
