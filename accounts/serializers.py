@@ -346,10 +346,7 @@ class VerifyTokenSerializer(serializers.Serializer):
         token = attrs.get("token")
 
         if models.Token.objects.filter(key=token).exists():
-            return {
-                "token": token,
-                "user_id": models.Token.objects.get(key=token).user.id,
-            }
+            return attrs
         else:
             raise serializers.ValidationError(
                 "Unable to validate given token. Please try again.",

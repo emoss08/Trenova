@@ -30,5 +30,6 @@ export interface UserModel {
   full_name: string
   organization_id: string
   department_id?: string
+  job_title_id?: string
   token: string
 }
