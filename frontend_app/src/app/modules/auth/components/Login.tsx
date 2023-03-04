@@ -23,7 +23,7 @@ import * as Yup from 'yup'
 import clsx from 'clsx'
 import {Link} from 'react-router-dom'
 import {useFormik} from 'formik'
-import {getUserByToken, login} from '../core/_requests'
+import {getJobTitle, getUserByToken, login} from '../core/_requests'
 import {toAbsoluteUrl} from '../../../../_monta/helpers'
 import {useAuth} from '../core/Auth'
 
@@ -51,7 +51,7 @@ const initialValues = {
 
 export function Login() {
   const [loading, setLoading] = useState(false)
-  const {saveAuth, setCurrentUser} = useAuth()
+  const {saveAuth, setCurrentUser, setJobTitle} = useAuth()
 
   const formik = useFormik({
     initialValues,
@@ -63,6 +63,10 @@ export function Login() {
         saveAuth(auth)
         const {data: user} = await getUserByToken(auth.token)
         setCurrentUser(user)
+        if (user?.job_title_id) {
+          const {data: jobTitle} = await getJobTitle(user.job_title_id)
+          setJobTitle(jobTitle)
+        }
       } catch (error) {
         console.error(error)
         saveAuth(undefined)
