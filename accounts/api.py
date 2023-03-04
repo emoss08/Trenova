@@ -17,19 +17,65 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  Monta is free software: you can redistribute it and/or modify                                   -
+#  it under the terms of the GNU General Public License as published by                            -
+#  the Free Software Foundation, either version 3 of the License, or                               -
+#  (at your option) any later version.                                                             -
+#                                                                                                  -
+#  Monta is distributed in the hope that it will be useful,                                        -
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
+#  GNU General Public License for more details.                                                    -
+#                                                                                                  -
+#  You should have received a copy of the GNU General Public License                               -
+#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+# --------------------------------------------------------------------------------------------------
+
 from typing import Any
 
-from django.contrib.auth import login
 from django.db.models import QuerySet
-from knox.views import LoginView as KnoxLoginView
-from rest_framework import permissions, status
-from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework import status, permissions
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from accounts import models, serializers
+from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
+
+
+class TokenProvisionView(ObtainAuthToken):
+    throttle_scope = "auth"
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = serializers.TokenProvisionSerializer
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data["user"]
+        token, _ = models.Token.objects.get_or_create(user=user)
+        if token.is_expired:
+            token.delete()
+            token = models.Token.objects.create(user=user)
+
+        return Response(
+            {
+                "id": user.id,
+                "first_name": user.profile.first_name,
+                "last_name": user.profile.last_name,
+                "email": user.email,
+                "organization_id": user.organization.id,
+                "department_id": user.department.id if user.department else None,
+                "token": token.key,
+            }
+        )
 
 
 class UserViewSet(OrganizationMixin):
@@ -107,43 +153,61 @@ class JobTitleViewSet(OrganizationMixin):
         ).select_related("organization")
 
 
-class LoginView(KnoxLoginView):
+class TokenVerifyView(APIView):
     """
-    A Django view that handles user authentication and login using token-based authentication provided by KnoxLoginView.
-
-    This view is accessible to all users, regardless of whether they are authenticated or not. It accepts HTTP POST requests
-    containing user data, validates the user data using the `AuthTokenSerializer`, logs the user in using Django's built-in
-    `login()` function, and returns an HTTP response object containing the authentication token.
-
-    Attributes:
-        permission_classes (tuple): A tuple of permission classes that allow any user to access this view.
-
-    Methods:
-        post(request, format=None): Handle user authentication and login using an HTTP POST request.
+    Rest API endpoint for users can verify a token
     """
 
-    permission_classes = (permissions.AllowAny,)
+    permission_classes: list[Any] = []
+    serializer_class = serializers.VerifyTokenSerializer
 
-    def post(self, request: Request, format: str | None = None) -> Response:
-        """
-        Handle user authentication and login using an HTTP POST request.
-
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Handle Post requests
         Args:
-            request (Request): The HTTP request object containing user data.
-            format (str, optional): The format of the response data (default=None).
-
+            request (Request): Request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
         Returns:
-            Response: The HTTP response object containing the authentication token.
-
-        Raises:
-            ValidationError: If the user data is invalid.
-
-        Notes:
-            This method validates the user data using the `AuthTokenSerializer` and logs the user in using Django's built-in
-            `login()` function. The method then returns an HTTP response object containing the authentication token.
+            Response: Response of token and user id
         """
-        serializer = AuthTokenSerializer(data=request.data)
+
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        login(request, user)
-        return super().post(request, format=None)
+
+        token = serializer.data.get("token")
+
+        try:
+            token = models.Token.objects.get(key=token)
+        except models.Token.DoesNotExist:
+            raise InvalidTokenException("Token is invalid")
+
+        user = (
+            models.User.objects.select_related("profiles", "organization", "department")
+            .only(
+                "id",
+                "username",
+                "email",
+                "last_login",
+                "is_staff",
+                "is_superuser",
+                "organization__id",
+                "department__id",
+                "profiles__first_name",
+                "profiles__last_name",
+            )
+            .get(id=token.user.id)
+        )
+
+        return Response(
+            {
+                "token": token.key,
+                "id": user.id,
+                "organization_id": user.organization.id,
+                "department_id": user.department.id if user.department else None,
+                "username": user.username,
+                "first_name": user.profile.first_name,
+                "last_name": user.profile.last_name,
+                "full_name": f"{user.profile.first_name} {user.profile.last_name}",
+                "email": user.email,
+            }
+        )

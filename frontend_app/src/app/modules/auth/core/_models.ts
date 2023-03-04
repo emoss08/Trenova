@@ -1,67 +1,34 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 export interface AuthModel {
-  api_token: string
-  refreshToken?: string
-}
-
-export interface UserAddressModel {
-  addressLine: string
-  city: string
-  state: string
-  postCode: string
-}
-
-export interface UserCommunicationModel {
-  email: boolean
-  sms: boolean
-  phone: boolean
-}
-
-export interface UserEmailSettingsModel {
-  emailNotification?: boolean
-  sendCopyToPersonalEmail?: boolean
-  activityRelatesEmail?: {
-    youHaveNewNotifications?: boolean
-    youAreSentADirectMessage?: boolean
-    someoneAddsYouAsAsAConnection?: boolean
-    uponNewOrder?: boolean
-    newMembershipApproval?: boolean
-    memberRegistration?: boolean
-  }
-  updatesFromKeenthemes?: {
-    newsAboutKeenthemesProductsAndFeatureUpdates?: boolean
-    tipsOnGettingMoreOutOfKeen?: boolean
-    thingsYouMissedSindeYouLastLoggedIntoKeen?: boolean
-    newsAboutStartOnPartnerProductsAndOtherServices?: boolean
-    tipsOnStartBusinessProducts?: boolean
-  }
-}
-
-export interface UserSocialNetworksModel {
-  linkedIn: string
-  facebook: string
-  twitter: string
-  instagram: string
+  token: string
 }
 
 export interface UserModel {
   id: number
   username: string
-  password: string | undefined
   email: string
   first_name: string
   last_name: string
-  fullname?: string
-  occupation?: string
-  companyName?: string
-  phone?: string
-  roles?: Array<number>
-  pic?: string
-  language?: 'en' | 'de' | 'es' | 'fr' | 'ja' | 'zh' | 'ru'
-  timeZone?: string
-  website?: 'https://keenthemes.com'
-  emailSettings?: UserEmailSettingsModel
-  auth?: AuthModel
-  communication?: UserCommunicationModel
-  address?: UserAddressModel
-  socialNetworks?: UserSocialNetworksModel
+  full_name: string
+  organization_id: string
+  department_id?: string
+  token: string
 }
