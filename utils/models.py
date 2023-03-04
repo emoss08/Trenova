@@ -19,14 +19,13 @@
 
 import base64
 from typing import Any, final
-import cryptography.fernet
 
+import cryptography.fernet
+from django.conf import settings
 from django.core import checks
 from django.core.checks import CheckMessage, Error
-from django.db import models
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-
+from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel

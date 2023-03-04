@@ -36,7 +36,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 
 from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
-from utils.models import ChoiceField, GenericModel, EncryptedCharField
+from utils.models import ChoiceField, EncryptedCharField, GenericModel
 
 User = settings.AUTH_USER_MODEL
 
