@@ -38,6 +38,8 @@ type AuthContextProps = {
   saveAuth: (auth: AuthModel | undefined) => void
   currentUser: UserModel | undefined
   setCurrentUser: Dispatch<SetStateAction<UserModel | undefined>>
+  loadingUser: boolean
+  setLoadingUser: Dispatch<SetStateAction<boolean>>
   logout: () => void
 }
 
@@ -47,6 +49,8 @@ const initAuthContextPropsState = {
   currentUser: undefined,
   setCurrentUser: () => {},
   logout: () => {},
+  loadingUser: false,
+  setLoadingUser: () => {},
 }
 
 const AuthContext = createContext<AuthContextProps>(initAuthContextPropsState)
@@ -58,6 +62,7 @@ const useAuth = () => {
 const AuthProvider: FC<WithChildren> = ({children}) => {
   const [auth, setAuth] = useState<AuthModel | undefined>(authHelper.getAuth())
   const [currentUser, setCurrentUser] = useState<UserModel | undefined>()
+  const [loadingUser, setLoadingUser] = useState(false)
   const saveAuth = (auth: AuthModel | undefined) => {
     setAuth(auth)
     if (auth) {
@@ -72,21 +77,28 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
     setCurrentUser(undefined)
   }
 
-  return (
-    <AuthContext.Provider value={{auth, saveAuth, currentUser, setCurrentUser, logout}}>
-      {children}
-    </AuthContext.Provider>
-  )
+  const contextValue = {
+    auth,
+    saveAuth,
+    currentUser,
+    setCurrentUser,
+    loadingUser,
+    setLoadingUser,
+    logout,
+  }
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
 }
 
 const AuthInit: FC<WithChildren> = ({children}) => {
-  const {auth, logout, setCurrentUser} = useAuth()
+  const {auth, logout, setCurrentUser, setLoadingUser} = useAuth()
   const didRequest = useRef(false)
   const [showSplashScreen, setShowSplashScreen] = useState(true)
-  // We should request user by authToken (IN OUR EXAMPLE IT'S API_TOKEN) before rendering the application
+
   useEffect(() => {
     const requestUser = async (apiToken: string) => {
       try {
+        setLoadingUser(true)
         if (!didRequest.current) {
           const {data} = await getUserByToken(apiToken)
           if (data) {
@@ -96,6 +108,7 @@ const AuthInit: FC<WithChildren> = ({children}) => {
       } catch (error) {
         console.error(error)
         if (!didRequest.current) {
+          setLoadingUser(true)
           logout()
         }
       } finally {
