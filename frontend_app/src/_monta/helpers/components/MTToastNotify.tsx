@@ -17,38 +17,30 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export interface AuthModel {
-  token: string
-}
+import {toast, cssTransition, Theme} from 'react-toastify'
 
-export interface UserModel {
-  id: string
-  username: string
-  email: string
-  first_name: string
-  last_name: string
-  full_name?: string
-  organization_id?: string
-  department_id?: string
-  job_title_id?: string
-  is_staff: boolean
-  is_superuser: boolean
-  address_line_1: string
-  address_line_2?: string
-  city: string
-  state: string
-  zip_code: string
-  full_address: string
-  phone_number: string
-  phone_verified: boolean
-  job_title?: string
-  token: string
-}
+export const MTToastNotify: ({
+  message,
+  theme,
+  icon,
+  autoClose,
+}: {
+  message: string
+  theme: Theme
+  icon?: string
+  autoClose?: number
+}) => void = ({message, theme, icon, autoClose}) => {
+  const Bounce = cssTransition({
+    enter: 'animate__animated animate__bounceIn',
+    exit: 'animate__animated animate__bounceOut',
+  })
 
-export interface JobTitleModel {
-  id: string
-  is_active: boolean
-  name: string
-  description: string
-  job_function: string
+  toast(message, {
+    theme: theme,
+    transition: Bounce,
+    pauseOnFocusLoss: false,
+    pauseOnHover: true,
+    icon: icon ? icon : undefined,
+    autoClose: autoClose ? autoClose : 5000,
+  })
 }

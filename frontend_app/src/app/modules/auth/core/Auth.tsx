@@ -76,7 +76,6 @@ const AuthProvider: FC<WithChildren> = ({children}) => {
       authHelper.removeAuth()
     }
   }
-
   const logout = () => {
     saveAuth(undefined)
     setCurrentUser(undefined)

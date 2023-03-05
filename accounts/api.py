@@ -38,7 +38,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Prefetch
 from rest_framework import status, permissions
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
@@ -55,7 +55,6 @@ class UserViewSet(OrganizationMixin):
     """
     User ViewSet to manage requests to the user endpoint
     """
-
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
     filterset_fields = ["department__name", "is_staff"]
@@ -67,12 +66,38 @@ class UserViewSet(OrganizationMixin):
             QuerySet[models.User]: Filtered queryset
         """
 
-        return self.queryset.filter(organization=self.request.user.organization).select_related(  # type: ignore
-            "organization",
-            "profiles",
-            "profiles__title",
-            "profiles__user",
-            "department",
+        return (
+            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
+            .only(
+                "last_login",
+                "is_superuser",
+                "id",
+                "department_id",
+                "username",
+                "email",
+                "is_staff",
+                "date_joined",
+                "organization_id",
+                "profiles__user",
+                "profiles__title",
+                "profiles__first_name",
+                "profiles__last_name",
+                "profiles__profile_picture",
+                "profiles__address_line_1",
+                "profiles__address_line_2",
+                "profiles__city",
+                "profiles__state",
+                "profiles__phone_number",
+                "profiles__zip_code",
+                "profiles__is_phone_verified",
+            )
+            .select_related(  # type: ignore
+                "organization",
+                "profiles",
+                "profiles__title",
+                "profiles__user",
+                "department",
+            )
         )
 
 
@@ -177,22 +202,39 @@ class TokenVerifyView(APIView):
                 "profiles__first_name",
                 "profiles__last_name",
                 "profiles__title_id",
+                "profiles__address_line_1",
+                "profiles__address_line_2",
+                "profiles__city",
+                "profiles__state",
+                "profiles__zip_code",
+                "profiles__phone_number",
+                "profiles__is_phone_verified",
             )
             .get(id=token.user.id)
         )
 
         return Response(
             {
-                "token": token.key,
                 "id": user.id,
-                "organization_id": user.organization.id,
-                "department_id": user.department.id if user.department else None,
-                "job_title_id": user.profile.title.id if user.profile.title else None,
                 "username": user.username,
+                "email": user.email,
                 "first_name": user.profile.first_name,
                 "last_name": user.profile.last_name,
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
-                "email": user.email,
+                "organization_id": user.organization.id,
+                "department_id": user.department.id if user.department else None,
+                "job_title_id": user.profile.title.id if user.profile.title else None,
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+                "address_line_1": user.profile.address_line_1,
+                "address_line_2": user.profile.address_line_2,
+                "city": user.profile.city,
+                "state": user.profile.state,
+                "zip_code": user.profile.zip_code,
+                "full_address": user.profile.get_full_address_combo,
+                "phone_number": user.profile.phone_number,
+                "phone_verified": user.profile.is_phone_verified,
+                "token": token.key,
             }
         )
 
@@ -213,13 +255,22 @@ class TokenProvisionView(ObtainAuthToken):
             )
             .only(
                 "id",
+                "username",
+                "email",
+                "profiles__first_name",
+                "profiles__last_name",
                 "organization__id",
                 "department__id",
                 "profiles__title__id",
-                "profiles__first_name",
-                "profiles__last_name",
-                "email",
-                "username",
+                "is_staff",
+                "is_superuser",
+                "profiles__address_line_1",
+                "profiles__address_line_2",
+                "profiles__city",
+                "profiles__state",
+                "profiles__zip_code",
+                "profiles__phone_number",
+                "profiles__is_phone_verified",
             )
             .get(id=user_obj.id)
         )
@@ -229,15 +280,25 @@ class TokenProvisionView(ObtainAuthToken):
 
         return Response(
             {
-                "token": token.key,
                 "id": user.id,
-                "organization_id": user.organization.id,
-                "department_id": user.department.id if user.department else None,
-                "job_title_id": user.profile.title.id if user.profile.title else None,
                 "username": user.username,
+                "email": user.email,
                 "first_name": user.profile.first_name,
                 "last_name": user.profile.last_name,
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
-                "email": user.email,
+                "organization_id": user.organization.id,
+                "department_id": user.department.id if user.department else None,
+                "job_title_id": user.profile.title.id if user.profile.title else None,
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+                "address_line_1": user.profile.address_line_1,
+                "address_line_2": user.profile.address_line_2,
+                "city": user.profile.city,
+                "state": user.profile.state,
+                "zip_code": user.profile.zip_code,
+                "full_address": user.profile.get_full_address_combo,
+                "phone_number": user.profile.phone_number,
+                "phone_verified": user.profile.is_phone_verified,
+                "token": token.key,
             }
         )

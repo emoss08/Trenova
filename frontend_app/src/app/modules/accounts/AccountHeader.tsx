@@ -23,8 +23,11 @@ import {KTSVG, toAbsoluteUrl} from '../../../_monta/helpers'
 import {Link} from 'react-router-dom'
 import {Dropdown1} from '../../../_monta/partials'
 import {useLocation} from 'react-router'
+import {useAuth} from '../auth'
 
 const AccountHeader: React.FC = () => {
+  const {jobTitle, currentUser} = useAuth()
+
   const location = useLocation()
 
   return (
@@ -34,7 +37,7 @@ const AccountHeader: React.FC = () => {
           <div className='me-7 mb-4'>
             <div className='symbol symbol-100px symbol-lg-160px symbol-fixed position-relative'>
               <img src={toAbsoluteUrl('/media/avatars/300-1.jpg')} alt='Metronic' />
-              <div className='position-absolute translate-middle bottom-0 start-100 mb-6 bg-success rounded-circle border border-4 border-white h-20px w-20px'></div>
+              <div className='position-absolute translate-middle bottom-0 start-100 bg-success rounded-circle border border-4 border-light h-20px w-20px'></div>
             </div>
           </div>
 
@@ -43,7 +46,7 @@ const AccountHeader: React.FC = () => {
               <div className='d-flex flex-column'>
                 <div className='d-flex align-items-center mb-2'>
                   <a href='#' className='text-gray-800 text-hover-primary fs-2 fw-bolder me-1'>
-                    Max Smith
+                    {currentUser?.full_name}
                   </a>
                   <a href='#'>
                     <KTSVG
@@ -70,7 +73,7 @@ const AccountHeader: React.FC = () => {
                       path='/media/icons/duotune/communication/com006.svg'
                       className='svg-icon-4 me-1'
                     />
-                    Developer
+                    {jobTitle?.name || 'User'}
                   </a>
                   <a
                     href='#'
@@ -80,7 +83,7 @@ const AccountHeader: React.FC = () => {
                       path='/media/icons/duotune/general/gen018.svg'
                       className='svg-icon-4 me-1'
                     />
-                    SF, Bay Area
+                    {currentUser?.full_address}
                   </a>
                   <a
                     href='#'
@@ -90,7 +93,7 @@ const AccountHeader: React.FC = () => {
                       path='/media/icons/duotune/communication/com011.svg'
                       className='svg-icon-4 me-1'
                     />
-                    max@kt.com
+                    {currentUser?.email}
                   </a>
                 </div>
               </div>
@@ -139,10 +142,10 @@ const AccountHeader: React.FC = () => {
                         path='/media/icons/duotune/arrows/arr066.svg'
                         className='svg-icon-3 svg-icon-success me-2'
                       />
-                      <div className='fs-2 fw-bolder'>4500$</div>
+                      <div className='fs-2 fw-bolder'>0</div>
                     </div>
 
-                    <div className='fw-bold fs-6 text-gray-400'>Earnings</div>
+                    <div className='fw-bold fs-6 text-gray-400'>Total Orders</div>
                   </div>
 
                   <div className='border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3'>
@@ -151,10 +154,10 @@ const AccountHeader: React.FC = () => {
                         path='/media/icons/duotune/arrows/arr065.svg'
                         className='svg-icon-3 svg-icon-danger me-2'
                       />
-                      <div className='fs-2 fw-bolder'>75</div>
+                      <div className='fs-2 fw-bolder'>0</div>
                     </div>
 
-                    <div className='fw-bold fs-6 text-gray-400'>Projects</div>
+                    <div className='fw-bold fs-6 text-gray-400'>Billed Orders</div>
                   </div>
 
                   <div className='border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3'>

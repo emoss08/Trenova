@@ -19,6 +19,7 @@
 
 import axios from 'axios'
 import {AuthModel, JobTitleModel, UserModel} from './_models'
+import {IProfileDetails} from '../../accounts/components/settings/cards/ProfileDetails'
 
 const API_URL = process.env.REACT_APP_API_URL
 
@@ -73,4 +74,12 @@ export function getUserByToken(token: string) {
 
 export function getJobTitle(id?: string) {
   return axios.get<JobTitleModel>(`${JOB_TITLE_URL}${id}/`)
+}
+
+export function getUser(id?: string) {
+  return axios.get<UserModel>(`${API_URL}/users/${id}/`)
+}
+
+export function getFullUser(id?: string) {
+  return axios.get<IProfileDetails>(`${API_URL}/users/${id}/`)
 }
