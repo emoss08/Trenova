@@ -288,6 +288,11 @@ class UserProfile(GenericModel):
         blank=True,
         help_text=_("The phone number of the user"),
     )
+    is_phone_verified = models.BooleanField(
+        _("Phone Number Verified"),
+        default=False,
+        help_text=_("Designates whether the user's phone number has been verified."),
+    )
 
     class Meta:
         """

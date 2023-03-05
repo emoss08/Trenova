@@ -30,13 +30,17 @@ import {MetronicI18nProvider} from './_monta/i18n/Metronici18n'
  *
  * import './_metronic/assets/css/style.rtl.css'
  **/
+import 'react-toastify/dist/ReactToastify.css'
 import 'nouislider/dist/nouislider.css'
 import './_monta/assets/sass/style.scss'
 import './_monta/assets/sass/plugins.scss'
 import './_monta/assets/sass/style.react.scss'
+import 'animate.css'
 import {AppRoutes} from './app/routing/AppRoutes'
 import {AuthProvider, setupAxios} from './app/modules/auth'
-import {ThemeModeProvider} from './_monta/partials/layout/theme-mode/ThemeModeProvider'
+import {ThemeModeProvider} from './_monta/partials'
+import {ToastContainer} from 'react-toastify'
+import React from 'react'
 /**
  * Creates `axios-mock-adapter` instance for provided `axios` instance, add
  * basic Metronic mocks and returns it.
@@ -60,6 +64,7 @@ if (container) {
         <ThemeModeProvider>
           <AuthProvider>
             <AppRoutes />
+            <ToastContainer />
           </AuthProvider>
         </ThemeModeProvider>
       </MetronicI18nProvider>
