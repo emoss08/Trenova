@@ -17,7 +17,24 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export * from './core/_models'
-export * from './core/Auth'
-export * from './core/AuthHelpers'
-export * from './Logout'
+import {Suspense} from 'react'
+import {I18nProvider} from '../../_monta/i18n/i18nProvider'
+import {LayoutProvider, LayoutSplashScreen} from '../../_monta/layout/core'
+import {MasterInit} from '../../_monta/layout/MasterInit'
+import {AuthInit} from "../modules/auth"
+
+const App = () => {
+  return (
+    <Suspense fallback={<LayoutSplashScreen />}>
+      <I18nProvider>
+        <LayoutProvider>
+          <AuthInit>
+            <MasterInit />
+          </AuthInit>
+        </LayoutProvider>
+      </I18nProvider>
+    </Suspense>
+  )
+}
+
+export {App}

@@ -25,16 +25,11 @@ import {QueryClient, QueryClientProvider} from 'react-query'
 import {ReactQueryDevtools} from 'react-query/devtools'
 // Apps
 import {MetronicI18nProvider} from './_monta/i18n/Metronici18n'
-/**
- * TIP: Replace this style import with rtl styles to enable rtl mode
- *
- * import './_metronic/assets/css/style.rtl.css'
- **/
 import 'react-toastify/dist/ReactToastify.css'
 import 'nouislider/dist/nouislider.css'
-import './_monta/assets/sass/style.scss'
-import './_monta/assets/sass/plugins.scss'
-import './_monta/assets/sass/style.react.scss'
+import '../../_monta/assets/sass/style.scss'
+import '../../_monta/assets/sass/plugins.scss'
+import '../../_monta/assets/sass/style.react.scss'
 import 'animate.css'
 import {AppRoutes} from './app/routing/AppRoutes'
 import {AuthProvider, setupAxios} from './app/modules/auth'

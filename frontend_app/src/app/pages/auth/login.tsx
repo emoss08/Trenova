@@ -21,11 +21,10 @@
 import {useState} from 'react'
 import * as Yup from 'yup'
 import clsx from 'clsx'
-import {Link} from 'react-router-dom'
 import {useFormik} from 'formik'
-import {getJobTitle, getUserByToken, login} from '../core/_requests'
-import {toAbsoluteUrl} from '../../../../_monta/helpers'
-import {useAuth} from '../core/Auth'
+import { getJobTitle, getUserByToken, login} from '../../modules/auth/core/_requests'
+import {toAbsoluteUrl} from '../../../_monta/helpers'
+import {useAuth} from '../../modules/auth/core/Auth'
 
 const loginSchema = Yup.object().shape({
   username: Yup.string()
@@ -42,12 +41,6 @@ const initialValues = {
   username: 'sys',
   password: 'system',
 }
-
-/*
-  Formik+YUP+Typescript:
-  https://jaredpalmer.com/formik/docs/tutorial#getfieldprops
-  https://medium.com/@maurice.de.beijer/yup-validation-and-typescript-and-formik-6c342578a20e
-*/
 
 export function Login() {
   const [loading, setLoading] = useState(false)

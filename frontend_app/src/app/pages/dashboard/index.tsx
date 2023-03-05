@@ -151,7 +151,7 @@ const DashboardPage = () => (
   </>
 )
 
-const DashboardWrapper = () => {
+const Index = () => {
   const intl = useIntl()
   return (
     <>
@@ -161,4 +161,4 @@ const DashboardWrapper = () => {
   )
 }
 
-export {DashboardWrapper}
+export {Index}

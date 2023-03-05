@@ -18,12 +18,9 @@
  */
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import {useEffect} from 'react'
-import {Outlet, Route, Routes} from 'react-router-dom'
-import {Registration} from './components/Registration'
-import {ForgotPassword} from './components/ForgotPassword'
-import {Login} from './components/Login'
+import React, {useEffect} from 'react'
 import {toAbsoluteUrl} from '../../../_monta/helpers'
+import Link from "next/link";
 
 const AuthLayout = () => {
   useEffect(() => {
@@ -56,7 +53,7 @@ const AuthLayout = () => {
         {/* end::Logo */}
         {/* begin::Wrapper */}
         <div className='w-lg-500px bg-body rounded shadow-sm p-10 p-lg-15 mx-auto'>
-          <Outlet />
+          <Login
         </div>
         {/* end::Wrapper */}
       </div>
@@ -83,14 +80,12 @@ const AuthLayout = () => {
 }
 
 const AuthPage = () => (
-  <Routes>
-    <Route element={<AuthLayout />}>
-      <Route path='login' element={<Login />} />
-      <Route path='registration' element={<Registration />} />
-      <Route path='forgot-password' element={<ForgotPassword />} />
-      <Route index element={<Login />} />
-    </Route>
-  </Routes>
+  <AuthLayout>
+    <Link href='auth/login'></Link>
+    <Link href='auth/registration'></Link>
+    <Link href='auth/forget-password'></Link>
+    <Link href={'/'}></Link>
+  </AuthLayout>
 )
 
 export {AuthPage}
