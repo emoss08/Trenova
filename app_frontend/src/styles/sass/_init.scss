@@ -1,0 +1,48 @@
+/*!
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+//
+// Main init file of global bootstrap and theme functions, mixins, variables and config
+//
+
+// Custom functions & mixins
+@import 'src/styles/sass/core/base/functions';
+@import 'src/styles/sass/core/base/mixins';
+@import 'src/styles/sass/core/components/mixins';
+@import 'src/styles/sass/core/vendors/plugins/mixins';
+
+// Custom variables
+@import 'src/styles/sass/components/variables.custom';
+@import 'src/styles/sass/core/components/variables';
+@import 'src/styles/sass/core/components/variables-dark';
+
+// Bootstrap initializaton
+@import '../../../../app_frontend/node_modules/bootstrap/scss/functions';
+@import '../../../../app_frontend/node_modules/bootstrap/scss/variables';
+@import '../../../../app_frontend/node_modules/bootstrap/scss/variables-dark';
+@import '../../../../app_frontend/node_modules/bootstrap/scss/maps';
+@import '../../../../app_frontend/node_modules/bootstrap/scss/mixins';
+@import '../../../../app_frontend/node_modules/bootstrap/scss/utilities';
+
+// 3rd-Party plugins variables
+@import 'src/styles/sass/core/vendors/plugins/variables';
+@import 'src/styles/sass/core/vendors/plugins/variables-dark';
+
+// Custom layout variables
+@import 'src/styles/sass/layout/variables';
