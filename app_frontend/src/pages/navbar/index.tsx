@@ -17,12 +17,10 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/** @type {import("next").NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  experimental: {
-    esmExternals: true
-  }
-};
-
-module.exports = nextConfig;
+export default function Navbar() {
+  return (
+    <div>
+      <h1>Navbar</h1>
+    </div>
+  );
+}

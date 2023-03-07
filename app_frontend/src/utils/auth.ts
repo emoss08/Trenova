@@ -17,21 +17,21 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { UserAuthModel } from "@/models/user";
+import { AuthModel } from "@/models/user";
 
-const AUTH_LOCAL_STORAGE_KEY = "mt-auth-v";
-
-
+const AUTH_LOCAL_STORAGE_KEY: string = "mt-auth-v";
 
 
-export function getAuth(): UserAuthModel | undefined {
+
+
+export function getAuth(): AuthModel | undefined {
   try {
     if (typeof window !== "undefined") {
       const lsValue = localStorage.getItem(AUTH_LOCAL_STORAGE_KEY);
       if (!lsValue) {
         return undefined;
       }
-      return JSON.parse(lsValue) as UserAuthModel;
+      return JSON.parse(lsValue) as AuthModel;
     }
   } catch (error) {
     console.error("Error parsing user auth data from local storage:", error);
@@ -39,7 +39,7 @@ export function getAuth(): UserAuthModel | undefined {
   return undefined;
 }
 
-export function setAuth(auth: UserAuthModel): void {
+export function setAuth(auth: AuthModel): void {
   try {
     if (typeof window !== "undefined") {
       const lsValue: string = JSON.stringify(auth);

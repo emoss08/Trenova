@@ -40,6 +40,7 @@
     "yup": "^1.0.2"
   },
   "devDependencies": {
+    "@types/nprogress": "^0.2.0",
     "@types/styled-components": "^5.1.26"
   }
 }

@@ -22,13 +22,17 @@ import "@/styles/SplashScreen.module.css";
 import "@/styles/sass/style.scss";
 import "@/styles/sass/plugins.scss";
 import "@/styles/sass/style.react.scss";
+import "nprogress/nprogress.css";
 import type { AppProps } from "next/app";
 import { LayoutProvider } from "@/utils/providers/layout-provider";
-import { AuthProvider, ProtectRoute } from "@/utils/providers/AuthProvider";
 import { ThemeProvider } from "next-themes";
-import NextNProgress from "nextjs-progressbar";
 import axios from "axios";
 import { setupAxios } from "@/utils/auth";
+import { AuthInit, AuthProvider } from "@/utils/providers/AuthProvider";
+import { Suspense, useEffect } from "react";
+import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
+import NProgress from "nprogress";
+
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -36,28 +40,43 @@ const poppins = Poppins({
   subsets: ["latin"]
 });
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps, router }: AppProps) {
   setupAxios(axios);
 
+  useEffect(() => {
+    const handleRouteStart = () => NProgress.start();
+    const handleRouteDone = () => NProgress.done();
+
+    router.events.on("routeChangeStart", handleRouteStart);
+    router.events.on("routeChangeComplete", handleRouteDone);
+    router.events.on("routeChangeError", handleRouteDone);
+
+    return () => {
+      // Make sure to remove the event handler on unmount!
+      router.events.off("routeChangeStart", handleRouteStart);
+      router.events.off("routeChangeComplete", handleRouteDone);
+      router.events.off("routeChangeError", handleRouteDone);
+    };
+  }, [router.events]);
+
   return (
-    <LayoutProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <ProtectRoute>
-            <style jsx global>{`
-              html {
-                font-family: ${poppins.style.fontFamily};
-              }
-            `}</style>
-            <>
-              <NextNProgress nonce="my-nonce" />
-              <Component {...pageProps} />
-            </>
-          </ProtectRoute>
-
-        </AuthProvider>
-      </ThemeProvider>
-    </LayoutProvider>
-
+    <Suspense fallback={<LayoutSplashScreen />}>
+      <AuthInit>
+        <LayoutProvider>
+          {/*<ThemeProvider>*/}
+            <AuthProvider>
+              <style jsx global>{`
+                html {
+                  font-family: ${poppins.style.fontFamily};
+                }
+              `}</style>
+              <>
+                <Component {...pageProps} />
+              </>
+            </AuthProvider>
+          {/*</ThemeProvider>*/}
+        </LayoutProvider>
+      </AuthInit>
+    </Suspense>
   );
 }
