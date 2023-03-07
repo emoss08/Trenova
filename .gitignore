@@ -32,3 +32,4 @@ media
 django_config.md
 postgres
 celerybeat-schedule
+.ruff_cache
