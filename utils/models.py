@@ -159,46 +159,44 @@ class ChoiceField(CharField):
         return []
 
 
-def get_crypter() -> cryptography.fernet.MultiFernet:
-    """
-    Returns a MultiFernet object initialized with the encryption keys defined in the `FIELD_ENCRYPTION_KEY` setting.
+class EncryptedMixin:
+    def to_python(self, value):
+        if value is None:
+            return value
 
-    Raises:
-        ImproperlyConfigured: If `FIELD_ENCRYPTION_KEY` is not defined or is defined incorrectly.
+        if isinstance(value, (bytes, str)):
+            if isinstance(value, bytes):
+                value = value.decode('utf-8')
+            try:
+                value = decrypt_str(value)
+            except cryptography.fernet.InvalidToken:
+                pass
 
-    Returns:
-        cryptography.fernet.MultiFernet: A MultiFernet object initialized with the encryption keys.
-    """
-    configured_keys = getattr(settings, "FIELD_ENCRYPTION_KEY", None)
+        return super(EncryptedMixin, self).to_python(value)
 
-    if configured_keys is None:
-        raise ImproperlyConfigured("FIELD_ENCRYPTION_KEY must be defined in settings")
+    def from_db_value(self, value, *args, **kwargs):
+        return self.to_python(value)
 
-    try:
-        if isinstance(configured_keys, (tuple, list)):
-            keys = [
-                cryptography.fernet.Fernet(key.encode("utf-8"))
-                for key in configured_keys
-            ]
-        else:
-            keys = [
-                cryptography.fernet.Fernet(configured_keys.encode("utf-8")),
-            ]
-    except Exception as e:
-        raise ImproperlyConfigured(
-            f"FIELD_ENCRYPTION_KEY defined incorrectly: {str(e)}"
-        )
+    def get_db_prep_save(self, value, connection):
+        value = super(EncryptedMixin, self).get_db_prep_save(value, connection)
 
-    if len(keys) == 0:
-        raise ImproperlyConfigured("No keys defined in setting FIELD_ENCRYPTION_KEY")
+        if value is None:
+            return value
+        # decode the encrypted value to a unicode string, else this breaks in pgsql
+        return (encrypt_str(str(value))).decode('utf-8')
 
-    return cryptography.fernet.MultiFernet(keys)
+    def get_internal_type(self):
+        return "TextField"
 
+    def deconstruct(self):
+        name, path, args, kwargs = super(EncryptedMixin, self).deconstruct()
 
-CRYPTER: cryptography.fernet.MultiFernet = get_crypter()
+        if 'max_length' in kwargs:
+            del kwargs['max_length']
 
+        return name, path, args, kwargs
 
-class EncryptedCharField(models.CharField):
+class EncryptedCharField(EncryptedMixin, models.CharField):
     """
     A custom Django CharField that encrypts and decrypts its value using the encryption keys defined in the
     `FIELD_ENCRYPTION_KEY` setting.

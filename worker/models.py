@@ -32,11 +32,12 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
+from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 
 from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
-from utils.models import ChoiceField, EncryptedCharField, GenericModel
+from utils.models import ChoiceField, GenericModel
 
 User = settings.AUTH_USER_MODEL
 
