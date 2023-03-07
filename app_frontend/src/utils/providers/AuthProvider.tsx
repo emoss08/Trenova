@@ -19,92 +19,111 @@
 
 import React, {
   createContext,
-  Dispatch, FC, ReactNode,
+  Dispatch, FC,
   SetStateAction,
-  useContext,
-  useEffect,
+  useContext, useEffect, useRef,
   useState
 } from "react";
-
-import { WithChildren } from "@/utils/types";
-import { AuthModel, JobTitleModel, UserAuthModel } from "@/models/user";
-import * as authHelper from "@/utils/auth";
-import { getJobTitle, getUserByToken } from "@/utils/_requests";
 import { useRouter } from "next/router";
+import { WithChildren } from "@/utils/types";
+import { AuthModel, UserAuthModel } from "@/models/user";
+import * as authHelper from "@/utils/auth";
+import { getUserByToken } from "../_requests";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
-import { set } from "immutable";
 
-export interface AuthContextType {
-  isAuthenticated: boolean;
+export interface AuthContextProps {
+  auth: AuthModel | undefined;
+  saveAuth: (auth: AuthModel | undefined) => void;
   user: UserAuthModel | undefined;
-  loading: boolean;
-  setLoading: Dispatch<SetStateAction<boolean>>;
-  logout: () => void
-
-
+  setUser: Dispatch<SetStateAction<UserAuthModel | undefined>>;
+  logout: () => void;
 }
 
-const InitalAuthContext: AuthContextType = {
-  setLoading: () => {},
-  loading: false,
-  isAuthenticated: false,
+const initAuthContextPropsState: AuthContextProps = {
+  auth: authHelper.getAuth(),
+  saveAuth: () => {
+  },
   user: undefined,
-  logout: () => {},
-}
+  setUser: () => {
+  },
+  logout: () => {
+  }
+};
 
-const AuthContext = createContext<AuthContextType>(InitalAuthContext);
+const AuthContext = createContext<AuthContextProps>(initAuthContextPropsState);
 
-export const AuthProvider: React.FC<WithChildren> = ({ children }) => {
-  const [user, setCurrentUser] = useState<UserAuthModel | undefined>();
-  const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter();
+const useAuth = () => {
+  return useContext(AuthContext);
+};
 
-  useEffect(() => {
-    async function loadUser() {
-      const auth = authHelper.getAuth();
-      if (auth) {
-        console.log("Got Auth", auth);
-        const { data: user } = await getUserByToken(auth.token);
-        if (user) setCurrentUser(user);
-      }
+const AuthProvider: React.FC<WithChildren> = ({ children }) => {
+  const [auth, setAuth] = useState<AuthModel | undefined>(authHelper.getAuth());
+  const [user, setUser] = useState<UserAuthModel | undefined>(undefined);
 
+  const saveAuth = (auth: AuthModel | undefined) => {
+    setAuth(auth);
+    if (auth) {
+      authHelper.setAuth(auth);
+    } else {
+      authHelper.clearAuth();
     }
-
-    loadUser();
-  }, []);
+  };
 
   const logout = () => {
-    authHelper.clearAuth();
-    setCurrentUser(undefined);
-    router.push("/login");
+    saveAuth(undefined);
+    setUser(undefined);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !user, user, logout, loading, setLoading }}>
+    <AuthContext.Provider value={{ auth, saveAuth, user, setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
-export const useAuth = () => useContext(AuthContext);
 
-export const ProtectRoute: ({ children }: { children: any }) => (JSX.Element) = ({ children }) => {
+
+const AuthInit: FC<WithChildren> = ({ children }) => {
+  const { auth, logout, setUser } = useAuth();
+  const didRequest = useRef(false);
+  const [showSplashScreen, setShowSplashScreen] = useState(true);
   const router = useRouter();
-  const { isAuthenticated, loading, setLoading } = useAuth();
+  // We should request user by authToken (IN OUR EXAMPLE IT'S API_TOKEN) before rendering the application
   useEffect(() => {
-    console.log("useEffect executed");
-    console.log((router.pathname))
-    console.log("Loading??", loading)
-    console.log("Authenticated ",isAuthenticated)
 
-    if (!loading && !isAuthenticated && router.pathname !== "/auth/login") {
-      router.push("/auth/login");
-      console.log((router.pathname))
-      if (router.pathname === "/auth/login") {
-        setLoading(false);
-        console.log(loading);
+
+    const requestUser = async (apiToken: string) => {
+      try {
+        if (!didRequest.current) {
+          const { data } = await getUserByToken(apiToken);
+          if (data) {
+            setUser(data);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+        if (!didRequest.current) {
+          logout();
+        }
+      } finally {
+        setShowSplashScreen(false);
       }
-    }
-  }, [loading, isAuthenticated, router, setLoading]);
+      return () => (didRequest.current = true);
+    };
 
-  return loading ? <LayoutSplashScreen /> : children;
+    if (auth && auth.token) {
+      requestUser(auth.token);
+    } else {
+      router.push("/auth/login").then(
+        () => {
+          logout();
+          setShowSplashScreen(false);
+        });
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  return showSplashScreen ? <LayoutSplashScreen /> : <>{children}</>;
 };
+
+
+export { AuthInit, AuthProvider, useAuth };

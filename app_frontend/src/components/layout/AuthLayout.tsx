@@ -20,13 +20,14 @@
 import React, { useEffect } from "react";
 import { WithChildren } from "@/utils/types";
 import Image from "next/image";
-import darkLogo from '../../../public/logos/default-dark.svg';
-import defaultLogo from '../../../public/logos/default.svg';
-import authBgIcon from '../../../public/media/illustrations/sketchy-1/14.png';
+import darkLogo from "../../../public/logos/default-dark.svg";
+import defaultLogo from "../../../public/logos/default.svg";
+import authBgIcon from "../../../public/media/illustrations/sketchy-1/14.png";
 import { useTheme } from "next-themes";
+
 export default function AuthLayout({ children }: WithChildren) {
 
-  const { resolvedTheme } = useTheme()
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     document.body.style.backgroundImage = "none";
@@ -40,7 +41,8 @@ export default function AuthLayout({ children }: WithChildren) {
       <div
         className="d-flex flex-column flex-column-fluid bgi-position-y-bottom position-x-center bgi-no-repeat bgi-size-contain bgi-attachment-fixed"
         style={{
-          backgroundImage: `url(${authBgIcon.src})`
+          backgroundImage: `url(${authBgIcon.src})`,
+          minHeight: "100vh",
         }}
       >
         {/* begin::Content */}
