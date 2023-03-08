@@ -17,21 +17,23 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Poppins } from "next/font/google";
 import "@/styles/SplashScreen.module.css";
 import "@/styles/sass/style.scss";
 import "@/styles/sass/plugins.scss";
 import "@/styles/sass/style.react.scss";
 import "nprogress/nprogress.css";
+import "react-toastify/dist/ReactToastify.min.css";
+
 import type { AppProps } from "next/app";
 import { LayoutProvider } from "@/utils/providers/layout-provider";
-import { ThemeProvider } from "next-themes";
+import { Poppins } from "next/font/google";
 import axios from "axios";
 import { setupAxios } from "@/utils/auth";
 import { AuthInit, AuthProvider } from "@/utils/providers/AuthProvider";
 import { Suspense, useEffect } from "react";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import NProgress from "nprogress";
+import { ToastContainer } from "react-toastify";
 
 
 const poppins = Poppins({
@@ -64,16 +66,17 @@ export default function App({ Component, pageProps, router }: AppProps) {
       <AuthInit>
         <LayoutProvider>
           {/*<ThemeProvider>*/}
-            <AuthProvider>
-              <style jsx global>{`
-                html {
-                  font-family: ${poppins.style.fontFamily};
-                }
-              `}</style>
-              <>
-                <Component {...pageProps} />
-              </>
-            </AuthProvider>
+          <AuthProvider>
+            <style jsx global>{`
+              html {
+                font-family: ${poppins.style.fontFamily};
+              }
+            `}</style>
+            <>
+              <Component {...pageProps} />
+              <ToastContainer />
+            </>
+          </AuthProvider>
           {/*</ThemeProvider>*/}
         </LayoutProvider>
       </AuthInit>

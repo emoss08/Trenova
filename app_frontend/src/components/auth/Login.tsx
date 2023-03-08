@@ -24,10 +24,6 @@ import clsx from "clsx";
 import { useFormik } from "formik";
 import Link from "next/link";
 import { getJobTitle, getUserByToken, login } from "@/utils/_requests";
-import Image from "next/image";
-import googleIcon from "../../../public/media/svg/brand-logos/google-icon.svg";
-import facebookIcon from "../../../public/media/svg/brand-logos/facebook-4.svg";
-import appleLogo from "../../../public/media/svg/brand-logos/apple-black.svg";
 import { useAuth } from "@/utils/providers/AuthProvider";
 
 const loginSchema = Yup.object().shape({
