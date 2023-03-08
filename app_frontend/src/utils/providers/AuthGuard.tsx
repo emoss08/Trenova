@@ -17,73 +17,63 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, {
-  createContext,
-  Dispatch, FC,
-  SetStateAction,
-  useContext, useEffect, useRef,
-  useState
-} from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { WithChildren } from "@/utils/types";
 import { AuthModel, UserAuthModel } from "@/models/user";
 import * as authHelper from "@/utils/auth";
 import { getUserByToken } from "../_requests";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
+import { createGlobalStore } from "@/utils/zustand";
 
-export interface AuthContextProps {
-  auth: AuthModel | undefined;
-  saveAuth: (auth: AuthModel | undefined) => void;
-  user: UserAuthModel | undefined;
-  setUser: Dispatch<SetStateAction<UserAuthModel | undefined>>;
-  logout: () => void;
+type AuthType = { auth?: AuthModel, user?: UserAuthModel };
+const store = createGlobalStore<AuthType>({});
+export const authStore = store;
+
+export function logout() {
+  store.update({auth: undefined, user: undefined});
+  authHelper.clearAuth()
 }
 
-const initAuthContextPropsState: AuthContextProps = {
-  auth: authHelper.getAuth(),
-  saveAuth: () => {
-  },
-  user: undefined,
-  setUser: () => {
-  },
-  logout: () => {
+export function saveAuth(auth: AuthModel | undefined) {
+  // If the auth token changed, then we'll need to refetch the user
+  if (auth?.token !== store.get('auth')?.token) {
+    store.set('user', undefined);
   }
-};
+  store.set('auth', auth);
+  if (auth) {
+    authHelper.setAuth(auth);
+  } else {
+    authHelper.clearAuth();
+  }
+}
 
-const AuthContext = createContext<AuthContextProps>(initAuthContextPropsState);
+/** List of routes that should be public and accessible without authentication. */
+const PUBLIC_PATHS = ['/auth/login'];
 
-const useAuth = () => {
-  return useContext(AuthContext);
-};
+const AuthGuard: React.FC<WithChildren> = ({ children }) => {
+  const [auth] = store.use('auth');
+  const router = useRouter();
 
-const AuthProvider: React.FC<WithChildren> = ({ children }) => {
-  const [auth, setAuth] = useState<AuthModel | undefined>(authHelper.getAuth());
-  const [user, setUser] = useState<UserAuthModel | undefined>(undefined);
-
-  const saveAuth = (auth: AuthModel | undefined) => {
-    setAuth(auth);
-    if (auth) {
-      authHelper.setAuth(auth);
-    } else {
-      authHelper.clearAuth();
+  const isAuthenticated = !!auth?.token;
+  useEffect(() => {
+    if (!isAuthenticated && router.pathname !== '/auth/login') {
+      router.push('/auth/login').then(logout);
+    } else if (isAuthenticated && router.pathname === '/auth/login') {
+      router.replace('/').then(() => {});
     }
-  };
+  }, [router, isAuthenticated]);
 
-  const logout = () => {
-    saveAuth(undefined);
-    setUser(undefined);
-  };
+  // Auth check. If trying to navigate to a non-public path, reroute to the login page.
+  if (!isAuthenticated && !PUBLIC_PATHS.includes(router.pathname)) {
+    return null;
+  }
 
-  return (
-    <AuthContext.Provider value={{ auth, saveAuth, user, setUser, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <>{children}</>;
 };
-
 
 const AuthInit: FC<WithChildren> = ({ children }) => {
-  const { auth, logout, setUser } = useAuth();
+  const [auth] = store.use('auth', authHelper.getAuth());
   const didRequest = useRef(false);
   const [showSplashScreen, setShowSplashScreen] = useState(true);
   const router = useRouter();
@@ -91,10 +81,12 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
   useEffect(() => {
     const requestUser = async (apiToken: string) => {
       try {
+        setShowSplashScreen(true);
         if (!didRequest.current) {
           const { data } = await getUserByToken(apiToken);
+          console.log("I'm being called", data)
           if (data) {
-            setUser(data);
+            store.set('user', data);
           }
         }
       } catch (error) {
@@ -110,17 +102,13 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
 
     if (auth && auth.token) {
       requestUser(auth.token);
-    } else {
-      router.push("/auth/login").then(
-        () => {
-          logout();
-          setShowSplashScreen(false);
-        });
+      return;
     }
-  }, [auth, logout, router, setUser]);
+
+    setShowSplashScreen(false);
+  }, [auth, router]);
 
   return showSplashScreen ? <LayoutSplashScreen /> : <>{children}</>;
 };
 
-
-export { AuthInit, AuthProvider, useAuth };
+export { AuthInit, AuthGuard };

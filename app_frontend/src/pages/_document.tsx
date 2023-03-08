@@ -26,7 +26,7 @@ const appScript = `
       var defaultThemeMode = 'system'
 
       var hasKTName = document.body.hasAttribute('data-kt-name')
-      var lsKey = 'kt_' + (hasKTName ? name + '_' : '') + 'theme_mode_value'
+      var lsKey = 'mt_' + (hasKTName ? name + '_' : '') + 'theme_mode_value'
       var themeMode = localStorage.getItem(lsKey)
       if (!themeMode) {
         if (defaultThemeMode === 'system') {
@@ -46,14 +46,11 @@ export default function Document() {
     <Html lang="en">
       <Head />
       <body>
-      {/*<Script*/}
-      {/*  id={"theme-mode-script"}*/}
-      {/*  strategy="beforeInteractive"*/}
-      {/*  dangerouslySetInnerHTML={{ __html: appScript }}*/}
-      {/*/>*/}
-      {/*<div id="kt_splash_screen" className="splash-screen">*/}
-      {/*  <span>Loading ...</span>*/}
-      {/*</div>*/}
+      <Script
+        id={"theme-mode-script"}
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: appScript }}
+      />
       <Main />
       <NextScript />
 

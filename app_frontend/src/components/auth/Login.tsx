@@ -24,7 +24,7 @@ import clsx from "clsx";
 import { useFormik } from "formik";
 import Link from "next/link";
 import { getJobTitle, getUserByToken, login } from "@/utils/_requests";
-import { useAuth } from "@/utils/providers/AuthProvider";
+import { authStore, saveAuth } from "@/utils/providers/AuthGuard";
 
 const loginSchema = Yup.object().shape({
   username: Yup.string()
@@ -44,7 +44,6 @@ const initialValues = {
 
 export function Login() {
   const [loading, setLoading] = useState(false);
-  const { saveAuth, user, setUser } = useAuth();
 
   const formik = useFormik({
     initialValues,
@@ -55,7 +54,8 @@ export function Login() {
         const { data: auth } = await login(values.username, values.password);
         saveAuth(auth);
         const { data: currentUser } = await getUserByToken(auth.token);
-        setUser(user);
+        console.log("i'm being called", currentUser)
+        authStore.set('user', currentUser);
         if (currentUser.job_title_id) {
           const { data: jobTitle } = await getJobTitle(currentUser.job_title_id);
           // setJobTitle(jobTitle);

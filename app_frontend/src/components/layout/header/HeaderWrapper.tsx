@@ -1,0 +1,88 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* eslint-disable react-hooks/exhaustive-deps */
+import clsx from 'clsx'
+import Link from 'next/link'
+import {HeaderToolbar} from './HeaderToolbar'
+import { useLayout } from "@/utils/layout/LayoutProvider";
+import Image from "next/image";
+import defaultDark from '../../../../public/media/logos/default-dark.svg'
+import abs015 from '../../../../public/media/icons/duotune/abstract/abs015.svg'
+import arr092 from '../../../../public/media/icons/duotune/arrows/arr092.svg'
+import arr076 from '../../../../public/media/icons/duotune/arrows/arr076.svg'
+
+export function HeaderWrapper() {
+  const {config, classes, attributes} = useLayout()
+  const {aside} = config
+
+  return (
+    <div
+      id='kt_header'
+      className={clsx('header', classes.header.join(' '), 'align-items-stretch')}
+      {...attributes.headerMenu}
+    >
+      {/* begin::Brand */}
+      <div className='header-brand'>
+        {/* begin::Logo */}
+        <Link href='/'>
+          <Image
+            alt='Logo'
+            src={defaultDark}
+            className='h-25px h-lg-25px'
+          />
+        </Link>
+        {/* end::Logo */}
+
+        {aside.minimize && (
+          <div
+            id='kt_aside_toggle'
+            className='btn btn-icon w-auto px-0 btn-active-color-primary aside-minimize'
+            data-kt-toggle='true'
+            data-kt-toggle-state='active'
+            data-kt-toggle-target='body'
+            data-kt-toggle-name='aside-minimize'
+          >
+            <Image
+              src={arr092}
+              className='svg-icon-1 me-n1 minimize-default'
+             alt={"arr092"}/>
+            <Image
+              src={arr076}
+              className='svg-icon-1 minimize-active'
+             alt={"arr076"}/>
+          </div>
+        )}
+
+        {/* begin::Aside toggle */}
+        <div className='d-flex align-items-center d-lg-none ms-n3 me-1' title='Show aside menu'>
+          <div
+            className='btn btn-icon btn-active-color-primary w-30px h-30px'
+            id='kt_aside_mobile_toggle'
+          >
+            <Image src={abs015} className='svg-icon-1'  alt={"abs015"}/>
+          </div>
+        </div>
+        {/* end::Aside toggle */}
+      </div>
+      {/* end::Brand */}
+      <HeaderToolbar />
+    </div>
+  )
+}

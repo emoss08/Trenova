@@ -18,13 +18,13 @@
  */
 
 import { createContext, FC, useContext, useEffect, useState } from 'react';
-import { DefaultLayoutConfig } from '@/utils/DefaultLayoutConfig';
+import { DefaultLayoutConfig } from '@/utils/layout/DefaultLayoutConfig';
 import {
   getEmptyCssClasses,
   getEmptyCSSVariables,
   getEmptyHTMLAttributes,
   LayoutSetup,
-} from '@/utils/LayoutSetup'
+} from '@/utils/layout/LayoutSetup'
 import {
   ILayout,
   ILayoutCSSVariables,
