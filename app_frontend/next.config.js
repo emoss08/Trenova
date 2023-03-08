@@ -16,9 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
-
+const path = require('path')
 /** @type {import("next").NextConfig} */
 const nextConfig = {
+  sassOptions: {
+    includesPaths: [path.join(__dirname, 'styles')]
+  },
   reactStrictMode: true,
   experimental: {
     esmExternals: true

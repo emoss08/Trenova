@@ -19,11 +19,13 @@
 
 import {SetStateAction, useCallback} from 'react'
 import {create} from 'zustand'
-import {isNil} from 'lodash'
+
+function isNil(value: any): value is undefined | null {
+  return value === null || value === undefined;
+}
 
 export type EqualityFn<T> = (left: T | null | undefined, right: T | null | undefined) => boolean
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 const isFunction = (fn: unknown): fn is Function => typeof fn === 'function'
 
 /**
@@ -51,7 +53,7 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
 
   const setter = <T extends keyof State>(key: T, value: SetStateAction<State[T]>) => {
     if (isFunction(value)) {
-      store.setState((prevValue) => ({[key]: value(prevValue[key])} as unknown as Partial<State>))
+      store.setState((prevValue: any) => ({[key]: value(prevValue[key])} as unknown as Partial<State>))
     } else {
       store.setState({[key]: value} as unknown as Partial<State>)
     }
@@ -70,18 +72,18 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
       if (defaultValue !== undefined && !(key in store.getState())) {
         setter(key, defaultValue)
       }
-      const result = store((state) => state[key], equalityFn)
+      const result = store((state: any) => state[key], equalityFn)
       // eslint-disable-next-line react-hooks/rules-of-hooks
       const keySetter = useCallback((value: SetStateAction<State[K]>) => setter(key, value), [key])
-      return [result, keySetter]
+      return [result, keySetter] as any
     },
 
     /** Listens on the entire state, causing a re-render when anything in the state changes. */
-    useAll: () => store((state) => state),
+    useAll: () => store((state: any) => state),
 
     /** Deletes a `key` from state, causing a re-render for anything listening. */
     delete<K extends keyof State>(key: K) {
-      store.setState((prevState) => {
+      store.setState((prevState: any) => {
         const {[key]: _, ...rest} = prevState
         return rest as State // TODO(acorn1010): Why can't this be Omit<State, K>?
       }, true)

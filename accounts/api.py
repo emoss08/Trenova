@@ -55,6 +55,7 @@ class UserViewSet(OrganizationMixin):
     """
     User ViewSet to manage requests to the user endpoint
     """
+
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
     filterset_fields = ["department__name", "is_staff"]
@@ -99,7 +100,6 @@ class UserViewSet(OrganizationMixin):
                 "department",
             )
         )
-
 
 class UpdatePasswordView(UpdateAPIView):
     """

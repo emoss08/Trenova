@@ -17,32 +17,33 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useRouter } from "next/router";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { ThemeProvider } from "styled-components";
+import React, {createContext, useContext, useEffect, useState} from 'react'
+import { toAbsoluteUrl } from "@/utils/AssetHelpers";
 
-export type ThemeModeType = "dark" | "light" | "system";
-const systemMode =
-  typeof window !== "undefined" &&
-  window.matchMedia("(prefers-color-scheme: dark)")
-    ? "dark"
-    : "light";
+export type ThemeModeType = 'dark' | 'light' | 'system'
 
-const useThemeMode = () => useContext(ThemeModeContext);
+const systemMode = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
 
 type ThemeModeContextType = {
-  mode: ThemeModeType;
-  menuMode: ThemeModeType;
-  updateMode: (_mode: ThemeModeType) => void;
-  updateMenuMode: (_mode: ThemeModeType) => void;
-};
+  mode: ThemeModeType
+  menuMode: ThemeModeType
+  updateMode: (_mode: ThemeModeType) => void
+  updateMenuMode: (_mode: ThemeModeType) => void
+}
 
-const themeModeLSKey = "mt_theme_mode_value";
-const themeMenuModeLSKey = "mt_theme_mode_menu";
+const themeModeSwitchHelper = (_mode: ThemeModeType) => {
+  // change background image url
+  const mode = _mode !== 'system' ? _mode : systemMode
+  const imageUrl = '/media/patterns/header-bg' + (mode === 'light' ? '.jpg' : '-dark.png')
+  document.body.style.backgroundImage = `url("${toAbsoluteUrl(imageUrl)}")`
+}
 
+const themeModeLSKey = 'mt_theme_mode_value'
+const themeMenuModeLSKey = 'mt_theme_mode_menu'
 
 const getThemeModeFromLocalStorage = (lsKey: string, isMenu?: boolean): ThemeModeType => {
-  if (typeof localStorage === "undefined") {
+  if (typeof localStorage === 'undefined') {
     return 'light'
   }
 
@@ -55,7 +56,7 @@ const getThemeModeFromLocalStorage = (lsKey: string, isMenu?: boolean): ThemeMod
     return data
   }
 
-  if (typeof document !== "undefined" && document.documentElement.hasAttribute('data-bs-theme')) {
+  if (typeof document !== 'undefined' && document.documentElement.hasAttribute('data-bs-theme')) {
     const dataTheme = document.documentElement.getAttribute('data-bs-theme')
     if (dataTheme && (dataTheme === 'dark' || dataTheme === 'light')) {
       return dataTheme
@@ -65,18 +66,12 @@ const getThemeModeFromLocalStorage = (lsKey: string, isMenu?: boolean): ThemeMod
   return 'system'
 }
 
+
 const defaultThemeMode: ThemeModeContextType = {
   mode: getThemeModeFromLocalStorage(themeModeLSKey),
   menuMode: getThemeModeFromLocalStorage(themeMenuModeLSKey, true),
   updateMode: (_mode: ThemeModeType) => {},
   updateMenuMode: (_menuMode: ThemeModeType) => {},
-}
-
-const themeModeSwitchHelper = (_mode: ThemeModeType) => {
-  // change background image url
-  const mode = _mode !== 'system' ? _mode : systemMode
-  const imageUrl = '/media/patterns/header-bg' + (mode === 'light' ? '.jpg' : '-dark.png')
-  document.body.style.backgroundImage = `url("${imageUrl}")`
 }
 
 const ThemeModeContext = createContext<ThemeModeContextType>({
@@ -86,39 +81,46 @@ const ThemeModeContext = createContext<ThemeModeContextType>({
   updateMenuMode: (_menuMode: ThemeModeType) => {},
 })
 
-const ThemeProviderWrapper = ({ children }: { children: React.ReactNode }) => {
-  const router = useRouter();
+const useThemeMode = () => useContext(ThemeModeContext)
+
+const ThemeModeProvider = ({children}: {children: React.ReactNode}) => {
   const [mode, setMode] = useState<ThemeModeType>(defaultThemeMode.mode)
   const [menuMode, setMenuMode] = useState<ThemeModeType>(defaultThemeMode.menuMode)
+
   const updateMode = (_mode: ThemeModeType, saveInLocalStorage: boolean = true) => {
     const updatedMode = _mode === 'system' ? systemMode : _mode
     setMode(updatedMode)
-    if (saveInLocalStorage && typeof localStorage !== "undefined") {
+    console.info("I'm being fired in updateMode")
+    if (saveInLocalStorage && localStorage) {
+      console.info("I'm also being fired under updateMode")
       localStorage.setItem(themeModeLSKey, updatedMode)
     }
-    if (saveInLocalStorage && typeof document !== "undefined") {
+
+    if (saveInLocalStorage) {
       document.documentElement.setAttribute('data-bs-theme', updatedMode)
     }
   }
 
   const updateMenuMode = (_menuMode: ThemeModeType, saveInLocalStorage: boolean = true) => {
     setMenuMode(_menuMode)
-    if (saveInLocalStorage && typeof localStorage !== "undefined") {
+    console.info("I'm being fired in updateMenuMode")
+    if (saveInLocalStorage && localStorage) {
+      console.info("I'm also being fired under updateMenuMode")
       localStorage.setItem(themeMenuModeLSKey, _menuMode)
     }
   }
 
   useEffect(() => {
-    updateMode(mode, false)
-    updateMenuMode(menuMode, false)
-// eslint-disable-next-line react-hooks/exhaustive-deps
+    updateMode(mode, true)
+    updateMenuMode(menuMode, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
-    <ThemeProvider theme={{ mode, menuMode, updateMode, updateMenuMode }}>
+    <ThemeModeContext.Provider value={{mode, menuMode, updateMode, updateMenuMode}}>
       {children}
-    </ThemeProvider>
+    </ThemeModeContext.Provider>
   )
 }
 
-export { ThemeProviderWrapper as ThemeModeProvider, useThemeMode, systemMode, themeModeSwitchHelper }
+export {ThemeModeProvider, useThemeMode, systemMode, themeModeSwitchHelper}

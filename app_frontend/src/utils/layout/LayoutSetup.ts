@@ -31,20 +31,22 @@ import {
 
 import { DefaultLayoutConfig } from "./DefaultLayoutConfig";
 
-const LAYOUT_CONFIG_KEY = process.env.REACT_APP_BASE_LAYOUT_CONFIG_KEY || "LayoutConfig";
+const LAYOUT_CONFIG_KEY = process.env.NEXT_PUBLIC_BASE_LAYOUT_CONFIG_KEY || "LayoutConfig";
 
 export function getLayout(): ILayout {
   let ls = null;
   try {
-    ls = localStorage.getItem(LAYOUT_CONFIG_KEY);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      ls = window.localStorage.getItem(LAYOUT_CONFIG_KEY);
+    }
   } catch (error) {
-    console.error("localStorage is not available on the server side.");
+    console.error("Error getting layout configuration from localStorage: ", error);
   }
   if (ls) {
     try {
       return JSON.parse(ls) as ILayout;
     } catch (er) {
-      console.error(er);
+      console.error("Error parsing layout configuration from localStorage: ", er);
     }
   }
   return DefaultLayoutConfig;

@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
+// f1416c
+
 
 import "@/styles/SplashScreen.module.css";
 import "@/styles/sass/style.scss";
@@ -25,15 +27,19 @@ import "nprogress/nprogress.css";
 import "react-toastify/dist/ReactToastify.min.css";
 
 import type { AppProps } from "next/app";
-import { LayoutProvider } from "@/utils/providers/layout-provider";
+import { LayoutProvider } from "@/utils/layout/LayoutProvider";
 import { Poppins } from "next/font/google";
 import axios from "axios";
 import { setupAxios } from "@/utils/auth";
-import { AuthInit, AuthProvider } from "@/utils/providers/AuthProvider";
-import { Suspense, useEffect } from "react";
+import { AuthInit, AuthGuard } from "@/utils/providers/AuthGuard";
+import React, { Suspense, useEffect } from "react";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import NProgress from "nprogress";
 import { ToastContainer } from "react-toastify";
+import { ThemeModeProvider, useThemeMode } from "@/utils/providers/ThemeProvider";
+import { useRouter } from "next/router";
+import { MasterInit } from "@/utils/MasterInit";
+import { MasterLayout } from "@/utils/MasterLayout";
 
 
 const poppins = Poppins({
@@ -42,8 +48,11 @@ const poppins = Poppins({
   subsets: ["latin"]
 });
 
-export default function App({ Component, pageProps, router }: AppProps) {
+export default function App({ Component, pageProps }: AppProps) {
   setupAxios(axios);
+  const [isMounted, setIsMounted] = React.useState(false);
+  const router = useRouter();
+  const { mode } = useThemeMode();
 
   useEffect(() => {
     const handleRouteStart = () => NProgress.start();
@@ -61,24 +70,34 @@ export default function App({ Component, pageProps, router }: AppProps) {
     };
   }, [router.events]);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <LayoutSplashScreen />;
+  }
+
+
   return (
     <Suspense fallback={<LayoutSplashScreen />}>
       <AuthInit>
-        <LayoutProvider>
-          {/*<ThemeProvider>*/}
-          <AuthProvider>
-            <style jsx global>{`
-              html {
-                font-family: ${poppins.style.fontFamily};
-              }
-            `}</style>
-            <>
-              <Component {...pageProps} />
-              <ToastContainer />
-            </>
-          </AuthProvider>
-          {/*</ThemeProvider>*/}
-        </LayoutProvider>
+        <ThemeModeProvider>
+          <LayoutProvider>
+            <AuthGuard>
+              <style jsx global>{`
+                html {
+                  font-family: ${poppins.style.fontFamily};
+                }
+              `}</style>
+              <>
+                  <Component {...pageProps} />
+                  <ToastContainer />
+                <MasterInit />
+              </>
+            </AuthGuard>
+          </LayoutProvider>
+        </ThemeModeProvider>
       </AuthInit>
     </Suspense>
   );
