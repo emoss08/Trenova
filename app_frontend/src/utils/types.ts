@@ -21,5 +21,5 @@
 import { ReactNode } from "react";
 
 export type WithChildren = {
-  children?: ReactNode
+  children: ReactNode
 }

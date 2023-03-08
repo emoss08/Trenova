@@ -87,10 +87,8 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
   const didRequest = useRef(false);
   const [showSplashScreen, setShowSplashScreen] = useState(true);
   const router = useRouter();
-  // We should request user by authToken (IN OUR EXAMPLE IT'S API_TOKEN) before rendering the application
+
   useEffect(() => {
-
-
     const requestUser = async (apiToken: string) => {
       try {
         if (!didRequest.current) {
@@ -119,8 +117,7 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
           setShowSplashScreen(false);
         });
     }
-    // eslint-disable-next-line
-  }, []);
+  }, [auth, logout, router, setUser]);
 
   return showSplashScreen ? <LayoutSplashScreen /> : <>{children}</>;
 };
