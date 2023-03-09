@@ -26,7 +26,6 @@ services:
       - zookeeper
     restart: on-failure
 
-
   db:
     image: postgres:latest
     container_name: monta-db
@@ -37,8 +36,20 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
     restart: always
-    expose:
-      - "5432"
+    volumes:
+      - "./.data:/var/lib/postgresql/data"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: monta-pgadmin
+    depends_on:
+      - db
+    ports:
+      - "5051:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: root
+    restart: always
 
 
   redis:
@@ -51,7 +62,7 @@ services:
     ports:
       - "6379:6379"
     restart: always
-    expose :
+    expose:
       - "6379"
 
   redis-slave:
@@ -63,17 +74,3 @@ services:
     depends_on:
       - redis
     restart: always
-
-#
-#  redis-sentinel:
-#    container_name: monta-cache-sentinel
-#    image: redis:latest
-#    ports:
-#      - "26379:26379"
-#    command: redis-sentinel /etc/redis/sentinel.conf --sentinel
-#    volumes:
-#      - "./.data:/data"
-#    depends_on:
-#      - redis
-#      - redis-slave
-#    restart: always
