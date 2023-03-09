@@ -73,7 +73,7 @@ class UserViewSet(OrganizationMixin):
                 "profiles__zip_code",
                 "profiles__is_phone_verified",
             )
-            .select_related(  # type: ignore
+            .select_related(
                 "organization",
                 "profiles",
                 "profiles__title",
@@ -204,7 +204,7 @@ class TokenVerifyView(APIView):
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
-                "job_title": user.profile.title.name if user.profile.title else None,
+                "job_title": user.profile.title.name,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
                 "address_line_1": user.profile.address_line_1,
@@ -269,7 +269,7 @@ class TokenProvisionView(ObtainAuthToken):
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
-                "job_title": user.profile.title.name if user.profile.title else None,
+                "job_title": user.profile.title.name,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
                 "address_line_1": user.profile.address_line_1,
