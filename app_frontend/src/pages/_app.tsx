@@ -35,12 +35,9 @@ import { setupAxios } from "@/utils/auth";
 import { AuthInit, AuthGuard } from "@/utils/providers/AuthGuard";
 import React, { Suspense, useEffect } from "react";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
-import NProgress from "nprogress";
 import { ToastContainer } from "react-toastify";
 import { ThemeModeProvider } from "@/utils/providers/ThemeProvider";
-import { useRouter } from "next/router";
 import { MasterInit } from "@/utils/MasterInit";
-import Topbar from "../../public/topbar";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],

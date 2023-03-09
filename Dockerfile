@@ -8,7 +8,7 @@ ENV DJANGO_SETTINGS_MODULE=backend.settings
 ENV SECRET_KEY='69tgugtg%^fgJO&*&'
 ENV DB_NAME=postgres
 ENV DB_USER=postgres
-ENV DB_HOST=localhost
+ENV DB_HOST=db
 ENV DB_PASSWORD=postgres
 ENV FIELD_ENCRYPTION_KEY='cxvoIIUnDvcCE9IkjaS_l3pvUUjngSK0eRubxEBwkRs='
 

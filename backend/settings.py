@@ -128,7 +128,7 @@ DATABASES = {
         "NAME": env("DB_NAME"),
         "USER": env("DB_USER"),
         "PASSWORD": env("DB_PASSWORD"),
-        "HOST": "localhost",
+        "HOST": env("DB_HOST"),
         "PORT": 5432,
         "ATOMIC_REQUESTS": True,
         "CONN_HEALTH_CHECK": True,
@@ -138,7 +138,6 @@ DATABASES = {
 # Internationalization
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "US/Eastern"
-# TIME_ZONE = "UTC" if DEBUG else TIME_ZONE
 USE_I18N = True
 USE_TZ = True
 
