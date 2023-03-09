@@ -19,8 +19,8 @@
 
 from typing import Any
 
-from django.db.models import QuerySet, Prefetch
-from rest_framework import status, permissions
+from django.db.models import QuerySet
+from rest_framework import permissions, status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
@@ -81,6 +81,7 @@ class UserViewSet(OrganizationMixin):
                 "department",
             )
         )
+
 
 class UpdatePasswordView(UpdateAPIView):
     """

@@ -38,7 +38,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Any
 
-from django.contrib.auth import password_validation, authenticate
+from django.contrib.auth import authenticate, password_validation
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 

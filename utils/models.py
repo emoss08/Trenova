@@ -17,14 +17,10 @@
 #  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
 # --------------------------------------------------------------------------------------------------
 
-import base64
 from typing import Any, final
 
-import cryptography.fernet
-from django.conf import settings
 from django.core import checks
 from django.core.checks import CheckMessage, Error
-from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
