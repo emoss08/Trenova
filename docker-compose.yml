@@ -72,7 +72,3 @@ services:
     depends_on:
       - redis
     restart: always
-
-volumes:
-  data:
-    driver: local
