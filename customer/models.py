@@ -181,8 +181,8 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
             name="Default",
         )
         if (
-                not CustomerBillingProfile.objects.filter(customer=self).exists()
-                and created
+            not CustomerBillingProfile.objects.filter(customer=self).exists()
+            and created
         ):
             CustomerBillingProfile.objects.create(
                 organization=self.organization,
