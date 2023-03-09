@@ -36,8 +36,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
     restart: always
-    volumes:
-      - "./.data:/var/lib/postgresql/data"
 
   pgadmin:
     image: dpage/pgadmin4
@@ -74,3 +72,7 @@ services:
     depends_on:
       - redis
     restart: always
+
+volumes:
+  data:
+    driver: local
