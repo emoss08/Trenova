@@ -17,13 +17,12 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { FC } from "react";
+import * as React from "react";
+const SvgFil003 = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path opacity="0.3" d="M19 22H5C4.4 22 4 21.6 4 21V3C4 2.4 4.4 2 5 2H14L20 8V21C20 21.6 19.6 22 19 22Z" fill="currentColor"/>
+    <path d="M15 8H20L14 2V7C14 7.6 14.4 8 15 8Z" fill="currentColor"/>
+  </svg>
 
-const DefaultTitle: FC = () => {
-  return (
-    <div className="page-title d-flex justify-content-center flex-column me-5"><h1
-      className="d-flex flex-column text-dark fw-bolder fs-3 mb-0">Dashboard</h1></div>
-  );
-};
-
-export { DefaultTitle };
+);
+export default SvgFil003;

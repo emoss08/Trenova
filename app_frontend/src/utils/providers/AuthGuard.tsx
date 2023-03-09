@@ -86,7 +86,7 @@ const AuthGuard: React.FC<WithChildren> = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, [router, isAuthenticated, setAuth]);
+  }, [router, isAuthenticated, setAuth, auth]);
 
   // Auth check. If trying to navigate to a non-public path, reroute to the login page.
   if (!isAuthenticated && !PUBLIC_PATHS.includes(router.pathname)) {
