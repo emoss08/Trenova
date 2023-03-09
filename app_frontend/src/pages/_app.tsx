@@ -38,6 +38,7 @@ import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import { ToastContainer } from "react-toastify";
 import { ThemeModeProvider } from "@/utils/providers/ThemeProvider";
 import { MasterInit } from "@/utils/MasterInit";
+import { useRouter } from "next/router";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],

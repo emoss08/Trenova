@@ -21,7 +21,6 @@ import React, { PropsWithChildren } from "react";
 import clsx from "clsx";
 import { useRouter } from "next/router";
 import { checkIsActive } from "@/utils/RouteHelpers";
-import Image from "next/image";
 import { MTSVG } from "@/components/elements/MTSVG";
 
 type Props = {
@@ -32,16 +31,17 @@ type Props = {
   hasBullet?: boolean
 }
 
-const AsideMenuItemWithSub: React.FC<Props & PropsWithChildren> = ({
-                                                                     children,
-                                                                     to,
-                                                                     title,
-                                                                     icon,
-                                                                     fontIcon,
-                                                                     hasBullet
-                                                                   }) => {
-  const { pathname } = useRouter();
-  const isActive = checkIsActive(pathname, to);
+const AsideMenuItemWithSub: React.FC<Props & PropsWithChildren> = (
+  {
+    children,
+    to,
+    title,
+    icon,
+    fontIcon,
+    hasBullet
+  }) => {
+  const router = useRouter();
+  const isActive = checkIsActive(router.pathname, to);
 
   return (
     <div
@@ -56,7 +56,7 @@ const AsideMenuItemWithSub: React.FC<Props & PropsWithChildren> = ({
         )}
         {icon && (
           <span className="menu-icon">
-            <MTSVG icon={icon} className='svg-icon-2'/>
+            <MTSVG icon={icon} className="svg-icon-2" />
           </span>
         )}
         {fontIcon && <i className={clsx("bi fs-3", fontIcon)}></i>}

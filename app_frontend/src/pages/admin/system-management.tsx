@@ -19,13 +19,14 @@
 
 import { MasterLayout } from "@/utils/MasterLayout";
 
-export default function Home() {
+
+export default function SystemManagement() {
 
   return (
     <>
       <MasterLayout>
         <div>
-          <h1>Home</h1>
+          <h1>System Management Page</h1>
         </div>
       </MasterLayout>
     </>

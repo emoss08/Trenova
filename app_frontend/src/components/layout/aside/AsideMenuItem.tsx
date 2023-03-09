@@ -42,8 +42,8 @@ const AsideMenuItem: FC<Props & PropsWithChildren> = (
     hasBullet = false
   }
 ) => {
-  const { pathname } = useRouter();
-  const isActive = checkIsActive(pathname, to);
+  const router = useRouter();
+  const isActive = checkIsActive(router.pathname, to);
 
   return (
     <div className="menu-item">
