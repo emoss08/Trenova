@@ -58,9 +58,16 @@ class TokenAdmin(admin.ModelAdmin[models.Token]):
     """
     Token Admin
     """
+
     model = models.Token
-    list_display = ("user", "created",)
-    search_fields = ("user", "key",)
+    list_display = (
+        "user",
+        "created",
+    )
+    search_fields = (
+        "user",
+        "key",
+    )
 
 
 @admin.register(models.User)
@@ -128,11 +135,11 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         return super().get_fieldsets(request, obj) if obj else self.add_fieldsets
 
     def get_form(
-            self,
-            request: HttpRequest,
-            obj: Any | None = ...,
-            change: bool = True,
-            **kwargs: Any,
+        self,
+        request: HttpRequest,
+        obj: Any | None = ...,
+        change: bool = True,
+        **kwargs: Any,
     ) -> type[ModelForm[models.User]]:
         """Get form for user admin
 
@@ -183,7 +190,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m  # type: ignore
     @csrf_protect_m  # type: ignore
     def add_view(
-            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -228,7 +235,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
-            self, request: HttpRequest, id: str, form_url: str = ""
+        self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 

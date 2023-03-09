@@ -105,8 +105,8 @@ class TokenAuthentication(authentication.TokenAuthentication):
             raise exceptions.AuthenticationFailed("Invalid token.") from e
 
         if (
-                not token.last_used
-                or (timezone.now() - token.last_used).total_seconds() > 60
+            not token.last_used
+            or (timezone.now() - token.last_used).total_seconds() > 60
         ):
             token.last_used = timezone.now()
             token.save(update_fields=["last_used"])
@@ -115,7 +115,6 @@ class TokenAuthentication(authentication.TokenAuthentication):
             raise exceptions.AuthenticationFailed(
                 f"Token expired at {token.expires.strftime('%Y-%m-%d %H:%M:%S')}. Please login again."
             )
-
 
         if not token.user.is_active:
             raise exceptions.AuthenticationFailed(
