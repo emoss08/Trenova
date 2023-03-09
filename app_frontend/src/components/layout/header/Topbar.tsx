@@ -45,7 +45,7 @@ const Topbar: FC = () => {
             'btn btn-icon btn-active-light-primary btn-custom',
             toolbarButtonHeightClass
           )}
-          id='kt_activities_toggle'
+          id='mt_activities_toggle'
         >
           <img
             src='/media/icons/duotune/general/gen032.svg'
@@ -63,10 +63,10 @@ const Topbar: FC = () => {
             'btn btn-icon btn-active-light-primary btn-custom',
             toolbarButtonHeightClass
           )}
-          data-kt-menu-trigger='click'
-          data-kt-menu-attach='parent'
-          data-kt-menu-placement='bottom-end'
-          data-kt-menu-flip='bottom'
+          data-mt-menu-trigger='click'
+          data-mt-menu-attach='parent'
+          data-mt-menu-placement='bottom-end'
+          data-mt-menu-flip='bottom'
         >
           <img
             src='/media/icons/duotune/general/gen022.svg'
@@ -85,7 +85,7 @@ const Topbar: FC = () => {
             'btn btn-icon btn-active-light-primary btn-custom position-relative',
             toolbarButtonHeightClass
           )}
-          id='kt_drawer_chat_toggle'
+          id='mt_drawer_chat_toggle'
         >
           <img
             src='/media/icons/duotune/communication/com012.svg'
@@ -105,10 +105,10 @@ const Topbar: FC = () => {
             'btn btn-icon btn-active-light-primary btn-custom',
             toolbarButtonHeightClass
           )}
-          data-kt-menu-trigger='click'
-          data-kt-menu-attach='parent'
-          data-kt-menu-placement='bottom-end'
-          data-kt-menu-flip='bottom'
+          data-mt-menu-trigger='click'
+          data-mt-menu-attach='parent'
+          data-mt-menu-placement='bottom-end'
+          data-mt-menu-flip='bottom'
         >
           <img
             src='/media/icons/duotune/general/gen025.svg'
@@ -124,15 +124,15 @@ const Topbar: FC = () => {
       {/* begin::User */}
       <div
         className={clsx('d-flex align-items-center', toolbarButtonMarginClass)}
-        id='kt_header_user_menu_toggle'
+        id='mt_header_user_menu_toggle'
       >
         {/* begin::Toggle */}
         <div
           className={clsx('cursor-pointer symbol', toolbarUserAvatarHeightClass)}
-          data-kt-menu-trigger='click'
-          data-kt-menu-attach='parent'
-          data-kt-menu-placement='bottom-end'
-          data-kt-menu-flip='bottom'
+          data-mt-menu-trigger='click'
+          data-mt-menu-attach='parent'
+          data-mt-menu-placement='bottom-end'
+          data-mt-menu-flip='bottom'
         >
           <img src={toAbsoluteUrl('/media/avatars/300-1.jpg')} alt='metronic' />
         </div>
@@ -146,7 +146,7 @@ const Topbar: FC = () => {
         <div className='d-flex align-items-center d-lg-none ms-2 me-n3' title='Show header menu'>
           <div
             className='btn btn-icon btn-active-light-primary w-30px h-30px w-md-40px h-md-40px'
-            id='kt_header_menu_mobile_toggle'
+            id='mt_header_menu_mobile_toggle'
           >
             <img src='/media/icons/duotune/text/txt001.svg' className='svg-icon-1' />
           </div>

@@ -25,7 +25,7 @@ import Link from 'next/link';
 const QuickLinks: FC = () => (
   <div
     className='menu menu-sub menu-sub-dropdown menu-column w-250px w-lg-325px'
-    data-kt-menu='true'
+    data-mt-menu='true'
   >
     <div
       className='d-flex flex-column flex-center bgi-no-repeat rounded-top px-9 py-10'

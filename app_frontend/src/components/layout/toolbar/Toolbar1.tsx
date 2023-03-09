@@ -29,10 +29,10 @@ const Toolbar1: FC = () => {
   const {classes} = useLayout()
 
   return (
-    <div className='toolbar' id='kt_toolbar'>
+    <div className='toolbar' id='mt_toolbar'>
       {/* begin::Container */}
       <div
-        id='kt_toolbar_container'
+        id='mt_toolbar_container'
         className={clsx(classes.toolbarContainer.join(' '), 'd-flex flex-stack')}
       >
         <DefaultTitle />
@@ -45,9 +45,9 @@ const Toolbar1: FC = () => {
             <a
               href='#'
               className='btn btn-sm btn-flex btn-light btn-active-primary fw-bolder'
-              data-kt-menu-trigger='click'
-              data-kt-menu-placement='bottom-end'
-              data-kt-menu-flip='top-end'
+              data-mt-menu-trigger='click'
+              data-mt-menu-placement='bottom-end'
+              data-mt-menu-flip='top-end'
             >
               <Image
                 src='/media/icons/duotune/general/gen031.svg'
@@ -66,8 +66,8 @@ const Toolbar1: FC = () => {
             href='#'
             className='btn btn-sm btn-primary'
             data-bs-toggle='modal'
-            data-bs-target='#kt_modal_create_app'
-            id='kt_toolbar_primary_button'
+            data-bs-target='#mt_modal_create_app'
+            id='mt_toolbar_primary_button'
           >
             Create
           </a>

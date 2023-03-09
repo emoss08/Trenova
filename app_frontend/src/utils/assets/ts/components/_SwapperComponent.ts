@@ -76,8 +76,8 @@ const defaultSwapperOptions: ISwapperOptions = {
 
 const defaultSwapperQueires: ISwapperQueries = {
   componentName: 'swapper',
-  instanseQuery: '[data-kt-swapper="true"]',
-  attrQuery: 'data-kt-swapper-',
+  instanseQuery: '[data-mt-swapper="true"]',
+  attrQuery: 'data-mt-swapper-',
 }
 
 class SwapperComponent {
@@ -125,7 +125,7 @@ class SwapperComponent {
     const mode = this.getOption('mode')
     const parentElement = parentSelector ? document.querySelector(parentSelector) : null
     if (parentElement && this.element.parentNode !== parentElement) {
-      const alreadyPended = document.getElementById('kt_header_menu') !== null
+      const alreadyPended = document.getElementById('mt_header_menu') !== null
       if (!alreadyPended) {
         if (mode === 'prepend') {
           parentElement.prepend(this.element)

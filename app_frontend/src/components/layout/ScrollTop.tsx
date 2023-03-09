@@ -48,7 +48,7 @@ export function ScrollTop() {
   }
 
   const updateHeaderSticky = () => {
-    const stickyHeader = document.body.querySelectorAll(`[data-kt-sticky-name="header"]`)
+    const stickyHeader = document.body.querySelectorAll(`[data-mt-sticky-name="header"]`)
     if (stickyHeader && stickyHeader.length > 0) {
       const sticky = StickyComponent.getInstance(stickyHeader[0] as HTMLElement)
       if (sticky) {
@@ -71,7 +71,7 @@ export function ScrollTop() {
   }, [pathname])
 
   return (
-    <div id='kt_scrolltop' className='scrolltop' data-kt-scrolltop='true'>
+    <div id='mt_scrolltop' className='scrolltop' data-mt-scrolltop='true'>
       <Image src={arr066} alt={"Arrow"} />
     </div>
   )

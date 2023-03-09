@@ -45,7 +45,7 @@ const SelectLocationModal: React.FC<Props> = ({show, handleClose, data}) => {
   return (
     <Modal
       className='modal fade'
-      id='kt_modal_select_location'
+      id='mt_modal_select_location'
       data-backdrop='static'
       tabIndex={-1}
       role='dialog'
@@ -67,7 +67,7 @@ const SelectLocationModal: React.FC<Props> = ({show, handleClose, data}) => {
         </div>
         <div className='modal-body'>
           <input type='text' value={location} onChange={(e) => setLocation(e.target.value)} />
-          <div id='kt_modal_select_location_map' className='map h-450px'></div>
+          <div id='mt_modal_select_location_map' className='map h-450px'></div>
         </div>
         <div className='modal-footer'>
           <button type='button' className='btn btn-light-primary' onClick={dissmissLocation}>

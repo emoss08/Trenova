@@ -32,7 +32,7 @@ const SearchModal: React.FC<Props> = ({show, handleClose}) => {
   return (
     <Modal
       className='bg-white'
-      id='kt_header_search_modal'
+      id='mt_header_search_modal'
       aria-hidden='true'
       dialogClassName='modal-fullscreen h-auto'
       show={show}

@@ -33,7 +33,7 @@ const HeaderUserMenu: FC = () => {
   return (
     <div
       className='menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-primary fw-bold py-4 fs-6 w-275px'
-      data-kt-menu='true'
+      data-mt-menu='true'
       data-popper-placement='bottom-start'
     >
       <div className='menu-item px-3'>
@@ -73,9 +73,9 @@ const HeaderUserMenu: FC = () => {
 
       <div
         className='menu-item px-5'
-        data-kt-menu-trigger='hover'
-        data-kt-menu-placement='left-start'
-        data-kt-menu-flip='bottom'
+        data-mt-menu-trigger='hover'
+        data-mt-menu-placement='left-start'
+        data-mt-menu-flip='bottom'
       >
         <Link href='#' className='menu-link px-5'>
           <span className='menu-title'>My Subscription</span>

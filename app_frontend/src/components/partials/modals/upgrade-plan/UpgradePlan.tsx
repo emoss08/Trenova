@@ -155,7 +155,7 @@ const UpgradePlan: FC = () => {
   const [selected, setSelected] = useState('Startup')
 
   return (
-    <div className='modal fade' id='kt_modal_upgrade_plan' aria-hidden='true'>
+    <div className='modal fade' id='mt_modal_upgrade_plan' aria-hidden='true'>
       <div className='modal-dialog modal-xl'>
         <div className='modal-content rounded'>
           <div className='modal-header justify-content-end border-0 pb-0'>
@@ -178,7 +178,7 @@ const UpgradePlan: FC = () => {
             </div>
 
             <div className='d-flex flex-column'>
-              <div className='nav-group nav-group-outline mx-auto' data-kt-buttons='true'>
+              <div className='nav-group nav-group-outline mx-auto' data-mt-buttons='true'>
                 <a
                   href='#'
                   className={
@@ -188,7 +188,7 @@ const UpgradePlan: FC = () => {
                   onClick={() => {
                     setCurrentState('month')
                   }}
-                  data-kt-plan='month'
+                  data-mt-plan='month'
                 >
                   Monthly
                 </a>
@@ -201,7 +201,7 @@ const UpgradePlan: FC = () => {
                   onClick={() => {
                     setCurrentState('annual')
                   }}
-                  data-kt-plan='annual'
+                  data-mt-plan='annual'
                 >
                   Annual
                 </a>
@@ -223,7 +223,7 @@ const UpgradePlan: FC = () => {
                             (!plan.custom && 'btn-active btn-active-primary ')
                           }
                           data-bs-toggle='tab'
-                          data-bs-target={`#kt_upgrade_plan_${index}`}
+                          data-bs-target={`#mt_upgrade_plan_${index}`}
                           key={index}
                         >
                           <div className='d-flex align-items-center me-2'>
@@ -265,7 +265,7 @@ const UpgradePlan: FC = () => {
                                 </span>
 
                                 <span className='fs-7 opacity-50'>
-                                  /<span data-kt-element='period'>Mon</span>
+                                  /<span data-mt-element='period'>Mon</span>
                                 </span>
                               </>
                             )}
@@ -285,7 +285,7 @@ const UpgradePlan: FC = () => {
                             <>
                               <div
                                 className={`tab-pane fade` + (plan.default && 'show active')}
-                                id={`kt_upgrade_plan_${index}`}
+                                id={`mt_upgrade_plan_${index}`}
                                 key={index}
                               >
                                 <div className='pb-5'>

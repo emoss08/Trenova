@@ -17,51 +17,53 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { FC, PropsWithChildren } from "react";
-import clsx from 'clsx'
+import React, { FC, PropsWithChildren } from "react";
+import clsx from "clsx";
 import { useRouter } from "next/router";
 import { checkIsActive } from "@/utils/RouteHelpers";
 import Link from "next/link";
-import Image from "next/image";
+import { MTSVG } from "@/components/elements/MTSVG";
 
 type Props = {
   to: string
   title: string
-  icon?: string
+  icon?: React.ReactNode,
   fontIcon?: string
   hasBullet?: boolean
 }
 
-const AsideMenuItem: FC<Props & PropsWithChildren> = ({
-  children,
-  to,
-  title,
-  icon,
-  fontIcon,
-  hasBullet = false,
-}) => {
-  const {pathname} = useRouter()
-  const isActive = checkIsActive(pathname, to)
+const AsideMenuItem: FC<Props & PropsWithChildren> = (
+  {
+    children,
+    to,
+    title,
+    icon,
+    fontIcon,
+    hasBullet = false
+  }
+) => {
+  const { pathname } = useRouter();
+  const isActive = checkIsActive(pathname, to);
 
   return (
-    <div className='menu-item'>
-      <Link className={clsx('menu-link without-sub', {active: isActive})} href={to}>
+    <div className="menu-item">
+      <Link className={clsx("menu-link without-sub", { active: isActive })} href={to}>
         {hasBullet && (
-          <span className='menu-bullet'>
-            <span className='bullet bullet-dot'></span>
+          <span className="menu-bullet">
+            <span className="bullet bullet-dot"></span>
           </span>
         )}
         {icon && (
-          <span className='menu-icon'>
-            <Image src={icon} className='svg-icon-3'  alt={"aside-menu-item-img"}/>
+          <span className="menu-icon">
+            <MTSVG icon={icon} className="svg-icon-2" />
           </span>
         )}
-        {fontIcon && <i className={clsx('bi fs-3', fontIcon)}></i>}
-        <span className='menu-title'>{title}</span>
+        {fontIcon && <i className={clsx("bi fs-3", fontIcon)}></i>}
+        <span className="menu-title">{title}</span>
       </Link>
       {children}
     </div>
-  )
-}
+  );
+};
 
-export {AsideMenuItem}
+export { AsideMenuItem };

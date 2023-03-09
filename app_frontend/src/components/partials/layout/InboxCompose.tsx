@@ -36,7 +36,7 @@ const InboxCompose: React.FC<Props> = ({show, handleClose}) => {
   return (
     <Modal
       className='modal-sticky modal-sticky-lg modal-sticky-bottom-right'
-      id='kt_inbox_compose'
+      id='mt_inbox_compose'
       role='dialog'
       data-backdrop='false'
       aria-hidden='true'
@@ -46,7 +46,7 @@ const InboxCompose: React.FC<Props> = ({show, handleClose}) => {
     >
       <div className='modal-content'>
         {/* begin::Form */}
-        <form ref={formRef} id='kt_inbox_compose_form' onSubmit={() => console.log('submit')}>
+        <form ref={formRef} id='mt_inbox_compose_form' onSubmit={() => console.log('submit')}>
           {/*begin::Header*/}
           <div className='d-flex align-items-center justify-content-between py-5 ps-8 pe-5 border-bottom'>
             <h5 className='fw-bold m-0'>Compose</h5>
@@ -143,11 +143,11 @@ const InboxCompose: React.FC<Props> = ({show, handleClose}) => {
             {/*end::Subject*/}
 
             {/*begin::Message*/}
-            <div id='kt_inbox_compose_editor' className='border-0 h-125px h-lg-250px'></div>
+            <div id='mt_inbox_compose_editor' className='border-0 h-125px h-lg-250px'></div>
             {/*end::Message*/}
 
             {/*begin::Attachments*/}
-            <div className='dropzone dropzone-multi px-8 py-4' id='kt_inbox_compose_attachments'>
+            <div className='dropzone dropzone-multi px-8 py-4' id='mt_inbox_compose_attachments'>
               <div className='dropzone-items'>
                 <div className='dropzone-item' style={{display: 'none'}}>
                   <div className='dropzone-file'>
@@ -205,7 +205,7 @@ const InboxCompose: React.FC<Props> = ({show, handleClose}) => {
               <a
                 href='#'
                 className='btn btn-icon btn-active-light-primary me-2'
-                id='kt_inbox_compose_attachments_select'
+                id='mt_inbox_compose_attachments_select'
               >
                 <img className='svg-icon-1' src='/media/icons/duotune/files/fil022.svg' />
               </a>

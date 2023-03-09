@@ -20,13 +20,11 @@
 import { useRouter } from "next/router";
 import { FC, PropsWithChildren, useEffect } from "react";
 import { MenuComponent } from "./assets/ts/components";
-import { ActivityDrawer, DrawerMessenger, InviteUsers, UpgradePlan } from "@/components/partials";
 import { PageDataProvider } from "@/components/layout/core";
 import { AsideDefault } from "@/components/layout/aside/AsideDefault";
 import { HeaderWrapper } from "@/components/layout/header/HeaderWrapper";
 import { Content } from "@/components/layout/Content";
 import { Footer } from "@/components/layout/Footer";
-import { RightToolbar } from "@/components/partials/layout/RightToolbar";
 import { ScrollTop } from "@/components/layout/ScrollTop";
 
 const MasterLayout: FC<PropsWithChildren> = ({ children }) => {
@@ -47,11 +45,11 @@ const MasterLayout: FC<PropsWithChildren> = ({ children }) => {
     <PageDataProvider>
       <div className="page d-flex flex-row flex-column-fluid">
         <AsideDefault />
-        <div className="wrapper d-flex flex-column flex-row-fluid" id="kt_wrapper">
+        <div className="wrapper d-flex flex-column flex-row-fluid" id="mt_wrapper">
           <HeaderWrapper />
 
           <div id="mt_content" className="content d-flex flex-column flex-column-fluid">
-            <div className="post d-flex flex-column-fluid" id="kt_post">
+            <div className="post d-flex flex-column-fluid" id="mt_post">
               <Content>
                 {/* Replace <Outlet /> with the children prop */}
                 {children}

@@ -18,13 +18,13 @@
  */
 
 import clsx from "clsx";
-import Link from "next/link";
 import Image from "next/image";
-import gen062 from "../../../../../public/media/icons/duotune/general/gen062.svg";
-import gen061 from "../../../../../public/media/icons/duotune/general/gen061.svg";
-import gen060 from "../../../../../public/media/icons/duotune/general/gen060.svg";
 import React, { forwardRef, Ref } from "react";
 import { systemMode, ThemeModeType, useThemeMode } from "@/utils/providers/ThemeProvider";
+import { MTSVG } from "@/components/elements/MTSVG";
+import SvgGen061 from "@/components/svgs/SvgGen061";
+import SvgGen060 from "@/components/svgs/SvgGen060";
+import SvgGen062 from "@/components/svgs/SvgGen062";
 /* eslint-disable jsx-a11y/anchor-is-valid */
 type Props = {
   toggleBtnClass?: string
@@ -52,41 +52,22 @@ const ThemeModeSwitcher = ({
     href?: string
   }
 
-  const ThemeSwitcherButton = forwardRef(
-    ({ onClick, href }: Props, ref: Ref<HTMLAnchorElement>) => {
-      return (
-        <a href={href} onClick={onClick} ref={ref}>
-          Click Me
-        </a>
-      )
-    }
-  )
-  ThemeSwitcherButton.displayName = 'ThemeSwitcherButton'
-
   return (
     <>
       {/* begin::Menu toggle */}
       <a
         className={clsx("btn btn-icon ", toggleBtnClass)}
-        data-kt-menu-trigger={menuTrigger}
-        data-kt-menu-attach="parent"
-        data-kt-menu-placement={menuPlacement}
+        data-mt-menu-trigger={menuTrigger}
+        data-mt-menu-attach="parent"
+        data-mt-menu-placement={menuPlacement}
         href={"#"}
       >
         {calculatedMode === "dark" && (
-          <Image
-            src={gen061}
-            className={clsx("theme-light-hide", toggleBtnIconClass)}
-            alt={"img"}
-          />
+          <MTSVG icon={<SvgGen061 />} className={clsx("theme-light-hide", toggleBtnIconClass)} />
         )}
 
         {calculatedMode === "light" && (
-          <Image
-            src={gen060}
-            className={clsx("theme-dark-hide", toggleBtnIconClass)}
-            alt={"img"}
-          />
+          <MTSVG icon={<SvgGen060 />} className={clsx("theme-dark-hide", toggleBtnIconClass)} />
         )}
       </a>
       {/* begin::Menu toggle */}
@@ -94,7 +75,7 @@ const ThemeModeSwitcher = ({
       {/* begin::Menu */}
       <div
         className="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-title-gray-700 menu-icon-muted menu-active-bg menu-state-primary fw-semibold py-4 fs-base w-175px"
-        data-kt-menu="true"
+        data-mt-menu="true"
       >
         {/* begin::Menu item */}
         <div className="menu-item px-3 my-0">
@@ -103,8 +84,8 @@ const ThemeModeSwitcher = ({
             className={clsx("menu-link px-3 py-2", { active: menuMode === "light" })}
             onClick={() => switchMode("light")}
           >
-          <span className="menu-icon" data-kt-element="icon">
-            <img src="/media/icons/duotune/general/gen060.svg" className="svg-icon-3" />
+          <span className="menu-icon" data-mt-element="icon">
+            <MTSVG icon={<SvgGen060 />} className="svg-icon-3" />
           </span>
             <span className="menu-title">Light</span>
           </a>
@@ -118,8 +99,8 @@ const ThemeModeSwitcher = ({
             className={clsx("menu-link px-3 py-2", { active: menuMode === "dark" })}
             onClick={() => switchMode("dark")}
           >
-          <span className="menu-icon" data-kt-element="icon">
-            <Image src={gen062} className="svg-icon-3"  alt={"img"}/>
+          <span className="menu-icon" data-mt-element="icon">
+            <MTSVG icon={<SvgGen062 />} className="svg-icon-3" />
           </span>
             <span className="menu-title">Dark</span>
           </a>
@@ -133,8 +114,8 @@ const ThemeModeSwitcher = ({
             className={clsx("menu-link px-3 py-2", { active: menuMode === "system" })}
             onClick={() => switchMode("system")}
           >
-          <span className="menu-icon" data-kt-element="icon">
-            <Image src={gen061} className="svg-icon-3"  alt={"img"}/>
+          <span className="menu-icon" data-mt-element="icon">
+            <MTSVG icon={<SvgGen061 />} className="svg-icon-3" />
           </span>
             <span className="menu-title">System</span>
           </a>

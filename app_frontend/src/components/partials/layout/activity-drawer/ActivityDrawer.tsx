@@ -30,40 +30,40 @@ import {Item8} from '../../content/activity/Item8'
 
 const ActivityDrawer: FC = () => (
   <div
-    id='kt_activities'
+    id='mt_activities'
     className='bg-white'
-    data-kt-drawer='true'
-    data-kt-drawer-name='activities'
-    data-kt-drawer-activate='true'
-    data-kt-drawer-overlay='true'
-    data-kt-drawer-width="{default:'300px', 'lg': '900px'}"
-    data-kt-drawer-direction='end'
-    data-kt-drawer-toggle='#kt_activities_toggle'
-    data-kt-drawer-close='#kt_activities_close'
+    data-mt-drawer='true'
+    data-mt-drawer-name='activities'
+    data-mt-drawer-activate='true'
+    data-mt-drawer-overlay='true'
+    data-mt-drawer-width="{default:'300px', 'lg': '900px'}"
+    data-mt-drawer-direction='end'
+    data-mt-drawer-toggle='#mt_activities_toggle'
+    data-mt-drawer-close='#mt_activities_close'
   >
     <div className='card shadow-none rounded-0'>
-      <div className='card-header' id='kt_activities_header'>
+      <div className='card-header' id='mt_activities_header'>
         <h3 className='card-title fw-bolder text-dark'>Activity Logs</h3>
 
         <div className='card-toolbar'>
           <button
             type='button'
             className='btn btn-sm btn-icon btn-active-light-primary me-n5'
-            id='kt_activities_close'
+            id='mt_activities_close'
           >
             <img src='/media/icons/duotune/arrows/arr061.svg' className='svg-icon-1' />
           </button>
         </div>
       </div>
-      <div className='card-body position-relative' id='kt_activities_body'>
+      <div className='card-body position-relative' id='mt_activities_body'>
         <div
-          id='kt_activities_scroll'
+          id='mt_activities_scroll'
           className='position-relative scroll-y me-n5 pe-5'
-          data-kt-scroll='true'
-          data-kt-scroll-height='auto'
-          data-kt-scroll-wrappers='#kt_activities_body'
-          data-kt-scroll-dependencies='#kt_activities_header, #kt_activities_footer'
-          data-kt-scroll-offset='5px'
+          data-mt-scroll='true'
+          data-mt-scroll-height='auto'
+          data-mt-scroll-wrappers='#mt_activities_body'
+          data-mt-scroll-dependencies='#mt_activities_header, #mt_activities_footer'
+          data-mt-scroll-offset='5px'
         >
           <div className='timeline'>
             {/*<Item1 />*/}
@@ -77,7 +77,7 @@ const ActivityDrawer: FC = () => (
           </div>
         </div>
       </div>
-      <div className='card-footer py-5 text-center' id='kt_activities_footer'>
+      <div className='card-footer py-5 text-center' id='mt_activities_footer'>
         <Link href='/crafted/pages/profile' className='btn btn-bg-white text-primary'>
           View All Activities
           <img

@@ -120,7 +120,7 @@ export class LayoutSetup {
         document.body.removeAttribute(attr.name);
       });
       document.body.setAttribute("style", "");
-      document.body.setAttribute("id", "kt_body");
+      document.body.setAttribute("id", "mt_body");
       if (config.main?.body?.backgroundImage) {
         document.body.style.backgroundImage = `url('${config.main.body.backgroundImage}')`;
       }
@@ -195,7 +195,7 @@ export class LayoutSetup {
 
     // Default minimized
     if (config.minimized) {
-      document.body.setAttribute("data-kt-aside-minimize", "on");
+      document.body.setAttribute("data-mt-aside-minimize", "on");
     }
 
     // Hoverable on minimize

@@ -34,7 +34,7 @@ export function HeaderWrapper() {
 
   return (
     <div
-      id='kt_header'
+      id='mt_header'
       className={clsx('header', classes.header.join(' '), 'align-items-stretch')}
       {...attributes.headerMenu}
     >
@@ -52,12 +52,12 @@ export function HeaderWrapper() {
 
         {aside.minimize && (
           <div
-            id='kt_aside_toggle'
+            id='mt_aside_toggle'
             className='btn btn-icon w-auto px-0 btn-active-color-primary aside-minimize'
-            data-kt-toggle='true'
-            data-kt-toggle-state='active'
-            data-kt-toggle-target='body'
-            data-kt-toggle-name='aside-minimize'
+            data-mt-toggle='true'
+            data-mt-toggle-state='active'
+            data-mt-toggle-target='body'
+            data-mt-toggle-name='aside-minimize'
           >
             <Image
               src={arr092}
@@ -74,7 +74,7 @@ export function HeaderWrapper() {
         <div className='d-flex align-items-center d-lg-none ms-n3 me-1' title='Show aside menu'>
           <div
             className='btn btn-icon btn-active-color-primary w-30px h-30px'
-            id='kt_aside_mobile_toggle'
+            id='mt_aside_mobile_toggle'
           >
             <Image src={abs015} className='svg-icon-1'  alt={"abs015"}/>
           </div>

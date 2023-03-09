@@ -24,7 +24,7 @@ import { toAbsoluteUrl } from "@/utils/AssetHelpers";
 const Step5 = () => {
   return (
     <>
-      <div data-kt-stepper-element='content'>
+      <div data-mt-stepper-element='content'>
         <div className='w-100 text-center'>
           {/* begin::Heading */}
           <h1 className='fw-bold text-dark mb-3'>Release!</h1>
