@@ -42,7 +42,6 @@ const ThemeModeSwitcher = ({
   const { mode, menuMode, updateMode, updateMenuMode } = useThemeMode();
   const calculatedMode = mode === "system" ? systemMode : mode;
   const switchMode = (_mode: ThemeModeType) => {
-    console.info("switchMode", _mode);
     updateMenuMode(_mode);
     updateMode(_mode);
   };

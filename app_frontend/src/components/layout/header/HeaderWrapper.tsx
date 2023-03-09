@@ -18,65 +18,62 @@
  */
 
 /* eslint-disable react-hooks/exhaustive-deps */
-import clsx from 'clsx'
-import Link from 'next/link'
-import {HeaderToolbar} from './HeaderToolbar'
+import clsx from "clsx";
+import Link from "next/link";
+import { HeaderToolbar } from "./HeaderToolbar";
 import { useLayout } from "@/utils/layout/LayoutProvider";
 import Image from "next/image";
-import defaultDark from '../../../../public/media/logos/default-dark.svg'
-import abs015 from '../../../../public/media/icons/duotune/abstract/abs015.svg'
-import arr092 from '../../../../public/media/icons/duotune/arrows/arr092.svg'
-import arr076 from '../../../../public/media/icons/duotune/arrows/arr076.svg'
+import defaultDark from "../../../../public/media/logos/default-dark.svg";
+import { MTSVG } from "@/components/elements/MTSVG";
+import SvgArr092 from "@/components/svgs/SvgArr092";
+import SvgArr076 from "@/components/svgs/SvgArr076";
+import SvgAbs015 from "@/components/svgs/SvgAbs015";
 
 export function HeaderWrapper() {
-  const {config, classes, attributes} = useLayout()
-  const {aside} = config
+  const { config, classes, attributes } = useLayout();
+  const { aside } = config;
 
   return (
     <div
-      id='mt_header'
-      className={clsx('header', classes.header.join(' '), 'align-items-stretch')}
+      id="mt_header"
+      className={clsx("header", classes.header.join(" "), "align-items-stretch")}
       {...attributes.headerMenu}
     >
       {/* begin::Brand */}
-      <div className='header-brand'>
+      <div className="header-brand">
         {/* begin::Logo */}
-        <Link href='/'>
+        <Link href="/">
           <Image
-            alt='Logo'
+            alt="Logo"
             src={defaultDark}
-            className='h-25px h-lg-25px'
+            className="h-25px"
           />
         </Link>
         {/* end::Logo */}
 
         {aside.minimize && (
           <div
-            id='mt_aside_toggle'
-            className='btn btn-icon w-auto px-0 btn-active-color-primary aside-minimize'
-            data-mt-toggle='true'
-            data-mt-toggle-state='active'
-            data-mt-toggle-target='body'
-            data-mt-toggle-name='aside-minimize'
+            id="mt_aside_toggle"
+            className="btn btn-icon w-auto px-0 btn-active-color-primary aside-minimize"
+            data-mt-toggle="true"
+            data-mt-toggle-state="active"
+            data-mt-toggle-target="body"
+            data-mt-toggle-name="aside-minimize"
           >
-            <Image
-              src={arr092}
-              className='svg-icon-1 me-n1 minimize-default'
-             alt={"arr092"}/>
-            <Image
-              src={arr076}
-              className='svg-icon-1 minimize-active'
-             alt={"arr076"}/>
+            <MTSVG icon={<SvgArr092 />} className="svg-icon-1 me-n1 minimize-default"
+            />
+            <MTSVG icon={<SvgArr076 />} className="svg-icon-1 minimize-active"
+            />
           </div>
         )}
 
         {/* begin::Aside toggle */}
-        <div className='d-flex align-items-center d-lg-none ms-n3 me-1' title='Show aside menu'>
+        <div className="d-flex align-items-center d-lg-none ms-n3 me-1" title="Show aside menu">
           <div
-            className='btn btn-icon btn-active-color-primary w-30px h-30px'
-            id='mt_aside_mobile_toggle'
+            className="btn btn-icon btn-active-color-primary w-30px h-30px"
+            id="mt_aside_mobile_toggle"
           >
-            <Image src={abs015} className='svg-icon-1'  alt={"abs015"}/>
+            <MTSVG icon={<SvgAbs015 />} className="svg-icon-1" />
           </div>
         </div>
         {/* end::Aside toggle */}
@@ -84,5 +81,5 @@ export function HeaderWrapper() {
       {/* end::Brand */}
       <HeaderToolbar />
     </div>
-  )
+  );
 }
