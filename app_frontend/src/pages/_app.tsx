@@ -19,11 +19,11 @@
 // f1416c
 
 
-import 'nouislider/dist/nouislider.css'
-import '../styles/assets/sass/style.scss'
-import '../styles/assets/sass/plugins.scss'
-import '../styles/assets/sass/style.react.scss'
-
+import "nouislider/dist/nouislider.css";
+import "../styles/assets/sass/style.scss";
+import "../styles/assets/sass/plugins.scss";
+import "../styles/assets/sass/style.react.scss";
+import "../../public/splash-screen.css";
 import "nprogress/nprogress.css";
 import "react-toastify/dist/ReactToastify.min.css";
 
@@ -37,11 +37,10 @@ import React, { Suspense, useEffect } from "react";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import NProgress from "nprogress";
 import { ToastContainer } from "react-toastify";
-import { ThemeModeProvider, useThemeMode } from "@/utils/providers/ThemeProvider";
+import { ThemeModeProvider } from "@/utils/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import { MasterInit } from "@/utils/MasterInit";
-import { MasterLayout } from "@/utils/MasterLayout";
-
+import Topbar from "../../public/topbar";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -52,24 +51,6 @@ const poppins = Poppins({
 export default function App({ Component, pageProps }: AppProps) {
   setupAxios(axios);
   const [isMounted, setIsMounted] = React.useState(false);
-  const router = useRouter();
-  const { mode } = useThemeMode();
-
-  useEffect(() => {
-    const handleRouteStart = () => NProgress.start();
-    const handleRouteDone = () => NProgress.done();
-
-    router.events.on("routeChangeStart", handleRouteStart);
-    router.events.on("routeChangeComplete", handleRouteDone);
-    router.events.on("routeChangeError", handleRouteDone);
-
-    return () => {
-      // Make sure to remove the event handler on unmount!
-      router.events.off("routeChangeStart", handleRouteStart);
-      router.events.off("routeChangeComplete", handleRouteDone);
-      router.events.off("routeChangeError", handleRouteDone);
-    };
-  }, [router.events]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -91,8 +72,8 @@ export default function App({ Component, pageProps }: AppProps) {
                 }
               `}</style>
               <>
-                  <Component {...pageProps} />
-                  <ToastContainer />
+                <Component {...pageProps} />
+                <ToastContainer />
                 <MasterInit />
               </>
             </AuthGuard>

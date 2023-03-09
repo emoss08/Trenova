@@ -54,18 +54,39 @@ export function saveAuth(auth: AuthModel | undefined) {
 const PUBLIC_PATHS = ["/auth/login"];
 
 const AuthGuard: React.FC<WithChildren> = ({ children }) => {
-  const [auth] = store.use("auth");
+  const [auth, setAuth] = store.use("auth");
   const router = useRouter();
 
   const isAuthenticated = !!auth?.token;
+
   useEffect(() => {
+    let isMounted = true;
+
     if (!isAuthenticated && router.pathname !== "/auth/login") {
-      router.push("/auth/login").then(logout);
+      router.push({
+          pathname: "/auth/login",
+          query: { redirect: router.pathname }
+        },
+        undefined,
+        { shallow: true })
+        .catch((e) => {
+          if (e.cancelled) {
+            throw e;
+          }
+        });
     } else if (isAuthenticated && router.pathname === "/auth/login") {
       router.replace("/").then(() => {
+        if (isMounted) {
+          setAuth(auth);
+          authHelper.setAuth(auth);
+        }
       });
     }
-  }, [router, isAuthenticated]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router, isAuthenticated, setAuth]);
 
   // Auth check. If trying to navigate to a non-public path, reroute to the login page.
   if (!isAuthenticated && !PUBLIC_PATHS.includes(router.pathname)) {
@@ -74,6 +95,7 @@ const AuthGuard: React.FC<WithChildren> = ({ children }) => {
 
   return <>{children}</>;
 };
+
 
 const AuthInit: FC<WithChildren> = ({ children }) => {
   const [auth] = store.use("auth", authHelper.getAuth());
