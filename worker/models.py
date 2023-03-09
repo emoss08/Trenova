@@ -401,7 +401,7 @@ class WorkerProfile(GenericModel):
         """Worker Profile clean method
 
         Returns:
-            NOne
+            None
 
         Raises:
             ValidationError: If the worker profile is not valid.

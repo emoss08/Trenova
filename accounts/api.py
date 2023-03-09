@@ -18,7 +18,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import Any
-
 from django.db.models import QuerySet
 from rest_framework import permissions, status
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -26,7 +25,6 @@ from rest_framework.generics import UpdateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
@@ -49,8 +47,15 @@ class UserViewSet(OrganizationMixin):
         """
 
         return (
-            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
-            .only(
+            self.queryset.filter(organization_id=self.request.user.organization_id)  # type: ignore
+            .select_related(
+                "organization",
+                "profiles",
+                "profiles__title",
+                "profiles__user",
+                "department",
+            )
+            .values(
                 "last_login",
                 "is_superuser",
                 "id",
@@ -72,13 +77,6 @@ class UserViewSet(OrganizationMixin):
                 "profiles__phone_number",
                 "profiles__zip_code",
                 "profiles__is_phone_verified",
-            )
-            .select_related(
-                "organization",
-                "profiles",
-                "profiles__title",
-                "profiles__user",
-                "department",
             )
         )
 

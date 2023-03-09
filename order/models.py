@@ -39,7 +39,7 @@ from django_lifecycle import (
 from djmoney.models.fields import MoneyField
 
 from order.validation import OrderValidation
-from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
+from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices, AutoSelectRelatedQuerySetMixin
 
 User = settings.AUTH_USER_MODEL
 
@@ -269,6 +269,13 @@ class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
             str: Order Type Absolute URL
         """
         return reverse("order-types-detail", kwargs={"pk": self.pk})
+
+
+class OrderManager(models.Manager, AutoSelectRelatedQuerySetMixin):
+    """
+    Order Manager
+    """
+    pass
 
 
 class Order(LifecycleModelMixin, GenericModel):  # type: ignore
@@ -524,6 +531,8 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
         help_text=_("Voided Comment"),
     )
 
+    objects = OrderManager()
+
     class Meta:
         """
         Order Metaclass
@@ -641,10 +650,10 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
 
         # Handle the mileage rate calculation
         if (
-            self.freight_charge_amount
-            and self.mileage
-            and self.rate_method
-            and self.rate_method == RatingMethodChoices.PER_MILE
+                self.freight_charge_amount
+                and self.mileage
+                and self.rate_method
+                and self.rate_method == RatingMethodChoices.PER_MILE
         ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
 
