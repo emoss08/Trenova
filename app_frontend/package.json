@@ -49,6 +49,7 @@
     "socicon": "^3.0.5",
     "styled-components": "^5.3.8",
     "swr": "^2.0.4",
+    "topbar": "^2.0.1",
     "yup": "^1.0.2",
     "zustand": "^4.3.6"
   },

@@ -83,7 +83,7 @@ export function AsideMenuMain() {
         icon={<SvgCom006 />}
       >
         <AsideMenuItem to="/crafted/account/overview" title="Overview" hasBullet={true} />
-        <AsideMenuItem to="/crafted/account/settings" title="Settings" hasBullet={true} />
+        <AsideMenuItem to="/account/settings" title="Settings" hasBullet={true} />
       </AsideMenuItemWithSub>
       <AsideMenuItemWithSub
         to="/error"

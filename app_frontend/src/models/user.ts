@@ -30,7 +30,6 @@ export interface UserAuthModel {
   full_name?: string;
   organization_id?: string;
   department_id?: string;
-  job_title_id?: string;
   is_staff: boolean;
   is_superuser: boolean;
   address_line_1: string;

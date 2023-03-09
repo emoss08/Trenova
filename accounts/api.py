@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -201,7 +182,7 @@ class TokenVerifyView(APIView):
                 "department__id",
                 "profiles__first_name",
                 "profiles__last_name",
-                "profiles__title_id",
+                "profiles__title__name",
                 "profiles__address_line_1",
                 "profiles__address_line_2",
                 "profiles__city",
@@ -223,7 +204,7 @@ class TokenVerifyView(APIView):
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
-                "job_title_id": user.profile.title.id if user.profile.title else None,
+                "job_title": user.profile.title.name if user.profile.title else None,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
                 "address_line_1": user.profile.address_line_1,
@@ -261,7 +242,7 @@ class TokenProvisionView(ObtainAuthToken):
                 "profiles__last_name",
                 "organization__id",
                 "department__id",
-                "profiles__title__id",
+                "profiles__title__name",
                 "is_staff",
                 "is_superuser",
                 "profiles__address_line_1",
@@ -288,7 +269,7 @@ class TokenProvisionView(ObtainAuthToken):
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
-                "job_title_id": user.profile.title.id if user.profile.title else None,
+                "job_title": user.profile.title.name if user.profile.title else None,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
                 "address_line_1": user.profile.address_line_1,

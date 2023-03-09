@@ -21,15 +21,12 @@ import { authStore } from "@/utils/providers/AuthGuard";
 import { HeaderUserMenu, Search } from "@/components/partials";
 import Image from "next/image";
 import avatar3001 from "../../../../public/media/avatars/300-1.jpg";
-import cod001 from "../../../../public/media/icons/duotune/coding/cod001.svg";
 import { MTSVG } from "@/components/elements/MTSVG";
 import SvgCod001 from "@/components/svgs/SvgCod001";
-import { jobStore } from "@/utils/stores";
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
 const AsideToolbar = () => {
   const [user] = authStore.use("user");
-  const [job] = jobStore.use("job");
   return (
     <>
       <div className="aside-user d-flex align-items-sm-center justify-content-center py-5">
@@ -44,7 +41,7 @@ const AsideToolbar = () => {
                 {user?.first_name} {user?.last_name}
               </a>
 
-              <span className="text-gray-600 fw-bold d-block fs-8 mb-1">{job?.name}</span>
+              <span className="text-gray-600 fw-bold d-block fs-8 mb-1">{user?.job_title}</span>
 
               <div className="d-flex align-items-center text-success fs-9">
                 <span className="bullet bullet-dot bg-success me-1"></span>online

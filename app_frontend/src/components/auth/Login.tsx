@@ -60,10 +60,6 @@ export function Login() {
         const { data: currentUser } = await getUserByToken(auth.token);
         console.log("i'm being called", currentUser)
         authStore.set('user', currentUser);
-        if (currentUser.job_title_id) {
-          const { data: jobTitle } = await getJobTitle(currentUser.job_title_id);
-          jobStore.set('job', jobTitle);
-        }
       } catch (error) {
         saveAuth(undefined);
         setStatus("The login detail is incorrect");

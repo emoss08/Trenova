@@ -17,19 +17,17 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  FC
-} from "react";
-import Image from "next/image";
-import defaultLogoSmall from "../../../public/media/logos/default-small.svg";
+import { AccountHeader } from "@/components/account/AccountHeader";
+import { MasterLayout } from "@/utils/MasterLayout";
 
-const LayoutSplashScreen: FC = () => {
+
+export default function AccountSettings() {
+
   return (
-    <div id="splash-screen" className="splash-screen">
-      <Image src={defaultLogoSmall} alt="Metronic logo" />
-      <span>Loading ...</span>
-    </div>
+    <>
+      <MasterLayout>
+        <AccountHeader />
+      </MasterLayout>
+    </>
   );
-};
-
-export { LayoutSplashScreen };
+}
