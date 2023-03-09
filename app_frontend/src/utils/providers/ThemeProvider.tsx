@@ -90,9 +90,7 @@ const ThemeModeProvider = ({children}: {children: React.ReactNode}) => {
   const updateMode = (_mode: ThemeModeType, saveInLocalStorage: boolean = true) => {
     const updatedMode = _mode === 'system' ? systemMode : _mode
     setMode(updatedMode)
-    console.info("I'm being fired in updateMode")
     if (saveInLocalStorage && localStorage) {
-      console.info("I'm also being fired under updateMode")
       localStorage.setItem(themeModeLSKey, updatedMode)
     }
 
@@ -103,9 +101,7 @@ const ThemeModeProvider = ({children}: {children: React.ReactNode}) => {
 
   const updateMenuMode = (_menuMode: ThemeModeType, saveInLocalStorage: boolean = true) => {
     setMenuMode(_menuMode)
-    console.info("I'm being fired in updateMenuMode")
     if (saveInLocalStorage && localStorage) {
-      console.info("I'm also being fired under updateMenuMode")
       localStorage.setItem(themeMenuModeLSKey, _menuMode)
     }
   }
