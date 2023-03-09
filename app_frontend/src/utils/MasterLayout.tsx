@@ -20,7 +20,7 @@
 import { useRouter } from "next/router";
 import { FC, PropsWithChildren, useEffect } from "react";
 import { MenuComponent } from "./assets/ts/components";
-import { PageDataProvider } from "@/components/layout/core";
+import { PageDataProvider } from "@/utils/layout/PageData";
 import { AsideDefault } from "@/components/layout/aside/AsideDefault";
 import { HeaderWrapper } from "@/components/layout/header/HeaderWrapper";
 import { Content } from "@/components/layout/Content";

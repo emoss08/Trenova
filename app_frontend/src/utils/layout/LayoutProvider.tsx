@@ -17,28 +17,27 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, FC, useContext, useEffect, useState } from 'react';
-import { DefaultLayoutConfig } from '@/utils/layout/DefaultLayoutConfig';
+import { FC, createContext, useContext, useState, useEffect, PropsWithChildren } from "react";
+import {DefaultLayoutConfig} from './DefaultLayoutConfig'
 import {
   getEmptyCssClasses,
   getEmptyCSSVariables,
   getEmptyHTMLAttributes,
   LayoutSetup,
-} from '@/utils/layout/LayoutSetup'
+} from './LayoutSetup'
 import {
   ILayout,
   ILayoutCSSVariables,
   ILayoutCSSClasses,
   ILayoutHTMLAttributes,
-} from "@/models/layout";
-import { WithChildren } from '../types';
+} from '@/models/layout'
 
 export interface LayoutContextModel {
-  config: ILayout;
-  classes: ILayoutCSSClasses;
-  attributes: ILayoutHTMLAttributes;
-  cssVariables: ILayoutCSSVariables;
-  setLayout: (config: LayoutSetup) => void;
+  config: ILayout
+  classes: ILayoutCSSClasses
+  attributes: ILayoutHTMLAttributes
+  cssVariables: ILayoutCSSVariables
+  setLayout: (config: LayoutSetup) => void
 }
 
 const LayoutContext = createContext<LayoutContextModel>({
@@ -47,44 +46,57 @@ const LayoutContext = createContext<LayoutContextModel>({
   attributes: getEmptyHTMLAttributes(),
   cssVariables: getEmptyCSSVariables(),
   setLayout: (config: LayoutSetup) => {},
-});
+})
 
-export const LayoutProvider: FC<WithChildren> = ({ children }) => {
-  const [config, setConfig] = useState(LayoutSetup.config);
-  const [classes, setClasses] = useState(LayoutSetup.classes);
-  const [attributes, setAttributes] = useState(LayoutSetup.attributes);
-  const [cssVariables, setCSSVariables] = useState(LayoutSetup.cssVariables);
+const enableSplashScreen = () => {
+  const splashScreen = document.getElementById('splash-screen')
+  if (splashScreen) {
+    splashScreen.style.setProperty('display', 'flex')
+  }
+}
 
+const disableSplashScreen = () => {
+  const splashScreen = document.getElementById('splash-screen')
+  if (splashScreen) {
+    splashScreen.style.setProperty('display', 'none')
+  }
+}
+
+const LayoutProvider: FC<PropsWithChildren> = ({children}) => {
+  const [config, setConfig] = useState(LayoutSetup.config)
+  const [classes, setClasses] = useState(LayoutSetup.classes)
+  const [attributes, setAttributes] = useState(LayoutSetup.attributes)
+  const [cssVariables, setCSSVariables] = useState(LayoutSetup.cssVariables)
   const setLayout = (_themeConfig: Partial<ILayout>) => {
-    const bodyClasses = Array.from(document.body.classList);
-    bodyClasses.forEach((cl) => document.body.classList.remove(cl));
-    LayoutSetup.updatePartialConfig(_themeConfig);
-    setConfig(Object.assign({}, LayoutSetup.config));
-    setClasses(LayoutSetup.classes);
-    setAttributes(LayoutSetup.attributes);
-    setCSSVariables(LayoutSetup.cssVariables);
-  };
-
+    enableSplashScreen()
+    const bodyClasses = Array.from(document.body.classList)
+    bodyClasses.forEach((cl) => document.body.classList.remove(cl))
+    LayoutSetup.updatePartialConfig(_themeConfig)
+    setConfig(Object.assign({}, LayoutSetup.config))
+    setClasses(LayoutSetup.classes)
+    setAttributes(LayoutSetup.attributes)
+    setCSSVariables(LayoutSetup.cssVariables)
+    setTimeout(() => {
+      disableSplashScreen()
+    }, 500)
+  }
   const value: LayoutContextModel = {
     config,
     classes,
     attributes,
     cssVariables,
     setLayout,
-  };
+  }
 
   useEffect(() => {
-    const disableSplashScreen = () => {
-      const splashScreen = document.getElementById('splash-screen');
-      if (splashScreen) {
-        splashScreen.style.setProperty('display', 'none');
-      }
-    };
+    disableSplashScreen()
+  }, [])
 
-    disableSplashScreen();
-  }, []);
+  return <LayoutContext.Provider value={value}>{children}</LayoutContext.Provider>
+}
 
-  return <LayoutContext.Provider value={value}>{children}</LayoutContext.Provider>;
-};
+export {LayoutContext, LayoutProvider}
 
-export const useLayout = () => useContext(LayoutContext);
+export function useLayout() {
+  return useContext(LayoutContext)
+}

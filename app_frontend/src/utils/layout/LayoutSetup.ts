@@ -30,15 +30,15 @@ import {
 } from "@/models/layout";
 
 import { DefaultLayoutConfig } from "./DefaultLayoutConfig";
+import { getFromLocalStorage, setInLocalStorage } from "@/utils/LocalStorageHelper";
 
 const LAYOUT_CONFIG_KEY = process.env.NEXT_PUBLIC_BASE_LAYOUT_CONFIG_KEY || "LayoutConfig";
 
 export function getLayout(): ILayout {
   let ls = null;
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      ls = window.localStorage.getItem(LAYOUT_CONFIG_KEY);
-    }
+    ls = getFromLocalStorage(LAYOUT_CONFIG_KEY)
+    console.log(ls)
   } catch (error) {
     console.error("Error getting layout configuration from localStorage: ", error);
   }
@@ -54,7 +54,7 @@ export function getLayout(): ILayout {
 
 function setLayout(config: ILayout): void {
   try {
-    localStorage.setItem(LAYOUT_CONFIG_KEY, JSON.stringify(config));
+    setInLocalStorage(LAYOUT_CONFIG_KEY, JSON.stringify(config));
   } catch (er) {
     console.error(er);
   }
