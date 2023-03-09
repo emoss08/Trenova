@@ -6,8 +6,6 @@
 /server/venv/
 /.idea/
 server/backend/
-/mvenv
-/rvenv
 .env
 .pytest_cache
 server/server.iml
@@ -16,6 +14,7 @@ scripts/startup.sh
 */__pycache__
 templates
 static/
+rvenv
 monta_frontend/node_modules
 *.local
 logs
