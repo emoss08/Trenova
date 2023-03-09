@@ -65,9 +65,9 @@ const Languages: FC = () => {
   return (
     <div
       className='menu-item px-5'
-      data-kt-menu-trigger='hover'
-      data-kt-menu-placement='left-start'
-      data-kt-menu-flip='bottom'
+      data-mt-menu-trigger='hover'
+      data-mt-menu-placement='left-start'
+      data-mt-menu-flip='bottom'
     >
       <a href='#' className='menu-link px-5'>
         <span className='menu-title position-relative'>

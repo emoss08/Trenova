@@ -1,0 +1,194 @@
+/*!
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+//
+// Toolbar
+//
+
+// General mode
+.app-toolbar {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--#{$prefix}app-toolbar-base-bg-color);
+  box-shadow: var(--#{$prefix}app-toolbar-base-box-shadow);
+  border-top: var(--#{$prefix}app-toolbar-base-border-top);
+  border-bottom: var(--#{$prefix}app-toolbar-base-border-bottom);
+
+  &.app-toolbar-minimize {
+    transition: $app-toolbar-base-transition;
+  }
+}
+
+// Desktop mode
+@include media-breakpoint-up(lg) {
+  // Vars
+  :root {
+    --#{$prefix}app-toolbar-height: #{$app-toolbar-base-height};
+    --#{$prefix}app-toolbar-height-actual: #{$app-toolbar-base-height};
+  }
+
+  [data-mt-app-toolbar-sticky='on'] {
+    --#{$prefix}app-toolbar-height: #{$app-toolbar-sticky-height};
+  }
+
+  [data-mt-app-toolbar-minimize='on'] {
+    --#{$prefix}app-toolbar-height: #{$app-toolbar-minimize-height};
+  }
+
+  // States
+  .app-toolbar {
+    height: var(--#{$prefix}app-toolbar-height);
+
+    [data-mt-app-header-fixed='true'][data-mt-app-toolbar-fixed='true'] & {
+      @include property(z-index, $app-toolbar-base-z-index);
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+    }
+
+    [data-mt-app-toolbar-sticky='on'] & {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+
+      box-shadow: var(--#{$prefix}app-toolbar-sticky-box-shadow);
+      background-color: var(--#{$prefix}app-toolbar-sticky-bg-color);
+      border-top: var(--#{$prefix}app-toolbar-sticky-border-top);
+      border-bottom: var(--#{$prefix}app-toolbar-sticky-border-bottom);
+
+      @include property(z-index, $app-toolbar-sticky-z-index);
+      @include property(backdrop-filter, $app-toolbar-sticky-backdrop-filter);
+    }
+
+    [data-mt-app-toolbar-minimize='on'] & {
+      transition: $app-toolbar-base-transition;
+
+      box-shadow: var(--#{$prefix}app-toolbar-minimize-box-shadow);
+      background-color: var(--#{$prefix}app-toolbar-minimize-bg-color);
+      border-top: var(--#{$prefix}app-toolbar-minimize-border-top);
+      border-bottom: var(--#{$prefix}app-toolbar-minimize-border-bottom);
+
+      @include property(z-index, $app-toolbar-minimize-z-index);
+      @include property(backdrop-filter, $app-toolbar-minimize-backdrop-filter);
+    }
+  }
+
+  // Integration
+  .app-toolbar {
+    // Header
+    [data-mt-app-toolbar-fixed='true'][data-mt-app-header-fixed='true'] & {
+      top: var(--#{$prefix}app-header-height);
+    }
+
+    // Sidebar
+    [data-mt-app-toolbar-sticky='on'][data-mt-app-sidebar-fixed='true'][data-mt-app-sidebar-push-toolbar='true']
+      &,
+    [data-mt-app-toolbar-fixed='true'][data-mt-app-sidebar-fixed='true'][data-mt-app-sidebar-push-toolbar='true']
+      & {
+      left: calc(
+        var(--#{$prefix}app-sidebar-width) + var(--#{$prefix}app-sidebar-gap-start, 0px) +
+          var(--#{$prefix}app-sidebar-gap-end, 0px)
+      );
+    }
+
+    // Sidebar panel
+    [data-mt-app-toolbar-sticky='on'][data-mt-app-sidebar-panel-fixed='true'][data-mt-app-sidebar-panel-push-toolbar='true']
+      &,
+    [data-mt-app-toolbar-fixed='true'][data-mt-app-sidebar-panel-fixed='true'][data-mt-app-sidebar-panel-push-toolbar='true']
+      & {
+      left: calc(
+        var(--#{$prefix}app-sidebar-width) + var(--#{$prefix}app-sidebar-gap-start, 0px) +
+          var(--#{$prefix}app-sidebar-gap-end, 0px) + var(--#{$prefix}app-sidebar-panel-width) +
+          var(--#{$prefix}app-sidebar-panel-gap-start, 0px) +
+          var(--#{$prefix}app-sidebar-panel-gap-end, 0px)
+      );
+    }
+
+    // Aside
+    [data-mt-app-toolbar-sticky='on'][data-mt-app-aside-fixed='true'][data-mt-app-aside-push-toolbar='true']
+      &,
+    [data-mt-app-toolbar-fixed='true'][data-mt-app-aside-fixed='true'][data-mt-app-aside-push-toolbar='true']
+      & {
+      right: calc(
+        var(--#{$prefix}app-aside-width) + var(--#{$prefix}app-aside-gap-start, 0px) +
+          var(--#{$prefix}app-aside-gap-end, 0px)
+      );
+    }
+  }
+}
+
+// Tablet & mobile modes
+@include media-breakpoint-down(lg) {
+  // Vars
+  :root {
+    --#{$prefix}app-toolbar-height: #{$app-toolbar-base-height-mobile};
+  }
+
+  [data-mt-app-toolbar-sticky='on'] {
+    --#{$prefix}app-toolbar-height: #{$app-toolbar-sticky-height-mobile};
+  }
+
+  [data-mt-app-toolbar-minimize='on'] {
+    --#{$prefix}app-toolbar-height: #{$app-toolbar-minimize-height-mobile};
+  }
+
+  // States
+  .app-toolbar {
+    height: var(--#{$prefix}app-toolbar-height);
+
+    [data-mt-app-header-fixed-mobile='true'][data-mt-app-toolbar-fixed-mobile='true'] & {
+      @include property(z-index, $app-toolbar-base-z-index-mobile);
+      position: fixed;
+      top: calc(
+        var(--#{$prefix}app-header-height, 0px) + var(--#{$prefix}app-header-mobile-height, 0px)
+      );
+      left: 0;
+      right: 0;
+    }
+
+    [data-mt-app-toolbar-sticky='on'] & {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: var(--#{$prefix}app-header-height, 0px);
+
+      box-shadow: var(--#{$prefix}app-toolbar-sticky-box-shadow);
+      background-color: var(--#{$prefix}app-toolbar-sticky-bg-color);
+      border-top: var(--#{$prefix}app-toolbar-sticky-border-top);
+      border-bottom: var(--#{$prefix}app-toolbar-sticky-border-bottom);
+
+      @include property(z-index, $app-toolbar-sticky-z-index-mobile);
+      @include property(backdrop-filter, $app-toolbar-sticky-backdrop-filter-mobile);
+    }
+
+    [data-mt-app-toolbar-minimize='on'] & {
+      transition: $app-toolbar-base-transition;
+
+      box-shadow: var(--#{$prefix}app-toolbar-minimize-box-shadow);
+      background-color: var(--#{$prefix}app-toolbar-minimize-bg-color);
+      border-top: var(--#{$prefix}app-toolbar-minimize-border-top);
+      border-bottom: var(--#{$prefix}app-toolbar-minimize-border-bottom);
+
+      @include property(z-index, $app-toolbar-minimize-z-index-mobile);
+      @include property(backdrop-filter, $app-toolbar-minimize-backdrop-filter-mobile);
+    }
+  }
+}

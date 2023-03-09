@@ -25,7 +25,7 @@ const appScript = `
     if (document.documentElement) {
       var defaultThemeMode = 'system'
 
-      var hasKTName = document.body.hasAttribute('data-kt-name')
+      var hasKTName = document.body.hasAttribute('data-mt-name')
       var lsKey = 'mt_' + (hasKTName ? name + '_' : '') + 'theme_mode_value'
       var themeMode = localStorage.getItem(lsKey)
       if (!themeMode) {

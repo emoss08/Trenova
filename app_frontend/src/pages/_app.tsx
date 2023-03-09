@@ -19,10 +19,11 @@
 // f1416c
 
 
-import "@/styles/SplashScreen.module.css";
-import "@/styles/sass/style.scss";
-import "@/styles/sass/plugins.scss";
-import "@/styles/sass/style.react.scss";
+import 'nouislider/dist/nouislider.css'
+import '../styles/assets/sass/style.scss'
+import '../styles/assets/sass/plugins.scss'
+import '../styles/assets/sass/style.react.scss'
+
 import "nprogress/nprogress.css";
 import "react-toastify/dist/ReactToastify.min.css";
 
@@ -77,7 +78,6 @@ export default function App({ Component, pageProps }: AppProps) {
   if (!isMounted) {
     return <LayoutSplashScreen />;
   }
-
 
   return (
     <Suspense fallback={<LayoutSplashScreen />}>

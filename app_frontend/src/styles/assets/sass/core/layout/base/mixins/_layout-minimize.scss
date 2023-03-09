@@ -1,0 +1,60 @@
+/*!
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+//
+// Hoverable
+//
+
+@mixin app-layout-minimize($class) {
+  // Desktop mode
+  @include media-breakpoint-up(lg) {
+    [data-mt-#{$class}-minimize='on']:not([data-mt-#{$class}-hoverable='true']) {
+      .#{$class} {
+        @content;
+      }
+    }
+
+    [data-mt-#{$class}-minimize='on'][data-mt-#{$class}-hoverable='true'] {
+      .#{$class} {
+        &:not(:hover) {
+          @content;
+        }
+      }
+    }
+  }
+}
+
+@mixin app-layout-minimize-mobile($class) {
+  // Tablet & mobile modes
+  @include media-breakpoint-down(lg) {
+    [data-mt-#{$class}-minimize-mobile='on']:not[data-mt-#{$class}-hoverable-mobile='true'] {
+      .#{$class} {
+        @content;
+      }
+    }
+
+    [data-mt-#{$class}-minimize-mobile='on'][data-mt-#{$class}-hoverable-mobile='true'] {
+      .#{$class} {
+        &:not(:hover) {
+          @content;
+        }
+      }
+    }
+  }
+}

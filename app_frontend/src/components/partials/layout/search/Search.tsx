@@ -20,6 +20,8 @@
 import { SearchComponent } from "@/utils/assets/ts/components";
 import { FC, useEffect, useRef, useState } from "react";
 import { toAbsoluteUrl } from "@/utils/AssetHelpers";
+import { MTSVG } from "@/components/elements/MTSVG";
+import SvgGen021 from "@/components/svgs/SvgGen021";
 
 const Search: FC = () => {
   const [searchVal, setSearchVal] = useState<string>("");
@@ -65,7 +67,7 @@ const Search: FC = () => {
 
   useEffect(() => {
     // Initialize search handler
-    const searchObject = SearchComponent.createInsance("#kt_header_search");
+    const searchObject = SearchComponent.createInsance("#mt_header_search");
 
     // Search handler
     searchObject!.on("kt.search.process", processs);
@@ -77,24 +79,22 @@ const Search: FC = () => {
   return (
     <>
       <div
-        id="kt_header_search"
+        id="mt_header_search"
         className="header-search d-flex align-items-center w-100"
-        data-kt-search-keypress="true"
-        data-kt-search-min-length="2"
-        data-kt-search-enter="enter"
-        data-kt-search-layout="menu"
-        data-kt-search-responsive="false"
-        data-kt-menu-trigger="auto"
-        data-kt-menu-permanent="true"
-        data-kt-menu-placement="bottom-start"
-        data-kt-search="true"
+        data-mt-search-keypress="true"
+        data-mt-search-min-length="2"
+        data-mt-search-enter="enter"
+        data-mt-search-layout="menu"
+        data-mt-search-responsive="false"
+        data-mt-menu-trigger="auto"
+        data-mt-menu-permanent="true"
+        data-mt-menu-placement="bottom-start"
+        data-mt-search="true"
         ref={element}
       >
-        <form data-kt-search-element="form" className="w-100 position-relative" autoComplete="off">
-          <img
-            src="/media/icons/duotune/general/gen021.svg"
-            className="svg-icon-2 search-icon position-absolute top-50 translate-middle-y ms-4"
-          />
+        <form data-mt-search-element="form" className="w-100 position-relative" autoComplete="off">
+          <MTSVG icon={<SvgGen021 />}
+                 className="svg-icon-2 search-icon position-absolute top-50 translate-middle-y ms-4" />
           <input
             type="text"
             className="search-input form-control ps-13 fs-7 h-40px"
@@ -102,47 +102,44 @@ const Search: FC = () => {
             value={searchVal}
             onChange={(e) => setSearchVal(e.target.value)}
             placeholder="Quick Search"
-            data-kt-search-element="input"
+            data-mt-search-element="input"
           />
         </form>
 
         <div
-          data-kt-search-element="content"
+          data-mt-search-element="content"
           className="menu menu-sub menu-sub-dropdown p-7 w-325px w-md-375px"
         >
           <div
             className={`${menuState === "main" ? "" : "d-none"}`}
             ref={wrapperElement}
-            data-kt-search-element="wrapper"
+            data-mt-search-element="wrapper"
           >
             <form
-              data-kt-search-element="form"
+              data-mt-search-element="form"
               className="w-100 position-relative mb-3"
               autoComplete="off"
             >
-              <img
-                src="/media/icons/duotune/general/gen021.svg"
-                className="svg-icon-2 svg-icon-lg-1 svg-icon-gray-500 position-absolute top-50 translate-middle-y ms-0"
-              />
-
+              <MTSVG icon={<SvgGen021 />}
+                     className="svg-icon-2 svg-icon-lg-1 svg-icon-gray-500 position-absolute top-50 translate-middle-y ms-0" />
               <input
                 type="text"
                 className="form-control form-control-flush ps-10"
                 name="search"
                 placeholder="Search..."
-                data-kt-search-element="input"
+                data-mt-search-element="input"
               />
 
               <span
                 className="position-absolute top-50 end-0 translate-middle-y lh-0 d-none me-1"
-                data-kt-search-element="spinner"
+                data-mt-search-element="spinner"
               >
                 <span className="spinner-border h-15px w-15px align-middle text-gray-400" />
               </span>
 
               <span
                 className="btn btn-flush btn-active-color-primary position-absolute top-50 end-0 translate-middle-y lh-0 d-none"
-                data-kt-search-element="clear"
+                data-mt-search-element="clear"
               >
                 <img
                   src="/media/icons/duotune/arrows/arr061.svg"
@@ -152,10 +149,10 @@ const Search: FC = () => {
 
               <div
                 className="position-absolute top-50 end-0 translate-middle-y"
-                data-kt-search-element="toolbar"
+                data-mt-search-element="toolbar"
               >
                 <div
-                  data-kt-search-element="preferences-show"
+                  data-mt-search-element="preferences-show"
                   className="btn btn-icon w-20px btn-sm btn-active-color-primary me-1"
                   data-bs-toggle="tooltip"
                   onClick={() => {
@@ -167,7 +164,7 @@ const Search: FC = () => {
                 </div>
 
                 <div
-                  data-kt-search-element="advanced-options-form-show"
+                  data-mt-search-element="advanced-options-form-show"
                   className="btn btn-icon w-20px btn-sm btn-active-color-primary"
                   data-bs-toggle="tooltip"
                   onClick={() => {
@@ -180,9 +177,9 @@ const Search: FC = () => {
               </div>
             </form>
 
-            <div ref={resultsElement} data-kt-search-element="results" className="d-none">
+            <div ref={resultsElement} data-mt-search-element="results" className="d-none">
               <div className="scroll-y mh-200px mh-lg-350px">
-                <h3 className="fs-5 text-muted m-0 pb-5" data-kt-search-element="category-title">
+                <h3 className="fs-5 text-muted m-0 pb-5" data-mt-search-element="category-title">
                   Users
                 </h3>
 
@@ -258,7 +255,7 @@ const Search: FC = () => {
 
                 <h3
                   className="fs-5 text-muted m-0 pt-5 pb-5"
-                  data-kt-search-element="category-title"
+                  data-mt-search-element="category-title"
                 >
                   Customers
                 </h3>
@@ -365,7 +362,7 @@ const Search: FC = () => {
 
                 <h3
                   className="fs-5 text-muted m-0 pt-5 pb-5"
-                  data-kt-search-element="category-title"
+                  data-mt-search-element="category-title"
                 >
                   Projects
                 </h3>
@@ -448,7 +445,7 @@ const Search: FC = () => {
               </div>
             </div>
 
-            <div ref={suggestionsElement} className="mb-4" data-kt-search-element="main">
+            <div ref={suggestionsElement} className="mb-4" data-mt-search-element="main">
               <div className="d-flex flex-stack fw-bold mb-4">
                 <span className="text-muted fs-6 me-2">Recently Searched:</span>
               </div>
@@ -582,7 +579,7 @@ const Search: FC = () => {
               </div>
             </div>
 
-            <div ref={emptyElement} data-kt-search-element="empty" className="text-center d-none">
+            <div ref={emptyElement} data-mt-search-element="empty" className="text-center d-none">
               <div className="pt-10 pb-10">
                 <img
                   src="/media/icons/duotune/files/fil024.svg"
@@ -744,7 +741,7 @@ const Search: FC = () => {
               <a
                 href="/#"
                 className="btn btn-sm fw-bolder btn-primary"
-                data-kt-search-element="advanced-options-form-search"
+                data-mt-search-element="advanced-options-form-search"
               >
                 Search
               </a>

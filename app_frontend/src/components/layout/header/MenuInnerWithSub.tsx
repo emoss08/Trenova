@@ -52,8 +52,8 @@ const MenuInnerWithSub: FC<Props & PropsWithChildren> = ({
 
   useEffect(() => {
     if (menuItemRef.current && menuTrigger && menuPlacement) {
-      menuItemRef.current.setAttribute('data-kt-menu-trigger', menuTrigger)
-      menuItemRef.current.setAttribute('data-kt-menu-placement', menuPlacement)
+      menuItemRef.current.setAttribute('data-mt-menu-trigger', menuTrigger)
+      menuItemRef.current.setAttribute('data-mt-menu-placement', menuPlacement)
     }
   }, [menuTrigger, menuPlacement])
 
@@ -91,7 +91,7 @@ const MenuInnerWithSub: FC<Props & PropsWithChildren> = ({
           'menu-sub menu-sub-lg-down-accordion menu-sub-lg-dropdown',
           isMega ? 'w-100 w-lg-600px p-5 p-lg-5' : 'menu-rounded-0 py-lg-4 w-lg-225px'
         )}
-        data-kt-menu-dismiss='true'
+        data-mt-menu-dismiss='true'
       >
         {children}
       </div>

@@ -1,3 +1,22 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import {FC} from 'react'
 
@@ -5,7 +24,7 @@ const Dropdown3: FC = () => {
   return (
     <div
       className='menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-light-primary fw-bold w-200px py-3'
-      data-kt-menu='true'
+      data-mt-menu='true'
     >
       <div className='menu-item px-3'>
         <div className='menu-content text-muted pb-2 px-3 fs-7 text-uppercase'>Payments</div>
@@ -36,9 +55,9 @@ const Dropdown3: FC = () => {
 
       <div
         className='menu-item px-3'
-        data-kt-menu-trigger='hover'
-        data-kt-menu-placement='left-start'
-        data-kt-menu-flip='center, top'
+        data-mt-menu-trigger='hover'
+        data-mt-menu-placement='left-start'
+        data-mt-menu-flip='center, top'
       >
         <a href='#' className='menu-link px-3'>
           <span className='menu-title'>Subscription</span>

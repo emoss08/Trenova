@@ -22,7 +22,7 @@ import {StepProps} from '../IAppModels'
 
 const Step1 = ({data, updateData, hasError}: StepProps) => {
   return (
-    <div className='current' data-kt-stepper-element='content'>
+    <div className='current' data-mt-stepper-element='content'>
       <div className='w-100'>
         {/*begin::Form Group */}
         <div className='fv-row mb-10'>

@@ -23,19 +23,19 @@ import Image from "next/image";
 
 const DrawerMessenger: FC = () => (
   <div
-    id='kt_drawer_chat'
+    id='mt_drawer_chat'
     className='bg-white'
-    data-kt-drawer='true'
-    data-kt-drawer-name='chat'
-    data-kt-drawer-activate='true'
-    data-kt-drawer-overlay='true'
-    data-kt-drawer-width="{default:'300px', 'md': '500px'}"
-    data-kt-drawer-direction='end'
-    data-kt-drawer-toggle='#kt_drawer_chat_toggle'
-    data-kt-drawer-close='#kt_drawer_chat_close'
+    data-mt-drawer='true'
+    data-mt-drawer-name='chat'
+    data-mt-drawer-activate='true'
+    data-mt-drawer-overlay='true'
+    data-mt-drawer-width="{default:'300px', 'md': '500px'}"
+    data-mt-drawer-direction='end'
+    data-mt-drawer-toggle='#mt_drawer_chat_toggle'
+    data-mt-drawer-close='#mt_drawer_chat_close'
   >
-    <div className='card w-100 rounded-0' id='kt_drawer_chat_messenger'>
-      <div className='card-header pe-5' id='kt_drawer_chat_messenger_header'>
+    <div className='card w-100 rounded-0' id='mt_drawer_chat_messenger'>
+      <div className='card-header pe-5' id='mt_drawer_chat_messenger_header'>
         <div className='card-title'>
           <div className='d-flex justify-content-center flex-column me-3'>
             <a href='#' className='fs-4 fw-bolder text-gray-900 text-hover-primary me-1 mb-2 lh-1'>
@@ -51,14 +51,14 @@ const DrawerMessenger: FC = () => (
           <div className='me-2'>
             <button
               className='btn btn-sm btn-icon btn-active-light-primary'
-              data-kt-menu-trigger='click'
-              data-kt-menu-placement='bottom-end'
-              data-kt-menu-flip='top-end'
+              data-mt-menu-trigger='click'
+              data-mt-menu-placement='bottom-end'
+              data-mt-menu-flip='top-end'
             >
               <i className='bi bi-three-dots fs-3'></i>
             </button>
           </div>
-          <div className='btn btn-sm btn-icon btn-active-light-primary' id='kt_drawer_chat_close'>
+          <div className='btn btn-sm btn-icon btn-active-light-primary' id='mt_drawer_chat_close'>
             <Image src='/media/icons/duotune/arrows/arr061.svg' className='svg-icon-2'  alt={"arr061"}/>
           </div>
         </div>

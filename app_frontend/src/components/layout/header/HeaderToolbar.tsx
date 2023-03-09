@@ -35,8 +35,8 @@ const HeaderToolbar = () => {
   const [status, setStatus] = useState<string>('1')
 
   useEffect(() => {
-    const rangeSlider = document.querySelector('#kt_toolbar_slider')
-    const rangeSliderValueElement = document.querySelector('#kt_toolbar_slider_value')
+    const rangeSlider = document.querySelector('#mt_toolbar_slider')
+    const rangeSliderValueElement = document.querySelector('#mt_toolbar_slider_value')
 
     if (!rangeSlider || !rangeSliderValueElement) {
       return
@@ -149,14 +149,14 @@ const HeaderToolbar = () => {
             {/* end::Label */}
 
             {/* begin::NoUiSlider */}
-            <div className='d-flex align-items-center ps-4' id='kt_toolbar'>
+            <div className='d-flex align-items-center ps-4' id='mt_toolbar'>
               <div
-                id='kt_toolbar_slider'
+                id='mt_toolbar_slider'
                 className='noUi-target noUi-target-primary w-75px w-xxl-150px noUi-sm noUi-ltr noUi-horizontal noUi-txt-dir-ltr'
               ></div>
 
               <span
-                id='kt_toolbar_slider_value'
+                id='mt_toolbar_slider_value'
                 className='d-flex flex-center bg-light-primary rounded-circle w-35px h-35px ms-4 fs-7 fw-bolder text-primary'
                 data-bs-toggle='tooltip'
                 data-bs-placement='top'
@@ -186,7 +186,7 @@ const HeaderToolbar = () => {
                 href='#'
                 className='btn btn-sm btn-icon btn-icon-muted btn-active-icon-primary'
                 data-bs-toggle='modal'
-                data-bs-target='#kt_modal_invite_friends'
+                data-bs-target='#mt_modal_invite_friends'
               >
                 <Image src={fil003} alt={"fil003-image"} className='svg-icon-1' />
               </a>

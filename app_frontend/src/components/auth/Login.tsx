@@ -74,7 +74,7 @@ export function Login() {
       className="form w-100"
       onSubmit={formik.handleSubmit}
       noValidate
-      id="kt_login_signin_form"
+      id="mt_login_signin_form"
     >
       {/* begin::Heading */}
       <div className="text-center mb-10">
@@ -158,7 +158,7 @@ export function Login() {
       <div className="text-center">
         <button
           type="submit"
-          id="kt_sign_in_submit"
+          id="mt_sign_in_submit"
           className="btn btn-lg btn-primary w-100 mb-5"
           disabled={formik.isSubmitting || !formik.isValid}
         >

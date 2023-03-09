@@ -1,3 +1,22 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, {useEffect, useRef} from 'react'
 import ApexCharts, {ApexOptions} from 'apexcharts'
@@ -47,17 +66,17 @@ const ChartsWidget6: React.FC<Props> = ({className}) => {
         </h3>
 
         {/* begin::Toolbar */}
-        <div className='card-toolbar' data-kt-buttons='true'>
+        <div className='card-toolbar' data-mt-buttons='true'>
           <a
             className='btn btn-sm btn-color-muted btn-active btn-active-primary active px-4 me-1'
-            id='kt_charts_widget_6_sales_btn'
+            id='mt_charts_widget_6_sales_btn'
           >
             Sales
           </a>
 
           <a
             className='btn btn-sm btn-color-muted btn-active btn-active-primary px-4 me-1'
-            id='kt_charts_widget_6_expenses_btn'
+            id='mt_charts_widget_6_expenses_btn'
           >
             Expenses
           </a>
@@ -69,7 +88,7 @@ const ChartsWidget6: React.FC<Props> = ({className}) => {
       {/* begin::Body */}
       <div className='card-body'>
         {/* begin::Chart */}
-        <div ref={chartRef} id='kt_charts_widget_6_chart' style={{height: '350px'}}></div>
+        <div ref={chartRef} id='mt_charts_widget_6_chart' style={{height: '350px'}}></div>
         {/* end::Chart */}
       </div>
       {/* end::Body */}

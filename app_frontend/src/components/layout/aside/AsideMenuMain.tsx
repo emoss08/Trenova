@@ -18,18 +18,19 @@
  */
 
 /* eslint-disable react/jsx-no-target-blank */
+import fs from "fs";
+import path from "path";
 import { AsideMenuItemWithSub } from "./AsideMenuItemWithSub";
 import { AsideMenuItem } from "./AsideMenuItem";
 import Image from "next/image";
-import gen005 from "../../../../public/media/icons/duotune/general/gen005.svg";
-import gen025 from "../../../../public/media/icons/duotune/general/gen025.svg";
-import gen040 from "../../../../public/media/icons/duotune/general/gen040.svg";
-import gen019 from "../../../../public/media/icons/duotune/general/gen025.svg";
-import ecm007 from "../../../../public/media/icons/duotune/ecommerce/ecm007.svg";
-import com006 from "../../../../public/media/icons/duotune/communication/com006.svg";
-import gen022 from "../../../../public/media/icons/duotune/general/gen022.svg";
-import com012 from "../../../../public/media/icons/duotune/communication/com012.svg";
-import gen051 from "../../../../public/media/icons/duotune/general/gen051.svg";
+import SvgGen005 from "@/components/svgs/SvgGen005";
+import SvgGen019 from "@/components/svgs/SvgGen019";
+import SvgEcm007 from "@/components/svgs/SvgEcm007";
+import SvgCom006 from "@/components/svgs/SvgCom006";
+import SvgGen040 from "@/components/svgs/SvgGen040";
+import SvgGen022 from "@/components/svgs/SvgGen022";
+import React from "react";
+import SvgCom012 from "@/components/svgs/SvgCom012";
 
 export function AsideMenuMain() {
 
@@ -37,12 +38,12 @@ export function AsideMenuMain() {
     <>
       <AsideMenuItem
         to="/dashboard"
-        icon={gen025}
+        icon={<SvgGen005 />}
         title={"Dashboard"}
       />
       <AsideMenuItem
         to="/builder"
-        icon={gen019}
+        icon={<SvgGen019 />}
         title="Layout Builder"
       />
       <div className="menu-item">
@@ -53,7 +54,7 @@ export function AsideMenuMain() {
       <AsideMenuItemWithSub
         to="/crafted/pages"
         title="Pages"
-        icon={ecm007}
+        icon={<SvgEcm007 />}
       >
         <AsideMenuItemWithSub to="/crafted/pages/profile" title="Profile" hasBullet={true}>
           <AsideMenuItem to="/crafted/pages/profile/overview" title="Overview" hasBullet={true} />
@@ -79,7 +80,7 @@ export function AsideMenuMain() {
       <AsideMenuItemWithSub
         to="/crafted/accounts"
         title="Accounts"
-        icon={com006}
+        icon={<SvgCom006 />}
       >
         <AsideMenuItem to="/crafted/account/overview" title="Overview" hasBullet={true} />
         <AsideMenuItem to="/crafted/account/settings" title="Settings" hasBullet={true} />
@@ -87,7 +88,7 @@ export function AsideMenuMain() {
       <AsideMenuItemWithSub
         to="/error"
         title="Errors"
-        icon={gen040}
+        icon={<SvgGen040 />}
       >
         <AsideMenuItem to="/error/404" title="Error 404" hasBullet={true} />
         <AsideMenuItem to="/error/500" title="Error 500" hasBullet={true} />
@@ -95,7 +96,7 @@ export function AsideMenuMain() {
       <AsideMenuItemWithSub
         to="/crafted/widgets"
         title="Widgets"
-        icon={gen022}
+        icon={<SvgGen022 />}
       >
         <AsideMenuItem to="/crafted/widgets/lists" title="Lists" hasBullet={true} />
         <AsideMenuItem to="/crafted/widgets/statistics" title="Statistics" hasBullet={true} />
@@ -112,7 +113,7 @@ export function AsideMenuMain() {
       <AsideMenuItemWithSub
         to="/apps/chat"
         title="Chat"
-        icon={com012}
+        icon={<SvgCom012 />}
       >
         <AsideMenuItem to="/apps/chat/private-chat" title="Private Chat" hasBullet={true} />
         <AsideMenuItem to="/apps/chat/group-chat" title="Group Chart" hasBullet={true} />
@@ -120,7 +121,7 @@ export function AsideMenuMain() {
       </AsideMenuItemWithSub>
       <AsideMenuItem
         to="/apps/user-management/users"
-        icon={gen051}
+        icon={<SvgGen005 />}
         title="User management"
       />
       <div className="menu-item">
@@ -135,7 +136,7 @@ export function AsideMenuMain() {
           href={process.env.REACT_APP_PREVIEW_DOCS_URL + "/docs/changelog"}
         >
           <span className="menu-icon">
-            <Image src={gen005} className="svg-icon-2" alt={"gen005"} />
+            <SvgGen005 />
           </span>
           <span className="menu-title">Changelog {process.env.NEXT_PUBLIC_APP_VERSION}</span>
         </a>

@@ -1,9 +1,28 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react'
 
 export function Dropdown1() {
   return (
-    <div className='menu menu-sub menu-sub-dropdown w-250px w-md-300px' data-kt-menu='true'>
+    <div className='menu menu-sub menu-sub-dropdown w-250px w-md-300px' data-mt-menu='true'>
       <div className='px-7 py-5'>
         <div className='fs-5 text-dark fw-bolder'>Filter Options</div>
       </div>
@@ -17,7 +36,7 @@ export function Dropdown1() {
           <div>
             <select
               className='form-select form-select-solid'
-              data-kt-select2='true'
+              data-mt-select2='true'
               data-placeholder='Select option'
               data-allow-clear='true'
               defaultValue={'1'}
@@ -66,12 +85,12 @@ export function Dropdown1() {
           <button
             type='reset'
             className='btn btn-sm btn-light btn-active-light-primary me-2'
-            data-kt-menu-dismiss='true'
+            data-mt-menu-dismiss='true'
           >
             Reset
           </button>
 
-          <button type='submit' className='btn btn-sm btn-primary' data-kt-menu-dismiss='true'>
+          <button type='submit' className='btn btn-sm btn-primary' data-mt-menu-dismiss='true'>
             Apply
           </button>
         </div>

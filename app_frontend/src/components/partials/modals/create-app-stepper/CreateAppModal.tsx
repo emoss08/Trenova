@@ -105,7 +105,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
 
   return createPortal(
     <Modal
-      id='kt_modal_create_app'
+      id='mt_modal_create_app'
       tabIndex={-1}
       aria-hidden='true'
       dialogClassName='modal-dialog modal-dialog-centered mw-900px'
@@ -127,14 +127,14 @@ const CreateAppModal = ({show, handleClose}: Props) => {
         <div
           ref={stepperRef}
           className='stepper stepper-pills stepper-column d-flex flex-column flex-xl-row flex-row-fluid'
-          id='kt_modal_create_app_stepper'
+          id='mt_modal_create_app_stepper'
         >
           {/* begin::Aside*/}
           <div className='d-flex justify-content-center justify-content-xl-start flex-row-auto w-100 w-xl-300px'>
             {/* begin::Nav*/}
             <div className='stepper-nav ps-lg-10'>
               {/* begin::Step 1*/}
-              <div className='stepper-item current' data-kt-stepper-element='nav'>
+              <div className='stepper-item current' data-mt-stepper-element='nav'>
                 {/* begin::Wrapper*/}
                 <div className='stepper-wrapper'>
                   {/* begin::Icon*/}
@@ -161,7 +161,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
               {/* end::Step 1*/}
 
               {/* begin::Step 2*/}
-              <div className='stepper-item' data-kt-stepper-element='nav'>
+              <div className='stepper-item' data-mt-stepper-element='nav'>
                 {/* begin::Wrapper*/}
                 <div className='stepper-wrapper'>
                   {/* begin::Icon*/}
@@ -188,7 +188,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
               {/* end::Step 2*/}
 
               {/* begin::Step 3*/}
-              <div className='stepper-item' data-kt-stepper-element='nav'>
+              <div className='stepper-item' data-mt-stepper-element='nav'>
                 {/* begin::Wrapper*/}
                 <div className='stepper-wrapper'>
                   {/* begin::Icon*/}
@@ -215,7 +215,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
               {/* end::Step 3*/}
 
               {/* begin::Step 4*/}
-              <div className='stepper-item' data-kt-stepper-element='nav'>
+              <div className='stepper-item' data-mt-stepper-element='nav'>
                 {/* begin::Wrapper*/}
                 <div className='stepper-wrapper'>
                   {/* begin::Icon*/}
@@ -242,7 +242,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
               {/* end::Step 4*/}
 
               {/* begin::Step 5*/}
-              <div className='stepper-item' data-kt-stepper-element='nav'>
+              <div className='stepper-item' data-mt-stepper-element='nav'>
                 {/* begin::Wrapper*/}
                 <div className='stepper-wrapper'>
                   {/* begin::Icon*/}
@@ -271,7 +271,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
           {/*begin::Content */}
           <div className='flex-row-fluid py-lg-5 px-lg-15'>
             {/*begin::Form */}
-            <form noValidate id='kt_modal_create_app_form'>
+            <form noValidate id='mt_modal_create_app_form'>
               <Step1 data={data} updateData={updateData} hasError={hasError} />
               <Step2 data={data} updateData={updateData} hasError={hasError} />
               <Step3 data={data} updateData={updateData} hasError={hasError} />
@@ -284,7 +284,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
                   <button
                     type='button'
                     className='btn btn-lg btn-light-primary me-3'
-                    data-kt-stepper-action='previous'
+                    data-mt-stepper-action='previous'
                     onClick={prevStep}
                   >
                     <img
@@ -298,7 +298,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
                   <button
                     type='button'
                     className='btn btn-lg btn-primary'
-                    data-kt-stepper-action='submit'
+                    data-mt-stepper-action='submit'
                     onClick={submit}
                   >
                     Submit{' '}
@@ -311,7 +311,7 @@ const CreateAppModal = ({show, handleClose}: Props) => {
                   <button
                     type='button'
                     className='btn btn-lg btn-primary'
-                    data-kt-stepper-action='next'
+                    data-mt-stepper-action='next'
                     onClick={nextStep}
                   >
                     Next Step{' '}

@@ -1,3 +1,22 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react'
 import {KTSVG, toAbsoluteUrl} from '../../../helpers'
@@ -21,7 +40,7 @@ const TablesWidget6: React.FC<Props> = ({className}) => {
               <a
                 className='nav-link btn btn-sm btn-color-muted btn-active btn-active-light-primary active fw-bold px-4 me-1'
                 data-bs-toggle='tab'
-                href='#kt_table_widget_6_tab_1'
+                href='#mt_table_widget_6_tab_1'
               >
                 Month
               </a>
@@ -30,7 +49,7 @@ const TablesWidget6: React.FC<Props> = ({className}) => {
               <a
                 className='nav-link btn btn-sm btn-color-muted btn-active btn-active-light-primary fw-bold px-4 me-1'
                 data-bs-toggle='tab'
-                href='#kt_table_widget_6_tab_2'
+                href='#mt_table_widget_6_tab_2'
               >
                 Week
               </a>
@@ -39,7 +58,7 @@ const TablesWidget6: React.FC<Props> = ({className}) => {
               <a
                 className='nav-link btn btn-sm btn-color-muted btn-active btn-active-light-primary fw-bold px-4'
                 data-bs-toggle='tab'
-                href='#kt_table_widget_6_tab_3'
+                href='#mt_table_widget_6_tab_3'
               >
                 Day
               </a>
@@ -52,7 +71,7 @@ const TablesWidget6: React.FC<Props> = ({className}) => {
       <div className='card-body py-3'>
         <div className='tab-content'>
           {/* begin::Tap pane */}
-          <div className='tab-pane fade show active' id='kt_table_widget_6_tab_1'>
+          <div className='tab-pane fade show active' id='mt_table_widget_6_tab_1'>
             {/* begin::Table container */}
             <div className='table-responsive'>
               {/* begin::Table */}
@@ -262,7 +281,7 @@ const TablesWidget6: React.FC<Props> = ({className}) => {
           </div>
           {/* end::Tap pane */}
           {/* begin::Tap pane */}
-          <div className='tab-pane fade' id='kt_table_widget_6_tab_2'>
+          <div className='tab-pane fade' id='mt_table_widget_6_tab_2'>
             {/* begin::Table container */}
             <div className='table-responsive'>
               {/* begin::Table */}
@@ -398,7 +417,7 @@ const TablesWidget6: React.FC<Props> = ({className}) => {
           </div>
           {/* end::Tap pane */}
           {/* begin::Tap pane */}
-          <div className='tab-pane fade' id='kt_table_widget_6_tab_3'>
+          <div className='tab-pane fade' id='mt_table_widget_6_tab_3'>
             {/* begin::Table container */}
             <div className='table-responsive'>
               {/* begin::Table */}

@@ -25,7 +25,7 @@ import {FC} from 'react'
 const HeaderNotificationsMenu: FC = () => (
   <div
     className='menu menu-sub menu-sub-dropdown menu-column w-350px w-lg-375px'
-    data-kt-menu='true'
+    data-mt-menu='true'
   >
     <div
       className='d-flex flex-column bgi-no-repeat rounded-top'
@@ -40,7 +40,7 @@ const HeaderNotificationsMenu: FC = () => (
           <a
             className='nav-link text-white opacity-75 opacity-state-100 pb-4'
             data-bs-toggle='tab'
-            href='#kt_topbar_notifications_1'
+            href='#mt_topbar_notifications_1'
           >
             Alerts
           </a>
@@ -50,7 +50,7 @@ const HeaderNotificationsMenu: FC = () => (
           <a
             className='nav-link text-white opacity-75 opacity-state-100 pb-4 active'
             data-bs-toggle='tab'
-            href='#kt_topbar_notifications_2'
+            href='#mt_topbar_notifications_2'
           >
             Updates
           </a>
@@ -60,7 +60,7 @@ const HeaderNotificationsMenu: FC = () => (
           <a
             className='nav-link text-white opacity-75 opacity-state-100 pb-4'
             data-bs-toggle='tab'
-            href='#kt_topbar_notifications_3'
+            href='#mt_topbar_notifications_3'
           >
             Logs
           </a>
@@ -69,7 +69,7 @@ const HeaderNotificationsMenu: FC = () => (
     </div>
 
     {/*<div className='tab-content'>*/}
-    {/*  <div className='tab-pane fade' id='kt_topbar_notifications_1' role='tabpanel'>*/}
+    {/*  <div className='tab-pane fade' id='mt_topbar_notifications_1' role='tabpanel'>*/}
     {/*    <div className='scroll-y mh-325px my-5 px-8'>*/}
     {/*      {defaultAlerts.map((alert, index) => (*/}
     {/*        <div key={`alert${index}`} className='d-flex flex-stack py-4'>*/}
@@ -107,7 +107,7 @@ const HeaderNotificationsMenu: FC = () => (
     {/*    </div>*/}
     {/*  </div>*/}
 
-    {/*  <div className='tab-pane fade show active' id='kt_topbar_notifications_2' role='tabpanel'>*/}
+    {/*  <div className='tab-pane fade show active' id='mt_topbar_notifications_2' role='tabpanel'>*/}
     {/*    <div className='d-flex flex-column px-9'>*/}
     {/*      <div className='pt-10 pb-0'>*/}
     {/*        <h3 className='text-dark text-center fw-bolder'>Get Pro Access</h3>*/}
@@ -121,7 +121,7 @@ const HeaderNotificationsMenu: FC = () => (
     {/*            href='#'*/}
     {/*            className='btn btn-sm btn-primary px-6'*/}
     {/*            data-bs-toggle='modal'*/}
-    {/*            data-bs-target='#kt_modal_upgrade_plan'*/}
+    {/*            data-bs-target='#mt_modal_upgrade_plan'*/}
     {/*          >*/}
     {/*            Upgrade*/}
     {/*          </a>*/}
@@ -138,7 +138,7 @@ const HeaderNotificationsMenu: FC = () => (
     {/*    </div>*/}
     {/*  </div>*/}
 
-    {/*  <div className='tab-pane fade' id='kt_topbar_notifications_3' role='tabpanel'>*/}
+    {/*  <div className='tab-pane fade' id='mt_topbar_notifications_3' role='tabpanel'>*/}
     {/*    <div className='scroll-y mh-325px my-5 px-8'>*/}
     {/*      {defaultLogs.map((log, index) => (*/}
     {/*        <div key={`log${index}`} className='d-flex flex-stack py-4'>*/}

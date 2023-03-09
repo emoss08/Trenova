@@ -1,0 +1,76 @@
+/*!
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+//
+// Main
+//
+
+// Body
+body {
+  background-color: var(--#{$prefix}page-bg);
+}
+
+// Font color from Content background color
+.text-page-bg {
+  color: $page-bg;
+}
+
+.app-blank {
+  background-color: var(--#{$prefix}app-blank-bg) !important;
+}
+
+// Desktop Mode
+@include media-breakpoint-up(lg) {
+  // Containers
+  .container,
+  .container-fluid {
+    padding: 0 get($content-spacing, desktop);
+  }
+
+  // Wrapper
+  .wrapper {
+    transition: padding-left get($aside-config, transition-speed) ease;
+    padding-top: get($header-config, height, desktop);
+    padding-left: get($aside-config, width);
+
+    // Aside default enabled, aside fixed and aside minimize modes
+    [data-mt-aside-minimize='on'] & {
+      transition: padding-left get($aside-config, transition-speed) ease;
+      padding-left: 0;
+    }
+  }
+}
+
+// Tablet & mobile modes
+@include media-breakpoint-down(lg) {
+  // Containers
+  .container,
+  .container-fluid {
+    max-width: none;
+    padding: 0 get($content-spacing, tablet-and-mobile);
+  }
+
+  // Wrapper
+  .wrapper {
+    // Fixed header mode
+    .header-tablet-and-mobile-fixed & {
+      padding-top: get($header-config, height, tablet-and-mobile);
+    }
+  }
+}

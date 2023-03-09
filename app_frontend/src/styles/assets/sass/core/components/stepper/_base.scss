@@ -1,0 +1,121 @@
+/*!
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+//
+// Stepper
+//
+
+// Base
+.stepper {
+  // Content
+  [data-mt-stepper-element='info'],
+  [data-mt-stepper-element='content'] {
+    display: none;
+
+    &.current {
+      display: flex;
+    }
+  }
+
+  // Enable cursor pointer on clickable steppers
+  .stepper-item[data-mt-stepper-action='step'] {
+    cursor: pointer;
+  }
+
+  // States
+  & {
+    [data-mt-stepper-action='final'] {
+      display: none;
+    }
+
+    [data-mt-stepper-action='previous'] {
+      display: none;
+    }
+
+    [data-mt-stepper-action='next'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='submit'] {
+      display: none;
+    }
+  }
+
+  &.first {
+    [data-mt-stepper-action='previous'] {
+      display: none;
+    }
+
+    [data-mt-stepper-action='next'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='submit'] {
+      display: none;
+    }
+  }
+
+  &.between {
+    [data-mt-stepper-action='previous'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='next'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='submit'] {
+      display: none;
+    }
+  }
+
+  &.last {
+    [data-mt-stepper-action='final'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='final'].btn-flex {
+      display: flex;
+    }
+
+    [data-mt-stepper-action='previous'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='previous'].btn-flex {
+      display: flex;
+    }
+
+    [data-mt-stepper-action='next'] {
+      display: none;
+    }
+
+    [data-mt-stepper-action='next'].btn-flex {
+      display: flex;
+    }
+
+    [data-mt-stepper-action='submit'] {
+      display: inline-block;
+    }
+
+    [data-mt-stepper-action='submit'].btn-flex {
+      display: flex;
+    }
+  }
+}

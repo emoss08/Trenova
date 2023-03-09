@@ -1,3 +1,22 @@
+/*
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React from 'react'
 import {KTSVG} from '../../../helpers'
@@ -20,16 +39,16 @@ const TablesWidget13: React.FC<Props> = ({className}) => {
           <button
             type='button'
             className='btn btn-sm btn-icon btn-color-primary btn-active-light-primary'
-            data-kt-menu-trigger='click'
-            data-kt-menu-placement='bottom-end'
-            data-kt-menu-flip='top-end'
+            data-mt-menu-trigger='click'
+            data-mt-menu-placement='bottom-end'
+            data-mt-menu-flip='top-end'
           >
             <KTSVG path='/media/icons/duotune/general/gen024.svg' className='svg-icon-2' />
           </button>
           {/* begin::Menu 2 */}
           <div
             className='menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold w-200px'
-            data-kt-menu='true'
+            data-mt-menu='true'
           >
             {/* begin::Menu item */}
             <div className='menu-item px-3'>
@@ -56,9 +75,9 @@ const TablesWidget13: React.FC<Props> = ({className}) => {
             {/* begin::Menu item */}
             <div
               className='menu-item px-3'
-              data-kt-menu-trigger='hover'
-              data-kt-menu-placement='right-start'
-              data-kt-menu-flip='left-start, top'
+              data-mt-menu-trigger='hover'
+              data-mt-menu-placement='right-start'
+              data-mt-menu-flip='left-start, top'
             >
               {/* begin::Menu item */}
               <a href='#' className='menu-link px-3'>
@@ -133,8 +152,8 @@ const TablesWidget13: React.FC<Props> = ({className}) => {
                       className='form-check-input'
                       type='checkbox'
                       value='1'
-                      data-kt-check='true'
-                      data-kt-check-target='.widget-13-check'
+                      data-mt-check='true'
+                      data-mt-check-target='.widget-13-check'
                     />
                   </div>
                 </th>
