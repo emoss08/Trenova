@@ -46,7 +46,11 @@ export function HeaderWrapper() {
           <Image
             alt="Logo"
             src={defaultDark}
-            className="h-25px"
+            className="h-25px h-lg-25px"
+            style={{
+              maxHeight: "125px",
+              maxWidth: "125px",
+            }}
           />
         </Link>
         {/* end::Logo */}
