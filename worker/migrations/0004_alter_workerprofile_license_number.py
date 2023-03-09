@@ -26,7 +26,6 @@ import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("worker", "0003_alter_workerprofile_license_number"),
     ]

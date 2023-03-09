@@ -475,7 +475,6 @@ class JobTitle(GenericModel):
         return reverse("user:job-title-view", kwargs={"pk": self.pk})
 
 
-
 class Token(models.Model):
     """
     Stores the token for a :model:`accounts.User
