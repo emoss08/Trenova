@@ -18,15 +18,15 @@
  */
 
 import { MasterLayout } from "@/utils/MasterLayout";
+import UsersCard from "@/components/admin/user-management/UsersCard";
 
-export default function Home() {
+
+export default function UserManagement() {
 
   return (
     <>
       <MasterLayout>
-        <div>
-          <h1>Home</h1>
-        </div>
+        <UsersCard/>
       </MasterLayout>
     </>
   );

@@ -31,6 +31,8 @@ import SvgGen040 from "@/components/svgs/SvgGen040";
 import SvgGen022 from "@/components/svgs/SvgGen022";
 import React from "react";
 import SvgCom012 from "@/components/svgs/SvgCom012";
+import SvgCom005 from "@/components/svgs/SvgCom005";
+import SvgGen062 from "@/components/svgs/SvgGen062";
 
 export function AsideMenuMain() {
 
@@ -78,7 +80,7 @@ export function AsideMenuMain() {
         </AsideMenuItemWithSub>
       </AsideMenuItemWithSub>
       <AsideMenuItemWithSub
-        to="/crafted/accounts"
+        to="/account"
         title="Accounts"
         icon={<SvgCom006 />}
       >
@@ -107,7 +109,7 @@ export function AsideMenuMain() {
       </AsideMenuItemWithSub>
       <div className="menu-item">
         <div className="menu-content pt-8 pb-2">
-          <span className="menu-section text-muted text-uppercase fs-8 ls-1">Apps</span>
+          <span className="menu-section text-muted text-uppercase fs-8 ls-1">Administration</span>
         </div>
       </div>
       <AsideMenuItemWithSub
@@ -120,9 +122,14 @@ export function AsideMenuMain() {
         <AsideMenuItem to="/apps/chat/drawer-chat" title="Drawer Chart" hasBullet={true} />
       </AsideMenuItemWithSub>
       <AsideMenuItem
-        to="/apps/user-management/users"
-        icon={<SvgGen005 />}
+        to="/admin/user-management"
+        icon={<SvgCom005 />}
         title="User management"
+      />
+      <AsideMenuItem
+        to="/admin/system-management"
+        icon={<SvgGen062 />}
+        title="System Management"
       />
       <div className="menu-item">
         <div className="menu-content">
