@@ -25,6 +25,9 @@ import { useFormik } from "formik";
 import Link from "next/link";
 import { getJobTitle, getUserByToken, login } from "@/utils/_requests";
 import { authStore, saveAuth } from "@/utils/providers/AuthGuard";
+import { createGlobalStore } from "@/utils/zustand";
+import { JobTitleModel } from "@/models/user";
+import { jobStore } from "@/utils/stores";
 
 const loginSchema = Yup.object().shape({
   username: Yup.string()
@@ -42,6 +45,7 @@ const initialValues = {
   password: "system"
 };
 
+
 export function Login() {
   const [loading, setLoading] = useState(false);
 
@@ -58,7 +62,7 @@ export function Login() {
         authStore.set('user', currentUser);
         if (currentUser.job_title_id) {
           const { data: jobTitle } = await getJobTitle(currentUser.job_title_id);
-          // setJobTitle(jobTitle);
+          jobStore.set('job', jobTitle);
         }
       } catch (error) {
         saveAuth(undefined);

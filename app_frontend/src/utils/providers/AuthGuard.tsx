@@ -25,22 +25,24 @@ import * as authHelper from "@/utils/auth";
 import { getUserByToken } from "../_requests";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import { createGlobalStore } from "@/utils/zustand";
+import { jobStore } from "@/utils/stores";
 
 type AuthType = { auth?: AuthModel, user?: UserAuthModel };
 const store = createGlobalStore<AuthType>({});
 export const authStore = store;
 
 export function logout() {
-  store.update({auth: undefined, user: undefined});
-  authHelper.clearAuth()
+  store.update({ auth: undefined, user: undefined });
+  jobStore.update({ job: undefined });
+  authHelper.clearAuth();
 }
 
 export function saveAuth(auth: AuthModel | undefined) {
   // If the auth token changed, then we'll need to refetch the user
-  if (auth?.token !== store.get('auth')?.token) {
-    store.set('user', undefined);
+  if (auth?.token !== store.get("auth")?.token) {
+    store.set("user", undefined);
   }
-  store.set('auth', auth);
+  store.set("auth", auth);
   if (auth) {
     authHelper.setAuth(auth);
   } else {
@@ -49,18 +51,19 @@ export function saveAuth(auth: AuthModel | undefined) {
 }
 
 /** List of routes that should be public and accessible without authentication. */
-const PUBLIC_PATHS = ['/auth/login'];
+const PUBLIC_PATHS = ["/auth/login"];
 
 const AuthGuard: React.FC<WithChildren> = ({ children }) => {
-  const [auth] = store.use('auth');
+  const [auth] = store.use("auth");
   const router = useRouter();
 
   const isAuthenticated = !!auth?.token;
   useEffect(() => {
-    if (!isAuthenticated && router.pathname !== '/auth/login') {
-      router.push('/auth/login').then(logout);
-    } else if (isAuthenticated && router.pathname === '/auth/login') {
-      router.replace('/').then(() => {});
+    if (!isAuthenticated && router.pathname !== "/auth/login") {
+      router.push("/auth/login").then(logout);
+    } else if (isAuthenticated && router.pathname === "/auth/login") {
+      router.replace("/").then(() => {
+      });
     }
   }, [router, isAuthenticated]);
 
@@ -73,7 +76,7 @@ const AuthGuard: React.FC<WithChildren> = ({ children }) => {
 };
 
 const AuthInit: FC<WithChildren> = ({ children }) => {
-  const [auth] = store.use('auth', authHelper.getAuth());
+  const [auth] = store.use("auth", authHelper.getAuth());
   const didRequest = useRef(false);
   const [showSplashScreen, setShowSplashScreen] = useState(true);
   const router = useRouter();
@@ -84,9 +87,9 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
         setShowSplashScreen(true);
         if (!didRequest.current) {
           const { data } = await getUserByToken(apiToken);
-          console.log("I'm being called", data)
+          console.log("I'm being called", data);
           if (data) {
-            store.set('user', data);
+            store.set("user", data);
           }
         }
       } catch (error) {
