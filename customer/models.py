@@ -1,21 +1,21 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  Monta is free software: you can redistribute it and/or modify                                   -
+#  it under the terms of the GNU General Public License as published by                            -
+#  the Free Software Foundation, either version 3 of the License, or                               -
+#  (at your option) any later version.                                                             -
+#                                                                                                  -
+#  Monta is distributed in the hope that it will be useful,                                        -
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
+#  GNU General Public License for more details.                                                    -
+#                                                                                                  -
+#  You should have received a copy of the GNU General Public License                               -
+#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+# --------------------------------------------------------------------------------------------------
 
 import textwrap
 import uuid
@@ -105,6 +105,14 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
         help_text=_("Zip code"),
         blank=True,
     )
+    has_customer_portal = models.BooleanField(
+        _("Has Customer Portal?"),
+        default=False,
+        help_text=_(
+            "Designates whether this customer has the customer portal. "
+            "active or not."
+        ),
+    )
 
     class Meta:
         """
@@ -173,8 +181,8 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
             name="Default",
         )
         if (
-            not CustomerBillingProfile.objects.filter(customer=self).exists()
-            and created
+                not CustomerBillingProfile.objects.filter(customer=self).exists()
+                and created
         ):
             CustomerBillingProfile.objects.create(
                 organization=self.organization,

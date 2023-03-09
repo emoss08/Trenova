@@ -235,9 +235,9 @@ SESSION_CACHE_ALIAS = "sessions"
 # Rest Framework Configurations
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "accounts.authentication.TokenAuthentication",
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-        "accounts.authentication.TokenAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -285,4 +285,3 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Silk Configurations
 SILKY_PYTHON_PROFILER = True
-

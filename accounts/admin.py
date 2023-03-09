@@ -1,21 +1,21 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  Monta is free software: you can redistribute it and/or modify                                   -
+#  it under the terms of the GNU General Public License as published by                            -
+#  the Free Software Foundation, either version 3 of the License, or                               -
+#  (at your option) any later version.                                                             -
+#                                                                                                  -
+#  Monta is distributed in the hope that it will be useful,                                        -
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
+#  GNU General Public License for more details.                                                    -
+#                                                                                                  -
+#  You should have received a copy of the GNU General Public License                               -
+#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+# --------------------------------------------------------------------------------------------------
 
 from typing import Any
 
@@ -51,6 +51,16 @@ class ProfileInline(GenericStackedInline[models.User, models.UserProfile]):
 
     model = models.UserProfile
     fk_name = "user"
+
+
+@admin.register(models.Token)
+class TokenAdmin(admin.ModelAdmin[models.Token]):
+    """
+    Token Admin
+    """
+    model = models.Token
+    list_display = ("user", "created",)
+    search_fields = ("user", "key",)
 
 
 @admin.register(models.User)
@@ -118,11 +128,11 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         return super().get_fieldsets(request, obj) if obj else self.add_fieldsets
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: Any | None = ...,
-        change: bool = True,
-        **kwargs: Any,
+            self,
+            request: HttpRequest,
+            obj: Any | None = ...,
+            change: bool = True,
+            **kwargs: Any,
     ) -> type[ModelForm[models.User]]:
         """Get form for user admin
 
@@ -173,7 +183,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m  # type: ignore
     @csrf_protect_m  # type: ignore
     def add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: Any = None
+            self, request: HttpRequest, form_url: str = "", extra_context: Any = None
     ) -> HttpResponse:
         """The 'add' admin view for this model.
 
@@ -218,7 +228,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
 
     @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
-        self, request: HttpRequest, id: str, form_url: str = ""
+            self, request: HttpRequest, id: str, form_url: str = ""
     ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
