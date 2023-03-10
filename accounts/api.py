@@ -55,29 +55,6 @@ class UserViewSet(OrganizationMixin):
                 "profiles__user",
                 "department",
             )
-            .values(
-                "last_login",
-                "is_superuser",
-                "id",
-                "department_id",
-                "username",
-                "email",
-                "is_staff",
-                "date_joined",
-                "organization_id",
-                "profiles__user",
-                "profiles__title",
-                "profiles__first_name",
-                "profiles__last_name",
-                "profiles__profile_picture",
-                "profiles__address_line_1",
-                "profiles__address_line_2",
-                "profiles__city",
-                "profiles__state",
-                "profiles__phone_number",
-                "profiles__zip_code",
-                "profiles__is_phone_verified",
-            )
         )
 
 

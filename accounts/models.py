@@ -418,6 +418,7 @@ class JobTitle(GenericModel):
         FINANCE = "FINANCE", _("Finance")
         SAFETY = "SAFETY", _("Safety")
         SYS_ADMIN = "SYS_ADMIN", _("System Administrator")
+        TEST = "TEST", _("Test Job Function")
 
     id = models.UUIDField(
         primary_key=True,
