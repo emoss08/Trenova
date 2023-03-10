@@ -17,9 +17,9 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import axios, { AxiosResponse } from "axios";
-import { AuthModel, JobTitleModel, UserAuthModel } from "@/models/user";
-import { JOB_TITLE_URL, LOGIN_URL, VERIFY_TOKEN } from "@/utils/_links";
+import axios, { Axios, AxiosResponse } from "axios";
+import { AuthModel, JobTitleModel, UserAuthModel, UserModel } from "@/models/user";
+import { JOB_TITLE_URL, LOGIN_URL, USER_URL, VERIFY_TOKEN } from "@/utils/_links";
 
 /**
  * Send a post request to LOGIN_URL to get
@@ -55,3 +55,6 @@ export function getUserByToken(token: string): Promise<AxiosResponse<UserAuthMod
   });
 }
 
+export function getUsersList(): Promise<AxiosResponse<UserModel[]>> {
+  return axios.get<UserModel[]>(USER_URL)
+}

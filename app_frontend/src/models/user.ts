@@ -17,6 +17,8 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { bool } from "yup";
+
 export interface AuthModel {
   token: string;
 }
@@ -50,4 +52,30 @@ export interface JobTitleModel {
   name: string;
   description: string;
   job_function: string;
+}
+
+interface UserProfileModel {
+  id: string;
+  user: string;
+  title: string;
+  first_name: string;
+  last_name: string;
+  profile_picture: string | null;
+  address_line_1: string;
+  address_line_2: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  phone_number: string;
+  is_phone_verified: boolean;
+}
+export interface UserModel {
+  id: string;
+  username: string;
+  email: string;
+  profile?: UserProfileModel;
+  date_joined: string;
+  groups?: any[];
+  user_permissions?: any[];
+  count?: number;
 }

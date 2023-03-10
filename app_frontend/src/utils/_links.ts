@@ -22,3 +22,5 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL
 export const VERIFY_TOKEN = `${API_URL}/verify_token/`
 export const JOB_TITLE_URL = `${API_URL}/job_titles/`
 export const LOGIN_URL = `${API_URL}/login/`
+
+export const USER_URL = `${API_URL}/users/?limit=20&offset=0`

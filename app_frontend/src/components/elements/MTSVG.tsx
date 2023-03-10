@@ -18,7 +18,6 @@
  */
 
 import React, { ReactNode } from "react";
-import SVG from 'react-inlinesvg'
 type Props = {
   className?: string
   icon: ReactNode

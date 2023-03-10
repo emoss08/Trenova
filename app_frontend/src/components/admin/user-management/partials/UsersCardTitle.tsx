@@ -17,24 +17,22 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import UsersCardToolbar from "@/components/admin/user-management/partials/UsersCardToolbar";
-import UsersCardTitle from "@/components/admin/user-management/partials/UsersCardTitle";
-import UsersCardBody from "@/components/admin/user-management/partials/UsersCardBody";
+import { MTSVG } from "@/components/elements/MTSVG";
+import SvgGen021 from "@/components/svgs/SvgGen021";
 
-export default function UsersCard() {
+export default function UsersCardTitle() {
   return (
     <>
-      <div className="card shadow-sm">
-        <div className="card-header">
-          <UsersCardTitle />
-          <UsersCardToolbar />
-        </div>
-        <div className="card-body">
-          <UsersCardBody />
+      <div className="card-title">
+        <div className="d-flex align-items-center position-relative my-1">
+          <MTSVG icon={<SvgGen021 />} className={"svg-icon-1 position-absolute ms-6"} />
+          <input
+            type="text"
+            data-kt-user-table-filter="search"
+            className="form-control form-control-solid w-250px ps-14"
+            placeholder="Search user" />
         </div>
       </div>
-
-
     </>
-  );
+  )
 }

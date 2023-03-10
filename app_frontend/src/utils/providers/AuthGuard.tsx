@@ -109,7 +109,6 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
         setShowSplashScreen(true);
         if (!didRequest.current) {
           const { data } = await getUserByToken(apiToken);
-          console.log("I'm being called", data);
           if (data) {
             store.set("user", data);
           }
