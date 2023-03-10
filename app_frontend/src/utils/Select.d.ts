@@ -17,24 +17,16 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import UsersCardToolbar from "@/components/admin/user-management/partials/UsersCardToolbar";
-import UsersCardTitle from "@/components/admin/user-management/partials/UsersCardTitle";
-import UsersCardBody from "@/components/admin/user-management/partials/UsersCardBody";
+type OptionTypeBase = {
+  label: string;
+  value: string;
+};
 
-export default function UsersCard() {
-  return (
-    <>
-      <div className="card shadow-sm">
-        <div className="card-header">
-          <UsersCardTitle />
-          <UsersCardToolbar />
-        </div>
-        <div className="card-body">
-          <UsersCardBody />
-        </div>
-      </div>
+type OptionType<T extends string = string> = {
+  label: string;
+  value: T;
+};
 
+type OptionsType<OptionType extends OptionTypeBase = OptionTypeBase> = readonly OptionType[];
 
-    </>
-  );
-}
+type ValueType<OptionType extends OptionTypeBase = OptionTypeBase> = OptionType | OptionsType<OptionType> | null | undefined;

@@ -38,7 +38,6 @@ export function getLayout(): ILayout {
   let ls = null;
   try {
     ls = getFromLocalStorage(LAYOUT_CONFIG_KEY)
-    console.log(ls)
   } catch (error) {
     console.error("Error getting layout configuration from localStorage: ", error);
   }
