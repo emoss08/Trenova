@@ -21,10 +21,7 @@ from typing import Any
 from django.db.models import QuerySet
 from rest_framework import permissions, status
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.generics import UpdateAPIView
-from rest_framework.request import Request
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework import generics, request, response, views
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
@@ -37,7 +34,9 @@ class UserViewSet(OrganizationMixin):
 
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
-    filterset_fields = ["department__name", "is_staff"]
+    search_fields = ["username", "email", "profiles__first_name", "profiles__last_name"]
+    filterset_fields = ["department__name", "is_staff", "username"]
+    ordering_fields = "__all__"
 
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
         """Filter the queryset to only include the current user
@@ -46,19 +45,18 @@ class UserViewSet(OrganizationMixin):
             QuerySet[models.User]: Filtered queryset
         """
 
-        return (
-            self.queryset.filter(organization_id=self.request.user.organization_id)  # type: ignore
-            .select_related(
-                "organization",
-                "profiles",
-                "profiles__title",
-                "profiles__user",
-                "department",
-            )
+        return self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).select_related(
+            "organization",
+            "profiles",
+            "profiles__title",
+            "profiles__user",
+            "department",
         )
 
 
-class UpdatePasswordView(UpdateAPIView):
+class UpdatePasswordView(generics.UpdateAPIView):
     """
     An endpoint for changing password.
     """
@@ -66,7 +64,9 @@ class UpdatePasswordView(UpdateAPIView):
     throttle_scope = "auth"
     serializer_class = serializers.ChangePasswordSerializer
 
-    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def update(
+        self, request: request.Request, *args: Any, **kwargs: Any
+    ) -> response.Response:
         """Handle update requests
 
         Args:
@@ -81,7 +81,7 @@ class UpdatePasswordView(UpdateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(
+        return response.Response(
             "Password updated successfully",
             status=status.HTTP_200_OK,
         )
@@ -108,7 +108,7 @@ class JobTitleViewSet(OrganizationMixin):
         ).select_related("organization")
 
 
-class TokenVerifyView(APIView):
+class TokenVerifyView(views.APIView):
     """
     Rest API endpoint for users can verify a token
     """
@@ -116,7 +116,9 @@ class TokenVerifyView(APIView):
     permission_classes: list[Any] = []
     serializer_class = serializers.VerifyTokenSerializer
 
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def post(
+        self, request: request.Request, *args: Any, **kwargs: Any
+    ) -> response.Response:
         """Handle Post requests
         Args:
             request (Request): Request object
@@ -170,7 +172,7 @@ class TokenVerifyView(APIView):
             .get(id=token.user.id)
         )
 
-        return Response(
+        return response.Response(
             {
                 "id": user.id,
                 "username": user.username,
@@ -201,7 +203,9 @@ class TokenProvisionView(ObtainAuthToken):
     permission_classes = (permissions.AllowAny,)
     serializer_class = serializers.TokenProvisionSerializer
 
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def post(
+        self, request: request.Request, *args: Any, **kwargs: Any
+    ) -> response.Response:
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_obj = serializer.validated_data["user"]
@@ -235,7 +239,7 @@ class TokenProvisionView(ObtainAuthToken):
             token.delete()
             token = models.Token.objects.create(user=user_obj)
 
-        return Response(
+        return response.Response(
             {
                 "id": user.id,
                 "username": user.username,
