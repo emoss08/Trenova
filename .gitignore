@@ -32,3 +32,4 @@ django_config.md
 postgres
 celerybeat-schedule
 .ruff_cache
+/app_frontend/cypress
