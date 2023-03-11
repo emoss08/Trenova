@@ -22,15 +22,13 @@ import Button from "react-bootstrap/Button";
 import { Form, Modal } from "react-bootstrap";
 import SvgArr061 from "@/components/svgs/SvgArr061";
 import * as Yup from "yup";
-import { Field, useFormik } from "formik";
+import { useFormik } from "formik";
 import clsx from "clsx";
 import axios from "axios";
 import { DangerAlert } from "@/components/partials/DangerAlert";
 import SvgGen016 from "@/components/svgs/SvgGen016";
 import { toast } from "react-toastify";
-import { phoneRegex, stateChoices, zipCodeRegex } from "@/utils/helpers/FieldHelpers";
-import Select from "react-select";
-import StateSelect from "@/components/partials/fields/StateSelect";
+import { phoneRegex, State, stateChoices, zipCodeRegex } from "@/utils/helpers/FieldHelpers";
 
 type JobTitlesOptionType = {
   id: string;
@@ -89,7 +87,6 @@ export default function UsersAddModal() {
   const [loading, setLoading] = useState(false);
   const [jobTitles, setJobTitles] = useState<JobTitlesOptionType[]>([]);
   const [jobTitlesLoading, setJobTitlesLoading] = useState(false);
-  const [selectedState, setSelectedState] = useState(null);
 
   useEffect(() => {
     const fetchJobTitles = async () => {
@@ -103,7 +100,8 @@ export default function UsersAddModal() {
         setJobTitlesLoading(false);
       }
     };
-    fetchJobTitles();
+    fetchJobTitles().then(() => {
+    });
   }, []);
 
   const formik = useFormik({
@@ -119,7 +117,8 @@ export default function UsersAddModal() {
       addressLine2: "",
       city: "",
       state: "",
-      zipCode: ""
+      zipCode: "",
+      phoneNumber: ""
     },
     validationSchema: UsersSchema,
     onSubmit: async (values, { setStatus, setSubmitting }) => {
@@ -136,7 +135,8 @@ export default function UsersAddModal() {
           address_line_2: values.addressLine2,
           city: values.city,
           state: values.state,
-          zip_code: values.zipCode
+          zip_code: values.zipCode,
+          phone_number: values.phoneNumber
         }
       };
 
@@ -440,38 +440,22 @@ export default function UsersAddModal() {
               <div className="row mb-5">
                 <Form.Group className="col-md-6 fv-row fv-plugins-icon-container">
                   <Form.Label className="required fs-5 fw-semibold mb-2">State</Form.Label>
-                  <StateSelect
-                    options={
-                      stateChoices.map((state) => ({
-                        value: state.abbr,
-                        label: state.name,
-                      }))
-                    }
+                  <Form.Select
+                    {...formik.getFieldProps("state")}
                     className={clsx(
                       { "is-invalid": formik.touched.state && formik.errors.state },
                       { "is-valid": formik.touched.state && !formik.errors.state }
                     )}
-                    isSearchable={true}
-                    isClearable={true}
-                    name="state"
-                    placeholder="Select State"
-                  />
-                  {/*<Form.Select*/}
-                  {/*  {...formik.getFieldProps("state")}*/}
-                  {/*  className={clsx(*/}
-                  {/*    { "is-invalid": formik.touched.state && formik.errors.state },*/}
-                  {/*    { "is-valid": formik.touched.state && !formik.errors.state }*/}
-                  {/*  )}*/}
-                  {/*>*/}
-                  {/*  <>*/}
-                  {/*    <option value="">Select State</option>*/}
-                  {/*    {stateChoices.map((state) => (*/}
-                  {/*      <option key={state.abbr} value={state.abbr}>*/}
-                  {/*        {state.name}*/}
-                  {/*      </option>*/}
-                  {/*    ))}*/}
-                  {/*  </>*/}
-                  {/*</Form.Select>*/}
+                  >
+                    <>
+                      <option value="">Select State</option>
+                      {stateChoices.map((state: State) => (
+                        <option key={state.abbr} value={state.abbr}>
+                          {state.name}
+                        </option>
+                      ))}
+                    </>
+                  </Form.Select>
                   {formik.touched.state && formik.errors.state && (
                     <div className="fv-plugins-message-container">
                       <div className="fv-help-block">{formik.errors.state}</div>
@@ -482,7 +466,7 @@ export default function UsersAddModal() {
                   <Form.Label className="required fs-5 fw-semibold mb-2">Zip Code</Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Enter Last Name"
+                    placeholder="Enter Zip Code"
                     {...formik.getFieldProps("zipCode")}
                     className={clsx(
                       { "is-invalid": formik.touched.zipCode && formik.errors.zipCode },
@@ -495,6 +479,28 @@ export default function UsersAddModal() {
                     </div>
                   )}
                 </Form.Group>
+              </div>
+
+              {/* Phone Number Field */}
+              <div className="d-flex flex-column mb-8 fv-row">
+                <Form.Label className="d-flex align-items-center fs-6 fw-semibold mb-2">
+                  <span>Phone Number</span>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  autoComplete="off"
+                  placeholder="Enter Phone Number"
+                  {...formik.getFieldProps("phoneNumber")}
+                  className={clsx(
+                    { "is-invalid": formik.touched.phoneNumber && formik.errors.phoneNumber },
+                    { "is-valid": formik.touched.phoneNumber && !formik.errors.phoneNumber }
+                  )}
+                />
+                {formik.touched.phoneNumber && formik.errors.phoneNumber && (
+                  <div className="fv-plugins-message-container">
+                    <div className="fv-help-block">{formik.errors.phoneNumber}</div>
+                  </div>
+                )}
               </div>
 
             </div>
