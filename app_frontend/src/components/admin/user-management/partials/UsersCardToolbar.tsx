@@ -20,27 +20,26 @@
 import { MTSVG } from "@/components/elements/MTSVG";
 import SvgGen031 from "@/components/svgs/SvgGen031";
 import SvgArr078 from "@/components/svgs/SvgArr078";
-import SvgArr009 from "@/components/svgs/SvgArr009";
+import UsersAddModal from "@/components/admin/user-management/partials/UsersAddModal";
 
 export default function UsersCardToolbar() {
   return (
     <>
       <div className="card-toolbar">
         <div className="d-flex justify-content-end" data-kt-user-table-toolbar="base">
-          <button type="button" className="btn btn-light-primary me-3" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
-            <MTSVG icon={<SvgGen031 />} className={'svg-icon-2'}/>
+          <button type="button" className="btn btn-light-primary me-3" data-kt-menu-trigger="click"
+                  data-kt-menu-placement="bottom-end">
+            <MTSVG icon={<SvgGen031 />} className={"svg-icon-2"} />
             Filter
           </button>
-          <button type="button" className="btn btn-light-primary me-3" data-bs-toggle="modal" data-bs-target="#kt_modal_export_users">
-            <MTSVG icon={<SvgArr078 />} className={'svg-icon-2'}/>
+          <button type="button" className="btn btn-light-primary me-3" data-bs-toggle="modal"
+                  data-bs-target="#kt_modal_export_users">
+            <MTSVG icon={<SvgArr078 />} className={"svg-icon-2"} />
             Export
           </button>
         </div>
-        <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#kt_modal_add_user">
-          <MTSVG icon={<SvgArr009 />} className={'svg-icon-2'}/>
-          Add User
-        </button>
+        <UsersAddModal />
       </div>
     </>
-  )
+  );
 }

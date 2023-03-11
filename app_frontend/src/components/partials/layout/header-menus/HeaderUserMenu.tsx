@@ -25,12 +25,15 @@ import { logout } from "@/utils/providers/AuthGuard";
 import Link from "next/link";
 import Image from "next/image";
 import a3001 from "../../../../../public/media/avatars/300-1.jpg";
+import { Dropdown } from "react-bootstrap";
+import { MTSVG } from "@/components/elements/MTSVG";
+import SvgCod001 from "@/components/svgs/SvgCod001";
 
 
 const HeaderUserMenu: FC = () => {
   const [user] = authStore.use("user");
-
   return (
+
     <div
       className="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-primary fw-bold py-4 fs-6 w-275px"
       data-mt-menu="true"
