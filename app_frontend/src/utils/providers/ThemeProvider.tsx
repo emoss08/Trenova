@@ -17,6 +17,7 @@
 
 import React, {createContext, useContext, useEffect, useState} from 'react'
 import { toAbsoluteUrl } from "@/utils/helpers/AssetHelpers";
+import { ToastContainer } from "react-toastify";
 
 export type ThemeModeType = 'dark' | 'light' | 'system'
 
@@ -92,6 +93,20 @@ const ThemeModeProvider = ({children}: {children: React.ReactNode}) => {
       localStorage.setItem(themeModeLSKey, updatedMode)
     }
 
+    if (updatedMode === 'dark') {
+      console.log('add dark stylesheet');
+      const darkStylesheet = document.createElement('link');
+      darkStylesheet.rel = 'stylesheet';
+      darkStylesheet.href = 'https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css';
+      document.head.appendChild(darkStylesheet);
+    } else {
+      console.log('remove dark stylesheet');
+      const darkStylesheet = document.head.querySelector('link[href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css"]');
+      if (darkStylesheet) {
+        document.head.removeChild(darkStylesheet);
+      }
+    }
+
     if (saveInLocalStorage) {
       document.documentElement.setAttribute('data-bs-theme', updatedMode)
     }
@@ -104,6 +119,8 @@ const ThemeModeProvider = ({children}: {children: React.ReactNode}) => {
     }
   }
 
+  const themeString = mode === "light" ? "light" : "dark";
+
   useEffect(() => {
     updateMode(mode, true)
     updateMenuMode(menuMode, true)
@@ -112,6 +129,7 @@ const ThemeModeProvider = ({children}: {children: React.ReactNode}) => {
 
   return (
     <ThemeModeContext.Provider value={{mode, menuMode, updateMode, updateMenuMode}}>
+      <ToastContainer theme={themeString} />
       {children}
     </ThemeModeContext.Provider>
   )
