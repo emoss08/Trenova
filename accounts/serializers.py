@@ -76,6 +76,11 @@ class JobTitleSerializer(GenericSerializer):
         fields = ["id", "organization", "name", "description", "is_active"]
 
 
+class JobTitleListingField(serializers.RelatedField):
+    def to_representation(self, value):
+        return value.name
+
+
 class UserProfileSerializer(GenericSerializer):
     """
     User Profile Serializer
@@ -87,13 +92,18 @@ class UserProfileSerializer(GenericSerializer):
         allow_null=True,
     )
 
+    title_name = JobTitleListingField(
+        source="title",
+        read_only=True,
+    )
+
     class Meta:
         """
         Metaclass for UserProfileSerializer
         """
 
         model = models.UserProfile
-        extra_fields = ("title",)
+        extra_fields = ("title", "title_name")
         extra_read_only_fields = (
             "id",
             "user",
