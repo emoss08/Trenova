@@ -23,11 +23,10 @@ import * as Yup from "yup";
 import clsx from "clsx";
 import { useFormik } from "formik";
 import Link from "next/link";
-import { getJobTitle, getUserByToken, login } from "@/utils/_requests";
+import { getUserByToken, login } from "@/utils/_requests";
 import { authStore, saveAuth } from "@/utils/providers/AuthGuard";
-import { createGlobalStore } from "@/utils/zustand";
-import { JobTitleModel } from "@/models/user";
-import { jobStore } from "@/utils/stores";
+import Button from "react-bootstrap/Button";
+import { Form } from "react-bootstrap";
 
 const loginSchema = Yup.object().shape({
   username: Yup.string()
@@ -58,11 +57,13 @@ export function Login() {
         const { data: auth } = await login(values.username, values.password);
         saveAuth(auth);
         const { data: currentUser } = await getUserByToken(auth.token);
-        console.log("i'm being called", currentUser)
         authStore.set('user', currentUser);
       } catch (error) {
         saveAuth(undefined);
         setStatus("The login detail is incorrect");
+        setSubmitting(false);
+        setLoading(false);
+      } finally {
         setSubmitting(false);
         setLoading(false);
       }
@@ -70,7 +71,7 @@ export function Login() {
   });
 
   return (
-    <form
+    <Form
       className="form w-100"
       onSubmit={formik.handleSubmit}
       noValidate
@@ -95,17 +96,14 @@ export function Login() {
       )}
 
       {/* begin::Form group */}
-      <div className="fv-row mb-10">
-        <label className="form-label fs-6 fw-bolder text-dark">Username</label>
-        <input
+      <Form.Group className="fv-row mb-10">
+        <Form.Label className="form-label fs-6 fw-bolder text-dark">Username</Form.Label>
+        <Form.Control
           placeholder="Username"
           {...formik.getFieldProps("username")}
           className={clsx(
-            "form-control form-control-lg form-control-solid",
             { "is-invalid": formik.touched.username && formik.errors.username },
-            {
-              "is-valid": formik.touched.username && !formik.errors.username
-            }
+            {"is-valid": formik.touched.username && !formik.errors.username}
           )}
           type="text"
           name="username"
@@ -116,32 +114,21 @@ export function Login() {
             <span role="alert">{formik.errors.username}</span>
           </div>
         )}
-      </div>
-      <div className="fv-row mb-10">
+      </Form.Group>
+      <Form.Group className="fv-row mb-10">
         <div className="d-flex justify-content-between mt-n5">
           <div className="d-flex flex-stack mb-2">
-            <label className="form-label fw-bolder text-dark fs-6 mb-0">Password</label>
-            <Link
-              href="/auth/forgot-password"
-              className="link-primary fs-6 fw-bolder"
-              style={{ marginLeft: "5px" }}
-            >
-              Forgot Password ?
-            </Link>
+            <Form.Label className="form-label fw-bolder text-dark fs-6 mb-0">Password</Form.Label>
           </div>
         </div>
-        <input
+        <Form.Control
           type="password"
           autoComplete="off"
           {...formik.getFieldProps("password")}
           className={clsx(
-            "form-control form-control-lg form-control-solid",
-            {
-              "is-invalid": formik.touched.password && formik.errors.password
+            {"is-invalid": formik.touched.password && formik.errors.password
             },
-            {
-              "is-valid": formik.touched.password && !formik.errors.password
-            }
+            {"is-valid": formik.touched.password && !formik.errors.password}
           )}
         />
         {formik.touched.password && formik.errors.password && (
@@ -151,12 +138,12 @@ export function Login() {
             </div>
           </div>
         )}
-      </div>
+      </Form.Group>
       {/* end::Form group */}
 
       {/* begin::Action */}
       <div className="text-center">
-        <button
+        <Button
           type="submit"
           id="mt_sign_in_submit"
           className="btn btn-lg btn-primary w-100 mb-5"
@@ -169,9 +156,9 @@ export function Login() {
               <span className="spinner-border spinner-border-sm align-middle ms-2"></span>
             </span>
           )}
-        </button>
+        </Button>
       </div>
       {/* end::Action */}
-    </form>
+    </Form>
   );
 }

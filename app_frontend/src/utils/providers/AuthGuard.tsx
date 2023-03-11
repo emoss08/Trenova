@@ -17,13 +17,12 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { FC, useEffect, useRef, useState } from "react";
+import React, { FC, PropsWithChildren, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
 import { WithChildren } from "@/utils/types";
 import { AuthModel, UserAuthModel } from "@/models/user";
 import * as authHelper from "@/utils/auth";
 import { getUserByToken } from "../_requests";
-import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import { createGlobalStore } from "@/utils/zustand";
 import { jobStore } from "@/utils/stores";
 
@@ -53,7 +52,7 @@ export function saveAuth(auth: AuthModel | undefined) {
 /** List of routes that should be public and accessible without authentication. */
 const PUBLIC_PATHS = ["/auth/login"];
 
-const AuthGuard: React.FC<WithChildren> = ({ children }) => {
+const AuthGuard: React.FC<PropsWithChildren> = ({ children }) => {
   const [auth, setAuth] = store.use("auth");
   const router = useRouter();
 
@@ -100,13 +99,11 @@ const AuthGuard: React.FC<WithChildren> = ({ children }) => {
 const AuthInit: FC<WithChildren> = ({ children }) => {
   const [auth] = store.use("auth", authHelper.getAuth());
   const didRequest = useRef(false);
-  const [showSplashScreen, setShowSplashScreen] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const requestUser = async (apiToken: string) => {
       try {
-        setShowSplashScreen(true);
         if (!didRequest.current) {
           const { data } = await getUserByToken(apiToken);
           if (data) {
@@ -118,8 +115,6 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
         if (!didRequest.current) {
           logout();
         }
-      } finally {
-        setShowSplashScreen(false);
       }
       return () => (didRequest.current = true);
     };
@@ -129,10 +124,9 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
       return;
     }
 
-    setShowSplashScreen(false);
   }, [auth, router]);
 
-  return showSplashScreen ? <LayoutSplashScreen /> : <>{children}</>;
+  return <>{children}</>;
 };
 
 export { AuthInit, AuthGuard };

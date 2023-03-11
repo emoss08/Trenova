@@ -56,7 +56,7 @@ const AsideToolbar = () => {
                 data-mt-menu-placement="bottom-start"
                 data-mt-menu-overflow="false"
               >
-                <MTSVG icon={<SvgCod001 />} className="svg-icon-muted svg-icon-12" />
+                <MTSVG icon={<SvgCod001 />} className="svg-icon-muted svg-icon-1" />
               </a>
 
               <HeaderUserMenu />

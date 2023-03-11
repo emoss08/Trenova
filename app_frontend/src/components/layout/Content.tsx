@@ -34,7 +34,7 @@ const Content: FC<PropsWithChildren> = ({children}) => {
   }, [location])
 
   return (
-    <div id='mt_content_container' className={clsx(classes.contentContainer.join(' '))}>
+    <div id='mt_content_container' className={'container-xxl'}>
       {children}
     </div>
   )
