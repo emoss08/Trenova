@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { UserModel } from "@/models/user";
 import axios from "axios";
 import { USER_URL } from "@/utils/_links";
@@ -24,8 +24,8 @@ import { UsersBodyContentLoader } from "@/components/admin/user-management/parti
 import Table from "react-bootstrap/Table";
 import Link from "next/link";
 import { Dropdown } from "react-bootstrap";
-import Swal from 'sweetalert2';
-import { swalBs } from "@/components/partials/SwalBs";
+import Swal, { SweetAlertResult } from "sweetalert2";
+
 
 const UsersCardBody = () => {
   const [users, setUsers] = useState<UserModel[]>([]);
@@ -34,9 +34,37 @@ const UsersCardBody = () => {
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    setIsLoading(true);
 
+  const formatDate = (dateString: string) => {
+    const date = parseISO(dateString);
+    return formatDistanceToNow(date, { addSuffix: true });
+  };
+
+  const lastLoginClassName = (lastLogin: string | null) => {
+    if (!lastLogin) {
+      return "badge badge-light-danger fw-bold";
+    }
+
+    const lastLoginDate = parseISO(lastLogin);
+
+    if (isBefore(lastLoginDate, subDays(new Date(), 7))) {
+      return "badge badge-light-warning fw-bold";
+    }
+
+    return "badge badge-light-success fw-bold";
+  };
+
+  const handlePageChange = (selectedItem: { selected: number }) => {
+    setPage(selectedItem.selected);
+  };
+
+  const handleLimitChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setLimit(Number(event.target.value));
+    setPage(0); // Reset the page to 0 when the limit changes
+  };
+
+  const fetchUsers = useCallback(() => {
+    setIsLoading(true);
     axios
       .get(USER_URL, {
         params: {
@@ -55,74 +83,49 @@ const UsersCardBody = () => {
       });
   }, [limit, page]);
 
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   const handleActionSelect = (action: string, userId: string) => {
     console.log(`Selected action: ${action} for user with id ${userId}`);
-    if (action === 'edit') {
-      console.log('Edit user');
-    } else if (action === 'delete') {
-      swalBs.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-      }).then((result) => {
-        if (result.isConfirmed) {
-          axios.delete('http://localhost:8000/api/users/' + userId + '/')
-            .then(() => {
-              swalBs.fire(
-                'Deleted!',
-                'User has been deleted.',
-                'success'
-              )
-            })
-            .catch((error) => {
-              console.error(error);
-              swalBs.fire(
-                'Error',
-                'There was an error deleting the user.',
-                'error'
-              )
-            });
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
-          swalBs.fire(
-            'Cancelled',
-            'Operation cancelled.',
-            'error'
-          )
+    if (action === "edit") {
+      console.log("Edit user");
+    } else if (action === "delete") {
+      const handleDelete = async (): Promise<void> => {
+        try {
+          await axios.delete(`http://localhost:8000/api/users/${userId}/`);
+          Swal
+            .fire("Deleted!", "User has been deleted.", "success")
+            .then(
+            () => fetchUsers()
+          );
+        } catch (error) {
+          console.error(error);
+          Swal.fire("Error", "There was an error deleting the user.", "error");
         }
-      })
-      console.log('Delete user');
+      };
+
+      Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+        cancelButtonText: "No, cancel!",
+        reverseButtons: true,
+        customClass: {
+          confirmButton: "btn btn-danger",
+          cancelButton: "btn btn-outline-secondary ms-1"
+        }
+      }).then((result: SweetAlertResult) => {
+        if (result.isConfirmed) {
+          handleDelete();
+        } else {
+          Swal.fire("Cancelled", "Operation cancelled.", "info");
+        }
+      });
     }
-  };
-
-
-  const formatDate = (dateString: string) => {
-    const date = parseISO(dateString);
-    return formatDistanceToNow(date, { addSuffix: true });
-  };
-
-  const lastLoginClassName = (lastLogin: string | null) => {
-    if (!lastLogin) {
-      return 'badge badge-light-danger fw-bold';
-    }
-
-    const lastLoginDate = parseISO(lastLogin);
-
-    if (isBefore(lastLoginDate, subDays(new Date(), 7))) {
-      return 'badge badge-light-warning fw-bold';
-    }
-
-    return 'badge badge-light-success fw-bold';
-  };
-
-  const handlePageChange = (selectedItem: { selected: number }) => {
-    setPage(selectedItem.selected);
-  };
-
-  const handleLimitChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setLimit(Number(event.target.value));
-    setPage(0); // Reset the page to 0 when the limit changes
   };
 
   return (
@@ -181,37 +184,27 @@ const UsersCardBody = () => {
                 <td>{user.profile?.title_name}</td>
                 <td>
                   <div className={lastLoginClassName(user.last_login)}>
-                    {user.last_login ? formatDate(user.last_login) : 'Never'}
+                    {user.last_login ? formatDate(user.last_login) : "Never"}
                   </div>
                 </td>
 
                 <td>{formatDate(user.date_joined)}</td>
                 <td className={"text-end"}>
                   <Dropdown>
-                    <Dropdown.Toggle variant='' className='btn btn-light btn-active-light-primary btn-sm' id={'users-action-dropdown'}>
+                    <Dropdown.Toggle variant="" className="btn btn-light btn-active-light-primary btn-sm"
+                                     id={"users-action-dropdown"}>
                       Actions
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu>
-                      <Dropdown.Item eventKey="list" onClick={() => handleActionSelect("list", user.id)}>List</Dropdown.Item>
-                      <Dropdown.Item eventKey="edit" onClick={() => handleActionSelect("edit", user.id)}>Edit</Dropdown.Item>
-                      <Dropdown.Item eventKey="delete" onClick={() => handleActionSelect("delete", user.id)}>Delete</Dropdown.Item>
+                      <Dropdown.Item eventKey="list"
+                                     onClick={() => handleActionSelect("list", user.id)}>List</Dropdown.Item>
+                      <Dropdown.Item eventKey="edit"
+                                     onClick={() => handleActionSelect("edit", user.id)}>Edit</Dropdown.Item>
+                      <Dropdown.Item eventKey="delete"
+                                     onClick={() => handleActionSelect("delete", user.id)}>Delete</Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
-                  {/*<a href="#"*/}
-                  {/*   className="btn btn-light btn-active-light-primary btn-sm"*/}
-                  {/*   data-kt-menu-trigger="click"*/}
-                  {/*   data-kt-menu-placement="bottom-end">*/}
-                  {/*  Actions*/}
-                  {/*  <span className="svg-icon svg-icon-5 m-0">*/}
-                  {/*    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">*/}
-                  {/*      <path*/}
-                  {/*        d="M11.4343 12.7344L7.25 8.55005C6.83579 8.13583 6.16421 8.13584 5.75 8.55005C5.33579 8.96426 5.33579 9.63583 5.75 10.05L11.2929 15.5929C11.6834 15.9835 12.3166 15.9835 12.7071 15.5929L18.25 10.05C18.6642 9.63584 18.6642 8.96426 18.25 8.55005C17.8358 8.13584 17.1642 8.13584 16.75 8.55005L12.5657 12.7344C12.2533 13.0468 11.7467 13.0468 11.4343 12.7344Z"*/}
-                  {/*        fill="currentColor">*/}
-                  {/*      </path>*/}
-                  {/*  </svg>*/}
-                  {/*  </span>*/}
-                  {/*</a>*/}
                 </td>
               </tr>
             ))}
