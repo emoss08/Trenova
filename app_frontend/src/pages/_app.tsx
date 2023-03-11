@@ -14,7 +14,6 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-// f1416c
 
 
 import "nouislider/dist/nouislider.css";
@@ -36,8 +35,6 @@ import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import { ToastContainer } from "react-toastify";
 import { ThemeModeProvider, useThemeMode } from "@/utils/providers/ThemeProvider";
 import { MasterInit } from "@/utils/MasterInit";
-import KeepAliveConnection from "@/utils/components/KeepAliveConnection";
-
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -48,8 +45,7 @@ const poppins = Poppins({
 export default function App({ Component, pageProps }: AppProps) {
   setupAxios(axios);
   const [isMounted, setIsMounted] = React.useState(false);
-  const { mode } = useThemeMode();
-  const themeString = mode === "light" ? "light" : "dark";
+
 
   useEffect(() => {
     setIsMounted(true);
@@ -67,8 +63,8 @@ export default function App({ Component, pageProps }: AppProps) {
             <AuthGuard>
               <>
                 <main className={poppins.className}>
+
                   <Component {...pageProps} />
-                  <ToastContainer theme={themeString} />
                   <MasterInit />
                 </main>
               </>

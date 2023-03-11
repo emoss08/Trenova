@@ -3,18 +3,16 @@
  *
  * This file is part of Monta.
  *
- * Monta is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Monta is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
  */
 import React, { useEffect, useState } from "react";
 import { UserModel } from "@/models/user";
@@ -25,7 +23,9 @@ import MontaPagination from "@/components/partials/MontaPagination";
 import { UsersBodyContentLoader } from "@/components/admin/user-management/partials/UsersBodyContentLoader";
 import Table from "react-bootstrap/Table";
 import Link from "next/link";
-import { Badge } from "react-bootstrap";
+import { Dropdown } from "react-bootstrap";
+import Swal from 'sweetalert2';
+import { swalBs } from "@/components/partials/SwalBs";
 
 const UsersCardBody = () => {
   const [users, setUsers] = useState<UserModel[]>([]);
@@ -54,6 +54,48 @@ const UsersCardBody = () => {
         setIsLoading(false);
       });
   }, [limit, page]);
+
+  const handleActionSelect = (action: string, userId: string) => {
+    console.log(`Selected action: ${action} for user with id ${userId}`);
+    if (action === 'edit') {
+      console.log('Edit user');
+    } else if (action === 'delete') {
+      swalBs.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios.delete('http://localhost:8000/api/users/' + userId + '/')
+            .then(() => {
+              swalBs.fire(
+                'Deleted!',
+                'User has been deleted.',
+                'success'
+              )
+            })
+            .catch((error) => {
+              console.error(error);
+              swalBs.fire(
+                'Error',
+                'There was an error deleting the user.',
+                'error'
+              )
+            });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          swalBs.fire(
+            'Cancelled',
+            'Operation cancelled.',
+            'error'
+          )
+        }
+      })
+      console.log('Delete user');
+    }
+  };
+
 
   const formatDate = (dateString: string) => {
     const date = parseISO(dateString);
@@ -145,18 +187,31 @@ const UsersCardBody = () => {
 
                 <td>{formatDate(user.date_joined)}</td>
                 <td className={"text-end"}>
-                  <a href="#" className="btn btn-light btn-active-light-primary btn-sm" data-kt-menu-trigger="click"
-                     data-kt-menu-placement="bottom-end">
-                    Actions
-                    <span className="svg-icon svg-icon-5 m-0">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                          d="M11.4343 12.7344L7.25 8.55005C6.83579 8.13583 6.16421 8.13584 5.75 8.55005C5.33579 8.96426 5.33579 9.63583 5.75 10.05L11.2929 15.5929C11.6834 15.9835 12.3166 15.9835 12.7071 15.5929L18.25 10.05C18.6642 9.63584 18.6642 8.96426 18.25 8.55005C17.8358 8.13584 17.1642 8.13584 16.75 8.55005L12.5657 12.7344C12.2533 13.0468 11.7467 13.0468 11.4343 12.7344Z"
-                          fill="currentColor">
-                        </path>
-                    </svg>
-                    </span>
-                  </a>
+                  <Dropdown>
+                    <Dropdown.Toggle variant='' className='btn btn-light btn-active-light-primary btn-sm' id={'users-action-dropdown'}>
+                      Actions
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                      <Dropdown.Item eventKey="list" onClick={() => handleActionSelect("list", user.id)}>List</Dropdown.Item>
+                      <Dropdown.Item eventKey="edit" onClick={() => handleActionSelect("edit", user.id)}>Edit</Dropdown.Item>
+                      <Dropdown.Item eventKey="delete" onClick={() => handleActionSelect("delete", user.id)}>Delete</Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                  {/*<a href="#"*/}
+                  {/*   className="btn btn-light btn-active-light-primary btn-sm"*/}
+                  {/*   data-kt-menu-trigger="click"*/}
+                  {/*   data-kt-menu-placement="bottom-end">*/}
+                  {/*  Actions*/}
+                  {/*  <span className="svg-icon svg-icon-5 m-0">*/}
+                  {/*    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">*/}
+                  {/*      <path*/}
+                  {/*        d="M11.4343 12.7344L7.25 8.55005C6.83579 8.13583 6.16421 8.13584 5.75 8.55005C5.33579 8.96426 5.33579 9.63583 5.75 10.05L11.2929 15.5929C11.6834 15.9835 12.3166 15.9835 12.7071 15.5929L18.25 10.05C18.6642 9.63584 18.6642 8.96426 18.25 8.55005C17.8358 8.13584 17.1642 8.13584 16.75 8.55005L12.5657 12.7344C12.2533 13.0468 11.7467 13.0468 11.4343 12.7344Z"*/}
+                  {/*        fill="currentColor">*/}
+                  {/*      </path>*/}
+                  {/*  </svg>*/}
+                  {/*  </span>*/}
+                  {/*</a>*/}
                 </td>
               </tr>
             ))}

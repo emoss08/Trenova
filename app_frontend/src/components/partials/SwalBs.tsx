@@ -1,4 +1,4 @@
-/*!
+/*
  * COPYRIGHT(c) 2023 MONTA
  *
  * This file is part of Monta.
@@ -15,37 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-//
-// Plugins
-//
+import Swal from "sweetalert2";
 
-// Import Dependencies
-@import 'root';
-@import 'prismjs';
-@import 'fslightbox';
-@import 'select2';
-@import 'formvalidation';
-@import 'daterangepicker';
-@import 'flatpickr';
-@import 'tagify';
-@import 'bootstrap-maxlength';
-@import 'ckeditor';
-@import 'datatables';
-@import 'dropzone';
-@import 'gmaps';
-@import 'nouislider';
-@import 'quill';
-@import 'recaptcha';
-@import 'sweetalert2';
-@import '@sweetalert2/theme-dark/dark.scss';
-@import 'tinymce';
-@import 'toastr';
-@import 'draggable';
-@import 'apexcharts';
-@import 'leaflet';
-@import 'tiny-slider';
-@import 'fullcalendar';
-@import 'jkanban';
-@import 'jstree';
-@import 'vis-timeline';
-@import 'tempus-dominus';
+export const swalBs = Swal.mixin({
+  customClass: {
+    confirmButton: 'btn btn-success',
+    cancelButton: 'btn btn-danger'
+  },
+  buttonsStyling: false,
+  willOpen(popup: HTMLElement) {
+  }
+})
