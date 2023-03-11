@@ -26,7 +26,7 @@ const Footer: FC = () => {
   return (
     <div className="footer py-4 d-flex flex-lg-column" id="mt_footer">
       <div
-        className={`${classes.footerContainer} d-flex flex-column flex-md-row align-items-center justify-content-between`}
+        className={` container-fluid  d-flex flex-column flex-md-row align-items-center justify-content-between`}
       >
         <div className="text-dark order-2 order-md-1">
           <span className="text-muted fw-bold me-2">{new Date().getFullYear()} &copy;</span>

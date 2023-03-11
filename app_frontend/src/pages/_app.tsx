@@ -36,9 +36,8 @@ import { AuthInit, AuthGuard } from "@/utils/providers/AuthGuard";
 import React, { Suspense, useEffect } from "react";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
 import { ToastContainer } from "react-toastify";
-import { ThemeModeProvider } from "@/utils/providers/ThemeProvider";
+import { ThemeModeProvider, useThemeMode } from "@/utils/providers/ThemeProvider";
 import { MasterInit } from "@/utils/MasterInit";
-import { useRouter } from "next/router";
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
@@ -49,6 +48,8 @@ const poppins = Poppins({
 export default function App({ Component, pageProps }: AppProps) {
   setupAxios(axios);
   const [isMounted, setIsMounted] = React.useState(false);
+  const { mode } = useThemeMode();
+  const themeString = mode === "light" ? "light" : "dark";
 
   useEffect(() => {
     setIsMounted(true);
@@ -64,15 +65,17 @@ export default function App({ Component, pageProps }: AppProps) {
         <ThemeModeProvider>
           <LayoutProvider>
             <AuthGuard>
-              <style jsx global>{`
-                html {
-                  font-family: ${poppins.style.fontFamily};
-                }
-              `}</style>
+              {/*<style jsx global>{`*/}
+              {/*  html {*/}
+              {/*    font-family: ${poppins.style.fontFamily};*/}
+              {/*  }*/}
+              {/*`}</style>*/}
               <>
-                <Component {...pageProps} />
-                <ToastContainer />
-                <MasterInit />
+                <main className={poppins.className} >
+                  <Component {...pageProps} />
+                  <ToastContainer theme={themeString} />
+                  <MasterInit />
+                </main>
               </>
             </AuthGuard>
           </LayoutProvider>
