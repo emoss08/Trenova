@@ -53,9 +53,11 @@
     "react-table": "^7.7.0",
     "react-toastify": "^9.1.1",
     "socicon": "^3.0.5",
+    "socket.io-client": "^4.6.1",
     "styled-components": "^5.3.8",
     "swr": "^2.0.4",
     "topbar": "^2.0.1",
+    "websocket": "^1.0.34",
     "yup": "^1.0.2",
     "zustand": "^4.3.6"
   },
