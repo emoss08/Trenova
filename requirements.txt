@@ -57,3 +57,4 @@ types-redis==4.5.1.4
 weasyprint==58.1
 whitenoise==6.4.0
 xhtml2pdf==0.2.9
+channels_redis==4.0.0

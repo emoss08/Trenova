@@ -15,24 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import os
-
-from art import *
-from channels.routing import ProtocolTypeRouter, URLRouter
-from django.core.asgi import get_asgi_application
-from rich.console import Console
-from organization.routing import websocket_urlpatterns
-
-console = Console()
-logo = text2art("MONTA", font="Larry 3D")  # type: ignore
-console.print(logo, style="bold purple")
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-
-django_asgi_app = get_asgi_application()
-application = ProtocolTypeRouter(
-    {
-        "http": django_asgi_app,
-        "websocket": URLRouter(websocket_urlpatterns)
-    }
-)
+from organization.consumers import KeepAliveConsumer
+from django.urls import re_path
+websocket_urlpatterns = [
+    re_path(r'ws/keepalive/$', KeepAliveConsumer.as_asgi()),
+]
