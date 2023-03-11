@@ -50,7 +50,6 @@ const MasterLayout: FC<PropsWithChildren> = ({ children }) => {
           <div id="mt_content" className="content d-flex flex-column flex-column-fluid">
             <div className="post d-flex flex-column-fluid" id="mt_post">
               <Content>
-                {/* Replace <Outlet /> with the children prop */}
                 {children}
               </Content>
             </div>
@@ -59,18 +58,8 @@ const MasterLayout: FC<PropsWithChildren> = ({ children }) => {
         </div>
       </div>
 
-      {/* begin:: Drawers */}
-      {/*<ActivityDrawer />*/}
-      {/*<RightToolbar />*/}
-      {/*<DrawerMessenger />*/}
-      {/* end:: Drawers */}
-
-      {/* begin:: Modals */}
-      {/*<InviteUsers />*/}
-      {/*<UpgradePlan />*/}
-      {/* end:: Modals */}
       <ScrollTop />
-      <KeepAliveConnection />
+      {/*<KeepAliveConnection />*/}
     </PageDataProvider>
   );
 };
