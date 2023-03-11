@@ -31,6 +31,7 @@ import SvgGen018 from "@/components/svgs/SvgGen018";
 import SvgCom011 from "../svgs/SvgCom011";
 import SvgArr012 from "../svgs/SvgArr012";
 import { authStore } from "@/utils/providers/AuthGuard";
+import Button from 'react-bootstrap/Button';
 
 const AccountHeader: React.FC = () => {
   const router = useRouter();
@@ -128,14 +129,14 @@ const AccountHeader: React.FC = () => {
                   Hire Me
                 </a>
                 <div className="me-0">
-                  <button
+                  <Button
                     className="btn btn-sm btn-icon btn-bg-light btn-active-color-primary"
                     data-kt-menu-trigger="click"
                     data-kt-menu-placement="bottom-end"
                     data-kt-menu-flip="top-end"
                   >
                     <i className="bi bi-three-dots fs-3"></i>
-                  </button>
+                  </Button>
                   <Dropdown1 />
                 </div>
               </div>

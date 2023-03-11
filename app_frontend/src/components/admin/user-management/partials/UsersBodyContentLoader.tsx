@@ -26,21 +26,35 @@ export const UsersBodyContentLoader = () => {
                    foregroundColor={"#a19d9d"}
                    backgroundOpacity={0.1}
                    foregroundOpacity={0.3}>
-      <circle cx="30" cy="20" r="15" />
-      <rect x="50" y="10" rx="4" ry="4" width="375" height="8" />
-      <rect x="50" y="20" rx="3" ry="3" width="425" height="10" />
+      <rect x="0" y="0" rx="4" ry="4" width="60" height="8" />
+      <rect x="100" y="0" rx="3" ry="3" width="60" height="8" />
+      <rect x="200" y="0" rx="3" ry="3" width="60" height="8" />
+      <rect x="300" y="0" rx="3" ry="3" width="60" height="8" />
+      <rect x="400" y="0" rx="3" ry="3" width="60" height="8" />
 
-      <circle cx="30" cy="60" r="15" />
-      <rect x="50" y="50" rx="4" ry="4" width="375" height="8" />
-      <rect x="50" y="60" rx="3" ry="3" width="425" height="10" />
+      <circle cx="15" cy="40" r="15" />
+      <rect x="32" y="30" rx="4" ry="4" width="50" height="8" />
+      <rect x="32" y="42" rx="4" ry="4" width="55" height="5" />
+      <rect x="100" y="35" rx="3" ry="3" width="60" height="8" />
+      <rect x="200" y="35" rx="3" ry="3" width="60" height="8" />
+      <rect x="300" y="35" rx="3" ry="3" width="60" height="8" />
+      <rect x="400" y="35" rx="3" ry="3" width="60" height="8" />
 
-      <circle cx="30" cy="100" r="15" />
-      <rect x="50" y="90" rx="4" ry="4" width="375" height="8" />
-      <rect x="50" y="100" rx="3" ry="3" width="425" height="10" />
+      <circle cx="15" cy="80" r="15" />
+      <rect x="32" y="70" rx="4" ry="4" width="50" height="8" />
+      <rect x="32" y="82" rx="4" ry="4" width="55" height="5" />
+      <rect x="100" y="75" rx="3" ry="3" width="60" height="8" />
+      <rect x="200" y="75" rx="3" ry="3" width="60" height="8" />
+      <rect x="300" y="75" rx="3" ry="3" width="60" height="8" />
+      <rect x="400" y="75" rx="3" ry="3" width="60" height="8" />
 
-      <circle cx="30" cy="140" r="15" />
-      <rect x="50" y="130" rx="4" ry="4" width="375" height="8" />
-      <rect x="50" y="140" rx="3" ry="3" width="425" height="10" />
+      <circle cx="15" cy="120" r="15" />
+      <rect x="32" y="110" rx="4" ry="4" width="50" height="8" />
+      <rect x="32" y="122" rx="4" ry="4" width="55" height="5" />
+      <rect x="100" y="115" rx="3" ry="3" width="60" height="8" />
+      <rect x="200" y="115" rx="3" ry="3" width="60" height="8" />
+      <rect x="300" y="115" rx="3" ry="3" width="60" height="8" />
+      <rect x="400" y="115" rx="3" ry="3" width="60" height="8" />
 
     </ContentLoader>
   );

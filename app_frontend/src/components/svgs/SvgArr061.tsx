@@ -17,22 +17,13 @@
  * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import UsersCardToolbar from "@/components/admin/user-management/partials/UsersCardToolbar";
-import UsersCardTitle from "@/components/admin/user-management/partials/UsersCardTitle";
-import UsersCardBody from "@/components/admin/user-management/partials/UsersCardBody";
+import * as React from "react";
 
-export default function UsersCard() {
-  return (
-    <>
-      <div className="card shadow-sm">
-        <div className="card-header">
-          <UsersCardTitle />
-          <UsersCardToolbar />
-        </div>
-        <div className="card-body">
-          <UsersCardBody />
-        </div>
-      </div>
-    </>
-  );
-}
+const SvgArr061 = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect opacity="0.5" x="6" y="17.3137" width="16" height="2" rx="1" transform="rotate(-45 6 17.3137)"
+          fill="currentColor" />
+    <rect x="7.41422" y="6" width="16" height="2" rx="1" transform="rotate(45 7.41422 6)" fill="currentColor" />
+  </svg>
+);
+export default SvgArr061;

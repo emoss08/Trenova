@@ -58,3 +58,7 @@ export function getUserByToken(token: string): Promise<AxiosResponse<UserAuthMod
 export function getUsersList(): Promise<AxiosResponse<UserModel[]>> {
   return axios.get<UserModel[]>(USER_URL)
 }
+
+export function getUser(id: string): Promise<AxiosResponse<UserModel>> {
+  return axios.get<UserModel>(`${USER_URL}${id}/`)
+}

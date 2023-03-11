@@ -68,14 +68,18 @@ interface UserProfileModel {
   zip_code: string;
   phone_number: string;
   is_phone_verified: boolean;
+  title_name: string;
 }
+
 export interface UserModel {
   id: string;
   username: string;
+  last_login: string;
   email: string;
   profile?: UserProfileModel;
   date_joined: string;
   groups?: any[];
   user_permissions?: any[];
   count?: number;
+  [key: string]: any; // Add index signature
 }
