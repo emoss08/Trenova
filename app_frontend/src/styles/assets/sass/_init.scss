@@ -1,3 +1,22 @@
+/*!
+ * COPYRIGHT(c) 2023 MONTA
+ *
+ * This file is part of Monta.
+ *
+ * Monta is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Monta is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 //
 // Main init file of global bootstrap and theme functions, mixins, variables and config
 //
@@ -27,3 +46,44 @@
 
 // Custom layout variables
 @import 'layout/variables';
+
+:root {
+  --bs-select-padding-y: #{$form-select-padding-y}; //
+  --bs-select-padding-x: #{$form-select-padding-x}; //
+  --bs-select-font-size: #{$form-select-font-size}; //
+  --bs-select-indicator-padding: #{$form-select-indicator-padding};
+  --bs-select-font-weight: #{$form-select-font-weight}; //
+  --bs-select-line-height: #{$form-select-line-height}; //
+  --bs-select-color: #{$form-select-color}; //
+  --bs-select-bg: #{$form-select-bg}; //
+  --bs-select-disabled-color: #{$form-select-disabled-color};
+  --bs-select-disabled-bg: #{$form-select-disabled-bg};
+  --bs-select-disabled-border-color: #{$form-select-disabled-border-color};
+  --bs-select-bg-position: #{$form-select-bg-position};
+  --bs-select-bg-size: #{$form-select-bg-size};
+  --bs-select-indicator: #{escape-svg($form-select-indicator)};
+  --bs-select-feedback-icon-padding-end: #{$form-select-feedback-icon-padding-end};
+  --bs-select-feedback-icon-position: #{$form-select-feedback-icon-position};
+  --bs-select-feedback-icon-size: #{$form-select-feedback-icon-size};
+  --bs-select-border-width: #{$form-select-border-width}; //
+  --bs-select-border-color: #{$input-border-color}; //
+  --bs-select-focus-border-color: #{$form-select-focus-border-color}; //
+  --bs-select-padding-y-sm: #{$form-select-padding-y-sm}; //
+  --bs-select-padding-x-sm: #{$form-select-padding-x-sm};
+  --bs-select-font-size-sm: #{$form-select-font-size-sm};
+  --bs-select-padding-y-lg: #{$form-select-padding-y-lg};
+  --bs-select-padding-x-lg: #{$form-select-padding-x-lg};
+  --bs-select-font-size-lg: #{$form-select-font-size-lg};
+  --bs-select-border-radius-lg: #{$form-select-border-radius-lg};
+  --bs-select-border-radius-sm: #{$form-select-border-radius-sm};
+  --bs-select-border-radius: #{$form-select-border-radius};
+  @if $enable-rounded {
+    --bs-select-border-radius: #{$form-select-border-radius}; //
+  } @else {
+    --bs-select-border-radius: 0; //
+  }
+  --bs-select-focus-box-shadow: #{$form-select-focus-box-shadow};
+  --bs-select-focus-width: #{$form-select-focus-width};
+  --bs-select-transition: #{$form-select-transition};
+  --bs-select-font-family: #{$form-select-font-family};
+}
