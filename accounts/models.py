@@ -3,18 +3,16 @@
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
-#  Monta is free software: you can redistribute it and/or modify                                   -
-#  it under the terms of the GNU General Public License as published by                            -
-#  the Free Software Foundation, either version 3 of the License, or                               -
-#  (at your option) any later version.                                                             -
-#                                                                                                  -
-#  Monta is distributed in the hope that it will be useful,                                        -
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
-#  GNU General Public License for more details.                                                    -
-#                                                                                                  -
-#  You should have received a copy of the GNU General Public License                               -
-#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
 from __future__ import annotations
@@ -48,11 +46,11 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
     """
 
     def create_user(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -82,11 +80,11 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
         return user
 
     def create_superuser(
-        self,
-        username: str,
-        email: str,
-        password: str | None = None,
-        **extra_fields: Any,
+            self,
+            username: str,
+            email: str,
+            password: str | None = None,
+            **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -268,7 +266,9 @@ class UserProfile(GenericModel):
         blank=True,
         help_text=_("The phone number of the user"),
         validators=[
-            RegexValidator(regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$")
+            RegexValidator(regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+                           message=_("Phone number must be in the format (xxx) xxx-xxxx")
+                           )
         ],
     )
     is_phone_verified = models.BooleanField(
@@ -297,6 +297,16 @@ class UserProfile(GenericModel):
             str: String representation of the Profile
         """
         return textwrap.wrap(self.user.username, 30)[0]
+
+    def save(self, **kwargs: Any) -> None:
+        """Save the model
+
+        Returns:
+            None
+        """
+        self.first_name = self.first_name.title()
+        self.last_name = self.last_name.title()
+        super().save(**kwargs)
 
     def update_profile(self, **kwargs: Any) -> None:
         """
@@ -437,7 +447,6 @@ class JobTitle(GenericModel):
     name = models.CharField(
         _("Name"),
         max_length=100,
-        unique=True,
         help_text=_("Name of the job title"),
     )
     description = models.TextField(
@@ -460,6 +469,12 @@ class JobTitle(GenericModel):
         verbose_name_plural = _("Job Titles")
         ordering: list[str] = ["name"]
         db_table = "job_title"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'organization'],
+                name='unique_job_title',
+            )
+        ]
 
     def __str__(self) -> str:
         """Job Title string representation.
