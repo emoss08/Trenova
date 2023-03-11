@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cypress": "cypress open"
   },
   "dependencies": {
     "@formatjs/intl-pluralrules": "4.3.3",
@@ -71,6 +72,7 @@
     "@types/sass-loader": "8.0.3",
     "@types/styled-components": "^5.1.26",
     "css-loader": "6.7.1",
+    "cypress": "^12.7.0",
     "del": "6.0.0",
     "html-react-parser": "^3.0.12",
     "mini-css-extract-plugin": "2.6.1",
