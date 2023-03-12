@@ -15,18 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { MasterLayout } from "@/utils/MasterLayout";
+import { formatDistanceToNow, parseISO } from "date-fns";
 
-export default function Home() {
-
-  return (
-    <>
-      <MasterLayout>
-        <div>
-          <h1>Home</h1>
-
-        </div>
-      </MasterLayout>
-    </>
-  );
-}
+export const formatDate = (dateString: string) => {
+  const date = parseISO(dateString);
+  return formatDistanceToNow(date, { addSuffix: true });
+};

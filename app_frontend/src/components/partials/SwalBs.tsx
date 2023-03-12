@@ -19,10 +19,8 @@ import Swal from "sweetalert2";
 
 export const swalBs = Swal.mixin({
   customClass: {
-    confirmButton: 'btn btn-success',
-    cancelButton: 'btn btn-danger'
+    confirmButton: 'btn btn-light-success',
+    cancelButton: 'btn btn-light-danger'
   },
   buttonsStyling: false,
-  willOpen(popup: HTMLElement) {
-  }
 })
