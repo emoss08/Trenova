@@ -15,15 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-
-import "nouislider/dist/nouislider.css";
-import "../styles/assets/sass/style.scss";
-import "../styles/assets/sass/plugins.scss";
-import "../styles/assets/sass/style.react.scss";
-import "../../public/splash-screen.css";
-import "nprogress/nprogress.css";
-import "react-toastify/dist/ReactToastify.min.css";
-
 import type { AppProps } from "next/app";
 import { LayoutProvider } from "@/utils/layout/LayoutProvider";
 import { Poppins } from "next/font/google";
@@ -32,9 +23,19 @@ import { setupAxios } from "@/utils/auth";
 import { AuthInit, AuthGuard } from "@/utils/providers/AuthGuard";
 import React, { Suspense, useEffect } from "react";
 import { LayoutSplashScreen } from "@/components/elements/LayoutSplashScreen";
-import { ToastContainer } from "react-toastify";
-import { ThemeModeProvider, useThemeMode } from "@/utils/providers/ThemeProvider";
+import { ThemeModeProvider } from "@/utils/providers/ThemeProvider";
 import { MasterInit } from "@/utils/MasterInit";
+import { config } from '@fortawesome/fontawesome-svg-core'
+
+import "nouislider/dist/nouislider.css";
+import "../styles/assets/sass/style.scss";
+import "../styles/assets/sass/plugins.scss";
+import "../styles/assets/sass/style.react.scss";
+import "../../public/splash-screen.css";
+import "nprogress/nprogress.css";
+import "react-toastify/dist/ReactToastify.min.css";
+import '@fortawesome/fontawesome-svg-core/styles.css'
+config.autoAddCss = false
 
 const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
