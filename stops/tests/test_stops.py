@@ -16,6 +16,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
+
 from datetime import timedelta
 
 import pytest
@@ -208,7 +225,7 @@ class TestStopValidation:
         Test ValidationError is thrown when the `arrival_time` is set in the stop, but
         Movement does not have a worker or equipment assigned to it.
         """
-        movement = MovementFactory(equipment=None, primary_worker=None)
+        movement = MovementFactory(tractor=None, primary_worker=None)
 
         with pytest.raises(ValidationError) as excinfo:
             StopFactory(movement=movement, arrival_time=timezone.now())
@@ -223,7 +240,7 @@ class TestStopValidation:
         and movement does not have a `primary_worker` and `equipment` assigned to it.
         """
 
-        movement = MovementFactory(primary_worker=None, equipment=None)
+        movement = MovementFactory(primary_worker=None, tractor=None)
 
         with pytest.raises(ValidationError) as excinfo:
             StopFactory(status="P", movement=movement)

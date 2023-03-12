@@ -3,18 +3,16 @@
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
-#  Monta is free software: you can redistribute it and/or modify                                   -
-#  it under the terms of the GNU General Public License as published by                            -
-#  the Free Software Foundation, either version 3 of the License, or                               -
-#  (at your option) any later version.                                                             -
-#                                                                                                  -
-#  Monta is distributed in the hope that it will be useful,                                        -
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
-#  GNU General Public License for more details.                                                    -
-#                                                                                                  -
-#  You should have received a copy of the GNU General Public License                               -
-#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
 from datetime import timedelta
@@ -45,7 +43,7 @@ class TestMovement:
         """
         assert movement is not None
 
-    def test_create(self, worker, equipment, organization, order):
+    def test_create(self, worker, tractor, organization, order):
         """
         Test Movement Create
         """
@@ -53,29 +51,29 @@ class TestMovement:
         movement = models.Movement.objects.create(
             organization=organization,
             order=order,
-            equipment=equipment,
+            tractor=tractor,
             primary_worker=worker,
         )
 
         assert movement is not None
         assert movement.order == order
-        assert movement.equipment == equipment
+        assert movement.tractor == tractor
         assert movement.primary_worker == worker
 
-    def test_update(self, movement, equipment):
+    def test_update(self, movement, tractor):
         """
         Test Movement Update
         """
 
         add_movement = models.Movement.objects.get(id=movement.id)
 
-        add_movement.equipment = equipment
+        add_movement.tractor = tractor
         add_movement.save()
 
         assert add_movement is not None
-        assert add_movement.equipment == equipment
+        assert add_movement.tractor == tractor
 
-    def test_initial_stop_creation_hook(self, worker, equipment) -> None:
+    def test_initial_stop_creation_hook(self, worker, tractor) -> None:
         """
         Test that an initial stop is created when a movement is created.
         """
@@ -87,7 +85,7 @@ class TestMovement:
         movement = models.Movement.objects.create(
             organization=order.organization,
             order=order,
-            equipment=equipment,
+            tractor=tractor,
             primary_worker=worker,
         )
 
@@ -108,7 +106,7 @@ class TestMovementAPI:
     """
 
     @pytest.fixture
-    def movement_api(self, api_client, organization, order, equipment, worker):
+    def movement_api(self, api_client, organization, order, tractor, worker):
         """
         Movement Factory
         """
@@ -118,7 +116,7 @@ class TestMovementAPI:
                 "organization": f"{organization.id}",
                 "order": f"{order.id}",
                 "primary_worker": f"{worker.id}",
-                "equipment": f"{equipment.id}",
+                "tractor": f"{tractor.id}",
             },
         )
 
@@ -129,7 +127,7 @@ class TestMovementAPI:
         response = api_client.get("/api/movements/")
         assert response.status_code == 200
 
-    def test_get_by_id(self, api_client, movement_api, order, worker, equipment):
+    def test_get_by_id(self, api_client, movement_api, order, worker, tractor):
         """
         Test get Movement by ID
         """
@@ -140,7 +138,7 @@ class TestMovementAPI:
         assert response.data is not None
         assert response.data["order"] == order.id
         assert response.data["primary_worker"] == worker.id
-        assert response.data["equipment"] == equipment.id
+        assert response.data["tractor"] == tractor.id
 
 
 class TestMovementValidation:
@@ -469,7 +467,7 @@ class TestMovementValidation:
     def test_movement_changed_to_in_progress_with_no_worker(self):
         """
         Test ValidationError is thrown when the movement status is changed
-        to in progress or completed and no worker or equipment is assigned.
+        to in progress or completed and no worker or tractor is assigned.
         """
 
         with pytest.raises(ValidationError) as excinfo:
@@ -477,14 +475,14 @@ class TestMovementValidation:
                 status="P",
                 primary_worker=None,
                 secondary_worker=None,
-                equipment=None,
+                tractor=None,
             )
 
         assert excinfo.value.message_dict["primary_worker"] == [
             "Primary worker is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
         ]
-        assert excinfo.value.message_dict["equipment"] == [
-            "Equipment is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
+        assert excinfo.value.message_dict["tractor"] == [
+            "Tractor is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
         ]
 
     def test_movement_cannot_change_status_in_in_progress_if_stops_are_new(self):
