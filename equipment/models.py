@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -307,9 +288,9 @@ class EquipmentManufacturer(GenericModel):
         return reverse("equipment-manufacturers-detail", kwargs={"pk": self.pk})
 
 
-class Equipment(GenericModel):
+class Tractor(GenericModel):
     """
-    Stores information about a piece of equipment for a :model:`organization.Organization`.
+    Stores information about a piece of Tractor for a :model:`organization.Organization`.
     """
 
     @final
@@ -337,8 +318,8 @@ class Equipment(GenericModel):
     equipment_type = models.ForeignKey(
         EquipmentType,
         on_delete=models.CASCADE,
-        related_name="equipment",
-        related_query_name="equipment",
+        related_name="tractor",
+        related_query_name="tractor",
         verbose_name=_("Equipment Type"),
     )
     is_active = models.BooleanField(
@@ -377,8 +358,8 @@ class Equipment(GenericModel):
     manufacturer = models.ForeignKey(
         EquipmentManufacturer,
         on_delete=models.CASCADE,
-        related_name="equipments",
-        related_query_name="equipment",
+        related_name="tractor",
+        related_query_name="tractor",
         verbose_name=_("Manufacturer"),
         blank=True,
         null=True,
@@ -421,8 +402,8 @@ class Equipment(GenericModel):
     primary_worker = models.OneToOneField(
         Worker,
         on_delete=models.SET_NULL,
-        related_name="primary_equipment",
-        related_query_name="primary_equipment",
+        related_name="primary_tractor",
+        related_query_name="primary_tractor",
         verbose_name=_("Primary Worker"),
         blank=True,
         null=True,
@@ -430,8 +411,8 @@ class Equipment(GenericModel):
     secondary_worker = models.OneToOneField(
         Worker,
         on_delete=models.SET_NULL,
-        related_name="secondary_equipment",
-        related_query_name="secondary_equipment",
+        related_name="secondary_tractor",
+        related_query_name="secondary_tractor",
         verbose_name=_("Secondary Worker"),
         blank=True,
         null=True,
@@ -499,47 +480,47 @@ class Equipment(GenericModel):
     fleet = models.ForeignKey(
         "dispatch.FleetCode",
         on_delete=models.CASCADE,
-        related_name="equipment",
-        related_query_name="equipment",
+        related_name="tractor",
+        related_query_name="tractor",
         verbose_name=_("Fleet"),
         help_text=_("Fleet of the equipment."),
     )
 
     class Meta:
         """
-        Equipment Model Metaclass
+        Tractor Model Metaclass
         """
 
-        verbose_name = _("Equipment")
-        verbose_name_plural = _("Equipment")
+        verbose_name = _("Tractor")
+        verbose_name_plural = _("Tractor")
         ordering = ["code"]
-        db_table = "equipment"
+        db_table = "tractor"
         constraints = [
             models.UniqueConstraint(
                 fields=["code", "organization"],
-                name="unique_equipment_code_organization",
+                name="unique_tractor_code_organization",
             )
         ]
 
     def __str__(self) -> str:
-        """Equipment string representation
+        """Tractor string representation
 
         Returns:
-            str: String representation of the Equipment Model
+            str: String representation of the Tractor Model
         """
         return textwrap.wrap(self.code, 50)[0]
 
     def clean(self) -> None:
-        """Equipment Model clean method
+        """Tractor Model clean method
 
         Raises:
-            ValidationError: If the Equipment is leased and the leased date is not set
+            ValidationError: If the Tractor is leased and the leased date is not set
         """
 
         errors = {}
         if self.leased and not self.leased_date:
             errors["leased_date"] = _(
-                "Leased date must be set if the equipment is leased. Please try again."
+                "Leased date must be set if the tractor is leased. Please try again."
             )
 
         if (
@@ -553,19 +534,19 @@ class Equipment(GenericModel):
 
         if self.primary_worker and self.fleet != self.primary_worker.fleet:
             errors["primary_worker"] = _(
-                "Primary worker must be in the same fleet as the equipment. Please try again."
+                "Primary worker must be in the same fleet as the tractor. Please try again."
             )
 
         if errors:
             raise ValidationError(errors)
 
     def get_absolute_url(self) -> str:
-        """Equipment absolute URL
+        """Tractor absolute URL
 
         Returns:
-            str: Absolute URL of the Equipment Model
+            str: Absolute URL of the Tractor Model
         """
-        return reverse("equipment-detail", kwargs={"pk": self.pk})
+        return reverse("tractor-detail", kwargs={"pk": self.pk})
 
 
 class EquipmentMaintenancePlan(GenericModel):
