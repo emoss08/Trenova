@@ -41,6 +41,8 @@ class KeepAliveConsumer(AsyncWebsocketConsumer):
         Returns:
             None: This method does not return anything.
         """
+        self.user = self.scope["user"]
+        print(self.user)
         await self.accept()
         await self.channel_layer.group_add("keepalive", self.channel_name)
 

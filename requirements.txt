@@ -10,7 +10,7 @@ django-auditlog==2.2.2
 django-braces==1.15.0
 django-cacheops==6.2
 django-celery-beat==2.4.0
-django-celery-results==2.4.0
+django-celery-results==2.5.0
 django-cors-headers==3.14.0
 django-debug-toolbar~=3.8.1
 django-encrypted-model-fields==0.6.5
@@ -52,8 +52,8 @@ pytest-django==4.5.2
 pytest-html==3.2.0
 redis==4.5.1
 rich==13.3.2
-tox==4.4.6
-types-redis==4.5.1.4
+tox==4.4.7
+types-redis==4.5.1.5
 weasyprint==58.1
 whitenoise==6.4.0
 xhtml2pdf==0.2.9

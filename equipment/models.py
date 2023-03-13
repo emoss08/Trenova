@@ -483,6 +483,8 @@ class Tractor(GenericModel):
         related_name="tractor",
         related_query_name="tractor",
         verbose_name=_("Fleet"),
+        blank=True,
+        null=True,
         help_text=_("Fleet of the equipment."),
     )
 
@@ -547,6 +549,194 @@ class Tractor(GenericModel):
             str: Absolute URL of the Tractor Model
         """
         return reverse("tractor-detail", kwargs={"pk": self.pk})
+
+
+class Trailer(GenericModel):
+    """
+    Stores information about a piece of Tractor for a :model:`organization.Organization`.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    code = models.CharField(
+        _("Code"),
+        max_length=50,
+        help_text=_("Code of the trailer."),
+    )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Is the trailer active."),
+    )
+    planning_comment = models.CharField(
+        _("Planning Comment"),
+        max_length=50,
+        blank=True,
+        help_text=_("Planning comment of the trailer."),
+    )
+    equipment_type = models.ForeignKey(
+        EquipmentType,
+        on_delete=models.SET_NULL,
+        related_name="trailer",
+        null=True,
+        verbose_name=_("Equipment Type"),
+        help_text=_("Equipment type of the trailer."),
+    )
+    make = models.CharField(
+        _("Make"),
+        max_length=50,
+        blank=True,
+        help_text=_("Make of the trailer."),
+    )
+    model = models.CharField(
+        _("Model"),
+        max_length=50,
+        blank=True,
+        help_text=_("Model of the trailer."),
+    )
+    year = models.PositiveIntegerField(
+        _("Year"),
+        default=0,
+        help_text=_("Year of the trailer."),
+    )
+    vin_number = models.CharField(
+        _("VIN Number"),
+        max_length=17,
+        blank=True,
+        help_text=_("VIN number of the equipment."),
+        validators=[us_vin_number_validator],
+    )
+    fleet = models.ForeignKey(
+        "dispatch.FleetCode",
+        on_delete=models.CASCADE,
+        related_name="trailer",
+        verbose_name=_("Fleet"),
+        blank=True,
+        null=True,
+        help_text=_("Fleet of the trailer."),
+    )
+    tag_identifier = models.CharField(
+        _("Tag Identifier"),
+        max_length=50,
+        blank=True,
+        help_text=_("Tag identifier of the trailer."),
+    )
+    state = USStateField(
+        _("State"),
+        blank=True,
+        help_text=_("State of the trailer."),
+    )
+    license_plate_number = models.CharField(
+        _("License Plate Number"),
+        max_length=50,
+        blank=True,
+        help_text=_("License plate number of the trailer."),
+    )
+    license_plate_state = USStateField(
+        _("License Plate State"),
+        blank=True,
+        help_text=_("License plate state of the trailer."),
+    )
+    license_plate_expiration_date = models.DateField(
+        _("License Plate Expiration Date"),
+        blank=True,
+        null=True,
+        help_text=_("License plate expiration date of the trailer."),
+    )
+    last_inspection = models.DateField(
+        _("Last Inspection"),
+        blank=True,
+        null=True,
+        help_text=_("Last inspection date of the trailer."),
+    )
+    length = models.DecimalField(
+        _("Length"),
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Length of the trailer."),
+    )
+    width = models.DecimalField(
+        _("Width"),
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Width of the trailer."),
+    )
+    height = models.DecimalField(
+        _("Height"),
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text=_("Height of the trailer."),
+    )
+    axles = models.PositiveIntegerField(
+        _("Axles"),
+        default=0,
+        help_text=_("Number of axles of the trailer."),
+    )
+    owner = models.CharField(
+        _("Owner"),
+        max_length=50,
+        blank=True,
+        help_text=_("Owner of the trailer."),
+    )
+    is_leased = models.BooleanField(
+        _("Is Leased"),
+        default=False,
+        help_text=_("Is the trailer leased."),
+    )
+    leased_date = models.DateField(
+        _("Leased Date"),
+        blank=True,
+        null=True,
+        help_text=_("Leased date of the trailer."),
+    )
+    lease_expiration_date = models.DateField(
+        _("Lease Expiration Date"),
+        blank=True,
+        null=True,
+        help_text=_("Lease expiration date of the trailer."),
+    )
+
+    def __str__(self) -> str:
+        """String representation of the Trailer model
+
+        Returns:
+            str: String representation of the Trailer model
+        """
+        return textwrap.shorten(self.code, width=50, placeholder="...")
+
+    class Meta:
+        """
+        Tractor Model Metaclass
+        """
+
+        verbose_name = _("Trailer")
+        verbose_name_plural = _("Trailer")
+        ordering = ["code"]
+        db_table = "trailer"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code", "organization"],
+                name="unique_trailer_code_organization",
+            )
+        ]
+
+    def get_absolute_url(self) -> str:
+        """Trailer absolute URL
+
+        Returns:
+            str: Absolute URL of the trailer Model
+        """
+        return reverse("trailer-detail", kwargs={"pk": self.pk})
 
 
 class EquipmentMaintenancePlan(GenericModel):
