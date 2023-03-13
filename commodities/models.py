@@ -274,8 +274,8 @@ class Commodity(GenericModel):  # type: ignore
         db_table = "commodity"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_commodity_name_organization',
+                fields=["name", "organization"],
+                name="unique_commodity_name_organization",
             )
         ]
 

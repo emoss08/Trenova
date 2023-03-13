@@ -166,8 +166,8 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         db_table = "worker"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_worker_code_organization',
+                fields=["code", "organization"],
+                name="unique_worker_code_organization",
             )
         ]
 

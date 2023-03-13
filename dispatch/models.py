@@ -288,8 +288,8 @@ class DelayCode(GenericModel):
         db_table = "delay_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_delay_code_organization',
+                fields=["code", "organization"],
+                name="unique_delay_code_organization",
             )
         ]
 
@@ -412,8 +412,8 @@ class FleetCode(GenericModel):
         db_table = "fleet_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_fleet_code_organization',
+                fields=["code", "organization"],
+                name="unique_fleet_code_organization",
             )
         ]
 
@@ -644,8 +644,8 @@ class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
         db_table = "rate"
         constraints = [
             models.UniqueConstraint(
-                fields=['rate_number', 'organization'],
-                name='unique_rate_number_organization',
+                fields=["rate_number", "organization"],
+                name="unique_rate_number_organization",
             )
         ]
 

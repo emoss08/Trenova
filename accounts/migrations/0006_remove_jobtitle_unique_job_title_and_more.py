@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0005_alter_jobtitle_job_function_alter_jobtitle_name_and_more"),
     ]

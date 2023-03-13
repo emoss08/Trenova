@@ -82,8 +82,8 @@ class LocationCategory(GenericModel):
         db_table = "location_category"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_location_category_name_organization',
+                fields=["name", "organization"],
+                name="unique_location_category_name_organization",
             )
         ]
 
@@ -211,8 +211,8 @@ class Location(GenericModel):  # type: ignore
         db_table = "location"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_location_code_organization',
+                fields=["code", "organization"],
+                name="unique_location_code_organization",
             )
         ]
 

@@ -18,8 +18,9 @@
 # --------------------------------------------------------------------------------------------------
 from collections.abc import Iterable
 
-from utils.types import MODEL_UUID
 from accounts import models
+from utils.types import MODEL_UUID
+
 
 def get_users_by_organization_id(
     *, organization_id: MODEL_UUID

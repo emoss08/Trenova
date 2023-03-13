@@ -19,20 +19,21 @@ from typing import Any
 
 from django.contrib.auth.models import Group, Permission
 from django.db.models import QuerySet
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework import (
     generics,
+    permissions,
     request,
     response,
-    views,
-    permissions,
     status,
+    views,
     viewsets,
 )
+from rest_framework.authtoken.views import ObtainAuthToken
+
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
-from utils.views import OrganizationMixin
 from utils.permissions import MontaModelPermissions
+from utils.views import OrganizationMixin
 
 
 class GroupViewSet(viewsets.ModelViewSet):

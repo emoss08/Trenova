@@ -367,8 +367,8 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         db_table = "depot"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_depot_name_organization',
+                fields=["name", "organization"],
+                name="unique_depot_name_organization",
             )
         ]
 
@@ -959,8 +959,8 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         db_table = "table_change_alert"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_name_organization',
+                fields=["name", "organization"],
+                name="unique_name_organization",
             )
         ]
 

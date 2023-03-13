@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0003_alter_additionalcharge_charge_amount_currency_and_more"),
     ]
