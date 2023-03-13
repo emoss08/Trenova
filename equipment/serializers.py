@@ -38,6 +38,7 @@ from typing import Any
 
 from rest_framework import serializers
 
+from dispatch.models import FleetCode
 from equipment import models
 from utils.serializers import GenericSerializer
 
@@ -154,9 +155,15 @@ class TractorSerializer(GenericSerializer):
     """A serializer for the Tractor model
 
     The serializer provides default operations for creating, update and deleting
-    Equipment, as well as listing and retrieving them.
+    Tractors, as well as listing and retrieving them.
     """
 
+    fleet_code = serializers.PrimaryKeyRelatedField(
+        queryset=FleetCode.objects.all(), required=False, allow_null=True
+    )
+    equipment_type = serializers.PrimaryKeyRelatedField(
+        queryset=models.EquipmentType.objects.all(), required=False, allow_null=True
+    )
     is_active = serializers.BooleanField(default=True)
 
     class Meta:
@@ -165,7 +172,29 @@ class TractorSerializer(GenericSerializer):
         """
 
         model = models.Tractor
-        extra_fields = ("is_active",)
+        extra_fields = ("is_active", "fleet_code", "equipment_type")
+
+class TrailerSerializer(GenericSerializer):
+    """A serializer for the Trailer model
+
+    The serializer provides default operations for creating, update and deleting
+    Trailers, as well as listing and retrieving them.
+    """
+    fleet_code = serializers.PrimaryKeyRelatedField(
+        queryset=FleetCode.objects.all(), required=False, allow_null=True
+    )
+    equipment_type = serializers.PrimaryKeyRelatedField(
+        queryset=models.EquipmentType.objects.all(), required=False, allow_null=True
+    )
+    is_active = serializers.BooleanField(default=True)
+
+    class Meta:
+        """
+        A class representing the metadata for the `TrailerSerializer` class.
+        """
+
+        model = models.Trailer
+        extra_fields = ("is_active", "fleet_code", "equipment_type")
 
 
 class EquipmentMaintenancePlanSerializer(GenericSerializer):

@@ -16,14 +16,47 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import Any
+
+from django.contrib.auth.models import Group, Permission
 from django.db.models import QuerySet
-from rest_framework import permissions, status
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework import generics, request, response, views
+from rest_framework import (
+    generics,
+    request,
+    response,
+    views,
+    permissions,
+    status,
+    viewsets,
+)
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
 from utils.permissions import MontaModelPermissions
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    """
+    Group ViewSet to manage requests to the group endpoint
+    """
+
+    serializer_class = serializers.GroupSerializer
+    queryset = Group.objects.all()
+    filterset_fields = ["name"]
+    ordering_fields = "__all__"
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class PermissionViewSet(viewsets.ModelViewSet):
+    """
+    Permission ViewSet to manage requests to the permission endpoint
+    """
+
+    serializer_class = serializers.PermissionSerializer
+    queryset = Permission.objects.all()
+    filterset_fields = ["name"]
+    ordering_fields = "__all__"
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class UserViewSet(OrganizationMixin):
