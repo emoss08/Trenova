@@ -69,7 +69,7 @@ class UserViewSet(OrganizationMixin):
     search_fields = ["username", "email", "profiles__first_name", "profiles__last_name"]
     filterset_fields = ["department__name", "is_staff", "username"]
     ordering_fields = "__all__"
-    permission_classes = [MontaModelPermissions]
+    # permission_classes = [MontaModelPermissions]
 
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
         """Filter the queryset to only include the current user

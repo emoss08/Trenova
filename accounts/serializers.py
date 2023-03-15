@@ -1,50 +1,61 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
-#  Monta is free software: you can redistribute it and/or modify                                   -
-#  it under the terms of the GNU General Public License as published by                            -
-#  the Free Software Foundation, either version 3 of the License, or                               -
-#  (at your option) any later version.                                                             -
-#                                                                                                  -
-#  Monta is distributed in the hope that it will be useful,                                        -
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
-#  GNU General Public License for more details.                                                    -
-#                                                                                                  -
-#  You should have received a copy of the GNU General Public License                               -
-#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
+from typing import Any, TypeVar
 
 from django.contrib.auth import authenticate, password_validation
+from django.contrib.auth.models import Group, Permission
+from django.db.models import Model
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
 from organization.models import Department
 from utils.serializers import GenericSerializer
+
+_MT = TypeVar("_MT", bound=Model)
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    """
+    Group Serializer
+    """
+
+    class Meta:
+        """
+        Metaclass for GroupSerializer
+        """
+
+        model = Group
+        fields = ["id", "name", "permissions"]
+
+
+class PermissionSerializer(serializers.ModelSerializer):
+    """
+    Permissions Serializer
+    """
+
+    class Meta:
+        """
+        Metaclass for PermissionsSerializer
+        """
+
+        model = Permission
+        fields = ["id", "name", "codename"]
 
 
 class JobTitleSerializer(GenericSerializer):
@@ -77,15 +88,97 @@ class JobTitleSerializer(GenericSerializer):
 
 
 class JobTitleListingField(serializers.RelatedField):
-    def to_representation(self, value):
-        return value.name
+    """
+    Serializes a related field for a JobTitle object, returning only the name of the instance.
+    """
+
+    def to_representation(self, instance: _MT) -> Any:
+        """Converts a complex data instance into a primitive representation.
+
+        Args:
+            self: The serializer instance.
+            instance: The data object to serialize.
+
+        Returns:
+            A serialized representation of the data object, typically a dictionary or a list of dictionaries.
+
+        Raises:
+            SerializerError: If there is an error during the serialization process.
+
+        Example Usage:
+            # In a serializer class definition
+            class BookSerializer(serializers.ModelSerializer):
+                author = AuthorSerializer()
+
+        class Meta:
+            model = Book
+            fields = ('id', 'title', 'author')
+
+        def to_representation(self, instance):
+            representation = super().to_representation(instance)
+            representation['title'] = representation['title'].upper()
+            return representation
+        """
+        return instance.name
 
 
 class UserProfileSerializer(GenericSerializer):
-    """
-    User Profile Serializer
-    """
+    """Serializes and deserializes instances of the UserProfile model.
 
+    The UserProfileSerializer defines two fields for serializing and
+    deserializing instances of the UserProfile model: `title` and `title_name`.
+    The `title` field is a `PrimaryKeyRelatedField` that can be used to set the
+    JobTitle associated with a UserProfile instance. The `title_name` field is a
+    `JobTitleListingField` that returns only the name of the associated JobTitle as
+    a read-only field.
+
+    Attributes:
+        title: A `PrimaryKeyRelatedField` that allows setting the associated JobTitle
+        for a UserProfile instance.
+        title_name: A `JobTitleListingField` that returns only the name of the associated
+        JobTitle as a read-only field.
+
+    Methods:
+        to_representation(self, instance):
+            Converts a UserProfile instance to a serialized representation.
+
+        to_internal_value(self, data):
+            Converts a serialized representation of a UserProfile to an instance of the model.
+
+    Meta:
+        model: The UserProfile model that the serializer should be based on.
+        extra_fields: A tuple of field names that should be included in the serialized
+        representation.
+        extra_read_only_fields: A tuple of field names that should be read-only in the
+        serialized representation.
+
+    Example Usage:
+        # In a view
+        class UserProfileView(generics.RetrieveUpdateAPIView):
+            serializer_class = UserProfileSerializer
+            queryset = models.UserProfile.objects.all()
+
+        # In a serializer class definition
+        class UserProfileSerializer(GenericSerializer):
+            title = serializers.PrimaryKeyRelatedField(
+                queryset=models.JobTitle.objects.all(),
+                required=False,
+                allow_null=True,
+            )
+
+            title_name = JobTitleListingField(
+                source="title",
+                read_only=True,
+            )
+
+            class Meta:
+                model = models.UserProfile
+                extra_fields = ("title", "title_name")
+                extra_read_only_fields = (
+                    "id",
+                    "user",
+                )
+        """
     title = serializers.PrimaryKeyRelatedField(
         queryset=models.JobTitle.objects.all(),
         required=False,
@@ -98,10 +191,29 @@ class UserProfileSerializer(GenericSerializer):
     )
 
     class Meta:
-        """
-        Metaclass for UserProfileSerializer
-        """
+        """Metadata for a Django REST framework serializer.
 
+        The `Meta` class allows you to specify metadata about a serializer class, such as the model
+        it should be based on, any additional fields to include in the serialized representation,
+        and any read-only fields.
+
+        Attributes:
+            model: The model that the serializer should be based on.
+            extra_fields: A tuple of field names that should be included in the serialized representation
+            in addition to the fields defined on the model.
+            extra_read_only_fields: A tuple of field names that should be read-only in the serialized
+            representation.
+
+        Example Usage:
+            # In a serializer class definition
+            class BookSerializer(serializers.ModelSerializer):
+                author = AuthorSerializer()
+
+                class Meta:
+                    model = Book
+                    fields = ('id', 'title', 'author')
+                    extra_read_only_fields = ('id',)
+        """
         model = models.UserProfile
         extra_fields = ("title", "title_name")
         extra_read_only_fields = (
