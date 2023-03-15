@@ -174,12 +174,14 @@ class TractorSerializer(GenericSerializer):
         model = models.Tractor
         extra_fields = ("is_active", "fleet_code", "equipment_type")
 
+
 class TrailerSerializer(GenericSerializer):
     """A serializer for the Trailer model
 
     The serializer provides default operations for creating, update and deleting
     Trailers, as well as listing and retrieving them.
     """
+
     fleet_code = serializers.PrimaryKeyRelatedField(
         queryset=FleetCode.objects.all(), required=False, allow_null=True
     )

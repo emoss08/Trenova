@@ -2,6 +2,7 @@ art==5.8
 celery~=5.2.7
 celery-types==0.14.0
 channels==4.0.0
+channels_redis==4.0.0
 confluent-kafka==2.0.2
 daphne==4.0.0
 django==4.1.7
@@ -57,4 +58,3 @@ types-redis==4.5.1.5
 weasyprint==58.1
 whitenoise==6.4.0
 xhtml2pdf==0.2.9
-channels_redis==4.0.0

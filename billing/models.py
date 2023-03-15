@@ -267,8 +267,8 @@ class ChargeType(GenericModel):
         db_table = "charge_type"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_charge_type_name_per_organization',
+                fields=["name", "organization"],
+                name="unique_charge_type_name_per_organization",
             )
         ]
 
@@ -358,8 +358,8 @@ class AccessorialCharge(GenericModel):  # type: ignore
         db_table = "other_charge"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_other_charge_code_per_organization',
+                fields=["code", "organization"],
+                name="unique_other_charge_code_per_organization",
             )
         ]
 
@@ -413,8 +413,8 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
         db_table = "document_classification"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_document_classification_name_per_organization',
+                fields=["name", "organization"],
+                name="unique_document_classification_name_per_organization",
             )
         ]
 

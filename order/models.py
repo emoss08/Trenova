@@ -37,13 +37,7 @@ from django_lifecycle import (
 from djmoney.models.fields import MoneyField
 
 from order.validation import OrderValidation
-from utils.models import (
-    ChoiceField,
-    GenericModel,
-    RatingMethodChoices,
-    StatusChoices,
-    AutoSelectRelatedQuerySetMixin,
-)
+from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
 

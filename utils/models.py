@@ -22,12 +22,11 @@ from typing import Any, final
 from django.core import checks
 from django.core.checks import CheckMessage, Error
 from django.db import models
-from django.db.models import CharField
+from django.db.models import CharField, Prefetch
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+
 from organization.models import Organization
-from django.core.exceptions import FieldDoesNotExist
-from django.db.models import F, Q, Prefetch
 
 
 @final
@@ -109,7 +108,7 @@ class ChoiceField(CharField):
     description = _("Choice Field")
 
     def __init__(
-            self, *args: Any, db_collation: str | None = None, **kwargs: Any
+        self, *args: Any, db_collation: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
@@ -154,6 +153,7 @@ class ChoiceField(CharField):
                 )
             ]
         return []
+
 
 class AutoSelectRelatedQuerySetMixin:
     """Mixin for automatically selecting related and prefetching objects in a queryset"""
@@ -200,12 +200,12 @@ class AutoSelectRelatedQuerySetMixin:
         # Build up a list of select_related arguments and a set of related fields to include in the query
         select_related_args = []
         related_fields = set()
-        self.traverse_related_tree(related_tree, select_related_args, related_fields, model)
+        self.traverse_related_tree(
+            related_tree, select_related_args, related_fields, model
+        )
 
         # Call select_related with the related objects and fields from the related_objects dictionary
-        queryset = queryset.select_related(*select_related_args).only(
-            *fields
-        )
+        queryset = queryset.select_related(*select_related_args).only(*fields)
 
         # Determine which related objects to prefetch based on the related_objects dictionary
         prefetch_objects = []
@@ -214,7 +214,9 @@ class AutoSelectRelatedQuerySetMixin:
 
         return queryset
 
-    def traverse_related_tree(self, related_tree, select_related_args, related_fields, model):
+    def traverse_related_tree(
+        self, related_tree, select_related_args, related_fields, model
+    ):
         """
         Traverses the related_tree in a depth-first manner, building up the select_related_args list and the
         related_fields set.
@@ -223,7 +225,9 @@ class AutoSelectRelatedQuerySetMixin:
             select_related_args.append(related_object)
             related_fields.add(related_object)
             if children is not None:
-                self.traverse_related_tree(children, select_related_args, related_fields, model)
+                self.traverse_related_tree(
+                    children, select_related_args, related_fields, model
+                )
 
     def build_prefetch_objects(self, related_tree, prefetch_objects, model):
         """
@@ -237,7 +241,7 @@ class AutoSelectRelatedQuerySetMixin:
                     prefetch_objects.append(
                         Prefetch(
                             related_object,
-                            queryset=related_model.objects.only(*related_fields)
+                            queryset=related_model.objects.only(*related_fields),
                         )
                     )
                 self.build_prefetch_objects(children, prefetch_objects, related_model)

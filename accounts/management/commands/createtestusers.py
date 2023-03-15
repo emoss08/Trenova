@@ -16,15 +16,16 @@
 #  You should have received a copy of the GNU General Public License                               -
 #  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
 # --------------------------------------------------------------------------------------------------
+import random
+import string
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+
 from accounts.models import JobTitle, UserProfile
 from organization.models import Organization
-import random
-import string
 
 
 class Command(BaseCommand):

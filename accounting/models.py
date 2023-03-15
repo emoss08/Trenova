@@ -275,8 +275,8 @@ class RevenueCode(GenericModel):  # type: ignore
         db_table = "revenue_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_revenue_code_organization',
+                fields=["code", "organization"],
+                name="unique_revenue_code_organization",
             )
         ]
 
@@ -426,8 +426,8 @@ class DivisionCode(GenericModel):
         db_table = "division_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_division_code_organization',
+                fields=["code", "organization"],
+                name="unique_division_code_organization",
             )
         ]
 
