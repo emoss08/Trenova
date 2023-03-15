@@ -27,7 +27,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import BEFORE_DELETE, BEFORE_SAVE, LifecycleModelMixin, hook
 from djmoney.models.fields import MoneyField
 
 from order.models import Order
@@ -267,8 +266,8 @@ class ChargeType(GenericModel):
         db_table = "charge_type"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_charge_type_name_per_organization',
+                fields=["name", "organization"],
+                name="unique_charge_type_name_per_organization",
             )
         ]
 
@@ -358,8 +357,8 @@ class AccessorialCharge(GenericModel):  # type: ignore
         db_table = "other_charge"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_other_charge_code_per_organization',
+                fields=["code", "organization"],
+                name="unique_other_charge_code_per_organization",
             )
         ]
 
@@ -380,7 +379,7 @@ class AccessorialCharge(GenericModel):  # type: ignore
         return reverse("billing:other_charge_detail", kwargs={"pk": self.pk})
 
 
-class DocumentClassification(LifecycleModelMixin, GenericModel):
+class DocumentClassification(GenericModel):
     """
     Stores Document Classification information.
     """
@@ -413,8 +412,8 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
         db_table = "document_classification"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_document_classification_name_per_organization',
+                fields=["name", "organization"],
+                name="unique_document_classification_name_per_organization",
             )
         ]
 
@@ -447,28 +446,6 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
                 },
             )
 
-    @hook(BEFORE_DELETE, when="name", is_now="CON")
-    def on_delete(self) -> None:
-        """Prevent deletion of document classification.
-
-        If the document classification is CON, it cannot be deleted.If the user
-        attempts to delete the document classification, a ValidationError is raised.
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the document classification is CON is being deleted.
-        """
-        raise ValidationError(
-            {
-                "name": _(
-                    "Document classification with this name cannot be deleted. Please try again."
-                ),
-            },
-            code="invalid",
-        )
-
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular document classification instance
 
@@ -486,7 +463,7 @@ class DocumentClassification(LifecycleModelMixin, GenericModel):
         self.save()
 
 
-class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
+class BillingQueue(GenericModel):
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -792,28 +769,6 @@ class BillingQueue(LifecycleModelMixin, GenericModel):  # type: ignore
         if errors:
             raise ValidationError({"order": errors})
 
-    @hook(BEFORE_SAVE)  # type: ignore
-    def save_order_details_to_billing_queue_before_save(self) -> None:
-        """Transfer order details after save.
-
-        Returns:
-            None: None
-        """
-        from billing.services.transfer_order_details import TransferOrderDetails
-
-        TransferOrderDetails(instance=self)
-
-    @hook(BEFORE_SAVE)  # type: ignore
-    def generate_invoice_number_before_save(self) -> None:
-        """Generate invoice number before save.
-
-        Returns:
-            None: None
-        """
-        from billing.services.invoice_number import InvoiceNumberService
-
-        InvoiceNumberService(instance=self)
-
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
 
@@ -900,7 +855,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
+class BillingHistory(GenericModel):
     """
     Class for storing information about the billing history.
     """
@@ -1105,44 +1060,6 @@ class BillingHistory(LifecycleModelMixin, GenericModel):  # type: ignore
                     ),
                 },
             )
-
-    @hook(  # type: ignore
-        BEFORE_DELETE,
-        when="organization.billing_control.remove_billing_history",
-        is_now=False,
-    )
-    def on_delete(self) -> None:
-        """Delete the billing history record.
-
-        Returns:
-            None
-        """
-        raise ValueError(
-            _("Records are not allowed to be removed from billing history."),
-        )
-
-    @hook(BEFORE_SAVE)  # type: ignore
-    def get_and_save_invoice_number_before_save(self) -> None:
-        """Get and save the invoice number.
-
-        Returns:
-            None
-        """
-        from billing.selectors import get_billing_queue_information
-
-        if billing_queue := get_billing_queue_information(order=self.order):
-            self.invoice_number = billing_queue.invoice_number
-
-    @hook(BEFORE_SAVE)  # type: ignore
-    def save_order_details_to_billing_history_before_save(self) -> None:
-        """Transfer order details after save.
-
-        Returns:
-            None: None
-        """
-        from billing.services.transfer_order_details import TransferOrderDetails
-
-        TransferOrderDetails(instance=self)
 
     def get_absolute_url(self) -> str:
         """Billing History absolute url
