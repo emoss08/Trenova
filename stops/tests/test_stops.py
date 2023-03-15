@@ -81,13 +81,11 @@ class TestStop:
         Test Stop Update
         """
 
-        new_stop = models.Stop.objects.get(id=stop.id)
+        stop.location = location
+        stop.stop_type = models.StopChoices.DELIVERY
 
-        new_stop.location = location
-        new_stop.stop_type = models.StopChoices.DELIVERY
-
-        assert new_stop.location == location
-        assert new_stop.stop_type == models.StopChoices.DELIVERY
+        assert stop.location == location
+        assert stop.stop_type == models.StopChoices.DELIVERY
 
     def test_location_address(self, location, organization, movement) -> None:
         """
@@ -178,7 +176,7 @@ class TestStopAPI:
                 "location": location.id,
                 "movement": movement.id,
                 "appointment_time": stop_api.data["appointment_time"],
-                "stop_type": models.StopChoices.SPLIT_DROP,
+                "stop_type": "SD",
             },
         )
 
@@ -186,7 +184,7 @@ class TestStopAPI:
         assert response.data is not None
         assert response.data["location"] == location.id
         assert response.data["movement"] == movement.id
-        assert response.data["stop_type"] == models.StopChoices.SPLIT_DROP
+        assert response.data["stop_type"] == "SD"
 
     def test_patch(self, api_client, location, stop_api) -> None:
         """
