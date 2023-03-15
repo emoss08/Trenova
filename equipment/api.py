@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -55,15 +36,15 @@ class EquipmentTypeViewSet(OrganizationMixin):
 
 
 class TractorViewSet(OrganizationMixin):
-    """A viewset for viewing and editing customer information in the system.
+    """A viewset for viewing and editing tractors information in the system.
 
-    The viewset provides default operations for creating, updating, and deleting customers,
-    as well as listing and retrieving customers. It uses the `CustomerSerializer`
-    class to convert the customer instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating, and deleting tractors,
+    as well as listing and retrieving tractors. It uses the `TractorSerializer`
+    class to convert the tractor instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
+    Filtering is also available, with the ability to filter by is_active, manufacturer,
+    has_berth, equipment_type__name, fleet__code and highway_use_tax.
     """
 
     queryset = models.Tractor.objects.all()
@@ -71,8 +52,31 @@ class TractorViewSet(OrganizationMixin):
     filterset_fields = (
         "is_active",
         "manufacturer",
+        "equipment_type__name",
+        "fleet__code",
         "has_berth",
         "highway_use_tax",
+    )
+
+class TrailerViewSet(OrganizationMixin):
+    """A viewset for viewing and editing customer information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting trailers,
+    as well as listing and retrieving trailers. It uses the `Trailers`
+    class to convert the customer instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by is_active, equipment_type__name,
+    fleet_code__code, and is_leased.
+    """
+
+    queryset = models.Trailer.objects.all()
+    serializer_class = serializers.TrailerSerializer
+    filterset_fields = (
+        "is_active",
+        "equipment_type__name",
+        "fleet__code",
+        "is_leased"
     )
 
 

@@ -25,10 +25,8 @@ from django.db.transaction import atomic
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import AFTER_CREATE, BEFORE_CREATE, LifecycleModelMixin, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
 from billing.models import AccessorialCharge, DocumentClassification
 from utils.models import ChoiceField, GenericModel
 
@@ -44,7 +42,7 @@ class FuelMethodChoices(models.TextChoices):
     PERCENTAGE = "P", _("Percentage")
 
 
-class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
+class Customer(GenericModel):  # type: ignore
     """
     Stores customer information for billing and invoicing
     """
@@ -158,41 +156,6 @@ class Customer(LifecycleModelMixin, GenericModel):  # type: ignore
             str: String representation of the customer address.
         """
         return f"{self.city}, {self.state} {self.zip_code}"
-
-    @hook(BEFORE_CREATE)  # type: ignore
-    def set_code_before_create(self) -> None:
-        """Set customer code before creating customer
-
-        Returns:
-            None: None
-        """
-        from customer.services.generation import CustomerGenerationService
-
-        if not self.code:
-            self.code = CustomerGenerationService.customer_code(instance=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_customer_billing_profile(self) -> None:
-        """Create customer billing profile after creating customer
-
-        Returns:
-            None: None
-        """
-
-        default_rule_profile, created = CustomerRuleProfile.objects.get_or_create(
-            organization=self.organization,
-            name="Default",
-        )
-        if (
-            not CustomerBillingProfile.objects.filter(customer=self).exists()
-            and created
-        ):
-            CustomerBillingProfile.objects.create(
-                organization=self.organization,
-                customer=self,
-                is_active=True,
-                rule_profile=default_rule_profile,
-            )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer instance
