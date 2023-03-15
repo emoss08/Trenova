@@ -92,7 +92,7 @@ class JobTitleListingField(serializers.RelatedField):
     Serializes a related field for a JobTitle object, returning only the name of the instance.
     """
 
-    def to_representation(self, instance: _MT) -> Any:
+    def to_representation(self, instance: models.JobTitle) -> str:
         """Converts a complex data instance into a primitive representation.
 
         Args:

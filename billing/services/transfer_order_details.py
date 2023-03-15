@@ -1,25 +1,26 @@
-"""
-COPYRIGHT 2022 MONTA
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+from typing import Union
 from django.utils import timezone
 
 from billing import models
 from billing.models import BillingHistory, BillingQueue
+
 
 
 class TransferOrderDetails:
@@ -32,18 +33,18 @@ class TransferOrderDetails:
     to the instance, if the instance does not have the information.
 
     Args:
-        instance (models.BillingHistory | models.BillingQueue): An instance of either the
+        instance (Union[models.BillingHistory, models.BillingQueue]): An instance of either the
         `BillingHistory` or `BillingQueue` model.
 
     Returns:
         None
     """
 
-    def __init__(self, *, instance: BillingQueue | BillingHistory) -> None:
+    def __init__(self, *, instance: Union[BillingQueue, BillingHistory]) -> None:
         self.instance = instance
-        self.save()
+        self._save()
 
-    def save(self) -> None:
+    def _save(self) -> None:
         """Save the instance of either `BillingHistory` or `BillingQueue`.
 
         The method transfers the details from `instance.order` to the instance,
@@ -52,55 +53,24 @@ class TransferOrderDetails:
         Returns:
             None
         """
-        # If order has `pieces`, set `pieces` to order `pieces`
-        if self.instance.order.pieces and not self.instance.pieces:
-            self.instance.pieces = self.instance.order.pieces
+        order = self.instance.order
+        instance = self.instance
 
-        # Set order `order_type` to `order_type` if it is not set
-        if not self.instance.order_type:
-            self.instance.order_type = self.instance.order.order_type
+        instance.pieces = instance.pieces or order.pieces
+        instance.order_type = instance.order_type or order.order_type
+        instance.weight = instance.weight or order.weight
+        instance.mileage = instance.mileage or order.mileage
+        instance.revenue_code = instance.revenue_code or order.revenue_code
+        instance.commodity = instance.commodity or order.commodity
+        instance.bol_number = instance.bol_number or order.bol_number
+        instance.bill_type = instance.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
+        instance.bill_date = instance.bill_date or timezone.now().date()
+        instance.consignee_ref_number = instance.consignee_ref_number or order.consignee_ref_number
 
-        # If order has `weight`, set `weight` to order `weight`
-        if self.instance.order.weight and not self.instance.weight:
-            self.instance.weight = self.instance.order.weight
+        if instance.commodity and not instance.commodity_descr:
+            instance.commodity_descr = instance.commodity.description
 
-        # If order has `mileage`, set `mileage` to order `mileage`
-        if self.instance.order.mileage and not self.instance.weight:
-            self.instance.mileage = self.instance.order.mileage
-
-        # If order has `revenue_code`, set `revenue_code` to order `revenue_code`
-        if self.instance.order.revenue_code and not self.instance.revenue_code:
-            self.instance.revenue_code = self.instance.order.revenue_code
-
-        if not self.instance.commodity and self.instance.order.commodity:
-            self.instance.commodity = self.instance.order.commodity
-
-        # If commodity `description` is set, set `commodity_descr` to the description of the commodity
-        if self.instance.commodity and self.instance.commodity.description:
-            self.instance.commodity_descr = self.instance.commodity.description
-
-        # if order has `bol_number`, set `bol_number` to `bol_number`
-        if self.instance.order.bol_number and not self.instance.bol_number:
-            self.instance.bol_number = self.instance.order.bol_number
-
-        # If `bill_type` is not set, set `bill_type` to `INVOICE`
-        if not self.instance.bill_type:
-            self.instance.bill_type = models.BillingQueue.BillTypeChoices.INVOICE
-
-        # If not `bill_date`, set `bill_date` to `timezone.now().date()`
-        if not self.instance.bill_date:
-            self.instance.bill_date = timezone.now().date()
-
-        # If order has `consignee_ref_number`, set `consignee_ref_number` to order `consignee_ref_number`
-        if (
-            self.instance.order.consignee_ref_number
-            and not self.instance.consignee_ref_number
-        ):
-            self.instance.consignee_ref_number = (
-                self.instance.order.consignee_ref_number
-            )
-
-        self.instance.customer = self.instance.order.customer
-        self.instance.other_charge_total = self.instance.order.other_charge_amount
-        self.instance.freight_charge_amount = self.instance.order.freight_charge_amount
-        self.instance.total_amount = self.instance.order.sub_total
+        instance.customer = order.customer
+        instance.other_charge_total = order.other_charge_amount
+        instance.freight_charge_amount = order.freight_charge_amount
+        instance.total_amount = order.sub_total
