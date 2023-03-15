@@ -70,7 +70,7 @@ export function AsideMenuMain() {
         <AsideMenuItem to="/dispatch/movements" title="Movements" hasBullet={true} />
 
         {/* Service Incidents */}
-        <AsideMenuItem to="/service-incidents" title="Service Incidents" hasBullet={true} />
+        <AsideMenuItem to="/dispatch/service-incidents" title="Service Incidents" hasBullet={true} />
 
       </AsideMenuItemWithSub>
 
@@ -314,8 +314,8 @@ export function AsideMenuMain() {
         {/* Manage Job Titles */}
         <AsideMenuItem to="/admin/job-titles" title="Manage Job Titles" hasBullet={true} />
 
-        {/* Manage Roles */}
-        <AsideMenuItem to="/admin/role-management" title="Manage Roles" hasBullet={true} />
+        {/* Manage Groups */}
+        <AsideMenuItem to="/admin/groups-management" title="Manage Groups" hasBullet={true} />
 
         {/* Manage Permissions */}
         <AsideMenuItem to="/admin/permission-management" title="Permissions" hasBullet={true} />
@@ -324,12 +324,14 @@ export function AsideMenuMain() {
         <AsideMenuItem to="/admin/token-management" title="Web Tokens" hasBullet={true} />
       </AsideMenuItemWithSub>
 
+
       {/* System Management */}
       <AsideMenuItem
-        to="/admin/system-management"
-        icon={<FontAwesomeIcon icon={faDisplayCode} />}
+        to="/system-management"
         title="System Management"
+        icon={<FontAwesomeIcon icon={faDisplayCode} />}
       />
+
       <div className="menu-item">
         <div className="menu-content">
           <div className="separator mx-1 my-4"></div>

@@ -15,31 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useEffect } from "react";
+type MontaSymbolProps = {
+  colorClass: string;
+  text: string | undefined;
+}
 
-const KeepAliveConnection: React.FC = () => {
-  useEffect(() => {
-    const newSocket = new WebSocket("ws://localhost:8000/ws/keepalive/", );
-    newSocket.onerror = (event) => {
-      console.error(`WebSocket error: ${event}`);
-    };
+export const MontaSymbol = ({ colorClass, text}: MontaSymbolProps) => {
+  return (
+    <div className="symbol symbol-50px">
+      <div className={`symbol-label fs-2 fw-semibold ${colorClass}`}>{text}</div>
+    </div>
+  )
+}
 
-    newSocket.onopen = () => {
-      console.log("KeepAlive WebSocket connection established");
-    };
-
-    newSocket.onmessage = (event) => {
-      console.log(`Received message: ${event.data}`);
-    };
-
-    setInterval(() => {
-      newSocket.send(JSON.stringify({ type: "keepalive_message", message: "keepalive"}));
-    }, 30000);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return <></>;
-};
-
-export default KeepAliveConnection;
