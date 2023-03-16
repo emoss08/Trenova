@@ -27,13 +27,6 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import (
-    AFTER_CREATE,
-    AFTER_SAVE,
-    BEFORE_SAVE,
-    LifecycleModelMixin,
-    hook,
-)
 from djmoney.models.fields import MoneyField
 
 from order.validation import OrderValidation
@@ -42,7 +35,6 @@ from utils.models import (
     GenericModel,
     RatingMethodChoices,
     StatusChoices,
-    AutoSelectRelatedQuerySetMixin,
 )
 
 User = settings.AUTH_USER_MODEL
@@ -203,7 +195,7 @@ class OrderControl(GenericModel):
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
-class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
+class OrderType(GenericModel):  # type:ignore
     """Stores the order type information for a related :model:`organization.Organization`.
 
     The OrderType model stores information about an order type, such as its name,
@@ -280,7 +272,7 @@ class OrderType(LifecycleModelMixin, GenericModel):  # type: ignore
         return reverse("order-types-detail", kwargs={"pk": self.pk})
 
 
-class Order(LifecycleModelMixin, GenericModel):  # type: ignore
+class Order(GenericModel):  # type:ignore
     """
     Stores order information related to a :model:`organization.Organization`.
     """
@@ -568,66 +560,6 @@ class Order(LifecycleModelMixin, GenericModel):  # type: ignore
 
         OrderValidation(order=self)
         super().clean()
-
-    @hook(AFTER_SAVE)  # type: ignore
-    def after_save(self) -> None:
-        """After Order save hook
-
-        Returns:
-            None
-        """
-        from stops.selectors import total_piece_count_for_order, total_weight_for_order
-
-        # If the order is marked as completed, set the total piece count and weight.
-        if self.status == StatusChoices.COMPLETED:
-            self.pieces = total_piece_count_for_order(order=self)
-            self.weight = total_weight_for_order(order=self)
-
-    @hook(BEFORE_SAVE)  # type: ignore
-    def before_save(self) -> None:
-        """Before Order save hook
-
-        Returns:
-            None
-        """
-        from order.services.pro_number_service import set_pro_number
-
-        # If the order does not have a pro number, set one.
-        if not self.pro_number:
-            self.pro_number = set_pro_number()
-
-        # If order marked 'ready_to_bill' and organization order control 'auto_order_total' is set.
-        # Calculate the total for the order and save it as the 'sub_total'.
-        if self.ready_to_bill and self.organization.order_control.auto_order_total:
-            self.sub_total = self.calculate_total()
-
-        # If origin location is provided, set origin address to location address.
-        if self.origin_location and not self.origin_address:
-            self.origin_address = self.origin_location.get_address_combination
-
-        # If destination location is provided, set destination address to location address.
-        if self.destination_location and not self.destination_address:
-            self.destination_address = self.destination_location.get_address_combination
-
-        # If the commodity has a hazmat class, set the hazmat class on the order.
-        if self.commodity and self.commodity.hazmat:
-            self.hazmat = self.commodity.hazmat
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_initial_movement_after_create(self) -> None:
-        """Create the initial movement for the order.
-
-        If the order is just created, create the initial movement for the order.
-
-        Returns:
-            None: None
-        """
-
-        from movements.models import Movement
-        from movements.services.generation import MovementService
-
-        if Movement.objects.filter(order=self).exists() is False:
-            MovementService.create_initial_movement(order=self)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order

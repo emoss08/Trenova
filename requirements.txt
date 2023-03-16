@@ -17,7 +17,6 @@ django-encrypted-model-fields==0.6.5
 django-environ==0.10.0
 django-extensions==3.2.1
 django-filter==22.1
-django-lifecycle==1.0.0
 django-localflavor==3.1
 django-money==3.0.0
 django-nested-inline==0.4.5

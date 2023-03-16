@@ -15,26 +15,30 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.apps import AppConfig
-from django.db.models.signals import pre_save
+from typing import Any
 
+from dispatch.models import Rate, RateBillingTable
 
-class DispatchConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "dispatch"
+def set_rate_number(sender: Rate, instance: Rate, **kwargs: Any) -> None:
+    """
+    Set the rate_number field of a Rate instance before it is created.
 
-    def ready(self) -> None:
-        from dispatch import signals
+    This method sets the rate_number field of the Rate instance to the result of the `generate_rate_number` method.
 
-        # Rate
-        pre_save.connect(
-            signals.set_rate_number,
-            sender="dispatch.Rate",
-            dispatch_uid="set_rate_number",
-        )
-        # Rate Billing Table
-        pre_save.connect(
-            signals.set_charge_amount_on_billing_table,
-            sender="dispatch.RateBillingTable",
-            dispatch_uid="set_charge_amount_on_billing_table",
-        )
+    Returns:
+        None
+    """
+
+    instance.rate_number = Rate.generate_rate_number()
+
+def set_charge_amount_on_billing_table(sender: RateBillingTable, instance: RateBillingTable, **kwargs: Any) -> None:
+    """
+    Set the charge amount for the rate billing table instance.
+
+    Returns:
+        None: None
+    """
+    if not instance.charge_amount:
+        instance.charge_amount = instance.charge_code.charge_amount
+
+    instance.sub_total = instance.charge_amount * instance.units
