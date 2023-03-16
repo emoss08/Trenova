@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from billing import models
 from billing.models import BillingHistory, BillingQueue
-
+from order.models import Order
 
 
 class TransferOrderDetails:
@@ -43,6 +43,7 @@ class TransferOrderDetails:
     def __init__(self, *, instance: Union[BillingQueue, BillingHistory]) -> None:
         self.instance = instance
         self._save()
+        print("TransferOrderDetails: ", self.instance)
 
     def _save(self) -> None:
         """Save the instance of either `BillingHistory` or `BillingQueue`.
@@ -53,7 +54,10 @@ class TransferOrderDetails:
         Returns:
             None
         """
-        order = self.instance.order
+        order = Order.objects.select_related(
+            "order_type", "revenue_code", "commodity", "customer"
+        ).get(pk=self.instance.order.pk)
+
         instance = self.instance
 
         instance.pieces = instance.pieces or order.pieces
@@ -63,9 +67,13 @@ class TransferOrderDetails:
         instance.revenue_code = instance.revenue_code or order.revenue_code
         instance.commodity = instance.commodity or order.commodity
         instance.bol_number = instance.bol_number or order.bol_number
-        instance.bill_type = instance.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
+        instance.bill_type = (
+            instance.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
+        )
         instance.bill_date = instance.bill_date or timezone.now().date()
-        instance.consignee_ref_number = instance.consignee_ref_number or order.consignee_ref_number
+        instance.consignee_ref_number = (
+            instance.consignee_ref_number or order.consignee_ref_number
+        )
 
         if instance.commodity and not instance.commodity_descr:
             instance.commodity_descr = instance.commodity.description

@@ -29,7 +29,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import AFTER_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 
@@ -40,7 +39,7 @@ from utils.models import ChoiceField, GenericModel
 User = settings.AUTH_USER_MODEL
 
 
-class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
+class Worker(GenericModel):  # type:ignore
     """
     Stores the equipment information that can be used later to
     assign an order to a movement.
@@ -166,8 +165,8 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         db_table = "worker"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_worker_code_organization',
+                fields=["code", "organization"],
+                name="unique_worker_code_organization",
             )
         ]
 
@@ -219,35 +218,6 @@ class Worker(LifecycleModelMixin, GenericModel):  # type: ignore
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    @hook(BEFORE_SAVE)  # type: ignore
-    def create_worker_code_before_save(self) -> None:
-        """Create worker code.
-
-        If the worker does not have an existing code, create one.
-        Otherwise, ignore.
-
-        Returns:
-            None: None
-        """
-        from worker.services.generation import WorkerGenerationService
-
-        if not self.code:
-            self.code = WorkerGenerationService.generate_worker_code(instance=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_worker_profile_after_create(self) -> None:
-        """Create worker profile.
-
-        If the worker does not have an existing profile, create one.
-        Otherwise, ignore.
-
-        Returns:
-            None: None
-        """
-
-        if not WorkerProfile.objects.filter(worker=self).exists():
-            WorkerProfile.objects.create(worker=self, organization=self.organization)
 
 
 class WorkerProfile(GenericModel):
@@ -668,27 +638,29 @@ class WorkerTimeAway(GenericModel):
     A Django model representing a worker's time off.
 
     Attributes:
-        id (UUIDField): The primary key field for the worker time away instance. This field is automatically generated using
-            the uuid4 function from the uuid module.
-        worker (ForeignKey): A foreign key that relates the worker to the worker time away. When a worker instance is deleted,
-            all related worker time away instances will be deleted as well.
+        id (UUIDField): The primary key field for the worker time away instance. This field is automatically generated
+            using the uuid4 function from the uuid module.
+        worker (ForeignKey): A foreign key that relates the worker to the worker time away. When a worker instance is
+            deleted, all related worker time away instances will be deleted as well.
         start_date (DateField): The date field representing the start date of the time away.
         end_date (DateField): The date field representing the end date of the time away.
-        leave_type (ChoiceField): The choice field representing the type of leave the worker is taking. It uses a nested class
-            LeaveTypeChoices that extends Django's built-in TextChoices class to provide a list of choices for the leave_type
-            field.
+        leave_type (ChoiceField): The choice field representing the type of leave the worker is taking. It uses a
+            nested class
+            LeaveTypeChoices that extends Django's built-in TextChoices class to provide a list of choices for the
+            leave_type field.
 
     Methods:
-        __str__(): A method that returns a string representation of the worker time away. In this case, the code of the worker
-            associated with the time away is wrapped at 50 characters.
-        get_absolute_url(): A method that returns the URL to view the detail of the worker time away. It uses Django's reverse
-            function to generate the URL based on the view name and the primary key of the worker time away instance.
+        __str__(): A method that returns a string representation of the worker time away. In this case, the code of the
+            worker associated with the time away is wrapped at 50 characters.
+        get_absolute_url(): A method that returns the URL to view the detail of the worker time away. It uses Django's
+            reverse function to generate the URL based on the view name and the primary key of the worker time away
+            instance.
 
     Meta:
         verbose_name (str): A human-readable name for the model. In this case, "Worker Time Away".
         verbose_name_plural (str): A human-readable plural name for the model. In this case, "Worker Time Away".
-        ordering (list): A list of fields to use when ordering the model instances. In this case, the instances are ordered
-            by the worker field.
+        ordering (list): A list of fields to use when ordering the model instances. In this case, the instances are
+            ordered by the worker field.
         db_table (str): The name of the database table to use for the model. In this case, "worker_time_away".
     """
 
@@ -743,9 +715,12 @@ class WorkerTimeAway(GenericModel):
 
         Attributes:
             verbose_name (str): A human-readable name for the model. The default value is "Worker Time Away".
-            verbose_name_plural (str): A human-readable plural name for the model. The default value is "Worker Time Away".
-            ordering (list of str): A list of model field names used to specify the default ordering of records. The default value is ["worker"].
-            db_table (str): The name of the database table to use for the model. The default value is "worker_time_away".
+            verbose_name_plural (str): A human-readable plural name for the model. The default value is
+            "Worker Time Away".
+            ordering (list of str): A list of model field names used to specify the default ordering of records. The
+            default value is ["worker"].
+            db_table (str): The name of the database table to use for the model. The default value is
+            "worker_time_away".
         """
 
         verbose_name = _("Worker Time Away")

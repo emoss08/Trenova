@@ -14,27 +14,42 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import Any
 
-from django.apps import AppConfig
-from django.db.models.signals import pre_save
+from movements.services.generation import MovementService
+from stops.services.generation import StopService
+from utils.models import StatusChoices
+from movements import models
 
 
-class DispatchConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "dispatch"
+def generate_initial_stops(
+    sender: models.Movement, created: bool, instance: models.Movement, **kwargs: Any
+) -> None:
+    """Generate initial movements stops.
 
-    def ready(self) -> None:
-        from dispatch import signals
+    This hook should only be fired if the first movement is being added to the order.
+    Its purpose is to create the initial stops for the movement, by taking the origin
+    and destination from the order. This is done by calling the StopService. This
+    service will then create the stops and sequence them.
 
-        # Rate
-        pre_save.connect(
-            signals.set_rate_number,
-            sender="dispatch.Rate",
-            dispatch_uid="set_rate_number",
-        )
-        # Rate Billing Table
-        pre_save.connect(
-            signals.set_charge_amount_on_billing_table,
-            sender="dispatch.RateBillingTable",
-            dispatch_uid="set_charge_amount_on_billing_table",
-        )
+    Returns:
+        None
+    """
+
+    if (
+        instance.order.status == StatusChoices.NEW
+        and instance.order.movements.count() == 1
+    ):
+        StopService.create_initial_stops(movement=instance, order=instance.order)
+
+
+def generate_ref_number(
+    sender: models.Movement, instance: models.Movement, **kwargs: Any
+) -> None:
+    """Generate the ref_num before saving the Movement
+
+    Returns:
+        None
+    """
+    if not instance.ref_num:
+        instance.ref_num = MovementService.set_ref_number()

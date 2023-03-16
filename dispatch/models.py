@@ -26,7 +26,6 @@ from django.db.models.aggregates import Max
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from django_lifecycle import BEFORE_CREATE, BEFORE_SAVE, LifecycleModelMixin, hook
 from djmoney.models.fields import MoneyField
 
 from integration.models import IntegrationChoices
@@ -42,25 +41,36 @@ class DispatchControl(GenericModel):
 
     Stores dispatch control information for a related :model:organization.Organization.
 
-    The DispatchControl model stores dispatch control information for a related organization. It is used to store information such as the record
-    service incident control, grace period, deadhead target, driver assign, trailer continuity, distance method, duplicate trailer check,
-    regulatory check, prevention of orders on hold, and the generation of routes.
+    The DispatchControl model stores dispatch control information for a related organization. It is used to store
+        information such as the record
+    service incident control, grace period, deadhead target, driver assign, trailer continuity, distance method,
+        duplicate trailer check, regulatory check, prevention of orders on hold, and the generation of routes.
 
     Attributes:
         id (UUIDField): Primary key and default value is a randomly generated UUID. Editable and unique.
-        organization (OneToOneField): ForeignKey to the related organization model with a CASCADE on delete. Has a verbose name of "Organization" and related
-        names of "dispatch_control" and "dispatch_controls".
-        record_service_incident (ChoiceField): ChoiceField that selects the record service incident control from the available choices
-        (Never, Pickup, Delivery, Pickup and Delivery, All except shipper). Default value is "Never".
-        grace_period (PositiveIntegerField): Positive integer field that stores the grace period for the service incident in minutes. Default value is 0.
-        deadhead_target (DecimalField): Decimal field that stores the deadhead target mileage for the company. Default value is 0.00.
-        driver_assign (BooleanField): Boolean field that enforces driver assign to orders for the company. Default value is True.
-        trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default value is False.
-        distance_method (ChoiceField): ChoiceField that selects the distance method from the available choices (Google, Monta). Default value is "Monta".
-        dupe_trailer_check (BooleanField): Boolean field that enforces the duplicate trailer check for the company. Default value is False.
-        regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default value is False.
-        prev_orders_on_hold (BooleanField): Boolean field that prevents dispatch of orders on hold for the company. Default value is False.
-        generate_routes (BooleanField): Boolean field that indicates whether routes should be generated for the company. Default value is False.
+        organization (OneToOneField): ForeignKey to the related organization model with a CASCADE on delete. Has a
+            verbose name of "Organization" and related names of "dispatch_control" and "dispatch_controls".
+        record_service_incident (ChoiceField): ChoiceField that selects the record service incident control from the
+            available choices (Never, Pickup, Delivery, Pickup and Delivery, All except shipper). Default value is
+            "Never".
+        grace_period (PositiveIntegerField): Positive integer field that stores the grace period for the service
+            incident in minutes. Default value is 0.
+        deadhead_target (DecimalField): Decimal field that stores the deadhead target mileage for the company. Default
+            value is 0.00.
+        driver_assign (BooleanField): Boolean field that enforces driver assign to orders for the company. Default
+            value is True.
+        trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default
+            value is False.
+        distance_method (ChoiceField): ChoiceField that selects the distance method from the available choices
+            (Google, Monta). Default value is "Monta".
+        dupe_trailer_check (BooleanField): Boolean field that enforces the duplicate trailer check for the company.
+            Default value is False.
+        regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default
+            value is False.
+        prev_orders_on_hold (BooleanField): Boolean field that prevents dispatch of orders on hold for the company.
+            Default value is False.
+        generate_routes (BooleanField): Boolean field that indicates whether routes should be generated for the
+            company. Default value is False.
 
     Methods:
         meta: Meta class for the DispatchControl model.
@@ -232,22 +242,27 @@ class DelayCode(GenericModel):
 
     A model to store delay codes for a service incident.
 
-    The DelayCode model stores codes and descriptions for a delay that occurs during a service incident. The fault of the delay
-    can be recorded as either the fault of the carrier or driver.
+    The DelayCode model stores codes and descriptions for a delay that occurs during a service incident. The fault of
+        the delay can be recorded as either the fault of the carrier or driver.
 
     Attributes:
-        code (CharField): The primary key, unique, and four character code for the delay. Help text is "Delay code for the service incident."
-        description (CharField): A 100-character description for the delay code. Help text is "Description for the delay code."
-        f_carrier_or_driver (BooleanField): A boolean value indicating if the fault of the delay is the carrier or driver. Default value is False.
+        code (CharField): The primary key, unique, and four character code for the delay. Help text is "Delay code for
+            the service incident."
+        description (CharField): A 100-character description for the delay code. Help text is "Description for the
+            delay code."
+        f_carrier_or_driver (BooleanField): A boolean value indicating if the fault of the delay is the carrier or
+            driver. Default value is False.
         Help text is "Fault is carrier or driver."
 
     Class Attributes:
-        Meta (class): A metaclass for the DelayCode model with verbose name "Delay Code" and verbose name plural "Delay Codes".
+        Meta (class): A metaclass for the DelayCode model with verbose name "Delay Code" and verbose name plural
+            "Delay Codes".
         The ordering is based on the code attribute.
 
     Methods:
         str(self) -> str:
-            Returns the string representation of the DelayCode instance, which is the first 50 characters of the code attribute.
+            Returns the string representation of the DelayCode instance, which is the first 50 characters of the
+            code attribute.
         get_absolute_url(self) -> str:
             Returns the URL for the DelayCode instance's detail view.
 
@@ -288,8 +303,8 @@ class DelayCode(GenericModel):
         db_table = "delay_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_delay_code_organization',
+                fields=["code", "organization"],
+                name="unique_delay_code_organization",
             )
         ]
 
@@ -322,17 +337,21 @@ class FleetCode(GenericModel):
 
     Attributes:
         code (CharField): Fleet code for the service incident.
-            Has a max length of 4 characters, is the primary key and unique, with help text of "Fleet code for the service incident.".
+            Has a max length of 4 characters, is the primary key and unique, with help text of "Fleet code for the
+            service incident.".
         description (CharField): Description for the fleet code.
             Has a max length of 100 characters and help text of "Description for the fleet code.".
         is_active (BooleanField): Whether the fleet code is active.
             Has a default value of True and help text of "Is the fleet code active.".
         revenue_goal (DecimalField): Revenue goal for the fleet code.
-            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Revenue goal for the fleet code.".
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Revenue goal for
+            the fleet code.".
         deadhead_goal (DecimalField): Deadhead goal for the fleet code.
-            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Deadhead goal for the fleet code.".
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Deadhead goal for
+            the fleet code.".
         mileage_goal (DecimalField): Mileage goal for the fleet code.
-            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Mileage goal for the fleet code.".
+            Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Mileage goal for
+            the fleet code.".
 
     Methods:
         __str__(self) -> str:
@@ -412,8 +431,8 @@ class FleetCode(GenericModel):
         db_table = "fleet_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_fleet_code_organization',
+                fields=["code", "organization"],
+                name="unique_fleet_code_organization",
             )
         ]
 
@@ -517,7 +536,7 @@ class CommentType(GenericModel):
         return reverse("comment-types-detail", kwargs={"pk": self.pk})
 
 
-class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
+class Rate(GenericModel):  # type:ignore
     """
     Class: Rate
 
@@ -544,7 +563,8 @@ class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
             Returns the absolute URL for the detail view of this Rate instance.
 
         set_rate_number_before_create(self) -> None:
-            Sets the rate_number field with the result of the generate_rate_number method before the instance is created.
+            Sets the rate_number field with the result of the generate_rate_number method before the instance is
+            created.
 
         generate_rate_number() -> str:
             Returns a new rate number that has not been used before, generated by incrementing the count of all previous
@@ -644,8 +664,8 @@ class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
         db_table = "rate"
         constraints = [
             models.UniqueConstraint(
-                fields=['rate_number', 'organization'],
-                name='unique_rate_number_organization',
+                fields=["rate_number", "organization"],
+                name="unique_rate_number_organization",
             )
         ]
 
@@ -683,19 +703,6 @@ class Rate(LifecycleModelMixin, GenericModel):  # type: ignore
                 }
             )
 
-    @hook(BEFORE_CREATE)
-    def set_rate_number_before_create(self) -> None:
-        """
-        Set the rate_number field of a Rate instance before it is created.
-
-        This method sets the rate_number field of the Rate instance to the result of the `generate_rate_number` method.
-
-        Returns:
-            None
-        """
-
-        self.rate_number = self.generate_rate_number()
-
     @staticmethod
     def generate_rate_number() -> str:
         """
@@ -729,8 +736,10 @@ class RateTable(GenericModel):
         id (UUIDField): A unique identifier for the rate table instance.
         rate (ForeignKey): A foreign key to the `Rate` model, representing the rate for the rate table.
         description (CharField): A description for the rate table.
-        origin_location (ForeignKey): A foreign key to the `Location` model, representing the origin location for the rate table.
-        destination_location (ForeignKey): A foreign key to the `Location` model, representing the destination location for the rate table.
+        origin_location (ForeignKey): A foreign key to the `Location` model, representing the origin location for the
+            rate table.
+        destination_location (ForeignKey): A foreign key to the `Location` model, representing the destination location
+            for the rate table.
         rate_method (ChoiceField): The rate method for the rate table, chosen from the `RatingMethodChoices` choices.
         rate_amount (PositiveIntegerField): The rate amount for the rate table.
         distance_override (PositiveIntegerField): The distance override for the rate table.
@@ -837,11 +846,12 @@ class RateTable(GenericModel):
         return reverse("rate-tables-detail", kwargs={"pk": self.pk})
 
 
-class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
+class RateBillingTable(GenericModel):  # type:ignore
     """
     Class: RateBillingTable
 
-    Django model representing a RateBillingTable. This model stores Billing Table information for a related :model:`rates.Rate`.
+    Django model representing a RateBillingTable. This model stores Billing Table information for a
+    related :model:`rates.Rate`.
 
     Attributes:
         id (UUIDField): The primary key for the rate billing table instance.
@@ -936,19 +946,6 @@ class RateBillingTable(LifecycleModelMixin, GenericModel):  # type: ignore
             str: The description field of the RateBillingTable instance.
         """
         return self.description
-
-    @hook(BEFORE_SAVE)
-    def before_save(self) -> None:
-        """
-        Set the charge amount for the rate billing table instance.
-
-        Returns:
-            None: None
-        """
-        if not self.charge_amount:
-            self.charge_amount = self.charge_code.charge_amount
-
-        self.sub_total = self.charge_amount * self.units
 
     def get_absolute_url(self) -> str:
         """

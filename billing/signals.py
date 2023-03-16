@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from typing import Any
 
 from django.core.exceptions import ValidationError
@@ -59,6 +60,7 @@ def check_billing_history(
 ) -> None:
     """
     Prevents the deletion of the Billing History if the organization has the remove_billing_history
+
     Args:
         sender (models.BillingHistory): Billing History model
         instance (models.BillingHistory): Billing History instance
@@ -70,7 +72,6 @@ def check_billing_history(
     Raises:
         ValidationError: If the organization has the remove_billing_history set to False
     """
-    print(origin)
     if instance.organization.billing_control.remove_billing_history is False:
         raise ValidationError(
             {
@@ -114,6 +115,7 @@ def transfer_order_details_to_billing_history(
     """
     TransferOrderDetails(instance=instance)
 
+
 def generate_invoice_number_on_billing_queue(
     sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any
 ) -> None:
@@ -129,11 +131,11 @@ def generate_invoice_number_on_billing_queue(
     """
     InvoiceNumberService(instance=instance)
 
+
 def transfer_order_details_to_billing_queue(
     sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any
 ) -> None:
-    """
-    Transfers the order details to the billing queue
+    """Transfers the order details to the billing queue
 
     Args:
         sender (models.BillingQueue): Billing Queue model

@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -43,15 +24,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from django_lifecycle import (
-    AFTER_CREATE,
-    AFTER_SAVE,
-    BEFORE_DELETE,
-    BEFORE_SAVE,
-    BEFORE_UPDATE,
-    LifecycleModelMixin,
-    hook,
-)
+from django_lifecycle import BEFORE_UPDATE, hook
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -60,7 +33,7 @@ from .services.table_choices import TABLE_NAME_CHOICES
 from .validators.organization import validate_org_timezone
 
 
-class Organization(LifecycleModelMixin, TimeStampedModel):
+class Organization(TimeStampedModel):
     """
     Organization Model Fields
     """
@@ -233,7 +206,6 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         """
         return f"{self.city}, {self.state} {self.zip_code}"
 
-    @hook(BEFORE_SAVE)  # type: ignore
     def before_create(self) -> None:
         """Actions before saving an Organization instance.
 
@@ -241,80 +213,10 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
             None: None
         """
 
+        # TODO: Move this to save method
+
         # Upper case the scac code before saving
         self.scac_code = self.scac_code.upper()
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_dispatch_control_after_create(self) -> None:
-        """Create a dispatch control after the organization is created.
-
-        Returns:
-            None
-        """
-        from dispatch.models import DispatchControl
-
-        if not DispatchControl.objects.filter(organization=self).exists():
-            DispatchControl.objects.create(organization=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_order_control_after_create(self) -> None:
-        """Create an order control after the organization is created.
-
-        Returns:
-            None
-        """
-        from order.models import OrderControl
-
-        if not OrderControl.objects.filter(organization=self).exists():
-            OrderControl.objects.create(organization=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_route_control_after_create(self) -> None:
-        """Create a route control after the organization is created.
-
-        Returns:
-            None
-        """
-
-        from route.models import RouteControl
-
-        if not RouteControl.objects.filter(organization=self).exists():
-            RouteControl.objects.create(organization=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_billing_control_after_crate(self) -> None:
-        """Create a billing control after the organization is created.
-
-        Returns:
-            None
-        """
-        from billing.models import BillingControl
-
-        if not BillingControl.objects.filter(organization=self).exists():
-            BillingControl.objects.create(organization=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_email_control_after_create(self) -> None:
-        """Create an email control after the organization is created.
-
-        Returns:
-            None: None
-        """
-        if not EmailControl.objects.filter(organization=self).exists():
-            EmailControl.objects.create(organization=self)
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_invoice_control_after_create(self) -> None:
-        """Create an invoice control after the organization is created.
-
-        Returns:
-            None: None
-        """
-
-        from invoicing.models import InvoiceControl
-
-        if not InvoiceControl.objects.filter(organization=self).exists():
-            InvoiceControl.objects.create(organization=self)
 
     def get_absolute_url(self) -> str:
         """
@@ -324,7 +226,7 @@ class Organization(LifecycleModelMixin, TimeStampedModel):
         return reverse("organizations-detail", kwargs={"pk": self.pk})
 
 
-class Depot(LifecycleModelMixin, TimeStampedModel):
+class Depot(TimeStampedModel):
     """
     Stores information about a specific depot inside a :model:`organization.Organization`
     Depots are commonly known as terminals or yards.
@@ -367,8 +269,8 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
         db_table = "depot"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_depot_name_organization',
+                fields=["name", "organization"],
+                name="unique_depot_name_organization",
             )
         ]
 
@@ -379,16 +281,6 @@ class Depot(LifecycleModelMixin, TimeStampedModel):
             str: String representation of the depot.
         """
         return textwrap.wrap(self.name, 50)[0]
-
-    @hook(AFTER_CREATE)  # type: ignore
-    def create_depot_details_after_save(self) -> None:
-        """Create a depot detail after the depot is created.
-
-        Returns:
-            None
-        """
-        if not DepotDetail.objects.filter(depot=self).exists():
-            DepotDetail.objects.create(organization=self.organization, depot=self)
 
     def get_absolute_url(self) -> str:
         """Depot absolute URL
@@ -834,7 +726,7 @@ class TaxRate(TimeStampedModel):
         return reverse("tax-rates-detail", kwargs={"pk": self.pk})
 
 
-class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
+class TableChangeAlert(TimeStampedModel):
     """
     Stores the table change alert information for a related :model:`organization.Organization`
     """
@@ -959,8 +851,8 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         db_table = "table_change_alert"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_name_organization',
+                fields=["name", "organization"],
+                name="unique_name_organization_table_change_alert",
             )
         ]
 
@@ -972,55 +864,6 @@ class TableChangeAlert(LifecycleModelMixin, TimeStampedModel):
         """
 
         return textwrap.wrap(self.name, 50)[0]
-
-    @hook(BEFORE_SAVE)
-    def save_trigger_name_requirements(self) -> None:
-        """Save trigger name requirements.
-
-        This function is called before the table change alert is saved. It is responsible for
-        setting the function name, trigger name, and listener name.
-
-        Returns:
-            None
-        """
-        from organization.services.table_change import set_trigger_name_requirements
-
-        set_trigger_name_requirements(instance=self)
-
-    @hook(BEFORE_UPDATE, when="table", has_changed=True)
-    def delete_and_add_new_trigger(self) -> None:
-        """Delete and add new trigger.
-
-        Returns:
-            None: This function has no return value.
-        """
-        from organization.services.table_change import drop_trigger_and_create
-
-        drop_trigger_and_create(instance=self)
-
-    @hook(AFTER_SAVE)
-    def after_save(self) -> None:
-        """After save hook.
-
-        Returns:
-            None: This function has no return value.
-        """
-        from organization.services.table_change import create_trigger_based_on_db_action
-
-        create_trigger_based_on_db_action(instance=self)
-
-    @hook(BEFORE_DELETE)
-    def before_delete(self) -> None:
-        """Before delete hook.
-
-        Returns:
-            None: This function has no return value.
-        """
-        drop_trigger_and_function(
-            trigger_name=self.trigger_name,
-            table_name=self.table,
-            function_name=self.function_name,
-        )
 
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL
