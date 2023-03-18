@@ -463,7 +463,7 @@ class DocumentClassification(GenericModel):
         self.save()
 
 
-class BillingQueue(GenericModel):
+class BillingQueue(GenericModel):  # type:ignore
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -736,7 +736,8 @@ class BillingQueue(GenericModel):
         ):
             errors.append(
                 _(
-                    "Order must be `COMPLETED` and `READY_TO_BILL` must be marked before transferring to billing. Please try again."
+                    "Order must be `COMPLETED` and `READY_TO_BILL` must be marked before transferring to billing."
+                    "Please try again."
                 )
             )
 
@@ -855,7 +856,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(GenericModel):
+class BillingHistory(GenericModel):  # type:ignore
     """
     Class for storing information about the billing history.
     """
@@ -1118,7 +1119,8 @@ class BillingExceptionManager(models.Manager):
         """
         Create a new BillingException instance with the provided information.
 
-        This method creates a new `BillingException` instance with the provided information. It takes the following arguments:
+        This method creates a new `BillingException` instance with the provided information. It takes the following
+        arguments:
         - `organization` (type: `Organization`): The `Organization` object associated with the `BillingException`.
         - `exception_type` (type: `str`): A string representing the type of the `BillingException`.
         - `order` (type: `Order`): The `Order` object associated with the `BillingException`.

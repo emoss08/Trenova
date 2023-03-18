@@ -26,6 +26,7 @@ class OrganizationConfig(AppConfig):
     def ready(self) -> None:
         from organization import signals
 
+        # Organization
         post_save.connect(
             signals.create_dispatch_control,
             sender="organization.Organization",
@@ -60,6 +61,13 @@ class OrganizationConfig(AppConfig):
             signals.create_depot_detail,
             sender="organization.Depot",
             dispatch_uid="create_depot_detail",
+        )
+
+        # Table Change Alerts
+        post_save.connect(
+            signals.create_trigger_signal,
+            sender="organization.TableChangeAlert",
+            dispatch_uid="create_trigger_signal",
         )
         pre_save.connect(
             signals.save_trigger_name_requirements,

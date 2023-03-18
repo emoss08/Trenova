@@ -17,10 +17,28 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
+
 from rest_framework import serializers
 
 from accounts.models import User
 from dispatch.models import CommentType, DelayCode
+from location.models import Location
 from movements.models import Movement
 from stops import models
 from utils.serializers import GenericSerializer
@@ -54,6 +72,8 @@ class StopCommentSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
 
     Attributes:
+        stop (serializers.PrimaryKeyRelatedField): A primary key related field that
+        determines the stop that the comment is for.
         comment_type (serializers.PrimaryKeyRelatedField): A primary key related field that
         determines the comment type of the stop comment.
         qualifier_code (serializers.PrimaryKeyRelatedField): A primary key related field that
@@ -62,6 +82,9 @@ class StopCommentSerializer(GenericSerializer):
         determines the user who entered the stop comment.
     """
 
+    stop = serializers.PrimaryKeyRelatedField(
+        queryset=models.Stop.objects.all(),
+    )
     comment_type = serializers.PrimaryKeyRelatedField(
         queryset=CommentType.objects.all(),
     )
@@ -83,6 +106,7 @@ class StopCommentSerializer(GenericSerializer):
 
         model = models.StopComment
         extra_fields = (
+            "stop",
             "comment_type",
             "qualifier_code",
             "entered_by",
@@ -98,7 +122,15 @@ class StopSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
-    stop_comments = serializers.PrimaryKeyRelatedField(
+    movement = serializers.PrimaryKeyRelatedField(
+        queryset=Movement.objects.all(),
+    )
+    location = serializers.PrimaryKeyRelatedField(
+        queryset=Location.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    comments = serializers.PrimaryKeyRelatedField(
         queryset=models.StopComment.objects.all(),
         allow_null=True,
         required=False,
@@ -112,7 +144,11 @@ class StopSerializer(GenericSerializer):
         """
 
         model = models.Stop
-        extra_fields = ("stop_comments",)
+        extra_fields = (
+            "comments",
+            "movement",
+            "location",
+        )
 
 
 class ServiceIncidentSerializer(GenericSerializer):

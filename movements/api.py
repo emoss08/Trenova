@@ -39,6 +39,7 @@ class MovementViewSet(OrganizationMixin):
     serializer_class = serializers.MovementSerializer
     filterset_fields = (
         "tractor",
-        "primary_worker",
-        "secondary_worker",
+        "primary_worker__code",
+        "secondary_worker__code",
+        "order__pro_number"
     )

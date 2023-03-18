@@ -69,7 +69,7 @@ def set_field_values(
 
 def _set_pro_number(instance: models.Order) -> None:
     if not instance.pro_number:
-        instance.pro_number = set_pro_number()
+        instance.pro_number = set_pro_number(organization=instance.organization)
 
 
 def _set_sub_total(instance: models.Order) -> None:
