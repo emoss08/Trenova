@@ -32,7 +32,6 @@ from rest_framework import (
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
-from utils.permissions import MontaModelPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -66,8 +65,17 @@ class UserViewSet(OrganizationMixin):
 
     serializer_class = serializers.UserSerializer
     queryset = models.User.objects.all()
-    search_fields = ["username", "email", "profiles__first_name", "profiles__last_name"]
-    filterset_fields = ["department__name", "is_staff", "username"]
+    search_fields = (
+        "username",
+        "email",
+        "profiles__first_name",
+        "profiles__last_name",
+    )
+    filterset_fields = (
+        "department__name",
+        "is_staff",
+        "username",
+    )
     ordering_fields = "__all__"
     # permission_classes = [MontaModelPermissions]
 
