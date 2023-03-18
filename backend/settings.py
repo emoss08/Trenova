@@ -85,6 +85,7 @@ INSTALLED_APPS = [
     "commodities",
     "fuel",
     "invoicing",
+    "reports",
 ]
 
 # Middleware configurations
@@ -137,7 +138,7 @@ DATABASES = {
         "USER": env("DB_USER"),
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": env("DB_HOST"),
-        "PORT": 5432,
+        "PORT": env("DB_PORT"),
         "ATOMIC_REQUESTS": True,
         "CONN_HEALTH_CHECK": True,
     }
@@ -263,7 +264,11 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {"user": "10/second", "auth": "5/minute"},
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 10,
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend", "rest_framework.filters.SearchFilter", "rest_framework.filters.OrderingFilter"],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
     "EXCEPTION_HANDLER": "core.exceptions.django_error_handler",
 }
 
@@ -273,6 +278,7 @@ CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "celery"
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
