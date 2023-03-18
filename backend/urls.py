@@ -42,6 +42,8 @@ from organization import api as org_api
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
+from reports import api as reports_api
+from reports import views as reports_views
 
 router = routers.DefaultRouter()
 
@@ -263,6 +265,11 @@ router.register(
     r"invoice_control", invoicing_api.InvoiceControlViewSet, basename="invoice_control"
 )
 
+# Reports Routing
+router.register(
+    r"custom_reports", reports_api.CustomReportViewSet, basename="custom_reports"
+)
+
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("admin/doc/", include("django.contrib.admindocs.urls")),
@@ -295,11 +302,20 @@ urlpatterns = [
     path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
     path(
+        "api/table_columns/",
+        reports_api.TableColumnsAPIView.as_view(),
+        name="table-columns",
+    ),
+    path(
         "api/transfer_to_billing/",
         billing_api.transfer_to_billing,
         name="transfer-to-billing",
     ),
-    # path("api/me/", accounts_api.user_info, name="user-info"),
+    path(
+        "generate_excel_report/<str:report_id>/",
+        reports_views.generate_excel_report,
+        name="generate-excel-report",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

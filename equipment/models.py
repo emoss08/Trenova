@@ -538,7 +538,7 @@ class Tractor(GenericModel):
 
 class Trailer(GenericModel):
     """
-    Stores information about a piece of Tractor for a :model:`organization.Organization`.
+    Stores information about a piece of Trailer for a :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
@@ -714,6 +714,33 @@ class Trailer(GenericModel):
                 name="unique_trailer_code_organization",
             )
         ]
+
+    def clean(self) -> None:
+        """Clean method for the Trailer model
+
+        Returns:
+            None: This method does not return anything
+
+        Raises:
+            ValidationError: Raised if the equipment type is not a trailer
+        """
+
+        super().clean()
+
+        if (
+            self.equipment_type
+            and self.equipment_type.equipment_type_details.equipment_class
+            != EquipmentTypeDetail.EquipmentClassChoices.TRAILER
+        ):
+            raise ValidationError(
+                {
+                    "equipment_type": _(
+                        "Cannot assign a non-trailer equipment type to a trailer. Check the equipment class"
+                        " and try again."
+                    )
+                },
+                code="invalid",
+            )
 
     def get_absolute_url(self) -> str:
         """Trailer absolute URL
