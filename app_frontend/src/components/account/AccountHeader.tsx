@@ -3,18 +3,16 @@
  *
  * This file is part of Monta.
  *
- * Monta is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Monta is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
  */
 
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -67,7 +65,7 @@ const AccountHeader: React.FC = () => {
                     href="#"
                     className="btn btn-sm btn-light-success fw-bolder ms-2 fs-8 py-1 px-3"
                     data-bs-toggle="modal"
-                    data-bs-target="#kt_modal_upgrade_plan"
+                    data-bs-target="#mt_modal_upgrade_plan"
                   >
                     Upgrade to Pro
                   </a>
@@ -108,7 +106,7 @@ const AccountHeader: React.FC = () => {
               </div>
 
               <div className="d-flex my-4">
-                <a href="#" className="btn btn-sm btn-light me-2" id="kt_user_follow_button">
+                <a href="#" className="btn btn-sm btn-light me-2" id="mt_user_follow_button">
                   <MTSVG
                     icon={<SvgArr012 />}
                     className="svg-icon-3 d-none"
@@ -124,7 +122,7 @@ const AccountHeader: React.FC = () => {
                   href="#"
                   className="btn btn-sm btn-primary me-3"
                   data-bs-toggle="modal"
-                  data-bs-target="#kt_modal_offer_a_deal"
+                  data-bs-target="#mt_modal_offer_a_deal"
                 >
                   Hire Me
                 </a>

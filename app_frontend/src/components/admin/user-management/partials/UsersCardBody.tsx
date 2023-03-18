@@ -169,16 +169,19 @@ const UsersCardBody = () => {
                   Actions
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  <Dropdown.Item eventKey="list"
-                                 onClick={() => handleActionSelect("list", user)}>
+                  <Dropdown.Item
+                    eventKey="list"
+                    onClick={() => handleActionSelect("list", user)}>
                     List
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="edit"
-                                 onClick={() => handleActionSelect("edit", user)}>
+                  <Dropdown.Item
+                    eventKey="edit"
+                    onClick={() => handleActionSelect("edit", user)}>
                     Edit
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="delete"
-                                 onClick={() => handleActionSelect("delete", user)}>
+                  <Dropdown.Item
+                    eventKey="delete"
+                    onClick={() => handleActionSelect("delete", user)}>
                     Delete
                   </Dropdown.Item>
                 </Dropdown.Menu>

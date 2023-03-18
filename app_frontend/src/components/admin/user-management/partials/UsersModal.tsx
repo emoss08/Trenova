@@ -29,11 +29,7 @@ import { DangerAlert } from "@/components/partials/DangerAlert";
 import SvgGen016 from "@/components/svgs/SvgGen016";
 import { toast } from "react-toastify";
 import { phoneRegex, State, stateChoices, zipCodeRegex } from "@/utils/helpers/FieldHelpers";
-
-type JobTitlesOptionType = {
-  id: string;
-  name: string;
-};
+import { UserModel } from "@/models/user";
 
 const UsersSchema = Yup.object().shape({
   username: Yup.string()
@@ -79,8 +75,19 @@ const UsersSchema = Yup.object().shape({
     .matches(phoneRegex, "Phone number must be in the format (xxx) xxx-xxxx")
 });
 
+type ActionType = "add" | "edit";
 
-export default function UsersAddModal() {
+type UsersModalProps = {
+  action: ActionType;
+  user?: UserModel;
+}
+
+type JobTitlesOptionType = {
+  id: string;
+  name: string;
+};
+
+export default function UsersModal({ action, user }: UsersModalProps) {
   const [show, setShow] = useState(false);
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
@@ -139,7 +146,6 @@ export default function UsersAddModal() {
           phone_number: values.phoneNumber
         }
       };
-
       axios.post("http://localhost:8000/api/users/", data, {
         headers: {
           "Content-Type": "application/json"
@@ -199,12 +205,12 @@ export default function UsersAddModal() {
           </Modal.Header>
           <Modal.Body className={"py-10 px-lg-16"}>
             <div className="scroll-y me-n7 pe-7"
-                 id="kt_modal_new_address_scroll"
+                 id="mt_modal_new_address_scroll"
                  data-mt-scroll="true"
                  data-mt-scroll-activate="{default: false, lg: true}"
                  data-kt-scroll-max-height="auto"
-                 data-mt-scroll-dependencies="#kt_modal_new_address_header"
-                 data-mt-scroll-wrappers="#kt_modal_new_address_scroll"
+                 data-mt-scroll-dependencies="#mt_modal_new_address_header"
+                 data-mt-scroll-wrappers="#mt_modal_new_address_scroll"
                  data-kt-scroll-offset="300px"
                  style={{ maxHeight: "667px" }}
             >

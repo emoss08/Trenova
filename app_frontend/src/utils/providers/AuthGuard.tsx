@@ -3,30 +3,27 @@
  *
  * This file is part of Monta.
  *
- * Monta is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Monta is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Monta.  If not, see <https://www.gnu.org/licenses/>.
+ * The Monta software is licensed under the Business Source License 1.1. You are granted the right
+ * to copy, modify, and redistribute the software, but only for non-production use or with a total
+ * of less than three server instances. Starting from the Change Date (November 16, 2026), the
+ * software will be made available under version 2 or later of the GNU General Public License.
+ * If you use the software in violation of this license, your rights under the license will be
+ * terminated automatically. The software is provided "as is," and the Licensor disclaims all
+ * warranties and conditions. If you use this license's text or the "Business Source License" name
+ * and trademark, you must comply with the Licensor's covenants, which include specifying the
+ * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
+ * Grant, and not modifying the license in any other way.
  */
 
 import React, { FC, PropsWithChildren, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
-import { WithChildren } from "@/utils/types";
 import { AuthModel, UserAuthModel } from "@/models/user";
 import * as authHelper from "@/utils/auth";
 import { getUserByToken } from "../_requests";
 import { createGlobalStore } from "@/utils/zustand";
 import { jobStore } from "@/utils/stores";
 
-type AuthType = { auth?: AuthModel, user?: UserAuthModel };
+type AuthType = { auth?: AuthModel; user?: UserAuthModel };
 const store = createGlobalStore<AuthType>({});
 export const authStore = store;
 
@@ -37,7 +34,6 @@ export function logout() {
 }
 
 export function saveAuth(auth: AuthModel | undefined) {
-  // If the auth token changed, then we'll need to refetch the user
   if (auth?.token !== store.get("auth")?.token) {
     store.set("user", undefined);
   }
@@ -49,10 +45,9 @@ export function saveAuth(auth: AuthModel | undefined) {
   }
 }
 
-/** List of routes that should be public and accessible without authentication. */
 const PUBLIC_PATHS = ["/auth/login"];
 
-const AuthGuard: React.FC<PropsWithChildren> = ({ children }) => {
+const AuthGuard: FC<PropsWithChildren> = ({ children }) => {
   const [auth, setAuth] = store.use("auth");
   const router = useRouter();
 
@@ -87,7 +82,6 @@ const AuthGuard: React.FC<PropsWithChildren> = ({ children }) => {
     };
   }, [router, isAuthenticated, setAuth, auth]);
 
-  // Auth check. If trying to navigate to a non-public path, reroute to the login page.
   if (!isAuthenticated && !PUBLIC_PATHS.includes(router.pathname)) {
     return null;
   }
@@ -95,8 +89,7 @@ const AuthGuard: React.FC<PropsWithChildren> = ({ children }) => {
   return <>{children}</>;
 };
 
-
-const AuthInit: FC<WithChildren> = ({ children }) => {
+const AuthInit: FC<PropsWithChildren> = ({ children }) => {
   const [auth] = store.use("auth", authHelper.getAuth());
   const didRequest = useRef(false);
   const router = useRouter();
@@ -120,7 +113,8 @@ const AuthInit: FC<WithChildren> = ({ children }) => {
     };
 
     if (auth && auth.token) {
-      requestUser(auth.token);
+      requestUser(auth.token).then(() => {
+      });
       return;
     }
 
