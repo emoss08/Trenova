@@ -168,7 +168,7 @@ class GeneralLedgerAccount(GenericModel):
         super().clean()
 
         if (
-            GeneralLedgerAccount.objects.filter(
+            self.__class__.objects.filter(
                 account_number__exact=self.account_number
             )
             .exclude(id__exact=self.id)
