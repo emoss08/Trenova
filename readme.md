@@ -49,3 +49,19 @@ Then there is pre-assignments....
 **Disclaimer:**
 
 It is essential to note that the utilization of Metronics from <b>Keenthemes</b> on Monta's frontend is not permitted without a valid license. This template is proprietary and requires proper authorization to be utilized. Any unauthorized usage may lead to legal consequences, and it is the sole responsibility of the end-user to obtain the necessary license before utilizing the Metronics template. <b>Monta LLC.</b> will not be held accountable for any violations or illegal usage of the Metronics template without proper authorization. To purchase a license for <b>Metronic</b> by <b>Keenthemes</b>, please visit <https://1.envato.market/EA4JP>. For further information on Keenthemes, please visit <https://keenthemes.com/>.
+
+### Developer Features
+
+Rich contains a number of builtin _renderables_ you can use to create elegant output in your CLI and help you debug your code.
+
+Click the following headings for details:
+
+<details>
+<summary>Traceback</summary>
+Monta incorporates an abstract representation of [Rich Tracebacks](https://rich.readthedocs.io/en/latest/traceback.html), which enhances the
+debugging experience of your code. This feature is enabled by default, but you have the option to disable it by setting the MONTA_TRACEBACK
+environment variable to 0.
+
+Check out the example below to see how it works:
+![Example](https://github.com/Monta-Application/Monta/blob/main/imgs/traceback.png?raw=true)
+</details>
