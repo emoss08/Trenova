@@ -22,7 +22,7 @@ from reports import models
 from reports.services import generate_excel_report_as_file
 
 
-@app.task
+@app.task(name="send_scheduled_report")
 def send_scheduled_report(report_id: str):
     scheduled_report = models.ScheduledReport.objects.get(pk=report_id)
     if not scheduled_report.is_active:

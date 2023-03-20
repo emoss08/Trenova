@@ -17,7 +17,24 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from celery import shared_task
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
+
+from backend.celery import app
 from django.core.exceptions import ObjectDoesNotExist
 
 from accounts.models import User
@@ -29,7 +46,7 @@ from organization.models import Organization
 from utils.types import MODEL_UUID
 
 
-@shared_task(bind=True)
+@app.task(name="consolidate_order_documentation", bind=True, max_retries=3, default_retry_delay=60)
 def consolidate_order_documentation(self, order_id: str) -> None:
     """Consolidate Order
 
@@ -54,7 +71,7 @@ def consolidate_order_documentation(self, order_id: str) -> None:
         raise self.retry(exc=exc) from exc
 
 
-@shared_task(bind=True)
+@app.task(name='bill_order_task', bind=True, max_retries=3, default_retry_delay=60)
 def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:
     """Bill Order
 
@@ -80,7 +97,7 @@ def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:
         raise self.retry(exc=exc) from exc
 
 
-@shared_task(bind=True)
+@app.task(name="mass_order_bill_task", bind=True, max_retries=3, default_retry_delay=60)
 def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:
     """Bill Order
 
@@ -102,7 +119,7 @@ def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:
         raise self.retry(exc=exc) from exc
 
 
-@shared_task(bind=True)
+@app.task(name="transfer_to_billing_task", bind=True)
 def transfer_to_billing_task(
     self, *, user_id: MODEL_UUID, order_pros: list[str]
 ) -> None:
@@ -145,7 +162,7 @@ def transfer_to_billing_task(
         raise self.retry(exc=exc) from exc
 
 
-@shared_task(bind=True)
+@app.task(name="automate_mass_order_billing", bind=True, max_retries=3, default_retry_delay=60)
 def automate_mass_order_billing(self) -> str:
     """Automated Mass Billing Tasks, that uses system user to bill orders.
 
