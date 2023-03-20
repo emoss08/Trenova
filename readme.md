@@ -52,9 +52,8 @@ It is essential to note that the utilization of Metronics from <b>Keenthemes</b>
 
 ### Developer Features
 
-Rich contains a number of builtin _renderables_ you can use to create elegant output in your CLI and help you debug your code.
-
-Click the following headings for details:
+Monta incorporates a number of developer-friendly features that make it easy to customize and extend the system to suit your
+unique requirements. These include:
 
 <details>
 <summary>Traceback</summary>
