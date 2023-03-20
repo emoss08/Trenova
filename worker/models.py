@@ -750,3 +750,111 @@ class WorkerTimeAway(GenericModel):
             `/worker_time_away/edd1e612-cdd4-43d9-b3f3-bc099872088b/`.
         """
         return reverse("worker-time-away-detail", kwargs={"pk": self.pk})
+
+
+class WorkerHOS(GenericModel):
+    """
+    A Django model representing a worker's hours of service.
+
+    Attributes:
+        id (UUIDField): The UUID field representing the primary key of the model. It is set to be the primary key,
+            read-only, and unique.
+        worker (ForeignKey): The foreign key field representing the worker associated with the hours of service.
+            It uses the Worker model as the related model, and it uses the CASCADE delete rule.
+        drive_time (PositiveIntegerField): The positive integer field representing the drive time in minutes.
+        off_duty_time (PositiveIntegerField): The positive integer field representing the off duty time in minutes.
+        sleeper_berth_time (PositiveIntegerField): The positive integer field representing the sleeper berth time in
+            minutes.
+        on_duty_time (PositiveIntegerField): The positive integer field representing the on duty time in minutes.
+
+    Methods:
+        __str__ (str): Returns the string representation of the Worker HOS.
+        get_absolute_url (str): Returns the absolute URL to view the detail of the Worker HOS.
+
+    Meta:
+        verbose_name (str): A human-readable name for the model. The default value is "Worker HOS".
+        verbose_name_plural (str): A human-readable plural name for the model. The default value is "Worker HOS".
+        ordering (list of str): A list of model field names used to specify the default ordering of records. The
+            default value is ["worker"].
+        db_table (str): The name of the database table to use for the model. The default value is "worker_hos".
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    worker = models.ForeignKey(
+        Worker,
+        on_delete=models.CASCADE,
+        related_name="worker_hos",
+        related_query_name="worker_hos",
+        verbose_name=_("worker"),
+        help_text=_("Related worker."),
+    )
+    drive_time = models.PositiveIntegerField(
+        _("Drive Time"), help_text=_("Drive time in minutes")
+    )
+    off_duty_time = models.PositiveIntegerField(
+        _("Off Duty Time"), help_text=_("Off duty time in minutes")
+    )
+    sleeper_berth_time = models.PositiveIntegerField(
+        _("Sleeper Berth Time"), help_text=_("Sleeper berth time in minutes")
+    )
+    on_duty_time = models.PositiveIntegerField(
+        _("On Duty Time"), help_text=_("On duty time in minutes")
+    )
+    violation_time = models.PositiveIntegerField(
+        _("Violation Time"), help_text=_("Violation time in minutes")
+    )
+    current_status = models.CharField(
+        _("Current Status"), max_length=50, help_text=_("Current status of the driver")
+    )
+    current_location = models.CharField(
+        _("Current Location"),
+        max_length=50,
+        help_text=_("Current location of the driver"),
+    )
+    log_date = models.DateField(_("Log Date"), help_text=_("Log date"))
+    last_reset_date = models.DateField(
+        _("Last Reset Date"), help_text=_("Last reset date")
+    )
+
+    class Meta:
+        """Model meta options for Worker HOS.
+
+        Attributes:
+            verbose_name (str): A human-readable name for the model. The default value is "Worker HOS".
+            verbose_name_plural (str): A human-readable plural name for the model. The default value is
+            "Worker HOS".
+            ordering (list of str): A list of model field names used to specify the default ordering of records. The
+            default value is ["worker"].
+            db_table (str): The name of the database table to use for the model. The default value is
+            "worker_hos".
+        """
+
+        verbose_name = _("Worker HOS")
+        verbose_name_plural = _("Worker HOS")
+        ordering = ["worker"]
+        db_table = "worker_hos"
+
+    def __str__(self) -> str:
+        """
+        Returns the string representation of the Worker HOS.
+
+        Returns:
+            String representation of the WorkerHOS model. For example,
+            "Worker HOS: 2021-01-01".
+        """
+        return textwrap.wrap(f"Worker HOS {self.log_date}", 50)[0]
+
+    def get_absolute_url(self) -> str:
+        """
+        Returns the absolute URL to view the detail of the Worker HOS.
+
+        Returns:
+            Absolute URL for the WorkerHOS object. For Example,
+            `/worker_hos/edd1e612-cdd4-43d9-b3f3-bc099872088b/`.
+        """
+        return reverse("worker-hos-detail", kwargs={"pk": self.pk})

@@ -17,7 +17,6 @@
 
 import os
 from pathlib import Path
-
 import django_stubs_ext
 import environ
 
@@ -101,6 +100,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
+    "core.middleware.logging_middleware.CustomLoggingMiddleware",
 ]
 ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
@@ -270,6 +270,33 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "EXCEPTION_HANDLER": "core.exceptions.django_error_handler",
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "rich_handler": {
+            "level": "INFO",
+            "class": "core.formatters.CustomRichHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["rich_handler"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "django.server": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["rich_handler"],
+        "level": "INFO",
+    },
 }
 
 # Celery Configurations
