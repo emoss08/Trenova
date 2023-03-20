@@ -58,6 +58,7 @@ class TractorViewSet(OrganizationMixin):
         "highway_use_tax",
     )
 
+
 class TrailerViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
 
@@ -72,12 +73,7 @@ class TrailerViewSet(OrganizationMixin):
 
     queryset = models.Trailer.objects.all()
     serializer_class = serializers.TrailerSerializer
-    filterset_fields = (
-        "is_active",
-        "equipment_type__name",
-        "fleet__code",
-        "is_leased"
-    )
+    filterset_fields = ("is_active", "equipment_type__name", "fleet__code", "is_leased")
 
 
 class EquipmentManufacturerViewSet(OrganizationMixin):

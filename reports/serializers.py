@@ -21,6 +21,7 @@ from organization.services.table_choices import TABLE_NAME_CHOICES
 from reports import models
 from utils.serializers import GenericSerializer
 
+
 class TableColumnSerializer(serializers.Serializer):
     """
     A serializer for the `TableColumn` model.
@@ -33,6 +34,7 @@ class TableColumnSerializer(serializers.Serializer):
         name (str): The name of the column.
         verbose_name (str): The verbose name of the column.
     """
+
     name = serializers.CharField()
     verbose_name = serializers.CharField()
 
@@ -52,9 +54,7 @@ class CustomReportSerializer(GenericSerializer):
         `GenericSerializer`
     """
 
-    table = serializers.ChoiceField(
-        choices=TABLE_NAME_CHOICES
-    )
+    table = serializers.ChoiceField(choices=TABLE_NAME_CHOICES)
 
     class Meta:
         """

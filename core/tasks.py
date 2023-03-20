@@ -34,7 +34,9 @@ def get_cutoff_date() -> datetime.datetime:
     return timezone.now() - datetime.timedelta(days=30)
 
 
-@app.task(name='delete_audit_log_records', bind=True, max_retries=3, default_retry_delay=60)
+@app.task(
+    name="delete_audit_log_records", bind=True, max_retries=3, default_retry_delay=60
+)
 def delete_audit_log_records(self) -> str:
     """Delete audit log records older than 30 days.
 

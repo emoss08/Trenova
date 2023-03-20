@@ -17,6 +17,7 @@
 
 from organization.consumers import KeepAliveConsumer
 from django.urls import re_path
+
 websocket_urlpatterns = [
-    re_path(r'ws/keepalive/$', KeepAliveConsumer.as_asgi()),
+    re_path(r"ws/keepalive/$", KeepAliveConsumer.as_asgi()),
 ]

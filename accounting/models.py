@@ -168,9 +168,7 @@ class GeneralLedgerAccount(GenericModel):
         super().clean()
 
         if (
-            self.__class__.objects.filter(
-                account_number__exact=self.account_number
-            )
+            self.__class__.objects.filter(account_number__exact=self.account_number)
             .exclude(id__exact=self.id)
             .exists()
         ):
@@ -256,8 +254,8 @@ class RevenueCode(GenericModel):  # type: ignore
         db_table = "revenue_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_revenue_code_organization',
+                fields=["code", "organization"],
+                name="unique_revenue_code_organization",
             )
         ]
 
@@ -407,8 +405,8 @@ class DivisionCode(GenericModel):
         db_table = "division_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_division_code_organization',
+                fields=["code", "organization"],
+                name="unique_division_code_organization",
             )
         ]
 

@@ -178,7 +178,8 @@ class UserProfileSerializer(GenericSerializer):
                     "id",
                     "user",
                 )
-        """
+    """
+
     title = serializers.PrimaryKeyRelatedField(
         queryset=models.JobTitle.objects.all(),
         required=False,
@@ -214,6 +215,7 @@ class UserProfileSerializer(GenericSerializer):
                     fields = ('id', 'title', 'author')
                     extra_read_only_fields = ('id',)
         """
+
         model = models.UserProfile
         extra_fields = ("title", "title_name")
         extra_read_only_fields = (

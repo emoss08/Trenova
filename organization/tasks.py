@@ -20,7 +20,7 @@ from django.core.management import call_command
 from kombu.exceptions import OperationalError
 
 
-@app.task(name='table_change_alerts', bind=True, max_retries=3, default_retry_delay=60)
+@app.task(name="table_change_alerts", bind=True, max_retries=3, default_retry_delay=60)
 def table_change_alerts(self) -> None:
     """
     A Celery task that listens for table change notifications from a PostgreSQL database and retries on errors.

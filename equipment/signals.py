@@ -25,12 +25,12 @@ def create_equipment_type_details(
 ) -> None:
     """Create Equipment Type details
 
-            After the initial creation of the Equipment Type, if equipment_type_details doesn't
-            exist then create it.
+    After the initial creation of the Equipment Type, if equipment_type_details doesn't
+    exist then create it.
 
-            Returns:
-                None: None
-            """
+    Returns:
+        None: None
+    """
     if created:
         models.EquipmentTypeDetail.objects.create(
             equipment_type=instance, organization=instance.organization

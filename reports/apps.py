@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete
 
 
 class ReportsConfig(AppConfig):
@@ -26,8 +26,8 @@ class ReportsConfig(AppConfig):
     def ready(self) -> None:
         from reports import signals
 
-        post_save.connect(
-            signals.create_scheduled_task,
+        post_delete.connect(
+            signals.delete_scheduled_report_periodic_task,
             sender="reports.ScheduledReport",
-            dispatch_uid="create_scheduled_task",
+            dispatch_uid="delete_scheduled_report_periodic_task",
         )

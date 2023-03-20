@@ -120,8 +120,8 @@ class Customer(GenericModel):  # type: ignore
         db_table = "customer"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_customer_code_organization',
+                fields=["code", "organization"],
+                name="unique_customer_code_organization",
             )
         ]
 
@@ -319,8 +319,8 @@ class CustomerEmailProfile(GenericModel):
         db_table = "customer_email_profile"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_customer_email_profile_organization',
+                fields=["name", "organization"],
+                name="unique_customer_email_profile_organization",
             )
         ]
 
@@ -385,8 +385,8 @@ class CustomerRuleProfile(GenericModel):
         db_table = "customer_rule_profile"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_customer_rule_profile_organization',
+                fields=["name", "organization"],
+                name="unique_customer_rule_profile_organization",
             )
         ]
 
@@ -746,8 +746,8 @@ class CustomerFuelTable(GenericModel):
         db_table = "customer_fuel_table"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_customer_fuel_table_name_organization',
+                fields=["name", "organization"],
+                name="unique_customer_fuel_table_name_organization",
             )
         ]
 

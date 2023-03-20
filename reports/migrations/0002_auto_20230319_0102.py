@@ -23,12 +23,12 @@ from reports.models import Weekday
 
 
 def populate_weekdays(apps, schema_editor):
-    Weekday.objects.bulk_create([
-        Weekday(name=day) for _, day in Weekday.WEEKDAYS
-    ])
+    Weekday.objects.bulk_create([Weekday(name=day) for _, day in Weekday.WEEKDAYS])
+
 
 def reverse_populate_weekdays(apps, schema_editor):
     Weekday.objects.all().delete()
+
 
 class Migration(migrations.Migration):
 

@@ -25,6 +25,7 @@ class EquipmentConfig(AppConfig):
 
     def ready(self) -> None:
         from equipment import signals
+
         post_save.connect(
             signals.create_equipment_type_details,
             sender="equipment.EquipmentType",

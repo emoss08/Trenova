@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import pytz
 import textwrap
 import uuid
 from django.db import models
@@ -26,23 +27,62 @@ from utils.models import GenericModel
 
 
 class ScheduleType(models.TextChoices):
+    """
+    The schedule type for a scheduled report.
+    """
+
     DAILY = "DAILY", _("Daily")
     WEEKLY = "WEEKLY", _("Weekly")
     MONTHLY = "MONTHLY", _("Monthly")
 
 
-class CustomReport(GenericModel):
+class Weekday(models.Model):
     """
-    A Django model representing a custom report.
+    Stores the weekdays for a weekly scheduled report.
 
     Attributes:
-        id (models.UUIDField): The primary key field for the report ID.
-        name (models.CharField): The name of the report.
-        table (models.CharField): The name of the table that the report is based on.
+        name (str): The name of the weekday.
+    """
 
-    Meta:
-        verbose_name (str): The human-readable name of the model.
+    WEEKDAYS = [
+        (0, "Monday"),
+        (1, "Tuesday"),
+        (2, "Wednesday"),
+        (3, "Thursday"),
+        (4, "Friday"),
+        (5, "Saturday"),
+        (6, "Sunday"),
+    ]
+    name = models.CharField(_("Name"), max_length=15, choices=WEEKDAYS, unique=True)
 
+    def __str__(self) -> str:
+        """String representation of the weekday.
+
+        Returns:
+            str: The name of the weekday.
+        """
+        return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    class Meta:
+        """
+        Metaclass for the Weekday model.
+
+        Attributes:
+            verbose_name (str): The verbose name for the model.
+            verbose_name_plural (str): The plural verbose name for the model.
+            ordering (list): The ordering of the model.
+            db_table (str): The database table name for the model.
+        """
+
+        verbose_name = _("Weekday")
+        verbose_name_plural = _("Weekdays")
+        ordering = ("name",)
+        db_table = "weekday"
+
+
+class CustomReport(GenericModel):
+    """
+    Stores the custom reports information for related :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
@@ -65,16 +105,23 @@ class CustomReport(GenericModel):
     )
 
     def __str__(self) -> str:
-        """Report string representation.
+        """String representation of the custom report.
 
         Returns:
-            str: String representation of the report model.
+            str: The name of the custom report.
         """
         return textwrap.shorten(self.name, width=50, placeholder="...")
 
     class Meta:
         """
-        Metaclass for the Report model.
+        Metaclass for the CustomReport model.
+
+        Attributes:
+            verbose_name (str): The verbose name of the model.
+            verbose_name_plural (str): The verbose plural name of the model.
+            ordering (tuple): The ordering of the model.
+            db_table (str): The database table name of the model.
+            constraints (list): The constraints of the model.
         """
 
         verbose_name = _("Custom Report")
@@ -88,27 +135,23 @@ class CustomReport(GenericModel):
         ]
 
     def get_absolute_url(self) -> str:
-        """Report absolute URL
+        """Returns the absolute URL for the custom report.
 
         Returns:
-            str: The absolute URL for the report.
+            str: The absolute URL for the custom report.
         """
         return reverse("report-detail", kwargs={"pk": self.pk})
 
 
 class ReportColumn(GenericModel):
     """
-    A Django model representing a column in a custom report.
+    Stores the columns for a related :model:`reports.CustomReport`.
 
     Attributes:
-        id (models.UUIDField): The primary key field for the report column ID.
-        report (models.ForeignKey): The foreign key field linking the column to a custom report.
-        column_name (models.CharField): The name of the column to be displayed in the report.
-        column_order (models.PositiveIntegerField): The order of the column to be displayed in the report.
-
-    Meta:
-        ordering (list): The default ordering for query sets.
-
+        id (UUID): The ID of the report column.
+        report (:model:`reports.CustomReport`): The report that the column is for.
+        column_name (str): The name of the column to be displayed in the report.
+        column_order (int): The order of the column to be displayed in the report.
     """
 
     id = models.UUIDField(
@@ -135,16 +178,23 @@ class ReportColumn(GenericModel):
     )
 
     def __str__(self) -> str:
-        """Report column string representation.
+        """String representation of the report column.
 
         Returns:
-            str: String representation of the report column model.
+            str: The name of the report column.
         """
         return textwrap.shorten(self.column_name, width=50, placeholder="...")
 
     class Meta:
         """
         Metaclass for the ReportColumn model.
+
+        Attributes:
+            verbose_name (str): The verbose name of the model.
+            verbose_name_plural (str): The verbose plural name of the model.
+            ordering (tuple): The ordering of the model.
+            db_table (str): The database table name of the model.
+            constraints (list): The constraints of the model.
         """
 
         verbose_name = _("Report Column")
@@ -159,7 +209,7 @@ class ReportColumn(GenericModel):
         ]
 
     def get_absolute_url(self) -> str:
-        """Report column absolute URL
+        """Returns the absolute URL for the report column.
 
         Returns:
             str: The absolute URL for the report column.
@@ -168,6 +218,17 @@ class ReportColumn(GenericModel):
 
 
 class ScheduledReport(GenericModel):
+    """
+    Stores the scheduled reports information for related :model:`organization.Organization`.
+
+    Attributes:
+        id (UUID): The ID of the scheduled report.
+        is_active (bool): Whether the scheduled report is active.
+        report (:model:`reports.CustomReport`): The report that the scheduled report is for.
+        user (:model:`accounts.User`): The user that the scheduled report is for.
+        schedule_type (str): The type of schedule for the scheduled report.
+    """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -202,11 +263,11 @@ class ScheduledReport(GenericModel):
         _("Time"),
         help_text=_("The time of day to send the report."),
     )
-    day_of_week = models.PositiveIntegerField(
-        _("Day of Week"),
-        help_text=_("The day of the week to send the report."),
-        null=True,
+    day_of_week = models.ManyToManyField(
+        Weekday,
         blank=True,
+        help_text=_("The day of the week to send the report."),
+        verbose_name=_("Day of Week"),
     )
     day_of_month = models.PositiveIntegerField(
         _("Day of Month"),
@@ -214,10 +275,31 @@ class ScheduledReport(GenericModel):
         null=True,
         blank=True,
     )
+    timezone = models.CharField(
+        _("Timezone"),
+        max_length=62,
+        choices=[(tz, tz) for tz in pytz.all_timezones],
+        default="UTC",
+    )
+
+    def __str__(self) -> str:
+        """String representation of the scheduled report.
+
+        Returns:
+            str: The name of the scheduled report.
+        """
+        return textwrap.shorten(self.report.name, width=50, placeholder="...")
 
     class Meta:
         """
         Metaclass for the ScheduledReport model.
+
+        Attributes:
+            verbose_name (str): The verbose name of the model.
+            verbose_name_plural (str): The verbose plural name of the model.
+            ordering (tuple): The ordering of the model.
+            db_table (str): The database table name of the model.
+            constraints (list): The constraints of the model.
         """
 
         verbose_name = _("Scheduled Report")
@@ -231,16 +313,8 @@ class ScheduledReport(GenericModel):
             )
         ]
 
-    def __str__(self) -> str:
-        """Scheduled report string representation.
-
-        Returns:
-            str: String representation of the scheduled report model.
-        """
-        return textwrap.shorten(self.report.name, width=50, placeholder="...")
-
     def get_absolute_url(self) -> str:
-        """Scheduled report absolute URL
+        """Returns the absolute URL for the scheduled report.
 
         Returns:
             str: The absolute URL for the scheduled report.

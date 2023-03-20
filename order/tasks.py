@@ -46,7 +46,12 @@ from organization.models import Organization
 from utils.types import MODEL_UUID
 
 
-@app.task(name="consolidate_order_documentation", bind=True, max_retries=3, default_retry_delay=60)
+@app.task(
+    name="consolidate_order_documentation",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+)
 def consolidate_order_documentation(self, order_id: str) -> None:
     """Consolidate Order
 
@@ -71,7 +76,7 @@ def consolidate_order_documentation(self, order_id: str) -> None:
         raise self.retry(exc=exc) from exc
 
 
-@app.task(name='bill_order_task', bind=True, max_retries=3, default_retry_delay=60)
+@app.task(name="bill_order_task", bind=True, max_retries=3, default_retry_delay=60)
 def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:
     """Bill Order
 
@@ -162,7 +167,9 @@ def transfer_to_billing_task(
         raise self.retry(exc=exc) from exc
 
 
-@app.task(name="automate_mass_order_billing", bind=True, max_retries=3, default_retry_delay=60)
+@app.task(
+    name="automate_mass_order_billing", bind=True, max_retries=3, default_retry_delay=60
+)
 def automate_mass_order_billing(self) -> str:
     """Automated Mass Billing Tasks, that uses system user to bill orders.
 
