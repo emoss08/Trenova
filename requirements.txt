@@ -33,7 +33,7 @@ django_compressor==4.3.1
 djangorestframework~=3.14.0
 djangorestframework-stubs[compatible-mypy]==1.10.0
 drf-nested-routers==0.93.4
-drf-spectacular==0.26.0
+drf-spectacular==0.26.1
 factory_boy==3.2.1
 hiredis==2.2.2
 httpx==0.23.3
@@ -43,7 +43,7 @@ phonenumbers==8.13.7
 Pillow==9.4.0
 psycopg2==2.9.5
 pydantic==1.10.6
-pypdf==3.5.2
+pypdf==3.6.0
 pytest==7.2.2
 pytest-bdd==6.1.1
 pytest-cov==4.0.0
@@ -58,3 +58,4 @@ whitenoise==6.4.0
 xhtml2pdf==0.2.9
 channels_redis==4.0.0
 openpyxl==3.1.2
+orjson==3.8.7
