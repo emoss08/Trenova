@@ -30,6 +30,7 @@ import SvgGen016 from "@/components/svgs/SvgGen016";
 import { toast } from "react-toastify";
 import { phoneRegex, State, stateChoices, zipCodeRegex } from "@/utils/helpers/FieldHelpers";
 import { UserModel } from "@/models/user";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const UsersSchema = Yup.object().shape({
   username: Yup.string()
@@ -265,7 +266,6 @@ export default function UsersModal({ action, user }: UsersModalProps) {
                   We&quot;ll never share your email with anyone else.
                 </Form.Text>
               </Form.Group>
-
               {/* Password Field */}
               <Form.Group className="d-flex flex-column mb-8 fv-row">
                 <Form.Label className="d-flex align-items-center fs-6 fw-semibold mb-2">
