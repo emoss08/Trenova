@@ -57,6 +57,7 @@ unique requirements. These include:
 
 <details>
 <summary>Traceback</summary>
+
 Monta incorporates an abstract representation of [Rich Tracebacks](https://rich.readthedocs.io/en/latest/traceback.html), which enhances the
 debugging experience of your code. This feature is enabled by default, but you have the option to disable it by setting the MONTA_TRACEBACK
 environment variable to 0.
