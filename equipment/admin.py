@@ -131,6 +131,7 @@ class EquipmentAdmin(GenericAdmin[models.Tractor]):
         ),
     )
 
+
 @admin.register(models.Trailer)
 class TrailerAdmin(GenericAdmin[models.Trailer]):
     model: type[models.Trailer] = models.Trailer

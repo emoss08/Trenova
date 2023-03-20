@@ -14,36 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import string
-import random
-from typing import Type
 
-from django.db import models
 from django.http import HttpResponse, HttpRequest
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
-from reports.models import CustomReport
-from django.apps import apps
+from reports import models, services
 
 from utils.models import generate_random_string
-
-
-def get_model_by_table_name(table_name: str) -> Type[models.Model] | None:
-    """
-    Returns a model class from Django apps by a given table name.
-    If the model class is not found, it returns None.
-
-    Args:
-        table_name (str): A string representing the name of the database table.
-
-    Returns:
-        Type[models.Model]: A model class that corresponds to the given table name.
-    """
-    return next(
-        (model for model in apps.get_models() if model._meta.db_table == table_name),
-        None,
-    )
 
 
 def generate_excel_report(request: HttpRequest, report_id: str) -> HttpResponse:
@@ -59,11 +37,11 @@ def generate_excel_report(request: HttpRequest, report_id: str) -> HttpResponse:
         HttpResponse: An HTTP response with an Excel file containing the report data.
     """
     # Get the report and related columns
-    report = CustomReport.objects.get(pk=report_id)
+    report = models.CustomReport.objects.get(pk=report_id)
     columns = report.columns.all().order_by("column_order")
 
     # Get the model by table name
-    model = get_model_by_table_name(report.table)
+    model = services.get_model_by_table_name(report.table)
     if not model:
         return HttpResponse("Model not found", status=404)
 

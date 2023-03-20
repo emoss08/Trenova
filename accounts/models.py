@@ -46,11 +46,11 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
     """
 
     def create_user(
-            self,
-            username: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """
         Create and save a user with the given email and password.
@@ -80,11 +80,11 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
         return user
 
     def create_superuser(
-            self,
-            username: str,
-            email: str,
-            password: str | None = None,
-            **extra_fields: Any,
+        self,
+        username: str,
+        email: str,
+        password: str | None = None,
+        **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
 
@@ -266,9 +266,10 @@ class UserProfile(GenericModel):
         blank=True,
         help_text=_("The phone number of the user"),
         validators=[
-            RegexValidator(regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
-                           message=_("Phone number must be in the format (xxx) xxx-xxxx")
-                           )
+            RegexValidator(
+                regex=r"^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$",
+                message=_("Phone number must be in the format (xxx) xxx-xxxx"),
+            )
         ],
     )
     is_phone_verified = models.BooleanField(
@@ -471,8 +472,8 @@ class JobTitle(GenericModel):
         db_table = "job_title"
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'organization'],
-                name='unique_job_title',
+                fields=["name", "organization"],
+                name="unique_job_title",
             )
         ]
 

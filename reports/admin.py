@@ -20,26 +20,10 @@ from typing import Any
 import requests
 from django.contrib import admin
 from django.http import HttpRequest, HttpResponse
+
+from accounts.selectors import get_user_auth_token_from_request
 from reports import models, forms
 from utils.admin import GenericAdmin, GenericTabularInline
-from accounts.models import Token
-
-
-def get_user_auth_token(request: HttpRequest) -> str:
-    """
-    Retrieve or create an authentication token for a user.
-
-    Args:
-        request (HttpRequest): The HTTP request object containing the user for whom to retrieve the token.
-
-    Returns:
-        Token: An authentication token object associated with the specified user.
-
-    Raises:
-        Token.DoesNotExist: If no token exists for the specified user.
-    """
-    token, _ = Token.objects.get_or_create(user=request.user)
-    return token.key
 
 
 class ReportColumnAdmin(GenericTabularInline[models.ReportColumn, models.CustomReport]):
@@ -132,6 +116,7 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
         Returns:
             None: This method does not return anything.
         """
+
         if formset.model == models.ReportColumn:
             for form in formset.forms:
                 if not form.cleaned_data.get("DELETE"):
@@ -179,8 +164,10 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
             HttpResponse: The HTTP response object for the change form view.
 
         """
-        context["auth_token"] = get_user_auth_token(request)
+
+        context["auth_token"] = get_user_auth_token_from_request(request=request)
         return super().render_change_form(request, context, add, change, form_url, obj)
+
 
 @admin.register(models.ScheduledReport)
 class ScheduledReportAdmin(GenericAdmin[models.ScheduledReport]):
@@ -197,6 +184,7 @@ class ScheduledReportAdmin(GenericAdmin[models.ScheduledReport]):
         list_filter (tuple): A tuple containing the fields to use as filters in the list view for ScheduledReport objects.
         ordering (tuple): A tuple containing the fields to use for ordering ScheduledReport objects in the list view.
     """
+
     list_display = ("report", "organization")
     search_fields = ("report",)
     list_filter = ("organization",)

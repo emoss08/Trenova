@@ -44,15 +44,15 @@ def create_insert_field_string(fields: list[str]) -> str:
         f"'{field}', new.{field}" for field in fields if field not in excluded_fields
     ]
     return (
-            ", ".join(field_strings[:-1])
-            + (", " if len(field_strings) > 1 else "")
-            + field_strings[-1]
+        ", ".join(field_strings[:-1])
+        + (", " if len(field_strings) > 1 else "")
+        + field_strings[-1]
     )
 
 
 @transaction.atomic
 def create_insert_function(
-        *, listener_name: str, function_name: str, fields: list[str]
+    *, listener_name: str, function_name: str, fields: list[str]
 ) -> None:
     """Creates a PL/pgSQL trigger function that sends a notification on INSERT.
 
@@ -100,7 +100,7 @@ def create_insert_function(
 
 @transaction.atomic
 def create_insert_trigger(
-        *, trigger_name: str, table_name: str, function_name: str, listener_name: str
+    *, trigger_name: str, table_name: str, function_name: str, listener_name: str
 ) -> None:
     """Creates a PL/pgSQL trigger and function for sending a notification on INSERT.
 
@@ -175,7 +175,7 @@ def create_update_field_string(fields: list[str]) -> str:
 
 @transaction.atomic
 def create_update_function(
-        *, listener_name: str, function_name: str, fields: list[str]
+    *, listener_name: str, function_name: str, fields: list[str]
 ) -> None:
     """
     Creates a PL/pgSQL trigger function that sends a notification on UPDATE.
@@ -224,7 +224,7 @@ def create_update_function(
 
 @transaction.atomic
 def create_update_trigger(
-        *, trigger_name: str, table_name: str, function_name: str, listener_name: str
+    *, trigger_name: str, table_name: str, function_name: str, listener_name: str
 ) -> None:
     """Creates a PL/pgSQL trigger and function for sending a notification on UPDATE.
 
@@ -268,7 +268,7 @@ def create_update_trigger(
 
 @transaction.atomic
 def drop_trigger_and_function(
-        *, trigger_name: str, function_name: str, table_name: str
+    *, trigger_name: str, function_name: str, table_name: str
 ) -> None:
     """Deletes a PL/pgSQL trigger and function.
 

@@ -187,9 +187,7 @@ def create_depot_detail(
 
 
 def save_trigger_name_requirements(
-    sender: models.TableChangeAlert,
-    instance: models.TableChangeAlert,
-    **kwargs: Any
+    sender: models.TableChangeAlert, instance: models.TableChangeAlert, **kwargs: Any
 ) -> None:
     """Save trigger name requirements for a TableChangeAlert model instance.
 

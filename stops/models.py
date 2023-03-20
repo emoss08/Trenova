@@ -65,8 +65,8 @@ class QualifierCode(GenericModel):
         db_table = "qualifier_code"
         constraints = [
             models.UniqueConstraint(
-                fields=['code', 'organization'],
-                name='unique_qualifier_code_organization',
+                fields=["code", "organization"],
+                name="unique_qualifier_code_organization",
             )
         ]
 

@@ -19,6 +19,7 @@ from typing import Any
 
 from dispatch.models import Rate, RateBillingTable
 
+
 def set_rate_number(sender: Rate, instance: Rate, **kwargs: Any) -> None:
     """
     Set the rate_number field of a Rate instance before it is created.
@@ -31,7 +32,10 @@ def set_rate_number(sender: Rate, instance: Rate, **kwargs: Any) -> None:
 
     instance.rate_number = Rate.generate_rate_number()
 
-def set_charge_amount_on_billing_table(sender: RateBillingTable, instance: RateBillingTable, **kwargs: Any) -> None:
+
+def set_charge_amount_on_billing_table(
+    sender: RateBillingTable, instance: RateBillingTable, **kwargs: Any
+) -> None:
     """
     Set the charge amount for the rate billing table instance.
 

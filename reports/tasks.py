@@ -38,8 +38,11 @@ def send_scheduled_report(report_id: str):
         body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
         from_email="reports@monta.io",
         to=[user.email],
-        )
+    )
 
-    email.attach(f"{report.name}.xlsx", excel_file.getvalue(),
-                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    email.attach(
+        f"{report.name}.xlsx",
+        excel_file.getvalue(),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
     email.send()

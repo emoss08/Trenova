@@ -31,6 +31,7 @@ class CustomReportForm(forms.ModelForm):
         model (models.CustomReport): The CustomReport model used for creating or updating objects.
         fields (str): The fields to include in the form. "__all__" is used to include all fields.
     """
+
     table_name = forms.ChoiceField(
         choices=models.TABLE_NAME_CHOICES,
     )
@@ -48,6 +49,7 @@ class IgnorePKModelChoiceField(forms.ModelChoiceField):
         clean(value) -> Any:
             Cleans the form data.
     """
+
     def clean(self, value) -> Any:
         """
         Cleans the form data.
@@ -71,16 +73,8 @@ class ReportColumnForm(forms.ModelForm):
     Meta:
         model (models.ReportColumn): The ReportColumn model used for creating or updating objects.
         fields (tuple): The fields to include in the form.
-
-    Example Usage:
-        class MyReportColumnForm(ReportColumnForm):
-            # Add some custom validation to the `column_name` field
-            def clean_column_name(self):
-                ...
-            class Meta:
-                model = ReportColumn
-                fields = ("report", "column_name", "column_order")
     """
+
     column_name = IgnorePKModelChoiceField(
         queryset=models.ReportColumn.objects.none(), required=False
     )

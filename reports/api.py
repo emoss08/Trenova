@@ -22,6 +22,7 @@ from utils.views import OrganizationMixin
 from reports import models, serializers
 from rest_framework import generics
 
+
 class TableColumnsAPIView(generics.GenericAPIView):
     """
     A class-based view for retrieving column information for a specified database table.
@@ -35,6 +36,7 @@ class TableColumnsAPIView(generics.GenericAPIView):
         get(request: Request) -> Response:
             Retrieves the column information for a specified database table.
     """
+
     serializer_class = serializers.TableColumnSerializer
     authentication_classes = []
     permission_classes = []
@@ -49,6 +51,7 @@ class TableColumnsAPIView(generics.GenericAPIView):
         Returns:
             Response: The HTTP response object containing the column information for the specified table.
         """
+
         if not (table_name := request.GET.get("table_name", None)):
             return Response({"error": "Table name not provided."})
         if model := next(
@@ -64,7 +67,8 @@ class TableColumnsAPIView(generics.GenericAPIView):
                     "name": field.name,
                     "verbose_name": field.verbose_name,  # type: ignore
                 }
-                for field in model._meta.get_fields() if hasattr(field, "column")
+                for field in model._meta.get_fields()
+                if hasattr(field, "column")
             ]
             return Response({"columns": columns})
         else:
@@ -80,10 +84,10 @@ class CustomReportViewSet(OrganizationMixin):
         serializer_class (serializers.CustomReportSerializer): The serializer class used for CustomReport objects.
         filterset_fields (tuple): A tuple containing the names of the fields that can be used to filter CustomReport objects.
     """
+
     queryset = models.CustomReport.objects.all()
     serializer_class = serializers.CustomReportSerializer
     filterset_fields = (
         "name",
         "table",
     )
-

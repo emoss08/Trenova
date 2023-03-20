@@ -27,7 +27,10 @@ from order.services.pro_number_service import set_pro_number
 
 
 def set_total_piece_and_weight(
-    sender: models.Order, instance: models.Order, created: bool, **kwargs: Any,
+    sender: models.Order,
+    instance: models.Order,
+    created: bool,
+    **kwargs: Any,
 ) -> None:
     """
     Set total pieces and weight of a completed order.

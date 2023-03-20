@@ -14,50 +14,33 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import json
+
+import contextlib
 from typing import Any
 
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from django.db.models.signals import m2m_changed
+from django.dispatch import receiver
+from django_celery_beat.models import PeriodicTask
 
-from reports import models
-from reports.models import ScheduleType
+from reports import models, services
 
 
-def create_scheduled_task(sender: models.ScheduledReport, instance: models.ScheduledReport, created: bool, **kwargs: Any) -> None:
-    # Create or update the schedule based on schedule_type
-    if instance.schedule_type == ScheduleType.DAILY:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            hour=instance.time.hour,
-            minute=instance.time.minute,
+@receiver(
+    m2m_changed,
+    sender=models.ScheduledReport.day_of_week.through,
+    dispatch_uid="day_of_week_changed",
+)
+def update_scheduled_task(
+    sender: models.ScheduledReport, instance: models.ScheduledReport, **kwargs: Any
+) -> None:
+    services.create_scheduled_task(instance)
+
+
+def delete_scheduled_report_periodic_task(
+    sender: models.ScheduledReport, instance: models.ScheduledReport, **kwargs: Any
+) -> None:
+    with contextlib.suppress(PeriodicTask.DoesNotExist):
+        periodic_task = PeriodicTask.objects.get(
+            name=f"Send scheduled report {instance.pk}"
         )
-        task_type = 'crontab'
-    elif instance.schedule_type == ScheduleType.WEEKLY:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            day_of_week=instance.day_of_week,
-            hour=instance.time.hour,
-            minute=instance.time.minute,
-        )
-        task_type = 'crontab'
-    elif instance.schedule_type == ScheduleType.MONTHLY:
-        schedule, _ = CrontabSchedule.objects.get_or_create(
-            day_of_month=instance.day_of_month,
-            hour=instance.time.hour,
-            minute=instance.time.minute,
-        )
-        task_type = 'crontab'
-    else:
-        raise ValueError("Invalid schedule_type")
-
-    # Create or update the periodic task
-    task, created_task = PeriodicTask.objects.get_or_create(
-        crontab=schedule if task_type == 'crontab' else None,
-        interval=schedule if task_type == 'interval' else None,
-        name=f"Send scheduled report {instance.pk}",
-        task='reports.tasks.send_scheduled_report',
-        args=json.dumps([str(instance.pk)]),
-    )
-
-    if not created_task:
-        setattr(task, task_type, schedule)
-        task.args = json.dumps([str(instance.pk)])
-        task.save()
+        periodic_task.delete()

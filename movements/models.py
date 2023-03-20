@@ -98,8 +98,8 @@ class Movement(GenericModel):
         db_table = "movement"
         constraints = [
             models.UniqueConstraint(
-                fields=['ref_num', 'organization'],
-                name='unique_movement_ref_num_organization',
+                fields=["ref_num", "organization"],
+                name="unique_movement_ref_num_organization",
             )
         ]
 

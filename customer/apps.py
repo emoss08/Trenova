@@ -18,6 +18,7 @@
 from django.apps import AppConfig
 from django.db.models.signals import pre_save, post_save
 
+
 class CustomerConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "customer"

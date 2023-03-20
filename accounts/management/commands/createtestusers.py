@@ -25,6 +25,7 @@ import random
 import string
 from rich.progress import Progress
 
+
 class Command(BaseCommand):
     """A Django management command to create test users for a given organization.
 
@@ -72,12 +73,16 @@ class Command(BaseCommand):
         try:
             system_org = Organization.objects.get(name=system_org_answer)
         except Organization.DoesNotExist as e:
-            raise CommandError(f"Organization {system_org_answer} does not exist.") from e
+            raise CommandError(
+                f"Organization {system_org_answer} does not exist."
+            ) from e
 
         try:
             number_of_users = int(number_of_users_answer)
         except ValueError as e:
-            raise CommandError(f"{number_of_users_answer} is not a valid number.") from e
+            raise CommandError(
+                f"{number_of_users_answer} is not a valid number."
+            ) from e
 
         User = get_user_model()
 
@@ -94,7 +99,9 @@ class Command(BaseCommand):
 
         new_users = []
         with Progress() as progress:
-            task = progress.add_task("[cyan]Creating test users...", total=number_of_users)
+            task = progress.add_task(
+                "[cyan]Creating test users...", total=number_of_users
+            )
 
             for i in range(number_of_users):
                 if usernames[i] in existing_users:
@@ -119,7 +126,9 @@ class Command(BaseCommand):
 
         new_profiles = []
         with Progress() as progress:
-            task = progress.add_task("[cyan]Creating user profiles...", total=number_of_users)
+            task = progress.add_task(
+                "[cyan]Creating user profiles...", total=number_of_users
+            )
 
             for i in range(number_of_users):
                 if usernames[i] in existing_users:

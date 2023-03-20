@@ -41,5 +41,5 @@ class MovementViewSet(OrganizationMixin):
         "tractor",
         "primary_worker__code",
         "secondary_worker__code",
-        "order__pro_number"
+        "order__pro_number",
     )
