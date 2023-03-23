@@ -86,6 +86,7 @@ class MovementValidation:
         self.validate_movement_stop_status()
         self.validate_worker_compare()
         self.validate_movement_worker()
+        self.validate_worker_tractor_fleet()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -367,4 +368,25 @@ class MovementValidation:
             self.errors["tractor"] = _(
                 "Tractor is required before movement status can be changed to"
                 " `In Progress` or `Completed`. Please try again."
+            )
+
+    def validate_worker_tractor_fleet(self) -> None:
+        """Validate Worker and tractor are in the same fleet.
+
+        Returns:
+            None: This function has no return.
+        """
+
+        if (
+            self.movement.primary_worker
+            and self.movement.tractor
+            and self.movement.primary_worker.fleet_id != self.movement.tractor.fleet_id
+        ):
+            self.errors["primary_worker"] = _(
+                "The primary worker and tractor must belong to the same fleet to add or update a record. "
+                "Please ensure they are part of the same fleet and try again."
+            )
+            self.errors["tractor"] = _(
+                "The primary worker and tractor must belong to the same fleet to add or update a record. "
+                "Please ensure they are part of the same fleet and try again."
             )
