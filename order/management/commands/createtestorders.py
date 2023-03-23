@@ -3,18 +3,16 @@
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
-#  Monta is free software: you can redistribute it and/or modify                                   -
-#  it under the terms of the GNU General Public License as published by                            -
-#  the Free Software Foundation, either version 3 of the License, or                               -
-#  (at your option) any later version.                                                             -
-#                                                                                                  -
-#  Monta is distributed in the hope that it will be useful,                                        -
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
-#  GNU General Public License for more details.                                                    -
-#                                                                                                  -
-#  You should have received a copy of the GNU General Public License                               -
-#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
 from typing import Any
@@ -30,6 +28,7 @@ from equipment.models import EquipmentType
 from location.models import Location
 from order.models import Order, OrderType
 from organization.models import Organization
+from rich.progress import Progress
 
 DESCRIPTION = "GENERATED FROM CREATE TEST ORDERS COMMAND"
 
@@ -297,28 +296,41 @@ class Command(BaseCommand):
         order_count_answer = input("How many orders would you like to create? ")
         order_count = int(order_count_answer)
         organization_name = options["organization"]
-        organization = self.create_system_organization(organization_name)
-        location_1, location_2 = self.create_location(organization)
-        order_type = self.create_order_type(organization)
-        customer = self.create_customer(organization)
-        equipment_type = self.create_equipment_type(organization)
-        user = self.create_user(organization)
 
-        for _ in range(order_count):
-            Order.objects.create(
-                organization=organization,
-                order_type=order_type,
-                customer=customer,
-                origin_location=location_1,
-                origin_appointment=timezone.now(),
-                freight_charge_amount=100,
-                destination_location=location_2,
-                destination_appointment=timezone.now(),
-                equipment_type=equipment_type,
-                entered_by=user,
-                bol_number="123456789",
-                comment=DESCRIPTION,
-            )
+        with Progress() as progress:
+            prerequisite_data_task = progress.add_task("[cyan]Creating prerequisite data...", total=6)
+            organization = self.create_system_organization(organization_name)
+            progress.update(prerequisite_data_task, advance=1)
+            location_1, location_2 = self.create_location(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            order_type = self.create_order_type(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            customer = self.create_customer(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            equipment_type = self.create_equipment_type(organization)
+            progress.update(prerequisite_data_task, advance=1)
+            user = self.create_user(organization)
+            progress.update(prerequisite_data_task, advance=1)
+
+        with Progress() as progress:
+            order_creation_task = progress.add_task("[cyan]Creating orders...", total=order_count)
+
+            for _ in range(order_count):
+                Order.objects.create(
+                    organization=organization,
+                    order_type=order_type,
+                    customer=customer,
+                    origin_location=location_1,
+                    origin_appointment=timezone.now(),
+                    freight_charge_amount=100,
+                    destination_location=location_2,
+                    destination_appointment=timezone.now(),
+                    equipment_type=equipment_type,
+                    entered_by=user,
+                    bol_number="123456789",
+                    comment=DESCRIPTION,
+                )
+                progress.update(order_creation_task, advance=1)
 
         self.stdout.write(
             self.style.SUCCESS(
