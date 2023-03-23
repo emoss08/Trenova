@@ -42,6 +42,10 @@ class Weekday(models.Model):
 
     Attributes:
         name (str): The name of the weekday.
+
+    Methods:
+        __str__: String representation of the weekday.
+        get_absolute_url: Returns the absolute URL for the weekday.
     """
 
     WEEKDAYS = [
@@ -79,10 +83,27 @@ class Weekday(models.Model):
         ordering = ("name",)
         db_table = "weekday"
 
+    def get_absolute_url(self) -> str:
+        """Returns the absolute URL for the weekday.
+
+        Returns:
+            str: The absolute URL for the weekday.
+        """
+        return reverse("weekday-detail", kwargs={"pk": self.pk})
+
 
 class CustomReport(GenericModel):
     """
     Stores the custom reports information for related :model:`organization.Organization`.
+
+    Attributes:
+        id (UUID): The ID of the custom report.
+        name (str): The name of the custom report.
+        table (str): The table that the table change alert is for.
+
+    Methods:
+        __str__: String representation of the custom report.
+        get_absolute_url: Returns the absolute URL for the custom report.
     """
 
     id = models.UUIDField(
@@ -227,6 +248,14 @@ class ScheduledReport(GenericModel):
         report (:model:`reports.CustomReport`): The report that the scheduled report is for.
         user (:model:`accounts.User`): The user that the scheduled report is for.
         schedule_type (str): The type of schedule for the scheduled report.
+        time (TimeField): The time of the scheduled report.
+        day_of_week (str): The day of the week for the scheduled report.
+        day_of_month (int): The day of the month for the scheduled report.
+        timezone (str): The timezone for the scheduled report.
+
+    Methods:
+        __str__: String representation of the scheduled report.
+        get_absolute_url: Returns the absolute URL for the scheduled report.
     """
 
     id = models.UUIDField(
