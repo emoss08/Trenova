@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
+from typing import Any, Tuple
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
@@ -102,7 +102,7 @@ class Command(BaseCommand):
         allows the user to specify the name of the system organization to create orders for.
 
         Args:
-            parser: The CommandParser object representing the command parser to add the argument to.
+            parser (CommandParser): The CommandParser object representing the command parser to add the argument to.
 
         Returns:
             None: This function does not return anything.
@@ -119,15 +119,16 @@ class Command(BaseCommand):
             default="sys",
         )
 
-    def create_system_organization(self, organization_name: str) -> Organization:
+    @staticmethod
+    def create_system_organization(organization_name: str) -> Organization:
         """
         Creates a new `Organization` object with the specified name.
 
         Args:
-            organization_name: A string representing the name of the new organization.
+            organization_name (str): A string representing the name of the new organization.
 
         Returns:
-            The new `Organization` object.
+            Organization: The new `Organization` object.
 
         This method creates a new `Organization` object with the specified name and a default `scac_code` based on the
         first four characters of the organization name. If the organization already exists, it returns the existing
@@ -139,15 +140,16 @@ class Command(BaseCommand):
         )
         return organization
 
-    def create_user(self, organization) -> User:
+    @staticmethod
+    def create_user(organization: Organization) -> User:
         """
         Creates a new `User` object associated with the specified organization.
 
         Args:
-            organization: The `Organization` object to associate the new user with.
+            organization (Organization): The `Organization` object to associate the new user with.
 
         Returns:
-            The new `User` object.
+            User: The new `User` object.
 
         This method creates a new `User` object associated with the specified organization. The new user is assigned a
         default username, password, and email address based on the organization name. If the user already exists, it
@@ -161,15 +163,16 @@ class Command(BaseCommand):
         )
         return user
 
-    def create_location(self, organization) -> tuple[Location, Location]:
+    @staticmethod
+    def create_location(organization: Organization) -> Tuple[Location, Location]:
         """
         Creates two new `Location` objects associated with the specified organization.
 
         Args:
-            organization: The `Organization` object to associate the new locations with.
+            organization (Organization): The `Organization` object to associate the new locations with.
 
         Returns:
-            A tuple containing the two new `Location` objects.
+            Tuple[Location, Location] A tuple containing the two new `Location` objects.
 
         This method creates two new `Location` objects associated with the specified organization. The new locations
         are assigned default values for their description, city, state, and zip code. If the locations already exist,
@@ -195,15 +198,16 @@ class Command(BaseCommand):
         )
         return location_1, location_2
 
-    def create_order_type(self, organization) -> OrderType:
+    @staticmethod
+    def create_order_type(organization: Organization) -> OrderType:
         """
         Creates a new `OrderType` object associated with the specified organization.
 
         Args:
-            organization: The `Organization` object to associate the new order type with.
+            organization (Organization): The `Organization` object to associate the new order type with.
 
         Returns:
-            The new `OrderType` object.
+            OrderType: The new `OrderType` object.
 
         This method creates a new `OrderType` object associated with the specified organization. The new order type
         is assigned a default description. If the order type already exists, it returns the existing order type
@@ -215,15 +219,16 @@ class Command(BaseCommand):
         )
         return order_type
 
-    def create_customer(self, organization) -> Customer:
+    @staticmethod
+    def create_customer(organization: Organization) -> Customer:
         """
         Creates a new `Customer` object associated with the specified organization.
 
         Args:
-            organization: The `Organization` object to associate the new customer with.
+            organization (Organization): The `Organization` object to associate the new customer with.
 
         Returns:
-            The new `Customer` object.
+            Customer: The new `Customer` object.
 
         This method creates a new `Customer` object associated with the specified organization. The new customer is
         assigned default values for its name, address, city, state, and zip code. If the customer already exists, it
@@ -242,12 +247,13 @@ class Command(BaseCommand):
         )
         return customer
 
-    def create_equipment_type(self, organization) -> EquipmentType:
+    @staticmethod
+    def create_equipment_type(organization: Organization) -> EquipmentType:
         """
         Creates a new `EquipmentType` object associated with the specified organization.
 
         Args:
-            organization: The `Organization` object to associate the new equipment type with.
+            organization (Organization): The `Organization` object to associate the new equipment type with.
 
         Returns:
             The new `EquipmentType` object.
@@ -262,12 +268,13 @@ class Command(BaseCommand):
         )
         return equipment_type
 
-    def create_system_job_title(self, organization: Organization) -> JobTitle:
+    @staticmethod
+    def create_system_job_title(organization: Organization) -> JobTitle:
         """
         Creates a new `JobTitle` object associated with the specified organization.
 
         Args:
-            organization: The `Organization` object to associate the new job title with.
+            organization (Organization): The `Organization` object to associate the new job title with.
 
         Returns:
             The new `JobTitle` object.
@@ -292,13 +299,22 @@ class Command(BaseCommand):
 
         This method prompts the user for the number of orders to create, creates the necessary objects for the orders,
         and creates that number of orders using the created objects. It then prints a success message to the console.
+
+        Args:
+            args (Any): Arguments
+            options: (Any): Options
+
+        Returns:
+            None: This function does not return anything.
         """
         order_count_answer = input("How many orders would you like to create? ")
         order_count = int(order_count_answer)
         organization_name = options["organization"]
 
         with Progress() as progress:
-            prerequisite_data_task = progress.add_task("[cyan]Creating prerequisite data...", total=6)
+            prerequisite_data_task = progress.add_task(
+                "[cyan]Creating prerequisite data...", total=6
+            )
             organization = self.create_system_organization(organization_name)
             progress.update(prerequisite_data_task, advance=1)
             location_1, location_2 = self.create_location(organization)
@@ -313,7 +329,9 @@ class Command(BaseCommand):
             progress.update(prerequisite_data_task, advance=1)
 
         with Progress() as progress:
-            order_creation_task = progress.add_task("[cyan]Creating orders...", total=order_count)
+            order_creation_task = progress.add_task(
+                "[cyan]Creating orders...", total=order_count
+            )
 
             for _ in range(order_count):
                 Order.objects.create(
