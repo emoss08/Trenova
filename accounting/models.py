@@ -324,7 +324,7 @@ class RevenueCode(GenericModel):  # type: ignore
         """
         return reverse("accounting:revenue_code_detail", kwargs={"pk": self.pk})
 
-    def update_revenue_code(self, **kwargs: Any):
+    def update_revenue_code(self, **kwargs: Any) -> None:
         """Update the revenue code.
 
         Args:
@@ -333,6 +333,9 @@ class RevenueCode(GenericModel):  # type: ignore
         Examples:
             >>> revenue_code = RevenueCode.objects.get(pk=uuid.uuid4())
             >>> revenue_code.update_revenue_code(code="1234", description="New Description")
+
+        Returns:
+            None: This function does not return anything.
         """
 
         for key, value in kwargs.items():
