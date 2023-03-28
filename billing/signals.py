@@ -64,6 +64,7 @@ def check_billing_history(
     Args:
         sender (models.BillingHistory): Billing History model
         instance (models.BillingHistory): Billing History instance
+        origin ():
         **kwargs (Any): Any additional arguments
 
     Returns:

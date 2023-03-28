@@ -23,7 +23,6 @@ const breadcrumbs = [
   { label: "System Management" }
 ];
 export default function Home() {
-
   return (
     <>
       <MasterLayout>
