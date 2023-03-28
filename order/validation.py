@@ -1,21 +1,19 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
 from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
@@ -244,7 +242,6 @@ class OrderValidation:
         Raises:
             ValidationError: If the order status is 'COMPLETED' and not all movements are 'COMPLETED'.
         """
-
         if self.order.status == StatusChoices.COMPLETED and all(
             movement.status != StatusChoices.COMPLETED
             for movement in self.order.movements.all()
@@ -254,23 +251,12 @@ class OrderValidation:
             )
 
     def validate_order_movement_in_progress(self) -> None:
-        """Validate that an order cannot be marked as 'IN PROGRESS' if none of its movements are 'IN PROGRESS'.
+        if self.order.status == StatusChoices.IN_PROGRESS:
+            in_progress_movements = [
+                movement for movement in self.order.movements.all() if movement.status == StatusChoices.IN_PROGRESS
+            ]
 
-        This function is used as a validation function in a Django form or model to ensure that if
-        an order's status is set to 'IN PROGRESS', at least one movement related to the order has
-        a status of 'IN PROGRESS'. If not, a validation error is raised.
-
-        Args:
-            self: The validation function is called on an instance of a Django form or model.
-
-        Raises:
-            ValidationError: If the order status is 'IN PROGRESS' and none of the movements are 'IN PROGRESS'.
-        """
-
-        if self.order.status == StatusChoices.IN_PROGRESS and any(
-            movement.status != StatusChoices.IN_PROGRESS
-            for movement in self.order.movements.all()
-        ):
-            self.errors["status"] = _(
-                "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please try again."
-            )
+            if not in_progress_movements:
+                self.errors["status"] = _(
+                    "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please try again."
+                )
