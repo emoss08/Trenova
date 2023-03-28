@@ -16,9 +16,15 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
+import sys
 from pathlib import Path
 import django_stubs_ext
 import environ
+
+# Check if running on pypy. If so, monkey patch psycopg2cffiq
+if sys.implementation.name == 'pypy':
+    from psycopg2cffi import compat
+    compat.register()
 
 django_stubs_ext.monkeypatch()
 
@@ -37,7 +43,7 @@ INTERNAL_IPS = [
 # Application definition
 INSTALLED_APPS = [
     # Django Apps
-    "daphne",
+    # "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -58,7 +64,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "silk",
     "encrypted_model_fields",
-    "pgtrigger",
+    # "pgtrigger",
     "nested_inline",
     "drf_spectacular",
     "auditlog",
