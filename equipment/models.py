@@ -17,7 +17,7 @@
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -198,11 +198,14 @@ class EquipmentTypeDetail(GenericModel):
         """
         return textwrap.wrap(self.equipment_type.name, 50)[0]
 
-    def update_details(self, **kwargs) -> None:
+    def update_details(self, **kwargs: Any) -> None:
         """Updates the Equipment Type Detail Model
 
         Args:
             **kwargs: Keyword arguments to update the model
+
+        Returns:
+            None: This function does not return anything.
         """
         for key, value in kwargs.items():
             setattr(self, key, value)

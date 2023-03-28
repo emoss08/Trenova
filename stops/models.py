@@ -26,7 +26,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from stops.validation import StopValidation
+from movements.models import Movement
 from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
 
 User = settings.AUTH_USER_MODEL
@@ -199,7 +199,8 @@ class Stop(GenericModel):
             ValidationError: If the stop is not valid.
 
         """
-        StopValidation(stop=self)
+        from stops.validation import StopValidation
+        StopValidation(instance=self)
 
     def save(self, **kwargs: Any) -> None:
         """Save the stop object
@@ -211,27 +212,22 @@ class Stop(GenericModel):
             None
         """
 
-        self.full_clean()
-
-        if self.arrival_time:
-            self.status = (
-                StatusChoices.COMPLETED
-                if self.departure_time
-                else StatusChoices.IN_PROGRESS
-            )
+        self.update_status_based_on_times()
+        super().save(**kwargs)
+        # self.update_movement_status()
 
         # If the location code is entered and not the address_line then autofill address_line
         # with the location combination (address_line_1, address_line_2, city, state & zip_code)
         if self.location and not self.address_line:
             self.address_line = self.location.get_address_combination
 
-        # CreateServiceIncident(
-        #     stop=self,
-        #     dc_object=DispatchControl,
-        #     si_object=ServiceIncident,
-        # ).create()
-
-        super().save(**kwargs)
+    def update_status_based_on_times(self):
+        if self.arrival_time is not None and self.departure_time is not None:
+            self.status = StatusChoices.COMPLETED
+        elif self.arrival_time is not None:
+            self.status = StatusChoices.IN_PROGRESS
+        else:
+            self.status = StatusChoices.NEW
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
@@ -239,8 +235,7 @@ class Stop(GenericModel):
         Returns:
             str: The absolute url for the stop
         """
-        return reverse("stop:stops-detail", kwargs={"pk": self.pk})
-
+        return reverse("stops-detail", kwargs={"pk": self.pk})
 
 class StopComment(GenericModel):
     """

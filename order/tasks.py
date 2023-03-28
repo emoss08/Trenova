@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -52,7 +33,7 @@ from utils.types import MODEL_UUID
     max_retries=3,
     default_retry_delay=60,
 )
-def consolidate_order_documentation(self, order_id: str) -> None:
+def consolidate_order_documentation(self, order_id: str) -> None:  # type: ignore
     """Consolidate Order
 
     Query the database for the Order and call the consolidate_pdf
@@ -77,7 +58,7 @@ def consolidate_order_documentation(self, order_id: str) -> None:
 
 
 @app.task(name="bill_order_task", bind=True, max_retries=3, default_retry_delay=60)
-def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:
+def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:  # type: ignore
     """Bill Order
 
     Query the database for the Order and call the bill_order
@@ -103,7 +84,7 @@ def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:
 
 
 @app.task(name="mass_order_bill_task", bind=True, max_retries=3, default_retry_delay=60)
-def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:
+def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:  # type: ignore
     """Bill Order
 
     Args:
@@ -125,7 +106,7 @@ def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:
 
 
 @app.task(name="transfer_to_billing_task", bind=True)
-def transfer_to_billing_task(
+def transfer_to_billing_task(  # type: ignore
     self, *, user_id: MODEL_UUID, order_pros: list[str]
 ) -> None:
     """
@@ -170,7 +151,7 @@ def transfer_to_billing_task(
 @app.task(
     name="automate_mass_order_billing", bind=True, max_retries=3, default_retry_delay=60
 )
-def automate_mass_order_billing(self) -> str:
+def automate_mass_order_billing(self) -> str:  # type: ignore
     """Automated Mass Billing Tasks, that uses system user to bill orders.
 
     Args:

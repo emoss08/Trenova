@@ -37,7 +37,7 @@ def get_cutoff_date() -> datetime.datetime:
 @app.task(
     name="delete_audit_log_records", bind=True, max_retries=3, default_retry_delay=60
 )
-def delete_audit_log_records(self) -> str:
+def delete_audit_log_records(self) -> str:  # type: ignore
     """Delete audit log records older than 30 days.
 
     This task uses the Django management command `auditlogflush` to delete

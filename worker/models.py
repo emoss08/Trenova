@@ -32,7 +32,6 @@ from django.utils.translation import gettext_lazy as _
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
 
-from dispatch.validators.regulatory import validate_worker_regulatory_information
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel
 
@@ -379,6 +378,7 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
+        from dispatch.validators.regulatory import validate_worker_regulatory_information
 
         super().clean()
 
@@ -531,11 +531,14 @@ class WorkerContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def update_worker_contact(self, **kwargs: Any):
+    def update_worker_contact(self, **kwargs: Any) -> None:
         """Update the location contact
 
         Args:
             **kwargs: Keyword arguments
+
+        Returns:
+            None: This function does not return anything.
         """
 
         for key, value in kwargs.items():
@@ -612,11 +615,14 @@ class WorkerComment(GenericModel):
 
         return textwrap.wrap(self.comment, 50)[0]
 
-    def update_worker_comment(self, **kwargs: Any):
+    def update_worker_comment(self, **kwargs: Any) -> None:
         """Update the worker comment
 
         Args:
             **kwargs: Keyword arguments
+
+        Returns:
+            None: This function does not return anything.
         """
 
         for key, value in kwargs.items():

@@ -17,19 +17,30 @@
 
 from django.core.mail import EmailMessage
 
+from accounts.models import User
 from backend.celery import app
 from reports import models
 from reports.services import generate_excel_report_as_file
 
 
 @app.task(name="send_scheduled_report")
-def send_scheduled_report(report_id: str):
+def send_scheduled_report(report_id: str) -> None:
+    """A Celery task that sends a scheduled report to the user who created it.
+
+    This tasks generates an Excel file from the report and sends it to the user who created the report.
+
+    Args:
+        report_id (str): The ID of the scheduled report.
+
+    Returns:
+        None: This function does not return anything.
+    """
     scheduled_report = models.ScheduledReport.objects.get(pk=report_id)
     if not scheduled_report.is_active:
         return
 
-    report = scheduled_report.report
-    user = scheduled_report.user
+    report: models.CustomReport = scheduled_report.report
+    user: User = scheduled_report.user
 
     excel_file = generate_excel_report_as_file(report)
 

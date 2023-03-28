@@ -166,6 +166,13 @@ class OrderControl(GenericModel):
         default=False,
         help_text=_("Check for duplicate BOL numbers when entering an order."),
     )
+    remove_orders = models.BooleanField(
+        _("Ability to Remove Orders"),
+        default=False,
+        help_text=_(
+            "Ability to remove orders from system. This will disallow the removal of Orders, Movements and Stops"
+        ),
+    )
 
     class Meta:
         """
@@ -558,8 +565,8 @@ class Order(GenericModel):  # type:ignore
             ValidationError: If the Order is not valid
         """
 
-        OrderValidation(order=self)
         super().clean()
+        OrderValidation(order=self)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order
@@ -569,7 +576,7 @@ class Order(GenericModel):  # type:ignore
         """
         return reverse("order-detail", kwargs={"pk": self.pk})
 
-    def calculate_total(self) -> decimal.Decimal:
+    def calculate_total(self) -> Any | decimal.Decimal:
         """Calculate the sub_total for an order
 
         Calculate the sub_total for the order if the organization 'OrderControl'
@@ -593,7 +600,6 @@ class Order(GenericModel):  # type:ignore
             and self.rate_method == RatingMethodChoices.PER_MILE
         ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
-
         return self.freight_charge_amount
 
 
@@ -798,7 +804,7 @@ class AdditionalCharge(GenericModel):  # type: ignore
         """
         return textwrap.shorten(f"{self.order} - {self.charge}", 50, placeholder="...")
 
-    def save(self, **kwargs: Any):
+    def save(self, **kwargs: Any) -> None:
         """
         Save the AdditionalCharge
         """

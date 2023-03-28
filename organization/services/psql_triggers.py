@@ -326,7 +326,7 @@ def check_trigger_exists(*, table_name: str, trigger_name: str) -> bool:
             AND trigger_name = %s)
         """
         cursor.execute(query, [table_name, trigger_name])
-        return cursor.fetchone()[0]
+        return bool(cursor.fetchone()[0])
 
 
 def check_function_exists(*, function_name: str) -> bool:
@@ -351,4 +351,4 @@ def check_function_exists(*, function_name: str) -> bool:
             )
         """
         cursor.execute(query, [function_name])
-        return cursor.fetchone()[0]
+        return bool(cursor.fetchone()[0])

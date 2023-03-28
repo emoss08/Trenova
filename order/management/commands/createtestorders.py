@@ -134,6 +134,9 @@ class Command(BaseCommand):
         first four characters of the organization name. If the organization already exists, it returns the existing
         organization instead.
         """
+        organization: Organization
+        created: bool
+
         defaults = {"scac_code": organization_name[:4]}
         organization, created = Organization.objects.get_or_create(
             name=organization_name, defaults=defaults
