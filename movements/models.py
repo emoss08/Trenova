@@ -17,12 +17,14 @@
 
 import textwrap
 import uuid
+from typing import Any
 
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from movements.validation import MovementValidation
+from order.models import Order
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -110,7 +112,9 @@ class Movement(GenericModel):
             str: String representation of the Movement
         """
         return textwrap.shorten(
-            f"{self.status} - {self.ref_num}", width=30, placeholder="..."
+            f"Movement {self.ref_num}, Status: {self.status}, Order: {self.order.pro_number}",
+            width=30,
+            placeholder="...",
         )
 
     def clean(self) -> None:
@@ -120,6 +124,25 @@ class Movement(GenericModel):
             None
         """
         MovementValidation(movement=self)
+        super().clean()
+
+    def save(self, **kwargs: Any) -> None:
+        self.set_tractor_and_workers()
+
+        super().save(**kwargs)
+
+    def set_tractor_and_workers(self) -> None:
+        if self.tractor:
+            if self.tractor.primary_worker and not self.primary_worker:
+                self.primary_worker = self.tractor.primary_worker
+            if self.tractor.secondary_worker and not self.secondary_worker:
+                self.secondary_worker = self.tractor.secondary_worker
+
+        if (
+            self.primary_worker
+            and not self.tractor
+        ):
+            self.tractor = self.primary_worker.primary_tractor
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Movement

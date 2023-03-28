@@ -22,12 +22,14 @@ from utils.admin import GenericAdmin
 
 
 @admin.register(models.Movement)
-class MovementAdmin(GenericAdmin[models.Movement]):
+class MovementAdmin(admin.ModelAdmin[models.Movement]):
     """
     Movement Admin
     """
+    exclude = ()
 
     list_display = (
+        "organization",
         "status",
         "ref_num",
         "order",
