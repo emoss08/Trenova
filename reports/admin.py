@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import json
-from typing import Any
+from typing import Any, Union
 import requests
 from django.contrib import admin
 from django.http import HttpRequest, HttpResponse
@@ -147,7 +147,7 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
         add: bool = False,
         change: bool = False,
         form_url: str = "",
-        obj: models.CustomReport | None = None,
+        obj: Union[models.CustomReport, None]  = None,
     ) -> HttpResponse:
         """
         Custom implementation of the render_change_form method to add an authentication token to the context.

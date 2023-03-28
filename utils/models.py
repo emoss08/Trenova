@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, final
+from typing import Any, final, Union
 import secrets
 import string
 from django.core import checks
@@ -29,7 +29,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import F, Q, Prefetch
 
 
-def generate_random_string(length=10) -> str:
+def generate_random_string(length: int = 10) -> str:
     return "".join(
         secrets.choice(string.ascii_letters + string.digits) for _ in range(length)
     )
@@ -114,14 +114,14 @@ class ChoiceField(CharField):
     description = _("Choice Field")
 
     def __init__(
-        self, *args: Any, db_collation: str | None = None, **kwargs: Any
+        self, *args: Any, db_collation: Union[str, None] = None, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
         if self.choices:
             self.max_length = max(len(choice[0]) for choice in self.choices)
 
-    def check(self, **kwargs: Any) -> list[CheckMessage | CheckMessage]:
+    def check(self, **kwargs: Any) -> list[Union[CheckMessage, CheckMessage]]:
         """Check the field for errors.
 
         Check the fields for errors and return a list of Error objects.
@@ -137,7 +137,7 @@ class ChoiceField(CharField):
             *self._validate_choices_attribute(**kwargs),
         ]
 
-    def _validate_choices_attribute(self, **kwargs: Any) -> list[Error] | list:
+    def _validate_choices_attribute(self, **kwargs: Any) -> Union[list[Error], list]:
         """Validate the choices attribute for the field.
 
         Validate the choices attribute is set in the field, if not return a list of

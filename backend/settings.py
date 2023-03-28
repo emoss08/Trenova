@@ -43,7 +43,7 @@ INTERNAL_IPS = [
 # Application definition
 INSTALLED_APPS = [
     # Django Apps
-    # "daphne",
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
