@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, TypeAlias
+from typing import Any
 
 from rest_framework import serializers
 
@@ -23,7 +23,7 @@ from billing.models import DocumentClassification
 from customer import models
 from utils.serializers import GenericSerializer
 
-Documents: TypeAlias = list[dict[str, Any]]
+Documents = list[dict[str, Any]]
 
 
 class CustomerContactSerializer(GenericSerializer):

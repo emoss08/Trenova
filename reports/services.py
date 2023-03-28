@@ -15,8 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import orjson
-from typing import Type
+import json
+from typing import Type, Union
 import io
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -26,7 +26,7 @@ from django.apps import apps
 from reports.models import ScheduledReport, ScheduleType, CustomReport
 
 
-def get_model_by_table_name(table_name: str) -> Type[models.Model] | None:
+def get_model_by_table_name(table_name: str) -> Union[Type[models.Model], None]:
     """
     Returns a model class from Django apps by a given table name.
     If the model class is not found, it returns None.
@@ -58,7 +58,7 @@ def generate_excel_report_as_file(report: CustomReport) -> io.BytesIO:
     columns, and populates the data rows by iterating through the data model object.
     The generated Excel file is saved to a BytesIO object which is then returned to the caller.
     """
-    model: Type[models.Model] | Type[models.Model] | None = get_model_by_table_name(
+    model: Union[Type[models.Model], Type[models.Model], None] = get_model_by_table_name(
         report.table
     )
 
@@ -153,11 +153,11 @@ def create_scheduled_task(instance: ScheduledReport) -> None:
             "crontab": schedule if task_type == "crontab" else None,
             "interval": schedule if task_type == "interval" else None,
             "task": "reports.tasks.send_scheduled_report",
-            "args": orjson.dumps([str(instance.pk)]).decode("utf-8"),
+            "args": json.dumps([str(instance.pk)]),
         },
     )
 
     if not created_task:
         setattr(task, task_type, schedule)
-        task.args = orjson.dumps([str(instance.pk)]).decode("utf-8")
+        task.args = json.dumps([str(instance.pk)])
         task.save()

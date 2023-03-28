@@ -20,7 +20,7 @@ from __future__ import annotations
 import secrets
 import textwrap
 import uuid
-from typing import Any, final
+from typing import Any, final, Union
 
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -49,7 +49,7 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
         self,
         username: str,
         email: str,
-        password: str | None = None,
+        password: Union[str, None] = None,
         **extra_fields: Any,
     ) -> User:
         """
@@ -83,7 +83,7 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
         self,
         username: str,
         email: str,
-        password: str | None = None,
+        password: Union[str, None] = None,
         **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
@@ -350,7 +350,8 @@ class UserProfile(GenericModel):
         return reverse("user:profile-view", kwargs={"pk": self.pk})
 
     @property
-    def get_user_profile_pic(self) -> str:
+    def get_user_profile_pic(self) -> Any | str:
+
         """Get the user profile picture.
 
         Returns:

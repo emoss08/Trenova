@@ -3,21 +3,19 @@
 #                                                                                                  -
 #  This file is part of Monta.                                                                     -
 #                                                                                                  -
-#  Monta is free software: you can redistribute it and/or modify                                   -
-#  it under the terms of the GNU General Public License as published by                            -
-#  the Free Software Foundation, either version 3 of the License, or                               -
-#  (at your option) any later version.                                                             -
-#                                                                                                  -
-#  Monta is distributed in the hope that it will be useful,                                        -
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of                                  -
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                                   -
-#  GNU General Public License for more details.                                                    -
-#                                                                                                  -
-#  You should have received a copy of the GNU General Public License                               -
-#  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
+from typing import Any, Optional, Dict, Union
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -122,12 +120,12 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     autocomplete_fields: tuple[str, ...] = ("organization", "department")
     inlines: tuple[type[ProfileInline]] = (ProfileInline,)
 
-    def get_fieldsets(self, request: HttpRequest, obj=None):
+    def get_fieldsets(self, request: HttpRequest, obj: Optional[models.User] = None):  # type: ignore
         """Return fieldsets for add/change view
 
         Args:
             request (HttpRequest): request
-            obj (): object
+            obj (models.User): object
 
         Returns:
             fieldsets
@@ -137,7 +135,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Any | None = ...,
+        obj: Union[Any, None] = ...,
         change: bool = True,
         **kwargs: Any,
     ) -> type[ModelForm[models.User]]:
@@ -205,7 +203,9 @@ class UserAdmin(admin.ModelAdmin[models.User]):
         with transaction.atomic(using=router.db_for_write(self.model)):
             return self._add_view(request, form_url, extra_context)
 
-    def _add_view(self, request, form_url="", extra_context=None) -> HttpResponse:
+    def _add_view(
+        self, request: HttpRequest, form_url: str = "", extra_context: Optional[Dict] = None
+    ) -> HttpResponse:
         # It's an error for a user to have added permission but NOT change
         # permission for users. If we allowed such users to add users, they
         # could create superusers, which would mean they would essentially have
@@ -236,7 +236,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
         self, request: HttpRequest, id: str, form_url: str = ""
-    ) -> HttpResponseRedirect | TemplateResponse:
+    ) -> Union[HttpResponseRedirect, TemplateResponse]:
         """Allow a user to change their password from the admin.
 
         Args:

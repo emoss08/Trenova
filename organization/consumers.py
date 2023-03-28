@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import json
-from typing import Any
+from typing import Any, Optional, Union
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 
@@ -58,7 +58,9 @@ class KeepAliveConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard("keepalive", self.channel_name)
 
     async def receive(
-        self, text_data: str | bytes | None = None, bytes_data=None
+        self,
+        text_data: Optional[Union[str, bytes]] = None,
+        bytes_data: Optional[bytearray] = None,
     ) -> None:
         """Receives messages from the client and broadcasts them to the "keepalive" group.
 
