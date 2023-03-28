@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 
 
 class OrderConfig(AppConfig):
@@ -40,4 +40,9 @@ class OrderConfig(AppConfig):
             signals.create_order_initial_movement,
             sender="order.Order",
             dispatch_uid="create_order_initial_movement",
+        )
+        pre_delete.connect(
+            signals.check_order_removal_policy,
+            sender="order.Order",
+            dispatch_uid="check_order_removal_policy",
         )

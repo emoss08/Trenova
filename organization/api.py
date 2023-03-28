@@ -57,10 +57,11 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        return self.queryset.prefetch_related(
+        queryset: QuerySet[models.Organization] = self.queryset.prefetch_related(
             "depots",
             "depots__details",
         )
+        return queryset
 
 
 @extend_schema(

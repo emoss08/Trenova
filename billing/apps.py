@@ -56,3 +56,8 @@ class BillingConfig(AppConfig):
             sender="billing.BillingHistory",
             dispatch_uid="transfer_order_details_billing_history",
         )
+        pre_delete.connect(
+            signals.check_billing_history,
+            sender="billing.BillingHistory",
+            dispatch_uid="check_billing_history",
+        )

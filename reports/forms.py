@@ -50,7 +50,7 @@ class IgnorePKModelChoiceField(forms.ModelChoiceField):
             Cleans the form data.
     """
 
-    def clean(self, value) -> Any:
+    def clean(self, value: Any) -> Any:
         """
         Cleans the form data.
 

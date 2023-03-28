@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 
 
 class MovementsConfig(AppConfig):
@@ -32,8 +32,23 @@ class MovementsConfig(AppConfig):
             sender="movements.Movement",
             dispatch_uid="generate_initial_stops",
         )
+        post_save.connect(
+            signals.update_order_status,
+            sender="movements.Movement",
+            dispatch_uid="update_order_status",
+        )
         pre_save.connect(
             signals.generate_ref_number,
             sender="movements.Movement",
             dispatch_uid="generate_ref_number",
+        )
+        pre_save.connect(
+            signals.validate_movement_order,
+            sender="movements.Movement",
+            dispatch_uid="validate_movement_order",
+        )
+        pre_delete.connect(
+            signals.check_movement_removal_policy,
+            sender="movements.Movement",
+            dispatch_uid="check_order_removal_policy",
         )

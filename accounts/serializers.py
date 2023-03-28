@@ -314,7 +314,7 @@ class UserSerializer(GenericSerializer):
             "date_joined": {"read_only": True},
         }
 
-    def create(self, validated_data: Any) -> models.User:  # type: ignore
+    def create(self, validated_data: Any) -> models.User:
         """Create a user
 
         Args:
@@ -440,7 +440,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         """
 
         password = self.validated_data["new_password"]
-        user = self.context["request"].user
+        user: models.User = self.context["request"].user
         user.set_password(password)
         user.save()
         return user

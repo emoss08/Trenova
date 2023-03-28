@@ -17,6 +17,9 @@
 
 from typing import Any
 
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
 from movements.models import Movement
 from movements.services.generation import MovementService
 
@@ -96,7 +99,7 @@ def _set_hazmat(instance: models.Order) -> None:
 
 
 def create_order_initial_movement(
-    sender: models.Order, instance: models.Order, created: bool, **kwargs: Any
+    instance: models.Order, created: bool, **kwargs: Any
 ) -> None:
     """Create the initial movement of an Order model instance.
 
@@ -109,9 +112,40 @@ def create_order_initial_movement(
         instance (models.Order): The instance of the Order model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if not created:
         return
 
     if not Movement.objects.filter(order=instance).exists():
         MovementService.create_initial_movement(order=instance)
+
+
+def check_order_removal_policy(
+    instance: models.Order,
+    **kwargs: Any,
+) -> None:
+    """Check if the organization allows order removal.
+
+    If the organization does not allow order removal throw a ValidationError.
+
+    Args:
+        sender (models.Order): The class of the sending instance.
+        instance (models.Order): The instance of the Order model being saved.
+        origin (models.Order | QuerySet[models.Order]): The origin of the save.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    if instance.organization.order_control.remove_orders is False:
+        raise ValidationError(
+            {
+                "pro_number": _(
+                    "Organization does not allow order removal. Please contact your administrator."
+                )
+            },
+            code="invalid",
+        )

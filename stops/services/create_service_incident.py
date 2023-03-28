@@ -1,177 +1,92 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
 from datetime import timedelta
 
+from rvenv.lib.pyre_check.stubs.django.shortcuts import get_object_or_404
 from utils.models import StopChoices
+from stops import models
+from dispatch.models import DispatchControl
 
 
-class CreateServiceIncident:
-    """
-    Create service incident
-    """
-
-    def __init__(self, stop, dc_object, si_object) -> None:
+class StopServiceIncidentHandler:
+    def __init__(
+        self,
+        instance: models.Stop,
+        dc_object: DispatchControl,
+    ) -> None:
         """Initialize the Create Service Incident class
 
         Assign instances to get around circular imports.
 
         Args:
-            stop (Stop): The stop to create service incident
+            instance (Stop): The stop to create service incident
             dc_object (DispatchControl): The dispatch object
-            si_object (ServiceIncident): The service incident object
 
         Returns:
             None
         """
 
-        self.stop = stop
-        self.dc_object = dc_object
-        self.si_object = si_object
-
-    def create(self) -> None:
-        """Create service incident
-
-        Create service incident based on the organization's service incident control settings.
-
-        Returns:
-            None
-        """
-
-        self.create_pickup_service_incident()
-        self.create_delivery_service_incident()
-        self.create_pick_and_delivery_service_incident()
-        self.create_all_exc_shipper_service_incident()
-
-    def create_pickup_service_incident(self) -> None:
-        """Create pickup service incident
-
-        If the stop is a pickup, and the organization has pickup service incident control
-        enabled, create a service incident for the stop.
-
-        Returns:
-            None
-        """
-
-        dispatch_control = self.dc_object.objects.get(
-            organization=self.stop.organization
+        self.instance = instance
+        self.dispatch_control = get_object_or_404(
+            dc_object, organization=self.instance.organization
         )
 
-        if (
-            self.stop.arrival_time
-            and dispatch_control.record_service_incident
-            == self.dc_object.ServiceIncidentControlChoices.PICKUP
-            and self.stop.stop_type == StopChoices.PICKUP
-            and self.stop.arrival_time
-            > self.stop.appointment_time
-            + timedelta(minutes=dispatch_control.grace_period)
-        ):
-            self.si_object.objects.create(
-                organization=self.stop.movement.order.organization,
-                movement=self.stop.movement,
-                stop=self,
-                delay_time=self.stop.arrival_time - self.stop.appointment_time,
-            )
-
-    def create_delivery_service_incident(self) -> None:
-        """Create delivery service incident
-
-        If the stop is a delivery, and the organization has delivery service incident control
-        enabled, create a service incident for the stop.
-
-        Returns:
-            None
-        """
-
-        dispatch_control = self.dc_object.objects.get(
-            organization=self.stop.organization
+    def should_create_service_incident(self, stop_type: str) -> bool:
+        is_late = (
+            self.instance.arrival_time and
+            self.instance.arrival_time
+            > self.instance.appointment_time
+            + timedelta(minutes=self.dispatch_control.grace_period)
         )
+        if not self.instance.arrival_time or not is_late:
+            return False
 
-        if (
-            dispatch_control.record_service_incident
-            == self.dc_object.ServiceIncidentControlChoices.DELIVERY
-            and self.stop.stop_type == StopChoices.DELIVERY
-            and self.stop.arrival_time
-            > self.stop.appointment_time
-            + timedelta(minutes=dispatch_control.grace_period)
+        control_choice = self.dispatch_control.record_service_incident
+
+        if control_choice == self.dispatch_control.ServiceIncidentControlChoices.PICKUP:
+            return stop_type == StopChoices.PICKUP
+        elif (
+            control_choice
+            == self.dispatch_control.ServiceIncidentControlChoices.DELIVERY
         ):
-            self.si_object.objects.create(
-                organization=self.stop.movement.order.organization,
-                movement=self.stop.movement,
-                stop=self,
-                delay_time=self.stop.arrival_time - self.stop.appointment_time,
+            return stop_type == StopChoices.DELIVERY
+        elif (
+            control_choice
+            == self.dispatch_control.ServiceIncidentControlChoices.PICKUP_DELIVERY
+        ):
+            return True
+        elif (
+            control_choice
+            == self.dispatch_control.ServiceIncidentControlChoices.ALL_EX_SHIPPER
+        ):
+            return stop_type != StopChoices.PICKUP and self.instance.sequence != 1
+
+        return False
+
+    def create_service_incident(self) -> None:
+        if self.instance.arrival_time:
+            models.ServiceIncident.objects.create(
+                organization=self.instance.organization,
+                movement=self.instance.movement,
+                stop=self.instance,
+                delay_time=self.instance.arrival_time - self.instance.appointment_time,
             )
 
-    def create_pick_and_delivery_service_incident(self) -> None:
-        """Create pickup and delivery service incident
-
-        If the stop is a pickup or delivery, and the organization has pickup and delivery service incident control
-        enabled, create a service incident for the stop.
-
-        Returns:
-            None
-        """
-
-        dispatch_control = self.dc_object.objects.get(
-            organization=self.stop.organization
-        )
-
-        if (
-            dispatch_control.record_service_incident
-            == self.dc_object.ServiceIncidentControlChoices.PICKUP_DELIVERY
-            and self.stop.arrival_time
-            > self.stop.appointment_time
-            + timedelta(minutes=dispatch_control.grace_period)
-        ):
-            self.si_object.objects.create(
-                organization=self.stop.movement.order.organization,
-                movement=self.stop.movement,
-                stop=self.stop,
-                delay_time=self.stop.arrival_time - self.stop.appointment_time,
-            )
-
-    def create_all_exc_shipper_service_incident(self) -> None:
-        """Create all except shipper service incident
-
-        If the stop is not a shipper, and the organization has all except shipper service incident control
-        enabled, create a service incident for the stop.
-
-        Returns:
-            None
-        """
-
-        dispatch_control = self.dc_object.objects.get(
-            organization=self.stop.organization
-        )
-
-        if (
-            dispatch_control.record_service_incident
-            == self.dc_object.ServiceIncidentControlChoices.ALL_EX_SHIPPER
-            and self.stop.stop_type != StopChoices.PICKUP
-            and self.stop.sequence != 1
-            and self.stop.arrival_time
-            > self.stop.appointment_time
-            + timedelta(minutes=dispatch_control.grace_period)
-        ):
-            self.si_object.objects.create(
-                organization=self.stop.movement.order.organization,
-                movement=self.stop.movement,
-                stop=self.stop,
-                delay_time=self.stop.arrival_time - self.stop.appointment_time,
-            )
+    def create_service_incident_if_needed(self) -> None:
+        if self.should_create_service_incident(self.instance.stop_type):
+            self.create_service_incident()
