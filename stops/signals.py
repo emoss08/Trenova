@@ -19,25 +19,86 @@ from typing import Any
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 from stops import models
 from stops.services import generation
+from utils.models import StatusChoices
 
 
 @receiver(post_save, sender=models.Stop)
 def sequence_stops(
     sender: models.Stop, instance: models.Stop, created: bool, **kwargs: Any
 ) -> None:
-    """Sequence Stops
-    Sequence the stops when a new stop is added
+    """Sequence the stops when a new stop is added
     to a movement.
+
     Args:
         sender (Stop): Stop
         instance (Stop): The stop instance.
         created (bool): if the Stop was created.
         **kwargs (Any): Keyword arguments.
+
     Returns:
-        None
+        None: This function has no return.
     """
     if created:
         generation.StopService.sequence_stops(instance)
+
+
+@receiver(post_save, sender=models.Stop, dispatch_uid="update_movement_status")
+def update_movement_status(
+    sender: models.Stop, instance: models.Stop, created: bool, **kwargs: Any
+) -> None:
+    """Update the movement status when a stop is created.
+
+    Args:
+        sender (Stop): Stop
+        instance (Stop): The stop instance.
+        created (bool): if the Stop was created.
+        **kwargs (Any): Keyword arguments.
+
+    Returns:
+        None: This function has no return.
+    """
+    stops = instance.movement.stops.all()
+
+    completed_stops = stops.filter(status=StatusChoices.COMPLETED)
+    in_progress_stops = stops.filter(status=StatusChoices.IN_PROGRESS)
+
+    if stops.count() == completed_stops.count():
+        new_status = StatusChoices.COMPLETED
+    elif completed_stops.count() > 0 or in_progress_stops.count() > 0:
+        new_status = StatusChoices.IN_PROGRESS
+    else:
+        new_status = StatusChoices.NEW
+
+    instance.movement.status = new_status
+    instance.movement.save()
+
+def check_stop_removal_policy(
+        instance: models.Stop,
+        **kwargs: Any,
+) -> None:
+    """Check if the organization allows order removal.
+
+    If the organization does not allow order removal throw a ValidationError.
+
+    Args:
+        instance (models.Stop): The instance of the Stop model being saved.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    if instance.organization.order_control.remove_orders is False:
+        raise ValidationError(
+            {
+                "ref_num": _(
+                    "Organization does not allow Stop removal. Please contact your administrator."
+                )
+            },
+            code="invalid",
+        )

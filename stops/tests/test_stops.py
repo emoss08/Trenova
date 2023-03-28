@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from movements.tests.factories import MovementFactory
+from order.models import Order
 from stops import models
 from stops.tests.factories import StopFactory
 from utils.models import StatusChoices
@@ -120,7 +121,6 @@ class TestStop:
         )
 
         assert stop.status == StatusChoices.COMPLETED
-
 
 class TestStopAPI:
     """
