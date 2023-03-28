@@ -22,6 +22,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from commodities.factories import CommodityFactory, HazardousMaterialFactory
+from equipment.tests.factories import TractorFactory
 from movements import models
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory
@@ -245,6 +246,25 @@ class TestMovementValidation:
 
         assert excinfo.value.message_dict["primary_worker"] == [
             "Cannot assign a terminated worker. Please update the worker's profile and try again."
+        ]
+
+    def test_primary_worker_tractor_fleet_validation(self, worker) -> None:
+        """
+        Test ValidationError is thrown when the primary worker and the tractor
+        are not a part of the same fleet.
+        """
+
+        with pytest.raises(ValidationError) as excinfo:
+            MovementFactory(
+                primary_worker=worker,
+                tractor=TractorFactory(organization=worker.organization),
+            )
+
+        assert excinfo.value.message_dict["primary_worker"] == [
+            "The primary worker and tractor must belong to the same fleet to add or update a record. Please ensure they are part of the same fleet and try again."
+        ]
+        assert excinfo.value.message_dict["tractor"] == [
+            "The primary worker and tractor must belong to the same fleet to add or update a record. Please ensure they are part of the same fleet and try again."
         ]
 
     def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat(self):
