@@ -155,6 +155,11 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
 
     objects = UserManager()
 
+    # To get around `Unresolved Attribute` problem with AbstractBaseUser, we have to
+    # define the UserProfile here. This is a bit of a hack, but it works.
+    # It will also give proper autocomplete in IDEs.
+    profile: UserProfile
+
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS: list[str] = [
         "email",
