@@ -80,6 +80,7 @@ def transfer_to_billing_queue_service(
     orders: Optional[Iterable[Order]] = get_billable_orders(organization=user.organization, order_pros=order_pros)
 
     if not orders:
+        # Raise an exception if no orders are found to be eligible for transfer. This also will cause the task to fail.
         raise BillingException("No orders found to be eligible for transfer.")
 
     now: datetime = timezone.now()
