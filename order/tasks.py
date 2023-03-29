@@ -16,13 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 
 from backend.celery import app
-from django.core.exceptions import ObjectDoesNotExist
 
 from accounts.models import User
 from billing.services import mass_order_billing, single_order_billing
 from billing.services.transfer_to_billing import transfer_to_billing_queue_service
+from core.exceptions import ServiceException
 from order.models import Order
-from order.services.consolidate_pdf import combine_pdfs
+from order.services.consolidate_pdf import combine_pdfs_service
 from organization.models import Organization
 from utils.types import MODEL_UUID
 
@@ -52,8 +52,8 @@ def consolidate_order_documentation(self, order_id: str) -> None:  # type: ignor
 
     try:
         order: Order = Order.objects.get(id=order_id)
-        combine_pdfs(order=order)
-    except ObjectDoesNotExist as exc:
+        combine_pdfs_service(order=order)
+    except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
 
@@ -79,7 +79,7 @@ def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:  # type: 
     try:
         order: Order = Order.objects.get(pk=order_id)
         single_order_billing.bill_order(order=order, user_id=user_id)
-    except ObjectDoesNotExist as exc:
+    except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
 
@@ -101,7 +101,7 @@ def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:  # type: ignore
         mass_order_billing.mass_order_billing_service(
             user_id=user_id, task_id=self.request.id
         )
-    except ObjectDoesNotExist as exc:
+    except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
 
@@ -144,7 +144,7 @@ def transfer_to_billing_task(  # type: ignore
         transfer_to_billing_queue_service(
             user_id=user_id, order_pros=order_pros, task_id=self.request.id
         )
-    except ObjectDoesNotExist as exc:
+    except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
 
@@ -177,7 +177,7 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
             results.append(
                 f"Automated Mass Billing Task for {organization.name} was successful."
             )
-        except ObjectDoesNotExist as exc:
+        except ServiceException as exc:
             raise self.retry(exc=exc) from exc
     if results:
         return "\n".join(results)
