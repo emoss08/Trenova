@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Iterable
-from typing import Union, List
+from typing import Union, List, Optional
 
 from django.db.models import Q
 
@@ -27,7 +27,7 @@ from utils.models import StatusChoices
 
 
 def get_billable_orders(
-    *, organization: Organization, order_pros: Union[List[str], None]
+    *, organization: Organization, order_pros: Optional[List[str]] = None
 ) -> Union[Iterable[Order], None]:
     """Returns an iterator of orders that are billable for a given organization.
 
@@ -70,7 +70,6 @@ def get_billable_orders(
     order_criteria_query: Q | None = criteria_to_query.get(
         organization.billing_control.order_transfer_criteria
     )
-    print(order_criteria_query)
 
     if order_criteria_query is not None:
         query &= order_criteria_query

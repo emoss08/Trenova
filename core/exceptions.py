@@ -37,3 +37,18 @@ def django_error_handler(exc: Any, context: Any) -> Union[Response, None]:
     if response is None and isinstance(exc, ValidationError):
         return Response(status=400, data=exc.message_dict)
     return response
+
+class ServiceException(Exception):
+    """
+    Base Service Exception for all services.
+    """
+
+    def __init__(self, message: str) -> None:
+        """Service Exception
+
+        Args:
+            message (str): Message
+        """
+
+        super().__init__(message)
+        self.message: str = message
