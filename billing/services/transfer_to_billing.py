@@ -15,14 +15,18 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from datetime import datetime
+from typing import Optional, Iterable
+
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from accounts.models import User
 from billing import models
-from billing.selectors import get_transfer_to_billing_orders
+from billing.exceptions import BillingException
+from billing.selectors import get_billable_orders
 from billing.services.billing_service import create_billing_exception
 from order.models import Order
 from utils.types import MODEL_UUID
@@ -71,43 +75,45 @@ def transfer_to_billing_queue_service(
     objects for all successfully transferred orders and update the Order objects with the new transfer status and
     transfer date.
     """
-    user = get_object_or_404(User, id=user_id)
-    orders = get_transfer_to_billing_orders(order_pros=order_pros)
 
-    now = timezone.now()
+    user: User = get_object_or_404(User, id=user_id)
+    orders: Optional[Iterable[Order]] = get_billable_orders(organization=user.organization, order_pros=order_pros)
+
+    if not orders:
+        raise BillingException("No orders found to be eligible for transfer.")
+
+    now: datetime = timezone.now()
     transfer_log = []
-    with transaction.atomic():
-        for order in orders:
-            try:
-                models.BillingQueue.objects.create(
+    for order in orders:
+        try:
+            models.BillingQueue.objects.create(
+                organization=order.organization,
+                order=order,
+            )
+            order.transferred_to_billing = True
+            order.billing_transfer_date = now
+
+            transfer_log.append(
+                models.BillingTransferLog(
+                    order=order,
                     organization=order.organization,
-                    order=order,
+                    transferred_at=now,
+                    task_id=task_id,
+                    transferred_by=user,
                 )
+            )
 
-            except ValidationError as db_error:
-                create_billing_exception(
-                    user=user,
-                    exception_type="OTHER",
-                    order=order,
-                    exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {db_error}",
-                )
+            Order.objects.bulk_update(
+                orders, ["transferred_to_billing", "billing_transfer_date"]
+            )
+        except (ValidationError, IntegrityError) as validation_error:
+            create_billing_exception(
+                user=user,
+                exception_type="OTHER",
+                order=order,
+                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {validation_error}",
+            )
+            return f"Order {order.pro_number} failed to transfer to billing queue: {validation_error}"
 
-                transfer_log.append(
-                    models.BillingTransferLog(
-                        order=order,
-                        organization=order.organization,
-                        transferred_at=now,
-                        task_id=task_id,
-                        transferred_by=user,
-                    )
-                )
-
-                order.transferred_to_billing = True
-                order.billing_transfer_date = now
-
-        models.BillingTransferLog.objects.bulk_create(transfer_log)
-        Order.objects.bulk_update(
-            orders, ["transferred_to_billing", "billing_transfer_date"]
-        )
-
-    return "Task completed successfully. See billing transfer log for details."
+    models.BillingTransferLog.objects.bulk_create(transfer_log)
+    return "Successfully transferred orders to billing queue."
