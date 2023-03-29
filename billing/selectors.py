@@ -16,19 +16,19 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Iterable
-from typing import Union
+from typing import Union, List
 
-from django.db.models import Prefetch, Q
+from django.db.models import Q
 
 from billing.models import BillingControl, BillingQueue
-from commodities.models import Commodity
-from customer.models import Customer
 from order.models import Order
 from organization.models import Organization
 from utils.models import StatusChoices
 
 
-def get_billable_orders(*, organization: Organization) -> Union[Iterable[Order], None]:
+def get_billable_orders(
+    *, organization: Organization, order_pros: Union[List[str], None]
+) -> Union[Iterable[Order], None]:
     """Returns an iterator of orders that are billable for a given organization.
 
     The billable orders are determined based on the `order_transfer_criteria`
@@ -41,6 +41,7 @@ def get_billable_orders(*, organization: Organization) -> Union[Iterable[Order],
 
     Args:
         organization: The organization for which billable orders should be returned.
+        order_pros: A list of order pros to filter the billable orders by.
 
     Returns:
         An iterator of billable orders for the organization, or `None` if no billable
@@ -61,18 +62,25 @@ def get_billable_orders(*, organization: Organization) -> Union[Iterable[Order],
         ),
     }
 
-    query = (
+    query: Q = (
         Q(billed=False)
         & Q(transferred_to_billing=False)
         & Q(billing_transfer_date__isnull=True)
     )
-    order_criteria_query = criteria_to_query.get(
+    order_criteria_query: Q | None = criteria_to_query.get(
         organization.billing_control.order_transfer_criteria
     )
+    print(order_criteria_query)
+
     if order_criteria_query is not None:
         query &= order_criteria_query
 
-    return organization.orders.filter(query) or None
+    if order_pros:
+        query &= Q(pro_number__in=order_pros)
+
+    orders = organization.orders.filter(query)
+
+    return orders if orders.exists() else None
 
 
 def get_billing_queue_information(*, order: Order) -> Union[BillingQueue, None]:
@@ -85,48 +93,3 @@ def get_billing_queue_information(*, order: Order) -> Union[BillingQueue, None]:
         The billing history for the order, or `None` if no billing history is found.
     """
     return BillingQueue.objects.filter(order=order).last()
-
-
-def get_transfer_to_billing_orders(*, order_pros: list[str]) -> Iterable[Order]:
-    return (
-        Order.objects.filter(pro_number__in=order_pros)
-        .only(
-            "id",
-            "organization_id",
-            "organization__name",
-            "pro_number",
-            "order_type_id",
-            "pieces",
-            "weight",
-            "ready_to_bill",
-            "status",
-            "billed",
-            "mileage",
-            "consignee_ref_number",
-            "other_charge_amount",
-            "other_charge_amount_currency",
-            "freight_charge_amount",
-            "freight_charge_amount_currency",
-            "sub_total",
-            "sub_total_currency",
-            "bol_number",
-            "transferred_to_billing",
-            "billing_transfer_date",
-            "revenue_code",
-            "customer_id",
-            "commodity_id",
-            "entered_by",
-        )
-        .select_related("revenue_code")
-        .prefetch_related(
-            Prefetch("customer", queryset=Customer.objects.only("id", "name")),
-            Prefetch(
-                "commodity",
-                queryset=Commodity.objects.only("id", "description"),
-            ),
-            Prefetch(
-                "organization",
-                queryset=Organization.objects.only("id", "name"),
-            ),
-        )
-    )
