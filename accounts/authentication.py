@@ -40,7 +40,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
     Authentication backend for the token authentication system.
     """
 
-    model: type[models.Token] = models.Token
+    model = models.Token
 
     def authenticate(self, request: Request) -> Union[Tuple[models.User, models.Token], None]:
         """

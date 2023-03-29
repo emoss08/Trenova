@@ -154,6 +154,9 @@ def transfer_to_billing_task(  # type: ignore
 def automate_mass_order_billing(self) -> str:  # type: ignore
     """Automated Mass Billing Tasks, that uses system user to bill orders.
 
+    Filter the database for the Organizations that have auto bill orders enabled and call the mass_order_billing_service
+    service to bill the orders.
+
     Args:
         self (celery.app.task.Task): The task object
 
@@ -163,7 +166,7 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
     Raises:
         ObjectDoesNotExist: If the Order does not exist in the database.
     """
-    system_user = User.objects.get(username="sys")
+    system_user: User = User.objects.get(username="sys")
     organizations = Organization.objects.filter(billing_control__auto_bill_orders=True)
     results = []
     for organization in organizations:

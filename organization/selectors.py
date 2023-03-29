@@ -19,6 +19,7 @@ from collections.abc import Iterable
 from typing import Union, Tuple
 
 from django.db import connection
+from django.db.backends.utils import CursorWrapper
 from django.db.models import Q
 from django.utils import timezone
 
@@ -50,7 +51,7 @@ def get_active_table_alerts() -> Union[Iterable[TableChangeAlert], None]:
             # Do something with the alert object
     """
 
-    query = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
+    query: Q = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
         effective_date__isnull=True
     ) & Q(Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True))
 
@@ -69,7 +70,6 @@ def get_active_triggers() -> Union[ Iterable[Tuple], None]:
         List[Tuple]: A list of tuples representing the rows from the result set.
         If the query returns an empty result set, this function returns `None`.
     """
-
     with connection.cursor() as conn:
         conn.execute("SELECT * FROM information_schema.triggers")
         return conn.fetchall() if conn.rowcount > 0 else None
