@@ -17,7 +17,8 @@
 
 from backend.celery import app
 from django.core.management import call_command
-from kombu.exceptions import OperationalError
+
+from core.exceptions import CommandCallException
 
 
 @app.task(name="table_change_alerts", bind=True, max_retries=3, default_retry_delay=60)
@@ -41,5 +42,5 @@ def table_change_alerts(self) -> None:  # type: ignore
     """
     try:
         call_command("psql_listener")
-    except OperationalError as exc:
+    except CommandCallException as exc:
         raise self.retry(exc=exc) from exc

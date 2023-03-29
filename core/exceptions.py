@@ -38,17 +38,21 @@ def django_error_handler(exc: Any, context: Any) -> Union[Response, None]:
         return Response(status=400, data=exc.message_dict)
     return response
 
+
 class ServiceException(Exception):
     """
     Base Service Exception for all services.
     """
 
-    def __init__(self, message: str) -> None:
-        """Service Exception
+    pass
 
-        Args:
-            message (str): Message
-        """
 
-        super().__init__(message)
-        self.message: str = message
+class CommandCallException(Exception):
+    """
+    Base Command call exception.
+
+    This exception is raised when a django command is called with invalid arguments,
+    or when the command fails to execute.
+    """
+
+    pass
