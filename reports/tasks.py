@@ -35,7 +35,10 @@ def send_scheduled_report(report_id: str) -> None:
     Returns:
         None: This function does not return anything.
     """
+
+    # TODO(WOLFRED): Make the send scheduled report command retry if it fails. and possibly move to a service.
     scheduled_report = models.ScheduledReport.objects.get(pk=report_id)
+
     if not scheduled_report.is_active:
         return
 
