@@ -25,6 +25,7 @@ from notifications.signals import notify
 
 from accounts.models import User
 from billing import models
+from billing.exceptions import BillingException
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from movements.models import Movement
 from order.models import Order
@@ -36,13 +37,6 @@ class AuthenticatedHTTPRequest(HttpRequest):
     """
 
     user: User
-
-
-class BillingException(Exception):
-    """
-    Base Billing Exception
-    """
-
 
 def create_billing_exception(
     *, user: User, exception_type: str, order: Order, exception_message: str
