@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Union
+from typing import Any, Union, Type, Tuple
 
 from django.contrib import admin
 from django.forms import ModelForm
@@ -32,13 +32,13 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     General Ledger Account Admin
     """
 
-    model: type[GeneralLedgerAccount] = GeneralLedgerAccount
-    list_display: tuple[str, ...] = (
+    model: Type[GeneralLedgerAccount] = GeneralLedgerAccount
+    list_display: Tuple[str, ...] = (
         "id",
         "account_number",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields: Tuple[str, ...] = (
         "id",
         "description",
     )
@@ -49,7 +49,7 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
         obj: Union[GeneralLedgerAccount, None] = None,
         change: bool = False,
         **kwargs: Any,
-    ) -> type[ModelForm[GeneralLedgerAccount]]:
+    ) -> Type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 
         Args:
@@ -75,12 +75,12 @@ class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
     Revenue Code Admin
     """
 
-    model: type[RevenueCode] = RevenueCode
-    list_display: tuple[str, ...] = (
+    model: Type[RevenueCode] = RevenueCode
+    list_display: Tuple[str, ...] = (
         "code",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields: Tuple[str, ...] = (
         "code",
         "description",
     )
@@ -92,12 +92,12 @@ class DivisionCodeAdmin(GenericAdmin[DivisionCode]):
     Division Code Admin
     """
 
-    model: type[DivisionCode] = DivisionCode
-    list_display: tuple[str, ...] = (
+    model: Type[DivisionCode] = DivisionCode
+    list_display: Tuple[str, ...] = (
         "code",
         "description",
     )
-    search_fields: tuple[str, ...] = (
+    search_fields: Tuple[str, ...] = (
         "code",
         "description",
     )
