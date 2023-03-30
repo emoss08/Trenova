@@ -23,62 +23,38 @@ from billing.models import BillingHistory, BillingQueue
 from order.models import Order
 
 
-class TransferOrderDetails:
-    """
-    Class to transfer details from `instance` to billing queue and billing history.
-    If the instance is a `models.BillingHistory`, it will transfer details from the `instance.order`
-    to the instance, if the instance does not have the information.
+def transfer_order_details(obj: Union[BillingHistory, BillingQueue]) -> None:
+    """Save the obj of either `BillingHistory` or `BillingQueue`.
 
-    If the instance is a `models.BillingQueue`, it will transfer details from the `instance.order`
-    to the instance, if the instance does not have the information.
-
-    Args:
-        instance (Union[models.BillingHistory, models.BillingQueue]): An instance of either the
-        `BillingHistory` or `BillingQueue` model.
+    The method transfers the details from `obj.order` to the obj,
+    if the obj does not have the information.
 
     Returns:
         None
     """
+    order = Order.objects.select_related(
+        "order_type", "revenue_code", "commodity", "customer"
+    ).get(pk=obj.order.pk)
 
-    def __init__(self, *, instance: Union[BillingQueue, BillingHistory]) -> None:
-        self.instance = instance
-        self._save()
-        print("TransferOrderDetails: ", self.instance)
+    obj.pieces = obj.pieces or order.pieces
+    obj.order_type = obj.order_type or order.order_type
+    obj.weight = obj.weight or order.weight
+    obj.mileage = obj.mileage or order.mileage
+    obj.revenue_code = obj.revenue_code or order.revenue_code
+    obj.commodity = obj.commodity or order.commodity
+    obj.bol_number = obj.bol_number or order.bol_number
+    obj.bill_type = (
+        obj.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
+    )
+    obj.bill_date = obj.bill_date or timezone.now().date()
+    obj.consignee_ref_number = (
+        obj.consignee_ref_number or order.consignee_ref_number
+    )
 
-    def _save(self) -> None:
-        """Save the instance of either `BillingHistory` or `BillingQueue`.
+    if obj.commodity and not obj.commodity_descr:
+        obj.commodity_descr = obj.commodity.description
 
-        The method transfers the details from `instance.order` to the instance,
-        if the instance does not have the information.
-
-        Returns:
-            None
-        """
-        order = Order.objects.select_related(
-            "order_type", "revenue_code", "commodity", "customer"
-        ).get(pk=self.instance.order.pk)
-
-        instance = self.instance
-
-        instance.pieces = instance.pieces or order.pieces
-        instance.order_type = instance.order_type or order.order_type
-        instance.weight = instance.weight or order.weight
-        instance.mileage = instance.mileage or order.mileage
-        instance.revenue_code = instance.revenue_code or order.revenue_code
-        instance.commodity = instance.commodity or order.commodity
-        instance.bol_number = instance.bol_number or order.bol_number
-        instance.bill_type = (
-            instance.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
-        )
-        instance.bill_date = instance.bill_date or timezone.now().date()
-        instance.consignee_ref_number = (
-            instance.consignee_ref_number or order.consignee_ref_number
-        )
-
-        if instance.commodity and not instance.commodity_descr:
-            instance.commodity_descr = instance.commodity.description
-
-        instance.customer = order.customer
-        instance.other_charge_total = order.other_charge_amount
-        instance.freight_charge_amount = order.freight_charge_amount
-        instance.total_amount = order.sub_total
+    obj.customer = order.customer
+    obj.other_charge_total = order.other_charge_amount
+    obj.freight_charge_amount = order.freight_charge_amount
+    obj.total_amount = order.sub_total

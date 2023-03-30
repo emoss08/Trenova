@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from datetime import datetime
-from typing import Optional, Iterable
+from typing import Optional, Iterable, List
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -33,7 +33,7 @@ from utils.types import MODEL_UUID
 
 
 def transfer_to_billing_queue_service(
-    *, user_id: MODEL_UUID, order_pros: list[str], task_id: str
+    *, user_id: MODEL_UUID, order_pros: List[str], task_id: str
 ) -> str:
     """
     Creates a new BillingQueue object for each order and updates the order's transfer status and transfer date.

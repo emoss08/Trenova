@@ -21,12 +21,11 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from billing import models
 from billing.selectors import get_billing_queue_information
-from billing.services.transfer_order_details import TransferOrderDetails
-from billing.services.invoice_number import InvoiceNumberService
+from billing.services.invoice_number import generate_invoice_number
+from billing.services.transfer_order_details import transfer_order_details
 
 
 def prevent_delete_on_rate_con_doc_class(
-    sender: models.DocumentClassification,
     instance: models.DocumentClassification,
     **kwargs: Any,
 ) -> None:
@@ -34,7 +33,6 @@ def prevent_delete_on_rate_con_doc_class(
     Prevents the deletion of the Document Classification with name "CON"
 
     Args:
-        sender (models.DocumentClassification): Document Classification model
         instance (models.DocumentClassification): Document Classification instance
         **kwargs (Any): Any additional arguments
 
@@ -53,18 +51,14 @@ def prevent_delete_on_rate_con_doc_class(
 
 
 def check_billing_history(
-    sender: models.BillingHistory,
     instance: models.BillingHistory,
-    origin: Any,
     **kwargs: Any,
 ) -> None:
     """
     Prevents the deletion of the Billing History if the organization has the remove_billing_history
 
     Args:
-        sender (models.BillingHistory): Billing History model
         instance (models.BillingHistory): Billing History instance
-        origin ():
         **kwargs (Any): Any additional arguments
 
     Returns:
@@ -85,12 +79,11 @@ def check_billing_history(
 
 
 def save_invoice_number_on_billing_history(
-    sender: models.BillingHistory, instance: models.BillingHistory, **kwargs: Any
+    instance: models.BillingHistory, **kwargs: Any
 ) -> None:
     """Saves the invoice number on the billing history
 
     Args:
-        sender (models.BillingHistory): Billing History model
         instance (models.BillingHistory): Billing History instance
         **kwargs (Any): Any additional arguments
 
@@ -102,48 +95,45 @@ def save_invoice_number_on_billing_history(
 
 
 def transfer_order_details_to_billing_history(
-    sender: models.BillingHistory, instance: models.BillingHistory, **kwargs: Any
+    instance: models.BillingHistory, **kwargs: Any
 ) -> None:
     """Transfers the order details to the billing history
 
     Args:
-        sender (models.BillingHistory): Billing History model
         instance (models.BillingHistory): Billing History instance
         **kwargs (Any): Any additional arguments
 
     Returns:
         None: This function does not return anything
     """
-    TransferOrderDetails(instance=instance)
+    transfer_order_details(obj=instance)
 
 
 def generate_invoice_number_on_billing_queue(
-    sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any
+    instance: models.BillingQueue, **kwargs: Any
 ) -> None:
     """Generates the invoice number on the billing queue
 
     Args:
-        sender (models.BillingQueue): Billing Queue model
         instance (models.BillingQueue): Billing Queue instance
         **kwargs (Any): Any additional arguments
 
     Returns:
         None: This function does not return anything
     """
-    InvoiceNumberService(instance=instance)
+    generate_invoice_number(instance=instance)
 
 
 def transfer_order_details_to_billing_queue(
-    sender: models.BillingQueue, instance: models.BillingQueue, **kwargs: Any
+    instance: models.BillingQueue, **kwargs: Any
 ) -> None:
     """Transfers the order details to the billing queue
 
     Args:
-        sender (models.BillingQueue): Billing Queue model
         instance (models.BillingQueue): Billing Queue instance
         **kwargs (Any): Any additional arguments
 
     Returns:
         None: This function does not return anything
     """
-    TransferOrderDetails(instance=instance)
+    transfer_order_details(obj=instance)
