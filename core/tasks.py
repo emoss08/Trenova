@@ -19,19 +19,9 @@ import datetime
 
 from django.core.management import call_command
 from django.utils import timezone
-from kombu.exceptions import OperationalError
 
 from backend.celery import app
-
-
-def get_cutoff_date() -> datetime.datetime:
-    """Get the cutoff date for deleting audit log records.
-
-    Returns:
-    str: The cutoff date for deleting audit log records.
-    """
-
-    return timezone.now() - datetime.timedelta(days=30)
+from core.exceptions import CommandCallException
 
 
 @app.task(
@@ -52,12 +42,12 @@ def delete_audit_log_records(self) -> str:  # type: ignore
         str: The message "Audit log records deleted." upon successful completion of the task.
     """
 
-    cutoff_date: datetime.datetime = get_cutoff_date()
+    cutoff_date: datetime.datetime = timezone.now() - datetime.timedelta(days=30)
     formatted_date: str = cutoff_date.strftime("%Y-%m-%d")
 
     try:
         call_command("auditlogflush", "-b", formatted_date, "-y")
-    except OperationalError as exc:
+    except CommandCallException as exc:
         raise self.retry(exc=exc) from exc
 
     return f"Successfully deleted audit log records. older than {formatted_date}."

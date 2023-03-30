@@ -14,49 +14,53 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from io import BytesIO
 
 from django.core.mail import EmailMessage
 
 from accounts.models import User
 from backend.celery import app
+from core.exceptions import ServiceException
 from reports import models
 from reports.services import generate_excel_report_as_file
 
 
-@app.task(name="send_scheduled_report")
-def send_scheduled_report(report_id: str) -> None:
+@app.task(name="send_scheduled_report", bind=True, max_retries=3, default_retry_delay=60)
+def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
     """A Celery task that sends a scheduled report to the user who created it.
 
     This tasks generates an Excel file from the report and sends it to the user who created the report.
 
     Args:
+        self (celery.app.task.Task): The task object.
         report_id (str): The ID of the scheduled report.
 
     Returns:
         None: This function does not return anything.
     """
+    try:
+        scheduled_report: models.ScheduledReport = models.ScheduledReport.objects.get(pk__exact=report_id)
 
-    # TODO(WOLFRED): Make the send scheduled report command retry if it fails. and possibly move to a service.
-    scheduled_report = models.ScheduledReport.objects.get(pk=report_id)
+        if not scheduled_report.is_active:
+            return
 
-    if not scheduled_report.is_active:
-        return
+        report: models.CustomReport = scheduled_report.report
+        user: User = scheduled_report.user
 
-    report: models.CustomReport = scheduled_report.report
-    user: User = scheduled_report.user
+        excel_file = generate_excel_report_as_file(report)
 
-    excel_file = generate_excel_report_as_file(report)
+        email = EmailMessage(
+            subject=f"Your scheduled report: {report.name}",
+            body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
+            from_email="reports@monta.io",
+            to=[user.email],
+        )
 
-    email = EmailMessage(
-        subject=f"Your scheduled report: {report.name}",
-        body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
-        from_email="reports@monta.io",
-        to=[user.email],
-    )
-
-    email.attach(
-        f"{report.name}.xlsx",
-        excel_file.getvalue(),
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-    email.send()
+        email.attach(
+            f"{report.name}.xlsx",
+            excel_file.getvalue(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        email.send()
+    except ServiceException as exc:
+        raise self.retry(exc=exc) from exc

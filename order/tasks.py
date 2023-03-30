@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import List, Iterable
 
 from backend.celery import app
 
@@ -33,7 +34,7 @@ from utils.types import MODEL_UUID
     max_retries=3,
     default_retry_delay=60,
 )
-def consolidate_order_documentation(self, order_id: str) -> None:  # type: ignore
+def consolidate_order_documentation(self, *, order_id: str) -> None:  # type: ignore
     """Consolidate Order
 
     Query the database for the Order and call the consolidate_pdf
@@ -84,7 +85,7 @@ def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:  # type: 
 
 
 @app.task(name="mass_order_bill_task", bind=True, max_retries=3, default_retry_delay=60)
-def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:  # type: ignore
+def mass_order_bill_task(self, *, user_id: MODEL_UUID) -> None:  # type: ignore
     """Bill Order
 
     Args:
@@ -107,7 +108,7 @@ def mass_order_bill_task(self, user_id: MODEL_UUID) -> None:  # type: ignore
 
 @app.task(name="transfer_to_billing_task", bind=True)
 def transfer_to_billing_task(  # type: ignore
-    self, *, user_id: MODEL_UUID, order_pros: list[str]
+    self, *, user_id: MODEL_UUID, order_pros: List[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
@@ -140,6 +141,7 @@ def transfer_to_billing_task(  # type: ignore
 
     Finally, the function returns None.
     """
+
     try:
         transfer_to_billing_queue_service(
             user_id=user_id, order_pros=order_pros, task_id=self.request.id
@@ -164,10 +166,10 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
         str: A string containing the results of the automated mass billing tasks.
 
     Raises:
-        ObjectDoesNotExist: If the Order does not exist in the database.
+        ServiceException: If the Order does not exist in the database.
     """
     system_user: User = User.objects.get(username="sys")
-    organizations = Organization.objects.filter(billing_control__auto_bill_orders=True)
+    organizations: Iterable[Organization] = Organization.objects.filter(billing_control__auto_bill_orders=True)
     results = []
     for organization in organizations:
         try:
