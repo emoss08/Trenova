@@ -17,6 +17,7 @@
 
 import logging
 import re
+
 from rich.logging import RichHandler
 from rich.text import Text
 
@@ -85,4 +86,3 @@ class CustomRichHandler(RichHandler):
             text.append(f"{outcome}.", style="bold red")
             text.append("\n    => ", style="bold white")
             text.append("Response Failed.", style="bold red")
-

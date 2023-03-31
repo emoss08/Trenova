@@ -19,8 +19,8 @@ from typing import Tuple, Union
 from django.utils import timezone
 from rest_framework import HTTP_HEADER_ENCODING, authentication, exceptions
 from rest_framework.request import Request
-from accounts import models
 
+from accounts import models
 
 
 def get_authorization_header(request: Request) -> bytes:
@@ -35,6 +35,7 @@ def get_authorization_header(request: Request) -> bytes:
         auth: bytes = auth.encode(HTTP_HEADER_ENCODING)  # type: ignore
     return auth  # type: ignore
 
+
 class TokenAuthentication(authentication.TokenAuthentication):
     """
     Authentication backend for the token authentication system.
@@ -42,7 +43,9 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
     model = models.Token
 
-    def authenticate(self, request: Request) -> Union[Tuple[models.User, models.Token], None]:
+    def authenticate(
+        self, request: Request
+    ) -> tuple[models.User, models.Token] | None:
         """
 
         Args:
@@ -72,7 +75,7 @@ class TokenAuthentication(authentication.TokenAuthentication):
 
         return self.authenticate_credentials(token)
 
-    def authenticate_credentials(self, key: str) -> Tuple[models.User, models.Token]:
+    def authenticate_credentials(self, key: str) -> tuple[models.User, models.Token]:
         """Authenticate the token
 
         Authenticate the given credentials. If authentication is successful,

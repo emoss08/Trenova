@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Iterable
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 from django.db.models import Q
 
@@ -27,8 +27,8 @@ from utils.models import StatusChoices
 
 
 def get_billable_orders(
-    *, organization: Organization, order_pros: Optional[List[str]] = None
-) -> Union[Iterable[Order], None]:
+    *, organization: Organization, order_pros: list[str] | None = None
+) -> Iterable[Order] | None:
     """Returns an iterator of orders that are billable for a given organization.
 
     The billable orders are determined based on the `order_transfer_criteria`
@@ -82,7 +82,7 @@ def get_billable_orders(
     return orders if orders.exists() else None
 
 
-def get_billing_queue_information(*, order: Order) -> Union[BillingQueue, None]:
+def get_billing_queue_information(*, order: Order) -> BillingQueue | None:
     """Returns the billing history for a given order.
 
     Args:

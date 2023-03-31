@@ -30,12 +30,7 @@ from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
 from order.validation import OrderValidation
-from utils.models import (
-    ChoiceField,
-    GenericModel,
-    RatingMethodChoices,
-    StatusChoices,
-)
+from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
 

@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytest
 import datetime
+
+import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 

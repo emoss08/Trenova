@@ -15,18 +15,20 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import io
 import json
 from typing import Type, Union
-import io
+
+from django.apps import apps
+from django.db import models
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
-from django.db import models
-from django.apps import apps
-from reports.models import ScheduledReport, ScheduleType, CustomReport
+
+from reports.models import CustomReport, ScheduledReport, ScheduleType
 
 
-def get_model_by_table_name(table_name: str) -> Union[Type[models.Model], None]:
+def get_model_by_table_name(table_name: str) -> type[models.Model] | None:
     """
     Returns a model class from Django apps by a given table name.
     If the model class is not found, it returns None.
@@ -58,9 +60,9 @@ def generate_excel_report_as_file(report: CustomReport) -> io.BytesIO:
     columns, and populates the data rows by iterating through the data model object.
     The generated Excel file is saved to a BytesIO object which is then returned to the caller.
     """
-    model: Union[Type[models.Model], Type[models.Model], None] = get_model_by_table_name(
-        report.table
-    )
+    model: (
+        type[models.Model] | type[models.Model] | None
+    ) = get_model_by_table_name(report.table)
 
     if not model:
         raise ValueError("Invalid table name.")

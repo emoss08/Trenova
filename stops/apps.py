@@ -25,6 +25,7 @@ class StopsConfig(AppConfig):
 
     def ready(self):
         from stops import signals
+
         # pre_save.connect(
         #     signals.set_movement_status,
         #     sender="stops.Stop",

@@ -16,8 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any
 
-from reports import models
 from django import forms
+
+from reports import models
 
 
 class CustomReportForm(forms.ModelForm):

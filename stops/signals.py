@@ -17,9 +17,9 @@
 
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from stops import models
@@ -77,9 +77,10 @@ def update_movement_status(
     instance.movement.status = new_status
     instance.movement.save()
 
+
 def check_stop_removal_policy(
-        instance: models.Stop,
-        **kwargs: Any,
+    instance: models.Stop,
+    **kwargs: Any,
 ) -> None:
     """Check if the organization allows order removal.
 

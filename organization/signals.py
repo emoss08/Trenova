@@ -18,16 +18,16 @@
 from typing import Any
 
 from billing.models import BillingControl
-from invoicing.models import InvoiceControl
-from organization import models
 from dispatch.models import DispatchControl
+from invoicing.models import InvoiceControl
 from order.models import OrderControl
+from organization import models
 from organization.models import EmailControl
 from organization.services.psql_triggers import drop_trigger_and_function
 from organization.services.table_change import (
-    set_trigger_name_requirements,
     create_trigger_based_on_db_action,
     drop_trigger_and_create,
+    set_trigger_name_requirements,
 )
 from route.models import RouteControl
 
@@ -36,7 +36,7 @@ def create_dispatch_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a DispatchControl model instance for a new Organization model instance.
 
@@ -59,7 +59,7 @@ def create_order_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create an OrderControl model instance for a new Organization model instance.
 
@@ -81,7 +81,7 @@ def create_route_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a RouteControl model instance for a new Organization model instance.
 
@@ -103,7 +103,7 @@ def create_billing_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a BillingControl model instance for a new Organization model instance.
 
@@ -125,7 +125,7 @@ def create_email_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create an EmailControl model instance for a new Organization model instance.
 
@@ -147,7 +147,7 @@ def create_invoice_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create an InvoiceControl model instance for a new Organization model instance.
 
@@ -207,7 +207,7 @@ def create_trigger_signal(
     sender: models.TableChangeAlert,
     instance: models.TableChangeAlert,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a trigger for a new TableChangeAlert model instance.
 

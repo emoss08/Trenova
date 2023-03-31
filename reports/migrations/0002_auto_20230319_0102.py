@@ -31,7 +31,6 @@ def reverse_populate_weekdays(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("reports", "0001_initial"),
     ]

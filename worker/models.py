@@ -378,7 +378,9 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
-        from dispatch.validators.regulatory import validate_worker_regulatory_information
+        from dispatch.validators.regulatory import (
+            validate_worker_regulatory_information,
+        )
 
         super().clean()
 

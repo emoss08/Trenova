@@ -39,11 +39,11 @@ from location import api as location_api
 from movements import api as movement_api
 from order import api as order_api
 from organization import api as org_api
+from reports import api as reports_api
+from reports import views as reports_views
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
-from reports import api as reports_api
-from reports import views as reports_views
 
 router = routers.DefaultRouter()
 

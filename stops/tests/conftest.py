@@ -53,6 +53,7 @@ def location() -> Generator[Any, Any, None]:
     """
     yield LocationFactory()
 
+
 @pytest.fixture
 def order() -> Generator[Any, Any, None]:
     """

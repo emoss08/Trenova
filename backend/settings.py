@@ -18,12 +18,14 @@
 import os
 import sys
 from pathlib import Path
+
 import django_stubs_ext
 import environ
 
 # Check if running on pypy. If so, monkey patch psycopg2cffiq
-if sys.implementation.name == 'pypy':
+if sys.implementation.name == "pypy":
     from psycopg2cffi import compat
+
     compat.register()
 
 django_stubs_ext.monkeypatch()

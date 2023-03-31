@@ -19,6 +19,7 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
 from billing import models
 from billing.selectors import get_billing_queue_information
 from billing.services.invoice_number import generate_invoice_number

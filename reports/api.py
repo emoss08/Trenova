@@ -15,12 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from django.apps import apps
+from rest_framework import generics
 from rest_framework.request import Request
 from rest_framework.response import Response
-from django.apps import apps
-from utils.views import OrganizationMixin
+
 from reports import models, serializers
-from rest_framework import generics
+from utils.views import OrganizationMixin
 
 
 class TableColumnsAPIView(generics.GenericAPIView):

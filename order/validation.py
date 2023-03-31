@@ -253,7 +253,9 @@ class OrderValidation:
     def validate_order_movement_in_progress(self) -> None:
         if self.order.status == StatusChoices.IN_PROGRESS:
             in_progress_movements = [
-                movement for movement in self.order.movements.all() if movement.status == StatusChoices.IN_PROGRESS
+                movement
+                for movement in self.order.movements.all()
+                if movement.status == StatusChoices.IN_PROGRESS
             ]
 
             if not in_progress_movements:

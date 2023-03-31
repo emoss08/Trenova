@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("dispatch", "0004_alter_ratebillingtable_charge_amount_currency_and_more"),
     ]

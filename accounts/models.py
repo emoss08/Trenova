@@ -20,7 +20,7 @@ from __future__ import annotations
 import secrets
 import textwrap
 import uuid
-from typing import Any, final, Union
+from typing import Any, Union, final
 
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -36,7 +36,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
-from utils.models import ChoiceField, GenericModel, AutoSelectRelatedQuerySetMixin
+
+from utils.models import AutoSelectRelatedQuerySetMixin, ChoiceField, GenericModel
 from utils.validators import ImageSizeValidator
 
 
@@ -49,7 +50,7 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
         self,
         username: str,
         email: str,
-        password: Union[str, None] = None,
+        password: str | None = None,
         **extra_fields: Any,
     ) -> User:
         """
@@ -83,7 +84,7 @@ class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
         self,
         username: str,
         email: str,
-        password: Union[str, None] = None,
+        password: str | None = None,
         **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.
@@ -356,7 +357,6 @@ class UserProfile(GenericModel):
 
     @property
     def get_user_profile_pic(self) -> Any | str:
-
         """Get the user profile picture.
 
         Returns:

@@ -295,7 +295,9 @@ class MovementValidation:
         """
         if (
             self.movement.status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]
-            and self.movement.stops.filter(status=StatusChoices.NEW, sequence=1).exists()
+            and self.movement.stops.filter(
+                status=StatusChoices.NEW, sequence=1
+            ).exists()
         ):
             self.errors["status"] = _(
                 "Cannot change status to anything other than `NEW` if any of the stops are"

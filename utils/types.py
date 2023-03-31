@@ -15,19 +15,17 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Union, Tuple, Dict
-from uuid import UUID
 import sys
+from typing import Any, Dict, Tuple, Union
+from uuid import UUID
+
 from django.db.models import UUIDField
 
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-    MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-    HealthStatus: TypeAlias = Union[Dict[str, Union[str, int, int, int]]]
-    HealthStatusAndTime: TypeAlias = Union[Dict[str, Union[str, int, int, int, float, float]]]
-    DiskUsage: TypeAlias = Tuple[int, int, int]
-else:
-    MODEL_UUID = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-    HealthStatus = Union[Dict[str, Union[str, int, int, int]]]
-    HealthStatusAndTime = Union[Dict[str, Union[str, int, int, int, float, float]]]
-    DiskUsage = Tuple[int, int, int]
+from typing import TypeAlias
+
+MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
+HealthStatus: TypeAlias = Union[dict[str, Union[str, int, int, int]]]
+HealthStatusAndTime: TypeAlias = Union[
+    dict[str, Union[str, int, int, int, float, float]]
+]
+DiskUsage: TypeAlias = tuple[int, int, int]

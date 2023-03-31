@@ -24,7 +24,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from movements.validation import MovementValidation
-from order.models import Order
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -138,10 +137,7 @@ class Movement(GenericModel):
             if self.tractor.secondary_worker and not self.secondary_worker:
                 self.secondary_worker = self.tractor.secondary_worker
 
-        if (
-            self.primary_worker
-            and not self.tractor
-        ):
+        if self.primary_worker and not self.tractor:
             self.tractor = self.primary_worker.primary_tractor
 
     def get_absolute_url(self) -> str:

@@ -38,6 +38,7 @@ class AuthenticatedHTTPRequest(HttpRequest):
 
     user: User
 
+
 def create_billing_exception(
     *, user: User, exception_type: str, order: Order, exception_message: str
 ) -> None:
@@ -71,7 +72,7 @@ def check_billing_control(*, user: User) -> bool:
     return bool(user.organization.billing_control.enforce_customer_billing)
 
 
-def set_billing_requirements(*, customer: Customer) -> Union[List[str], bool]:
+def set_billing_requirements(*, customer: Customer) -> list[str] | bool:
     """Set the billing requirements for the customer
 
     Args:

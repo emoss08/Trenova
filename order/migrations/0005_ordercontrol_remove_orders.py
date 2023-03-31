@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("order", "0004_alter_order_pro_number_alter_ordertype_name_and_more"),
     ]

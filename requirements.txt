@@ -2,6 +2,7 @@ art==5.9
 celery~=5.2.7
 celery-types==0.14.0
 channels==4.0.0
+channels_redis==4.0.0
 confluent-kafka==2.0.2
 daphne==4.0.0
 django==4.1.7
@@ -39,6 +40,8 @@ hiredis==2.2.2
 httpx==0.23.3
 isort==5.12.0
 msgpack==1.0.5
+openpyxl==3.1.2
+orjson==3.8.8
 phonenumbers==8.13.7
 Pillow==9.4.0
 psycopg2==2.9.5
@@ -49,6 +52,7 @@ pytest-bdd==6.1.1
 pytest-cov==4.0.0
 pytest-django==4.5.2
 pytest-html==3.2.0
+pytz==2022.7.1
 redis==4.5.4
 rich==13.3.2
 tox==4.4.7
@@ -56,7 +60,3 @@ types-redis==4.5.2.0
 weasyprint==58.1
 whitenoise==6.4.0
 xhtml2pdf==0.2.9
-channels_redis==4.0.0
-openpyxl==3.1.2
-orjson==3.8.8
-pytz==2022.7.1

@@ -65,7 +65,9 @@ class GenericSerializer(serializers.ModelSerializer):
         """
 
         if self.context["request"].user.is_authenticated:
-            context_organization: Organization = self.context["request"].user.organization
+            context_organization: Organization = self.context[
+                "request"
+            ].user.organization
             return context_organization
         token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization

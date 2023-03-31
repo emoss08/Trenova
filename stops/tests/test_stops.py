@@ -122,6 +122,7 @@ class TestStop:
 
         assert stop.status == StatusChoices.COMPLETED
 
+
 class TestStopAPI:
     """
     Class to Test Stops API.
