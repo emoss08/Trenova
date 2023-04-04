@@ -72,6 +72,7 @@ class UserViewSet(OrganizationMixin):
         "profiles__last_name",
     )
     filterset_fields = (
+        "is_active",
         "department__name",
         "is_staff",
         "username",
@@ -89,11 +90,8 @@ class UserViewSet(OrganizationMixin):
         return self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).select_related(
-            "organization",
             "profiles",
             "profiles__title",
-            "profiles__user",
-            "department",
         )
 
 
