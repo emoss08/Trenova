@@ -16,17 +16,28 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Iterable
-from typing import Union, Tuple
+from typing import Union, Tuple, Optional
 
+from django.contrib.sessions.models import Session
 from django.db import connection
-from django.db.backends.utils import CursorWrapper
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.utils import timezone
 
 from organization.models import TableChangeAlert
 
 
-def get_active_table_alerts() -> Union[Iterable[TableChangeAlert], None]:
+def get_active_sessions() -> Optional[QuerySet[Session]]:
+    """Returns an iterable of active sessions, or None if no sessions are active.
+
+    Returns:
+        QuerySet[Sessions]: An iterable of active sessions, or None if no sessions are active.
+    """
+
+    active_sessions = Session.objects.filter(expire_date__gte=timezone.now())
+    return active_sessions if active_sessions.exists() else None
+
+
+def get_active_table_alerts() -> Optional[QuerySet[TableChangeAlert]]:
     """
     Returns an iterable of active TableChangeAlert objects, or None if no alerts are active.
 
@@ -59,7 +70,7 @@ def get_active_table_alerts() -> Union[Iterable[TableChangeAlert], None]:
     return active_alerts if active_alerts.exists() else None
 
 
-def get_active_triggers() -> Union[ Iterable[Tuple], None]:
+def get_active_triggers() -> Union[Iterable[Tuple], None]:
     """
     Returns a list of active triggers in the PostgreSQL database.
 

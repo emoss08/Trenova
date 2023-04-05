@@ -53,6 +53,11 @@ class OrganizationConfig(AppConfig):
             dispatch_uid="create_email_control",
         )
         post_save.connect(
+            signals.create_kube_configuration,
+            sender="organization.Organization",
+            dispatch_uid="create_kube_configuration",
+        )
+        post_save.connect(
             signals.create_invoice_control,
             sender="organization.Organization",
             dispatch_uid="create_invoice_control",

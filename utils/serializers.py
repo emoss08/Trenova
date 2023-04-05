@@ -42,6 +42,7 @@ class GenericSerializer(serializers.ModelSerializer):
         extra_fields: list[str]
         extra_read_only_fields: list[str]
         model: _MT  # type: ignore
+        exclude: tuple[str, ...]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the serializer
@@ -65,7 +66,9 @@ class GenericSerializer(serializers.ModelSerializer):
         """
 
         if self.context["request"].user.is_authenticated:
-            context_organization: Organization = self.context["request"].user.organization
+            context_organization: Organization = self.context[
+                "request"
+            ].user.organization
             return context_organization
         token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization
@@ -112,6 +115,8 @@ class GenericSerializer(serializers.ModelSerializer):
 
         original_fields = getattr(self.Meta, "fields", None)
 
+        excluded_fields = getattr(self.Meta, "exclude", None)
+
         if original_fields is not None:
             fields = original_fields
         else:
@@ -119,12 +124,11 @@ class GenericSerializer(serializers.ModelSerializer):
             fields = [
                 field.name
                 for field in self.Meta.model._meta._get_fields(reverse=False)  # type: ignore
-                if field.name not in read_only_field
+                if field.name not in [excluded_fields, read_only_field]
             ]
 
         self.Meta.read_only_fields = read_only_field
         self.Meta.fields = tuple(fields)
-
         extra_fields = getattr(self.Meta, "extra_fields", None)
         if extra_fields:
             self.Meta.fields += tuple(extra_fields)

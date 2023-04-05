@@ -133,6 +133,14 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         null=True,
         blank=True,
     )
+    is_active = models.BooleanField(
+        _("Active"),
+        default=True,
+        help_text=_(
+            "Designates whether this user should be treated as active. "
+            "Unselect this instead of deleting accounts."
+        ),
+    )
     username = models.CharField(
         _("Username"),
         max_length=30,
@@ -152,6 +160,11 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         help_text=_("Designates whether the user can log into this admin site."),
     )
     date_joined = models.DateTimeField(_("Date Joined"), default=timezone.now)
+    online = models.BooleanField(
+        _("Online"),
+        default=False,
+        help_text=_("Designates whether the user is currently online."),
+    )
 
     objects = UserManager()
 

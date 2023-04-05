@@ -19,6 +19,8 @@ from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
+from order.models import Order
+from order.selectors import get_order_by_id
 from utils.models import RatingMethodChoices, StatusChoices
 
 
@@ -27,7 +29,7 @@ class OrderValidation:
     Class to validate the order model.
     """
 
-    def __init__(self, *, order):
+    def __init__(self, *, order: Order):
         self.order = order
         self.errors: dict[str, Promise] = {}
         self.validate()
@@ -54,6 +56,7 @@ class OrderValidation:
         self.validate_duplicate_order_bol()
         self.validate_order_movement_in_progress()
         self.validate_order_movements_completed()
+        # self.validate_location_information_cannot_change_once_order_completed()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -253,10 +256,39 @@ class OrderValidation:
     def validate_order_movement_in_progress(self) -> None:
         if self.order.status == StatusChoices.IN_PROGRESS:
             in_progress_movements = [
-                movement for movement in self.order.movements.all() if movement.status == StatusChoices.IN_PROGRESS
+                movement
+                for movement in self.order.movements.all()
+                if movement.status == StatusChoices.IN_PROGRESS
             ]
 
             if not in_progress_movements:
                 self.errors["status"] = _(
                     "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please try again."
                 )
+
+    def validate_location_information_cannot_change_once_order_completed(self) -> None:
+        """Validate location information in an order cannot be changed once the order is completed.
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            ValidationError: If the location information in an order is changed after the order is completed.
+        """
+        order = get_order_by_id(order_id=self.order.id)
+
+        if order.status == StatusChoices.COMPLETED:
+            location_attributes = [
+                ("origin_location", "Origin location"),
+                ("destination_location", "Destination location"),
+                ("origin_address", "Origin address"),
+                ("destination_address", "Destination address"),
+                ("origin_appointment", "Origin appointment"),
+                ("destination_appointment", "Destination appointment"),
+            ]
+
+            for attribute, display_name in location_attributes:
+                if getattr(order, attribute) != getattr(self.order, attribute):
+                    self.errors[attribute] = _(
+                        f"{display_name} cannot be changed once the order is completed. Please try again."
+                    )

@@ -29,7 +29,6 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
-from order.validation import OrderValidation
 from utils.models import (
     ChoiceField,
     GenericModel,
@@ -564,7 +563,7 @@ class Order(GenericModel):  # type:ignore
         Raises:
             ValidationError: If the Order is not valid
         """
-
+        from order.validation import OrderValidation
         super().clean()
         OrderValidation(order=self)
 

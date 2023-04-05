@@ -132,9 +132,7 @@ def check_order_removal_policy(
     If the organization does not allow order removal throw a ValidationError.
 
     Args:
-        sender (models.Order): The class of the sending instance.
         instance (models.Order): The instance of the Order model being saved.
-        origin (models.Order | QuerySet[models.Order]): The origin of the save.
         **kwargs: Additional keyword arguments.
 
     Returns:

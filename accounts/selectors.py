@@ -14,8 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from collections.abc import Iterable
-
+from django.db.models import QuerySet
 from django.http import HttpRequest
 
 from utils.types import MODEL_UUID
@@ -24,7 +23,7 @@ from accounts import models
 
 def get_users_by_organization_id(
     *, organization_id: MODEL_UUID
-) -> Iterable[models.User]:
+) -> QuerySet[models.User]:
     """
     Get Users by organization_id
     Args:

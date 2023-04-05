@@ -17,21 +17,41 @@ You should have received a copy of the GNU General Public License
 along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
+
 import pytest
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 from billing import models
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
-def test_list(charge_type):
+def test_list(charge_type: models.ChargeType) -> None:
     """
     Test Charge Type List
     """
     assert charge_type is not None
 
 
-def test_create(organization):
+def test_create(organization: Organization) -> None:
     """
     Test Create Charge Type
     """
@@ -46,7 +66,7 @@ def test_create(organization):
     assert charge_type.description == "Test Description"
 
 
-def test_update(charge_type):
+def test_update(charge_type: models.ChargeType) -> None:
     """
     Test Charge Type update
     """
@@ -60,7 +80,7 @@ def test_update(charge_type):
     assert char_type.name == "maybe"
 
 
-def test_get(api_client):
+def test_get(api_client: APIClient) -> None:
     """
     Test get Charge Type
     """
@@ -68,7 +88,7 @@ def test_get(api_client):
     assert response.status_code == 200
 
 
-def test_get_by_id(api_client, organization, charge_type_api):
+def test_get_by_id(api_client: APIClient, charge_type_api: Response) -> None:
     """
     Test get Charge Type by ID
     """
@@ -80,7 +100,7 @@ def test_get_by_id(api_client, organization, charge_type_api):
     assert response.data["description"] == "Test Description"
 
 
-def test_put(api_client, organization, charge_type_api):
+def test_put(api_client: APIClient, charge_type_api: Response) -> None:
     """
     Test put Charge Type
     """
@@ -95,7 +115,7 @@ def test_put(api_client, organization, charge_type_api):
     assert response.data["name"] == "foo bar"
 
 
-def test_delete(api_client, organization, charge_type_api):
+def test_delete(api_client: APIClient, charge_type_api: Response) -> None:
     """
     Test Delete Charge Type
     """
