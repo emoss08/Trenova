@@ -24,7 +24,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
-from organization.models import Department
+from organization.models import Department, Organization
 from utils.serializers import GenericSerializer
 
 _MT = TypeVar("_MT", bound=Model)
@@ -294,6 +294,11 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+        allow_null=True,
+        required=False,
+    )
     department = serializers.PrimaryKeyRelatedField(
         queryset=Department.objects.all(),
         allow_null=True,
@@ -450,7 +455,7 @@ class VerifyTokenSerializer(serializers.Serializer):
     """A serializer for token verification.
     The serializer provides a token field. The token field is used to verify the incoming token
     from the user. If the given token is valid then the user is given back the token and the user
-    id in the response. Otherwise the user is given an error message.
+    id in the response. Otherwise, the user is given an error message.
     Attributes:
         token (serializers.CharField): The token to be verified.
     Methods:

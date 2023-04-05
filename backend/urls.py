@@ -44,6 +44,7 @@ from stops import api as stops_api
 from worker import api as worker_api
 from reports import api as reports_api
 from reports import views as reports_views
+from kubectl import api as kubectl_views
 
 router = routers.DefaultRouter()
 
@@ -301,6 +302,9 @@ urlpatterns = [
     path("api/bill_order/", billing_api.bill_order_view, name="bill-order"),
     path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
+    path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),
+    path("api/active_threads/", org_api.active_threads, name="active-threads"),
+    path("api/active_k8/", kubectl_views.get_active_clusters, name="active-threads"),
     path(
         "api/table_columns/",
         reports_api.TableColumnsAPIView.as_view(),

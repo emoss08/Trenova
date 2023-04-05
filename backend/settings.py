@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.admindocs",
     # Third-Party apps
+    "drf_standardized_errors",
     "django_extensions",
     "localflavor",
     "cacheops",
@@ -91,6 +92,7 @@ INSTALLED_APPS = [
     "fuel",
     "invoicing",
     "reports",
+    "kubectl",
 ]
 
 # Middleware configurations
@@ -275,7 +277,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "EXCEPTION_HANDLER": "core.exceptions.django_error_handler",
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
 }
 
 LOGGING = {

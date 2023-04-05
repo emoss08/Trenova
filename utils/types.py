@@ -17,17 +17,12 @@
 
 from typing import Any, Union, Tuple, Dict
 from uuid import UUID
-import sys
 from django.db.models import UUIDField
+from typing import TypeAlias
 
-if sys.version_info >= (3, 10):
-    from typing import TypeAlias
-    MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-    HealthStatus: TypeAlias = Union[Dict[str, Union[str, int, int, int]]]
-    HealthStatusAndTime: TypeAlias = Union[Dict[str, Union[str, int, int, int, float, float]]]
-    DiskUsage: TypeAlias = Tuple[int, int, int]
-else:
-    MODEL_UUID = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-    HealthStatus = Union[Dict[str, Union[str, int, int, int]]]
-    HealthStatusAndTime = Union[Dict[str, Union[str, int, int, int, float, float]]]
-    DiskUsage = Tuple[int, int, int]
+MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
+HealthStatus: TypeAlias = Union[Dict[str, Union[str, int, int, int]]]
+HealthStatusAndTime: TypeAlias = Union[
+    Dict[str, Union[str, int, int, int, float, float]]
+]
+DiskUsage: TypeAlias = Tuple[int, int, int]

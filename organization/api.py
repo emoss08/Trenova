@@ -14,7 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+import threading
+from typing import List
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -29,8 +30,7 @@ from core.health_check.database_backend import DatabaseHealthCheck
 from core.health_check.disk_backend import DiskUsageHealthCheck
 from core.health_check.redis_backend import RedisHealthCheck
 from core.health_check.storage_backend import FileStorageHealthCheck
-from organization import models, serializers
-from organization.selectors import get_active_triggers
+from organization import models, serializers, selectors
 from utils.views import OrganizationMixin
 
 
@@ -194,7 +194,8 @@ def health_check(request: Request) -> Response:
     Health check endpoint that returns the health status of various components of the system.
 
     Returns:
-        Response: A dictionary that contains the health status of the cache backend, storage backend, redis, disk usage, celery, and database.
+        Response: A dictionary that contains the health status of the cache backend, storage backend, redis, disk usage,
+        celery, and database.
     """
     health_status = {
         "cache_backend": CacheBackendHealthCheck.check_caches_and_time(),
@@ -254,7 +255,7 @@ def active_triggers(request: Request) -> Response:
         with status code 200 (OK).
     """
     try:
-        results = get_active_triggers()
+        results = selectors.get_active_triggers()
         if results is None:
             return Response([], status=status.HTTP_200_OK)
         triggers = [
@@ -277,6 +278,45 @@ def active_triggers(request: Request) -> Response:
         return Response(triggers, status=status.HTTP_200_OK)
     except NotImplementedError as e:
         return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET"])
+def active_sessions(request: Request) -> Response:
+    """
+    View that retrieves a list of active sessions in the PostgreSQL database.
+
+    Args:
+        request (Request): The request object.
+
+    Returns:
+        Response: A Response object containing a list of dictionaries representing the sessions,
+    """
+    sessions = selectors.get_active_sessions()
+    return Response(sessions, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def active_threads(request: Request) -> Response:
+    """
+    View that retrieves a list of active threads in the PostgreSQL database.
+
+    Args:
+        request (Request): The request object.
+
+    Returns:
+        Response: A Response object containing a list of dictionaries representing the threads,
+    """
+    threads: List[threading.Thread] = threading.enumerate()
+    thread_list = [
+        {
+            "name": thread.name,
+            "ident": thread.ident,
+            "daemon": thread.daemon,
+            "is_alive": thread.is_alive(),
+        }
+        for thread in threads
+    ]
+    return Response(thread_list, status=status.HTTP_200_OK)
 
 
 class TaxRateViewSet(OrganizationMixin):

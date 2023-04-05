@@ -21,20 +21,25 @@ import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
 
+from accounts.models import User
 from billing import selectors
 from billing.models import BillingHistory, BillingQueue
 from billing.services import mass_order_billing
 from customer.factories import CustomerFactory
+from customer.models import Customer
+from order.models import Order
 from order.tests.factories import OrderFactory
+from organization.models import Organization
 from utils.models import StatusChoices
+from worker.models import Worker
 
 pytestmark = pytest.mark.django_db
 
 
 def test_bill_orders(
-    organization,
-    user,
-    worker,
+    organization: Organization,
+    user: User,
+    worker: Worker,
 ) -> None:
     order = OrderFactory()
 
@@ -89,7 +94,9 @@ def test_bill_orders(
     )
 
 
-def test_invoice_number_generation(organization, customer, user, worker) -> None:
+def test_invoice_number_generation(
+    organization: Organization, customer: Customer, user: User, worker: Worker
+) -> None:
     """
     Test that invoice number is generated for each new invoice
     """
@@ -119,7 +126,9 @@ def test_invoice_number_generation(organization, customer, user, worker) -> None
     )
 
 
-def test_invoice_number_increments(organization, customer, user, worker) -> None:
+def test_invoice_number_increments(
+    organization: Organization, customer: Customer, user: User, worker: Worker
+) -> None:
     """
     Test that invoice number increments by 1 for each new invoice
     """
@@ -174,7 +183,7 @@ def test_invoice_number_increments(organization, customer, user, worker) -> None
     )
 
 
-def test_unbilled_order_in_billing_history(order) -> None:
+def test_unbilled_order_in_billing_history(order: Order) -> None:
     """
     Test ValidationError is thrown when adding an order in billing history
     that hasn't billed.
@@ -191,7 +200,7 @@ def test_unbilled_order_in_billing_history(order) -> None:
     ]
 
 
-def test_billing_control_hook(organization) -> None:
+def test_billing_control_hook(organization: Organization) -> None:
     """
     Test that the billing control hook is created when a new organization is
     created.
@@ -199,7 +208,9 @@ def test_billing_control_hook(organization) -> None:
     assert organization.billing_control is not None
 
 
-def test_auto_bill_criteria_required_when_auto_bill_true(organization) -> None:
+def test_auto_bill_criteria_required_when_auto_bill_true(
+    organization: Organization,
+) -> None:
     """
     Test if `auto_bill_orders` is true & `auto_bill_criteria` is blank that a
     `ValidationError` is thrown.
@@ -216,7 +227,7 @@ def test_auto_bill_criteria_required_when_auto_bill_true(organization) -> None:
     ]
 
 
-def test_auto_bill_criteria_choices_is_invalid(organization) -> None:
+def test_auto_bill_criteria_choices_is_invalid(organization: Organization) -> None:
     """
     Test when passing invalid choice to `auto_bill_criteria` that a
     `ValidationError` is thrown.
@@ -349,7 +360,9 @@ def test_get_billing_queue_information() -> None:
     assert result == billing_queue
 
 
-def test_cannot_delete_billing_history(organization, order) -> None:
+def test_cannot_delete_billing_history(
+    organization: Organization, order: Order
+) -> None:
     """
     Test that if the organization has remove_billing_history as false that
     the billing history cannot be deleted.
@@ -372,7 +385,7 @@ def test_cannot_delete_billing_history(organization, order) -> None:
     ]
 
 
-def test_can_delete_billing_history(organization, order) -> None:
+def test_can_delete_billing_history(organization: Organization, order: Order) -> None:
     """
     Test that if the organization has remove_billing_history as true that the billing
     history can be deleted.
@@ -392,7 +405,7 @@ def test_can_delete_billing_history(organization, order) -> None:
     assert BillingHistory.objects.count() == 0
 
 
-def test_generate_invoice_number_before_save(order) -> None:
+def test_generate_invoice_number_before_save(order: Order) -> None:
     """
     Test that the invoice number is generated before the save method is called.
     """
@@ -410,7 +423,7 @@ def test_generate_invoice_number_before_save(order) -> None:
     )
 
 
-def test_save_order_details_to_billing_history_before_save(order) -> None:
+def test_save_order_details_to_billing_history_before_save(order: Order) -> None:
     """
     Test that the order details are saved to the billing history before the
     save method is called.
