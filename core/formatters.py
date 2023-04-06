@@ -72,17 +72,17 @@ class CustomRichHandler(RichHandler):
         outcome = match[6]
 
         text.append(method, style=self.method_style(method))
-        text.append(f" {path}: ", style="bold blue")
-        text.append("\n    => Matched: ", style="bold white")
-        text.append(f"{method} {path} ", style="bold orange")
-        text.append(f"[{handler_name}]", style="bold yellow")
-        text.append(f"\n    => Outcome: ", style="bold white")
+        text.append(f" {path}: ", style="blue")
+        text.append("\n    => Matched: ", style="white")
+        text.append(f"{method} {path} ", style="orange")
+        text.append(f"[{handler_name}]", style="yellow")
+        text.append(f"\n    => Outcome: ", style="white")
         if status >= 200 and status < 400:
-            text.append(f"{outcome}.", style="bold green")
-            text.append("\n    => ", style="bold white")
-            text.append("Response Succeeded.", style="bold green")
+            text.append(f"{outcome}", style="green")
+            text.append("\n    => ", style="white")
+            text.append("✅ Response Succeeded.", style="green")
         else:
-            text.append(f"{outcome}.", style="bold red")
-            text.append("\n    => ", style="bold white")
-            text.append("Response Failed.", style="bold red")
+            text.append(f"{outcome}.", style="red")
+            text.append("\n    => ", style="white")
+            text.append("❌ Response Failed.", style="red")
 
