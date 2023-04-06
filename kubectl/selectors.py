@@ -14,39 +14,21 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.request import Request
-from rest_framework.response import Response
 
-from kubectl.helpers import (
-    get_node_info,
-    get_node_metadata,
-    organization_kube_api_client,
-)
+from kubectl import models
+from organization.models import Organization
 
 
-@api_view(["GET"])
-def get_active_clusters(request: Request) -> Response:
-    """Handles GET requests to retrieve information about active clusters from the organization's
-     Kubernetes API.
+def get_kube_config_by_organization(
+    *, organization: Organization
+) -> models.KubeConfiguration:
+    """Get KubeConfiguration by organization
 
     Args:
-        request(Request): A HTTP request object containing metadata about the client's request.
+        organization (Organization):
 
     Returns:
-        Response (Response): A HTTP response object containing a list of dictionaries, where each dictionary contains information
-        about an active cluster, including the cluster's name, node information, and metadata.
+        models.KubeConfiguration: KubeConfiguration
     """
-    api = organization_kube_api_client(organization=request.user.organization)
-    node = api.list_node()
 
-    response = [
-        {
-            "name": node.metadata.name,
-            "node_info": get_node_info(node=node),
-            "metadata": get_node_metadata(node=node),
-        }
-        for node in node.items
-    ]
-    return Response(response, status=status.HTTP_200_OK)
+    return models.KubeConfiguration.objects.filter(organization=organization).first()

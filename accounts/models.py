@@ -36,6 +36,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
+
 from utils.models import ChoiceField, GenericModel, AutoSelectRelatedQuerySetMixin
 from utils.validators import ImageSizeValidator
 
@@ -172,7 +173,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
     # define the UserProfile here. This is a bit of a hack, but it works.
     # It will also give proper autocomplete in IDEs.
     profile: UserProfile
-
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS: list[str] = [
         "email",
@@ -369,7 +369,6 @@ class UserProfile(GenericModel):
 
     @property
     def get_user_profile_pic(self) -> Any | str:
-
         """Get the user profile picture.
 
         Returns:
