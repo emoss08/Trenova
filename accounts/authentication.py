@@ -14,7 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Tuple, Union
+
+from typing import Tuple
 
 from django.utils import timezone
 from rest_framework import HTTP_HEADER_ENCODING, authentication, exceptions
@@ -25,8 +26,8 @@ from accounts import models
 def get_authorization_header(request: Request) -> bytes:
     auth = request.META.get("HTTP_AUTHORIZATION", b"")
     if isinstance(auth, str):
-        auth: bytes = auth.encode(HTTP_HEADER_ENCODING)
-    return auth
+        auth: bytes = auth.encode(HTTP_HEADER_ENCODING)  # type: ignore
+    return auth  # type: ignore
 
 
 class BearerTokenAuthentication(authentication.BaseAuthentication):
@@ -35,7 +36,7 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
 
     def authenticate(
         self, request: Request
-    ) -> Union[Tuple[models.User, models.Token], None]:
+    ) -> Tuple[models.User, models.Token] | None:
         """
         Authenticate the request using the Bearer token.
 
@@ -43,7 +44,7 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
             request (Request): The incoming request.
 
         Returns:
-            Union[Tuple[models.User, models.Token], None]: The authenticated user and token, or None if authentication fails.
+            Tuple[models.User, models.Token] | None: The authenticated user and token.
         """
         auth: list[bytes] = get_authorization_header(request).split()
 
@@ -99,12 +100,18 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
         return token.user, token
 
     @staticmethod
-    def validate_token(*, token: models.Token):
+    def validate_token(*, token: models.Token) -> None:
         """
         Validate the token and raise an AuthenticationFailed exception if invalid.
 
         Args:
             token (models.Token): The token to validate.
+
+        Raises:
+            exceptions.AuthenticationFailed: Raised if the token is invalid.
+
+        Returns:
+            None: This function does not return anything.
         """
         if (
             not token.last_used
