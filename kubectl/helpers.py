@@ -21,7 +21,6 @@ from kubernetes import client
 from organization.models import Organization
 from kubectl.selectors import get_kube_config_by_organization
 
-
 def get_node_info(*, node: client.V1Node) -> Dict[str, Any]:
     """Returns a dictionary containing information about a Kubernetes node.
 
