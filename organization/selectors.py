@@ -23,7 +23,8 @@ from django.db import connection
 from django.db.models import Q, QuerySet
 from django.utils import timezone
 
-from organization.models import TableChangeAlert
+from accounts.models import User
+from organization import models
 
 
 def get_active_sessions() -> Optional[QuerySet[Session]]:
@@ -37,7 +38,7 @@ def get_active_sessions() -> Optional[QuerySet[Session]]:
     return active_sessions if active_sessions.exists() else None
 
 
-def get_active_table_alerts() -> Optional[QuerySet[TableChangeAlert]]:
+def get_active_table_alerts() -> Optional[QuerySet[models.TableChangeAlert]]:
     """
     Returns an iterable of active TableChangeAlert objects, or None if no alerts are active.
 
@@ -66,7 +67,7 @@ def get_active_table_alerts() -> Optional[QuerySet[TableChangeAlert]]:
         effective_date__isnull=True
     ) & Q(Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True))
 
-    active_alerts = TableChangeAlert.objects.filter(query)
+    active_alerts = models.TableChangeAlert.objects.filter(query)
     return active_alerts if active_alerts.exists() else None
 
 
