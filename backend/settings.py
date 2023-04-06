@@ -252,7 +252,7 @@ SESSION_CACHE_ALIAS = "sessions"
 # Rest Framework Configurations
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "accounts.authentication.TokenAuthentication",
+        "accounts.authentication.BearerTokenAuthentication",
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],

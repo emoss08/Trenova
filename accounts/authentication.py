@@ -22,69 +22,62 @@ from rest_framework.request import Request
 from accounts import models
 
 
-
 def get_authorization_header(request: Request) -> bytes:
-    """
-    Return request's 'Authorization:' header, as a bytestring.
-
-    Hide some test client ickyness where the header can be unicode.
-    """
     auth = request.META.get("HTTP_AUTHORIZATION", b"")
     if isinstance(auth, str):
-        # Work around django test client oddness
-        auth: bytes = auth.encode(HTTP_HEADER_ENCODING)  # type: ignore
-    return auth  # type: ignore
+        auth: bytes = auth.encode(HTTP_HEADER_ENCODING)
+    return auth
 
-class TokenAuthentication(authentication.TokenAuthentication):
-    """
-    Authentication backend for the token authentication system.
-    """
 
+class BearerTokenAuthentication(authentication.BaseAuthentication):
+    keyword = "Bearer"
     model = models.Token
 
-    def authenticate(self, request: Request) -> Union[Tuple[models.User, models.Token], None]:
+    def authenticate(
+        self, request: Request
+    ) -> Union[Tuple[models.User, models.Token], None]:
         """
+        Authenticate the request using the Bearer token.
 
         Args:
-            request ():
+            request (Request): The incoming request.
 
         Returns:
-
+            Union[Tuple[models.User, models.Token], None]: The authenticated user and token, or None if authentication fails.
         """
-
         auth: list[bytes] = get_authorization_header(request).split()
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
 
         if len(auth) == 1:
-            msg = "Invalid token header. No credentials provided. Please try again."
-            raise exceptions.AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(
+                "Invalid token header. No credentials provided. Please try again."
+            )
         elif len(auth) > 2:
-            msg = "Invalid token header. Token string should not contain spaces. Please try again."
-            raise exceptions.AuthenticationFailed(msg)
+            raise exceptions.AuthenticationFailed(
+                "Invalid token header. Token string should not contain spaces. Please try again."
+            )
 
         try:
             token = auth[1].decode()
         except UnicodeError as e:
-            msg = "Invalid token header. Token string should not contain invalid characters."
-            raise exceptions.AuthenticationFailed(msg) from e
+            raise exceptions.AuthenticationFailed(
+                "Invalid token header. Token string should not contain invalid characters."
+            ) from e
 
-        return self.authenticate_credentials(token)
+        return self.authenticate_credentials(key=token)
 
-    def authenticate_credentials(self, key: str) -> Tuple[models.User, models.Token]:
-        """Authenticate the token
-
-        Authenticate the given credentials. If authentication is successful,
-        return a two-tuple of (user, token).
+    def authenticate_credentials(self, *, key: str) -> Tuple[models.User, models.Token]:
+        """
+        Authenticate the token and return the associated user and token.
 
         Args:
             key (str): Token key
 
         Returns:
-            tuple: User and token
+            Tuple[models.User, models.Token]: The authenticated user and token.
         """
-
         try:
             token = (
                 self.model.objects.select_related("user", "user__organization")
@@ -101,6 +94,18 @@ class TokenAuthentication(authentication.TokenAuthentication):
         except self.model.DoesNotExist as e:
             raise exceptions.AuthenticationFailed("Invalid token.") from e
 
+        self.validate_token(token=token)
+
+        return token.user, token
+
+    @staticmethod
+    def validate_token(*, token: models.Token):
+        """
+        Validate the token and raise an AuthenticationFailed exception if invalid.
+
+        Args:
+            token (models.Token): The token to validate.
+        """
         if (
             not token.last_used
             or (timezone.now() - token.last_used).total_seconds() > 60
@@ -117,5 +122,3 @@ class TokenAuthentication(authentication.TokenAuthentication):
             raise exceptions.AuthenticationFailed(
                 "User inactive or deleted. Please Try Again."
             )
-
-        return token.user, token
