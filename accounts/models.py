@@ -37,11 +37,11 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
-from utils.models import ChoiceField, GenericModel, AutoSelectRelatedQuerySetMixin
+from utils.models import ChoiceField, GenericModel
 from utils.validators import ImageSizeValidator
 
 
-class UserManager(BaseUserManager, AutoSelectRelatedQuerySetMixin):
+class UserManager(BaseUserManager):
     """
     Base user manager
     """
