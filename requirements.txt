@@ -62,3 +62,4 @@ orjson==3.8.9
 pytz==2023.3
 drf-standardized-errors[openapi]==0.12.5
 psycopg2cffi==2.9.0
+kubernetes==26.1.0
