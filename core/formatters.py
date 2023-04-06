@@ -17,34 +17,61 @@
 
 import logging
 import re
+
 from rich.logging import RichHandler
 from rich.text import Text
 
 
 class CustomRichHandler(RichHandler):
-    def level_styles(self, levelno):
-        if levelno >= logging.CRITICAL:
-            return "bold red"
-        if levelno >= logging.ERROR:
-            return "bold red"
-        if levelno >= logging.WARNING:
-            return "bold yellow"
-        if levelno >= logging.INFO:
-            return "bold blue"
-        return "green" if levelno >= logging.DEBUG else "dim"
+    @staticmethod
+    def level_styles(*, level_no: int) -> str:
+        """Get the color for the log level.
 
-    def method_style(self, method):
+        Args:
+            level_no (int): Log level number.
+
+        Returns:
+            str: Color for the log level.
+        """
+        if level_no >= logging.CRITICAL:
+            return "bold red"
+        if level_no >= logging.ERROR:
+            return "bold red"
+        if level_no >= logging.WARNING:
+            return "bold yellow"
+        if level_no >= logging.INFO:
+            return "bold blue"
+        return "green" if level_no >= logging.DEBUG else "dim"
+
+    @staticmethod
+    def method_style(*, method: str) -> str:
+        """Get the color for the HTTP method.
+
+        Args:
+            method (str): HTTP method.
+
+        Returns:
+            str: Color for the HTTP method.
+        """
         if method == "GET":
             return "green"
         elif method == "POST":
             return "yellow"
-        elif method in ["PUT", "PATCH"]:
+        elif method in {"PUT", "PATCH"}:
             return "cyan"
         elif method == "DELETE":
             return "red"
         return "white"
 
-    def emit(self, record):
+    def emit(self, record: logging.LogRecord) -> None:
+        """Emit a record.
+
+        Args:
+            record(logging.LogRecord): Log record.
+
+        Returns:
+            None: This function does not return anything.
+        """
         message = self.format(record)
         level_name = record.levelname
         level_text = f"{level_name}: "
@@ -57,27 +84,36 @@ class CustomRichHandler(RichHandler):
 
         text = Text()
         if match:
-            self.show_http_message(match, text)
+            self.show_http_message(match=match, text=text)
         else:
-            text.append(level_text, style=self.level_styles(record.levelno))
+            text.append(level_text, style=self.level_styles(level_no=record.levelno))
             text.append(message, style="white")
 
         self.console.print(text)
 
-    def show_http_message(self, match, text):
+    def show_http_message(self, *, match: re.Match, text: Text) -> None:
+        """Show HTTP request and response.
+
+        Args:
+            match (re.Match): Match object.
+            text: Text object.
+
+        Returns:
+            None: This function does not return anything.
+        """
         method = match[2]
         path = match[3]
         status = int(match[4])
         handler_name = match[5]
         outcome = match[6]
 
-        text.append(method, style=self.method_style(method))
+        text.append(method, style=self.method_style(method=method))
         text.append(f" {path}: ", style="blue")
         text.append("\n    => Matched: ", style="white")
         text.append(f"{method} {path} ", style="orange")
         text.append(f"[{handler_name}]", style="yellow")
         text.append(f"\n    => Outcome: ", style="white")
-        if status >= 200 and status < 400:
+        if 200 <= status < 400:
             text.append(f"{outcome}", style="green")
             text.append("\n    => ", style="white")
             text.append("✅ Response Succeeded.", style="green")
@@ -85,4 +121,3 @@ class CustomRichHandler(RichHandler):
             text.append(f"{outcome}.", style="red")
             text.append("\n    => ", style="white")
             text.append("❌ Response Failed.", style="red")
-
