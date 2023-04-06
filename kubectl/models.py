@@ -17,6 +17,10 @@
 
 import textwrap
 import uuid
+from typing import Any
+
+from django.contrib.auth import password_validation
+from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -52,7 +56,7 @@ class KubeConfiguration(GenericModel):
         _("Host"),
         max_length=255,
         help_text=_("The host URL to use when communicating with the API server."),
-        default="http://localhost"
+        default="http://localhost",
     )
     api_key = models.CharField(
         _("API Key"),
@@ -85,7 +89,7 @@ class KubeConfiguration(GenericModel):
     password = models.CharField(
         _("Password"),
         blank=True,
-        max_length=255,
+        max_length=128,
         help_text=_("The password for HTTP basic authentication."),
     )
     discard_unknown_keys = models.BooleanField(
@@ -220,6 +224,15 @@ class KubeConfiguration(GenericModel):
         verbose_name = _("Kube Configuration")
         verbose_name_plural = _("Kube Configurations")
         db_table = "kube_configuration"
+
+    def save(self, **kwargs: Any) -> None:
+        """
+        Save the Kube Configuration.
+        """
+        super().save(**kwargs)
+        if self.password:
+            hashed_password = make_password(self.password)
+            self.password = hashed_password
 
     def get_absolute_url(self) -> str:
         """Kube Configuration absolute URL.
