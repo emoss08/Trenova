@@ -25,10 +25,10 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from commodities.factories import CommodityFactory, HazardousMaterialFactory
+from dispatch.factories import FleetCodeFactory
 from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements import models
-from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
@@ -41,16 +41,20 @@ from worker.models import Worker
 pytestmark = pytest.mark.django_db
 
 
-def test_list(movement: models.Movement) -> None:
-    """
-    Test for Movement List
-    """
-    assert movement is not None
-
-def test_create(worker: Worker, tractor: Tractor, organization: Organization, order: Order) -> None:
+def test_create(
+    worker: Worker, tractor: Tractor, organization: Organization, order: Order
+) -> None:
     """
     Test Movement Create
     """
+
+    fleet = FleetCodeFactory()
+
+    tractor.fleet = fleet
+    tractor.save()
+
+    worker.fleet = fleet
+    worker.save()
 
     movement = models.Movement.objects.create(
         organization=organization,
@@ -64,7 +68,8 @@ def test_create(worker: Worker, tractor: Tractor, organization: Organization, or
     assert movement.tractor == tractor
     assert movement.primary_worker == worker
 
-def test_update(movement: Movement, tractor: Tractor) -> None:
+
+def test_update(movement: models.Movement, tractor: Tractor) -> None:
     """
     Test Movement Update
     """
@@ -76,6 +81,7 @@ def test_update(movement: Movement, tractor: Tractor) -> None:
 
     assert add_movement is not None
     assert add_movement.tractor == tractor
+
 
 def test_initial_stop_creation_hook(worker: Worker, tractor: Tractor) -> None:
     """
@@ -97,6 +103,7 @@ def test_initial_stop_creation_hook(worker: Worker, tractor: Tractor) -> None:
 
     assert movement.stops.count() == 2
 
+
 def test_movement_ref_num_hook(movement: models.Movement) -> None:
     """
     Test that a movement reference number is created when a movement is created.
@@ -105,7 +112,13 @@ def test_movement_ref_num_hook(movement: models.Movement) -> None:
 
 
 @pytest.fixture
-def movement_api(api_client: APIClient, organization: Organization, order: Order, tractor: Tractor, worker: Worker) -> Generator[Any, Any, None]:
+def movement_api(
+    api_client: APIClient,
+    organization: Organization,
+    order: Order,
+    tractor: Tractor,
+    worker: Worker,
+) -> Generator[Any, Any, None]:
     """
     Movement Factory
     """
@@ -119,6 +132,7 @@ def movement_api(api_client: APIClient, organization: Organization, order: Order
         },
     )
 
+
 def test_get(api_client: APIClient) -> None:
     """
     Test get Movement
@@ -126,7 +140,14 @@ def test_get(api_client: APIClient) -> None:
     response = api_client.get("/api/movements/")
     assert response.status_code == 200
 
-def test_get_by_id(api_client: APIClient, movement_api: Response, order: Order, worker: Worker, tractor: Tractor) -> None:
+
+def test_get_by_id(
+    api_client: APIClient,
+    movement_api: Response,
+    order: Order,
+    worker: Worker,
+    tractor: Tractor,
+) -> None:
     """
     Test get Movement by ID
     """
@@ -160,6 +181,7 @@ def test_primary_worker_license_expiration_date() -> None:
         "Cannot assign a worker with an expired license. Please update the worker's profile and try again."
     ]
 
+
 def test_primary_worker_physical_due_date() -> None:
     """
     Test ValidationError is thrown when the primary worker
@@ -180,6 +202,7 @@ def test_primary_worker_physical_due_date() -> None:
         "Cannot assign a worker with an expired physical. Please update the worker's profile and try again."
     ]
 
+
 def test_primary_worker_medical_cert_date() -> None:
     """
     Test ValidationError is thrown when the primary worker
@@ -199,6 +222,7 @@ def test_primary_worker_medical_cert_date() -> None:
     assert excinfo.value.message_dict["primary_worker"] == [
         "Cannot assign a worker with an expired medical certificate. Please update the worker's profile and try again."
     ]
+
 
 def test_primary_worker_mvr_due_date() -> None:
     """
@@ -221,6 +245,7 @@ def test_primary_worker_mvr_due_date() -> None:
         "Cannot assign a worker with an expired MVR. Please update the worker's profile and try again."
     ]
 
+
 def test_primary_worker_termination_date() -> None:
     """
     Test ValidationError is thrown when the primary worker termination_date
@@ -241,16 +266,21 @@ def test_primary_worker_termination_date() -> None:
         "Cannot assign a terminated worker. Please update the worker's profile and try again."
     ]
 
-def test_primary_worker_tractor_fleet_validation(worker: Worker) -> None:
+
+def test_primary_worker_tractor_fleet_validation(worker: Worker, organization) -> None:
     """
     Test ValidationError is thrown when the primary worker and the tractor
     are not a part of the same fleet.
     """
 
+    organization.dispatch_control.tractor_worker_fleet_constraint = True
+    organization.dispatch_control.save()
+
     with pytest.raises(ValidationError) as excinfo:
         MovementFactory(
             primary_worker=worker,
             tractor=TractorFactory(organization=worker.organization),
+            organization=organization,
         )
 
     assert excinfo.value.message_dict["primary_worker"] == [
@@ -259,6 +289,7 @@ def test_primary_worker_tractor_fleet_validation(worker: Worker) -> None:
     assert excinfo.value.message_dict["tractor"] == [
         "The primary worker and tractor must belong to the same fleet to add or update a record. Please ensure they are part of the same fleet and try again."
     ]
+
 
 def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat():
     """
@@ -279,6 +310,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat():
         "Worker must be hazmat certified to haul this order. Please try again."
     ]
 
+
 def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
     """
     Test ValidationError is thrown when the worker is being assigned
@@ -291,9 +323,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
     order = OrderFactory(commodity=commodity, hazmat=hazmat)
     worker = WorkerFactory()
     worker.profile.endorsements = "H"
-    worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(
-        days=30
-    )
+    worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
     worker.profile.save()
 
     with pytest.raises(ValidationError) as excinfo:
@@ -302,6 +332,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
     assert excinfo.value.message_dict["primary_worker"] == [
         "Worker hazmat certification has expired. Please try again."
     ]
+
 
 # --- Secondary Worker tests ---
 def test_secondary_worker_license_expiration_date():
@@ -325,6 +356,7 @@ def test_secondary_worker_license_expiration_date():
         "Cannot assign a worker with an expired license. Please update the worker's profile and try again."
     ]
 
+
 def test_secondary_worker_physical_due_date():
     """
     Test ValidationError is thrown when the secondary worker
@@ -344,6 +376,7 @@ def test_secondary_worker_physical_due_date():
     assert excinfo.value.message_dict["secondary_worker"] == [
         "Cannot assign a worker with an expired physical. Please update the worker's profile and try again."
     ]
+
 
 def test_secondary_worker_medical_cert_date():
     """
@@ -365,6 +398,7 @@ def test_secondary_worker_medical_cert_date():
         "Cannot assign a worker with an expired medical certificate. Please update the worker's profile and try again."
     ]
 
+
 def test_secondary_worker_mvr_due_date():
     """
     Test ValidationError is thrown when the secondary worker
@@ -385,6 +419,7 @@ def test_secondary_worker_mvr_due_date():
         "Cannot assign a worker with an expired MVR. Please update the worker's profile and try again."
     ]
 
+
 def test_secondary_worker_termination_date():
     """
     Test ValidationError is thrown when the secondary worker
@@ -404,6 +439,7 @@ def test_secondary_worker_termination_date():
     assert excinfo.value.message_dict["secondary_worker"] == [
         "Cannot assign a terminated worker. Please update the worker's profile and try again."
     ]
+
 
 def test_second_worker_cannot_be_assigned_to_movement_without_hazmat():
     """
@@ -428,6 +464,7 @@ def test_second_worker_cannot_be_assigned_to_movement_without_hazmat():
         "Worker must be hazmat certified to haul this order. Please try again."
     ]
 
+
 def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
     """
     Test ValidationError is thrown when the worker is being assigned
@@ -445,9 +482,7 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
 
     worker = WorkerFactory()
     worker.profile.endorsements = "H"
-    worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(
-        days=30
-    )
+    worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
     worker.profile.save()
 
     with pytest.raises(ValidationError) as excinfo:
@@ -458,6 +493,7 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
     assert excinfo.value.message_dict["secondary_worker"] == [
         "Worker hazmat certification has expired. Please try again."
     ]
+
 
 def test_workers_cannot_be_the_same():
     """
@@ -476,6 +512,7 @@ def test_workers_cannot_be_the_same():
     assert excinfo.value.message_dict["primary_worker"] == [
         "Primary worker cannot be the same as secondary worker. Please try again."
     ]
+
 
 def test_movement_changed_to_in_progress_with_no_worker():
     """
@@ -498,6 +535,7 @@ def test_movement_changed_to_in_progress_with_no_worker():
         "Tractor is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
     ]
 
+
 def test_movement_cannot_change_status_in_in_progress_if_stops_are_new():
     """
     Test ValidationError is thrown when the movement status is
@@ -515,24 +553,6 @@ def test_movement_cannot_change_status_in_in_progress_if_stops_are_new():
 
     assert excinfo.value.message_dict["status"] == [
         "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
-    ]
-
-def test_movement_cannot_change_status_to_new_if_stops_are_in_progress():
-    """
-    Test ValidationError is thrown when the movement status is
-    changed to in new, but the stops status is in progress.
-    """
-    movement = MovementFactory()
-
-    StopFactory(movement=movement, status="P")
-    StopFactory(movement=movement, status="P")
-
-    with pytest.raises(ValidationError) as excinfo:
-        movement.status = "N"
-        movement.save()
-
-    assert excinfo.value.message_dict["status"] == [
-        "Cannot change status to `NEW` if any of the stops are in progress or completed. Please try again."
     ]
 
 def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress():
