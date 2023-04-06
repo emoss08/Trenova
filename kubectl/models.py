@@ -228,11 +228,16 @@ class KubeConfiguration(GenericModel):
     def save(self, **kwargs: Any) -> None:
         """
         Save the Kube Configuration.
+
+        Args:
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
         """
-        super().save(**kwargs)
         if self.password:
-            hashed_password = make_password(self.password)
-            self.password = hashed_password
+            self.password = make_password(self.password)
+        super().save(**kwargs)
 
     def get_absolute_url(self) -> str:
         """Kube Configuration absolute URL.
