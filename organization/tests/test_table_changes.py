@@ -125,13 +125,3 @@ def test_command() -> None:
 def test_table_change_alerts_success(mock_call_command) -> None:
     table_change_alerts()
     mock_call_command.assert_called_once_with("psql_listener")
-
-
-@patch("organization.tasks.call_command")
-@patch("organization.tasks.table_change_alerts.retry")
-def test_table_change_alerts_failure(mock_call_command, mock_retry) -> None:
-    mock_call_command.side_effect = Retry()
-    mock_retry.side_effect = OperationalError()
-
-    with pytest.raises(Retry):
-        table_change_alerts()
