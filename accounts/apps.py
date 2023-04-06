@@ -16,19 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.contrib.auth.signals import user_logged_in, user_logged_out
 
 
 class AccountConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "accounts"
-
-    def ready(self) -> None:
-        from accounts import signals
-
-        user_logged_in.connect(
-            signals.user_logged_in_callback, dispatch_uid="user_logged_in"
-        )
-        user_logged_out.connect(
-            signals.user_logged_out_callback, dispatch_uid="user_logged_out"
-        )
