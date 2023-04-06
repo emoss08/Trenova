@@ -32,7 +32,7 @@ from integration.models import IntegrationChoices
 from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices
 
-User: str = settings.AUTH_USER_MODEL
+User = settings.AUTH_USER_MODEL
 
 
 class DispatchControl(GenericModel):
@@ -177,12 +177,16 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Generate routes for the company."),
     )
-    enforce_driver_ta = models.BooleanField(
+    driver_time_away_restriction = models.BooleanField(
         _("Enforce Driver Time Away"),
         default=True,
         help_text=_("Disallow assignments if the driver is on Time Away"),
     )
-
+    tractor_worker_fleet_constraint = models.BooleanField(
+        _("Enforce Tractor and Worker Fleet Continuity "),
+        default=False,
+        help_text=_("Enforce Worker and Tractor must be in the same fleet to be assigned to a dispatch."),
+    )
     class Meta:
         """
         Metaclass for DispatchControl
