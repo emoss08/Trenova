@@ -15,9 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import Any, Generator
 import pytest
 from rest_framework.test import APIClient
-
 from accounts.models import Token
 from accounts.tests.factories import TokenFactory, UserFactory
 from organization.factories import OrganizationFactory
@@ -26,7 +26,7 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def token():
+def token() -> Generator[Any, Any, None]:
     """
     Token Fixture
     """
@@ -34,7 +34,7 @@ def token():
 
 
 @pytest.fixture
-def organization():
+def organization() -> Generator[Any, Any, None]:
     """
     Organization Fixture
     """
@@ -42,7 +42,7 @@ def organization():
 
 
 @pytest.fixture
-def user():
+def user() -> Generator[Any, Any, None]:
     """
     User Fixture
     """
@@ -57,5 +57,5 @@ def api_client(token: Token) -> APIClient:
         APIClient: Authenticated Api object
     """
     client = APIClient()
-    client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {token.key}")
     yield client
