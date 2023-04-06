@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import json
-from typing import Any, Union
+from typing import Any
 import requests
 from django.contrib import admin
 from django.http import HttpRequest, HttpResponse
@@ -29,11 +29,6 @@ from utils.admin import GenericAdmin, GenericTabularInline
 class ReportColumnAdmin(GenericTabularInline[models.ReportColumn, models.CustomReport]):
     """
     Admin class for managing ReportColumn objects as a tabular inline in the CustomReport admin interface.
-
-    Args:
-        GenericTabularInline: A generic inline class for tabular inlines.
-        models.ReportColumn: The ReportColumn model for which to create the admin interface.
-        models.CustomReport: The CustomReport model that the ReportColumn objects belong to.
 
     Attributes:
         model (models.ReportColumn): The ReportColumn model to be used.
@@ -65,7 +60,6 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
     Admin class for managing CustomReport objects in the Django admin interface.
 
     Args:
-        GenericAdmin: A generic admin class for managing Django models.
         models.CustomReport: The CustomReport model for which to create the admin interface.
 
     Attributes:
@@ -147,7 +141,7 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
         add: bool = False,
         change: bool = False,
         form_url: str = "",
-        obj: Union[models.CustomReport, None]  = None,
+        obj: models.CustomReport | None = None,
     ) -> HttpResponse:
         """
         Custom implementation of the render_change_form method to add an authentication token to the context.
@@ -166,6 +160,12 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
         """
 
         context["auth_token"] = get_user_auth_token_from_request(request=request)
+        if obj:
+            existing_columns = obj.columns.values_list("column_name", flat=True)
+            context["existing_columns_json"] = json.dumps(list(existing_columns))
+        else:
+            context["existing_columns_json"] = json.dumps([])
+
         return super().render_change_form(request, context, add, change, form_url, obj)
 
 
@@ -175,7 +175,6 @@ class ScheduledReportAdmin(GenericAdmin[models.ScheduledReport]):
     Admin class for managing ScheduledReport objects in the Django admin interface.
 
     Args:
-        GenericAdmin: A generic admin class for managing Django models.
         models.ScheduledReport: The ScheduledReport model for which to create the admin interface.
 
     Attributes:
