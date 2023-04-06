@@ -21,7 +21,7 @@ from organization.models import Organization
 
 def get_kube_config_by_organization(
     *, organization: Organization
-) -> models.KubeConfiguration:
+) -> models.KubeConfiguration | None:
     """Get KubeConfiguration by organization
 
     Args:
@@ -31,4 +31,4 @@ def get_kube_config_by_organization(
         models.KubeConfiguration: KubeConfiguration
     """
 
-    return models.KubeConfiguration.objects.filter(organization=organization).first()
+    return models.KubeConfiguration.objects.filter(organization=organization).first() or None
