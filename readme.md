@@ -46,10 +46,6 @@ necessary, our system can even send the relevant information to the driver via t
 
 Then there is pre-assignments....
 
-**Disclaimer:**
-
-It is essential to note that the utilization of Metronics from <b>Keenthemes</b> on Monta's frontend is not permitted without a valid license. This template is proprietary and requires proper authorization to be utilized. Any unauthorized usage may lead to legal consequences, and it is the sole responsibility of the end-user to obtain the necessary license before utilizing the Metronics template. <b>Monta LLC.</b> will not be held accountable for any violations or illegal usage of the Metronics template without proper authorization. To purchase a license for <b>Metronic</b> by <b>Keenthemes</b>, please visit <https://1.envato.market/EA4JP>. For further information on Keenthemes, please visit <https://keenthemes.com/>.
-
 ### Developer Features
 
 Monta incorporates a number of developer-friendly features that make it easy to customize and extend the system to suit your
