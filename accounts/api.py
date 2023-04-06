@@ -22,13 +22,14 @@ from django.db.models import QuerySet
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework import (
     generics,
-    request,
     response,
     views,
     permissions,
     status,
     viewsets,
 )
+from rest_framework.request import Request
+
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
@@ -104,7 +105,7 @@ class UpdatePasswordView(generics.UpdateAPIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     def update(
-        self, request: request.Request, *args: Any, **kwargs: Any
+        self, request: Request, *args: Any, **kwargs: Any
     ) -> response.Response:
         """Handle update requests
 
@@ -156,7 +157,7 @@ class TokenVerifyView(views.APIView):
     serializer_class = serializers.VerifyTokenSerializer
 
     def post(
-        self, request: request.Request, *args: Any, **kwargs: Any
+        self, request: Request, *args: Any, **kwargs: Any
     ) -> response.Response:
         """Handle Post requests
         Args:
@@ -243,7 +244,7 @@ class TokenProvisionView(ObtainAuthToken):
     serializer_class = serializers.TokenProvisionSerializer
 
     def post(
-        self, request: request.Request, *args: Any, **kwargs: Any
+        self, request: Request, *args: Any, **kwargs: Any
     ) -> response.Response:
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
