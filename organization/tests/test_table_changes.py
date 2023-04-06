@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -53,7 +34,7 @@ from organization.tasks import table_change_alerts
 pytestmark = pytest.mark.django_db
 
 
-def test_create_table_charge_alert(organization):
+def test_create_table_charge_alert(organization: models.Organization) -> None:
     """
     Tests the creation a table charge alert.
     """
@@ -75,7 +56,7 @@ def test_create_table_charge_alert(organization):
     assert table_charge.table == TABLE_NAME_CHOICES[0][0]
 
 
-def test_table_change_insert_database_action_save():
+def test_table_change_insert_database_action_save() -> None:
     """
     Tests the creation of a table change alert with INSERT Action adds the proper function,
     trigger, and listener name.
@@ -87,7 +68,7 @@ def test_table_change_insert_database_action_save():
     assert table_change.listener_name == f"new_added_{table_change.table}"
 
 
-def test_table_change_insert_adds_insert_trigger():
+def test_table_change_insert_adds_insert_trigger() -> None:
     """
     Tests that the insert trigger is added to the database when a table change alert is created
     with INSERT action.
@@ -107,7 +88,7 @@ def test_table_change_insert_adds_insert_trigger():
     assert function_check == True
 
 
-def test_delete_table_change_removes_trigger():
+def test_delete_table_change_removes_trigger() -> None:
     """
     Tests that the trigger is removed from the database when a table change alert is deleted.
     """
@@ -131,7 +112,7 @@ def test_delete_table_change_removes_trigger():
     assert function_check_2 == False
 
 
-def test_command():
+def test_command() -> None:
     with patch("psycopg2.connect"), patch(
         "django.core.management.color.supports_color", return_value=False
     ):
@@ -141,14 +122,14 @@ def test_command():
 
 
 @patch("organization.tasks.call_command")
-def test_table_change_alerts_success(mock_call_command):
+def test_table_change_alerts_success(mock_call_command) -> None:
     table_change_alerts()
     mock_call_command.assert_called_once_with("psql_listener")
 
 
 @patch("organization.tasks.call_command")
 @patch("organization.tasks.table_change_alerts.retry")
-def test_table_change_alerts_failure(mock_call_command, mock_retry):
+def test_table_change_alerts_failure(mock_call_command, mock_retry) -> None:
     mock_call_command.side_effect = Retry()
     mock_retry.side_effect = OperationalError()
 

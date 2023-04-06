@@ -23,14 +23,14 @@ from commodities import models
 pytestmark = pytest.mark.django_db
 
 
-def test_commodity_creation(commodity: models.Commodity):
+def test_commodity_creation(commodity: models.Commodity) -> None:
     """
     Test commodity creation
     """
     assert commodity is not None
 
 
-def test_unit_of_measure_choices(commodity: models.Commodity):
+def test_unit_of_measure_choices(commodity: models.Commodity) -> None:
     """
     Test Unit of measure choices throws ValidationError
     when the passed choice is not valid.
@@ -44,7 +44,7 @@ def test_unit_of_measure_choices(commodity: models.Commodity):
     ]
 
 
-def test_commodity_update(commodity: models.Commodity):
+def test_commodity_update(commodity: models.Commodity) -> None:
     """
     Test commodity update
     """
@@ -53,7 +53,7 @@ def test_commodity_update(commodity: models.Commodity):
     assert commodity.name == "New name"
 
 
-def test_commodity_is_hazmat_if_hazmat_class(commodity: models.Commodity):
+def test_commodity_is_hazmat_if_hazmat_class(commodity: models.Commodity) -> None:
     """
     Test commodity hazardous material creation
     """

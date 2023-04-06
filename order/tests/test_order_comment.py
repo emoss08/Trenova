@@ -1,141 +1,150 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
 import pytest
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
+from accounts.models import User
+from dispatch.models import CommentType
 from order import models
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
-class TestOrderComment:
+def test_list(order_comment: models.OrderComment) -> None:
     """
-    Class to test Order
+    Test Order list
     """
-
-    def test_list(self, order_comment):
-        """
-        Test Order list
-        """
-        assert order_comment is not None
-
-    def test_create(self, organization, user, order, comment_type):
-        """
-        Test Order Create
-        """
-
-        order_comment = models.OrderComment.objects.create(
-            organization=organization,
-            order=order,
-            comment_type=comment_type,
-            comment="DONT BE SAD",
-            entered_by=user,
-        )
-        assert order_comment is not None
-        assert order_comment.order == order
-        assert order_comment.comment_type == comment_type
-        assert order_comment.comment == "DONT BE SAD"
-        assert order_comment.entered_by == user
-
-    def test_update(self, order_comment):
-        """
-        Test Order update
-        """
-
-        ord_comment = models.OrderComment.objects.get(id=order_comment.id)
-        ord_comment.comment = "GET GLAD"
-        ord_comment.save()
-
-        assert ord_comment is not None
-        assert ord_comment.comment == "GET GLAD"
+    assert order_comment is not None
 
 
-class TestOrderCommentAPI:
+def test_create(
+    organization: Organization,
+    user: User,
+    order: models.Order,
+    comment_type: CommentType,
+) -> None:
     """
-    Test for Reason Code API
+    Test Order Create
     """
 
-    def test_get_by_id(
-        self, order_comment_api, order_api, comment_type, user, api_client
-    ):
-        """
-        Test get Order Comment by ID
-        """
-        response = api_client.get(
-            f"/api/order_comments/{order_comment_api.data['id']}/"
-        )
-        assert response.status_code == 200
-        assert response.data is not None
-        assert (
-            f"{response.data['order']}" == order_api.data["id"]
-        )  # returns UUID <UUID>, convert to F-string
-        assert response.data["comment_type"] == comment_type.id
-        assert response.data["comment"] == "IM HAPPY YOU'RE HERE"
-        assert response.data["entered_by"] == user.id
+    order_comment = models.OrderComment.objects.create(
+        organization=organization,
+        order=order,
+        comment_type=comment_type,
+        comment="DONT BE SAD",
+        entered_by=user,
+    )
+    assert order_comment is not None
+    assert order_comment.order == order
+    assert order_comment.comment_type == comment_type
+    assert order_comment.comment == "DONT BE SAD"
+    assert order_comment.entered_by == user
 
-    def test_put(self, api_client, order_api, order_comment_api, comment_type, user):
-        """
-        Test put Order Comment
-        """
-        response = api_client.put(
-            f"/api/order_comments/{order_comment_api.data['id']}/",
-            {
-                "order": f"{order_api.data['id']}",
-                "comment_type": f"{comment_type.id}",
-                "comment": "BE GLAD IM HERE",
-                "entered_by": f"{user.id}",
-            },
-            format="json",
-        )
 
-        assert response.status_code == 200
-        assert response.data is not None
-        assert (
-            f"{response.data['order']}" == order_api.data["id"]
-        )  # returns UUID <UUID>, convert to F-string
-        assert response.data["comment_type"] == comment_type.id
-        assert response.data["comment"] == "BE GLAD IM HERE"
-        assert response.data["entered_by"] == user.id
+def test_update(order_comment: models.OrderComment) -> None:
+    """
+    Test Order update
+    """
 
-    def test_patch(self, api_client, order_comment_api):
-        """
-        Test patch Order Comment
-        """
-        response = api_client.patch(
-            f"/api/order_comments/{order_comment_api.data['id']}/",
-            {
-                "comment": "DONT BE SAD GET GLAD",
-            },
-            format="json",
-        )
+    ord_comment = models.OrderComment.objects.get(id=order_comment.id)
+    ord_comment.comment = "GET GLAD"
+    ord_comment.save()
 
-        assert response.status_code == 200
-        assert response.data is not None
-        assert response.data["comment"] == "DONT BE SAD GET GLAD"
+    assert ord_comment is not None
+    assert ord_comment.comment == "GET GLAD"
 
-    def test_delete(self, api_client, order_comment_api):
-        """
-        Test delete Order Comment
-        """
-        response = api_client.delete(
-            f"/api/order_comments/{order_comment_api.data['id']}/"
-        )
 
-        assert response.status_code == 204
-        assert response.data is None
+def test_get_by_id(
+    order_comment_api: Response,
+    order_api: Response,
+    comment_type: CommentType,
+    user: User,
+    api_client: APIClient,
+) -> None:
+    """
+    Test get Order Comment by ID
+    """
+    response = api_client.get(f"/api/order_comments/{order_comment_api.data['id']}/")
+    assert response.status_code == 200
+    assert response.data is not None
+    assert (
+        f"{response.data['order']}" == order_api.data["id"]
+    )  # returns UUID <UUID>, convert to F-string
+    assert response.data["comment_type"] == comment_type.id
+    assert response.data["comment"] == "IM HAPPY YOU'RE HERE"
+    assert response.data["entered_by"] == user.id
+
+
+def test_put(
+    api_client: APIClient,
+    order_api: Response,
+    order_comment_api: Response,
+    comment_type: CommentType,
+    user: User,
+) -> None:
+    """
+    Test put Order Comment
+    """
+    response = api_client.put(
+        f"/api/order_comments/{order_comment_api.data['id']}/",
+        {
+            "order": f"{order_api.data['id']}",
+            "comment_type": f"{comment_type.id}",
+            "comment": "BE GLAD IM HERE",
+            "entered_by": f"{user.id}",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.data is not None
+    assert (
+        f"{response.data['order']}" == order_api.data["id"]
+    )  # returns UUID <UUID>, convert to F-string
+    assert response.data["comment_type"] == comment_type.id
+    assert response.data["comment"] == "BE GLAD IM HERE"
+    assert response.data["entered_by"] == user.id
+
+
+def test_patch(api_client: APIClient, order_comment_api: Response) -> None:
+    """
+    Test patch Order Comment
+    """
+    response = api_client.patch(
+        f"/api/order_comments/{order_comment_api.data['id']}/",
+        {
+            "comment": "DONT BE SAD GET GLAD",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.data is not None
+    assert response.data["comment"] == "DONT BE SAD GET GLAD"
+
+
+def test_delete(api_client: APIClient, order_comment_api: Response) -> None:
+    """
+    Test delete Order Comment
+    """
+    response = api_client.delete(f"/api/order_comments/{order_comment_api.data['id']}/")
+
+    assert response.status_code == 204
+    assert response.data is None

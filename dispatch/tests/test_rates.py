@@ -1,21 +1,20 @@
-"""
-COPYRIGHT 2022 MONTA
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
 import datetime
 import uuid
 
@@ -25,6 +24,8 @@ from django.urls import reverse
 from django.utils import timezone
 from pydantic import BaseModel
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
@@ -34,6 +35,7 @@ from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order.tests.factories import OrderTypeFactory
+from organization.models import Organization
 from utils.models import RatingMethodChoices
 
 pytestmark = pytest.mark.django_db
@@ -164,7 +166,7 @@ def test_delete_schema() -> None:
     assert rates[0].rate_number == "R00001"
 
 
-def test_rate_str_representation(rate) -> None:
+def test_rate_str_representation(rate: models.Rate) -> None:
     """
     Test the rate string representation.
     """
@@ -172,14 +174,14 @@ def test_rate_str_representation(rate) -> None:
     assert str(rate) == rate.rate_number
 
 
-def test_list(rate) -> None:
+def test_list(rate: models.Rate) -> None:
     """
     Test the list method.
     """
     assert rate is not None
 
 
-def test_rate_create(organization) -> None:
+def test_rate_create(organization: Organization) -> None:
     customer = CustomerFactory()
     commodity = CommodityFactory()
     order_type = OrderTypeFactory()
@@ -206,7 +208,7 @@ def test_rate_create(organization) -> None:
     assert rate.comments == "Test Rate"
 
 
-def test_rate_update(rate) -> None:
+def test_rate_update(rate: models.Rate) -> None:
     """
     Test the update method.
     """
@@ -231,7 +233,7 @@ def test_rate_update(rate) -> None:
     assert rate.comments == "Test Rate Update"
 
 
-def test_rate_api_get(api_client, organization) -> None:
+def test_rate_api_get(api_client: APIClient, organization: Organization) -> None:
     """
     Test the get method.
     """
@@ -240,7 +242,7 @@ def test_rate_api_get(api_client, organization) -> None:
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_rate_api_create(api_client, organization) -> None:
+def test_rate_api_create(api_client: APIClient, organization: Organization) -> None:
     """
     Test the create method.
     """
@@ -266,7 +268,7 @@ def test_rate_api_create(api_client, organization) -> None:
     assert models.Rate.objects.get().customer.id == data["customer"]
 
 
-def test_rate_api_update(api_client, rate_api) -> None:
+def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     """
     Test the update method.
     """
@@ -296,7 +298,7 @@ def test_rate_api_update(api_client, rate_api) -> None:
     assert models.Rate.objects.get().comments == data["comments"]
 
 
-def test_rate_api_delete(api_client, rate_api) -> None:
+def test_rate_api_delete(api_client: APIClient, rate_api: Response) -> None:
     """
     Test the delete method.
     """
@@ -309,11 +311,11 @@ def test_rate_api_delete(api_client, rate_api) -> None:
     assert models.Rate.objects.count() == 0
 
 
-def test_expiration_cannot_be_greater_than_effective_date(rate) -> None:
+def test_expiration_cannot_be_greater_than_effective_date(rate: models.Rate) -> None:
     """
     Test that the expiration date cannot be greater than the effective date.
     """
-    rate.expiration_date = rate.effective_date - timezone.timedelta(days=1)
+    rate.expiration_date = rate.effective_date - datetime.timedelta(days=1)
 
     with pytest.raises(ValidationError) as excinfo:
         rate.full_clean()
@@ -323,7 +325,7 @@ def test_expiration_cannot_be_greater_than_effective_date(rate) -> None:
     ]
 
 
-def test_set_rate_number_before_create_hook(rate) -> None:
+def test_set_rate_number_before_create_hook(rate: models.Rate) -> None:
     """
     Test the set_rate_number_before_create_hook method.
     """
@@ -331,7 +333,7 @@ def test_set_rate_number_before_create_hook(rate) -> None:
     assert rate.rate_number == "R00001"
 
 
-def test_set_rate_number_increment_hook(rate) -> None:
+def test_set_rate_number_increment_hook(rate: models.Rate) -> None:
     """
     Test the set_rate_number_increment_hook method.
     """
@@ -343,7 +345,7 @@ def test_set_rate_number_increment_hook(rate) -> None:
     assert rate2.rate_number == "R00002"
 
 
-def test_rate_table_str_representation(rate_table) -> None:
+def test_rate_table_str_representation(rate_table: models.RateTable) -> None:
     """
     Test the rate table string representation.
     """
@@ -351,7 +353,7 @@ def test_rate_table_str_representation(rate_table) -> None:
     assert str(rate_table) == rate_table.description
 
 
-def test_rate_table_get_absolute_url(rate_table) -> None:
+def test_rate_table_get_absolute_url(rate_table: models.RateTable) -> None:
     """
     Test the rate table get_absolute_url method.
     """
@@ -361,7 +363,7 @@ def test_rate_table_get_absolute_url(rate_table) -> None:
     )
 
 
-def test_rate_table_api_get(api_client, organization) -> None:
+def test_rate_table_api_get(api_client: APIClient, organization: Organization) -> None:
     """
     Test Rate Table API GET method.
     """
@@ -369,7 +371,7 @@ def test_rate_table_api_get(api_client, organization) -> None:
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_rate_table_api_post(api_client, organization, rate) -> None:
+def test_rate_table_api_post(api_client: APIClient, organization: Organization, rate: models.Rate) -> None:
     """
     Test Rate Table API POST method.
     """
@@ -399,7 +401,7 @@ def test_rate_table_api_post(api_client, organization, rate) -> None:
     )
 
 
-def test_rate_table_api_put(api_client, rate_table_api, organization) -> None:
+def test_rate_table_api_put(api_client: APIClient, rate_table_api: Response, organization: Organization) -> None:
     """
     Test Rate Table API put method.
     """
@@ -432,7 +434,7 @@ def test_rate_table_api_put(api_client, rate_table_api, organization) -> None:
     )
 
 
-def test_rate_table_api_delete(api_client, rate_table_api) -> None:
+def test_rate_table_api_delete(api_client: APIClient, rate_table_api: Response) -> None:
     """
     Test Rate Table API Delete Method.
     """
@@ -444,7 +446,7 @@ def test_rate_table_api_delete(api_client, rate_table_api) -> None:
     assert models.RateTable.objects.count() == 0
 
 
-def test_rate_billing_table_api_get(api_client) -> None:
+def test_rate_billing_table_api_get(api_client: APIClient) -> None:
     """
     Test Rate Billing Table API GET method.
     """
@@ -452,7 +454,7 @@ def test_rate_billing_table_api_get(api_client) -> None:
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_rate_billing_table_api_post(api_client, organization, rate) -> None:
+def test_rate_billing_table_api_post(api_client: APIClient, organization: Organization, rate: models.Rate) -> None:
     """
     Test Rate Billing Table API POST method.
     """
@@ -477,7 +479,7 @@ def test_rate_billing_table_api_post(api_client, organization, rate) -> None:
 
 
 def test_rate_billing_table_api_update(
-    api_client, organization, rate, rate_billing_table_api
+    api_client: APIClient, organization: Organization, rate: models.Rate, rate_billing_table_api: Response
 ) -> None:
     """
     Test Rate Billing Table API PUT method.
@@ -505,7 +507,7 @@ def test_rate_billing_table_api_update(
     assert models.RateBillingTable.objects.count() == 1
 
 
-def test_rate_billing_table_delete(api_client, rate_billing_table_api) -> None:
+def test_rate_billing_table_delete(api_client: APIClient, rate_billing_table_api: Response) -> None:
     """
     Test Rate Billing Table API DELETE method.
     """
