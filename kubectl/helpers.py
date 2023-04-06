@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any, Dict
 
+from django.core.exceptions import ValidationError
 from kubernetes import client
 
 from organization.models import Organization
@@ -104,6 +105,9 @@ def organization_kube_api_client(*, organization: Organization) -> client.CoreV1
 
     """
     org_kube_config = get_kube_config_by_organization(organization=organization)
+
+    if not org_kube_config:
+        raise ValidationError("Organization does not have a Kubernetes configuration.")
 
     configuration = client.Configuration()
 

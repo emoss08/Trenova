@@ -14,11 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from accounts.models import User
 from kubectl.helpers import (
     get_node_info,
     get_node_metadata,
@@ -38,7 +40,9 @@ def get_active_clusters(request: Request) -> Response:
         Response (Response): A HTTP response object containing a list of dictionaries, where each dictionary contains information
         about an active cluster, including the cluster's name, node information, and metadata.
     """
-    api = organization_kube_api_client(organization=request.user.organization)
+    user = get_object_or_404(User, username=request.user.username)
+
+    api = organization_kube_api_client(organization=user.organization)
     node = api.list_node()
 
     response = [

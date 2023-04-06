@@ -15,14 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import datetime
-from typing import Tuple
+from typing import Tuple, Any
 
 from django.db.models import Avg, F, ExpressionWrapper, fields
 from location import models
 from stops.models import Stop
 
 
-def get_avg_wait_time(*, location: models.Location) -> datetime.timedelta:
+def get_avg_wait_time(*, location: models.Location) -> datetime.timedelta | Any:
     """Calculates the average wait time for a given location and returns it as a `datetime.timedelta` object.
 
     Args:

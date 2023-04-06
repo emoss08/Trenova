@@ -56,7 +56,7 @@ class LocationViewSet(OrganizationMixin):
     serializer_class = serializers.LocationSerializer
     filterset_fields = ("location_category__name", "depot__name", "is_geocoded")
 
-    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:  # type: ignore
         response = super().list(request, *args, **kwargs)
 
         locations = response.data["results"]
@@ -66,7 +66,8 @@ class LocationViewSet(OrganizationMixin):
             wait_time_avg = selectors.get_avg_wait_time(location=location_obj)
             location["wait_time_avg"] = wait_time_avg
 
-        return response
+
+        return response  # type: ignore
 
 class LocationContactViewSet(OrganizationMixin):
     """A viewset for viewing and editing Location Contact information in the system.
