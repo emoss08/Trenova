@@ -19,14 +19,22 @@ import pytest
 import datetime
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
+from accounting.models import RevenueCode
+from accounts.models import User
+from customer.models import Customer
 from dispatch.factories import FleetCodeFactory
+from equipment.models import EquipmentType
 from equipment.tests.factories import TractorFactory
 from location.factories import LocationFactory
+from location.models import Location
 from movements.models import Movement
 from order import models
 from order.selectors import get_order_stops
 from order.tests.factories import OrderFactory
+from organization.models import Organization
 from stops.models import Stop
 from utils.models import StatusChoices
 from worker.factories import WorkerFactory
@@ -34,7 +42,7 @@ from worker.factories import WorkerFactory
 pytestmark = pytest.mark.django_db
 
 
-def test_list(order):
+def test_list(order: models.Order) -> None:
     """
     Test Order list
     """
@@ -42,15 +50,15 @@ def test_list(order):
 
 
 def test_create(
-    organization,
-    order_type,
-    revenue_code,
-    origin_location,
-    destination_location,
-    customer,
-    equipment_type,
-    user,
-):
+    organization: Organization,
+    order_type: models.OrderType,
+    revenue_code: RevenueCode,
+    origin_location: Location,
+    destination_location: Location,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
+) -> None:
     """
     Test Order Create
     """
@@ -81,7 +89,7 @@ def test_create(
     assert order.bol_number == "1234567890"
 
 
-def test_update(order):
+def test_update(order: models.Order) -> None:
     """
     Test Order update
     """
@@ -101,14 +109,14 @@ def test_update(order):
 
 
 def test_first_stop_completion_puts_order_movement_in_progress(
-    organization,
-    order_type,
-    revenue_code,
-    origin_location,
-    destination_location,
-    customer,
-    equipment_type,
-    user,
+    organization: Organization,
+    order_type: models.OrderType,
+    revenue_code: RevenueCode,
+    origin_location: Location,
+    destination_location: Location,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
 ) -> None:
     """
     Test when the first stop in a movement is completed. The associated movement and order are both
@@ -162,14 +170,14 @@ def test_first_stop_completion_puts_order_movement_in_progress(
 
 
 def test_create_initial_movement_hook(
-    organization,
-    order_type,
-    revenue_code,
-    origin_location,
-    destination_location,
-    customer,
-    equipment_type,
-    user,
+    organization: Organization,
+    order_type: models.OrderType,
+    revenue_code: RevenueCode,
+    origin_location: Location,
+    destination_location: Location,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
 ) -> None:
     """
     Test create initial movement hook when order is created.
@@ -195,7 +203,7 @@ def test_create_initial_movement_hook(
     assert movement_count == 1
 
 
-def test_get(api_client):
+def test_get(api_client: APIClient) -> None:
     """
     Test get Reason Code
     """
@@ -204,16 +212,16 @@ def test_get(api_client):
 
 
 def test_get_by_id(
-    api_client,
-    order_api,
-    order_type,
-    revenue_code,
-    origin_location,
-    destination_location,
-    customer,
-    equipment_type,
-    user,
-):
+    api_client: APIClient,
+    order_api: Response,
+    order_type: models.OrderType,
+    revenue_code: RevenueCode,
+    origin_location: Location,
+    destination_location: Location,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
+) -> None:
     """
     Test get Order by id
     """
@@ -235,16 +243,16 @@ def test_get_by_id(
 
 
 def test_put(
-    api_client,
-    order_api,
-    origin_location,
-    destination_location,
-    order_type,
-    revenue_code,
-    customer,
-    equipment_type,
-    user,
-):
+    api_client: APIClient,
+    order_api: Response,
+    origin_location: Location,
+    destination_location: Location,
+    order_type: models.OrderType,
+    revenue_code: RevenueCode,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
+) -> None:
     """
     Test put Order
     """
@@ -280,9 +288,9 @@ def test_put(
 
 
 def test_patch(
-    api_client,
-    order_api,
-):
+    api_client: APIClient,
+    order_api: Response,
+) -> None:
     """
     Test patch Order
     """
@@ -297,7 +305,7 @@ def test_patch(
     assert response.data["bol_number"] == "patchedbol"
 
 
-def test_flat_method_requires_freight_charge_amount():
+def test_flat_method_requires_freight_charge_amount() -> None:
     """
     Test ValidationError is thrown when the order has `FLAT` rating method
     and the `freight_charge_amount` is None
@@ -310,7 +318,7 @@ def test_flat_method_requires_freight_charge_amount():
     ]
 
 
-def test_per_mile_requires_mileage():
+def test_per_mile_requires_mileage() -> None:
     """
     Test ValidationError is thrown when the order has `PER-MILE` rating method
     and the `mileage` is None
@@ -323,7 +331,7 @@ def test_per_mile_requires_mileage():
     ]
 
 
-def test_order_origin_destination_location_cannot_be_the_same():
+def test_order_origin_destination_location_cannot_be_the_same() -> None:
     """
     Test ValidationError is thrown when the order `origin_location and
     `destination_location` is the same.
@@ -343,7 +351,7 @@ def test_order_origin_destination_location_cannot_be_the_same():
     ]
 
 
-def test_order_revenue_code_is_enforced():
+def test_order_revenue_code_is_enforced() -> None:
     """
     Test ValidationError is thrown if the `order_control` has `enforce_rev_code`
     set as `TRUE`
@@ -360,7 +368,7 @@ def test_order_revenue_code_is_enforced():
     ]
 
 
-def test_order_commodity_is_enforced():
+def test_order_commodity_is_enforced() -> None:
     """
     Test ValidationError is thrown if the `order_control` has `enforce_commodity`
     set as `TRUE`
@@ -377,7 +385,7 @@ def test_order_commodity_is_enforced():
     ]
 
 
-def test_order_must_be_completed_to_bill():
+def test_order_must_be_completed_to_bill() -> None:
     """
     Test ValidationError is thrown if the order status is not `COMPLETED`
     and `ready_to_bill` is marked `TRUE`
@@ -390,7 +398,7 @@ def test_order_must_be_completed_to_bill():
     ]
 
 
-def test_order_origin_location_or_address_is_required():
+def test_order_origin_location_or_address_is_required() -> None:
     """
     Test ValidationError is thrown if the order `origin_location` and
     `origin_address` is blank
@@ -406,7 +414,7 @@ def test_order_origin_location_or_address_is_required():
     ]
 
 
-def test_order_destination_location_or_address_is_required():
+def test_order_destination_location_or_address_is_required() -> None:
     """
     Test ValidationError is thrown if the order `destination_location` and
     `destination_address` is blank
@@ -422,7 +430,7 @@ def test_order_destination_location_or_address_is_required():
     ]
 
 
-def test_remove_orders_validation(order) -> None:
+def test_remove_orders_validation(order: models.Order) -> None:
     """
     Test ValidationError is thrown if the stop in an order is being deleted,
     and order_control does not allow it.

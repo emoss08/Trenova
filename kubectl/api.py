@@ -21,6 +21,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 from silk.profiling.profiler import silk_profile
+
 @silk_profile(name="Get Active Clusters")
 @api_view(["GET"])
 def get_active_clusters(request: Request) -> Response:

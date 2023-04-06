@@ -15,18 +15,30 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import Any, Generator
+
 import pytest
 from django.utils import timezone
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
+from accounting.models import RevenueCode
 from accounting.tests.factories import RevenueCodeFactory
+from accounts.models import User
+from billing.models import AccessorialCharge, DocumentClassification
 from billing.tests.factories import (
     AccessorialChargeFactory,
     DocumentClassificationFactory,
 )
 from customer.factories import CustomerFactory
+from customer.models import Customer
 from dispatch.factories import CommentTypeFactory
+from dispatch.models import CommentType
+from equipment.models import EquipmentType
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
+from location.models import Location
+from order.models import OrderType, Order
 from order.tests.factories import (
     AdditionalChargeFactory,
     OrderCommentFactory,
@@ -35,12 +47,13 @@ from order.tests.factories import (
     OrderTypeFactory,
     ReasonCodeFactory,
 )
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def order_type():
+def order_type() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for order Type
     """
@@ -48,7 +61,7 @@ def order_type():
 
 
 @pytest.fixture
-def order():
+def order() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Order
     """
@@ -56,7 +69,7 @@ def order():
 
 
 @pytest.fixture
-def document_classification():
+def document_classification() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Document Classification
     """
@@ -64,7 +77,7 @@ def document_classification():
 
 
 @pytest.fixture
-def reason_code():
+def reason_code() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Reason Code
     """
@@ -72,7 +85,7 @@ def reason_code():
 
 
 @pytest.fixture
-def order_document():
+def order_document() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Order Documentation
     """
@@ -80,7 +93,7 @@ def order_document():
 
 
 @pytest.fixture
-def additional_charge():
+def additional_charge() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for order Type
     """
@@ -88,7 +101,7 @@ def additional_charge():
 
 
 @pytest.fixture
-def accessorial_charge():
+def accessorial_charge() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Accessorial Charge
     """
@@ -96,7 +109,7 @@ def accessorial_charge():
 
 
 @pytest.fixture
-def revenue_code():
+def revenue_code() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Revenue Code
     """
@@ -104,7 +117,7 @@ def revenue_code():
 
 
 @pytest.fixture
-def customer():
+def customer() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Customer
     """
@@ -112,7 +125,7 @@ def customer():
 
 
 @pytest.fixture
-def equipment_type():
+def equipment_type() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Equipment Type
     """
@@ -120,7 +133,7 @@ def equipment_type():
 
 
 @pytest.fixture
-def order_comment():
+def order_comment() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Order Comment
     """
@@ -128,7 +141,7 @@ def order_comment():
 
 
 @pytest.fixture
-def comment_type():
+def comment_type() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Comment Type
     """
@@ -136,33 +149,33 @@ def comment_type():
 
 
 @pytest.fixture
-def origin_location():
+def origin_location() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Origin Location
     """
-    return LocationFactory()
+    yield LocationFactory()
 
 
 @pytest.fixture
-def destination_location():
+def destination_location() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Destination Location
     """
-    return LocationFactory()
+    yield LocationFactory()
 
 
 @pytest.fixture
 def order_api(
-    api_client,
-    organization,
-    order_type,
-    revenue_code,
-    origin_location,
-    destination_location,
-    customer,
-    equipment_type,
-    user,
-):
+    api_client: APIClient,
+    organization: Organization,
+    order_type: OrderType,
+    revenue_code: RevenueCode,
+    origin_location: Location,
+    destination_location: Location,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
+) -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Reason Code
     """
@@ -187,7 +200,13 @@ def order_api(
 
 
 @pytest.fixture
-def additional_charge_api(api_client, user, organization, order, accessorial_charge):
+def additional_charge_api(
+    api_client: APIClient,
+    user: User,
+    organization: Organization,
+    order: Order,
+    accessorial_charge: AccessorialCharge,
+) -> Generator[Any, Any, None]:
     """
     Additional Charge Factory
     """
@@ -206,11 +225,13 @@ def additional_charge_api(api_client, user, organization, order, accessorial_cha
 
 
 @pytest.fixture
-def order_comment_api(order_api, user, comment_type, api_client):
+def order_comment_api(
+    order_api: Response, user: User, comment_type: CommentType, api_client: APIClient
+) -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Order Comment
     """
-    return api_client.post(
+    yield api_client.post(
         "/api/order_comments/",
         {
             "order": f"{order_api.data['id']}",
@@ -223,7 +244,12 @@ def order_comment_api(order_api, user, comment_type, api_client):
 
 
 @pytest.fixture
-def order_documentation_api(api_client, order, document_classification, organization):
+def order_documentation_api(
+    api_client: APIClient,
+    order: Order,
+    document_classification: DocumentClassification,
+    organization: Organization,
+) -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Order Documentation
     """
@@ -241,22 +267,22 @@ def order_documentation_api(api_client, order, document_classification, organiza
 
 
 @pytest.fixture
-def order_type_api(api_client):
+def order_type_api(api_client: APIClient) -> Generator[Any, Any, None]:
     """
     Order Type Factory
     """
-    return api_client.post(
+    yield api_client.post(
         "/api/order_types/",
         {"name": "Foo Bar", "description": "Foo Bar", "is_active": True},
     )
 
 
 @pytest.fixture
-def reason_code_api(api_client):
+def reason_code_api(api_client: APIClient) -> Generator[Any, Any, None]:
     """
     Reason Code Factory
     """
-    return api_client.post(
+    yield api_client.post(
         "/api/reason_codes/",
         {
             "code": "NEWT",
