@@ -148,6 +148,22 @@ class BillingControl(GenericModel):
         default=False,
         help_text=_("Whether to automatically bill orders directly to customer"),
     )
+    auto_mark_ready_to_bill = models.BooleanField(
+        _("Auto Mark Ready to Bill"),
+        default=False,
+        help_text=_(
+            "Marks orders as ready to bill when they are delivered and meet customer billing requirements."
+        ),
+    )
+    validate_customer_rates = models.BooleanField(
+        _("Validate Customer Rates"),
+        default=False,
+        help_text=_(
+            "Validate rates match the customer contract in the billing queue before allowing billing. If the rates"
+            " do not match, the order will not be allowed to be billed. If the rates match, the order will be"
+            " allowed to be billed. If no contract exists for the customer, the order will be allowed to be billed."
+        ),
+    )
     auto_bill_criteria = ChoiceField(
         _("Auto Bill Criteria"),
         choices=AutoBillingCriteriaChoices.choices,
