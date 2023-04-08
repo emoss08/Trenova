@@ -21,12 +21,12 @@ import io
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
-from django.db import models
+from django.db.models import Model
 from django.apps import apps
-from reports.models import ScheduledReport, ScheduleType, CustomReport
+from reports import models, exceptions
 
 
-def get_model_by_table_name(table_name: str) -> Union[Type[models.Model], None]:
+def get_model_by_table_name(table_name: str) -> Type[Model] | None:
     """
     Returns a model class from Django apps by a given table name.
     If the model class is not found, it returns None.
@@ -43,7 +43,7 @@ def get_model_by_table_name(table_name: str) -> Union[Type[models.Model], None]:
     )
 
 
-def generate_excel_report_as_file(report: CustomReport) -> io.BytesIO:
+def generate_excel_report_as_file(report: models.CustomReport) -> io.BytesIO:
     """Generate an Excel report as a file.
 
     Args:
@@ -58,12 +58,10 @@ def generate_excel_report_as_file(report: CustomReport) -> io.BytesIO:
     columns, and populates the data rows by iterating through the data model object.
     The generated Excel file is saved to a BytesIO object which is then returned to the caller.
     """
-    model: Union[Type[models.Model], Type[models.Model], None] = get_model_by_table_name(
-        report.table
-    )
+    model: Type[Model] | Type[Model] | None = get_model_by_table_name(report.table)
 
     if not model:
-        raise ValueError("Invalid table name.")
+        raise exceptions.InvalidTableException("Invalid table name.")
 
     columns = report.columns.all().order_by("column_order")
 
@@ -86,7 +84,7 @@ def generate_excel_report_as_file(report: CustomReport) -> io.BytesIO:
     return file_obj
 
 
-def create_scheduled_task(instance: ScheduledReport) -> None:
+def create_scheduled_task(instance: models.ScheduledReport) -> None:
     """
     Creates or updates a scheduled task for sending reports based on the schedule type provided in
     the instance object.
@@ -99,7 +97,7 @@ def create_scheduled_task(instance: ScheduledReport) -> None:
         None
 
     Raises:
-        ValueError: If an invalid schedule type is provided.
+        exceptions.InvalidScheduleType: Raised when an invalid schedule type is provided.
 
     The function creates or updates a schedule using CrontabSchedule objects from Django. The
     schedule type is determined from the instance object, which can be daily, weekly, or monthly. If the
@@ -120,14 +118,14 @@ def create_scheduled_task(instance: ScheduledReport) -> None:
 
     If an invalid schedule type is provided, a ValueError is raised.
     """
-    if instance.schedule_type == ScheduleType.DAILY:
+    if instance.schedule_type == models.ScheduleType.DAILY:
         schedule, _ = CrontabSchedule.objects.update_or_create(
             hour=instance.time.hour,
             minute=instance.time.minute,
             timezone=instance.timezone,
         )
         task_type = "crontab"
-    elif instance.schedule_type == ScheduleType.WEEKLY:
+    elif instance.schedule_type == models.ScheduleType.WEEKLY:
         weekdays = ",".join([str(weekday.id) for weekday in instance.day_of_week.all()])
         schedule, _ = CrontabSchedule.objects.update_or_create(
             day_of_week=weekdays,
@@ -136,7 +134,7 @@ def create_scheduled_task(instance: ScheduledReport) -> None:
             timezone=instance.timezone,
         )
         task_type = "crontab"
-    elif instance.schedule_type == ScheduleType.MONTHLY:
+    elif instance.schedule_type == models.ScheduleType.MONTHLY:
         schedule, _ = CrontabSchedule.objects.update_or_create(
             day_of_month=instance.day_of_month,
             hour=instance.time.hour,
@@ -145,7 +143,7 @@ def create_scheduled_task(instance: ScheduledReport) -> None:
         )
         task_type = "crontab"
     else:
-        raise ValueError("Invalid schedule_type")
+        raise exceptions.InvalidScheduleTypeException("Invalid schedule type.")
 
     task, created_task = PeriodicTask.objects.update_or_create(
         name=f"Send scheduled report {instance.user_id}-{instance.pk}",
