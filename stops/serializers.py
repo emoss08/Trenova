@@ -116,9 +116,8 @@ class StopCommentSerializer(GenericSerializer):
 class StopSerializer(GenericSerializer):
     """A serializer for the `Stop` model.
 
-    A serializer class for the Stop Model. This serializer is used
-    to convert the Stop model instances into a Python dictionary
-    format that can be rendered into a JSON response. It also defines the fields
+    A serializer class for the Stop Model. This serializer is used to convert the Stop model instances
+    into a Python dictionary format that can be rendered into a JSON response. It also defines the fields
     that should be included in the serialized representation of the model.
     """
 
@@ -127,8 +126,6 @@ class StopSerializer(GenericSerializer):
     )
     location = serializers.PrimaryKeyRelatedField(
         queryset=Location.objects.all(),
-        allow_null=True,
-        required=False,
     )
     comments = serializers.PrimaryKeyRelatedField(
         queryset=models.StopComment.objects.all(),
@@ -154,9 +151,8 @@ class StopSerializer(GenericSerializer):
 class ServiceIncidentSerializer(GenericSerializer):
     """A serializer for the `ServiceIncident` model.
 
-    A serializer class for the ServiceIncident Model. This serializer is used
-    to convert the ServiceIncident model instances into a Python dictionary
-    format that can be rendered into a JSON response. It also defines the fields
+    A serializer class for the ServiceIncident Model. This serializer is used to convert the ServiceIncident model instances
+    into a Python dictionary format that can be rendered into a JSON response. It also defines the fields
     that should be included in the serialized representation of the model.
     """
 

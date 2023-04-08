@@ -62,7 +62,7 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
     search_fields = ("invoice_number", "order", "bol_number")
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: Union[BillingHistory, None] = None
+        self, request: HttpRequest, obj: BillingHistory | None = None
     ) -> bool:
         """Has permission to delete.
 
@@ -104,7 +104,7 @@ class BillingTransferLogAdmin(GenericAdmin[BillingTransferLog]):
     readonly_fields = ("task_id", "transferred_at", "transferred_by", "order")
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: Union[BillingTransferLog, None] = None
+        self, request: HttpRequest, obj: BillingTransferLog | None = None
     ) -> bool:
         """Has permission to delete.
 

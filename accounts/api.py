@@ -29,11 +29,11 @@ from rest_framework import (
     viewsets,
 )
 from rest_framework.request import Request
+from typeguard import typechecked
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
-
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
