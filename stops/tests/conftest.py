@@ -20,8 +20,11 @@ from typing import Any
 
 import pytest
 from django.utils import timezone
+from rest_framework.test import APIClient
 
 from location.factories import LocationFactory
+from location.models import Location
+from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory
 from stops import models
@@ -62,7 +65,7 @@ def order() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def stop_api(api_client, movement, location) -> Generator[Any, Any, None]:
+def stop_api(api_client: APIClient, movement: Movement, location: Location) -> Generator[Any, Any, None]:
     """
     Stop API fixture
     """
