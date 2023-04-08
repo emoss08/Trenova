@@ -600,7 +600,7 @@ class Rate(GenericModel):  # type:ignore
     )
     rate_number = models.CharField(
         _("Rate Number"),
-        max_length=10,
+        max_length=6,
         editable=False,
         help_text=_("Rate Number for Rate"),
     )
@@ -647,6 +647,46 @@ class Rate(GenericModel):  # type:ignore
         related_name="rates",
         null=True,
         blank=True,
+    )
+    origin_location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.PROTECT,
+        verbose_name=_("Origin Location"),
+        related_name="origin_rates",
+        help_text=_("Origin Location for Rate"),
+        blank=True,
+        null=True,
+    )
+    destination_location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.PROTECT,
+        verbose_name=_("Destination Location"),
+        related_name="destination_rates",
+        help_text=_("Destination Location for Rate"),
+        blank=True,
+        null=True,
+    )
+    rate_method = ChoiceField(
+        _("Rate Method"),
+        choices=RatingMethodChoices.choices,
+        default=RatingMethodChoices.FLAT,
+        help_text=_("Rate Method for Rate"),
+    )
+    rate_amount = MoneyField(
+        _("Rate Amount"),
+        max_digits=19,
+        decimal_places=4,
+        default=0,
+        help_text=_("Rate Amount for Rate"),
+        blank=True,
+        null=True,
+        default_currency="USD",
+    )
+    distance_override = models.PositiveIntegerField(
+        _("Distance Override"),
+        help_text=_("Distance Override for Rate"),
+        blank=True,
+        null=True,
     )
     comments = models.TextField(
         _("Comments"),
@@ -718,137 +758,12 @@ class Rate(GenericModel):  # type:ignore
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-
-        if rate_number := Rate.objects.aggregate(Max("rate_number"))[
-            "rate_number__max"
-        ]:
-            count = int(rate_number[1:]) + 1
-        else:
-            count = 1
-
-        return f"R{count:05d}"
-
-
-class RateTable(GenericModel):
-    """
-    Class: RateTable
-
-    The `RateTable` model represents a table that stores the rate details for a specific origin and destination location
-    and their respective rate method, rate amount and distance override.
-
-    Attributes:
-        id (UUIDField): A unique identifier for the rate table instance.
-        rate (ForeignKey): A foreign key to the `Rate` model, representing the rate for the rate table.
-        description (CharField): A description for the rate table.
-        origin_location (ForeignKey): A foreign key to the `Location` model, representing the origin location for the
-            rate table.
-        destination_location (ForeignKey): A foreign key to the `Location` model, representing the destination location
-            for the rate table.
-        rate_method (ChoiceField): The rate method for the rate table, chosen from the `RatingMethodChoices` choices.
-        rate_amount (PositiveIntegerField): The rate amount for the rate table.
-        distance_override (PositiveIntegerField): The distance override for the rate table.
-
-    Methods:
-        meta (Meta): The Meta class defines some options for the RateTable model.
-        __str__ (str): Return the string representation of a RateTable instance.
-        get_absolute_url (str): Return the absolute URL for the detail view of a RateTable instance.
-
-    Typical Usage:
-        >>> rate_table = RateTable.objects.create(
-        ...     rate=rate,
-        ...     description="Rate Table 1",
-        ...     origin_location=origin_location,
-        ...     destination_location=destination_location,
-        ...     rate_method=RatingMethodChoices.FLAT,
-        ...     rate_amount=100,
-        ...     distance_override=100,
-        ... )
-        >>> rate_table
-        <RateTable: Rate Table 1>
-    """
-
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-    )
-    rate = models.ForeignKey(
-        Rate,
-        on_delete=models.PROTECT,
-        related_name="rate_tables",
-        verbose_name=_("Rate"),
-        help_text=_("Rate for Rate Table"),
-    )
-    description = models.CharField(
-        _("Description"),
-        max_length=100,
-        help_text=_("Description for Rate Table"),
-        blank=True,
-    )
-    origin_location = models.ForeignKey(
-        "location.Location",
-        on_delete=models.PROTECT,
-        related_name="origin_rate_tables",
-        verbose_name=_("Origin Location"),
-        help_text=_("Origin Location for Rate Table"),
-        blank=True,
-        null=True,
-    )
-    destination_location = models.ForeignKey(
-        "location.Location",
-        on_delete=models.PROTECT,
-        related_name="destination_rate_tables",
-        verbose_name=_("Destination Location"),
-        help_text=_("Destination Location for Rate Table"),
-        blank=True,
-        null=True,
-    )
-    rate_method = ChoiceField(
-        _("Rate Method"),
-        choices=RatingMethodChoices.choices,
-        default=RatingMethodChoices.FLAT,
-        help_text=_("Rate Method for Rate Table"),
-    )
-    rate_amount = models.PositiveIntegerField(
-        _("Rate"),
-        help_text=_("Rate for Rate Table"),
-    )
-    distance_override = models.PositiveIntegerField(
-        _("Distance Override"),
-        help_text=_("Distance Override for Rate Table"),
-        blank=True,
-        null=True,
-    )
-
-    class Meta:
-        """
-        Metaclass for the RateTable model.
-        """
-
-        verbose_name = _("Rate Table")
-        verbose_name_plural = _("Rate Tables")
-        ordering = ["rate", "origin_location", "destination_location"]
-        db_table = "rate_table"
-
-    def __str__(self) -> str:
-        """
-        Return the string representation of a RateTable instance.
-
-        Returns:
-            str: The description field of the RateTable instance.
-        """
-        return self.description
-
-    def get_absolute_url(self) -> str:
-        """
-        Return the absolute URL for the detail view of a RateTable instance.
-
-        Returns:
-            str: The absolute URL for the detail view of the RateTable instance.
-        """
-        return reverse("rate-tables-detail", kwargs={"pk": self.pk})
-
+        code = f"R{Rate.objects.count() + 1:05d}"
+        return (
+            "R00001"
+            if Rate.objects.filter(rate_number=code).exists()
+            else code
+        )
 
 class RateBillingTable(GenericModel):  # type:ignore
     """
