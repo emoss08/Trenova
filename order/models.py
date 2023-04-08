@@ -363,6 +363,16 @@ class Order(GenericModel):  # type:ignore
     )
 
     # Billing Information for the order
+    rate = models.ForeignKey(
+        "dispatch.Rate",
+        on_delete=models.RESTRICT,
+        related_name="orders",
+        related_query_name="order",
+        verbose_name=_("Rate"),
+        help_text=_("Associated Rate to the Order."),
+        blank=True,
+        null=True,
+    )
     mileage = models.DecimalField(
         _("Total Mileage"),
         max_digits=10,
@@ -564,6 +574,7 @@ class Order(GenericModel):  # type:ignore
             ValidationError: If the Order is not valid
         """
         from order.validation import OrderValidation
+
         super().clean()
         OrderValidation(order=self)
 
