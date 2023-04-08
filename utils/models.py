@@ -95,7 +95,7 @@ class GenericModel(TimeStampedModel):
         """Save the model instance
 
         Args:
-            **kwargs (Any):
+            **kwargs (Any): Keyword Arguments
 
         Returns:
             None
