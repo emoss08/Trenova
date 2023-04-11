@@ -21,9 +21,13 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from pydantic import BaseModel
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 from accounting import models
+from accounting.models import GeneralLedgerAccount
 from accounting.tests.factories import GeneralLedgerAccountFactory
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
@@ -179,14 +183,18 @@ def test_delete_schema() -> None:
     assert gl_account_store[0].account_number == "1234-1234-1234-1235"
 
 
-def test_gl_account_str_representation(general_ledger_account) -> None:
+def test_gl_account_str_representation(
+    general_ledger_account: GeneralLedgerAccount,
+) -> None:
     """
     Test GL Account String Representation
     """
     assert str(general_ledger_account) == general_ledger_account.account_number
 
 
-def test_gl_account_get_absolute_url(general_ledger_account) -> None:
+def test_gl_account_get_absolute_url(
+    general_ledger_account: GeneralLedgerAccount,
+) -> None:
     """
     Test GL Account Get Absolute URL
     """
@@ -196,7 +204,9 @@ def test_gl_account_get_absolute_url(general_ledger_account) -> None:
     )
 
 
-def test_gl_account_clean_method_with_valid_data(general_ledger_account) -> None:
+def test_gl_account_clean_method_with_valid_data(
+    general_ledger_account: GeneralLedgerAccount,
+) -> None:
     """
     Test GL Account Clean Method with valid data
     """
@@ -206,14 +216,14 @@ def test_gl_account_clean_method_with_valid_data(general_ledger_account) -> None
         pytest.fail("clean method raised ValidationError unexpectedly")
 
 
-def test_list(general_ledger_account) -> None:
+def test_list(general_ledger_account: GeneralLedgerAccount) -> None:
     """
     Test general ledger account list
     """
     assert general_ledger_account is not None
 
 
-def test_create(general_ledger_account) -> None:
+def test_create(general_ledger_account: GeneralLedgerAccount) -> None:
     """
     Test general ledger account creation
     """
@@ -231,7 +241,7 @@ def test_create(general_ledger_account) -> None:
     assert gl_account.account_number == "1234-1234-1234-1234"
 
 
-def test_update(general_ledger_account) -> None:
+def test_update(general_ledger_account: GeneralLedgerAccount) -> None:
     """
     Test general ledger account update
     """
@@ -240,7 +250,7 @@ def test_update(general_ledger_account) -> None:
     assert general_ledger_account.account_number == "1234-1234-1234-1234"
 
 
-def test_api_get(api_client) -> None:
+def test_api_get(api_client: APIClient) -> None:
     """
     Test get General Ledger accounts
     """
@@ -248,7 +258,7 @@ def test_api_get(api_client) -> None:
     assert response.status_code == 200
 
 
-def test_api_get_by_id(api_client, gl_account_api) -> None:
+def test_api_get_by_id(api_client: APIClient, gl_account_api: Response) -> None:
     """
     Test get General Ledger account by ID
     """
@@ -264,7 +274,9 @@ def test_api_get_by_id(api_client, gl_account_api) -> None:
     assert response.data["description"] == gl_account_api.data["description"]
 
 
-def test_api_put(api_client, gl_account_api, organization) -> None:
+def test_api_put(
+    api_client: APIClient, gl_account_api: Response, organization: Organization
+) -> None:
     """
     Test put General Ledger Account
     """
@@ -304,7 +316,7 @@ def test_api_put(api_client, gl_account_api, organization) -> None:
     )
 
 
-def test_api_delete(api_client, gl_account_api) -> None:
+def test_api_delete(api_client: APIClient, gl_account_api: Response) -> None:
     """
     Test delete general Ledger account
     """
@@ -319,7 +331,7 @@ def test_api_delete(api_client, gl_account_api) -> None:
     assert not response.data
 
 
-def test_account_number(general_ledger_account) -> None:
+def test_account_number(general_ledger_account: GeneralLedgerAccount) -> None:
     """
     Test Whether the validation error is thrown if the entered account_number value is not a
     regex match.
@@ -334,7 +346,7 @@ def test_account_number(general_ledger_account) -> None:
     ]
 
 
-def test_unique_account_numer(general_ledger_account) -> None:
+def test_unique_account_numer(general_ledger_account: GeneralLedgerAccount) -> None:
     """
     Test creating a General Ledger account with the same account number
     throws ValidationError.

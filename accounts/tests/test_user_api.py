@@ -18,28 +18,32 @@
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
+from accounts.models import User
 from accounts.serializers import UserSerializer
 from accounts.tests.factories import JobTitleFactory
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
-def test_get(api_client) -> None:
+def test_get(api_client: APIClient) -> None:
     """
     Test get users
     """
     response = api_client.get("/api/users/")
     assert response.status_code == 200
 
-def test_get_by_id(api_client, user_api) -> None:
+def test_get_by_id(api_client: APIClient, user_api: Response) -> None:
     """
     Test get user by ID
     """
     response = api_client.get(f"/api/users/{user_api.data['id']}/")
     assert response.status_code == 200
 
-def test_create_success(api_client, organization):
+def test_create_success(api_client: APIClient, organization: Organization) -> None:
     """
     Test Create user
     """
@@ -71,7 +75,7 @@ def test_create_success(api_client, organization):
     assert response.data["username"] == payload["username"]
     assert response.data["email"] == payload["email"]
 
-def test_user_with_email_exists_error(api_client, organization):
+def test_user_with_email_exists_error(api_client: APIClient, organization: Organization) -> None:
     """
     Test Create user with email exists
     """
@@ -97,7 +101,7 @@ def test_user_with_email_exists_error(api_client, organization):
     response = api_client.post("/api/users/", payload, format="json")
     assert response.status_code == 400
 
-def test_put(user_api, api_client, organization):
+def test_put(user_api: Response, api_client: APIClient, organization: Organization) -> None:
     """
     Test Put request
     """
@@ -131,7 +135,7 @@ def test_put(user_api, api_client, organization):
     assert response.data["profile"]["zip_code"] == "12345"
     assert "password" not in response.data
 
-def test_delete(user_api, token, api_client):
+def test_delete(user_api: Response, api_client: APIClient) -> None:
     """
     Test delete user
     """
@@ -139,7 +143,7 @@ def test_delete(user_api, token, api_client):
     assert response.status_code == 204
     assert response.data is None
 
-def test_user_cannot_change_password_on_update(user):
+def test_user_cannot_change_password_on_update(user: User) -> None:
     """
     Test ValidationError is thrown when posting to update user endpoint
     with password.

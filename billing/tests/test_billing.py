@@ -274,13 +274,12 @@ def test_get_billable_orders_completed() -> None:
         assert order.billing_transfer_date is None
 
 
-def test_get_billable_orders_ready_and_completed():
+def test_get_billable_orders_ready_and_completed() -> None:
     """
     Test that get_billable_orders returns orders that are completed and not
     billed. When the billing_control.order_transfer_criteria is set to
     "READY_AND_COMPLETED".
     """
-    # create an order that is ready to bill
     order = OrderFactory()
 
     order_movements = order.movements.all()

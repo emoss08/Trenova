@@ -20,10 +20,13 @@ import uuid
 import pytest
 from django.core.exceptions import ValidationError
 from pydantic import BaseModel
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 from accounting import models
-from accounting.models import GeneralLedgerAccount
+from accounting.models import GeneralLedgerAccount, DivisionCode
 from accounting.tests.factories import GeneralLedgerAccountFactory
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
@@ -146,14 +149,14 @@ def test_delete_schema() -> None:
     assert division_codes_store[0].code == "NEW2"
 
 
-def test_division_code_str_representation(division_code) -> None:
+def test_division_code_str_representation(division_code: DivisionCode) -> None:
     """
     Test Division Code String Representation
     """
     assert str(division_code) == division_code.code
 
 
-def test_division_code_get_absolute_url(division_code) -> None:
+def test_division_code_get_absolute_url(division_code: DivisionCode) -> None:
     """
     Test Division Code Get Absolute URL
     """
@@ -162,7 +165,9 @@ def test_division_code_get_absolute_url(division_code) -> None:
     )
 
 
-def test_division_code_clean_method_with_valid_data(division_code) -> None:
+def test_division_code_clean_method_with_valid_data(
+    division_code: DivisionCode,
+) -> None:
     """
     Test Division Code Clean Method with valid data
     """
@@ -191,7 +196,9 @@ def test_division_code_clean_method_with_invalid_cash_account(division_code) -> 
     }
 
 
-def test_division_code_clean_method_with_invalid_expense_account(division_code) -> None:
+def test_division_code_clean_method_with_invalid_expense_account(
+    division_code: DivisionCode,
+) -> None:
     """
     Test Division Code Clean Method with invalid expense account
     """
@@ -212,7 +219,7 @@ def test_division_code_clean_method_with_invalid_expense_account(division_code) 
 
 
 def test_division_code_clean_method_with_invalid_ap_account(
-    division_code, expense_account
+    division_code: DivisionCode, expense_account: GeneralLedgerAccount
 ) -> None:
     """
     Test Division Code Clean Method with invalid ap account
@@ -228,14 +235,18 @@ def test_division_code_clean_method_with_invalid_ap_account(
     }
 
 
-def test_list(division_code) -> None:
+def test_list(division_code: DivisionCode) -> None:
     """
     Test Division Code List
     """
     assert division_code is not None
 
 
-def test_create(organization, expense_account, cash_account) -> None:
+def test_create(
+    organization: Organization,
+    expense_account: GeneralLedgerAccount,
+    cash_account: GeneralLedgerAccount,
+) -> None:
     """
     Test Division Code Creation
     """
@@ -260,7 +271,7 @@ def test_create(organization, expense_account, cash_account) -> None:
     assert div_code.description == "Test Description"
 
 
-def test_update(division_code) -> None:
+def test_update(division_code: DivisionCode) -> None:
     """
     Test Division Code update
     """
@@ -273,7 +284,7 @@ def test_update(division_code) -> None:
     assert div_code.code == "FOOB"
 
 
-def test_api_get(api_client) -> None:
+def test_api_get(api_client: APIClient) -> None:
     """
     Test get Division Code
     """
@@ -282,7 +293,9 @@ def test_api_get(api_client) -> None:
     assert response.status_code == 200
 
 
-def test_api_get_by_id(api_client, organization, division_code_api) -> None:
+def test_api_get_by_id(
+    api_client: APIClient, organization: Organization, division_code_api: Response
+) -> None:
     """
     Test get Division Code by ID
     """
@@ -295,7 +308,9 @@ def test_api_get_by_id(api_client, organization, division_code_api) -> None:
     assert response.data["description"] == "Test Description"
 
 
-def test_api_put(api_client, organization, division_code_api) -> None:
+def test_api_put(
+    api_client: APIClient, organization: Organization, division_code_api: Response
+) -> None:
     """
     Test put Division Code
     """
@@ -331,7 +346,9 @@ def test_api_put(api_client, organization, division_code_api) -> None:
     assert response.data["description"] == "Another Description"
 
 
-def test_api_delete(api_client, organization, division_code_api) -> None:
+def test_api_delete(
+    api_client: APIClient, organization: Organization, division_code_api: Response
+) -> None:
     """
     Test Delete Division Code
     """
