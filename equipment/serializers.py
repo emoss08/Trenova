@@ -21,6 +21,7 @@ from rest_framework import serializers
 
 from dispatch.models import FleetCode
 from equipment import models
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -31,6 +32,9 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
     Equipment Type Detail, as well as listing and retrieving them.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     equipment_class = serializers.ChoiceField(
         choices=models.EquipmentTypeDetail.EquipmentClassChoices.choices
     )
@@ -42,7 +46,10 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
         """
 
         model = models.EquipmentTypeDetail
-        extra_fields = ("equipment_class",)
+        extra_fields = (
+            "equipment_class",
+            "organization",
+        )
         extra_read_only_fields = ("equipment_type",)
 
 
@@ -53,6 +60,9 @@ class EquipmentTypeSerializer(GenericSerializer):
     Equipment Types, as well as listing and retrieving them.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     equipment_type_details = EquipmentTypeDetailSerializer(required=False)
 
     class Meta:
@@ -61,7 +71,10 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
 
         model = models.EquipmentType
-        extra_fields = ("equipment_type_details",)
+        extra_fields = (
+            "equipment_type_details",
+            "organization",
+        )
 
     def create(self, validated_data: Any) -> models.EquipmentType:
         """Create new Equipment Type
@@ -123,6 +136,10 @@ class EquipmentManufacturerSerializer(GenericSerializer):
     Equipment Manufacturer, as well as listing and retrieving them.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
         """
         A class representing the metadata for the `EquipmentManufacturerSerializer`
@@ -130,6 +147,7 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         """
 
         model = models.EquipmentManufacturer
+        extra_fields = ("organization",)
 
 
 class TractorSerializer(GenericSerializer):
@@ -139,6 +157,9 @@ class TractorSerializer(GenericSerializer):
     Tractors, as well as listing and retrieving them.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     fleet_code = serializers.PrimaryKeyRelatedField(
         queryset=FleetCode.objects.all(), required=False, allow_null=True
     )
@@ -153,7 +174,7 @@ class TractorSerializer(GenericSerializer):
         """
 
         model = models.Tractor
-        extra_fields = ("is_active", "fleet_code", "equipment_type")
+        extra_fields = ("organization", "is_active", "fleet_code", "equipment_type")
 
 
 class TrailerSerializer(GenericSerializer):
@@ -163,6 +184,9 @@ class TrailerSerializer(GenericSerializer):
     Trailers, as well as listing and retrieving them.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     fleet_code = serializers.PrimaryKeyRelatedField(
         queryset=FleetCode.objects.all(), required=False, allow_null=True
     )
@@ -177,7 +201,7 @@ class TrailerSerializer(GenericSerializer):
         """
 
         model = models.Trailer
-        extra_fields = ("is_active", "fleet_code", "equipment_type")
+        extra_fields = ("organization", "is_active", "fleet_code", "equipment_type")
 
 
 class EquipmentMaintenancePlanSerializer(GenericSerializer):
@@ -187,6 +211,10 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
     Equipment Maintenance Plan, as well as listing and retrieving them.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
         """
         A class representing the metadata for the `EquipmentMaintenancePlanSerializer`
@@ -194,3 +222,4 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
         """
 
         model = models.EquipmentMaintenancePlan
+        extra_fields = ("organization",)

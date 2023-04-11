@@ -68,7 +68,9 @@ class JobTitleSerializer(GenericSerializer):
     Attributes:
         is_active (serializers.BooleanField): A boolean field representing the
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     is_active = serializers.BooleanField(required=False, default=True)
 
     class Meta:
@@ -179,7 +181,9 @@ class UserProfileSerializer(GenericSerializer):
                     "user",
                 )
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     title = serializers.PrimaryKeyRelatedField(
         queryset=models.JobTitle.objects.all(),
         required=False,
