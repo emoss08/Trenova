@@ -678,8 +678,6 @@ class Rate(GenericModel):  # type:ignore
         decimal_places=4,
         default=0,
         help_text=_("Rate Amount for Rate"),
-        blank=True,
-        null=True,
         default_currency="USD",
     )
     distance_override = models.PositiveIntegerField(
