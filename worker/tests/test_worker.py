@@ -18,24 +18,26 @@
 import pytest
 from django.core.exceptions import ValidationError
 
+from worker.models import Worker
+
 pytestmark = pytest.mark.django_db
 
 
-def test_worker_creation(worker):
+def test_worker_creation(worker: Worker) -> None:
     """
     Test worker creation
     """
     assert worker is not None
 
 
-def test_worker_code_hook(worker):
+def test_worker_code_hook(worker: Worker) -> None:
     """
     Test worker code is generated from create_worker_code_before_save BEFORE_SAVE hook
     """
     assert worker.code is not None
 
 
-def test_worker_type_choices(worker):
+def test_worker_type_choices(worker: Worker) -> None:
     """
     Test Worker Type choices throws ValidationError when the passed choice is not valid.
     """
@@ -48,21 +50,21 @@ def test_worker_type_choices(worker):
     ]
 
 
-def test_worker_profile_hook(worker):
+def test_worker_profile_hook(worker: Worker) -> None:
     """
     Test worker code is generated from create_worker_profile_after_create AFTER_CREATE hook
     """
     assert worker.profile is not None
 
 
-def test_worker_contact_creation(worker):
+def test_worker_contact_creation(worker: Worker) -> None:
     """
     Test worker contact creation
     """
     assert worker.worker_contact is not None
 
 
-def test_worker_contact_update(worker):
+def test_worker_contact_update(worker: Worker) -> None:
     """
     Test worker contact update
     """
@@ -71,14 +73,14 @@ def test_worker_contact_update(worker):
     assert worker.worker_contact.phone_number == "1234567890"
 
 
-def test_worker_comment_creation(worker):
+def test_worker_comment_creation(worker: Worker) -> None:
     """
     Test worker comment creation
     """
     assert worker.worker_comment is not None
 
 
-def test_worker_comment_update(worker):
+def test_worker_comment_update(worker) -> None:
     """
     Test worker comment update
     """

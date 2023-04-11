@@ -30,9 +30,11 @@ class WorkerCommentSerializer(GenericSerializer):
     """
     Worker Comment Serializer
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
+
     class Meta:
         """
         Metaclass for WorkerCommentSerializer
@@ -40,7 +42,7 @@ class WorkerCommentSerializer(GenericSerializer):
 
         model = models.WorkerComment
         extra_fields = ("organization",)
-        extra_read_only_fields = ("worker", "id")
+        extra_read_only_fields = ("worker",)
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -51,13 +53,14 @@ class WorkerContactSerializer(GenericSerializer):
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
+
     class Meta:
         """
         Metaclass for WorkerContactSerializer
         """
 
         model = models.WorkerContact
-        extra_read_only_fields = ("worker", "id")
+        extra_read_only_fields = ("worker",)
         extra_fields = ("organization",)
 
 
@@ -65,9 +68,11 @@ class WorkerProfileSerializer(GenericSerializer):
     """
     Worker Profile Serializer
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
+
     class Meta:
         """
         Metaclass for WorkerProfileSerializer
@@ -82,6 +87,7 @@ class WorkerSerializer(GenericSerializer):
     """
     Worker Serializer
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
@@ -199,6 +205,7 @@ class WorkerSerializer(GenericSerializer):
         profile_data = validated_data.pop("profile", {})
         comments_data = validated_data.pop("comments", [])
         contacts_data = validated_data.pop("contacts", [])
+        print(contacts_data)
 
         with transaction.atomic():
             if profile_data:
@@ -234,6 +241,7 @@ class WorkerSerializer(GenericSerializer):
                     instance.comments.create(**comment_data)
 
             for contact_data in contacts_data:
+                print("contact_data", contact_data)
                 contact_id = contact_data.get("id", None)
                 try:
                     worker_contact = (
