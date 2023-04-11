@@ -159,7 +159,7 @@ def charge_type_api(api_client, organization) -> Generator[Any, Any, None]:
     yield api_client.post(
         "/api/charge_types/",
         {
-            "organization": f"{organization}",
+            "organization": organization.id,
             "name": "foob",
             "description": "Test Description",
         },

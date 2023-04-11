@@ -27,6 +27,7 @@ from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory
+from organization.models import Organization
 from stops import models
 from stops.tests.factories import StopFactory
 
@@ -56,6 +57,7 @@ def location() -> Generator[Any, Any, None]:
     """
     yield LocationFactory()
 
+
 @pytest.fixture
 def order() -> Generator[Any, Any, None]:
     """
@@ -65,13 +67,19 @@ def order() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def stop_api(api_client: APIClient, movement: Movement, location: Location) -> Generator[Any, Any, None]:
+def stop_api(
+    api_client: APIClient,
+    movement: Movement,
+    location: Location,
+    organization: Organization,
+) -> Generator[Any, Any, None]:
     """
     Stop API fixture
     """
     yield api_client.post(
         "/api/stops/",
         {
+            "organization": organization.id,
             "movement": f"{movement.id}",
             "location": f"{location.id}",
             "appointment_time": f"{timezone.now()}",

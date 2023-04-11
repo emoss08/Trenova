@@ -88,13 +88,20 @@ def test_get_by_id(api_client: APIClient, order_type_api: Response) -> None:
     assert response.data["is_active"] is True
 
 
-def test_put(api_client: APIClient, order_type_api: Response) -> None:
+def test_put(
+    api_client: APIClient, order_type_api: Response, organization: Organization
+) -> None:
     """
     Test put Order Type
     """
     response = api_client.put(
         reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]}),
-        {"name": "New Name", "description": "New Description", "is_active": False},
+        {
+            "organization": organization.id,
+            "name": "New Name",
+            "description": "New Description",
+            "is_active": False,
+        },
     )
 
     assert response.status_code == 200

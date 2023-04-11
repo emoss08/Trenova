@@ -578,6 +578,12 @@ class Order(GenericModel):  # type:ignore
         super().clean()
         OrderValidation(order=self)
 
+    # def save(self, *args, **kwargs) -> None:
+    #     from dispatch.services import transfer_rate_details
+    #
+    #     transfer_rate_details.transfer_rate_details(order=self)
+    #     super().save(*args, **kwargs)
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order
 

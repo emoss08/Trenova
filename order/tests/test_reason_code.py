@@ -83,13 +83,14 @@ def test_get_by_id(api_client: APIClient, reason_code_api: Response) -> None:
     assert response.data["is_active"] is True
     assert response.data["code_type"] == "VOIDED"
 
-def test_put(api_client: APIClient, reason_code_api: Response) -> None:
+def test_put(api_client: APIClient, reason_code_api: Response, organization: Organization) -> None:
     """
     Test put Reason Code
     """
     response = api_client.put(
         f"/api/reason_codes/{reason_code_api.data['id']}/",
         {
+            "organization": organization.id,
             "code": "FOBO",
             "description": "New Description",
             "is_active": False,

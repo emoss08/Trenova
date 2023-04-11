@@ -303,6 +303,7 @@ def test_api_put(api_client, organization, division_code_api) -> None:
     cash_account_data = api_client.post(
         "/api/gl_accounts/",
         {
+            "organization": organization.id,
             "is_active": True,
             "account_number": "7000-0000-0000-0000",
             "description": "Foo bar",
@@ -315,6 +316,7 @@ def test_api_put(api_client, organization, division_code_api) -> None:
     response = api_client.put(
         f"/api/division_codes/{division_code_api.data['id']}/",
         {
+            "organization": organization.id,
             "code": "foob",
             "is_active": False,
             "description": "Another Description",

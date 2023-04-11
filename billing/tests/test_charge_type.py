@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -100,14 +81,16 @@ def test_get_by_id(api_client: APIClient, charge_type_api: Response) -> None:
     assert response.data["description"] == "Test Description"
 
 
-def test_put(api_client: APIClient, charge_type_api: Response) -> None:
+def test_put(
+    api_client: APIClient, charge_type_api: Response, organization: Organization
+) -> None:
     """
     Test put Charge Type
     """
 
     response = api_client.put(
         f"/api/charge_types/{charge_type_api.data['id']}/",
-        {"name": "foo bar"},
+        {"organization": organization.id, "name": "foo bar"},
         format="json",
     )
 

@@ -41,6 +41,11 @@ class OrderConfig(AppConfig):
             sender="order.Order",
             dispatch_uid="create_order_initial_movement",
         )
+        # post_save.connect(
+        #     signals.transfer_rate_information,
+        #     sender="order.Order",
+        #     dispatch_uid="transfer_rate_information",
+        # )
         pre_delete.connect(
             signals.check_order_removal_policy,
             sender="order.Order",
