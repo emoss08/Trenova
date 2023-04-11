@@ -22,8 +22,8 @@ from commodities.models import Commodity
 from customer.models import Customer
 from dispatch import models
 from equipment.models import EquipmentType
-from location.models import Location
 from order.models import OrderType
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -38,14 +38,16 @@ class CommentTypeSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     class Meta:
         """
         A class representing the metadata for the `CommentTypeSerializer` class.
         """
 
         model = models.CommentType
-
+        extra_fields = ("organization",)
 
 class DelayCodeSerializer(GenericSerializer):
     """A serializer for the DelayCode model.
@@ -58,13 +60,16 @@ class DelayCodeSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     class Meta:
         """
         A class representing the metadata for the `DelayCodeSerializer` class.
         """
 
         model = models.DelayCode
+        extra_fields = ("organization",)
 
 
 class FleetCodeSerializer(GenericSerializer):
@@ -78,7 +83,9 @@ class FleetCodeSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+    )
     is_active = serializers.BooleanField(default=True)
 
     class Meta:
@@ -87,7 +94,7 @@ class FleetCodeSerializer(GenericSerializer):
         """
 
         model = models.FleetCode
-        extra_fields = ("is_active",)
+        extra_fields = ("organization", "is_active",)
 
 
 class DispatchControlSerializer(GenericSerializer):
@@ -101,13 +108,16 @@ class DispatchControlSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+    )
     class Meta:
         """
         A class representing the metadata for the `DispatchControlSerializer` class.
         """
 
         model = models.DispatchControl
+        extra_fields = ("organization",)
 
 
 class RateSerializer(GenericSerializer):
@@ -126,7 +136,9 @@ class RateSerializer(GenericSerializer):
         equipment_type (serializers.PrimaryKeyRelatedField): The related `EquipmentType` model, with a queryset of all `EquipmentType`
         objects and the option to allow `None` values.
     """
-
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+    )
     customer = serializers.PrimaryKeyRelatedField(
         queryset=Customer.objects.all(), required=False, allow_null=True
     )
@@ -147,6 +159,7 @@ class RateSerializer(GenericSerializer):
 
         model = models.Rate
         extra_fields = (
+            "organization",
             "customer",
             "commodity",
             "order_type",

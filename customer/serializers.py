@@ -21,6 +21,7 @@ from rest_framework import serializers
 
 from billing.models import DocumentClassification
 from customer import models
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 Documents = list[dict[str, Any]]
@@ -39,6 +40,9 @@ class CustomerContactSerializer(GenericSerializer):
     code.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     is_active = serializers.BooleanField(default=True)
     is_payable_contact = serializers.BooleanField(default=True)
 
@@ -49,6 +53,7 @@ class CustomerContactSerializer(GenericSerializer):
 
         model = models.CustomerContact
         extra_fields = (
+            "organization",
             "is_active",
             "is_payable_contact",
         )
@@ -62,12 +67,17 @@ class CustomerEmailProfileSerializer(GenericSerializer):
     of the data.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
         """
         A class representing the metadata for the `CustomerEmailProfileSerializer` class.
         """
 
         model = models.CustomerEmailProfile
+        extra_fields = ("organization",)
 
 
 class CustomerFuelTableDetailSerializer(GenericSerializer):
@@ -78,6 +88,9 @@ class CustomerFuelTableDetailSerializer(GenericSerializer):
     details. It uses the `CustomerFuelTableDetail` model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     method = serializers.ChoiceField(
         choices=models.FuelMethodChoices.choices,
     )
@@ -88,7 +101,10 @@ class CustomerFuelTableDetailSerializer(GenericSerializer):
         """
 
         model = models.CustomerFuelTableDetail
-        extra_fields = ("method",)
+        extra_fields = (
+            "method",
+            "organization",
+        )
         extra_kwargs = {
             "customer_fuel_table": {"required": True},
             "method": {"required": True},
@@ -108,6 +124,9 @@ class CustomerFuelTableSerializer(GenericSerializer):
     code.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     customer_fuel_table_details = CustomerFuelTableDetailSerializer(
         many=True,
         required=False,
@@ -119,7 +138,10 @@ class CustomerFuelTableSerializer(GenericSerializer):
         """
 
         model = models.CustomerFuelTable
-        extra_fields = ("customer_fuel_table_details",)
+        extra_fields = (
+            "customer_fuel_table_details",
+            "organization",
+        )
 
     def update(  # type: ignore
         self, instance: models.CustomerFuelTable, validated_data: Any
@@ -179,6 +201,9 @@ class CustomerRuleProfileSerializer(GenericSerializer):
     code.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     document_class = serializers.PrimaryKeyRelatedField(
         queryset=DocumentClassification.objects.all(), many=True
     )
@@ -189,7 +214,10 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         """
 
         model = models.CustomerRuleProfile
-        extra_fields = ("document_class",)
+        extra_fields = (
+            "document_class",
+            "organization",
+        )
 
 
 class CustomerBillingProfileSerializer(GenericSerializer):
@@ -207,6 +235,9 @@ class CustomerBillingProfileSerializer(GenericSerializer):
     """
 
     is_active = serializers.BooleanField(default=True)
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     email_profile = serializers.PrimaryKeyRelatedField(
         queryset=models.CustomerEmailProfile.objects.all(),
         allow_null=True,
@@ -225,6 +256,7 @@ class CustomerBillingProfileSerializer(GenericSerializer):
 
         model = models.CustomerBillingProfile
         extra_fields = (
+            "organization",
             "is_active",
             "email_profile",
             "rule_profile",
@@ -239,6 +271,9 @@ class CustomerSerializer(GenericSerializer):
     create the serialized representation of the `Customer` model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     billing_profile = serializers.PrimaryKeyRelatedField(
         queryset=models.CustomerBillingProfile.objects.all(),
         allow_null=True,
@@ -257,4 +292,8 @@ class CustomerSerializer(GenericSerializer):
         """
 
         model = models.Customer
-        extra_fields = ("billing_profile", "contacts")
+        extra_fields = (
+            "billing_profile",
+            "contacts",
+            "organization",
+        )

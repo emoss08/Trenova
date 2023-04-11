@@ -18,6 +18,7 @@
 from rest_framework import serializers
 
 from accounting import models
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -53,6 +54,9 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     is_active = serializers.BooleanField(default=True)
     account_type = serializers.ChoiceField(
         choices=models.GeneralLedgerAccount.AccountTypeChoices.choices
@@ -86,6 +90,7 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
 
         model = models.GeneralLedgerAccount
         extra_fields = (
+            "organization",
             "is_active",
             "account_type",
             "cash_flow_type",
@@ -117,6 +122,9 @@ class RevenueCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     expense_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
@@ -142,7 +150,7 @@ class RevenueCodeSerializer(GenericSerializer):
         """
 
         model = models.RevenueCode
-        extra_fields = ("expense_account", "revenue_account")
+        extra_fields = ("organization", "expense_account", "revenue_account")
 
 
 class DivisionCodeSerializer(GenericSerializer):
@@ -174,6 +182,9 @@ class DivisionCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     is_active = serializers.BooleanField(default=True)
     cash_account = serializers.PrimaryKeyRelatedField(
         queryset=models.GeneralLedgerAccount.objects.filter(
@@ -207,4 +218,10 @@ class DivisionCodeSerializer(GenericSerializer):
         """
 
         model = models.DivisionCode
-        extra_fields = ("is_active", "cash_account", "ap_account", "expense_account")
+        extra_fields = (
+            "organization",
+            "is_active",
+            "cash_account",
+            "ap_account",
+            "expense_account",
+        )

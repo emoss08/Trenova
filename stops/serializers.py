@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -40,6 +21,7 @@ from accounts.models import User
 from dispatch.models import CommentType, DelayCode
 from location.models import Location
 from movements.models import Movement
+from organization.models import Organization
 from stops import models
 from utils.serializers import GenericSerializer
 
@@ -53,6 +35,10 @@ class QualifierCodeSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+    )
+
     class Meta:
         """Metaclass for the `QualifierCodeSerializer` class
 
@@ -61,6 +47,7 @@ class QualifierCodeSerializer(GenericSerializer):
         """
 
         model = models.QualifierCode
+        extra_fields = ("organization",)
 
 
 class StopCommentSerializer(GenericSerializer):
@@ -82,6 +69,9 @@ class StopCommentSerializer(GenericSerializer):
         determines the user who entered the stop comment.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+    )
     stop = serializers.PrimaryKeyRelatedField(
         queryset=models.Stop.objects.all(),
     )
@@ -106,6 +96,7 @@ class StopCommentSerializer(GenericSerializer):
 
         model = models.StopComment
         extra_fields = (
+            "organization",
             "stop",
             "comment_type",
             "qualifier_code",
@@ -121,6 +112,9 @@ class StopSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     movement = serializers.PrimaryKeyRelatedField(
         queryset=Movement.objects.all(),
     )
@@ -142,6 +136,7 @@ class StopSerializer(GenericSerializer):
 
         model = models.Stop
         extra_fields = (
+            "organization",
             "comments",
             "movement",
             "location",
@@ -156,6 +151,9 @@ class ServiceIncidentSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     movement = serializers.PrimaryKeyRelatedField(
         queryset=Movement.objects.all(),
     )
@@ -179,6 +177,7 @@ class ServiceIncidentSerializer(GenericSerializer):
 
         model = models.ServiceIncident
         extra_fields = (
+            "organization",
             "movement",
             "stop",
             "delay_code",

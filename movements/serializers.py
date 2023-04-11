@@ -20,6 +20,7 @@ from rest_framework import serializers
 from equipment.models import Tractor
 from movements import models
 from order.models import Order
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 from worker.models import Worker
 
@@ -43,6 +44,9 @@ class MovementSerializer(GenericSerializer):
         determines the secondary worker of the movement.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     order = serializers.PrimaryKeyRelatedField(
         queryset=Order.objects.all(),
     )
@@ -73,6 +77,7 @@ class MovementSerializer(GenericSerializer):
 
         model = models.Movement
         extra_fields = (
+            "organization",
             "order",
             "tractor",
             "primary_worker",

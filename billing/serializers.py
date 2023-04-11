@@ -23,6 +23,7 @@ from billing import models
 from commodities.models import Commodity
 from customer.models import Customer
 from order.models import Order, OrderType
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 from worker.models import Worker
 
@@ -36,6 +37,10 @@ class BillingControlSerializer(GenericSerializer):
     should be included in the serialized representation of the model
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
         """
         Metaclass for the BillingControlSerializer
@@ -45,6 +50,7 @@ class BillingControlSerializer(GenericSerializer):
         """
 
         model = models.BillingControl
+        extra_fields = ("organization",)
 
 
 class BillingTransferLogSerializer(GenericSerializer):
@@ -62,6 +68,9 @@ class BillingTransferLogSerializer(GenericSerializer):
         determines the transferred_by of the BillingTransferLog.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     order = serializers.PrimaryKeyRelatedField(
         queryset=Order.objects.all(),
     )
@@ -78,6 +87,7 @@ class BillingTransferLogSerializer(GenericSerializer):
 
         model = models.BillingTransferLog
         extra_fields = (
+            "organization",
             "order",
             "transferred_by",
         )
@@ -106,6 +116,9 @@ class BillingQueueSerializer(GenericSerializer):
         determines the user that entered the BillingQueue.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     order_type = serializers.PrimaryKeyRelatedField(
         queryset=OrderType.objects.all(),
     )
@@ -141,6 +154,7 @@ class BillingQueueSerializer(GenericSerializer):
 
         model = models.BillingQueue
         extra_fields = (
+            "organization",
             "order_type",
             "order",
             "revenue_code",
@@ -174,6 +188,9 @@ class BillingHistorySerializer(GenericSerializer):
         determines the user that entered the BillingQueue.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
     order_type = serializers.PrimaryKeyRelatedField(
         queryset=OrderType.objects.all(),
     )
@@ -209,6 +226,7 @@ class BillingHistorySerializer(GenericSerializer):
 
         model = models.BillingHistory
         extra_fields = (
+            "organization",
             "order_type",
             "order",
             "revenue_code",
@@ -228,12 +246,17 @@ class ChargeTypeSerializer(GenericSerializer):
     the serialized representation of the `ChargeType` model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
         """
         A class representing the metadata for the `ChargeTypeSerializer` class.
         """
 
         model = models.ChargeType
+        extra_fields = ("organization",)
 
 
 class AccessorialChargeSerializer(GenericSerializer):
@@ -246,12 +269,17 @@ class AccessorialChargeSerializer(GenericSerializer):
     representation of the `AccessorialCharge` model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
-        """
+        """k
         A class representing the metadata for the `AccessorialChargeSerializer` class.
         """
 
         model = models.AccessorialCharge
+        extra_fields = ("organization",)
 
 
 class DocumentClassificationSerializer(GenericSerializer):
@@ -263,9 +291,14 @@ class DocumentClassificationSerializer(GenericSerializer):
     serialized representation of the `DocumentClassification` model.
     """
 
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all()
+    )
+
     class Meta:
         """
         A class representing the metadata for the `DocumentClassificationSerializer` class.
         """
 
         model = models.DocumentClassification
+        extra_fields = ("organization",)
