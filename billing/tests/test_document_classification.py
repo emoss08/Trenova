@@ -39,7 +39,9 @@ def test_document_classification_creation(organization: Organization) -> None:
     assert document_classification.description == "Test document classification"
 
 
-def test_document_classification_update(document_classification: models.DocumentClassification) -> None:
+def test_document_classification_update(
+    document_classification: models.DocumentClassification,
+) -> None:
     """
     Test document classification update
     """
@@ -68,7 +70,7 @@ def test_get_by_id(api_client: APIClient, organization: Organization) -> None:
     _response = api_client.post(
         "/api/document_classifications/",
         {
-            "organization": f"{organization}",
+            "organization": organization.id,
             "name": "test",
             "description": "Test Description",
         },
@@ -87,7 +89,7 @@ def test_post(api_client: APIClient, organization: Organization) -> None:
     response = api_client.post(
         "/api/document_classifications/",
         {
-            "organization": f"{organization}",
+            "organization": organization.id,
             "name": "test",
             "description": "Test Description",
         },
@@ -106,7 +108,7 @@ def test_put(api_client: APIClient, organization: Organization) -> None:
     _response = api_client.post(
         "/api/document_classifications/",
         {
-            "organization": f"{organization}",
+            "organization": organization.id,
             "name": "test",
             "description": "Test Description",
         },
@@ -115,7 +117,11 @@ def test_put(api_client: APIClient, organization: Organization) -> None:
 
     response = api_client.put(
         f"/api/document_classifications/{_response.data['id']}/",
-        {"name": "foo", "description": "foo bar description"},
+        {
+            "organization": organization.id,
+            "name": "foo",
+            "description": "foo bar description",
+        },
         format="json",
     )
 
@@ -132,7 +138,7 @@ def test_delete(api_client: APIClient, organization) -> None:
     _response = api_client.post(
         "/api/document_classifications/",
         {
-            "organization": f"{organization}",
+            "organization": organization.id,
             "name": "test",
             "description": "Test Description",
         },
@@ -147,7 +153,9 @@ def test_delete(api_client: APIClient, organization) -> None:
     assert response.data is None
 
 
-def test_cannot_delete_con_hook(document_classification: models.DocumentClassification) -> None:
+def test_cannot_delete_con_hook(
+    document_classification: models.DocumentClassification,
+) -> None:
     """
     Test for cannot delete consolidated document classification
     """

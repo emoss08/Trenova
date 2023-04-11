@@ -32,9 +32,6 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
     Equipment Type Detail, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
     equipment_class = serializers.ChoiceField(
         choices=models.EquipmentTypeDetail.EquipmentClassChoices.choices
     )
@@ -48,7 +45,6 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
         model = models.EquipmentTypeDetail
         extra_fields = (
             "equipment_class",
-            "organization",
         )
         extra_read_only_fields = ("equipment_type",)
 
@@ -60,9 +56,6 @@ class EquipmentTypeSerializer(GenericSerializer):
     Equipment Types, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
     equipment_type_details = EquipmentTypeDetailSerializer(required=False)
 
     class Meta:
@@ -71,10 +64,7 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
 
         model = models.EquipmentType
-        extra_fields = (
-            "equipment_type_details",
-            "organization",
-        )
+        extra_fields = ("equipment_type_details",)
 
     def create(self, validated_data: Any) -> models.EquipmentType:
         """Create new Equipment Type

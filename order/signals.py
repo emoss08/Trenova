@@ -20,6 +20,7 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
+from dispatch.services.transfer_rate_details import transfer_rate_details
 from movements.models import Movement
 from movements.services.generation import MovementService
 
@@ -147,3 +148,18 @@ def check_order_removal_policy(
             },
             code="invalid",
         )
+
+
+def transfer_rate_information(instance: models.Order, **kwargs: Any) -> None:
+    """Transfer rate information from the order to the movement.
+
+    Args:
+        instance (models.Order): The instance of the Order model being saved.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    if instance.rate:
+        transfer_rate_details(order=instance)

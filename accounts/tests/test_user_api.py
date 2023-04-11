@@ -39,17 +39,19 @@ def test_get_by_id(api_client, user_api) -> None:
     response = api_client.get(f"/api/users/{user_api.data['id']}/")
     assert response.status_code == 200
 
-def test_create_success(api_client):
+def test_create_success(api_client, organization):
     """
     Test Create user
     """
     job_title = JobTitleFactory()
 
     payload = {
+        "organization": organization.id,
         "username": "test_user",
         "email": "test_user@example.com",
         "password": "test_password1234%",
         "profile": {
+            "organization": organization.id,
             "first_name": "test",
             "last_name": "user",
             "address_line_1": "test",
@@ -95,16 +97,18 @@ def test_user_with_email_exists_error(api_client, organization):
     response = api_client.post("/api/users/", payload, format="json")
     assert response.status_code == 400
 
-def test_put(user_api, api_client):
+def test_put(user_api, api_client, organization):
     """
     Test Put request
     """
     response = api_client.put(
         f"/api/users/{user_api.data['id']}/",
         {
+            "organization": organization.id,
             "username": "test2342",
             "email": "test@test.com",
             "profile": {
+                "organization": organization.id,
                 "first_name": "test",
                 "last_name": "user",
                 "address_line_1": "test",

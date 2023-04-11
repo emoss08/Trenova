@@ -21,6 +21,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from equipment import models
+from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
@@ -32,7 +33,9 @@ def test_equipment_type_detail_hook(equipment_type: models.EquipmentType) -> Non
     assert equipment_type.equipment_type_details is not None
 
 
-def test_create_equipment_type(api_client: APIClient) -> None:
+def test_create_equipment_type(
+    api_client: APIClient, organization: Organization
+) -> None:
     """
     Test create equipment type
     """
@@ -49,7 +52,9 @@ def test_create_equipment_type(api_client: APIClient) -> None:
     assert response.data["description"] == "Test Equipment Type Description"
 
 
-def test_create_equip_type_with_detail(api_client: APIClient) -> None:
+def test_create_equip_type_with_detail(
+    api_client: APIClient, organization: Organization
+) -> None:
     """
     Test create equipment type with detail
     """
@@ -85,13 +90,14 @@ def test_create_equip_type_with_detail(api_client: APIClient) -> None:
     assert response.data["equipment_type_details"]["idling_fuel_usage"] == "10.0000"
 
 
-def test_detail_signal_fire(api_client: APIClient) -> None:
+def test_detail_signal_fire(api_client: APIClient, organization: Organization) -> None:
     """
     Test detail signal fire
     """
 
     url = "/api/equipment_types/"
     data = {
+        "organization": organization.id,
         "name": "test_equipment_type",
         "description": "Test Equipment Type Description",
     }
@@ -102,12 +108,15 @@ def test_detail_signal_fire(api_client: APIClient) -> None:
     assert response.data["equipment_type_details"] is not None
 
 
-def test_update_equipment_type(api_client: APIClient, equipment_type_api: Response) -> None:
+def test_update_equipment_type(
+    api_client: APIClient, equipment_type_api: Response, organization: Organization
+) -> None:
     """
     Test update equipment type
     """
 
     put_data = {
+        "organization": organization.id,
         "name": "test_updated",
         "description": "Test Equipment Type Description Updated",
     }
@@ -122,15 +131,19 @@ def test_update_equipment_type(api_client: APIClient, equipment_type_api: Respon
     assert response.data["description"] == "Test Equipment Type Description Updated"
 
 
-def test_update_equipment_details(api_client: APIClient, equipment_type_api: Response) -> None:
+def test_update_equipment_details(
+    api_client: APIClient, equipment_type_api: Response, organization: Organization
+) -> None:
     """
     Test update equipment details
     """
 
     put_data = {
+        "organization": organization.id,
         "name": "test_equipment_type",
         "description": "Test Equipment Updated",
         "equipment_type_details": {
+            "organization": organization.id,
             "equipment_class": "TRAILER",
             "fixed_cost": "1.0000",
             "variable_cost": "0.0000",

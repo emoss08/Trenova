@@ -30,7 +30,6 @@ from movements.tests.factories import MovementFactory
 from organization.models import Organization
 from stops import models
 from stops.tests.factories import StopFactory
-from utils.models import StatusChoices
 
 pytestmark = pytest.mark.django_db
 
@@ -94,6 +93,7 @@ def test_location_address(
 
     assert stop.address_line == location.get_address_combination
 
+
 def test_get(api_client: APIClient) -> None:
     """
     Test get Stop
@@ -115,7 +115,11 @@ def get_by_id(api_client: APIClient, stop_api: Response) -> None:
 
 
 def test_put(
-    api_client: APIClient, stop_api: Response, location: Location, movement: Movement
+    api_client: APIClient,
+    stop_api: Response,
+    location: Location,
+    movement: Movement,
+    organization: Organization,
 ) -> None:
     """
     Test put Stop
@@ -124,6 +128,7 @@ def test_put(
     response = api_client.put(
         reverse("stops-detail", kwargs={"pk": stop_api.data["id"]}),
         {
+            "organization": organization.id,
             "location": location.id,
             "movement": movement.id,
             "appointment_time": stop_api.data["appointment_time"],

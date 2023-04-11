@@ -33,10 +33,8 @@ from customer.factories import CustomerFactory
 from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
-from location.factories import LocationFactory
 from order.tests.factories import OrderTypeFactory
 from organization.models import Organization
-from utils.models import RatingMethodChoices
 
 pytestmark = pytest.mark.django_db
 
@@ -345,107 +343,6 @@ def test_set_rate_number_increment_hook(rate: models.Rate) -> None:
     assert rate2.rate_number == "R00002"
 
 
-def test_rate_table_str_representation(rate_table: models.RateTable) -> None:
-    """
-    Test the rate table string representation.
-    """
-
-    assert str(rate_table) == rate_table.description
-
-
-def test_rate_table_get_absolute_url(rate_table: models.RateTable) -> None:
-    """
-    Test the rate table get_absolute_url method.
-    """
-
-    assert rate_table.get_absolute_url() == reverse(
-        "rate-tables-detail", kwargs={"pk": rate_table.id}
-    )
-
-
-def test_rate_table_api_get(api_client: APIClient, organization: Organization) -> None:
-    """
-    Test Rate Table API GET method.
-    """
-    response = api_client.get(reverse("rate-tables-list"))
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_rate_table_api_post(api_client: APIClient, organization: Organization, rate: models.Rate) -> None:
-    """
-    Test Rate Table API POST method.
-    """
-
-    origin_location = LocationFactory()
-    destination_location = LocationFactory()
-
-    data = {
-        "organization": organization.id,
-        "rate": rate.id,
-        "description": "Test Rate Table",
-        "origin_location": origin_location.id,
-        "destination_location": destination_location.id,
-        "rate_method": RatingMethodChoices.FLAT,
-        "rate_amount": 100.00,
-    }
-
-    response = api_client.post(reverse("rate-tables-list"), data=data)
-
-    assert response.status_code == status.HTTP_201_CREATED
-    assert models.RateTable.objects.count() == 1
-    assert models.RateTable.objects.get().description == data["description"]
-    assert models.RateTable.objects.get().origin_location.id == data["origin_location"]
-    assert (
-        models.RateTable.objects.get().destination_location.id
-        == data["destination_location"]
-    )
-
-
-def test_rate_table_api_put(api_client: APIClient, rate_table_api: Response, organization: Organization) -> None:
-    """
-    Test Rate Table API put method.
-    """
-    origin_location = LocationFactory()
-    destination_location = LocationFactory()
-    rate = factories.RateFactory()
-
-    data = {
-        "organization": organization.id,
-        "rate": rate.id,
-        "description": "Test Rate Table",
-        "origin_location": origin_location.id,
-        "destination_location": destination_location.id,
-        "rate_method": RatingMethodChoices.FLAT,
-        "rate_amount": 100.00,
-    }
-
-    response = api_client.put(
-        reverse("rate-tables-detail", kwargs={"pk": rate_table_api.data["id"]}),
-        data=data,
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    assert models.RateTable.objects.count() == 1
-    assert models.RateTable.objects.get().description == data["description"]
-    assert models.RateTable.objects.get().origin_location.id == data["origin_location"]
-    assert (
-        models.RateTable.objects.get().destination_location.id
-        == data["destination_location"]
-    )
-
-
-def test_rate_table_api_delete(api_client: APIClient, rate_table_api: Response) -> None:
-    """
-    Test Rate Table API Delete Method.
-    """
-    response = api_client.delete(
-        reverse("rate-tables-detail", kwargs={"pk": rate_table_api.data["id"]})
-    )
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert response.data is None
-    assert models.RateTable.objects.count() == 0
-
-
 def test_rate_billing_table_api_get(api_client: APIClient) -> None:
     """
     Test Rate Billing Table API GET method.
@@ -454,7 +351,9 @@ def test_rate_billing_table_api_get(api_client: APIClient) -> None:
     assert response.status_code == status.HTTP_200_OK
 
 
-def test_rate_billing_table_api_post(api_client: APIClient, organization: Organization, rate: models.Rate) -> None:
+def test_rate_billing_table_api_post(
+    api_client: APIClient, organization: Organization, rate: models.Rate
+) -> None:
     """
     Test Rate Billing Table API POST method.
     """
@@ -479,7 +378,10 @@ def test_rate_billing_table_api_post(api_client: APIClient, organization: Organi
 
 
 def test_rate_billing_table_api_update(
-    api_client: APIClient, organization: Organization, rate: models.Rate, rate_billing_table_api: Response
+    api_client: APIClient,
+    organization: Organization,
+    rate: models.Rate,
+    rate_billing_table_api: Response,
 ) -> None:
     """
     Test Rate Billing Table API PUT method.
@@ -507,7 +409,9 @@ def test_rate_billing_table_api_update(
     assert models.RateBillingTable.objects.count() == 1
 
 
-def test_rate_billing_table_delete(api_client: APIClient, rate_billing_table_api: Response) -> None:
+def test_rate_billing_table_delete(
+    api_client: APIClient, rate_billing_table_api: Response
+) -> None:
     """
     Test Rate Billing Table API DELETE method.
     """

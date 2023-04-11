@@ -267,24 +267,32 @@ def order_documentation_api(
 
 
 @pytest.fixture
-def order_type_api(api_client: APIClient) -> Generator[Any, Any, None]:
+def order_type_api(
+    api_client: APIClient, organization: Organization
+) -> Generator[Any, Any, None]:
     """
     Order Type Factory
     """
     yield api_client.post(
         "/api/order_types/",
-        {"name": "Foo Bar", "description": "Foo Bar", "is_active": True},
+        {
+            "organization": organization.id,
+            "name": "Foo Bar",
+            "description": "Foo Bar",
+            "is_active": True,
+        },
     )
 
 
 @pytest.fixture
-def reason_code_api(api_client: APIClient) -> Generator[Any, Any, None]:
+def reason_code_api(api_client: APIClient, organization: Organization) -> Generator[Any, Any, None]:
     """
     Reason Code Factory
     """
     yield api_client.post(
         "/api/reason_codes/",
         {
+            "organization": organization.id,
             "code": "NEWT",
             "description": "Foo Bar",
             "is_active": True,
