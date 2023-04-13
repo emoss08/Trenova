@@ -225,7 +225,7 @@ class KubeConfiguration(GenericModel):
         verbose_name_plural = _("Kube Configurations")
         db_table = "kube_configuration"
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save the Kube Configuration.
 
@@ -237,7 +237,7 @@ class KubeConfiguration(GenericModel):
         """
         if self.password:
             self.password = make_password(self.password)
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Kube Configuration absolute URL.

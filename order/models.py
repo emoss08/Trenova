@@ -578,11 +578,11 @@ class Order(GenericModel):  # type:ignore
         super().clean()
         OrderValidation(order=self)
 
-    # def save(self, *args, **kwargs) -> None:
-    #     from dispatch.services import transfer_rate_details
-    #
-    #     transfer_rate_details.transfer_rate_details(order=self)
-    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs) -> None:
+        from dispatch.services import transfer_rate_details
+
+        transfer_rate_details.transfer_rate_details(order=self)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the Order
@@ -820,14 +820,14 @@ class AdditionalCharge(GenericModel):  # type: ignore
         """
         return textwrap.shorten(f"{self.order} - {self.charge}", 50, placeholder="...")
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save the AdditionalCharge
         """
         self.charge_amount = self.charge.charge_amount
         self.sub_total = self.charge_amount * self.unit
 
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the AdditionalCharges

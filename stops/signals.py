@@ -77,9 +77,10 @@ def update_movement_status(
     instance.movement.status = new_status
     instance.movement.save()
 
+
 def check_stop_removal_policy(
-        instance: models.Stop,
-        **kwargs: Any,
+    instance: models.Stop,
+    **kwargs: Any,
 ) -> None:
     """Check if the organization allows order removal.
 

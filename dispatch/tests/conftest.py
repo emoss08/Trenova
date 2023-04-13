@@ -1,21 +1,19 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
 from collections.abc import Generator
 from typing import Any
@@ -23,14 +21,17 @@ from typing import Any
 import pytest
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.test import APIClient
 
 from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories
+from dispatch.models import Rate
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order.tests.factories import OrderTypeFactory
+from organization.models import Organization
 from utils.models import RatingMethodChoices
 
 pytestmark = pytest.mark.django_db
@@ -45,14 +46,6 @@ def rate() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def rate_table() -> Generator[Any, Any, None]:
-    """
-    Rate Table Fixture
-    """
-    yield factories.RateTableFactory()
-
-
-@pytest.fixture
 def rate_billing_table() -> Generator[Any, Any, None]:
     """
     Rate Billing Table
@@ -61,7 +54,9 @@ def rate_billing_table() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def rate_api(api_client, organization) -> Generator[Any, Any, None]:
+def rate_api(
+    api_client: APIClient, organization: Organization
+) -> Generator[Any, Any, None]:
     """
     Rate API
     """
@@ -88,7 +83,9 @@ def rate_api(api_client, organization) -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def rate_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
+def rate_table_api(
+    api_client: APIClient, rate: Rate, organization: Organization
+) -> Generator[Any, Any, None]:
     """
     Rate Table API
     """

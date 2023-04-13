@@ -314,7 +314,7 @@ class RevenueCode(GenericModel):  # type: ignore
         if self.code:
             self.code = self.code.upper()
 
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """RevenueCode absolute url

@@ -317,7 +317,7 @@ class UserProfile(GenericModel):
         """
         return textwrap.wrap(self.user.username, 30)[0]
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the model
 
         Returns:
@@ -325,7 +325,8 @@ class UserProfile(GenericModel):
         """
         self.first_name = self.first_name.title()
         self.last_name = self.last_name.title()
-        super().save(**kwargs)
+
+        super().save(*args, **kwargs)
 
     def update_profile(self, **kwargs: Any) -> None:
         """
@@ -569,7 +570,7 @@ class Token(models.Model):
         """
         return f"{self.key[-10:]}({self.user.username})"
 
-    def save(self, **kwargs: Any) -> None:  # type: ignore
+    def save(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
         """Save the model
         Returns:
             None
@@ -577,7 +578,7 @@ class Token(models.Model):
 
         if not self.key:
             self.key = self.generate_key()
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     @staticmethod
     def generate_key() -> str:

@@ -20,6 +20,7 @@ import datetime
 import factory
 from django.utils import timezone
 
+
 class DispatchControlFactory(factory.django.DjangoModelFactory):
     """
     Dispatch control factory
@@ -105,6 +106,7 @@ class RateFactory(factory.django.DjangoModelFactory):
     equipment_type = factory.SubFactory(
         "equipment.tests.factories.EquipmentTypeFactory"
     )
+    rate_amount = 1_000_000.00
 
     class Meta:
         """
