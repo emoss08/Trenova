@@ -112,20 +112,7 @@ class StopSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    movement = serializers.PrimaryKeyRelatedField(
-        queryset=Movement.objects.all(),
-    )
-    location = serializers.PrimaryKeyRelatedField(
-        queryset=Location.objects.all(),
-    )
-    comments = serializers.PrimaryKeyRelatedField(
-        queryset=models.StopComment.objects.all(),
-        allow_null=True,
-        required=False,
-    )
+
 
     class Meta:
         """Metaclass for the `StopSerializer` class
@@ -135,12 +122,6 @@ class StopSerializer(GenericSerializer):
         """
 
         model = models.Stop
-        extra_fields = (
-            "organization",
-            "comments",
-            "movement",
-            "location",
-        )
 
 
 class ServiceIncidentSerializer(GenericSerializer):

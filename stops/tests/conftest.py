@@ -80,9 +80,9 @@ def stop_api(
         "/api/stops/",
         {
             "organization": organization.id,
-            "movement": f"{movement.id}",
-            "location": f"{location.id}",
-            "appointment_time": f"{timezone.now()}",
+            "movement": movement.id,
+            "location": location.id,
+            "appointment_time": timezone.now(),
             "stop_type": models.StopChoices.PICKUP,
         },
         format="json",

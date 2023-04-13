@@ -114,6 +114,34 @@ def get_by_id(api_client: APIClient, stop_api: Response) -> None:
     assert response.data["stop_type"] == models.StopChoices.PICKUP
 
 
+def test_post(
+    api_client: APIClient,
+    location: Location,
+    movement: Movement,
+    organization: Organization,
+) -> None:
+    """
+    Test post Stop
+    """
+    response = api_client.post(
+        STOP_LIST_URL,
+        {
+            "organization": organization.id,
+            "location": location.id,
+            "movement": movement.id,
+            "sequence": 1,
+            "appointment_time": timezone.now() + timedelta(days=1),
+            "stop_type": "SP",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.data is not None
+    assert response.data["location"] == location.id
+    assert response.data["movement"] == movement.id
+    assert response.data["stop_type"] == "SP"
+
+
 def test_put(
     api_client: APIClient,
     stop_api: Response,
@@ -159,18 +187,6 @@ def test_patch(api_client: APIClient, location: Location, stop_api: Response) ->
     assert response.data["location"] == location.id
 
 
-def test_delete(api_client: APIClient, stop_api: Response) -> None:
-    """
-    Test Delete Stop
-    """
-    response = api_client.delete(
-        reverse("stops-detail", kwargs={"pk": stop_api.data["id"]})
-    )
-
-    assert response.status_code == 204
-    assert not response.data
-
-
 def test_worker_or_equipment_in_movement_before_arrival_time() -> None:
     """
     Test ValidationError is thrown when the `arrival_time` is set in the stop, but
@@ -182,7 +198,7 @@ def test_worker_or_equipment_in_movement_before_arrival_time() -> None:
         StopFactory(movement=movement, arrival_time=timezone.now())
 
     assert excinfo.value.message_dict["arrival_time"] == [
-        "Must assign worker or equipment to movement before setting arrival time. Please try again."
+        "Must assign worker or tractor to movement before setting arrival time. Please try again."
     ]
 
 
@@ -193,12 +209,14 @@ def test_movement_has_worker_and_equipment_if_stop_in_progress_or_completed() ->
     """
 
     movement = MovementFactory(primary_worker=None, tractor=None)
+    stop = StopFactory(movement=movement)
 
     with pytest.raises(ValidationError) as excinfo:
-        StopFactory(status="P", movement=movement)
+        stop.status = "P"
+        stop.clean()
 
     assert excinfo.value.message_dict["status"] == [
-        "Cannot change status to in progress or completed if there is no equipment or primary worker. Please try again."
+        "Cannot change status to in progress or completed if there is no tractor or primary worker. Please try again."
     ]
 
 

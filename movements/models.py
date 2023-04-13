@@ -126,10 +126,10 @@ class Movement(GenericModel):
         MovementValidation(movement=self)
         super().clean()
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self,*args: Any, **kwargs: Any) -> None:
         self.set_tractor_and_workers()
 
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def set_tractor_and_workers(self) -> None:
         if self.tractor:

@@ -430,7 +430,7 @@ def test_order_destination_location_or_address_is_required() -> None:
     ]
 
 
-def test_remove_orders_validation(order: models.Order) -> None:
+def test_remove_orders_validation(order: models.Order, organization: Organization) -> None:
     """
     Test ValidationError is thrown if the stop in an order is being deleted,
     and order_control does not allow it.

@@ -298,7 +298,7 @@ class Commodity(GenericModel):  # type: ignore
             setattr(self, key, value)
         self.save()
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save Commodity
 
         Args:
@@ -312,7 +312,7 @@ class Commodity(GenericModel):  # type: ignore
 
         if self.hazmat:
             self.is_hazmat = True
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Commodity Absolute URL

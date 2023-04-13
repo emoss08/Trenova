@@ -202,7 +202,7 @@ class Stop(GenericModel):
         from stops.validation import StopValidation
         StopValidation(instance=self)
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self,*args: Any, **kwargs: Any) -> None:
         """Save the stop object
 
         Args:
@@ -213,7 +213,7 @@ class Stop(GenericModel):
         """
 
         self.update_status_based_on_times()
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
         # self.update_movement_status()
 
         # If the location code is entered and not the address_line then autofill address_line

@@ -91,10 +91,11 @@ class GenericModel(TimeStampedModel):
     class Meta:
         abstract = True
 
-    def save(self, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the model instance
 
         Args:
+            *args (Any): Arguments
             **kwargs (Any): Keyword Arguments
 
         Returns:
@@ -102,7 +103,7 @@ class GenericModel(TimeStampedModel):
         """
 
         self.full_clean()
-        super().save(**kwargs)
+        super().save(*args, **kwargs)
 
 
 class ChoiceField(CharField):

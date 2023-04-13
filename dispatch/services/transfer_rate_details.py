@@ -52,7 +52,7 @@ def transfer_rate_details(order: Order) -> None:
     Returns:
         None: This function does not return anything.
     """
-    rate = get_rate(order=order)
-
-    order.freight_charge_amount = rate.rate_amount
-    order.mileage = rate.distance_override
+    if rate := get_rate(order=order):
+        order.freight_charge_amount = rate.rate_amount
+        order.mileage = rate.distance_override
+        order.save()
