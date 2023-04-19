@@ -367,10 +367,10 @@ class AccessorialCharge(GenericModel):  # type: ignore
         Metaclass for the AccessorialCharge model.
         """
 
-        verbose_name = _("Other Charge")
-        verbose_name_plural = _("Other Charges")
+        verbose_name = _("Accessorial Charge")
+        verbose_name_plural = _("Accessorial Charges")
         ordering = ["code"]
-        db_table = "other_charge"
+        db_table = "accessorial_charge"
         constraints = [
             models.UniqueConstraint(
                 fields=["code", "organization"],
@@ -392,7 +392,7 @@ class AccessorialCharge(GenericModel):  # type: ignore
         Returns:
             str: Other Charge absolute URL
         """
-        return reverse("billing:other_charge_detail", kwargs={"pk": self.pk})
+        return reverse("other_charge_detail", kwargs={"pk": self.pk})
 
 
 class DocumentClassification(GenericModel):

@@ -570,7 +570,7 @@ class Token(models.Model):
         """
         return f"{self.key[-10:]}({self.user.username})"
 
-    def save(self, *args: Any, **kwargs: Any) -> None:  # type: ignore
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the model
         Returns:
             None

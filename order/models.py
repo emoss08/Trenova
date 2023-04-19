@@ -763,13 +763,19 @@ class AdditionalCharge(GenericModel):  # type: ignore
         related_query_name="additional_charge",
         verbose_name=_("Order"),
     )
-    charge = models.ForeignKey(
+    accessorial_charge = models.ForeignKey(
         "billing.AccessorialCharge",
         on_delete=models.CASCADE,
         related_name="additional_charges",
         related_query_name="additional_charge",
         verbose_name=_("Charge"),
         help_text=_("Charge"),
+    )
+    description = models.CharField(
+        _("Description"),
+        max_length=100,
+        help_text=_("Description of the charge"),
+        blank=True,
     )
     charge_amount = MoneyField(
         _("Charge Amount"),
@@ -818,13 +824,13 @@ class AdditionalCharge(GenericModel):  # type: ignore
         Returns:
             str: String representation of the AdditionalCharges
         """
-        return textwrap.shorten(f"{self.order} - {self.charge}", 50, placeholder="...")
+        return textwrap.shorten(f"{self.order} - {self.accessorial_charge}", 50, placeholder="...")
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save the AdditionalCharge
         """
-        self.charge_amount = self.charge.charge_amount
+        self.charge_amount = self.accessorial_charge.charge_amount
         self.sub_total = self.charge_amount * self.unit
 
         super().save(*args, **kwargs)
