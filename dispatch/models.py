@@ -17,7 +17,7 @@
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -185,8 +185,11 @@ class DispatchControl(GenericModel):
     tractor_worker_fleet_constraint = models.BooleanField(
         _("Enforce Tractor and Worker Fleet Continuity "),
         default=False,
-        help_text=_("Enforce Worker and Tractor must be in the same fleet to be assigned to a dispatch."),
+        help_text=_(
+            "Enforce Worker and Tractor must be in the same fleet to be assigned to a dispatch."
+        ),
     )
+
     class Meta:
         """
         Metaclass for DispatchControl
@@ -757,11 +760,8 @@ class Rate(GenericModel):  # type:ignore
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
         code = f"R{Rate.objects.count() + 1:05d}"
-        return (
-            "R00001"
-            if Rate.objects.filter(rate_number=code).exists()
-            else code
-        )
+        return "R00001" if Rate.objects.filter(rate_number=code).exists() else code
+
 
 class RateBillingTable(GenericModel):  # type:ignore
     """
@@ -809,7 +809,7 @@ class RateBillingTable(GenericModel):  # type:ignore
         verbose_name=_("Rate"),
         help_text=_("Rate for Rate Billing Table"),
     )
-    charge_code = models.ForeignKey(
+    accessorial_charge = models.ForeignKey(
         "billing.AccessorialCharge",
         on_delete=models.PROTECT,
         related_name="rate_billing_tables",
@@ -822,9 +822,9 @@ class RateBillingTable(GenericModel):  # type:ignore
         help_text=_("Description for Rate Billing Table"),
         blank=True,
     )
-    units = models.PositiveIntegerField(
-        _("Units"),
-        help_text=_("Units for Rate Billing Table"),
+    unit = models.PositiveIntegerField(
+        _("Unit"),
+        help_text=_("Unit for Rate Billing Table"),
     )
     charge_amount = MoneyField(
         _("Charge Amount"),
@@ -850,7 +850,7 @@ class RateBillingTable(GenericModel):  # type:ignore
 
         verbose_name = _("Rate Billing Table")
         verbose_name_plural = _("Rate Billing Tables")
-        ordering = ["rate", "charge_code"]
+        ordering = ["rate", "accessorial_charge"]
         db_table = "rate_billing_table"
 
     def __str__(self) -> str:
@@ -862,7 +862,23 @@ class RateBillingTable(GenericModel):  # type:ignore
         Returns:
             str: The description field of the RateBillingTable instance.
         """
-        return self.description
+        return textwrap.shorten(
+            f"{self.rate}, {self.accessorial_charge}", width=50, placeholder="..."
+        )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Save the RateBillingTable instance.
+
+        This method overrides the default save method for the RateBillingTable model. It calculates
+        the sub_total for the RateBillingTable instance.
+
+        Returns:
+            None: None
+        """
+        if not self.sub_total:
+            self.sub_total = self.unit * self.charge_amount
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """

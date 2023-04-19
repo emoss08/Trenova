@@ -14,9 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from django.db.models import QuerySet
 from django.utils import timezone
-from order.models import Order
+from order.models import Order, AdditionalCharge
 from dispatch import models
 
 
@@ -43,6 +43,12 @@ def get_rate(*, order: Order) -> models.Rate | None:
     return rates.first() if rates.exists() else None
 
 
+def get_rate_billing_table(
+    *, rate: models.Rate
+) -> QuerySet[models.RateBillingTable] | None:
+    return models.RateBillingTable.objects.filter(rate=rate).all() if rate else None
+
+
 def transfer_rate_details(order: Order) -> None:
     """Transfer rate details to the order.
 
@@ -52,7 +58,26 @@ def transfer_rate_details(order: Order) -> None:
     Returns:
         None: This function does not return anything.
     """
+
     if rate := get_rate(order=order):
         order.freight_charge_amount = rate.rate_amount
         order.mileage = rate.distance_override
-        order.save()
+
+    for billing_item in get_rate_billing_table(rate=rate):
+        # Check if the charge already exists on the order
+        additional_charge_exists = AdditionalCharge.objects.filter(
+            organization=order.organization,
+            order=order,
+            accessorial_charge=billing_item.accessorial_charge,
+        ).exists()
+
+        if not additional_charge_exists:
+            AdditionalCharge.objects.create(
+                organization=order.organization,
+                order=order,
+                accessorial_charge=billing_item.accessorial_charge,
+                charge_amount=billing_item.charge_amount,
+                unit=billing_item.unit,
+                description=billing_item.description,
+                entered_by=order.entered_by,
+            )

@@ -82,7 +82,7 @@ class RateBillingTableAdmin(GenericStackedInline[models.Rate, models.RateBilling
     model: type[models.RateBillingTable] = models.RateBillingTable
     extra = 0
     exclude = ("organization",)
-    autocomplete_fields = ("charge_code",)
+    autocomplete_fields = ("accessorial_charge",)
 
 
 @admin.register(models.Rate)
