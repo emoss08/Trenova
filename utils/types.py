@@ -15,10 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Union, Tuple, Dict
+from typing import Any, Dict, Tuple, TypeAlias, Union
 from uuid import UUID
+
 from django.db.models import UUIDField
-from typing import TypeAlias
 
 MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
 HealthStatus: TypeAlias = Union[Dict[str, Union[str, int, int, int]]]

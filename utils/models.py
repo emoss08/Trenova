@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, final, Union
+from typing import Any, final, Union, Optional
 import secrets
 import string
 from django.core import checks
@@ -24,9 +24,10 @@ from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from pendulum import DateTime
+
 from organization.models import Organization
-from django.core.exceptions import FieldDoesNotExist
-from django.db.models import F, Q, Prefetch
+import pendulum
 
 
 def generate_random_string(length: int = 10) -> str:
@@ -160,3 +161,20 @@ class ChoiceField(CharField):
                 )
             ]
         return []
+
+
+class PendulumDateTimeField(models.DateTimeField):
+    def to_python(self, value: Any) -> Optional[pendulum.DateTime]:
+        if isinstance(value, pendulum.DateTime):
+            return value
+        return super().to_python(value)
+
+    def from_db_value(
+        self, value: Optional[Any], expression: Any, connection: Any
+    ) -> Optional[pendulum.DateTime]:
+        return pendulum.instance(value) if value is not None else value
+
+    def get_prep_value(self, value: Optional[pendulum.DateTime]) -> Optional[Any]:
+        if value is not None:
+            value = pendulum.instance(value).naive()
+        return super().get_prep_value(value)
