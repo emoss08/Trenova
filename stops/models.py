@@ -214,14 +214,13 @@ class Stop(GenericModel):
 
         self.update_status_based_on_times()
         super().save(*args, **kwargs)
-        # self.update_movement_status()
 
         # If the location code is entered and not the address_line then autofill address_line
         # with the location combination (address_line_1, address_line_2, city, state & zip_code)
         if self.location and not self.address_line:
             self.address_line = self.location.get_address_combination
 
-    def update_status_based_on_times(self):
+    def update_status_based_on_times(self) -> None:
         if self.arrival_time is not None and self.departure_time is not None:
             self.status = StatusChoices.COMPLETED
         elif self.arrival_time is not None:
