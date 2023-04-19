@@ -27,36 +27,11 @@ from stops.services import generation
 from utils.models import StatusChoices
 
 
-@receiver(post_save, sender=models.Stop)
-def sequence_stops(
-    sender: models.Stop, instance: models.Stop, created: bool, **kwargs: Any
-) -> None:
-    """Sequence the stops when a new stop is added
-    to a movement.
-
-    Args:
-        sender (Stop): Stop
-        instance (Stop): The stop instance.
-        created (bool): if the Stop was created.
-        **kwargs (Any): Keyword arguments.
-
-    Returns:
-        None: This function has no return.
-    """
-    if created:
-        generation.StopService.sequence_stops(instance)
-
-
-@receiver(post_save, sender=models.Stop, dispatch_uid="update_movement_status")
-def update_movement_status(
-    sender: models.Stop, instance: models.Stop, created: bool, **kwargs: Any
-) -> None:
+def update_movement_status(instance: models.Stop, **kwargs: Any) -> None:
     """Update the movement status when a stop is created.
 
     Args:
-        sender (Stop): Stop
         instance (Stop): The stop instance.
-        created (bool): if the Stop was created.
         **kwargs (Any): Keyword arguments.
 
     Returns:
