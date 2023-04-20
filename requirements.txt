@@ -31,7 +31,7 @@ drf-spectacular==0.26.2
 hiredis==2.2.2
 httpx==0.24.0
 msgpack==1.0.5
-phonenumbers==8.13.9
+phonenumbers==8.13.10
 Pillow==9.5.0
 psycopg2==2.9.6
 pypdf==3.8.0
@@ -39,7 +39,7 @@ redis==4.5.4
 rich==13.3.4
 weasyprint==58.1
 whitenoise==6.4.0
-xhtml2pdf==0.2.9
+xhtml2pdf==0.2.10
 channels_redis==4.1.0
 openpyxl==3.1.2
 orjson==3.8.10
@@ -48,3 +48,5 @@ drf-standardized-errors[openapi]==0.12.5
 psycopg2cffi==2.9.0
 kubernetes==26.1.0
 pendulum==2.1.2
+googlemaps==4.10.0
+geopy==2.3.0
