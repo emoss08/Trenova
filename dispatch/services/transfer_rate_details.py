@@ -18,6 +18,7 @@ from django.db.models import QuerySet
 from django.utils import timezone
 from order.models import Order, AdditionalCharge
 from dispatch import models
+from order.selectors import sum_order_additional_charges
 
 
 def get_rate(*, order: Order) -> models.Rate | None:
@@ -81,3 +82,5 @@ def transfer_rate_details(order: Order) -> None:
                 description=billing_item.description,
                 entered_by=order.entered_by,
             )
+
+    order.other_charge_amount = sum_order_additional_charges(order=order)
