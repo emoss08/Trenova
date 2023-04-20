@@ -25,13 +25,13 @@ from movements.models import Movement
 from movements.services.generation import MovementService
 
 from order import models
+from route.services import get_order_mileage
 from stops.selectors import total_weight_for_order, total_piece_count_for_order
 from utils.models import StatusChoices
 from order.services.pro_number_service import set_pro_number
 
 
 def set_total_piece_and_weight(
-    sender: models.Order,
     instance: models.Order,
     created: bool,
     **kwargs: Any,
@@ -44,7 +44,6 @@ def set_total_piece_and_weight(
     order using the respective helper functions.
 
     Args:
-        sender (models.Order): The class of the sending instance.
         instance (models.Order): The instance of the Order model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
@@ -109,7 +108,6 @@ def create_order_initial_movement(
     the initial movement using the MovementService.
 
     Args:
-        sender (models.Order): The class of the sending instance.
         instance (models.Order): The instance of the Order model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
@@ -163,3 +161,7 @@ def transfer_rate_information(instance: models.Order, **kwargs: Any) -> None:
 
     if instance.rate:
         transfer_rate_details(order=instance)
+
+
+def set_order_mileage_and_create_route(instance: models.Order, **kwargs) -> None:
+    instance.mileage = get_order_mileage(order=instance)
