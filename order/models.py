@@ -47,12 +47,12 @@ def order_documentation_upload_to(instance: OrderDocumentation, filename: str) -
 
     Args:
         instance (Order): The instance of the Order.
-        filename (str): file name.
+        filename (str): The name of the file.
 
     Returns:
         Upload path for the order documentation to be stored. For example.
 
-        `order_documentation/M000123/invoice-12341.pdf`
+        `Order_documentation/M000123/invoice-12341.pdf`
 
         Upload path is always a string. If the file is not uploaded, the
         upload path will be an empty string.
@@ -373,10 +373,8 @@ class Order(GenericModel):  # type:ignore
         blank=True,
         null=True,
     )
-    mileage = models.DecimalField(
+    mileage = models.FloatField(
         _("Total Mileage"),
-        max_digits=10,
-        decimal_places=2,
         default=0,
         help_text=_("Total Mileage"),
         blank=True,
@@ -539,10 +537,15 @@ class Order(GenericModel):  # type:ignore
         blank=True,
         help_text=_("Voided Comment"),
     )
+    auto_rate = models.BooleanField(
+        _("Auto Rate"),
+        default=True,
+        help_text=_("Determines whether order will be auto-rated by entered rate."),
+    )
 
     class Meta:
         """
-        Order Metaclass
+        Metaclass for the Order model
         """
 
         verbose_name = _("Order")
@@ -580,8 +583,14 @@ class Order(GenericModel):  # type:ignore
 
     def save(self, *args, **kwargs) -> None:
         from dispatch.services import transfer_rate_details
+        from route.services import get_mileage
 
-        transfer_rate_details.transfer_rate_details(order=self)
+        if self.auto_rate:
+            transfer_rate_details.transfer_rate_details(order=self)
+
+        self.sub_total = self.calculate_total()
+
+        self.mileage = get_mileage(order=self)
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -824,7 +833,9 @@ class AdditionalCharge(GenericModel):  # type: ignore
         Returns:
             str: String representation of the AdditionalCharges
         """
-        return textwrap.shorten(f"{self.order} - {self.accessorial_charge}", 50, placeholder="...")
+        return textwrap.shorten(
+            f"{self.order} - {self.accessorial_charge}", 50, placeholder="..."
+        )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
