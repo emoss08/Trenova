@@ -102,14 +102,6 @@ class DispatchControl(GenericModel):
         PICKUP_DELIVERY = "Pickup and Delivery", _("Pickup and Delivery")
         ALL_EX_SHIPPER = "All except shipper", _("All except shipper")
 
-    @final
-    class DistanceMethodChoices(models.TextChoices):
-        """
-        Distance method choices for Order model
-        """
-
-        GOOGLE = "Google", _("Google")
-        MONTA = "Monta", _("Monta")
 
     id = models.UUIDField(
         primary_key=True,
@@ -151,12 +143,6 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Enforce trailer continuity for the company."),
     )
-    distance_method = ChoiceField(
-        _("Distance Method"),
-        choices=DistanceMethodChoices.choices,
-        default=DistanceMethodChoices.MONTA,
-        help_text=_("Distance method for the company."),
-    )
     dupe_trailer_check = models.BooleanField(
         _("Enforce Duplicate Trailer Check"),
         default=False,
@@ -171,11 +157,6 @@ class DispatchControl(GenericModel):
         _("Prevent Orders On Hold"),
         default=False,
         help_text=_("Prevent dispatch of orders on hold for the company."),
-    )
-    generate_routes = models.BooleanField(
-        _("Generate Routes"),
-        default=False,
-        help_text=_("Generate routes for the company."),
     )
     driver_time_away_restriction = models.BooleanField(
         _("Enforce Driver Time Away"),

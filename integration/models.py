@@ -90,17 +90,6 @@ class IntegrationVendor(GenericModel):
         """
         return textwrap.shorten(self.name, width=50, placeholder="...")
 
-    # @hook(AFTER_CREATE)  # type: ignore
-    # def create_integration_after_create(self) -> None:
-    #     """Creates an Integration after creating an IntegrationVendor.
-    #
-    #     Returns:
-    #         None: None
-    #     """
-    #     Integration.objects.create(
-    #         integration_vendor=self, organization=self.organization
-    #     )
-
     def get_absolute_url(self) -> str:
         """Returns the absolute url for the integration vendor.
 
@@ -285,6 +274,12 @@ class GoogleAPI(GenericModel):
         editable=False,
         unique=True,
     )
+    name = models.CharField(
+        _("Name"),
+        max_length=50,
+        help_text=_("Name of the Google API"),
+        default="Google API",
+    )
     organization = models.OneToOneField(
         "organization.Organization",
         on_delete=models.CASCADE,
@@ -335,7 +330,7 @@ class GoogleAPI(GenericModel):
         Returns:
             str: Google API string representation
         """
-        return textwrap.wrap(self.organization.name, 50)[0]
+        return textwrap.shorten(self.name, width=30, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Google API absolute url
