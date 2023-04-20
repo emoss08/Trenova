@@ -1,25 +1,23 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.db import models
 from django.urls import reverse
@@ -39,22 +37,22 @@ class Route(GenericModel):
         editable=False,
         unique=True,
     )
-    origin = models.CharField(
-        _("Origin"),
-        max_length=255,
-        blank=True,
+    origin_location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.CASCADE,
+        related_name="origin_location",
         help_text=_("Origin of the route"),
+        verbose_name=_("Origin Location"),
     )
-    destination = models.CharField(
-        _("Destination"),
-        max_length=255,
-        blank=True,
+    destination_location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.CASCADE,
+        related_name="destination_location",
         help_text=_("Destination of the route"),
+        verbose_name=_("Destination Location"),
     )
-    total_mileage = models.DecimalField(
+    total_mileage = models.FloatField(
         _("Total Mileage"),
-        max_digits=10,
-        decimal_places=2,
         blank=True,
         null=True,
         help_text=_("Total Mile from origin to destination"),
@@ -65,6 +63,12 @@ class Route(GenericModel):
         blank=True,
         help_text=_("Duration of route from origin to destination"),
     )
+    distance_method = models.CharField(
+        _("Distance Model"),
+        max_length=50,
+        blank=True,
+        help_text=_("Distance model used to calculate the route"),
+    )
 
     class Meta:
         """
@@ -73,7 +77,7 @@ class Route(GenericModel):
 
         verbose_name = _("Route")
         verbose_name_plural = _("Routes")
-        ordering = ("origin", "destination")
+        ordering = ("origin_location", "destination_location")
         indexes = [
             models.Index(fields=["total_mileage", "duration"]),
         ]
@@ -85,7 +89,9 @@ class Route(GenericModel):
         Returns:
             str: Route string representation
         """
-        return textwrap.wrap(f"{self.origin} - {self.destination}", 50)[0]
+        return textwrap.wrap(
+            f"{self.origin_location} - {self.destination_location}", 50
+        )[0]
 
     def get_absolute_url(self) -> str:
         """Route absolute URL
@@ -98,7 +104,7 @@ class Route(GenericModel):
 
 class RouteControl(GenericModel):
     """
-    Stores Route Control information related to a `organization.Organization`
+    Store Route Control information related to an `organization.Organization`
     """
 
     @final
@@ -130,6 +136,15 @@ class RouteControl(GenericModel):
         METRIC = "metric", "Metric"
         IMPERIAL = "imperial", "Imperial"
 
+    @final
+    class DistanceMethodChoices(models.TextChoices):
+        """
+        Distance method choices for Order model
+        """
+
+        GOOGLE = "Google", _("Google")
+        MONTA = "Monta", _("Monta")
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -143,37 +158,22 @@ class RouteControl(GenericModel):
         verbose_name=_("Organization"),
         help_text=_("Organization related to this route control"),
     )
+    distance_method = ChoiceField(
+        _("Distance Method"),
+        choices=DistanceMethodChoices.choices,
+        default=DistanceMethodChoices.MONTA,
+        help_text=_("Distance method for the company."),
+    )
     mileage_unit = ChoiceField(
         _("Mileage Unit"),
         choices=RouteDistanceUnitChoices.choices,
         default=RouteDistanceUnitChoices.IMPERIAL,
         help_text=_("The mileage unit that the organization uses"),
     )
-    traffic_model = ChoiceField(
-        _("Traffic Model"),
-        choices=RouteModelChoices.choices,
-        default=RouteModelChoices.BEST_GUESS,
-        help_text=_("The traffic model that the organization uses"),
-    )
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
         help_text=_("Automatically generate routes for orders"),
-    )
-    avoid_tolls = models.BooleanField(
-        _("Avoid Tolls"),
-        default=True,
-        help_text=_("Avoid tolls when generating routes"),
-    )
-    avoid_highways = models.BooleanField(
-        _("Avoid Highways"),
-        default=False,
-        help_text=_("Avoid highways when generating routes"),
-    )
-    avoid_ferries = models.BooleanField(
-        _("Avoid Ferries"),
-        default=True,
-        help_text=_("Avoid ferries when generating routes"),
     )
 
     class Meta:
