@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import QuerySet
+from django.db.models.aggregates import Sum
 
 from movements.models import Movement
 from order import models
@@ -34,6 +35,7 @@ def get_order_by_id(*, order_id: MODEL_UUID) -> models.Order:
     """
     return models.Order.objects.get(id=order_id)
 
+
 def get_order_movements(*, order: models.Order) -> QuerySet[Movement]:
     """Get the movements of an order.
 
@@ -45,6 +47,7 @@ def get_order_movements(*, order: models.Order) -> QuerySet[Movement]:
     """
     return Movement.objects.filter(order=order)
 
+
 def get_order_stops(*, order: models.Order) -> QuerySet[Stop]:
     """Get the stops of an order.
 
@@ -55,4 +58,22 @@ def get_order_stops(*, order: models.Order) -> QuerySet[Stop]:
         QuerySett[Stop]: QuerySet of the stops of the order.
     """
     movements = get_order_movements(order=order)
-    return Stop.objects.filter(movement__in=movements).select_related('movement')
+    return Stop.objects.filter(movement__in=movements).select_related("movement")
+
+
+def sum_order_additional_charges(*, order: models.Order) -> float:
+    """Sum the additional charges of an order.
+
+    Args:
+        order (models.Order): The order.
+
+    Returns:
+        float: The sum of the additional charges.
+    """
+    # Calculate the sum of sub_total for each additional charge associated with the order
+    additional_charges_total = models.AdditionalCharge.objects.filter(
+        order=order
+    ).aggregate(total=Sum("sub_total"))["total"]
+
+    # If there are no additional charges associated with the order, return 0
+    return additional_charges_total or 0

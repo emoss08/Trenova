@@ -147,6 +147,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
                     "billed",
                     "transferred_to_billing",
                     "billing_transfer_date",
+                    "auto_rate",
                 ),
             },
         ),

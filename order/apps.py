@@ -51,3 +51,8 @@ class OrderConfig(AppConfig):
             sender="order.Order",
             dispatch_uid="check_order_removal_policy",
         )
+        post_save.connect(
+            signals.set_order_mileage_and_create_route,
+            sender="order.Order",
+            dispatch_uid="set_order_mileage_and_create_route",
+        )
