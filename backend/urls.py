@@ -45,6 +45,7 @@ from worker import api as worker_api
 from reports import api as reports_api
 from reports import views as reports_views
 from kubectl import api as kubectl_views
+from plugin import api as plugin_api
 
 router = routers.DefaultRouter()
 
@@ -319,6 +320,8 @@ urlpatterns = [
         reports_views.generate_excel_report,
         name="generate-excel-report",
     ),
+    path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
+    path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
