@@ -18,18 +18,13 @@ import typing
 import os
 import tempfile
 import zipfile
-from time import sleep
 
-from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandParser
 from urllib.request import urlretrieve
 from rich.progress import Progress
 
-from django.conf import settings
 from backend.settings import BASE_DIR, INSTALLED_APPS
 from plugin.models import Plugin
-import importlib
-from django import setup
 
 
 class Command(BaseCommand):
