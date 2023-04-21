@@ -16,8 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 
 import textwrap
-from django.db import models
 import uuid
+
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 

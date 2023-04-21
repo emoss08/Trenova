@@ -14,13 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import typing
 import os
 import tempfile
+import typing
 import zipfile
+from urllib.request import urlretrieve
 
 from django.core.management.base import BaseCommand, CommandParser
-from urllib.request import urlretrieve
 from rich.progress import Progress
 
 from backend.settings import BASE_DIR, INSTALLED_APPS
