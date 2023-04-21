@@ -72,31 +72,21 @@ class Command(BaseCommand):
             progress.update(
                 download_task, description="[cyan]Adding plugin to settings..."
             )
-            settings_file_path = os.path.join(
-                BASE_DIR, "backend", "settings.py"
-            )  # Replace 'my_project' with your project's name
+            settings_file_path = os.path.join(BASE_DIR, "backend", "settings.py")
+
             with open(settings_file_path, "a") as settings_file:
                 settings_file.write(f"\nINSTALLED_APPS.append('{plugin_name}')\n")
 
-            # Reload settings.py module to recognize the new plugin
-            settings_module = importlib.import_module("backend.settings")
-            importlib.reload(settings_module)
-
-            # Call Django's setup() function
-            setup()
-
             Plugin.objects.update_or_create(name=plugin_name, github_url=github_url)
-
-            # Step 5: Applying migrations
-            progress.update(
-                download_task, description="[cyan]Applying migrations for plugin..."
-            )
-
-            call_command("makemigrations", plugin_name)
-            call_command("migrate", plugin_name)
 
             progress.update(
                 download_task,
                 description="[cyan]Plugin successfully installed!",
                 completed=100,
+            )
+            progress.stop()
+            self.stdout.write(
+                self.style.WARNING(
+                    "Please restart the server and run 'makemigrations' and 'migrate' commands."
+                )
             )
