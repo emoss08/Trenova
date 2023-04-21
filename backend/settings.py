@@ -22,8 +22,9 @@ import django_stubs_ext
 import environ
 
 # Check if running on pypy. If so, monkey patch psycopg2cffiq
-if sys.implementation.name == 'pypy':
+if sys.implementation.name == "pypy":
     from psycopg2cffi import compat
+
     compat.register()
 
 django_stubs_ext.monkeypatch()
@@ -93,6 +94,7 @@ INSTALLED_APPS = [
     "invoicing",
     "reports",
     "kubectl",
+    "plugin",
 ]
 
 # Middleware configurations
@@ -277,7 +279,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler"
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
 LOGGING = {
