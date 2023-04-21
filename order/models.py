@@ -578,19 +578,19 @@ class Order(GenericModel):  # type:ignore
         """
         from order.validation import OrderValidation
 
-        super().clean()
         OrderValidation(order=self)
+        super().clean()
 
     def save(self, *args, **kwargs) -> None:
         from dispatch.services import transfer_rate_details
-        from route.services import get_mileage
+        from route.services import get_order_mileage
 
         if self.auto_rate:
             transfer_rate_details.transfer_rate_details(order=self)
 
         self.sub_total = self.calculate_total()
 
-        self.mileage = get_mileage(order=self)
+        self.mileage = get_order_mileage(order=self)
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
