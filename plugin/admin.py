@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
+
 from plugin import models
 
 

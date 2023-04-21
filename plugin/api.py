@@ -15,11 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from django.core.management import call_command
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
-from plugin import serializers, helpers
-from django.core.management import call_command
+
+from plugin import helpers, serializers
 
 
 @api_view(["GET"])
