@@ -70,11 +70,13 @@ class TableChoiceService:
         for table_name in names:
             excluded_names = (
                 "silk_",
-                "django_",
+                "django",
                 "auth_",
                 "contenttypes_",
                 "sessions_",
                 "notifications_",
+                "plugin",
+                "auditlog",
             )
             if table_name.startswith(excluded_names):
                 names.remove(table_name)
