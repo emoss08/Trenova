@@ -53,9 +53,7 @@ def set_total_piece_and_weight(
         instance.weight = total_weight_for_order(order=instance)
 
 
-def set_field_values(
-    sender: models.Order, instance: models.Order, **kwargs: Any
-) -> None:
+def set_field_values(instance: models.Order, **kwargs: Any) -> None:
     """Set various field values of an Order model instance.
 
     This function is called as a signal when an Order model instance is saved.
