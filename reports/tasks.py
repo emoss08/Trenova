@@ -29,7 +29,7 @@ from reports.services import generate_excel_report_as_file
 def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
     """A Celery task that sends a scheduled report to the user who created it.
 
-    This tasks generates an Excel file from the report and sends it to the user who created the report.
+    This task generates an Excel file from the report and sends it to the user who created the report.
 
     Args:
         self (celery.app.task.Task): The task object.
