@@ -314,6 +314,13 @@ class GoogleAPI(GenericModel):
         default=False,
         help_text=_("Add location through google places"),
     )
+    auto_geocode = models.BooleanField(
+        _("Auto Geocode"),
+        default=False,
+        help_text=_(
+            "This determines if locations will automatically be geocoded, once they are created/updated."
+        ),
+    )
 
     class Meta:
         """
