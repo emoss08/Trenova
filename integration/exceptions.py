@@ -15,32 +15,17 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from integration import models, exceptions
-from organization.models import Organization
 
+class GoogleAPINotFoundError(Exception):
+    """Exception raised when a GoogleAPI object does not exist for an organization."""
 
-def get_maps_api_key(*, organization: Organization) -> str:
-    """Get the Google Maps API key for the given organization.
+    def __init__(self, organization_name: str) -> None:
+        """Initialize a GoogleAPINotFoundError.
 
-    Args:
-        organization (Organization): The organization to get the Google Maps API key for.
-
-    Returns:
-        str: The Google Maps API key for the given organization.
-
-    Raises:
-        ValueError: If the GoogleAPI object for the given organization does not exist.
-    """
-    try:
-        return models.GoogleAPI.objects.get(organization=organization).api_key
-    except models.GoogleAPI.DoesNotExist as google_api_exception:
-        raise exceptions.GoogleAPINotFoundError(
-            organization.name
-        ) from google_api_exception
-
-
-def get_organization_google_api(*, organization: Organization) -> str | None:
-    try:
-        return models.GoogleAPI.objects.get(organization=organization)
-    except models.GoogleAPI.DoesNotExist:
-        return
+        Args:
+            organization_name (str): The name of the organization for which a GoogleAPI object does not
+                exist.
+        """
+        super().__init__(
+            f"GoogleAPI object for organization '{organization_name}' does not exist."
+        )

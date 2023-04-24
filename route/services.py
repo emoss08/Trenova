@@ -120,6 +120,7 @@ def calculate_distance(
             point_1=point_1,
             point_2=point_2,
             units=route_control.mileage_unit,
+            organization=organization,
         )
     else:
         # If the distance method is not Google, use the Haversine formula

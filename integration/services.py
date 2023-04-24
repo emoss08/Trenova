@@ -14,25 +14,29 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Tuple, List, Any
+from typing import Tuple, Any
 
 import googlemaps
 
 from integration import selectors
 from location.models import Location
+from organization.models import Organization
 
 
-def google_client() -> googlemaps.Client:
-    api_key = selectors.get_maps_api_key()
-
+def google_client(*, organization: Organization) -> googlemaps.Client:
+    api_key = selectors.get_maps_api_key(organization=organization)
     return googlemaps.Client(key=api_key)
 
 
 def geocode_location(*, location: Location):
-    if location.is_geocoded:
+    gmaps_api_config = selectors.get_organization_google_api(
+        organization=location.organization
+    )
+
+    if not gmaps_api_config:
         return
 
-    gmaps = google_client()
+    gmaps = google_client(organization=location.organization)
     if geocode_result := gmaps.geocode(
         f"{location.address_line_1}, {location.city}, {location.state} {location.zip_code}"
     ):
@@ -47,8 +51,9 @@ def google_distance_matrix_service(
     point_1: Tuple[float, float],
     point_2: Tuple[float, float],
     units: str,
+    organization: Organization,
 ) -> tuple[float | Any, float | Any]:
-    gmaps = google_client()
+    gmaps = google_client(organization=organization)
     distance_matrix = gmaps.distance_matrix(
         origins=point_1,
         destinations=point_2,

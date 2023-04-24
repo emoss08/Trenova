@@ -79,7 +79,6 @@ def create_order_control(
 
 
 def create_route_control(
-    sender: models.Organization,
     instance: models.Organization,
     created: bool,
     **kwargs: Any
@@ -91,7 +90,6 @@ def create_route_control(
     instance with the organization reference.
 
     Args:
-        sender (models.Organization): The class of the sending instance.
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.

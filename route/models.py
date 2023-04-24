@@ -19,10 +19,12 @@ import textwrap
 import uuid
 from typing import final, Any
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
+from integration.models import IntegrationChoices
 from utils.models import ChoiceField, GenericModel
 
 
@@ -186,13 +188,54 @@ class RouteControl(GenericModel):
         ordering = ("organization",)
         db_table = "route_control"
 
+    def clean(self) -> None:
+        """Route Control clean method
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            ValidationError: If the distance method is Google and the organization does not have
+                a Google Maps integration configured.
+
+        """
+        if self.distance_method == self.DistanceMethodChoices.GOOGLE and all(
+            integration.integration_type != IntegrationChoices.GOOGLE_MAPS
+            for integration in self.organization.integrations.all()
+        ):
+            raise ValidationError(
+                {
+                    "distance_method": _(
+                        "Google Maps integration is not configured for the organization."
+                        " Please configure the integration before selecting Google as "
+                        "the distance method."
+                    ),
+                },
+                code="invalid",
+            )
+
+        if (
+            self.generate_routes
+            and self.distance_method == self.DistanceMethodChoices.MONTA
+        ):
+            raise ValidationError(
+                {
+                    "generate_routes": _(
+                        "'Monta' does not support automatic route generation. Please select Google as the distance method."
+                    ),
+                },
+                code="invalid",
+            )
+
     def __str__(self) -> str:
         """Route Control string representation
 
         Returns:
             str: Route Control string representation
         """
-        return str(self.organization)
+        return textwrap.shorten(
+            f"Route Control for {self.organization.name}", width=30, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Route Control absolute URL
