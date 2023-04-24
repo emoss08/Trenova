@@ -102,7 +102,6 @@ class DispatchControl(GenericModel):
         PICKUP_DELIVERY = "Pickup and Delivery", _("Pickup and Delivery")
         ALL_EX_SHIPPER = "All except shipper", _("All except shipper")
 
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -188,32 +187,6 @@ class DispatchControl(GenericModel):
             str: Dispatch control string representation
         """
         return textwrap.wrap(self.organization.name, 50)[0]
-
-    def clean(self) -> None:
-        """Dispatch control clean method
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the dispatch control is not valid.
-        """
-        super().clean()
-
-        if self.distance_method == self.DistanceMethodChoices.GOOGLE and all(
-            integration.integration_type != IntegrationChoices.GOOGLE_MAPS
-            for integration in self.organization.integrations.all()
-        ):
-            raise ValidationError(
-                {
-                    "distance_method": _(
-                        "Google Maps integration is not configured for the organization."
-                        " Please configure the integration before selecting Google as "
-                        "the distance method."
-                    ),
-                },
-                code="invalid",
-            )
 
     def get_absolute_url(self) -> str:
         """Dispatch control absolute URL
