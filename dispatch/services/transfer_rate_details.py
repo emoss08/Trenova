@@ -64,23 +64,23 @@ def transfer_rate_details(order: Order) -> None:
         order.freight_charge_amount = rate.rate_amount
         order.mileage = rate.distance_override
 
-    for billing_item in get_rate_billing_table(rate=rate):
-        # Check if the charge already exists on the order
-        additional_charge_exists = AdditionalCharge.objects.filter(
-            organization=order.organization,
-            order=order,
-            accessorial_charge=billing_item.accessorial_charge,
-        ).exists()
-
-        if not additional_charge_exists:
-            AdditionalCharge.objects.create(
+        for billing_item in get_rate_billing_table(rate=rate):
+            # Check if the charge already exists on the order
+            additional_charge_exists = AdditionalCharge.objects.filter(
                 organization=order.organization,
                 order=order,
                 accessorial_charge=billing_item.accessorial_charge,
-                charge_amount=billing_item.charge_amount,
-                unit=billing_item.unit,
-                description=billing_item.description,
-                entered_by=order.entered_by,
-            )
+            ).exists()
 
-    order.other_charge_amount = sum_order_additional_charges(order=order)
+            if not additional_charge_exists:
+                AdditionalCharge.objects.create(
+                    organization=order.organization,
+                    order=order,
+                    accessorial_charge=billing_item.accessorial_charge,
+                    charge_amount=billing_item.charge_amount,
+                    unit=billing_item.unit,
+                    description=billing_item.description,
+                    entered_by=order.entered_by,
+                )
+
+        order.other_charge_amount = sum_order_additional_charges(order=order)
