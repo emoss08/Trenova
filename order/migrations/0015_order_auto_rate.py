@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('order', '0014_additionalcharge_description'),
+        ("order", "0014_additionalcharge_description"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='order',
-            name='auto_rate',
-            field=models.BooleanField(default=True, help_text='Determines whether order will be auto-rated by entered rate.', verbose_name='Auto Rate'),
+            model_name="order",
+            name="auto_rate",
+            field=models.BooleanField(
+                default=True,
+                help_text="Determines whether order will be auto-rated by entered rate.",
+                verbose_name="Auto Rate",
+            ),
         ),
     ]

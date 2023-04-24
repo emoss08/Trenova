@@ -16,7 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from datetime import timedelta
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -554,6 +555,7 @@ def test_movement_cannot_change_status_in_in_progress_if_stops_are_new():
     assert excinfo.value.message_dict["status"] == [
         "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
     ]
+
 
 def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress():
     """

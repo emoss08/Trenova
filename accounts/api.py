@@ -19,21 +19,14 @@ from typing import Any
 
 from django.contrib.auth.models import Group, Permission
 from django.db.models import QuerySet
+from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework import (
-    generics,
-    response,
-    views,
-    permissions,
-    status,
-    viewsets,
-)
 from rest_framework.request import Request
-from typeguard import typechecked
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
+
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
@@ -104,9 +97,7 @@ class UpdatePasswordView(generics.UpdateAPIView):
     throttle_scope = "auth"
     serializer_class = serializers.ChangePasswordSerializer
 
-    def update(
-        self, request: Request, *args: Any, **kwargs: Any
-    ) -> response.Response:
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """Handle update requests
 
         Args:
@@ -156,9 +147,7 @@ class TokenVerifyView(views.APIView):
     permission_classes: list[Any] = []
     serializer_class = serializers.VerifyTokenSerializer
 
-    def post(
-        self, request: Request, *args: Any, **kwargs: Any
-    ) -> response.Response:
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """Handle Post requests
         Args:
             request (Request): Request object
@@ -243,9 +232,7 @@ class TokenProvisionView(ObtainAuthToken):
     permission_classes = (permissions.AllowAny,)
     serializer_class = serializers.TokenProvisionSerializer
 
-    def post(
-        self, request: Request, *args: Any, **kwargs: Any
-    ) -> response.Response:
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_obj = serializer.validated_data["user"]

@@ -4,15 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('order', '0015_order_auto_rate'),
+        ("order", "0015_order_auto_rate"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='order',
-            name='mileage',
-            field=models.FloatField(blank=True, default=0, help_text='Total Mileage', null=True, verbose_name='Total Mileage'),
+            model_name="order",
+            name="mileage",
+            field=models.FloatField(
+                blank=True,
+                default=0,
+                help_text="Total Mileage",
+                null=True,
+                verbose_name="Total Mileage",
+            ),
         ),
     ]

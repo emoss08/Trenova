@@ -16,8 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 from django.db.models import QuerySet
 from django.utils import timezone
-from order.models import Order, AdditionalCharge
+
 from dispatch import models
+from order.models import AdditionalCharge, Order
 from order.selectors import sum_order_additional_charges
 
 

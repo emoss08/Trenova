@@ -17,18 +17,16 @@
 
 import textwrap
 import uuid
-from typing import final, Any
+from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.aggregates import Max
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
-from integration.models import IntegrationChoices
 from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices
 

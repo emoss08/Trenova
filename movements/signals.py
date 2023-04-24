@@ -20,10 +20,10 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
+from movements import models
 from movements.services.generation import MovementService
 from stops.services.generation import StopService
 from utils.models import StatusChoices
-from movements import models
 
 
 def generate_initial_stops(

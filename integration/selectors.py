@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from integration import models, exceptions
+from integration import exceptions, models
 from organization.models import Organization
 
 

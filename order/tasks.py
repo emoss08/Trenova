@@ -14,11 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import List, Iterable
-
-from backend.celery import app
+from typing import List
+from collections.abc import Iterable
 
 from accounts.models import User
+from backend.celery import app
 from billing.services import mass_order_billing, single_order_billing
 from billing.services.transfer_to_billing import transfer_to_billing_queue_service
 from core.exceptions import ServiceException
@@ -108,7 +108,7 @@ def mass_order_bill_task(self, *, user_id: MODEL_UUID) -> None:  # type: ignore
 
 @app.task(name="transfer_to_billing_task", bind=True)
 def transfer_to_billing_task(  # type: ignore
-    self, *, user_id: MODEL_UUID, order_pros: List[str]
+    self, *, user_id: MODEL_UUID, order_pros: list[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
@@ -169,7 +169,9 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
         ServiceException: If the Order does not exist in the database.
     """
     system_user: User = User.objects.get(username="sys")
-    organizations: Iterable[Organization] = Organization.objects.filter(billing_control__auto_bill_orders=True)
+    organizations: Iterable[Organization] = Organization.objects.filter(
+        billing_control__auto_bill_orders=True
+    )
     results = []
     for organization in organizations:
         try:

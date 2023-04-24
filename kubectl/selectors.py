@@ -31,4 +31,7 @@ def get_kube_config_by_organization(
         models.KubeConfiguration: KubeConfiguration
     """
 
-    return models.KubeConfiguration.objects.filter(organization=organization).first() or None
+    return (
+        models.KubeConfiguration.objects.filter(organization=organization).first()
+        or None
+    )

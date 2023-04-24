@@ -4,18 +4,17 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('dispatch', '0019_remove_ratebillingtable_units_ratebillingtable_unit'),
+        ("dispatch", "0019_remove_ratebillingtable_units_ratebillingtable_unit"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='dispatchcontrol',
-            name='distance_method',
+            model_name="dispatchcontrol",
+            name="distance_method",
         ),
         migrations.RemoveField(
-            model_name='dispatchcontrol',
-            name='generate_routes',
+            model_name="dispatchcontrol",
+            name="generate_routes",
         ),
     ]

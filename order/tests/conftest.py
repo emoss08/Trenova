@@ -15,7 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 
 import pytest
 from django.utils import timezone
@@ -38,7 +39,7 @@ from equipment.models import EquipmentType
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
-from order.models import OrderType, Order
+from order.models import Order, OrderType
 from order.tests.factories import (
     AdditionalChargeFactory,
     OrderCommentFactory,
@@ -285,7 +286,9 @@ def order_type_api(
 
 
 @pytest.fixture
-def reason_code_api(api_client: APIClient, organization: Organization) -> Generator[Any, Any, None]:
+def reason_code_api(
+    api_client: APIClient, organization: Organization
+) -> Generator[Any, Any, None]:
     """
     Reason Code Factory
     """

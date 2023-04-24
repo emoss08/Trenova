@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import Union
+
 from django.utils import timezone
 
 from billing import models
@@ -23,7 +24,7 @@ from billing.models import BillingHistory, BillingQueue
 from order.models import Order
 
 
-def transfer_order_details(obj: Union[BillingHistory, BillingQueue]) -> None:
+def transfer_order_details(obj: BillingHistory | BillingQueue) -> None:
     """Save the obj of either `BillingHistory` or `BillingQueue`.
 
     The method transfers the details from `obj.order` to the obj,
@@ -43,13 +44,9 @@ def transfer_order_details(obj: Union[BillingHistory, BillingQueue]) -> None:
     obj.revenue_code = obj.revenue_code or order.revenue_code
     obj.commodity = obj.commodity or order.commodity
     obj.bol_number = obj.bol_number or order.bol_number
-    obj.bill_type = (
-        obj.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
-    )
+    obj.bill_type = obj.bill_type or models.BillingQueue.BillTypeChoices.INVOICE
     obj.bill_date = obj.bill_date or timezone.now().date()
-    obj.consignee_ref_number = (
-        obj.consignee_ref_number or order.consignee_ref_number
-    )
+    obj.consignee_ref_number = obj.consignee_ref_number or order.consignee_ref_number
 
     if obj.commodity and not obj.commodity_descr:
         obj.commodity_descr = obj.commodity.description

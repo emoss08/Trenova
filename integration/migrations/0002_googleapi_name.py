@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('integration', '0001_initial'),
+        ("integration", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='googleapi',
-            name='name',
-            field=models.CharField(default='Google API', help_text='Name of the Google API', max_length=50, verbose_name='Name'),
+            model_name="googleapi",
+            name="name",
+            field=models.CharField(
+                default="Google API",
+                help_text="Name of the Google API",
+                max_length=50,
+                verbose_name="Name",
+            ),
         ),
     ]

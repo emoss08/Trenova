@@ -36,12 +36,14 @@ def test_get(api_client: APIClient) -> None:
     response = api_client.get("/api/users/")
     assert response.status_code == 200
 
+
 def test_get_by_id(api_client: APIClient, user_api: Response) -> None:
     """
     Test get user by ID
     """
     response = api_client.get(f"/api/users/{user_api.data['id']}/")
     assert response.status_code == 200
+
 
 def test_create_success(api_client: APIClient, organization: Organization) -> None:
     """
@@ -75,7 +77,10 @@ def test_create_success(api_client: APIClient, organization: Organization) -> No
     assert response.data["username"] == payload["username"]
     assert response.data["email"] == payload["email"]
 
-def test_user_with_email_exists_error(api_client: APIClient, organization: Organization) -> None:
+
+def test_user_with_email_exists_error(
+    api_client: APIClient, organization: Organization
+) -> None:
     """
     Test Create user with email exists
     """
@@ -101,7 +106,10 @@ def test_user_with_email_exists_error(api_client: APIClient, organization: Organ
     response = api_client.post("/api/users/", payload, format="json")
     assert response.status_code == 400
 
-def test_put(user_api: Response, api_client: APIClient, organization: Organization) -> None:
+
+def test_put(
+    user_api: Response, api_client: APIClient, organization: Organization
+) -> None:
     """
     Test Put request
     """
@@ -135,6 +143,7 @@ def test_put(user_api: Response, api_client: APIClient, organization: Organizati
     assert response.data["profile"]["zip_code"] == "12345"
     assert "password" not in response.data
 
+
 def test_delete(user_api: Response, api_client: APIClient) -> None:
     """
     Test delete user
@@ -142,6 +151,7 @@ def test_delete(user_api: Response, api_client: APIClient) -> None:
     response = api_client.delete(f"/api/users/{user_api.data['id']}/")
     assert response.status_code == 204
     assert response.data is None
+
 
 def test_user_cannot_change_password_on_update(user: User) -> None:
     """

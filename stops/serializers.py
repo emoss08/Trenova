@@ -19,7 +19,6 @@ from rest_framework import serializers
 
 from accounts.models import User
 from dispatch.models import CommentType, DelayCode
-from location.models import Location
 from movements.models import Movement
 from organization.models import Organization
 from stops import models
@@ -111,8 +110,6 @@ class StopSerializer(GenericSerializer):
     into a Python dictionary format that can be rendered into a JSON response. It also defines the fields
     that should be included in the serialized representation of the model.
     """
-
-
 
     class Meta:
         """Metaclass for the `StopSerializer` class

@@ -23,7 +23,7 @@ GITHUB_REPO_API_URL = (
 )
 
 
-def get_plugin_list() -> List[Dict[str, str]]:
+def get_plugin_list() -> list[dict[str, str]]:
     response = requests.get(GITHUB_REPO_API_URL)
     response_data = response.json()
     plugin_list = []

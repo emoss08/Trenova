@@ -17,8 +17,8 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
-from utils.types import MODEL_UUID
 from accounts import models
+from utils.types import MODEL_UUID
 
 
 def get_users_by_organization_id(

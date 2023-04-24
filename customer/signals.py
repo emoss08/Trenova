@@ -17,8 +17,8 @@
 
 from typing import Any
 
-from customer.services.generation import CustomerGenerationService
 from customer import models
+from customer.services.generation import CustomerGenerationService
 
 
 def generate_customer_code(

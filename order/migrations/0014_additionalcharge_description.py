@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('order', '0013_rename_charge_additionalcharge_accessorial_charge'),
+        ("order", "0013_rename_charge_additionalcharge_accessorial_charge"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='additionalcharge',
-            name='description',
-            field=models.CharField(blank=True, help_text='Description of the charge', max_length=100, verbose_name='Description'),
+            model_name="additionalcharge",
+            name="description",
+            field=models.CharField(
+                blank=True,
+                help_text="Description of the charge",
+                max_length=100,
+                verbose_name="Description",
+            ),
         ),
     ]

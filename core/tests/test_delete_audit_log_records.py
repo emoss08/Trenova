@@ -45,5 +45,3 @@ def test_delete_audit_log_records_retry(patched_call_command):
     patched_call_command.side_effect = Retry()
     with pytest.raises(Retry):
         delete_audit_log_records()
-
-

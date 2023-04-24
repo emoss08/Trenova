@@ -24,7 +24,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from accounting import models
-from accounting.models import GeneralLedgerAccount, DivisionCode
+from accounting.models import DivisionCode, GeneralLedgerAccount
 from accounting.tests.factories import GeneralLedgerAccountFactory
 from organization.models import Organization
 

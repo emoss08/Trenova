@@ -35,17 +35,17 @@ from dispatch import api as dispatch_api
 from equipment import api as equipment_api
 from integration import api as integration_api
 from invoicing import api as invoicing_api
+from kubectl import api as kubectl_views
 from location import api as location_api
 from movements import api as movement_api
 from order import api as order_api
 from organization import api as org_api
+from plugin import api as plugin_api
+from reports import api as reports_api
+from reports import views as reports_views
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api
-from reports import api as reports_api
-from reports import views as reports_views
-from kubectl import api as kubectl_views
-from plugin import api as plugin_api
 
 router = routers.DefaultRouter()
 

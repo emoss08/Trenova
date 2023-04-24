@@ -4,16 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('plugin', '0001_initial'),
+        ("plugin", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='plugin',
-            name='github_url',
-            field=models.URLField(default=1, verbose_name='GitHub URL'),
+            model_name="plugin",
+            name="github_url",
+            field=models.URLField(default=1, verbose_name="GitHub URL"),
             preserve_default=False,
         ),
     ]

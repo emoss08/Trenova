@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import Union
+
 from django.contrib import admin
 from django.http import HttpRequest
 
@@ -42,7 +43,7 @@ class OrganizationAdmin(admin.ModelAdmin[models.Organization]):
     )
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: Union[models.EmailLog, None] = None
+        self, request: HttpRequest, obj: models.EmailLog | None = None
     ) -> bool:
         """Has permission to delete.
 
@@ -132,7 +133,7 @@ class EmailLogAdmin(admin.ModelAdmin[models.EmailLog]):
     search_fields = ("subject", "to_email", "created")
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: Union[models.EmailLog, None] = None
+        self, request: HttpRequest, obj: models.EmailLog | None = None
     ) -> bool:
         """Has permission to delete.
 

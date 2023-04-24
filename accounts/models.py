@@ -20,7 +20,7 @@ from __future__ import annotations
 import secrets
 import textwrap
 import uuid
-from typing import Any, final, Union
+from typing import Any, Union, final
 
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -50,7 +50,7 @@ class UserManager(BaseUserManager):
         self,
         username: str,
         email: str,
-        password: Union[str, None] = None,
+        password: str | None = None,
         **extra_fields: Any,
     ) -> User:
         """
@@ -84,7 +84,7 @@ class UserManager(BaseUserManager):
         self,
         username: str,
         email: str,
-        password: Union[str, None] = None,
+        password: str | None = None,
         **extra_fields: Any,
     ) -> User:
         """Create and save a superuser with the given username, email and password.

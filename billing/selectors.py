@@ -15,8 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from collections.abc import Iterable
-from typing import Union, List, Optional
 
 from django.db.models import Q, QuerySet
 

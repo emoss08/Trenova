@@ -4,19 +4,22 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('dispatch', '0017_alter_rate_rate_amount_and_more'),
+        ("dispatch", "0017_alter_rate_rate_amount_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='ratebillingtable',
-            options={'ordering': ['rate', 'accessorial_charge'], 'verbose_name': 'Rate Billing Table', 'verbose_name_plural': 'Rate Billing Tables'},
+            name="ratebillingtable",
+            options={
+                "ordering": ["rate", "accessorial_charge"],
+                "verbose_name": "Rate Billing Table",
+                "verbose_name_plural": "Rate Billing Tables",
+            },
         ),
         migrations.RenameField(
-            model_name='ratebillingtable',
-            old_name='charge_code',
-            new_name='accessorial_charge',
+            model_name="ratebillingtable",
+            old_name="charge_code",
+            new_name="accessorial_charge",
         ),
     ]

@@ -4,18 +4,21 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('billing', '0011_billingcontrol_auto_mark_ready_to_bill_and_more'),
+        ("billing", "0011_billingcontrol_auto_mark_ready_to_bill_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='accessorialcharge',
-            options={'ordering': ['code'], 'verbose_name': 'Accessorial Charge', 'verbose_name_plural': 'Accessorial Charges'},
+            name="accessorialcharge",
+            options={
+                "ordering": ["code"],
+                "verbose_name": "Accessorial Charge",
+                "verbose_name_plural": "Accessorial Charges",
+            },
         ),
         migrations.AlterModelTable(
-            name='accessorialcharge',
-            table='accessorial_charge',
+            name="accessorialcharge",
+            table="accessorial_charge",
         ),
     ]

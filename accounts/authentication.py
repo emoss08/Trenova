@@ -20,6 +20,7 @@ from typing import Tuple
 from django.utils import timezone
 from rest_framework import HTTP_HEADER_ENCODING, authentication, exceptions
 from rest_framework.request import Request
+
 from accounts import models
 
 
@@ -34,9 +35,7 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
     keyword = "Bearer"
     model = models.Token
 
-    def authenticate(
-        self, request: Request
-    ) -> Tuple[models.User, models.Token] | None:
+    def authenticate(self, request: Request) -> tuple[models.User, models.Token] | None:
         """
         Authenticate the request using the Bearer token.
 
@@ -69,7 +68,7 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
 
         return self.authenticate_credentials(key=token)
 
-    def authenticate_credentials(self, *, key: str) -> Tuple[models.User, models.Token]:
+    def authenticate_credentials(self, *, key: str) -> tuple[models.User, models.Token]:
         """
         Authenticate the token and return the associated user and token.
 

@@ -19,10 +19,11 @@ from typing import Any, Dict
 from django.core.exceptions import ValidationError
 from kubernetes import client
 
-from organization.models import Organization
 from kubectl.selectors import get_kube_config_by_organization
+from organization.models import Organization
 
-def get_node_info(*, node: client.V1Node) -> Dict[str, Any]:
+
+def get_node_info(*, node: client.V1Node) -> dict[str, Any]:
     """Returns a dictionary containing information about a Kubernetes node.
 
     Args:
@@ -62,7 +63,7 @@ def get_node_info(*, node: client.V1Node) -> Dict[str, Any]:
     }
 
 
-def get_node_metadata(*, node: client.V1Node) -> Dict[str, Any]:
+def get_node_metadata(*, node: client.V1Node) -> dict[str, Any]:
     """Returns a dictionary of metadata for a Kubernetes node.
 
     Args:

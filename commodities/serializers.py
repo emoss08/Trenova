@@ -30,6 +30,7 @@ class HazardousMaterialSerializer(GenericSerializer):
     and vice versa. It uses the specified fields (name, description, and code) to create the serialized
     representation of the `HazardousMaterial` model.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(),
     )
@@ -58,6 +59,7 @@ class CommoditySerializer(GenericSerializer):
     and vice versa. It uses the specified fields (name, description, and code) to create the serialized
     representation of the `Commodity` model.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(),
     )
@@ -76,4 +78,8 @@ class CommoditySerializer(GenericSerializer):
         """
 
         model = models.Commodity
-        extra_fields = ("organization", "unit_of_measure", "hazmat",)
+        extra_fields = (
+            "organization",
+            "unit_of_measure",
+            "hazmat",
+        )

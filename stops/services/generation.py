@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import List, Any
+from typing import Any, List
 
 from django.db import IntegrityError
 
@@ -87,7 +87,7 @@ class StopService:
         # FIXME: Does not properly sequence stops. Need to figure out a way to sequence this properly.
 
         if instance.organization.order_control.auto_sequence_stops:
-            stop_list: List[Any] = []
+            stop_list: list[Any] = []
             stops = models.Stop.objects.filter(movement=instance.movement).order_by(
                 "created"
             )

@@ -22,7 +22,7 @@ from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
 
-def django_error_handler(exc: Any, context: Any) -> Union[Response, None]:
+def django_error_handler(exc: Any, context: Any) -> Response | None:
     """Django error handler
 
     Args:
@@ -44,8 +44,6 @@ class ServiceException(Exception):
     Base Service Exception for all services.
     """
 
-    pass
-
 
 class CommandCallException(Exception):
     """
@@ -54,5 +52,3 @@ class CommandCallException(Exception):
     This exception is raised when a django command is called with invalid arguments,
     or when the command fails to execute.
     """
-
-    pass

@@ -22,6 +22,7 @@ from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
+
 def test_dispatch_control_creation(organization: Organization) -> None:
     """
     Test dispatch control is created from

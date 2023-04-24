@@ -38,9 +38,11 @@ class CommentTypeSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
+
     class Meta:
         """
         A class representing the metadata for the `CommentTypeSerializer` class.
@@ -48,6 +50,7 @@ class CommentTypeSerializer(GenericSerializer):
 
         model = models.CommentType
         extra_fields = ("organization",)
+
 
 class DelayCodeSerializer(GenericSerializer):
     """A serializer for the DelayCode model.
@@ -60,9 +63,11 @@ class DelayCodeSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
+
     class Meta:
         """
         A class representing the metadata for the `DelayCodeSerializer` class.
@@ -83,6 +88,7 @@ class FleetCodeSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(),
     )
@@ -94,7 +100,10 @@ class FleetCodeSerializer(GenericSerializer):
         """
 
         model = models.FleetCode
-        extra_fields = ("organization", "is_active",)
+        extra_fields = (
+            "organization",
+            "is_active",
+        )
 
 
 class DispatchControlSerializer(GenericSerializer):
@@ -108,9 +117,11 @@ class DispatchControlSerializer(GenericSerializer):
     Only authenticated users are allowed to access the view provided by this serializer.
     Filtering is also available, with the ability to filter by ID, and name.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(),
     )
+
     class Meta:
         """
         A class representing the metadata for the `DispatchControlSerializer` class.
@@ -136,6 +147,7 @@ class RateSerializer(GenericSerializer):
         equipment_type (serializers.PrimaryKeyRelatedField): The related `EquipmentType` model, with a queryset of all `EquipmentType`
         objects and the option to allow `None` values.
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all(),
     )

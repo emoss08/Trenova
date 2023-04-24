@@ -4,20 +4,27 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('billing', '0010_alter_accessorialcharge_charge_amount_currency_and_more'),
+        ("billing", "0010_alter_accessorialcharge_charge_amount_currency_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='billingcontrol',
-            name='auto_mark_ready_to_bill',
-            field=models.BooleanField(default=False, help_text='Marks orders as ready to bill when they are delivered and meet customer billing requirements.', verbose_name='Auto Mark Ready to Bill'),
+            model_name="billingcontrol",
+            name="auto_mark_ready_to_bill",
+            field=models.BooleanField(
+                default=False,
+                help_text="Marks orders as ready to bill when they are delivered and meet customer billing requirements.",
+                verbose_name="Auto Mark Ready to Bill",
+            ),
         ),
         migrations.AddField(
-            model_name='billingcontrol',
-            name='validate_customer_rates',
-            field=models.BooleanField(default=False, help_text='Validate rates match the customer contract in the billing queue before allowing billing. If the rates do not match, the order will not be allowed to be billed. If the rates match, the order will be allowed to be billed. If no contract exists for the customer, the order will be allowed to be billed.', verbose_name='Validate Customer Rates'),
+            model_name="billingcontrol",
+            name="validate_customer_rates",
+            field=models.BooleanField(
+                default=False,
+                help_text="Validate rates match the customer contract in the billing queue before allowing billing. If the rates do not match, the order will not be allowed to be billed. If the rates match, the order will be allowed to be billed. If no contract exists for the customer, the order will be allowed to be billed.",
+                verbose_name="Validate Customer Rates",
+            ),
         ),
     ]

@@ -22,6 +22,7 @@ from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
+
 def test_list(organization: Organization) -> None:
     """
     Test Order Control is created when the organization is
@@ -29,6 +30,7 @@ def test_list(organization: Organization) -> None:
     """
 
     assert organization.order_control is not None
+
 
 def test_update(organization: Organization) -> None:
     """

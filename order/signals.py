@@ -23,12 +23,11 @@ from django.utils.translation import gettext_lazy as _
 from dispatch.services.transfer_rate_details import transfer_rate_details
 from movements.models import Movement
 from movements.services.generation import MovementService
-
 from order import models
-from route.services import get_order_mileage
-from stops.selectors import total_weight_for_order, total_piece_count_for_order
-from utils.models import StatusChoices
 from order.services.pro_number_service import set_pro_number
+from route.services import get_order_mileage
+from stops.selectors import total_piece_count_for_order, total_weight_for_order
+from utils.models import StatusChoices
 
 
 def set_total_piece_and_weight(

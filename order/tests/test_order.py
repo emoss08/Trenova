@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytest
 import datetime
+
+import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework.response import Response
@@ -430,7 +431,9 @@ def test_order_destination_location_or_address_is_required() -> None:
     ]
 
 
-def test_remove_orders_validation(order: models.Order, organization: Organization) -> None:
+def test_remove_orders_validation(
+    order: models.Order, organization: Organization
+) -> None:
     """
     Test ValidationError is thrown if the stop in an order is being deleted,
     and order_control does not allow it.

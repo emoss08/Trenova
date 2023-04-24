@@ -17,8 +17,9 @@
 
 import sys
 import threading
-from rich.traceback import Traceback
+
 from rich.console import Console
+from rich.traceback import Traceback
 
 console = Console()
 
@@ -39,12 +40,11 @@ def rich_traceback_hook(exc_type, exc_value, exc_traceback):
     console.print(tb)
 
 
-
-
 class RichTracebackThread(threading.Thread):
     """
     A subclass of `threading.Thread` that overrides the `run` method to handle exceptions with the rich traceback hook.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -57,8 +57,9 @@ class RichTracebackThread(threading.Thread):
         """
         try:
             super().run()
-        except Exception as e:
+        except Exception:
             sys.excepthook(*sys.exc_info())
+
 
 sys.excepthook = rich_traceback_hook
 threading.Thread = RichTracebackThread

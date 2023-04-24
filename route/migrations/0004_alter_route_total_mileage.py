@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('route', '0003_alter_route_options_remove_route_destination_and_more'),
+        ("route", "0003_alter_route_options_remove_route_destination_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='route',
-            name='total_mileage',
-            field=models.FloatField(blank=True, help_text='Total Mile from origin to destination', null=True, verbose_name='Total Mileage'),
+            model_name="route",
+            name="total_mileage",
+            field=models.FloatField(
+                blank=True,
+                help_text="Total Mile from origin to destination",
+                null=True,
+                verbose_name="Total Mileage",
+            ),
         ),
     ]

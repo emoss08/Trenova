@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('organization', '0025_alter_tablechangealert_table'),
+        ("organization", "0025_alter_tablechangealert_table"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tablechangealert',
-            name='table',
-            field=models.CharField(choices=[], help_text='The table that the table change alert is for.', max_length=255, verbose_name='Table'),
+            model_name="tablechangealert",
+            name="table",
+            field=models.CharField(
+                choices=[],
+                help_text="The table that the table change alert is for.",
+                max_length=255,
+                verbose_name="Table",
+            ),
         ),
     ]

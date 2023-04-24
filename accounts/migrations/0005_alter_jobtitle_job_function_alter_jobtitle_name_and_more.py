@@ -2,11 +2,11 @@
 
 import django.core.validators
 from django.db import migrations, models
+
 import utils.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("accounts", "0004_alter_token_table"),
     ]

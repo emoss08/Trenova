@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('dispatch', '0015_alter_rate_rate_number'),
+        ("dispatch", "0015_alter_rate_rate_number"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='rate',
-            name='rate_number',
-            field=models.CharField(editable=False, help_text='Rate Number for Rate', max_length=10, verbose_name='Rate Number'),
+            model_name="rate",
+            name="rate_number",
+            field=models.CharField(
+                editable=False,
+                help_text="Rate Number for Rate",
+                max_length=10,
+                verbose_name="Rate Number",
+            ),
         ),
     ]

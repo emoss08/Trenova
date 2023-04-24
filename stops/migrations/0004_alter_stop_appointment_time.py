@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('stops', '0003_alter_stop_appointment_time'),
+        ("stops", "0003_alter_stop_appointment_time"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='stop',
-            name='appointment_time',
-            field=models.DateTimeField(help_text='The time the equipment is expected to arrive at the stop.', verbose_name='Stop Appointment Time'),
+            model_name="stop",
+            name="appointment_time",
+            field=models.DateTimeField(
+                help_text="The time the equipment is expected to arrive at the stop.",
+                verbose_name="Stop Appointment Time",
+            ),
         ),
     ]

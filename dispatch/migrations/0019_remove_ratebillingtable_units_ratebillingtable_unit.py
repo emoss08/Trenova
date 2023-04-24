@@ -4,20 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('dispatch', '0018_alter_ratebillingtable_options_and_more'),
+        ("dispatch", "0018_alter_ratebillingtable_options_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='ratebillingtable',
-            name='units',
+            model_name="ratebillingtable",
+            name="units",
         ),
         migrations.AddField(
-            model_name='ratebillingtable',
-            name='unit',
-            field=models.PositiveIntegerField(default=1, help_text='Unit for Rate Billing Table', verbose_name='Unit'),
+            model_name="ratebillingtable",
+            name="unit",
+            field=models.PositiveIntegerField(
+                default=1, help_text="Unit for Rate Billing Table", verbose_name="Unit"
+            ),
             preserve_default=False,
         ),
     ]

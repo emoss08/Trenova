@@ -4,31 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('route', '0004_alter_route_total_mileage'),
+        ("route", "0004_alter_route_total_mileage"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='routecontrol',
-            name='avoid_ferries',
+            model_name="routecontrol",
+            name="avoid_ferries",
         ),
         migrations.RemoveField(
-            model_name='routecontrol',
-            name='avoid_highways',
+            model_name="routecontrol",
+            name="avoid_highways",
         ),
         migrations.RemoveField(
-            model_name='routecontrol',
-            name='avoid_tolls',
+            model_name="routecontrol",
+            name="avoid_tolls",
         ),
         migrations.RemoveField(
-            model_name='routecontrol',
-            name='traffic_model',
+            model_name="routecontrol",
+            name="traffic_model",
         ),
         migrations.AddField(
-            model_name='route',
-            name='distance_method',
-            field=models.CharField(blank=True, help_text='Distance model used to calculate the route', max_length=50, verbose_name='Distance Model'),
+            model_name="route",
+            name="distance_method",
+            field=models.CharField(
+                blank=True,
+                help_text="Distance model used to calculate the route",
+                max_length=50,
+                verbose_name="Distance Model",
+            ),
         ),
     ]

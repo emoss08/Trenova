@@ -15,10 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from rest_framework import serializers
+
 from invoicing import models
 from organization.models import Organization
 from utils.serializers import GenericSerializer
-from rest_framework import serializers
 
 
 class InvoiceControlSerializer(GenericSerializer):

@@ -15,12 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Tuple, Any
+from typing import Any, Tuple
+
+from geopy.distance import geodesic
 
 from integration.services import google_distance_matrix_service
 from order.models import Order
-from geopy.distance import geodesic
-
 from organization.models import Organization
 from route import models
 from route.models import RouteControl
@@ -57,7 +57,7 @@ def generate_route(
     )
 
 
-def get_coordinates(*, order: Order) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+def get_coordinates(*, order: Order) -> tuple[tuple[float, float], tuple[float, float]]:
     """
     Retrieve the latitude and longitude coordinates for an order's origin and destination locations.
 
@@ -83,8 +83,8 @@ def get_coordinates(*, order: Order) -> Tuple[Tuple[float, float], Tuple[float, 
 def calculate_distance(
     *,
     organization: Organization,
-    point_1: Tuple[float, float],
-    point_2: Tuple[float, float],
+    point_1: tuple[float, float],
+    point_2: tuple[float, float],
 ) -> tuple[float | Any, str, float | None | Any]:
     """
     Calculate the distance and duration between two points on the Earth's surface using the Haversine formula or the Google Distance

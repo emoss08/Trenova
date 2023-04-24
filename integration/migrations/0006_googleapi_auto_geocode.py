@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('integration', '0005_delete_googleapilog'),
+        ("integration", "0005_delete_googleapilog"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='googleapi',
-            name='auto_geocode',
-            field=models.BooleanField(default=False, help_text='This determines if locations will automatically be geocoded, once they are created/updated.', verbose_name='Auto Geocode'),
+            model_name="googleapi",
+            name="auto_geocode",
+            field=models.BooleanField(
+                default=False,
+                help_text="This determines if locations will automatically be geocoded, once they are created/updated.",
+                verbose_name="Auto Geocode",
+            ),
         ),
     ]

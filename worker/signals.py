@@ -17,8 +17,8 @@
 
 from typing import Any
 
-from worker.services.generation import WorkerGenerationService
 from worker import models
+from worker.services.generation import WorkerGenerationService
 
 
 def create_worker_code(

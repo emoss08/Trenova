@@ -26,7 +26,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from movements.models import Movement
 from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
 
 User = settings.AUTH_USER_MODEL
@@ -200,9 +199,10 @@ class Stop(GenericModel):
 
         """
         from stops.validation import StopValidation
+
         StopValidation(instance=self)
 
-    def save(self,*args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the stop object
 
         Args:
@@ -235,6 +235,7 @@ class Stop(GenericModel):
             str: The absolute url for the stop
         """
         return reverse("stops-detail", kwargs={"pk": self.pk})
+
 
 class StopComment(GenericModel):
     """

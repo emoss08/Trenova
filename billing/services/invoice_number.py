@@ -40,6 +40,8 @@ def generate_invoice_number(*, instance: models.BillingQueue) -> str:
                 latest_invoice_number + 1,
             )
         else:
-            instance.invoice_number = f"{instance.organization.invoice_control.invoice_number_prefix}00001"
+            instance.invoice_number = (
+                f"{instance.organization.invoice_control.invoice_number_prefix}00001"
+            )
 
     return instance.invoice_number

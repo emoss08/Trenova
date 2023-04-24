@@ -17,6 +17,7 @@
 
 import factory
 
+
 class CustomReportFactory(factory.django.DjangoModelFactory):
     """
     Custom Report Factory
@@ -26,6 +27,7 @@ class CustomReportFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for CustomReportFactory
         """
+
         model = "reports.CustomReport"
         django_get_or_create = ("organization",)
 
@@ -40,6 +42,7 @@ class CustomReportFactory(factory.django.DjangoModelFactory):
         ),
     )
 
+
 class ReportColumnFactory(factory.django.DjangoModelFactory):
     """
     Report Column Factory
@@ -49,6 +52,7 @@ class ReportColumnFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for ReportColumnFactory
         """
+
         model = "reports.ReportColumn"
         django_get_or_create = ("organization", "report")
 
@@ -56,6 +60,7 @@ class ReportColumnFactory(factory.django.DjangoModelFactory):
     report = factory.SubFactory(CustomReportFactory)
     column_name = factory.Faker("word", locale="en_US")
     column_order = 1
+
 
 class ScheduledReportFactory(factory.django.DjangoModelFactory):
     """
@@ -66,6 +71,7 @@ class ScheduledReportFactory(factory.django.DjangoModelFactory):
         """
         Metaclass for ScheduledReportFactory
         """
+
         model = "reports.ScheduledReport"
         django_get_or_create = ("organization", "report")
 
@@ -74,5 +80,5 @@ class ScheduledReportFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory("accounts.test.factories.UserFactory")
     schedule_type = "WEEKLY"
     time = "12:00"
-    day_of_week = 0 # monday
+    day_of_week = 0  # monday
     timezone = "UTC"

@@ -68,6 +68,7 @@ class JobTitleSerializer(GenericSerializer):
     Attributes:
         is_active (serializers.BooleanField): A boolean field representing the
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
@@ -181,6 +182,7 @@ class UserProfileSerializer(GenericSerializer):
                     "user",
                 )
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )

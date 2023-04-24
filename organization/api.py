@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import threading
 from typing import List
+
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -30,7 +31,7 @@ from core.health_check.database_backend import DatabaseHealthCheck
 from core.health_check.disk_backend import DiskUsageHealthCheck
 from core.health_check.redis_backend import RedisHealthCheck
 from core.health_check.storage_backend import FileStorageHealthCheck
-from organization import models, serializers, selectors
+from organization import models, selectors, serializers
 from utils.views import OrganizationMixin
 
 
@@ -306,7 +307,7 @@ def active_threads(request: Request) -> Response:
     Returns:
         Response: A Response object containing a list of dictionaries representing the threads,
     """
-    threads: List[threading.Thread] = threading.enumerate()
+    threads: list[threading.Thread] = threading.enumerate()
     thread_list = [
         {
             "name": thread.name,

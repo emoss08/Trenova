@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('kubectl', '0002_alter_kubeconfiguration_host'),
+        ("kubectl", "0002_alter_kubeconfiguration_host"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='kubeconfiguration',
-            name='password',
-            field=models.CharField(blank=True, help_text='The password for HTTP basic authentication.', max_length=128, verbose_name='Password'),
+            model_name="kubeconfiguration",
+            name="password",
+            field=models.CharField(
+                blank=True,
+                help_text="The password for HTTP basic authentication.",
+                max_length=128,
+                verbose_name="Password",
+            ),
         ),
     ]
