@@ -85,7 +85,8 @@ class Command(BaseCommand):
             default="sys",
         )
 
-    def create_system_organization(self, organization_name: str) -> Organization:
+    @staticmethod
+    def create_system_organization(organization_name: str) -> Organization:
         """
         Creates a system organization with the specified name.
 
@@ -107,7 +108,8 @@ class Command(BaseCommand):
         )
         return organization
 
-    def create_system_job_title(self, organization: Organization) -> JobTitle:
+    @staticmethod
+    def create_system_job_title(organization: Organization) -> JobTitle:
         """
         Creates a system job title for the specified organization.
 
