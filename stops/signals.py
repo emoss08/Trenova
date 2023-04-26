@@ -17,13 +17,10 @@
 
 from typing import Any
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from stops import models
-from stops.services import generation
 from utils.models import StatusChoices
 
 
@@ -59,7 +56,7 @@ def check_stop_removal_policy(
 ) -> None:
     """Check if the organization allows order removal.
 
-    If the organization does not allow order removal throw a ValidationError.
+    If the organization does not allow order removal, throw a ValidationError.
 
     Args:
         instance (models.Stop): The instance of the Stop model being saved.

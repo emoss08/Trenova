@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Tuple, Any
+from typing import Tuple, Any, Optional, Union
 
 import googlemaps
 
@@ -28,7 +28,7 @@ def google_client(*, organization: Organization) -> googlemaps.Client:
     return googlemaps.Client(key=api_key)
 
 
-def geocode_location(*, location: Location):
+def geocode_location_service(*, location: Location) -> None:
     gmaps_api_config = selectors.get_organization_google_api(
         organization=location.organization
     )
@@ -48,8 +48,8 @@ def geocode_location(*, location: Location):
 
 def google_distance_matrix_service(
     *,
-    point_1: Tuple[float, float],
-    point_2: Tuple[float, float],
+    point_1: Union[Tuple[Optional[float], Optional[float]], Any],
+    point_2: Union[Tuple[Optional[float], Optional[float]], Any],
     units: str,
     organization: Organization,
 ) -> tuple[float | Any, float | Any]:

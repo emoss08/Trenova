@@ -702,20 +702,6 @@ class Rate(GenericModel):  # type:ignore
                 }
             )
 
-    @staticmethod
-    def generate_rate_number() -> str:
-        """
-        Generate a unique rate number for a Rate instance.
-
-        This method generates a unique rate number by finding the highest rate number and
-        incrementing it by 1.
-
-        Returns:
-            str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
-        """
-        code = f"R{Rate.objects.count() + 1:05d}"
-        return "R00001" if Rate.objects.filter(rate_number=code).exists() else code
-
 
 class RateBillingTable(GenericModel):  # type:ignore
     """
@@ -727,9 +713,9 @@ class RateBillingTable(GenericModel):  # type:ignore
     Attributes:
         id (UUIDField): The primary key for the rate billing table instance.
         rate (ForeignKey): The rate associated with the rate billing table instance.
-        charge_code (ForeignKey): The charge code associated with the rate billing table instance.
+        accessorial_charge (ForeignKey): The charge code associated with the rate billing table instance.
         description (CharField): The description for the rate billing table instance.
-        units (PositiveIntegerField): The number of units for the rate billing table instance.
+        unit (PositiveIntegerField): The number of units for the rate billing table instance.
         charge_amount (MoneyField): The charge amount for the rate billing table instance.
         sub_total (MoneyField): The sub_total for the rate billing table instance.
 

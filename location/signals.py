@@ -15,39 +15,21 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db.models import Sum
-
-from order.models import Order
-from stops.models import Stop
-
-
-def get_total_piece_count_by_order(*, order: Order) -> int:
-    """Return the total piece count for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total piece count for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-
-    return value or 0
+from typing import Any
+from location import models, selectors, helpers
+from integration.services import geocode_location_service
 
 
-def get_total_weight_by_order(*, order: Order) -> int:
-    """Return the total weight for an order
+def geocode_location(instance: models.Location, created: bool, **kwargs: Any) -> None:
+    route_control = instance.organization.route_control
 
-    Args:
-        order (Order): Order instance
+    if route_control.generate_routes:
+        old_instance = selectors.get_location_by_pk(location_id=instance.pk)
 
-    Returns:
-        int: Total weight for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
-    return value or 0
+        if created or (
+            old_instance
+            and helpers.has_address_changed(
+                old_instance=old_instance, new_instance=instance
+            )
+        ):
+            geocode_location_service(location=instance)

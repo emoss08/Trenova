@@ -277,6 +277,9 @@ class OrderValidation:
         """
         order = get_order_by_id(order_id=self.order.id)
 
+        if not order:
+            return None
+
         if order.status == StatusChoices.COMPLETED:
             location_attributes = [
                 ("origin_location", "Origin location"),

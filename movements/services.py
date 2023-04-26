@@ -1,22 +1,3 @@
-"""
-COPYRIGHT 2022 MONTA
-
-This file is part of Monta.
-
-Monta is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Monta is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Monta.  If not, see <https://www.gnu.org/licenses/>.
-"""
-
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -33,24 +14,63 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.db import IntegrityError
 
+from movements import models
 from order.models import Order
-from utils.types import MODEL_UUID
+from stops.models import Stop
+from utils.models import StopChoices
 
 
-def set_pro_number(*, organization: MODEL_UUID) -> str:
-    """Generate a unique pro number for an order.
+def set_ref_number() -> str:
+    """Generate a unique movement reference number.
 
     Returns:
-        str: The pro number for the order.
+        str: The generated reference number.
+    """
+    code = f"MOV{models.Movement.objects.count() + 1:06d}"
+    return (
+        "MOV000001" if models.Movement.objects.filter(ref_num=code).exists() else code
+    )
+
+
+def create_initial_stops(
+    *, movement: models.Movement, order: Order
+) -> tuple[Stop, Stop]:
+    """Create Initial Stops for Orders
+
+    Args:
+        movement (Movement): The movement instance.
+        order (Order): The order instance.
+
+    Returns:
+        tuple[Stop, Stop]: The origin and destination stop.
+
+    Raises:
+        IntegrityError: If the stop cannot be created.
     """
 
-    count: int = Order.objects.filter(organization=organization).count() + 1
-    pro_number = f"ORD{count:06d}"
+    try:
+        origin_stop: Stop = Stop.objects.create(
+            organization=movement.organization,
+            movement=movement,
+            sequence=1,
+            stop_type=StopChoices.PICKUP,
+            location=order.origin_location,
+            address_line=order.origin_address,
+            appointment_time=order.origin_appointment,
+        )
+        destination_stop: Stop = Stop.objects.create(
+            organization=movement.organization,
+            movement=movement,
+            sequence=2,
+            stop_type=StopChoices.DELIVERY,
+            location=order.destination_location,
+            address_line=order.destination_address,
+            appointment_time=order.destination_appointment,
+        )
 
-    # Check if pro number already exists and generate a new one if it does.
-    while Order.objects.filter(pro_number=pro_number).exists():
-        count += 1
-        pro_number = f"ORD{count:06d}"
+    except IntegrityError as stop_creation_error:
+        raise stop_creation_error
 
-    return pro_number
+    return origin_stop, destination_stop

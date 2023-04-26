@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Tuple, Any
+from typing import Tuple, Any, TypeAlias, Union, Optional
 
 from integration.services import google_distance_matrix_service
 from order.models import Order
@@ -25,9 +25,14 @@ from organization.models import Organization
 from route import models
 from route.models import RouteControl
 
+Coordinates: TypeAlias = (
+    Tuple[Tuple[float | None, float | None], Tuple[float | None, float | None]] | None
+)
+Distance: TypeAlias = Tuple[float, float, str]
+
 
 def generate_route(
-    *, order: Order, distance: float, method: str, duration: str | None
+    *, order: Order, distance: float, method: str, duration: float | None
 ) -> None:
     """
     Generate a new Route object for an order.
@@ -57,7 +62,7 @@ def generate_route(
     )
 
 
-def get_coordinates(*, order: Order) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+def get_coordinates(*, order: Order) -> Coordinates:
     """
     Retrieve the latitude and longitude coordinates for an order's origin and destination locations.
 
@@ -72,6 +77,9 @@ def get_coordinates(*, order: Order) -> Tuple[Tuple[float, float], Tuple[float, 
         A tuple containing two tuples, each representing a pair of latitude and longitude coordinates for
         the order's origin and destination locations.
     """
+    if not order.origin_location or not order.destination_location:
+        return None
+
     point_1 = (order.origin_location.latitude, order.origin_location.longitude)
     point_2 = (
         order.destination_location.latitude,
@@ -83,9 +91,9 @@ def get_coordinates(*, order: Order) -> Tuple[Tuple[float, float], Tuple[float, 
 def calculate_distance(
     *,
     organization: Organization,
-    point_1: Tuple[float, float],
-    point_2: Tuple[float, float],
-) -> tuple[float | Any, str, float | None | Any]:
+    point_1: Union[Tuple[Optional[float], Optional[float]], Any],  # Update the type hint for point_1
+    point_2: Union[Tuple[Optional[float], Optional[float]], Any],
+) -> Tuple[float, float, str]:
     """
     Calculate the distance and duration between two points on the Earth's surface using the Haversine formula or the Google Distance
     Matrix API.
@@ -133,7 +141,7 @@ def calculate_distance(
     return distance_miles, duration_hours, method
 
 
-def get_order_mileage(*, order: Order) -> float:
+def get_order_mileage(*, order: Order) -> float | None:
     """
     Get the total mileage for an order's route or calculate the distance between two locations.
 
@@ -168,6 +176,9 @@ def get_order_mileage(*, order: Order) -> float:
     except models.Route.DoesNotExist:
         # Get coordinates for two points.
         point_1, point_2 = get_coordinates(order=order)
+
+        if not point_1 or not point_2:
+            return 0
 
         # Calculate distance between two points.
         distance, duration, method = calculate_distance(

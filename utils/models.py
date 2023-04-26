@@ -167,7 +167,7 @@ class PendulumDateTimeField(models.DateTimeField):
     def to_python(self, value: Any) -> Optional[pendulum.DateTime]:
         if isinstance(value, pendulum.DateTime):
             return value
-        return super().to_python(value)
+        return super().to_python(value) if value is not None else value
 
     def from_db_value(
         self, value: Optional[Any], expression: Any, connection: Any

@@ -28,12 +28,11 @@ from commodities.factories import CommodityFactory, HazardousMaterialFactory
 from dispatch.factories import FleetCodeFactory
 from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
-from movements import models
+from movements import models, services
 from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
-from stops.services.generation import StopService
 from stops.tests.factories import StopFactory
 from worker.factories import WorkerFactory
 from worker.models import Worker
@@ -42,7 +41,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_create(
-    worker: Worker, tractor: Tractor, organization: Organization, order: Order
+        worker: Worker, tractor: Tractor, organization: Organization, order: Order
 ) -> None:
     """
     Test Movement Create
@@ -99,7 +98,7 @@ def test_initial_stop_creation_hook(worker: Worker, tractor: Tractor) -> None:
         primary_worker=worker,
     )
 
-    StopService.create_initial_stops(movement=movement, order=order)
+    services.create_initial_stops(movement=movement, order=order)
 
     assert movement.stops.count() == 2
 
@@ -113,11 +112,11 @@ def test_movement_ref_num_hook(movement: models.Movement) -> None:
 
 @pytest.fixture
 def movement_api(
-    api_client: APIClient,
-    organization: Organization,
-    order: Order,
-    tractor: Tractor,
-    worker: Worker,
+        api_client: APIClient,
+        organization: Organization,
+        order: Order,
+        tractor: Tractor,
+        worker: Worker,
 ) -> Generator[Any, Any, None]:
     """
     Movement Factory
@@ -142,11 +141,11 @@ def test_get(api_client: APIClient) -> None:
 
 
 def test_get_by_id(
-    api_client: APIClient,
-    movement_api: Response,
-    order: Order,
-    worker: Worker,
-    tractor: Tractor,
+        api_client: APIClient,
+        movement_api: Response,
+        order: Order,
+        worker: Worker,
+        tractor: Tractor,
 ) -> None:
     """
     Test get Movement by ID
@@ -554,6 +553,7 @@ def test_movement_cannot_change_status_in_in_progress_if_stops_are_new():
     assert excinfo.value.message_dict["status"] == [
         "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
     ]
+
 
 def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress():
     """

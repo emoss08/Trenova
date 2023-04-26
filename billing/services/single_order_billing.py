@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 from django.shortcuts import get_object_or_404
 
 from accounts.models import User
@@ -28,10 +27,10 @@ from billing.services.billing_service import (
     set_order_documents,
 )
 from order.models import Order
-from utils.types import MODEL_UUID
+from utils.types import ModelUUID
 
 
-def bill_order(*, user_id: MODEL_UUID, order: Order) -> None:
+def bill_order(*, user_id: ModelUUID, order: Order) -> None:
     """Bill a single order by performing multiple operations.
 
     This function checks if the billing control is valid, sets the billing requirements,
@@ -40,7 +39,7 @@ def bill_order(*, user_id: MODEL_UUID, order: Order) -> None:
     not valid, or if the billing requirements are not met, an exception is created.
 
     Args:
-        user_id (str): The ID of the user performing the billing actions.
+        user_id (ModelUUID): The ID of the user performing the billing actions.
         order (Order): The order to bill
 
     Returns:

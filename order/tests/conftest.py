@@ -215,7 +215,7 @@ def additional_charge_api(
         {
             "organization": f"{organization.id}",
             "order": f"{order.id}",
-            "charge": f"{accessorial_charge.id}",
+            "accessorial_charge": f"{accessorial_charge.id}",
             "charge_amount": 123.00,
             "unit": 2,
             "entered_by": f"{user.id}",
@@ -285,7 +285,9 @@ def order_type_api(
 
 
 @pytest.fixture
-def reason_code_api(api_client: APIClient, organization: Organization) -> Generator[Any, Any, None]:
+def reason_code_api(
+    api_client: APIClient, organization: Organization
+) -> Generator[Any, Any, None]:
     """
     Reason Code Factory
     """

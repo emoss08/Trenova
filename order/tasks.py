@@ -14,7 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import List, Iterable
+from typing import List
+
+from django.db.models import QuerySet
 
 from backend.celery import app
 
@@ -22,10 +24,9 @@ from accounts.models import User
 from billing.services import mass_order_billing, single_order_billing
 from billing.services.transfer_to_billing import transfer_to_billing_queue_service
 from core.exceptions import ServiceException
-from order.models import Order
-from order.services.consolidate_pdf import combine_pdfs_service
+from order import selectors, services
 from organization.models import Organization
-from utils.types import MODEL_UUID
+from utils.types import ModelUUID
 
 
 @app.task(
@@ -34,7 +35,7 @@ from utils.types import MODEL_UUID
     max_retries=3,
     default_retry_delay=60,
 )
-def consolidate_order_documentation(self, *, order_id: str) -> None:  # type: ignore
+def consolidate_order_documentation(self, *, order_id: ModelUUID) -> None:  # type: ignore
     """Consolidate Order
 
     Query the database for the Order and call the consolidate_pdf
@@ -52,14 +53,17 @@ def consolidate_order_documentation(self, *, order_id: str) -> None:  # type: ig
     """
 
     try:
-        order: Order = Order.objects.get(id=order_id)
-        combine_pdfs_service(order=order)
+        if order := selectors.get_order_by_id(order_id=order_id):
+            services.combine_pdfs_service(order=order)
+        else:
+            return None
+
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
 
 @app.task(name="bill_order_task", bind=True, max_retries=3, default_retry_delay=60)
-def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:  # type: ignore
+def bill_order_task(self, user_id: ModelUUID, order_id: ModelUUID) -> None:    # type: ignore
     """Bill Order
 
     Query the database for the Order and call the bill_order
@@ -78,14 +82,16 @@ def bill_order_task(self, user_id: MODEL_UUID, order_id: str) -> None:  # type: 
     """
 
     try:
-        order: Order = Order.objects.get(pk=order_id)
-        single_order_billing.bill_order(order=order, user_id=user_id)
+        if order := selectors.get_order_by_id(order_id=order_id):
+            single_order_billing.bill_order(order=order, user_id=user_id)
+        else:
+            return None
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
 
 
 @app.task(name="mass_order_bill_task", bind=True, max_retries=3, default_retry_delay=60)
-def mass_order_bill_task(self, *, user_id: MODEL_UUID) -> None:  # type: ignore
+def mass_order_bill_task(self, *, user_id: ModelUUID) -> None:  # type: ignore
     """Bill Order
 
     Args:
@@ -108,7 +114,7 @@ def mass_order_bill_task(self, *, user_id: MODEL_UUID) -> None:  # type: ignore
 
 @app.task(name="transfer_to_billing_task", bind=True)
 def transfer_to_billing_task(  # type: ignore
-    self, *, user_id: MODEL_UUID, order_pros: List[str]
+    self, *, user_id: ModelUUID, order_pros: List[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
@@ -154,7 +160,7 @@ def transfer_to_billing_task(  # type: ignore
     name="automate_mass_order_billing", bind=True, max_retries=3, default_retry_delay=60
 )
 def automate_mass_order_billing(self) -> str:  # type: ignore
-    """Automated Mass Billing Tasks, that uses system user to bill orders.
+    """Automated Mass Billing Tasks that uses system user to bill orders.
 
     Filter the database for the Organizations that have auto bill orders enabled and call the mass_order_billing_service
     service to bill the orders.
@@ -168,13 +174,15 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
     Raises:
         ServiceException: If the Order does not exist in the database.
     """
-    system_user: User = User.objects.get(username="sys")
-    organizations: Iterable[Organization] = Organization.objects.filter(billing_control__auto_bill_orders=True)
+    system_user = User.objects.get(username="sys")
+    organizations: QuerySet[Organization] = Organization.objects.filter(
+        billing_control__auto_bill_orders=True
+    )
     results = []
     for organization in organizations:
         try:
             mass_order_billing.mass_order_billing_service(
-                user_id=str(system_user.id), task_id=self.request.id
+                user_id=system_user.id, task_id=self.request.id
             )
             results.append(
                 f"Automated Mass Billing Task for {organization.name} was successful."

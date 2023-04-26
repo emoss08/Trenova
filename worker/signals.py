@@ -17,40 +17,20 @@
 
 from typing import Any
 
-from worker.services.generation import WorkerGenerationService
 from worker import models
 
 
-def create_worker_code(
-    sender: models.Worker, instance: models.Worker, **kwargs: Any
-) -> None:
-    """Generate a worker code for a Worker model instance if it doesn't exist.
-
-    This function is called as a signal when a Worker model instance is saved.
-    If the worker instance does not have a code, it generates a worker code
-    using the WorkerGenerationService.
-
-    Args:
-        sender (models.Worker): The class of the sending instance.
-        instance (models.Worker): The instance of the Worker model being saved.
-        **kwargs: Additional keyword arguments.
-    """
-    if not instance.code:
-        WorkerGenerationService.generate_worker_code(instance=instance)
-
-
 def create_worker_profile(
-    sender: models.Worker, instance: models.Worker, created: bool, **kwargs: Any
+    instance: models.Worker, created: bool, **kwargs: Any
 ) -> None:
     """Create a WorkerProfile model instance for a new Worker model instance.
 
     This function is called as a signal when a Worker model instance is saved.
-    If a new Worker instance is created and it does not have an associated
+    If a new Worker instance is created, and it doesn't have an associated
     WorkerProfile, it creates a WorkerProfile model instance with the worker
     and organization references.
 
     Args:
-        sender (models.Worker): The class of the sending instance.
         instance (models.Worker): The instance of the Worker model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.

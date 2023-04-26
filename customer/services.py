@@ -14,40 +14,30 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import Dict
 
-from django.db.models import Sum
-
-from order.models import Order
-from stops.models import Stop
+from customer import models
 
 
-def get_total_piece_count_by_order(*, order: Order) -> int:
-    """Return the total piece count for an order
+def generate_customer_code(*, instance: models.Customer) -> str:
+    code = instance.name[:3].upper()
+    new_code = f"{code}{models.Customer.objects.count() + 1:04d}"
 
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total piece count for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-
-    return value or 0
+    return new_code if models.Customer.objects.filter(code=code).exists() else code
 
 
-def get_total_weight_by_order(*, order: Order) -> int:
-    """Return the total weight for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total weight for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
-    return value or 0
+def generate_fuel_surcharge(
+    *,
+    fuel_price_from: float,
+    fuel_price_to: float,
+    fuel_price_increment: float,
+    base_charge: float,
+    fuel_surcharge_increment: float,
+    fuel_method: float,
+) -> Dict[float, float]:
+    fuel_surcharge = {}
+    fuel_price = fuel_price_from
+    while fuel_price <= fuel_price_to:
+        fuel_surcharge[fuel_price] = base_charge
+        fuel_price += fuel_price_increment
+    return fuel_surcharge

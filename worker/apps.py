@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 
 
 class WorkerConfig(AppConfig):
@@ -26,11 +26,6 @@ class WorkerConfig(AppConfig):
     def ready(self) -> None:
         from worker import signals
 
-        pre_save.connect(
-            signals.create_worker_code,
-            sender="worker.Worker",
-            dispatch_uid="create_worker_code",
-        )
         post_save.connect(
             signals.create_worker_profile,
             sender="worker.Worker",

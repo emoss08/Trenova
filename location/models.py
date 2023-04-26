@@ -215,16 +215,6 @@ class Location(GenericModel):  # type: ignore
         """
         return reverse("location:location_detail", kwargs={"pk": self.pk})
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Saves the location and geocodes the address if it is not geocoded
-        """
-        from integration.services import geocode_location
-
-        if not self.is_geocoded:
-            geocode_location(location=self)
-        super().save(*args, **kwargs)
-
     @cached_property
     def get_address_combination(self) -> str:
         """Location address combination

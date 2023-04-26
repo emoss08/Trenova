@@ -32,9 +32,9 @@ class OrderConfig(AppConfig):
             dispatch_uid="set_total_piece_and_weight",
         )
         pre_save.connect(
-            signals.set_field_values,
+            signals.set_order_pro_number,
             sender="order.Order",
-            dispatch_uid="set_field_values",
+            dispatch_uid="set_order_pro_number",
         )
         post_save.connect(
             signals.create_order_initial_movement,

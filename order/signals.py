@@ -20,20 +20,17 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from dispatch.services.transfer_rate_details import transfer_rate_details
+from dispatch.services import transfer_rate_details
 from movements.models import Movement
-from movements.services.generation import MovementService
 
-from order import models
+from order import models, services
 from route.services import get_order_mileage
-from stops.selectors import total_weight_for_order, total_piece_count_for_order
+from stops.selectors import get_total_weight_by_order, get_total_piece_count_by_order
 from utils.models import StatusChoices
-from order.services.pro_number_service import set_pro_number
 
 
 def set_total_piece_and_weight(
     instance: models.Order,
-    created: bool,
     **kwargs: Any,
 ) -> None:
     """
@@ -45,55 +42,15 @@ def set_total_piece_and_weight(
 
     Args:
         instance (models.Order): The instance of the Order model being saved.
-        created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
     """
     if instance.status == StatusChoices.COMPLETED:
-        instance.pieces = total_piece_count_for_order(order=instance)
-        instance.weight = total_weight_for_order(order=instance)
+        instance.pieces = get_total_piece_count_by_order(order=instance)
+        instance.weight = get_total_weight_by_order(order=instance)
 
 
-def set_field_values(instance: models.Order, **kwargs: Any) -> None:
-    """Set various field values of an Order model instance.
-
-    This function is called as a signal when an Order model instance is saved.
-    It sets values for pro_number, sub_total, origin_address, destination_address,
-    and hazmat fields based on certain conditions.
-
-    Args:
-        sender (models.Order): The class of the sending instance.
-        instance (models.Order): The instance of the Order model being saved.
-        **kwargs: Additional keyword arguments.
-    """
-    _set_pro_number(instance)
-    _set_sub_total(instance)
-    _set_origin_and_destination_addresses(instance)
-    _set_hazmat(instance)
-
-
-def _set_pro_number(instance: models.Order) -> None:
-    if not instance.pro_number:
-        instance.pro_number = set_pro_number(organization=instance.organization)
-
-
-def _set_sub_total(instance: models.Order) -> None:
-    if instance.ready_to_bill and instance.organization.order_control.auto_order_total:
-        instance.sub_total = instance.calculate_total()
-
-
-def _set_origin_and_destination_addresses(instance: models.Order) -> None:
-    if instance.origin_location and not instance.origin_address:
-        instance.origin_address = instance.origin_location.get_address_combination
-
-    if instance.destination_location and not instance.destination_address:
-        instance.destination_address = (
-            instance.destination_location.get_address_combination
-        )
-
-
-def _set_hazmat(instance: models.Order) -> None:
-    if instance.commodity and instance.commodity.hazmat:
-        instance.hazmat = instance.commodity.hazmat
+def set_order_pro_number(instance: models.Order, **kwargs: Any) -> None:
+    instance.pro_number = services.set_pro_number(organization=instance.organization)
 
 
 def create_order_initial_movement(
@@ -117,7 +74,7 @@ def create_order_initial_movement(
         return
 
     if not Movement.objects.filter(order=instance).exists():
-        MovementService.create_initial_movement(order=instance)
+        services.create_initial_movement(order=instance)
 
 
 def check_order_removal_policy(
@@ -161,5 +118,6 @@ def transfer_rate_information(instance: models.Order, **kwargs: Any) -> None:
         transfer_rate_details(order=instance)
 
 
-def set_order_mileage_and_create_route(instance: models.Order, **kwargs) -> None:
-    instance.mileage = get_order_mileage(order=instance)
+def set_order_mileage_and_create_route(instance: models.Order, **kwargs: Any) -> None:
+    if instance.origin_location and instance.destination_location:
+        instance.mileage = get_order_mileage(order=instance)

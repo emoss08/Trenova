@@ -15,9 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+
 from datetime import timedelta
 
-from rvenv.lib.pyre_check.stubs.django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404
+
 from utils.models import StopChoices
 from stops import models
 from dispatch.models import DispatchControl
@@ -48,8 +50,8 @@ class StopServiceIncidentHandler:
 
     def should_create_service_incident(self, stop_type: str) -> bool:
         is_late = (
-            self.instance.arrival_time and
             self.instance.arrival_time
+            and self.instance.arrival_time
             > self.instance.appointment_time
             + timedelta(minutes=self.dispatch_control.grace_period)
         )

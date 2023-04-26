@@ -362,9 +362,9 @@ def test_rate_billing_table_api_post(
     data = {
         "organization": organization.id,
         "rate": rate.id,
-        "charge_code": charge_code.id,
+        "accessorial_charge": charge_code.id,
         "description": "Test Rate Billing Table",
-        "units": 1,
+        "unit": 1,
     }
 
     response = api_client.post(reverse("rate-billing-tables-list"), data=data)
@@ -373,8 +373,8 @@ def test_rate_billing_table_api_post(
     assert response.status_code == status.HTTP_201_CREATED
     assert models.RateBillingTable.objects.count() == 1
     assert billing_table.description == data["description"]
-    assert billing_table.charge_code.id == data["charge_code"]
-    assert billing_table.units == data["units"]
+    assert billing_table.accessorial_charge.id == data["accessorial_charge"]
+    assert billing_table.unit == data["unit"]
 
 
 def test_rate_billing_table_api_update(
@@ -391,9 +391,9 @@ def test_rate_billing_table_api_update(
     data = {
         "organization": organization.id,
         "rate": rate.id,
-        "charge_code": charge_code.id,
+        "accessorial_charge": charge_code.id,
         "description": "Test Rate Billing Table",
-        "units": 1,
+        "unit": 1,
         "charge_amount": 100.00,
         "sub_total": 100.00,
     }
@@ -434,12 +434,12 @@ def test_rate_billing_table_before_save_hook() -> None:
 
     accessorial_charge = AccessorialChargeFactory()
     rate_billing_table = RateBillingTableFactory(
-        charge_code=accessorial_charge,
+        accessorial_charge=accessorial_charge,
         charge_amount=0,
     )
 
     assert rate_billing_table.charge_amount == accessorial_charge.charge_amount
     assert (
         rate_billing_table.sub_total
-        == accessorial_charge.charge_amount * rate_billing_table.units
+        == accessorial_charge.charge_amount * rate_billing_table.unit
     )

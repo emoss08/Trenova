@@ -326,6 +326,7 @@ def test_put(
         },
         format="json",
     )
+
     payload = {
         "organization": organization.id,
         "is_active": True,
@@ -337,6 +338,8 @@ def test_put(
         "state": "CA",
         "zip_code": "12345",
         "fleet": fleet.code,
+        "manager": user.id,
+        "entered_by": user.id,
         "profile": {
             "organization": organization.id,
             "race": "TEST",
@@ -374,6 +377,7 @@ def test_put(
         format="json",
         data=payload,
     )
+
     assert response.status_code == 200
     assert response.data is not None
     assert response.data["first_name"] == "foo bar"

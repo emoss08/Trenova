@@ -20,10 +20,8 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from movements.services.generation import MovementService
-from stops.services.generation import StopService
 from utils.models import StatusChoices
-from movements import models
+from movements import models, services
 
 
 def generate_initial_stops(
@@ -45,7 +43,7 @@ def generate_initial_stops(
         and instance.order.movements.count() == 1
         and created
     ):
-        StopService.create_initial_stops(movement=instance, order=instance.order)
+        services.create_initial_stops(movement=instance, order=instance.order)
 
 
 def generate_ref_number(instance: models.Movement, **kwargs: Any) -> None:
@@ -55,7 +53,7 @@ def generate_ref_number(instance: models.Movement, **kwargs: Any) -> None:
         None
     """
     if not instance.ref_num:
-        instance.ref_num = MovementService.set_ref_number()
+        instance.ref_num = services.set_ref_number()
 
 
 def update_order_status(instance: models.Movement, **kwargs: Any) -> None:

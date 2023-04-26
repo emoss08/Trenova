@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 from datetime import datetime
 from typing import Optional, Iterable, List
 
@@ -29,11 +28,11 @@ from billing.exceptions import BillingException
 from billing.selectors import get_billable_orders
 from billing.services.billing_service import create_billing_exception
 from order.models import Order
-from utils.types import MODEL_UUID
+from utils.types import ModelUUID
 
 
 def transfer_to_billing_queue_service(
-    *, user_id: MODEL_UUID, order_pros: List[str], task_id: str
+    *, user_id: ModelUUID, order_pros: List[str], task_id: str
 ) -> str:
     """
     Creates a new BillingQueue object for each order and updates the order's transfer status and transfer date.
@@ -77,7 +76,9 @@ def transfer_to_billing_queue_service(
     """
 
     user: User = get_object_or_404(User, id=user_id)
-    orders: Optional[Iterable[Order]] = get_billable_orders(organization=user.organization, order_pros=order_pros)
+    orders: Optional[Iterable[Order]] = get_billable_orders(
+        organization=user.organization, order_pros=order_pros
+    )
 
     if not orders:
         # Raise an exception if no orders are found to be eligible for transfer. This also will cause the task to fail.

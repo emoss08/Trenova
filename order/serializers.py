@@ -299,7 +299,7 @@ class AdditionalChargeSerializer(GenericSerializer):
     Attributes:
         order (serializers.PrimaryKeyRelatedField): A primary key related field that
         determines the order of the additional charge.
-        charge (serializers.PrimaryKeyRelatedField): A primary key related field that
+        accessorial_charge (serializers.PrimaryKeyRelatedField): A primary key related field that
         determines the charge of the additional charge.
         entered_by (serializers.PrimaryKeyRelatedField): A primary key related field that
         determines the user that entered the additional charge.
@@ -308,7 +308,7 @@ class AdditionalChargeSerializer(GenericSerializer):
     order = serializers.PrimaryKeyRelatedField(
         queryset=models.Order.objects.all(),
     )
-    charge = serializers.PrimaryKeyRelatedField(
+    accessorial_charge = serializers.PrimaryKeyRelatedField(
         queryset=AccessorialCharge.objects.all(),
     )
     entered_by = serializers.PrimaryKeyRelatedField(
@@ -325,4 +325,4 @@ class AdditionalChargeSerializer(GenericSerializer):
         """
 
         model = models.AdditionalCharge
-        extra_fields = ("order", "charge", "entered_by")
+        extra_fields = ("order", "accessorial_charge", "entered_by")
