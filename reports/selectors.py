@@ -15,39 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db.models import Sum
-
-from order.models import Order
-from stops.models import Stop
+from reports import models
 
 
-def get_total_piece_count_by_order(*, order: Order) -> int:
-    """Return the total piece count for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total piece count for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-
-    return value or 0
-
-
-def get_total_weight_by_order(*, order: Order) -> int:
-    """Return the total weight for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total weight for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
-    return value or 0
+def get_scheduled_report_by_id(report_id: str) -> models.ScheduledReport:
+    return models.ScheduledReport.objects.get(pk__exact=report_id)

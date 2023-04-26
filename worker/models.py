@@ -62,7 +62,6 @@ class Worker(GenericModel):  # type:ignore
     code = models.CharField(
         _("Code"),
         max_length=10,
-        editable=False,
         help_text=_(
             "The code of the worker. This field is required and must be unique."
         ),
@@ -178,6 +177,19 @@ class Worker(GenericModel):  # type:ignore
 
         return textwrap.wrap(f"{self.first_name} {self.last_name}", 50)[0]
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Worker save method
+
+        Args:
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments.
+        """
+        from worker import services
+
+        if not self.code:
+            self.code = services.generate_worker_code(instance=self)
+        super().save(*args, **kwargs)
+
     @cached_property
     def get_full_name(self) -> str:
         """Worker full name
@@ -209,14 +221,6 @@ class Worker(GenericModel):  # type:ignore
         """
 
         return reverse("worker:detail", kwargs={"pk": self.pk})
-
-    def update_worker(self, **kwargs: Any) -> None:
-        """
-        Updates the user with the given kwargs
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
 
 class WorkerProfile(GenericModel):
@@ -378,7 +382,9 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
-        from dispatch.validators.regulatory import validate_worker_regulatory_information
+        from dispatch.validators.regulatory import (
+            validate_worker_regulatory_information,
+        )
 
         super().clean()
 

@@ -47,14 +47,14 @@ def test_create(
     add_charge = models.AdditionalCharge.objects.create(
         organization=organization,
         order=order,
-        charge=accessorial_charge,
+        accessorial_charge=accessorial_charge,
         unit=1,
         entered_by=user,
     )
 
     assert add_charge is not None
     assert add_charge.order == order
-    assert add_charge.charge == accessorial_charge
+    assert add_charge.accessorial_charge == accessorial_charge
     assert add_charge.unit == 1
     assert add_charge.entered_by == user
 
@@ -68,11 +68,11 @@ def test_update(
 
     add_charge = models.AdditionalCharge.objects.get(id=additional_charge.id)
 
-    add_charge.charge = accessorial_charge
+    add_charge.accessorial_charge = accessorial_charge
     add_charge.save()
 
     assert add_charge is not None
-    assert add_charge.charge == accessorial_charge
+    assert add_charge.accessorial_charge == accessorial_charge
     assert (
         add_charge.sub_total
         == accessorial_charge.charge_amount * additional_charge.unit
@@ -92,7 +92,6 @@ def test_api_get_by_id(
     additional_charge_api: Response,
     order: models.Order,
     user: User,
-    accessorial_charge: AccessorialCharge,
 ):
     """
     Test get Additional Charge by id

@@ -212,6 +212,6 @@ class AdditionalChargeViewSet(OrganizationMixin):
     queryset = models.AdditionalCharge.objects.all()
     serializer_class = serializers.AdditionalChargeSerializer
     filterset_fields = (
-        "charge",
+        "accessorial_charge",
         "entered_by",
     )

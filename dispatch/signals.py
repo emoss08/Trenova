@@ -17,32 +17,32 @@
 
 from typing import Any
 
-from dispatch.models import Rate, RateBillingTable
+from dispatch import models, services
 
 
-def set_rate_number(instance: Rate, **kwargs: Any) -> None:
+def set_rate_number(instance: models.Rate, **kwargs: Any) -> None:
     """
     Set the rate_number field of a Rate instance before it is created.
 
     This method sets the rate_number field of the Rate instance to the result of the `generate_rate_number` method.
 
     Returns:
-        None
+        None: This function does not return anything.
     """
     if not instance.rate_number:
-        instance.rate_number = Rate.generate_rate_number()
+        instance.rate_number = services.generate_rate_number()
 
 
 def set_charge_amount_on_billing_table(
-    instance: RateBillingTable, **kwargs: Any
+    instance: models.RateBillingTable, **kwargs: Any
 ) -> None:
     """
     Set the charge amount for the rate billing table instance.
 
     Returns:
-        None: None
+        None: This function does not return anything.
     """
     if not instance.charge_amount:
-        instance.charge_amount = instance.charge_code.charge_amount
+        instance.charge_amount = instance.accessorial_charge.charge_amount
 
-    instance.sub_total = instance.charge_amount * instance.units
+    instance.sub_total = instance.charge_amount * instance.unit

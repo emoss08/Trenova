@@ -15,39 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db.models import Sum
-
-from order.models import Order
-from stops.models import Stop
+from dispatch import models
+from django.db.models import QuerySet
 
 
-def get_total_piece_count_by_order(*, order: Order) -> int:
-    """Return the total piece count for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total piece count for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-
-    return value or 0
-
-
-def get_total_weight_by_order(*, order: Order) -> int:
-    """Return the total weight for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total weight for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
-    return value or 0
+def get_rate_billing_table_by_rate(*, rate: models.Rate) -> QuerySet[models.RateBillingTable]:
+    return models.RateBillingTable.objects.filter(rate=rate).all()

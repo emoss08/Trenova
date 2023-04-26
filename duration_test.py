@@ -14,40 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from datetime import timedelta
 
-from django.db.models import Sum
+td = timedelta(0, 3600)
 
-from order.models import Order
-from stops.models import Stop
+# Calculate the total number of minutes
+minutes = td.total_seconds() / 60
 
+# Convert the result to an integer
+minutes = int(minutes)
 
-def get_total_piece_count_by_order(*, order: Order) -> int:
-    """Return the total piece count for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total piece count for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-
-    return value or 0
-
-
-def get_total_weight_by_order(*, order: Order) -> int:
-    """Return the total weight for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total weight for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
-    return value or 0
+print(minutes)

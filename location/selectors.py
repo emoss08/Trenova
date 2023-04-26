@@ -20,6 +20,14 @@ from typing import Tuple, Any
 from django.db.models import Avg, F, ExpressionWrapper, fields
 from location import models
 from stops.models import Stop
+from utils.types import ModelUUID
+
+
+def get_location_by_pk(*, location_id: ModelUUID) -> models.Location | None:
+    try:
+        return models.Location.objects.get(pk=location_id)
+    except models.Location.DoesNotExist:
+        return None
 
 
 def get_avg_wait_time(*, location: models.Location) -> datetime.timedelta | Any:

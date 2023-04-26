@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 
@@ -32,7 +31,7 @@ from billing.services.billing_service import (
     set_order_billed,
     set_order_documents,
 )
-from utils.types import MODEL_UUID
+from utils.types import ModelUUID
 
 
 def order_billing_actions(*, invoice: BillingQueue, user: User) -> None:
@@ -55,7 +54,7 @@ def order_billing_actions(*, invoice: BillingQueue, user: User) -> None:
         delete_billing_queue(billing_queue=invoice)
 
 
-def mass_order_billing_service(*, user_id: MODEL_UUID, task_id: str) -> None:
+def mass_order_billing_service(*, user_id: ModelUUID, task_id: str) -> None:
     """Bill a list of orders to their respective customers
 
     This function bills a list of orders to their respective customers.

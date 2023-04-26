@@ -581,16 +581,25 @@ class Order(GenericModel):  # type:ignore
         OrderValidation(order=self)
         super().clean()
 
-    def save(self, *args, **kwargs) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         from dispatch.services import transfer_rate_details
-        from route.services import get_order_mileage
 
         if self.auto_rate:
-            transfer_rate_details.transfer_rate_details(order=self)
+            transfer_rate_details(order=self)
+
+        if self.ready_to_bill and self.organization.order_control.auto_order_total:
+            self.sub_total = self.calculate_total()
+
+        if self.origin_location and not self.origin_address:
+            self.origin_address = self.origin_location.get_address_combination
+
+        if self.destination_location and not self.destination_address:
+            self.destination_address = self.destination_location.get_address_combination
+
+        if self.commodity and self.commodity.hazmat:
+            self.hazmat = self.commodity.hazmat
 
         self.sub_total = self.calculate_total()
-
-        self.mileage = get_order_mileage(order=self)
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:

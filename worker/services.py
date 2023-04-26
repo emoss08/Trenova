@@ -15,48 +15,20 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.conf import settings
-from django.core.files.storage import default_storage
-from pypdf import PdfMerger
-
-from billing.models import DocumentClassification
-from order.models import Order, OrderDocumentation
+from worker import models
 
 
-def combine_pdfs_service(*, order: Order) -> OrderDocumentation:
-    """Combine all PDFs in Order Document into one PDF file
+def generate_worker_code(*, instance: models.Worker) -> str:
+    """Generate a unique code for the worker
 
     Args:
-        order (Order): Order to combine documents from
+        instance (Worker): The worker instance.
 
     Returns:
-        OrderDocumentation: created OrderDocumentation
+        str: Worker code
     """
+    code = f"{instance.first_name[0]}{instance.last_name[:5]}".upper()
+    new_code = f"{code}{models.Worker.objects.count() + 1:04d}"
 
-    document_class: DocumentClassification = DocumentClassification.objects.get(
-        name="CON"
-    )
-    file_path = f"{settings.MEDIA_ROOT}/{order.id}.pdf"
-    merger = PdfMerger()
-
-    if default_storage.exists(file_path):
-        raise FileExistsError(f"File {file_path} already exists")
-
-    for document in order.order_documentation.all():
-        merger.append(document.document.path)
-
-    merger.write(file_path)
-    merger.close()
-
-    consolidated_document = default_storage.open(file_path, "rb")
-
-    documentation: OrderDocumentation = OrderDocumentation.objects.create(
-        organization=order.organization,
-        order=order,
-        document=consolidated_document,
-        document_class=document_class,
-    )
-
-    default_storage.delete(file_path)
-
-    return documentation
+    # Check if the code already exists in the database
+    return new_code if models.Worker.objects.filter(code=code).exists() else code

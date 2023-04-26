@@ -14,14 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 from typing import Any
 
-from django.db import OperationalError, transaction
+from django.db import transaction
 from rest_framework import serializers
 
 from accounts.models import User
-from organization.models import Depot, Organization
+from organization.models import Depot
 from utils.serializers import GenericSerializer
 from worker import models
 
@@ -31,9 +30,7 @@ class WorkerCommentSerializer(GenericSerializer):
     Worker Comment Serializer
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
+    id = serializers.UUIDField(required=False)
 
     class Meta:
         """
@@ -41,7 +38,10 @@ class WorkerCommentSerializer(GenericSerializer):
         """
 
         model = models.WorkerComment
-        extra_fields = ("organization",)
+        extra_fields = (
+            "organization",
+            "id",
+        )
         extra_read_only_fields = ("worker",)
 
 
@@ -50,9 +50,7 @@ class WorkerContactSerializer(GenericSerializer):
     Worker Contact Serializer
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
+    id = serializers.UUIDField(required=False)
 
     class Meta:
         """
@@ -61,17 +59,16 @@ class WorkerContactSerializer(GenericSerializer):
 
         model = models.WorkerContact
         extra_read_only_fields = ("worker",)
-        extra_fields = ("organization",)
+        extra_fields = (
+            "organization",
+            "id",
+        )
 
 
 class WorkerProfileSerializer(GenericSerializer):
     """
     Worker Profile Serializer
     """
-
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
 
     class Meta:
         """
@@ -88,9 +85,6 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
     depot = serializers.PrimaryKeyRelatedField(  # type: ignore
         queryset=Depot.objects.all(),
         allow_null=True,
@@ -98,17 +92,14 @@ class WorkerSerializer(GenericSerializer):
     )
     manager = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
-        allow_null=True,
-        required=False,
     )
     entered_by = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
-        allow_null=True,
-        required=False,
     )
     is_active = serializers.BooleanField(default=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
+    code = serializers.CharField(required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
 
     class Meta:
@@ -126,6 +117,7 @@ class WorkerSerializer(GenericSerializer):
             "profile",
             "contacts",
             "comments",
+            "code",
         )
 
     def create(self, validated_data: Any) -> models.Worker:
@@ -137,7 +129,6 @@ class WorkerSerializer(GenericSerializer):
         Returns:
             Models.Worker: Worker Instance
         """
-
         # Get the organization of the user from the request.
         organization = super().get_organization
 
@@ -170,7 +161,7 @@ class WorkerSerializer(GenericSerializer):
         if contacts_data:
             for contact in contacts_data:
                 contact["organization"] = organization
-                models.WorkerContact.objects.create(worker=worker, **contact)
+                worker.contacts.create(**contact)
 
         # Create the Worker Comments
         if comments_data:
@@ -181,95 +172,48 @@ class WorkerSerializer(GenericSerializer):
         return worker
 
     def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
-        """Updates a worker instance.
-
-        Args:
-            instance: A Worker instance to be updated.
-            validated_data: Validated data for updating the worker.
-
-        Returns:
-            The updated Worker instance.
-
-        Raises:
-            serializers.ValidationError: If any errors occur during the update process.
-
-        This function updates a worker instance by first updating the worker's profile,
-        comments, and contacts, and then updating the worker instance itself. If comments or
-        contacts are included in the validated data, the function will attempt to select and
-        lock the associated rows using `select_for_update()`. If `nowait=True`, the function
-        will raise a `serializers.ValidationError` immediately if the selected rows are
-        locked by another transaction, without waiting for the lock to be released. If any
-        errors occur during the update process, the function will raise a
-        `serializers.ValidationError` with a helpful error message.
-        """
         profile_data = validated_data.pop("profile", {})
         comments_data = validated_data.pop("comments", [])
         contacts_data = validated_data.pop("contacts", [])
-        print(contacts_data)
 
         with transaction.atomic():
             if profile_data:
                 instance.profile.update_worker_profile(**profile_data)
 
             for comment_data in comments_data:
-                comment_id = comment_data.get("id", None)
-                try:
-                    worker_comment = (
-                        models.WorkerComment.objects.select_for_update(nowait=True).get(
-                            id=comment_id, worker=instance
+                comment_id = comment_data.pop("id", None)
+                defaults = {**comment_data, "organization": instance.organization}
+                if comment_id:
+                    updated = models.WorkerComment.objects.filter(
+                        id=comment_id, worker=instance
+                    ).update(**defaults)
+                    if not updated:
+                        raise serializers.ValidationError(
+                            {
+                                "comments": f"Worker comment with id '{comment_id}' does not exist."
+                            }
                         )
-                        if comment_id
-                        else None
-                    )
-                except models.WorkerComment.DoesNotExist as e:
-                    raise serializers.ValidationError(
-                        {
-                            "comments": f"Worker comment with id '{comment_id}' does not exist. Delete the ID and try again."
-                        }
-                    ) from e
-                except OperationalError as e:
-                    raise serializers.ValidationError(
-                        {
-                            "comments": "Worker comment is locked by another transaction. Try again later."
-                        }
-                    ) from e
-
-                if worker_comment:
-                    worker_comment.update_worker_comment(**comment_data)
                 else:
-                    comment_data["organization"] = instance.organization
-                    instance.comments.create(**comment_data)
+                    instance.comments.create(**defaults)
 
             for contact_data in contacts_data:
-                print("contact_data", contact_data)
-                contact_id = contact_data.get("id", None)
-                try:
-                    worker_contact = (
-                        models.WorkerContact.objects.select_for_update(nowait=True).get(
-                            id=contact_id, worker=instance
+                contact_id = contact_data.pop("id", None)
+                defaults = {**contact_data, "organization": instance.organization}
+                if contact_id:
+                    updated = models.WorkerContact.objects.filter(
+                        id=contact_id, worker=instance
+                    ).update(**defaults)
+                    if not updated:
+                        raise serializers.ValidationError(
+                            {
+                                "contacts": f"Worker contact with id '{contact_id}' does not exist."
+                            }
                         )
-                        if contact_id
-                        else None
-                    )
-                except models.WorkerContact.DoesNotExist as exc:
-                    raise serializers.ValidationError(
-                        {
-                            "contacts": f"Worker contact with id '{contact_id}' does not exist. Delete the ID and try again."
-                        }
-                    ) from exc
-                except OperationalError as exc:
-                    raise serializers.ValidationError(
-                        {
-                            "contacts": "Worker contact is locked by another transaction. Try again later."
-                        }
-                    ) from exc
-
-                if worker_contact:
-                    worker_contact.update_worker_contact(**contact_data)
                 else:
-                    contact_data["organization"] = instance.organization
-                    instance.contacts.create(**contact_data)
+                    instance.contacts.create(**defaults)
 
-            instance.update_worker(**validated_data)
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            instance.save()
 
         return instance

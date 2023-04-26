@@ -17,17 +17,17 @@
 from django.db.models import QuerySet
 from django.http import HttpRequest
 
-from utils.types import MODEL_UUID
 from accounts import models
+from utils.types import ModelUUID
 
 
 def get_users_by_organization_id(
-    *, organization_id: MODEL_UUID
-) -> QuerySet[models.User]:
+    *, organization_id: ModelUUID
+) -> QuerySet[models.User] | None:
     """
     Get Users by organization_id
     Args:
-        organization_id (MODEL_UUID): Organization ID
+        organization_id (ModelUUID): Organization ID
 
     Returns:
         Iterable[models.User]: Users
@@ -40,8 +40,10 @@ def get_users_by_organization_id(
         ... print(users)
         <QuerySet [<User: User object (1)>, <User: User object (2)>]>
     """
-
-    return models.User.objects.filter(organization_id=organization_id)
+    try:
+        return models.User.objects.filter(organization_id=organization_id)
+    except models.User.DoesNotExist:
+        return None
 
 
 def get_user_auth_token_from_request(*, request: HttpRequest) -> str:

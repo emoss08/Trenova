@@ -14,40 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from django.db.models import Sum
-
-from order.models import Order
-from stops.models import Stop
-
-
-def get_total_piece_count_by_order(*, order: Order) -> int:
-    """Return the total piece count for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total piece count for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-
-    return value or 0
-
-
-def get_total_weight_by_order(*, order: Order) -> int:
-    """Return the total weight for an order
-
-    Args:
-        order (Order): Order instance
-
-    Returns:
-        int: Total weight for an order
-    """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
-    return value or 0
+from location import models
+def has_address_changed(*, old_instance: models.Location, new_instance: models.Location) -> bool:
+    return (
+        old_instance.address_line_1 != new_instance.address_line_1
+        or old_instance.address_line_2 != new_instance.address_line_2
+        or old_instance.city != new_instance.city
+        or old_instance.state != new_instance.state
+        or old_instance.zip_code != new_instance.zip_code
+    )

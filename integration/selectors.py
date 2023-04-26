@@ -39,8 +39,10 @@ def get_maps_api_key(*, organization: Organization) -> str:
         ) from google_api_exception
 
 
-def get_organization_google_api(*, organization: Organization) -> str | None:
+def get_organization_google_api(
+    *, organization: Organization
+) -> models.GoogleAPI | None:
     try:
         return models.GoogleAPI.objects.get(organization=organization)
     except models.GoogleAPI.DoesNotExist:
-        return
+        return None

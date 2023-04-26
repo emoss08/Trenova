@@ -14,10 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import QuerySet
 from django.utils import timezone
 from order.models import Order, AdditionalCharge
-from dispatch import models
+from dispatch import models, selectors
 from order.selectors import sum_order_additional_charges
 
 
@@ -44,12 +43,6 @@ def get_rate(*, order: Order) -> models.Rate | None:
     return rates.first() if rates.exists() else None
 
 
-def get_rate_billing_table(
-    *, rate: models.Rate
-) -> QuerySet[models.RateBillingTable] | None:
-    return models.RateBillingTable.objects.filter(rate=rate).all() if rate else None
-
-
 def transfer_rate_details(order: Order) -> None:
     """Transfer rate details to the order.
 
@@ -64,7 +57,7 @@ def transfer_rate_details(order: Order) -> None:
         order.freight_charge_amount = rate.rate_amount
         order.mileage = rate.distance_override
 
-        for billing_item in get_rate_billing_table(rate=rate):
+        for billing_item in selectors.get_rate_billing_table_by_rate(rate=rate):
             # Check if the charge already exists on the order
             additional_charge_exists = AdditionalCharge.objects.filter(
                 organization=order.organization,
@@ -84,3 +77,17 @@ def transfer_rate_details(order: Order) -> None:
                 )
 
         order.other_charge_amount = sum_order_additional_charges(order=order)
+
+
+def generate_rate_number() -> str:
+    """
+    Generate a unique rate number for a Rate instance.
+
+    This method generates a unique rate number by finding the highest rate number and
+    incrementing it by 1.
+
+    Returns:
+        str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
+    """
+    code = f"R{models.Rate.objects.count() + 1:05d}"
+    return "R00001" if models.Rate.objects.filter(rate_number=code).exists() else code

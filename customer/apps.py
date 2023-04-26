@@ -26,7 +26,6 @@ class CustomerConfig(AppConfig):
     def ready(self) -> None:
         from customer import signals
 
-        # Customer
         pre_save.connect(
             signals.generate_customer_code,
             sender="customer.Customer",

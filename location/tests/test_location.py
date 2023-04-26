@@ -29,6 +29,7 @@ def location() -> Generator[Any, Any, None]:
     return factories.LocationFactory()
 
 
+@pytest.mark.django_db
 def test_location_creation(location: models.Location) -> None:
     """
     Test location creation

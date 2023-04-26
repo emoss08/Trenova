@@ -14,18 +14,18 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from io import BytesIO
 
 from django.core.mail import EmailMessage
 
-from accounts.models import User
 from backend.celery import app
 from core.exceptions import ServiceException
-from reports import models
+from reports import selectors
 from reports.services import generate_excel_report_as_file
 
 
-@app.task(name="send_scheduled_report", bind=True, max_retries=3, default_retry_delay=60)
+@app.task(
+    name="send_scheduled_report", bind=True, max_retries=3, default_retry_delay=60
+)
 def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
     """A Celery task that sends a scheduled report to the user who created it.
 
@@ -39,13 +39,13 @@ def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
         None: This function does not return anything.
     """
     try:
-        scheduled_report: models.ScheduledReport = models.ScheduledReport.objects.get(pk__exact=report_id)
+        scheduled_report = selectors.get_scheduled_report_by_id(report_id=report_id)
 
         if not scheduled_report.is_active:
             return
 
-        report: models.CustomReport = scheduled_report.report
-        user: User = scheduled_report.user
+        report = scheduled_report.report
+        user = scheduled_report.user
 
         excel_file = generate_excel_report_as_file(report)
 

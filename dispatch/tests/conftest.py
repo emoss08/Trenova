@@ -109,7 +109,9 @@ def rate_table_api(
 
 
 @pytest.fixture
-def rate_billing_table_api(api_client, rate, organization) -> Generator[Any, Any, None]:
+def rate_billing_table_api(
+    api_client: APIClient, rate: Rate, organization: Organization
+) -> Generator[Any, Any, None]:
     """
     Rate Billing Table API
     """
@@ -118,9 +120,9 @@ def rate_billing_table_api(api_client, rate, organization) -> Generator[Any, Any
     data = {
         "organization": organization.id,
         "rate": rate.id,
-        "charge_code": charge_code.id,
+        "accessorial_charge": charge_code.id,
         "description": "Test Rate Billing Table",
-        "units": 1,
+        "unit": 1,
     }
 
     yield api_client.post(

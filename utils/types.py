@@ -20,7 +20,7 @@ from uuid import UUID
 
 from django.db.models import UUIDField
 
-MODEL_UUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
+ModelUUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
 HealthStatus: TypeAlias = Union[Dict[str, Union[str, int, int, int]]]
 HealthStatusAndTime: TypeAlias = Union[
     Dict[str, Union[str, int, int, int, float, float]]

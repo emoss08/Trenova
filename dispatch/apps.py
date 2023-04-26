@@ -26,13 +26,11 @@ class DispatchConfig(AppConfig):
     def ready(self) -> None:
         from dispatch import signals
 
-        # Rate
         pre_save.connect(
             signals.set_rate_number,
             sender="dispatch.Rate",
             dispatch_uid="set_rate_number",
         )
-        # Rate Billing Table
         pre_save.connect(
             signals.set_charge_amount_on_billing_table,
             sender="dispatch.RateBillingTable",

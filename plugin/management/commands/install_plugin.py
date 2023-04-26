@@ -30,7 +30,7 @@ from plugin.models import Plugin
 class Command(BaseCommand):
     help = "Installs a plugin from a GitHub URL"
 
-    def add_arguments(self, parser: CommandParser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument(
             "github_url", type=str, help="GitHub URL of the plugin to install"
         )

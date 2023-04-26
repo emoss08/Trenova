@@ -128,9 +128,9 @@ class RateBillingTableFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     rate = factory.SubFactory(RateFactory)
-    charge_code = factory.SubFactory("billing.factories.AccessorialChargeFactory")
+    accessorial_charge = factory.SubFactory("billing.tests.factories.AccessorialChargeFactory")
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
-    units = 1
+    unit = 1
     charge_amount = 100.00
 
     class Meta:
@@ -142,5 +142,5 @@ class RateBillingTableFactory(factory.django.DjangoModelFactory):
         django_get_or_create = (
             "organization",
             "rate",
-            "charge_code",
+            "accessorial_charge",
         )
