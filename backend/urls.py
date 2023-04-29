@@ -299,7 +299,7 @@ urlpatterns = [
         name="verify-token",
     ),
     path("api/system_health/", org_api.health_check, name="system-health"),
-    path("api/bill_order/", billing_api.bill_order_view, name="bill-order"),
+    path("api/bill_invoice/", billing_api.bill_invoice_view, name="bill-order"),
     path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
     path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),

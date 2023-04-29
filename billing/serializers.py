@@ -31,10 +31,9 @@ from worker.models import Worker
 class BillingControlSerializer(GenericSerializer):
     """A serializer for the `BillingControl` model.
 
-    A serializer class for the BillingControl model. This serializer is used
-    to convert BillingControl model instances into a Python dictionary format
-    that can be rendered into a JSON response. It also defined the fields that
-    should be included in the serialized representation of the model
+    A serializer class for the BillingControl model. This serializer is used to convert BillingControl model
+    instances into a Python dictionary format that can be rendered into a JSON response. It also defined the
+    fields that should be included in the serialized representation of the model
     """
 
     organization = serializers.PrimaryKeyRelatedField(
@@ -56,10 +55,9 @@ class BillingControlSerializer(GenericSerializer):
 class BillingTransferLogSerializer(GenericSerializer):
     """A serializer for the `BillingTransferLog` model.
 
-    A serializer class for the BillingTransferLog Model. This serializer is used
-    to convert the BillingTransferLog model instances into a Python dictionary
-    format that can be rendered into a JSON response. It also defines the fields
-    that should be included in the serialized representation of the model.
+    A serializer class for the BillingTransferLog Model. This serializer is used to convert the BillingTransferLog
+    model instances into a Python dictionary format that can be rendered into a JSON response. It also defines
+    the fields that should be included in the serialized representation of the model.
 
     Attributes:
         order (serializers.PrimaryKeyRelatedField): A primary key related field that
@@ -96,10 +94,9 @@ class BillingTransferLogSerializer(GenericSerializer):
 class BillingQueueSerializer(GenericSerializer):
     """A serializer for the `BillingQueue` model.
 
-    A serializer class for the BillingQueue Model. This serializer is used
-    to convert the BillingQueue model instances into a Python dictionary
-    format that can be rendered into a JSON response. It also defines the fields
-    that should be included in the serialized representation of the model.
+    A serializer class for the BillingQueue Model. This serializer is used to convert the BillingQueue
+    model instances into a Python dictionary format that can be rendered into a JSON response. It
+    also defines the fields that should be included in the serialized representation of the model.
 
     Attributes:
         order_type (serializers.PrimaryKeyRelatedField): A primary key related field that

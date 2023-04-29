@@ -88,7 +88,7 @@ def user_api(api_client, organization) -> Generator[Any, Any, None]:
                 "city": "test",
                 "state": "NC",
                 "zip_code": "12345",
-                "title": job_title.id,
+                "job_title": job_title.id,
             },
         },
         format="json",

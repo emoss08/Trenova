@@ -483,29 +483,29 @@ class BillingQueue(GenericModel):  # type:ignore
     """Class for storing information about the billing queue.
 
     It has several fields, including:
-    id (models.UUIDField): primary key and unique identifier for the billing queue.
-    order_type (models.ForeignKey): foreign key to the `OrderType` model, representing the assigned order type
-    to the billing queue.
-    order (models.ForeignKey): foreign key to the `Order` model, representing the assigned order to the billing queue.
-    revenue_code (models.ForeignKey): foreign key to the `RevenueCode` model, representing the assigned revenue
-    code to the billing queue.
-    customer (models.ForeignKey): foreign key to the `Customer` model, representing the assigned customer
-    to the billing queue.
-    invoice_number (models.CharField): invoice number for the billing queue.
-    pieces (models.PositiveIntegerField): total piece count of the order.
-    weight (models.DecimalField): total weight of the order.
-    bill_type (ChoiceField): bill type for the billing queue, with choices from the `BillTypeChoices` class.
-    ready_to_bill (models.BooleanField): Whether order is ready to be billed to the customer.
-    bill_date (models.DateField): date the invoice was billed.
-    mileage (models.DecimalField): total mileage.
-    worker (models.ForeignKey): foreign key to the `Worker` model, representing the assigned worker
-    to the billing queue.
-    commodity (models.ForeignKey): foreign key to the `Commodity` model, representing the assigned commodity
-    to the billing queue.
-    commodity_descr (models.CharField): description of the commodity.
-    other_charge_total (models.DecimalField): other charge total for the order.
-    freight_charge_amount (models.DecimalField): freight charge amount for the order.
-    total_amount (models.DecimalField): total amount for the order.
+        id (models.UUIDField): primary key and unique identifier for the billing queue.
+        order_type (models.ForeignKey): foreign key to the `OrderType` model, representing the assigned order type
+            to the billing queue.
+        order (models.ForeignKey): foreign key to the `Order` model, representing the assigned order to the billing queue.
+        revenue_code (models.ForeignKey): foreign key to the `RevenueCode` model, representing the assigned revenue
+            code to the billing queue.
+        customer (models.ForeignKey): foreign key to the `Customer` model, representing the assigned customer
+            to the billing queue.
+        invoice_number (models.CharField): invoice number for the billing queue.
+        pieces (models.PositiveIntegerField): total piece count of the order.
+        weight (models.DecimalField): total weight of the order.
+        bill_type (ChoiceField): bill type for the billing queue, with choices from the `BillTypeChoices` class.
+        ready_to_bill (models.BooleanField): Whether order is ready to be billed to the customer.
+        bill_date (models.DateField): date the invoice was billed.
+        mileage (models.DecimalField): total mileage.
+        worker (models.ForeignKey): foreign key to the `Worker` model, representing the assigned worker
+            to the billing queue.
+        commodity (models.ForeignKey): foreign key to the `Commodity` model, representing the assigned commodity
+            to the billing queue.
+        commodity_descr (models.CharField): description of the commodity.
+        other_charge_total (models.DecimalField): other charge total for the order.
+        freight_charge_amount (models.DecimalField): freight charge amount for the order.
+        total_amount (models.DecimalField): total amount for the order.
     """
 
     @final
@@ -557,12 +557,10 @@ class BillingQueue(GenericModel):  # type:ignore
         related_name="billing_queue",
         help_text=_("Assigned customer to the billing queue"),
         verbose_name=_("Customer"),
-        null=True,
-        blank=True,
     )
     invoice_number = models.CharField(
         _("Invoice Number"),
-        max_length=50,
+        max_length=10,
         blank=True,
         help_text=_("Invoice number for the billing queue"),
     )
@@ -915,8 +913,6 @@ class BillingHistory(GenericModel):  # type:ignore
         on_delete=models.RESTRICT,
         related_name="billing_history",
         help_text=_("Assigned customer to the billing history"),
-        blank=True,
-        null=True,
     )
     invoice_number = models.CharField(
         _("Invoice Number"),

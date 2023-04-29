@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import Any
-from location import models, selectors, helpers
+from location import models, selectors, utils
 from integration.services import geocode_location_service
 
 
@@ -28,7 +28,7 @@ def geocode_location(instance: models.Location, created: bool, **kwargs: Any) ->
 
         if created or (
             old_instance
-            and helpers.has_address_changed(
+            and utils.has_address_changed(
                 old_instance=old_instance, new_instance=instance
             )
         ):

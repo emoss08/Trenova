@@ -199,10 +199,11 @@ class Stop(GenericModel):
             ValidationError: If the stop is not valid.
 
         """
+        super().clean()
         from stops.validation import StopValidation
         StopValidation(instance=self)
 
-    def save(self,*args: Any, **kwargs: Any) -> None:
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the stop object
 
         Args:
@@ -235,6 +236,7 @@ class Stop(GenericModel):
             str: The absolute url for the stop
         """
         return reverse("stops-detail", kwargs={"pk": self.pk})
+
 
 class StopComment(GenericModel):
     """

@@ -18,7 +18,6 @@
 from typing import Any, Generator
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.test import Client
 from django.urls import reverse
 
@@ -54,7 +53,7 @@ def admin_user(organization: Organization) -> Generator[Any, Any, None]:
     """
     Fixture to create a superuser.
     """
-    yield get_user_model().objects.create_superuser(
+    yield User.objects.create_superuser(
         organization=organization,
         email="admin@example.com",
         username="bigboss",
@@ -94,7 +93,7 @@ def test_create_superuser_is_superuser_error(organization: Organization) -> None
     """
 
     with pytest.raises(ValueError) as excinfo:
-        get_user_model().objects.create_superuser(
+        User.objects.create_superuser(
             organization=organization,
             username="test_admin",
             email="test@admin.com",
@@ -113,7 +112,7 @@ def test_create_superuser_is_staff_error(organization: Organization) -> None:
     """
 
     with pytest.raises(ValueError) as excinfo:
-        get_user_model().objects.create_superuser(
+        User.objects.create_superuser(
             organization=organization,
             username="test_admin",
             email="test@admin.com",

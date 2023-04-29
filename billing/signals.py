@@ -19,10 +19,8 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from billing import models
+from billing import models, services, utils
 from billing.selectors import get_billing_queue_information
-from billing.services.invoice_number import generate_invoice_number
-from billing.services.transfer_order_details import transfer_order_details
 
 
 def prevent_delete_on_rate_con_doc_class(
@@ -106,7 +104,7 @@ def transfer_order_details_to_billing_history(
     Returns:
         None: This function does not return anything
     """
-    transfer_order_details(obj=instance)
+    utils.transfer_order_details(obj=instance)
 
 
 def generate_invoice_number_on_billing_queue(
@@ -121,7 +119,7 @@ def generate_invoice_number_on_billing_queue(
     Returns:
         None: This function does not return anything
     """
-    generate_invoice_number(instance=instance)
+    services.generate_invoice_number(instance=instance)
 
 
 def transfer_order_details_to_billing_queue(
@@ -136,4 +134,4 @@ def transfer_order_details_to_billing_queue(
     Returns:
         None: This function does not return anything
     """
-    transfer_order_details(obj=instance)
+    utils.transfer_order_details(obj=instance)

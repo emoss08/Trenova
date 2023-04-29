@@ -22,9 +22,8 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 
 from accounts.models import User
-from billing import selectors
-from billing.models import BillingHistory, BillingQueue
-from billing.services import mass_order_billing
+from accounts.tests.factories import UserFactory
+from billing import selectors, models, services
 from customer.factories import CustomerFactory
 from customer.models import Customer
 from order.models import Order
@@ -34,64 +33,6 @@ from utils.models import StatusChoices
 from worker.models import Worker
 
 pytestmark = pytest.mark.django_db
-
-
-def test_bill_orders(
-    organization: Organization,
-    user: User,
-    worker: Worker,
-) -> None:
-    order = OrderFactory()
-
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
-
-    order.status = "C"
-    order.save()
-
-    customer = CustomerFactory(organization=organization)
-
-    BillingQueue.objects.create(
-        organization=user.organization,
-        order_type=order.order_type,
-        order=order,
-        revenue_code=order.revenue_code,
-        customer=customer,
-        worker=worker,
-        commodity=order.commodity,
-        bol_number=order.bol_number,
-        user=user,
-    )
-
-    mass_order_billing.mass_order_billing_service(
-        task_id=str(uuid.uuid4()), user_id=str(user.id)
-    )
-
-    billing_queue = BillingQueue.objects.all()
-    billing_history = BillingHistory.objects.get(order=order)
-
-    billing_history.refresh_from_db()
-
-    assert billing_queue.count() == 0
-    assert billing_history.order == order
-    assert billing_history.organization == order.organization
-    assert billing_history.order_type == order.order_type
-    assert billing_history.revenue_code == order.revenue_code
-    assert billing_history.customer == order.customer
-    assert billing_history.commodity == order.commodity
-    assert billing_history.bol_number == order.bol_number
-    assert (
-        billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
-    )
-
-    order.refresh_from_db()
-    assert order.billed is True
-    assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
-    assert (
-        mail.outbox[0].body
-        == f"Please see attached invoice for invoice: {order.pro_number}"
-    )
 
 
 def test_invoice_number_generation(
@@ -108,7 +49,7 @@ def test_invoice_number_generation(
     order.status = "C"
     order.save()
 
-    invoice = BillingQueue.objects.create(
+    invoice = models.BillingQueue.objects.create(
         organization=user.organization,
         order_type=order.order_type,
         order=order,
@@ -119,6 +60,7 @@ def test_invoice_number_generation(
         bol_number=order.bol_number,
         user=user,
     )
+
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
@@ -148,7 +90,7 @@ def test_invoice_number_increments(
     order_2.status = "C"
     order_2.save()
 
-    invoice = BillingQueue.objects.create(
+    invoice = models.BillingQueue.objects.create(
         organization=user.organization,
         order_type=order.order_type,
         order=order,
@@ -159,7 +101,7 @@ def test_invoice_number_increments(
         bol_number=order.bol_number,
         user=user,
     )
-    second_invoice = BillingQueue.objects.create(
+    second_invoice = models.BillingQueue.objects.create(
         organization=user.organization,
         order_type=order_2.order_type,
         order=order_2,
@@ -190,7 +132,7 @@ def test_unbilled_order_in_billing_history(order: Order) -> None:
     """
 
     with pytest.raises(ValidationError) as excinfo:
-        BillingHistory.objects.create(
+        models.BillingHistory.objects.create(
             organization=order.organization,
             order=order,
         )
@@ -341,6 +283,8 @@ def test_get_billing_queue_information() -> None:
     `get_billing_queue_information` selector.
     """
 
+    customer = CustomerFactory()
+
     order = OrderFactory()
 
     order_movements = order.movements.all()
@@ -350,9 +294,8 @@ def test_get_billing_queue_information() -> None:
     order.status = "C"
     order.save()
 
-    billing_queue = BillingQueue.objects.create(
-        organization=order.organization,
-        order=order,
+    billing_queue = models.BillingQueue.objects.create(
+        organization=order.organization, order=order, customer=customer
     )
 
     result = selectors.get_billing_queue_information(order=order)
@@ -372,8 +315,8 @@ def test_cannot_delete_billing_history(
     order.billed = True
     order.save()
 
-    billing_history = BillingHistory.objects.create(
-        organization=organization, order=order
+    billing_history = models.BillingHistory.objects.create(
+        organization=organization, order=order, customer=order.customer
     )
 
     with pytest.raises(ValidationError) as excinfo:
@@ -395,13 +338,13 @@ def test_can_delete_billing_history(organization: Organization, order: Order) ->
     order.billed = True
     order.save()
 
-    billing_history = BillingHistory.objects.create(
-        organization=organization, order=order
+    billing_history = models.BillingHistory.objects.create(
+        organization=organization, order=order, customer=order.customer
     )
 
     billing_history.delete()
 
-    assert BillingHistory.objects.count() == 0
+    assert models.BillingHistory.objects.count() == 0
 
 
 def test_generate_invoice_number_before_save(order: Order) -> None:
@@ -412,8 +355,8 @@ def test_generate_invoice_number_before_save(order: Order) -> None:
     order.status = StatusChoices.COMPLETED
     order.ready_to_bill = True
 
-    billing_queue = BillingQueue.objects.create(
-        organization=order.organization, order=order
+    billing_queue = models.BillingQueue.objects.create(
+        organization=order.organization, order=order, customer=order.customer
     )
 
     assert (
@@ -430,8 +373,8 @@ def test_save_order_details_to_billing_history_before_save(order: Order) -> None
     order.billed = True
     order.save()
 
-    billing_history = BillingHistory.objects.create(
-        organization=order.organization, order=order
+    billing_history = models.BillingHistory.objects.create(
+        organization=order.organization, order=order, customer=order.customer
     )
 
     assert billing_history.pieces == order.pieces
@@ -445,3 +388,184 @@ def test_save_order_details_to_billing_history_before_save(order: Order) -> None
     assert billing_history.other_charge_total == order.other_charge_amount
     assert billing_history.freight_charge_amount == order.freight_charge_amount
     assert billing_history.total_amount == order.sub_total
+
+
+def test_transfer_order_to_billing_queue(organization: Organization) -> None:
+    """
+    Test an order is transferred to the billing queue.
+    """
+
+    # set the order_transfer_criteria on the organization's billing_control
+    organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    organization.billing_control.save()
+
+    order = OrderFactory(organization=organization)
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.ready_to_bill = True
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.save()
+
+    user = UserFactory(organization=organization)
+
+    services.transfer_to_billing_queue_service(
+        user_id=user.id,
+        order_pros=[order.pro_number],
+        task_id=str(uuid.uuid4()),
+    )
+
+    billing_queue = models.BillingQueue.objects.get(order=order)
+    billing_transfer_log = models.BillingTransferLog.objects.get(order=order)
+
+    order.refresh_from_db()
+
+    assert order.transferred_to_billing
+    assert order.billing_transfer_date is not None
+    assert billing_queue.order_type == order.order_type
+    assert billing_queue.weight == order.weight
+    assert billing_queue.pieces == order.pieces
+    assert billing_queue.revenue_code == order.revenue_code
+    assert billing_queue.commodity == order.commodity
+    assert billing_queue.bol_number == order.bol_number
+    assert billing_queue.customer == order.customer
+    assert billing_queue.bill_type == "INVOICE"
+
+    # Check that the billing_transfer_log was created
+    assert billing_transfer_log
+
+
+def test_bill_orders(
+    organization: Organization,
+    user: User,
+    worker: Worker,
+) -> None:
+    """
+    Test that the orders are billed correctly.
+    """
+
+    # set the order_transfer_criteria on the organization's billing_control
+    organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    organization.billing_control.save()
+
+    # Create an order from the Order Factory
+    order = OrderFactory(organization=organization)
+
+    # Update the order movements to be completed
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    # Update the order to be ready to bill
+    order.status = "C"
+    order.ready_to_bill = True
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.save()
+
+    # Create a User from the User Factory
+    user = UserFactory(organization=organization)
+
+    # transfer the order to the billing queue
+    services.transfer_to_billing_queue_service(
+        user_id=user.id,
+        order_pros=[order.pro_number],
+        task_id=str(uuid.uuid4()),
+    )
+
+    # Bill all the orders, in the billing queue.
+    invoices = models.BillingQueue.objects.all()
+    services.bill_orders(user_id=user.id, invoices=invoices)
+
+    # Query the billing history to make sure it was created.
+    billing_history = models.BillingHistory.objects.get(order=order)
+    billing_history.refresh_from_db()
+
+    assert billing_history.order == order
+    assert billing_history.organization == order.organization
+    assert billing_history.order_type == order.order_type
+    assert billing_history.revenue_code == order.revenue_code
+    assert billing_history.customer == order.customer
+    assert billing_history.commodity == order.commodity
+    assert billing_history.bol_number == order.bol_number
+    assert (
+        billing_history.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+    )
+
+    order.refresh_from_db()
+    assert order.billed is True
+    assert order.bill_date is not None
+    assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
+    assert (
+        mail.outbox[0].body
+        == f"Please see attached invoice for invoice: {order.pro_number}"
+    )
+
+
+def test_single_order_billing_service(
+    organization: Organization,
+    user: User,
+    worker: Worker,
+) -> None:
+    """
+    Test an single order can be billed.
+    """
+    # set the order_transfer_criteria on the organization's billing_control
+    organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    organization.billing_control.save()
+
+    # Create an order from the Order Factory
+    order = OrderFactory(organization=organization)
+
+    # Update the order movements to be completed
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    # Update the order to be ready to bill
+    order.status = "C"
+    order.ready_to_bill = True
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.save()
+
+    # Create a User from the User Factory
+    user = UserFactory(organization=organization)
+
+    # transfer the order to the billing queue
+    services.transfer_to_billing_queue_service(
+        user_id=user.id,
+        order_pros=[order.pro_number],
+        task_id=str(uuid.uuid4()),
+    )
+
+    # Bill all the orders, in the billing queue.
+    invoice = models.BillingQueue.objects.get(order=order)
+    services.bill_orders(user_id=user.id, invoices=invoice)
+
+    # Query the billing history to make sure it was created.
+    billing_history = models.BillingHistory.objects.get(order=order)
+    billing_history.refresh_from_db()
+
+    assert billing_history.order == order
+    assert billing_history.organization == order.organization
+    assert billing_history.order_type == order.order_type
+    assert billing_history.revenue_code == order.revenue_code
+    assert billing_history.customer == order.customer
+    assert billing_history.commodity == order.commodity
+    assert billing_history.bol_number == order.bol_number
+    assert (
+        billing_history.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+    )
+
+    order.refresh_from_db()
+    assert order.billed is True
+    assert order.bill_date is not None
+    assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
+    assert (
+        mail.outbox[0].body
+        == f"Please see attached invoice for invoice: {order.pro_number}"
+    )

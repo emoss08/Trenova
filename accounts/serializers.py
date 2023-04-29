@@ -68,6 +68,7 @@ class JobTitleSerializer(GenericSerializer):
     Attributes:
         is_active (serializers.BooleanField): A boolean field representing the
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
@@ -135,7 +136,7 @@ class UserProfileSerializer(GenericSerializer):
     a read-only field.
 
     Attributes:
-        title: A `PrimaryKeyRelatedField` that allows setting the associated JobTitle
+        job_title: A `PrimaryKeyRelatedField` that allows setting the associated JobTitle
         for a UserProfile instance.
         title_name: A `JobTitleListingField` that returns only the name of the associated
         JobTitle as a read-only field.
@@ -162,7 +163,7 @@ class UserProfileSerializer(GenericSerializer):
 
         # In a serializer class definition
         class UserProfileSerializer(GenericSerializer):
-            title = serializers.PrimaryKeyRelatedField(
+            job_title = serializers.PrimaryKeyRelatedField(
                 queryset=models.JobTitle.objects.all(),
                 required=False,
                 allow_null=True,
@@ -181,10 +182,11 @@ class UserProfileSerializer(GenericSerializer):
                     "user",
                 )
     """
+
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
-    title = serializers.PrimaryKeyRelatedField(
+    job_title = serializers.PrimaryKeyRelatedField(
         queryset=models.JobTitle.objects.all(),
         required=False,
         allow_null=True,
@@ -221,7 +223,7 @@ class UserProfileSerializer(GenericSerializer):
         """
 
         model = models.UserProfile
-        extra_fields = ("title", "title_name")
+        extra_fields = ("job_title", "title_name")
         extra_read_only_fields = (
             "id",
             "user",
@@ -242,7 +244,7 @@ class UserProfileSerializer(GenericSerializer):
                 "profile": {
                     "id": "a75a4b66-3f3a-48af-a089-4b7f1373f7a1",
                     "user": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
-                    "title": "bfa74d30-915f-425a-b957-15b826c3bee2",
+                    "job_title": "bfa74d30-915f-425a-b957-15b826c3bee2",
                     "first_name": "Example",
                     "last_name": "User",
                     "profile_picture": None,
@@ -277,7 +279,7 @@ class UserProfileSerializer(GenericSerializer):
                 "profile": {
                     "id": "a75a4b66-3f3a-48af-a089-4b7f1373f7a1",
                     "user": "b08e6e3f-28da-47cf-ad48-99fc7919c087",
-                    "title": "bfa74d30-915f-425a-b957-15b826c3bee2",
+                    "job_title": "bfa74d30-915f-425a-b957-15b826c3bee2",
                     "first_name": "Example",
                     "last_name": "User",
                     "profile_picture": "http://localhost:8000/media/profile_pictures/placeholder.png",
@@ -342,7 +344,7 @@ class UserSerializer(GenericSerializer):
         profile_data["organization"] = organization
 
         # Create the user
-        user: models.User = models.User.objects.create_user(
+        user = models.User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
@@ -369,6 +371,7 @@ class UserSerializer(GenericSerializer):
         Returns:
             None
         """
+
         if profile_data := validated_data.pop("profile", None):
             instance.profile.update_profile(**profile_data)
 

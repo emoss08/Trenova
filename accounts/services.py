@@ -14,3 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
+import secrets
+
+
+def generate_key() -> str:
+    """Generates a random key.
+
+    Returns:
+        str: A random key.
+    """
+    return secrets.token_hex(20)
