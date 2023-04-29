@@ -21,6 +21,7 @@ from kubernetes.client import Configuration, ApiException
 from kubernetes.stream import stream
 import time
 
+
 def delete_pod(api_instance: client, namespace: str, pod_name: str) -> None:
     try:
         api_instance.delete_namespaced_pod(
@@ -87,7 +88,7 @@ def main() -> None:
     print("Listing pods with their IPs:")
     ret = v1.list_pod_for_all_namespaces(watch=False)
     pod_list = [(i.metadata.name, i.metadata.namespace) for i in ret.items]
-    pod_to_restart, _ = pick(pod_list, title="Select the pod to restart")
+    pod_to_restart, _ = pick(pod_list, title="Select the pod to restart")  # type: ignore
     pod_name, namespace = pod_to_restart
 
     original_pod = v1.read_namespaced_pod(namespace=namespace, name=pod_name)

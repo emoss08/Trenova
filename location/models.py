@@ -19,7 +19,6 @@ import textwrap
 import uuid
 from typing import Any
 
-from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -28,8 +27,6 @@ from localflavor.us.models import USStateField, USZipCodeField
 
 from organization.models import Depot
 from utils.models import GenericModel
-
-User = settings.AUTH_USER_MODEL
 
 
 class LocationCategory(GenericModel):
@@ -346,7 +343,7 @@ class LocationComment(GenericModel):
         help_text=_("Comment"),
     )
     entered_by = models.ForeignKey(
-        User,
+        "accounts.User",
         on_delete=models.PROTECT,
         related_name="location_comments",
         related_query_name="location_comment",

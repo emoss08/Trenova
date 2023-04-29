@@ -77,21 +77,28 @@ def get_coordinates(*, order: Order) -> Coordinates:
         A tuple containing two tuples, each representing a pair of latitude and longitude coordinates for
         the order's origin and destination locations.
     """
+
+    # Return None if the order does not have an origin or destination location
     if not order.origin_location or not order.destination_location:
         return None
 
+    # Get the latitude and longitude coordinates for the order's origin and destination locations
     point_1 = (order.origin_location.latitude, order.origin_location.longitude)
     point_2 = (
         order.destination_location.latitude,
         order.destination_location.longitude,
     )
+
+    # Return the coordinates
     return point_1, point_2
 
 
 def calculate_distance(
     *,
     organization: Organization,
-    point_1: Union[Tuple[Optional[float], Optional[float]], Any],  # Update the type hint for point_1
+    point_1: Union[
+        Tuple[Optional[float], Optional[float]], Any
+    ],  # Update the type hint for point_1
     point_2: Union[Tuple[Optional[float], Optional[float]], Any],
 ) -> Tuple[float, float, str]:
     """

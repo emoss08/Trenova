@@ -17,12 +17,10 @@
 
 from __future__ import annotations
 
-import secrets
 import textwrap
 import uuid
 from typing import Any, final, Union
 
-from django.conf import settings
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -37,6 +35,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
 
+from accounts import services
 from utils.models import ChoiceField, GenericModel
 from utils.validators import ImageSizeValidator
 
@@ -223,13 +222,13 @@ class UserProfile(GenericModel):
         unique=True,
     )
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
+        User,
         on_delete=models.CASCADE,
         related_name="profile",
         related_query_name="profiles",
         verbose_name=_("User"),
     )
-    title = models.ForeignKey(
+    job_title = models.ForeignKey(
         "JobTitle",
         on_delete=models.PROTECT,
         related_name="profile",
@@ -301,10 +300,10 @@ class UserProfile(GenericModel):
         Metaclass for the Profile model
         """
 
-        ordering: list[str] = ["-created"]
+        ordering = ["-created"]
         verbose_name = _("Profile")
         verbose_name_plural = _("Profiles")
-        indexes: list[models.Index] = [
+        indexes = [
             models.Index(fields=["-created"]),
         ]
         db_table = "user_profile"
@@ -350,7 +349,7 @@ class UserProfile(GenericModel):
             ValidationError: Validation error for the UserProfile Model
         """
 
-        if self.title.is_active is False:
+        if self.job_title.is_active is False:
             raise ValidationError(
                 {
                     "title": _(
@@ -568,24 +567,19 @@ class Token(models.Model):
         Returns:
             str: String representation of the Token Model.
         """
-        return f"{self.key[-10:]}({self.user.username})"
+        return textwrap.shorten(
+            f"{self.key[:10]} ({self.user.username})", width=30, placeholder="..."
+        )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the model
+
         Returns:
-            None
+            None: This function does not return anything.
         """
-
         if not self.key:
-            self.key = self.generate_key()
+            self.key = services.generate_key()
         super().save(*args, **kwargs)
-
-    @staticmethod
-    def generate_key() -> str:
-        """
-        Generates a new key for a token.
-        """
-        return secrets.token_hex(20)
 
     @property
     def is_expired(self) -> bool:

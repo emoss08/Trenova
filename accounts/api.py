@@ -29,11 +29,11 @@ from rest_framework import (
     viewsets,
 )
 from rest_framework.request import Request
-from typeguard import typechecked
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
 from utils.views import OrganizationMixin
+
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
@@ -79,6 +79,7 @@ class UserViewSet(OrganizationMixin):
         "username",
     )
     ordering_fields = "__all__"
+
     # permission_classes = [MontaModelPermissions]
 
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
@@ -92,7 +93,7 @@ class UserViewSet(OrganizationMixin):
             organization=self.request.user.organization  # type: ignore
         ).select_related(
             "profiles",
-            "profiles__title",
+            "profiles__job_title",
         )
 
 
@@ -104,9 +105,7 @@ class UpdatePasswordView(generics.UpdateAPIView):
     throttle_scope = "auth"
     serializer_class = serializers.ChangePasswordSerializer
 
-    def update(
-        self, request: Request, *args: Any, **kwargs: Any
-    ) -> response.Response:
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """Handle update requests
 
         Args:
@@ -156,9 +155,7 @@ class TokenVerifyView(views.APIView):
     permission_classes: list[Any] = []
     serializer_class = serializers.VerifyTokenSerializer
 
-    def post(
-        self, request: Request, *args: Any, **kwargs: Any
-    ) -> response.Response:
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """Handle Post requests
         Args:
             request (Request): Request object
@@ -185,7 +182,7 @@ class TokenVerifyView(views.APIView):
         user = (
             models.User.objects.select_related(
                 "profiles",
-                "profiles__title",
+                "profiles__job_title",
                 "organization",
                 "department",
             )
@@ -200,7 +197,7 @@ class TokenVerifyView(views.APIView):
                 "department__id",
                 "profiles__first_name",
                 "profiles__last_name",
-                "profiles__title__name",
+                "profiles__job_title__name",
                 "profiles__address_line_1",
                 "profiles__address_line_2",
                 "profiles__city",
@@ -222,7 +219,7 @@ class TokenVerifyView(views.APIView):
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
-                "job_title": user.profile.title.name,
+                "job_title": user.profile.job_title.name,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
                 "address_line_1": user.profile.address_line_1,
@@ -243,16 +240,14 @@ class TokenProvisionView(ObtainAuthToken):
     permission_classes = (permissions.AllowAny,)
     serializer_class = serializers.TokenProvisionSerializer
 
-    def post(
-        self, request: Request, *args: Any, **kwargs: Any
-    ) -> response.Response:
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user_obj = serializer.validated_data["user"]
         token, _ = models.Token.objects.get_or_create(user=user_obj)
         user = (
             models.User.objects.select_related(
-                "profiles", "profiles__title", "organization", "department"
+                "profiles", "profiles__job_title", "organization", "department"
             )
             .only(
                 "id",
@@ -262,7 +257,7 @@ class TokenProvisionView(ObtainAuthToken):
                 "profiles__last_name",
                 "organization__id",
                 "department__id",
-                "profiles__title__name",
+                "profiles__job_title__name",
                 "is_staff",
                 "is_superuser",
                 "profiles__address_line_1",
@@ -289,7 +284,7 @@ class TokenProvisionView(ObtainAuthToken):
                 "full_name": f"{user.profile.first_name} {user.profile.last_name}",
                 "organization_id": user.organization.id,
                 "department_id": user.department.id if user.department else None,
-                "job_title": user.profile.title.name,
+                "job_title": user.profile.job_title.name,
                 "is_staff": user.is_staff,
                 "is_superuser": user.is_superuser,
                 "address_line_1": user.profile.address_line_1,

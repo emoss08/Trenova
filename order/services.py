@@ -46,6 +46,18 @@ def set_pro_number(*, organization: Organization) -> str:
     return pro_number
 
 
+def create_initial_movement(*, order: models.Order) -> None:
+    """Create the initial movement for the given order.
+
+    Args:
+        order (Order): The order instance.
+
+    Returns:
+        None
+    """
+    Movement.objects.create(organization=order.organization, order=order)
+
+
 def combine_pdfs_service(*, order: Order) -> OrderDocumentation:
     """Combine all PDFs in Order Document into one PDF file
 
@@ -83,15 +95,3 @@ def combine_pdfs_service(*, order: Order) -> OrderDocumentation:
     default_storage.delete(file_path)
 
     return documentation
-
-
-def create_initial_movement(*, order: models.Order) -> None:
-    """Create the initial movement for the given order.
-
-    Args:
-        order (Order): The order instance.
-
-    Returns:
-        None
-    """
-    Movement.objects.create(organization=order.organization, order=order)

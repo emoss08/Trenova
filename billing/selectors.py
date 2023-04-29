@@ -14,47 +14,33 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import uuid
+from typing import List
 
 from django.db.models import Q, QuerySet
+from notifications.signals import notify
 
-from billing.models import BillingControl, BillingQueue
+from accounts.models import User
+from billing import models
 from order.models import Order
 from organization.models import Organization
 from utils.models import StatusChoices
+from utils.types import ModelUUID
 
 
 def get_billable_orders(
-    *, organization: Organization, order_pros: list[str] | None = None
+    *, organization: Organization, order_pros: List[str] | None = None
 ) -> QuerySet[Order] | None:
-    """Returns an iterator of orders that are billable for a given organization.
-
-    The billable orders are determined based on the `order_transfer_criteria`
-    set on the organization's `BillingControl` instance. If the
-    `order_transfer_criteria` is set to `READY_AND_COMPLETED`, orders that are
-    both ready to bill and have a status of `COMPLETED` will be returned. If the
-    `order_transfer_criteria` is set to `COMPLETED`, orders that have a status of
-    `COMPLETED` will be returned. If the `order_transfer_criteria` is set to
-    `READY_TO_BILL`, orders that are ready to bill will be returned.
-
-    Args:
-        organization: The organization for which billable orders should be returned.
-        order_pros: A list of order pros to filter the billable orders by.
-
-    Returns:
-        An iterator of billable orders for the organization, or `None` if no billable
-        orders are found.
-    """
-
     # Map BillingControl.OrderTransferCriteriaChoices to the corresponding query
     criteria_to_query = {
-        BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED: Q(
+        models.BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED: Q(
             status=StatusChoices.COMPLETED
         )
         & Q(ready_to_bill=True),
-        BillingControl.OrderTransferCriteriaChoices.COMPLETED: Q(
+        models.BillingControl.OrderTransferCriteriaChoices.COMPLETED: Q(
             status=StatusChoices.COMPLETED
         ),
-        BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL: Q(
+        models.BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL: Q(
             ready_to_bill=True
         ),
     }
@@ -79,13 +65,28 @@ def get_billable_orders(
     return orders if orders.exists() else None
 
 
-def get_billing_queue_information(*, order: Order) -> BillingQueue | None:
-    """Returns the billing history for a given order.
+def get_billing_queue_information(*, order: Order) -> models.BillingQueue | None:
+    return models.BillingQueue.objects.filter(order=order).last()
 
-    Args:
-        order: The order for which the billing history should be returned.
 
-    Returns:
-        The billing history for the order, or `None` if no billing history is found.
-    """
-    return BillingQueue.objects.filter(order=order).last()
+def get_billing_queue(
+    *, user: User, task_id: str | uuid.UUID
+) -> QuerySet[models.BillingQueue]:
+    billing_queue = models.BillingQueue.objects.filter(organization=user.organization)
+    if not billing_queue:
+        notify.send(
+            user,
+            organization=user.organization,
+            recipient=user,
+            level="info",
+            verb="Order Billing Exception",
+            description=f"No Orders in the billing queue for task: {task_id}",
+        )
+    return billing_queue
+
+
+def get_invoice_by_id(*, invoice_id: ModelUUID) -> models.BillingQueue | None:
+    try:
+        return models.BillingQueue.objects.get(pk__exact=invoice_id)
+    except models.BillingQueue.DoesNotExist:
+        return None

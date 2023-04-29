@@ -20,12 +20,12 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from plugin import helpers, serializers
+from plugin import utils, serializers
 
 
 @api_view(["GET"])
 def get_plugin_list_api(request: Request) -> Response:
-    plugin_list = helpers.get_plugin_list()
+    plugin_list = utils.get_plugin_list()
     serializer = serializers.PluginInfoSerializer(plugin_list, many=True)
     return Response(serializer.data)
 
@@ -39,7 +39,7 @@ def plugin_install_api(request: Request) -> Response:
             {"detail": "Missing 'plugin_name' query parameter."}, status=400
         )
 
-    plugin_list = helpers.get_plugin_list()
+    plugin_list = utils.get_plugin_list()
     plugin = next((p for p in plugin_list if p["name"] == plugin_name), None)
 
     if plugin is None:
