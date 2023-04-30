@@ -583,9 +583,21 @@ class Order(GenericModel):  # type:ignore
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         from dispatch.services import transfer_rate_details
+        from stops.selectors import (
+            get_total_piece_count_by_order,
+            get_total_weight_by_order,
+        )
 
         if self.auto_rate:
             transfer_rate_details(order=self)
+
+        if (
+            self.status == StatusChoices.COMPLETED
+            and not self.pieces
+            and not self.weight
+        ):
+            self.weight = get_total_weight_by_order(order=self)
+            self.pieces = get_total_piece_count_by_order(order=self)
 
         if self.ready_to_bill and self.organization.order_control.auto_order_total:
             self.sub_total = self.calculate_total()
@@ -622,7 +634,6 @@ class Order(GenericModel):  # type:ignore
         """
 
         # Handle the flat fee rate calculation
-
         if self.freight_charge_amount and self.rate_method == RatingMethodChoices.FLAT:
             return self.freight_charge_amount + self.other_charge_amount
 

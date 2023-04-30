@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import uuid
 from collections.abc import Iterable
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -24,8 +24,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from accounts.models import User
+from billing import exceptions, models, selectors, utils
 from order.models import Order
-from billing import selectors, exceptions, models, utils
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID

@@ -79,6 +79,11 @@ class OrganizationConfig(AppConfig):
             sender="organization.TableChangeAlert",
             dispatch_uid="save_trigger_name_requirements",
         )
+        pre_save.connect(
+            signals.delete_and_recreate_trigger_and_function,
+            sender="organization.TableChangeAlert",
+            dispatch_uid="delete_and_recreate_trigger_and_function",
+        )
         pre_delete.connect(
             signals.drop_trigger_and_function_signal,
             sender="organization.TableChangeAlert",

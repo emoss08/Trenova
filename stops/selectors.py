@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import decimal
 
 from django.db.models import Sum
 
@@ -28,26 +29,24 @@ def get_total_piece_count_by_order(*, order: Order) -> int:
         order (Order): Order instance
 
     Returns:
-        int: Total piece count for an order
+        int: Total piece counts for an order
     """
     value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
         Sum("pieces")
     )["pieces__sum"]
-
     return value or 0
 
 
-def get_total_weight_by_order(*, order: Order) -> int:
+def get_total_weight_by_order(*, order: Order) -> decimal.Decimal | int:
     """Return the total weight for an order
 
     Args:
         order (Order): Order instance
 
     Returns:
-        int: Total weight for an order
+        decimal.Decimal: Total weight for an order
     """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
-        Sum("weight")
-    )["weight__sum"]
-
+    value: decimal.Decimal = Stop.objects.filter(
+        movement__order__exact=order
+    ).aggregate(Sum("weight"))["weight__sum"]
     return value or 0

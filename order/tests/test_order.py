@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytest
 import datetime
+
+import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework.response import Response
@@ -31,7 +32,7 @@ from equipment.tests.factories import TractorFactory
 from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
-from order import models
+from order import models, selectors
 from order.selectors import get_order_stops
 from order.tests.factories import OrderFactory
 from organization.models import Organization
@@ -430,7 +431,9 @@ def test_order_destination_location_or_address_is_required() -> None:
     ]
 
 
-def test_remove_orders_validation(order: models.Order, organization: Organization) -> None:
+def test_remove_orders_validation(
+    order: models.Order, organization: Organization
+) -> None:
     """
     Test ValidationError is thrown if the stop in an order is being deleted,
     and order_control does not allow it.
@@ -443,3 +446,55 @@ def test_remove_orders_validation(order: models.Order, organization: Organizatio
     assert excinfo.value.message_dict["ref_num"] == [
         "Organization does not allow Stop removal. Please contact your administrator."
     ]
+
+
+def test_set_order_pro_number_signal(order: models.Order) -> None:
+    """
+    Test set_order_pro_number `pre_save` signal.
+    """
+
+    assert order.pro_number
+
+
+def test_order_pro_number_increments(
+    order: models.Order, organization: Organization
+) -> None:
+    """
+    Test order pro_number increments by one.
+    """
+
+    order_2 = OrderFactory(organization=organization)
+
+    assert order.pro_number == "ORD000001"
+    assert order_2.pro_number == "ORD000002"
+
+
+def test_set_total_piece_and_weight_signal(
+    order: models.Order,
+) -> None:
+    """
+    Test set_total_piece_and_weight `pre_save` signal.
+    """
+    movements = selectors.get_order_movements(order=order)
+    stops = selectors.get_order_stops(order=order)
+
+    fleet = FleetCodeFactory()
+    worker = WorkerFactory(fleet=fleet)
+    tractor = TractorFactory(primary_worker=worker, fleet=fleet)
+
+    for movement in movements:
+        movement.worker = worker
+        movement.tractor = tractor
+        movement.save()
+
+    for stop in stops:
+        if stop.sequence == 2:
+            stop.appointment_time = timezone.now() + datetime.timedelta(days=1)
+
+        stop.arrival_time = timezone.now()
+        stop.departure_time = timezone.now() + datetime.timedelta(hours=1)
+        stop.pieces = 100
+        stop.weight = 100
+        stop.save()
+
+    order.refresh_from_db()

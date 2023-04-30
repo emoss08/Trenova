@@ -128,17 +128,15 @@ class Stop(GenericModel):
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
+        help_text=_("Total Piece Count of the Order"),
         default=0,
-        null=True,
-        blank=True,
-        help_text=_("Pieces"),
     )
-    weight = models.PositiveIntegerField(
+    weight = models.DecimalField(
         _("Weight"),
+        max_digits=10,
+        decimal_places=2,
+        help_text=_("Total Weight of the Order"),
         default=0,
-        null=True,
-        blank=True,
-        help_text=_("Weight"),
     )
     address_line = models.CharField(
         _("Stop Address"),
@@ -201,6 +199,7 @@ class Stop(GenericModel):
         """
         super().clean()
         from stops.validation import StopValidation
+
         StopValidation(instance=self)
 
     def save(self, *args: Any, **kwargs: Any) -> None:

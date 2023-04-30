@@ -16,15 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 
 
-from movements.models import Movement
-from order import models
-
 from django.conf import settings
 from django.core.files.storage import default_storage
 from pypdf import PdfMerger
 
 from billing.models import DocumentClassification
-from order.models import Order, OrderDocumentation
+from movements.models import Movement
+from order import models
 from organization.models import Organization
 
 
@@ -34,16 +32,14 @@ def set_pro_number(*, organization: Organization) -> str:
     Returns:
         str: The pro number for the order.
     """
-
-    count: int = Order.objects.filter(organization=organization).count() + 1
-    pro_number = f"ORD{count:06d}"
-
-    # Check if pro number already exists and generate a new one if it does.
-    while Order.objects.filter(pro_number=pro_number).exists():
-        count += 1
-        pro_number = f"ORD{count:06d}"
-
-    return pro_number
+    code = f"ORD{models.Order.objects.count() + 1:06d}"
+    return (
+        "ORD000001"
+        if models.Order.objects.filter(
+            pro_number=code, organization=organization
+        ).exists()
+        else code
+    )
 
 
 def create_initial_movement(*, order: models.Order) -> None:
@@ -53,12 +49,12 @@ def create_initial_movement(*, order: models.Order) -> None:
         order (Order): The order instance.
 
     Returns:
-        None
+        None: This function does not return anything.
     """
     Movement.objects.create(organization=order.organization, order=order)
 
 
-def combine_pdfs_service(*, order: Order) -> OrderDocumentation:
+def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
     """Combine all PDFs in Order Document into one PDF file
 
     Args:
@@ -68,9 +64,7 @@ def combine_pdfs_service(*, order: Order) -> OrderDocumentation:
         OrderDocumentation: created OrderDocumentation
     """
 
-    document_class: DocumentClassification = DocumentClassification.objects.get(
-        name="CON"
-    )
+    document_class = DocumentClassification.objects.get(name="CON")
     file_path = f"{settings.MEDIA_ROOT}/{order.id}.pdf"
     merger = PdfMerger()
 
@@ -85,7 +79,7 @@ def combine_pdfs_service(*, order: Order) -> OrderDocumentation:
 
     consolidated_document = default_storage.open(file_path, "rb")
 
-    documentation: OrderDocumentation = OrderDocumentation.objects.create(
+    documentation = models.OrderDocumentation.objects.create(
         organization=order.organization,
         order=order,
         document=consolidated_document,

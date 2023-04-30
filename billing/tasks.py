@@ -14,7 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from typing import List
+
+from celery_singleton import Singleton
 
 from backend.celery import app
 
@@ -25,10 +28,15 @@ from organization.models import Organization
 from accounts.models import User
 from django.db.models import QuerySet
 from billing import selectors, services
+from celery import shared_task
 
 
 @app.task(
-    name="automate_mass_order_billing", bind=True, max_retries=3, default_retry_delay=60
+    name="auto_mass_billing_for_all_orgs",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    base=Singleton,
 )
 def automate_mass_order_billing(self) -> str:  # type: ignore
     """Automated Mass Billing Tasks that uses system user to bill orders.
@@ -71,7 +79,7 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
     return "No organizations have auto billing enabled."
 
 
-@app.task(name="transfer_to_billing_task", bind=True)
+@shared_task(name="transfer_to_billing_task", bind=True, base=Singleton)
 def transfer_to_billing_task(  # type: ignore
     self, *, user_id: ModelUUID, order_pros: List[str]
 ) -> None:
@@ -110,7 +118,13 @@ def transfer_to_billing_task(  # type: ignore
         raise self.retry(exc=exc) from exc
 
 
-@app.task(name="bill_invoice_task", bind=True, max_retries=3, default_retry_delay=60)
+@shared_task(
+    name="bill_invoice_task",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    base=Singleton,
+)
 def bill_invoice_task(self, user_id: ModelUUID, invoice_id: ModelUUID) -> None:  # type: ignore
     """Bill Order
 
@@ -138,7 +152,13 @@ def bill_invoice_task(self, user_id: ModelUUID, invoice_id: ModelUUID) -> None: 
         raise self.retry(exc=exc) from exc
 
 
-@app.task(name="mass_order_bill_task", bind=True, max_retries=3, default_retry_delay=60)
+@shared_task(
+    name="mass_order_billing_task",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    base=Singleton,
+)
 def mass_order_bill_task(self, *, user_id: ModelUUID) -> None:  # type: ignore
     """Bill Order
 

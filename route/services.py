@@ -28,7 +28,6 @@ from route.models import RouteControl
 Coordinates: TypeAlias = (
     Tuple[Tuple[float | None, float | None], Tuple[float | None, float | None]] | None
 )
-Distance: TypeAlias = Tuple[float, float, str]
 
 
 def generate_route(
@@ -95,10 +94,8 @@ def get_coordinates(*, order: Order) -> Coordinates:
 
 def calculate_distance(
     *,
-    organization: Organization,
-    point_1: Union[
-        Tuple[Optional[float], Optional[float]], Any
-    ],  # Update the type hint for point_1
+    route_control: RouteControl,
+    point_1: Union[Tuple[Optional[float], Optional[float]], Any],
     point_2: Union[Tuple[Optional[float], Optional[float]], Any],
 ) -> Tuple[float, float, str]:
     """
@@ -113,18 +110,15 @@ def calculate_distance(
     from the geopy library, which implements the Haversine formula.
 
     Args:
-        organization: An instance of the Organization model representing the organization associated with the order.
-        point_1: A tuple of two floats representing the latitude and longitude of the first point.
-        point_2: A tuple of two floats representing the latitude and longitude of the second point.
+        route_control (RouteControl): An instance of the Organization's RouteControl object.
+        point_1 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude and longitude of the first point.
+        point_2 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude and longitude of the second point.
 
     Returns:
         A tuple containing three values: a float representing the distance between the two points in miles, a string
         representing the method used to calculate the distance ('Google' or 'Monta'), and a float representing the
         duration between the two points in hours if the method is 'Google', or None if the method is 'Monta'.
     """
-
-    # Get the RouteControl object associated with the organization
-    route_control: RouteControl = organization.route_control
 
     # Get the distance method from the Organization's RouteControl object
     if route_control.distance_method == RouteControl.DistanceMethodChoices.GOOGLE:
@@ -135,7 +129,7 @@ def calculate_distance(
             point_1=point_1,
             point_2=point_2,
             units=route_control.mileage_unit,
-            organization=organization,
+            organization=route_control.organization,
         )
     else:
         # If the distance method is not Google, use the Haversine formula
@@ -189,7 +183,7 @@ def get_order_mileage(*, order: Order) -> float | None:
 
         # Calculate distance between two points.
         distance, duration, method = calculate_distance(
-            point_1=point_1, point_2=point_2, organization=order.organization
+            point_1=point_1, point_2=point_2, route_control=route_control
         )
 
         # Generate a route that can be used moving forward.
