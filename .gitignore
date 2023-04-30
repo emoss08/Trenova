@@ -35,3 +35,4 @@ celerybeat-schedule
 /app_frontend/cypress
 /app_frontend/cypress.config.ts
 my_pypy_ven
+*/migrations/*
