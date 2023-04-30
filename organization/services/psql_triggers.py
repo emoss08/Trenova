@@ -259,7 +259,7 @@ def create_update_trigger(
         cursor.execute(
             f"""
             CREATE or REPLACE TRIGGER {trigger_name}
-            AFTER UPDATE ON {table_name}
+            AFTER UPDATE ON public.{table_name}
             FOR EACH ROW
             EXECUTE PROCEDURE {function_name}();
             """
@@ -293,7 +293,7 @@ def drop_trigger_and_function(
         with connection.cursor() as cursor:
             cursor.execute(
                 f"""
-            DROP TRIGGER IF EXISTS {trigger_name} ON {table_name};
+            DROP TRIGGER IF EXISTS {trigger_name} ON public.{table_name};
             DROP FUNCTION IF EXISTS {function_name}();
             """
             )

@@ -37,7 +37,7 @@ def create_dispatch_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a DispatchControl model instance for a new Organization model instance.
 
@@ -60,7 +60,7 @@ def create_order_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create an OrderControl model instance for a new Organization model instance.
 
@@ -79,9 +79,7 @@ def create_order_control(
 
 
 def create_route_control(
-    instance: models.Organization,
-    created: bool,
-    **kwargs: Any
+    instance: models.Organization, created: bool, **kwargs: Any
 ) -> None:
     """Create a RouteControl model instance for a new Organization model instance.
 
@@ -102,7 +100,7 @@ def create_billing_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a BillingControl model instance for a new Organization model instance.
 
@@ -124,7 +122,7 @@ def create_email_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create an EmailControl model instance for a new Organization model instance.
 
@@ -146,7 +144,7 @@ def create_invoice_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create an InvoiceControl model instance for a new Organization model instance.
 
@@ -189,7 +187,7 @@ def create_kube_configuration(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a KubeConfiguration model instance for a new Organization model instance.
 
@@ -228,7 +226,7 @@ def create_trigger_signal(
     sender: models.TableChangeAlert,
     instance: models.TableChangeAlert,
     created: bool,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> None:
     """Create a trigger for a new TableChangeAlert model instance.
 
@@ -288,3 +286,27 @@ def delete_and_add_new_trigger(
 
     if old_instance.table != instance.table:
         drop_trigger_and_create(instance=instance)
+
+    if old_instance.database_action != instance.database_action:
+        drop_trigger_and_create(instance=instance)
+
+
+def delete_and_recreate_trigger_and_function(
+    sender: models.TableChangeAlert, instance: models.TableChangeAlert, **kwargs: Any
+) -> None:
+    """
+    If the database action on a trigger has changed, drop the trigger,
+    and function and recreate it to reflect the new changes.
+    """
+    try:
+        old_instance = sender.objects.get(pk__exact=instance.pk)
+    except sender.DoesNotExist:
+        return
+
+    if old_instance.database_action != instance.database_action:
+        drop_trigger_and_function(
+            trigger_name=old_instance.trigger_name,
+            function_name=old_instance.function_name,
+            table_name=instance.table,
+        )
+        create_trigger_based_on_db_action(instance=instance)
