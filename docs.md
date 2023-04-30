@@ -61,3 +61,34 @@ py manage.py createsystemuser
 #### Description
 
 `createsystemuser` command creates a system user.
+
+### Setup PSQL Triggers
+
+```postgresql
+CREATE OR REPLACE FUNCTION notify_table_change_alert_update()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+AS
+$BODY$
+DECLARE
+BEGIN
+    IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
+        PERFORM pg_notify('table_change_alert_updated', NEW.id::text);
+    END IF;
+    RETURN NULL;
+END
+$BODY$;
+```
+
+```postgresql
+CREATE OR REPLACE TRIGGER table_change_alert_update_trigger
+    AFTER INSERT OR UPDATE
+    ON public.table_change_alert
+    FOR EACH ROW
+EXECUTE PROCEDURE notify_table_change_alert_update();
+```
+
+#### Description
+
+`notify_table_change_alert_update` function notifies the `table_change_alert_updated` channel when a row is inserted or
+updated in the `table_change_alert` table.

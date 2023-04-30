@@ -17,6 +17,7 @@
 
 from django.db import connection, transaction
 
+from utils.types import ModelUUID
 from .table_choices import TableChoiceService
 
 table_service = TableChoiceService()
@@ -52,7 +53,11 @@ def create_insert_field_string(fields: list[str]) -> str:
 
 @transaction.atomic
 def create_insert_function(
-    *, listener_name: str, function_name: str, fields: list[str]
+    *,
+    listener_name: str,
+    function_name: str,
+    fields: list[str],
+    organization_id: ModelUUID,
 ) -> None:
     """Creates a PL/pgSQL trigger function that sends a notification on INSERT.
 
@@ -67,6 +72,7 @@ def create_insert_function(
         listener_name (str): The name of the channel to send notifications to.
         function_name (str): The name of the function to create or replace.
         fields (list of str): A list of field names to include in the notification.
+        organization_id (ModelUUID): The ID of the organization to monitor for INSERTs.
 
     Returns:
         None: This function has no return value.
@@ -85,7 +91,7 @@ def create_insert_function(
                 as $BODY$
                 declare
                 begin
-                    if (tg_op = 'INSERT') then
+                    if (tg_op = 'INSERT' AND NEW.organization_id = '{organization_id}')  then
                     perform pg_notify('{listener_name}',
                     json_build_object(
                         {fields_string}
@@ -100,7 +106,12 @@ def create_insert_function(
 
 @transaction.atomic
 def create_insert_trigger(
-    *, trigger_name: str, table_name: str, function_name: str, listener_name: str
+    *,
+    trigger_name: str,
+    table_name: str,
+    function_name: str,
+    listener_name: str,
+    organization_id: ModelUUID,
 ) -> None:
     """Creates a PL/pgSQL trigger and function for sending a notification on INSERT.
 
@@ -115,6 +126,7 @@ def create_insert_trigger(
         table_name (str): The name of the table to monitor for INSERTs.
         function_name (str): The name of the function to create or replace.
         listener_name (str): The name of the channel to send notifications to.
+        organization_id (ModelUUID): The ID of the organization to monitor for INSERTs.
 
     Returns:
         None: This function has no return value.
@@ -129,6 +141,7 @@ def create_insert_trigger(
         function_name=function_name,
         fields=fields,
         listener_name=listener_name,
+        organization_id=organization_id,
     )
 
     with connection.cursor() as cursor:
@@ -152,7 +165,11 @@ def create_update_field_string(fields: list[str]) -> str:
 
 @transaction.atomic
 def create_update_function(
-    *, listener_name: str, function_name: str, fields: list[str]
+    *,
+    listener_name: str,
+    function_name: str,
+    fields: list[str],
+    organization_id: ModelUUID,
 ) -> None:
     fields_string: str = create_insert_field_string(fields)
     comparison_string: str = create_update_field_string(fields)
@@ -165,7 +182,7 @@ def create_update_function(
                  as $BODY$
                  declare
                  begin
-                     IF (TG_OP = 'UPDATE' AND {comparison_string}) THEN
+                     IF (TG_OP = 'UPDATE' AND {comparison_string} AND NEW.organization_id = '{organization_id}') THEN
                          PERFORM pg_notify('{listener_name}',
                          json_build_object(
                              {fields_string}
@@ -180,7 +197,12 @@ def create_update_function(
 
 @transaction.atomic
 def create_update_trigger(
-    *, trigger_name: str, table_name: str, function_name: str, listener_name: str
+    *,
+    trigger_name: str,
+    table_name: str,
+    function_name: str,
+    listener_name: str,
+    organization_id: ModelUUID,
 ) -> None:
     fields: list[str] = table_service.get_column_names(table_name=table_name)
 
@@ -188,6 +210,7 @@ def create_update_trigger(
         function_name=function_name,
         fields=fields,
         listener_name=listener_name,
+        organization_id=organization_id,
     )
 
     with connection.cursor() as cursor:
