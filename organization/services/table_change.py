@@ -22,6 +22,7 @@ from organization.services.psql_triggers import (
     create_update_trigger,
     drop_trigger_and_function,
 )
+from utils.types import ModelUUID
 
 ACTION_NAMES = {
     "INSERT": {
@@ -67,7 +68,9 @@ def set_trigger_name_requirements(*, instance: TableChangeAlert) -> None:
     instance.listener_name = f"{action_names['listener']}_{instance.table}"
 
 
-def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
+def create_trigger_based_on_db_action(
+    *, instance: TableChangeAlert, organization_id: ModelUUID
+) -> None:
     """
     Creates a trigger function and trigger for a PostgreSQL database table based on a specified database action.
 
@@ -79,6 +82,8 @@ def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
     Args:
         instance (TableChangeAlert): An instance of the `TableChangeAlert` model that specifies the properties of
             the trigger function and trigger to be created.
+        organization_id (ModelUUID): The ID of the organization that the trigger function and trigger will be
+            created for.
 
     Returns:
         None: This function has no return value.
@@ -105,6 +110,7 @@ def create_trigger_based_on_db_action(*, instance: TableChangeAlert) -> None:
             function_name=instance.function_name,
             listener_name=instance.listener_name,
             table_name=instance.table,
+            organization_id=organization_id,
         )
 
 
@@ -133,4 +139,6 @@ def drop_trigger_and_create(*, instance: TableChangeAlert) -> None:
             table_name=instance.table,
             trigger_name=instance.trigger_name,
         )
-    create_trigger_based_on_db_action(instance=instance)
+    create_trigger_based_on_db_action(
+        instance=instance, organization_id=instance.organization
+    )

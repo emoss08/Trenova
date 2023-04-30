@@ -112,6 +112,25 @@ def test_delete_table_change_removes_trigger() -> None:
     assert function_check_2 == False
 
 
+def test_table_change_database_action_update() -> None:
+    """
+    Test changing the database action removes and adds the proper function, trigger, and listener
+    names.
+    """
+    table_change = factories.TableChangeAlertFactory(database_action="INSERT")
+
+    assert table_change.function_name == f"notify_new_{table_change.table}"
+    assert table_change.trigger_name == f"after_insert_{table_change.table}"
+    assert table_change.listener_name == f"new_added_{table_change.table}"
+
+    table_change.database_action = "UPDATE"
+    table_change.save()
+
+    assert table_change.function_name == f"notify_updated_{table_change.table}"
+    assert table_change.trigger_name == f"after_update_{table_change.table}"
+    assert table_change.listener_name == f"updated_{table_change.table}"
+
+
 def test_command() -> None:
     with patch("psycopg2.connect"), patch(
         "django.core.management.color.supports_color", return_value=False

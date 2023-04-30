@@ -32,6 +32,10 @@ from organization.services.table_change import (
 )
 from route.models import RouteControl
 
+from django.dispatch import Signal
+
+restart_psql_listener_signal = Signal()
+
 
 def create_dispatch_control(
     sender: models.Organization,
@@ -241,7 +245,10 @@ def create_trigger_signal(
         **kwargs: Additional keyword arguments.
     """
     if created:
-        create_trigger_based_on_db_action(instance=instance)
+        create_trigger_based_on_db_action(
+            instance=instance,
+            organization_id=instance.organization_id,
+        )
 
 
 def drop_trigger_and_function_signal(
@@ -297,6 +304,11 @@ def delete_and_recreate_trigger_and_function(
     """
     If the database action on a trigger has changed, drop the trigger,
     and function and recreate it to reflect the new changes.
+
+    Args:
+        sender (models.TableChangeAlert): The class of the sending instance.
+        instance (models.TableChangeAlert): The instance of the TableChangeAlert model being saved.
+        **kwargs: Additional keyword arguments.
     """
     try:
         old_instance = sender.objects.get(pk__exact=instance.pk)
@@ -309,4 +321,16 @@ def delete_and_recreate_trigger_and_function(
             function_name=old_instance.function_name,
             table_name=instance.table,
         )
-        create_trigger_based_on_db_action(instance=instance)
+        create_trigger_based_on_db_action(
+            instance=instance, organization_id=instance.organization_id
+        )
+
+    if old_instance.table != instance.table:
+        drop_trigger_and_function(
+            trigger_name=old_instance.trigger_name,
+            function_name=old_instance.function_name,
+            table_name=old_instance.table,
+        )
+        create_trigger_based_on_db_action(
+            instance=instance, organization_id=instance.organization_id
+        )

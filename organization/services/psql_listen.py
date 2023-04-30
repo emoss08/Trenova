@@ -20,7 +20,7 @@ from pathlib import Path
 
 import psycopg2
 from environ import environ
-
+import select
 from organization.selectors import get_active_table_alerts
 
 env = environ.Env()
@@ -29,8 +29,33 @@ environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
 
 
 class PSQLListener:
+    """
+    A class representing a PostgreSQL listener for table change alerts.
+
+    This class provides methods to connect to a PostgreSQL database and
+    listen to notifications on specific channels. It sets up listeners for
+    table change alerts and handles notifications by printing them.
+
+    Methods:
+        connect() -> psycopg2.extensions.connection:
+            Establishes a connection to a PostgreSQL database using psycopg2.
+
+        listen() -> None:
+            Sets up listeners for table change alerts and handles notifications.
+    """
+
     @classmethod
-    def connect(cls):
+    def connect(cls) -> psycopg2.connection:
+        """
+        Connect to a PostgreSQL database using psycopg2.
+
+        This method reads database connection information from environment
+        variables and returns a connection to the specified database.
+
+        Returns:
+            psycopg2.connection: A connection to the PostgreSQL database.
+        """
+
         conn = psycopg2.connect(
             host="localhost",
             database=env("DB_NAME"),
@@ -43,8 +68,21 @@ class PSQLListener:
 
     @classmethod
     def listen(cls) -> None:
+        """
+        Set up listeners for table change alerts and handle notifications.
+
+        This method connects to the database, sets up listeners for table
+        change alerts, and handles notifications by printing them. If a
+        notification is received on the table_change_alert_channel, it restarts
+        the listeners for table_changes.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
         conn = cls.connect()
         table_changes = get_active_table_alerts()
+        table_change_alert_channel = "table_change_alert_updated"
 
         if not table_changes:
             print("No active table change alerts.")
@@ -54,11 +92,28 @@ class PSQLListener:
         with conn.cursor() as cur:
             for change in table_changes:
                 cur.execute(f"LISTEN {change.listener_name};")
+                print(f"Listening to channel: {change.listener_name}")
+
+            cur.execute(f"LISTEN {table_change_alert_channel};")
+            print(f"Listening to channel: {table_change_alert_channel}")
 
             while True:
-                conn.poll()
-                while conn.notifies:
-                    notify = conn.notifies.pop(0)
-                    print(
-                        f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}"
-                    )
+                rlist, _, _ = select.select([conn.fileno()], [], [], 5)
+                if conn.fileno() in rlist:
+                    conn.poll()
+                    while conn.notifies:
+                        notify = conn.notifies.pop(0)
+                        print(
+                            f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}"
+                        )
+
+                        if notify.channel == table_change_alert_channel:
+                            cur.execute("UNLISTEN *;")
+                            print("Restarting listener due to new TableChangeAlert...")
+                            for change in table_changes:
+                                cur.execute(f"LISTEN {change.listener_name};")
+                                print(f"Listening to channel: {change.listener_name}")
+
+                            cur.execute(f"LISTEN {table_change_alert_channel};")
+                else:
+                    print("Timeout reached, no notifications received.")
