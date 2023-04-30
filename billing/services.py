@@ -32,6 +32,15 @@ if TYPE_CHECKING:
 
 
 def generate_invoice_number(*, instance: models.BillingQueue) -> str:
+    """Generate a new invoice number for a BillingQueue instance.
+
+    Args:
+        instance (models.BillingQueue): The BillingQueue instance to generate an invoice number for.
+
+    Returns:
+        str: The generated invoice number.
+    """
+
     if not instance.invoice_number:
         if (
             latest_invoice := models.BillingQueue.objects.only("invoice_number")
@@ -58,6 +67,20 @@ def generate_invoice_number(*, instance: models.BillingQueue) -> str:
 def transfer_to_billing_queue_service(
     *, user_id: "ModelUUID", order_pros: List[str], task_id: str
 ) -> str:
+    """Transfer eligible orders to the billing queue.
+
+    Args:
+        user_id (ModelUUID): The ID of the user transferring the orders.
+        order_pros (List[str]): A list of order PRO numbers to be transferred.
+        task_id (str): The ID of the task that initiated the transfer.
+
+    Returns:
+        str: A message indicating the success of the transfer and the number of orders transferred.
+
+    Raises:
+        exceptions.BillingException: If no eligible orders are found for transfer.
+    """
+
     # Get the user
     user = get_object_or_404(User, id=user_id)
 
@@ -134,6 +157,16 @@ def transfer_to_billing_queue_service(
 def mass_order_billing_service(
     *, user_id: "ModelUUID", task_id: str | uuid.UUID
 ) -> None:
+    """Process the billing for multiple orders.
+
+    Args:
+        user_id (ModelUUID): The ID of the user initiating the mass billing.
+        task_id (str | uuid.UUID): The ID of the task that initiated the mass billing.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
     user: User = get_object_or_404(User, id=user_id)
     orders = selectors.get_billing_queue(user=user, task_id=task_id)
     bill_orders(user_id=user_id, invoices=orders)
@@ -144,6 +177,17 @@ def bill_orders(
     user_id: "ModelUUID",
     invoices: Iterable[models.BillingQueue] | models.BillingQueue,
 ) -> None:
+    """Bill the specified orders.
+
+    Args:
+        user_id (ModelUUID): The ID of the user responsible for billing the orders.
+        invoices (Iterable[models.BillingQueue] | models.BillingQueue): An iterable of BillingQueue instances
+            or a single BillingQueue instance representing the orders to be billed.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
     user = get_object_or_404(User, id=user_id)
 
     # If invoices is a BillingQueue object, convert it to a list
