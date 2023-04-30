@@ -20,37 +20,29 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from dispatch.services import transfer_rate_details
 from movements.models import Movement
 
 from order import models, services
 from route.services import get_order_mileage
-from stops.selectors import get_total_weight_by_order, get_total_piece_count_by_order
-from utils.models import StatusChoices
-
-
-def set_total_piece_and_weight(
-    instance: models.Order,
-    **kwargs: Any,
-) -> None:
-    """
-    Set total pieces and weight of a completed order.
-
-    This function is called as a signal when an Order model instance is saved.
-    If the order status is COMPLETED, it sets the total pieces and weight of the
-    order using the respective helper functions.
-
-    Args:
-        instance (models.Order): The instance of the Order model being saved.
-        **kwargs: Additional keyword arguments.
-    """
-    if instance.status == StatusChoices.COMPLETED:
-        instance.pieces = get_total_piece_count_by_order(order=instance)
-        instance.weight = get_total_weight_by_order(order=instance)
 
 
 def set_order_pro_number(instance: models.Order, **kwargs: Any) -> None:
-    instance.pro_number = services.set_pro_number(organization=instance.organization)
+    """Set a pro number for an order.
+
+    This function sets a pro number for the passed Order instance if it does not already have one. It calls the set_pro_number
+    function from the services module, passing in the organization associated with the order.
+
+    Args:
+        instance: An instance of the Order model.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    if not instance.pro_number:
+        instance.pro_number = services.set_pro_number(
+            organization=instance.organization
+        )
 
 
 def create_order_initial_movement(
@@ -83,7 +75,7 @@ def check_order_removal_policy(
 ) -> None:
     """Check if the organization allows order removal.
 
-    If the organization does not allow order removal throw a ValidationError.
+    If the organization does not allow order removal, throw a ValidationError.
 
     Args:
         instance (models.Order): The instance of the Order model being saved.
@@ -103,21 +95,19 @@ def check_order_removal_policy(
         )
 
 
-def transfer_rate_information(instance: models.Order, **kwargs: Any) -> None:
-    """Transfer rate information from the order to the movement.
+def set_order_mileage_and_create_route(instance: models.Order, **kwargs: Any) -> None:
+    """Set the mileage for an order and create a route.
+
+    This function is called as a signal when an Order model instance is saved.
+    If the order has an origin and destination location, it sets the mileage
+    for the order and creates a route using the generate_route().
 
     Args:
         instance (models.Order): The instance of the Order model being saved.
-        **kwargs: Additional keyword arguments.
+        **kwargs (Any): Additional keyword arguments.
 
     Returns:
         None: This function does not return anything.
     """
-
-    if instance.rate:
-        transfer_rate_details(order=instance)
-
-
-def set_order_mileage_and_create_route(instance: models.Order, **kwargs: Any) -> None:
     if instance.origin_location and instance.destination_location:
         instance.mileage = get_order_mileage(order=instance)

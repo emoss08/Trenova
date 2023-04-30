@@ -15,8 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-
-
 from backend.celery import app
 
 from core.exceptions import ServiceException

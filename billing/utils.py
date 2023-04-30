@@ -331,7 +331,8 @@ def transfer_order_details(obj: models.BillingHistory | models.BillingQueue) -> 
     obj.consignee_ref_number = obj.consignee_ref_number or order.consignee_ref_number
     if obj.commodity and not obj.commodity_descr:
         obj.commodity_descr = obj.commodity.description
-    obj.customer = obj.customer or order.customer
+
+    obj.customer = order.customer
     obj.other_charge_total = order.other_charge_amount
     obj.freight_charge_amount = order.freight_charge_amount
     obj.total_amount = order.sub_total

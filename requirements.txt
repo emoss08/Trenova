@@ -51,3 +51,5 @@ googlemaps==4.10.0
 geopy==2.3.0
 bcrypt==4.0.1
 requests==2.29.0
+celery-singleton==0.3.1
+django-silk==5.0.3

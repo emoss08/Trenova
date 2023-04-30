@@ -180,7 +180,7 @@ class Command(BaseCommand):
         UserProfile.objects.get_or_create(
             organization=organization,
             user=user,
-            title=job_title,
+            job_title=job_title,
             defaults={
                 "first_name": "System",
                 "last_name": "User",

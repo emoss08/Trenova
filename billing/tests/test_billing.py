@@ -23,7 +23,7 @@ from django.core.exceptions import ValidationError
 
 from accounts.models import User
 from accounts.tests.factories import UserFactory
-from billing import selectors, models, services
+from billing import models, selectors, services
 from customer.factories import CustomerFactory
 from customer.models import Customer
 from order.models import Order

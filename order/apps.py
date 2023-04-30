@@ -26,11 +26,6 @@ class OrderConfig(AppConfig):
     def ready(self) -> None:
         from order import signals
 
-        post_save.connect(
-            signals.set_total_piece_and_weight,
-            sender="order.Order",
-            dispatch_uid="set_total_piece_and_weight",
-        )
         pre_save.connect(
             signals.set_order_pro_number,
             sender="order.Order",
@@ -41,11 +36,6 @@ class OrderConfig(AppConfig):
             sender="order.Order",
             dispatch_uid="create_order_initial_movement",
         )
-        # post_save.connect(
-        #     signals.transfer_rate_information,
-        #     sender="order.Order",
-        #     dispatch_uid="transfer_rate_information",
-        # )
         pre_delete.connect(
             signals.check_order_removal_policy,
             sender="order.Order",
