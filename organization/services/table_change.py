@@ -123,7 +123,7 @@ def drop_trigger_and_create(*, instance: TableChangeAlert) -> None:
         None: This function has no return value.
 
     """
-    trigger_exists: bool = check_trigger_exists(
+    trigger_exists = check_trigger_exists(
         table_name=instance.table, trigger_name=instance.trigger_name
     )
 
