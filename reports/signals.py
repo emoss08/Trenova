@@ -63,5 +63,3 @@ def delete_scheduled_report_periodic_task(
             name=f"Send scheduled report {instance.user_id}-{instance.pk}"
         )
         periodic_task.delete()
-        crontab_schedule = periodic_task.crontab
-        crontab_schedule.delete()
