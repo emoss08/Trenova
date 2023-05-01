@@ -89,7 +89,7 @@ def get_billing_queue_information(*, order: "Order") -> models.BillingQueue | No
         models.BillingQueue | None: The most recent BillingQueue instance for the given order,
             or None if no billing queue information is found.
     """
-    return models.BillingQueue.objects.get(order=order).last()
+    return models.BillingQueue.objects.filter(order=order).last()
 
 
 def get_billing_queue(
