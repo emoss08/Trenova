@@ -127,19 +127,13 @@ def transfer_to_billing_queue_service(
             )
 
         # If there is a ValidationError or IntegrityError, create a BillingException
-        except* ValidationError as validation_error:
+        except (ValidationError, IntegrityError) as error:
+            error_type = type(error).__name__
             utils.create_billing_exception(
                 user=user,
                 exception_type="OTHER",
                 invoice=order,
-                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {validation_error}",
-            )
-        except* IntegrityError as integrity_error:
-            utils.create_billing_exception(
-                user=user,
-                exception_type="OTHER",
-                invoice=order,
-                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {integrity_error}",
+                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {error_type} - {error}",
             )
 
     # Bulk update the orders
