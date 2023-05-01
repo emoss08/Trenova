@@ -92,3 +92,29 @@ EXECUTE PROCEDURE notify_table_change_alert_update();
 
 `notify_table_change_alert_update` function notifies the `table_change_alert_updated` channel when a row is inserted or
 updated in the `table_change_alert` table.
+
+## Celery Task Schedules
+
+### Send Expired Rates Notification
+
+Name: `send_expired_rates_notification`
+
+Task: `dispatch.tasks.send_expired_rates_notification`
+
+Interval Schedule: `Every Day`
+
+Start Datetime: `now`
+
+### Auto Mass Order Billing
+
+Name: `auto_mass_order_billing`
+
+Task: `auto_mass_billing_for_all_orgs`
+
+Interval Schedule: `Every 15 minutes`
+
+Start Datetime: `now`
+
+    Note: This task should only be enabled if the customer has purchased the billing module, and auto-billing package.
+
+
