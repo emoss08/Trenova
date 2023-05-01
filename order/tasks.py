@@ -14,11 +14,15 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import TYPE_CHECKING
 
 from backend.celery import app
 from core.exceptions import ServiceException
 from order import selectors, services
 from utils.types import ModelUUID
+
+if TYPE_CHECKING:
+    from celery.app.task import Task
 
 
 @app.task(
@@ -27,7 +31,7 @@ from utils.types import ModelUUID
     max_retries=3,
     default_retry_delay=60,
 )
-def consolidate_order_documentation(self, *, order_id: ModelUUID) -> None:  # type: ignore
+def consolidate_order_documentation(self: "Task", *, order_id: ModelUUID) -> None:
     """Consolidate Order
 
     Query the database for the Order and call the consolidate_pdf

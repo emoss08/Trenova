@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import TYPE_CHECKING
 
 from celery import shared_task
 from celery_singleton import Singleton
@@ -27,6 +28,9 @@ from core.exceptions import ServiceException
 from organization.models import Organization
 from utils.types import ModelUUID
 
+if TYPE_CHECKING:
+    from celery.app.task import Task
+
 
 @app.task(
     name="auto_mass_billing_for_all_orgs",
@@ -35,7 +39,7 @@ from utils.types import ModelUUID
     default_retry_delay=60,
     base=Singleton,
 )
-def automate_mass_order_billing(self) -> str:  # type: ignore
+def automate_mass_order_billing(self: "Task") -> str:
     """Automated Mass Billing Tasks that uses system user to bill orders.
 
     Filter the database for the Organizations that have auto bill orders enabled and call the mass_order_billing_service
@@ -77,8 +81,8 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
 
 
 @shared_task(name="transfer_to_billing_task", bind=True, base=Singleton)
-def transfer_to_billing_task(  # type: ignore
-    self, *, user_id: ModelUUID, order_pros: list[str]
+def transfer_to_billing_task(
+    self: "Task", *, user_id: ModelUUID, order_pros: list[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
@@ -122,7 +126,7 @@ def transfer_to_billing_task(  # type: ignore
     default_retry_delay=60,
     base=Singleton,
 )
-def bill_invoice_task(self, user_id: ModelUUID, invoice_id: ModelUUID) -> None:  # type: ignore
+def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -> None:
     """Bill Order
 
     Query the database for the Order and call the bill_order
@@ -156,7 +160,7 @@ def bill_invoice_task(self, user_id: ModelUUID, invoice_id: ModelUUID) -> None: 
     default_retry_delay=60,
     base=Singleton,
 )
-def mass_order_bill_task(self, *, user_id: ModelUUID) -> None:  # type: ignore
+def mass_order_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
     """Bill Order
 
     Args:
