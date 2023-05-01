@@ -14,36 +14,34 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import TYPE_CHECKING
+from celery import shared_task
+from celery_singleton import Singleton
 
-from django.db.models import QuerySet
-from django.utils import timezone
+from core.exceptions import ServiceException
+from dispatch import selectors
 
-from dispatch import models
+if TYPE_CHECKING:
+    from celery.app.task import Task
 
 
-def get_rate_billing_table_by_rate(
-    *, rate: models.Rate
-) -> QuerySet[models.RateBillingTable]:
-    """Get rate billing table by rate
+@shared_task(bind=True, max_retries=3, default_retry_delay=60 * 60 * 24, base=Singleton)
+def send_expired_rates_notification(self: "Task") -> None:
+    """Send expired rates notification
 
     Args:
-        rate (models.Rate): Rate object
+        self (celery.app.task.Task): The task object
 
     Returns:
-        QuerySet[models.RateBillingTable]: Rate billing table queryset
-    """
-    return models.RateBillingTable.objects.filter(rate=rate).all()
-
-
-def get_expired_rates() -> QuerySet[models.Rate] | None:
-    """Get expired rates
-
-    Returns:
-        QuerySet[models.Rate]: Expired rates queryset
+        None: This function does not return anything.
     """
 
+    expired_rates = selectors.get_expired_rates()
+    if not expired_rates:
+        print("No expired rates found")
+        return
     try:
-        today = timezone.now().date()
-        return models.Rate.objects.filter(expiration_date__lte=today).all()
-    except models.Rate.DoesNotExist as no_rates_found_exc:
-        return None
+        for rate in expired_rates:
+            print(f"Sending notification for rate {rate.id}")
+    except ServiceException as exc:
+        raise self.retry(exc=exc) from exc
