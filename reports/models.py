@@ -17,6 +17,7 @@
 
 import textwrap
 import uuid
+from typing import final
 
 import pytz
 from django.db import models
@@ -27,6 +28,7 @@ from organization.services.table_choices import TABLE_NAME_CHOICES
 from utils.models import GenericModel
 
 
+@final
 class ScheduleType(models.TextChoices):
     """
     The schedule type for a scheduled report.
@@ -49,16 +51,21 @@ class Weekday(models.Model):
         get_absolute_url: Returns the absolute URL for the weekday.
     """
 
-    WEEKDAYS = [
-        (0, "Monday"),
-        (1, "Tuesday"),
-        (2, "Wednesday"),
-        (3, "Thursday"),
-        (4, "Friday"),
-        (5, "Saturday"),
-        (6, "Sunday"),
-    ]
-    name = models.CharField(_("Name"), max_length=15, choices=WEEKDAYS, unique=True)
+    @final
+    class Weekdays(models.IntegerChoices):
+        """
+        The weekdays for a weekly scheduled report.
+        """
+
+        MONDAY = 0, _("Monday")
+        TUESDAY = 1, _("Tuesday")
+        WEDNESDAY = 2, _("Wednesday")
+        THURSDAY = 3, _("Thursday")
+        FRIDAY = 4, _("Friday")
+        SATURDAY = 5, _("Saturday")
+        SUNDAY = 6, _("Sunday")
+
+    name = models.PositiveIntegerField(_("Name"), choices=Weekdays.choices, unique=True)
 
     def __str__(self) -> str:
         """String representation of the weekday.
@@ -66,7 +73,7 @@ class Weekday(models.Model):
         Returns:
             str: The name of the weekday.
         """
-        return textwrap.shorten(self.name, width=50, placeholder="...")
+        return textwrap.shorten(self.get_name_display(), width=50, placeholder="...")
 
     class Meta:
         """
@@ -171,7 +178,7 @@ class ReportColumn(GenericModel):
 
     Attributes:
         id (UUID): The ID of the report column.
-        report (:model:`reports.CustomReport`): The report that the column is for.
+        custom_report (:model:`reports.CustomReport`): The report that the column is for.
         column_name (str): The name of the column to be displayed in the report.
         column_order (int): The order of the column to be displayed in the report.
     """
@@ -183,7 +190,7 @@ class ReportColumn(GenericModel):
         unique=True,
         verbose_name="ID",
     )
-    report = models.ForeignKey(
+    custom_report = models.ForeignKey(
         CustomReport,
         on_delete=models.CASCADE,
         related_name="columns",
@@ -225,7 +232,7 @@ class ReportColumn(GenericModel):
         db_table = "report_column"
         constraints = [
             models.UniqueConstraint(
-                fields=["report", "column_name", "column_order"],
+                fields=["custom_report", "column_name", "column_order"],
                 name="unique_report_column_name_order",
             )
         ]

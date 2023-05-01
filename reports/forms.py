@@ -82,4 +82,4 @@ class ReportColumnForm(forms.ModelForm):
 
     class Meta:
         model = models.ReportColumn
-        fields = ("report", "column_name", "column_order")
+        fields = ("custom_report", "column_name", "column_order")
