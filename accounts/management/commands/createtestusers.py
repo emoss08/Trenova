@@ -14,16 +14,17 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import random
+import string
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from rich.progress import Progress
+
 from accounts.models import JobTitle, UserProfile
 from organization.models import Organization
-import random
-import string
-from rich.progress import Progress
 
 
 class Command(BaseCommand):

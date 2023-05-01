@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from collections.abc import Generator
 from datetime import timedelta
-from typing import Any, Generator
+from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -41,7 +42,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_create(
-        worker: Worker, tractor: Tractor, organization: Organization, order: Order
+    worker: Worker, tractor: Tractor, organization: Organization, order: Order
 ) -> None:
     """
     Test Movement Create
@@ -112,11 +113,11 @@ def test_movement_ref_num_hook(movement: models.Movement) -> None:
 
 @pytest.fixture
 def movement_api(
-        api_client: APIClient,
-        organization: Organization,
-        order: Order,
-        tractor: Tractor,
-        worker: Worker,
+    api_client: APIClient,
+    organization: Organization,
+    order: Order,
+    tractor: Tractor,
+    worker: Worker,
 ) -> Generator[Any, Any, None]:
     """
     Movement Factory
@@ -141,11 +142,11 @@ def test_get(api_client: APIClient) -> None:
 
 
 def test_get_by_id(
-        api_client: APIClient,
-        movement_api: Response,
-        order: Order,
-        worker: Worker,
-        tractor: Tractor,
+    api_client: APIClient,
+    movement_api: Response,
+    order: Order,
+    worker: Worker,
+    tractor: Tractor,
 ) -> None:
     """
     Test get Movement by ID

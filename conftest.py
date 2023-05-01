@@ -15,9 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
+
 import pytest
 from rest_framework.test import APIClient
+
 from accounts.models import Token
 from accounts.tests.factories import TokenFactory, UserFactory
 from organization.factories import OrganizationFactory

@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Optional, Dict, Union
+from typing import Any
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -120,7 +120,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     autocomplete_fields: tuple[str, ...] = ("organization", "department")
     inlines: tuple[type[ProfileInline]] = (ProfileInline,)
 
-    def get_fieldsets(self, request: HttpRequest, obj: Optional[models.User] = None):  # type: ignore
+    def get_fieldsets(self, request: HttpRequest, obj: models.User | None = None):  # type: ignore
         """Return fieldsets for add/change view
 
         Args:
@@ -135,7 +135,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Union[Any, None] = ...,
+        obj: Any | None = ...,
         change: bool = True,
         **kwargs: Any,
     ) -> type[ModelForm[models.User]]:
@@ -204,7 +204,10 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             return self._add_view(request, form_url, extra_context)
 
     def _add_view(
-        self, request: HttpRequest, form_url: str = "", extra_context: Optional[Dict] = None
+        self,
+        request: HttpRequest,
+        form_url: str = "",
+        extra_context: dict | None = None,
     ) -> HttpResponse:
         # It's an error for a user to have added permission but NOT change
         # permission for users. If we allowed such users to add users, they
@@ -236,7 +239,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     @sensitive_post_parameters_m  # type: ignore
     def user_change_password(
         self, request: HttpRequest, id: str, form_url: str = ""
-    ) -> Union[HttpResponseRedirect, TemplateResponse]:
+    ) -> HttpResponseRedirect | TemplateResponse:
         """Allow a user to change their password from the admin.
 
         Args:

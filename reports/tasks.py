@@ -14,17 +14,21 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from celery import shared_task
+from celery_singleton import Singleton
 from django.core.mail import EmailMessage
 
-from backend.celery import app
 from core.exceptions import ServiceException
 from reports import selectors
 from reports.services import generate_excel_report_as_file
 
 
-@app.task(
-    name="send_scheduled_report", bind=True, max_retries=3, default_retry_delay=60
+@shared_task(
+    name="send_scheduled_report",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    base=Singleton,
 )
 def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
     """A Celery task that sends a scheduled report to the user who created it.
@@ -44,7 +48,7 @@ def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
         if not scheduled_report.is_active:
             return
 
-        report = scheduled_report.report
+        report = scheduled_report.custom_report
         user = scheduled_report.user
 
         excel_file = generate_excel_report_as_file(report)

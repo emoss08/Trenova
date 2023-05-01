@@ -15,7 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
+
+import pytest
+
+from dispatch.factories import FleetCodeFactory
+from dispatch.models import FleetCode
 
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
@@ -34,12 +40,9 @@ from typing import Any, Generator
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytest
-
-from dispatch.factories import FleetCodeFactory
-from dispatch.models import FleetCode
 
 pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def fleet_code() -> Generator[Any, Any, None]:

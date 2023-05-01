@@ -15,11 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from pick import pick
-from kubernetes import client, config, watch
-from kubernetes.client import Configuration, ApiException
-from kubernetes.stream import stream
 import time
+
+from kubernetes import client, config, watch
+from kubernetes.client import Configuration
+from pick import pick
 
 
 def delete_pod(api_instance: client, namespace: str, pod_name: str) -> None:
@@ -83,7 +83,7 @@ def main() -> None:
     print(f"Active host is {configuration.host}")
     v1 = client.CoreV1Api(api_client=client.ApiClient(configuration))
 
-    w = watch.Watch()
+    watch.Watch()
 
     print("Listing pods with their IPs:")
     ret = v1.list_pod_for_all_namespaces(watch=False)

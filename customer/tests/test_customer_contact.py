@@ -14,7 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -22,6 +23,7 @@ from django.core.exceptions import ValidationError
 from customer import factories, models
 
 pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture
 def customer_contact() -> Generator[Any, Any, None]:
@@ -47,7 +49,9 @@ def test_customer_contact_update(customer_contact: models.CustomerContact) -> No
     assert customer_contact.name == "New name"
 
 
-def test_customer_contact_payable_has_no_email(customer_contact: models.CustomerContact) -> None:
+def test_customer_contact_payable_has_no_email(
+    customer_contact: models.CustomerContact,
+) -> None:
     """
     Test customer contact payable has no email
     """

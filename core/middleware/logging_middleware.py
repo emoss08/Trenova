@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import logging
+
 from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger(__name__)

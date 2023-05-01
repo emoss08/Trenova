@@ -128,7 +128,9 @@ class RateBillingTableFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     rate = factory.SubFactory(RateFactory)
-    accessorial_charge = factory.SubFactory("billing.tests.factories.AccessorialChargeFactory")
+    accessorial_charge = factory.SubFactory(
+        "billing.tests.factories.AccessorialChargeFactory"
+    )
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
     unit = 1
     charge_amount = 100.00

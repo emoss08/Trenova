@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Union, Type, Tuple
+from typing import Any
 
 from django.contrib import admin
 from django.forms import ModelForm
@@ -32,13 +32,13 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     General Ledger Account Admin
     """
 
-    model: Type[GeneralLedgerAccount] = GeneralLedgerAccount
-    list_display: Tuple[str, ...] = (
+    model: type[GeneralLedgerAccount] = GeneralLedgerAccount
+    list_display: tuple[str, ...] = (
         "id",
         "account_number",
         "description",
     )
-    search_fields: Tuple[str, ...] = (
+    search_fields: tuple[str, ...] = (
         "id",
         "description",
     )
@@ -46,10 +46,10 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Union[GeneralLedgerAccount, None] = None,
+        obj: GeneralLedgerAccount | None = None,
         change: bool = False,
         **kwargs: Any,
-    ) -> Type[ModelForm[GeneralLedgerAccount]]:
+    ) -> type[ModelForm[GeneralLedgerAccount]]:
         """Get Form for Model
 
         Args:
@@ -75,12 +75,12 @@ class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
     Revenue Code Admin
     """
 
-    model: Type[RevenueCode] = RevenueCode
-    list_display: Tuple[str, ...] = (
+    model: type[RevenueCode] = RevenueCode
+    list_display: tuple[str, ...] = (
         "code",
         "description",
     )
-    search_fields: Tuple[str, ...] = (
+    search_fields: tuple[str, ...] = (
         "code",
         "description",
     )
@@ -92,12 +92,12 @@ class DivisionCodeAdmin(GenericAdmin[DivisionCode]):
     Division Code Admin
     """
 
-    model: Type[DivisionCode] = DivisionCode
-    list_display: Tuple[str, ...] = (
+    model: type[DivisionCode] = DivisionCode
+    list_display: tuple[str, ...] = (
         "code",
         "description",
     )
-    search_fields: Tuple[str, ...] = (
+    search_fields: tuple[str, ...] = (
         "code",
         "description",
     )

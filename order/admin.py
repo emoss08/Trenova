@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Type
 
 from django.contrib import admin
 
@@ -29,7 +28,7 @@ class OrderDocumentationInline(
     Order documentation inline
     """
 
-    model: Type[models.OrderDocumentation] = models.OrderDocumentation
+    model: type[models.OrderDocumentation] = models.OrderDocumentation
 
 
 class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]):
@@ -37,7 +36,7 @@ class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]
     Order comment inline
     """
 
-    model: Type[models.OrderComment] = models.OrderComment
+    model: type[models.OrderComment] = models.OrderComment
 
 
 class AdditionalChargeInline(
@@ -47,7 +46,7 @@ class AdditionalChargeInline(
     Order Additional Charge inline
     """
 
-    model: Type[models.AdditionalCharge] = models.AdditionalCharge
+    model: type[models.AdditionalCharge] = models.AdditionalCharge
 
 
 @admin.register(models.OrderType)

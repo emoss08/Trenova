@@ -42,8 +42,8 @@ def delete_audit_log_records(self) -> str:  # type: ignore
         str: The message "Audit log records deleted." upon successful completion of the task.
     """
 
-    cutoff_date: datetime.datetime = timezone.now() - datetime.timedelta(days=30)
-    formatted_date: str = cutoff_date.strftime("%Y-%m-%d")
+    cutoff_date = timezone.now() - datetime.timedelta(days=30)
+    formatted_date = cutoff_date.strftime("%Y-%m-%d")
 
     try:
         call_command("auditlogflush", "-b", formatted_date, "-y")

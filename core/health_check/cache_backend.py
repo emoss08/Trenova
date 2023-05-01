@@ -18,7 +18,7 @@
 from timeit import default_timer as timer
 
 from django.conf import settings
-from django.core.cache import caches, BaseCache
+from django.core.cache import BaseCache, caches
 
 
 class CacheBackendHealthCheck:

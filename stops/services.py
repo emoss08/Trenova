@@ -20,9 +20,9 @@ from datetime import timedelta
 
 from django.shortcuts import get_object_or_404
 
-from utils.models import StopChoices
-from stops import models
 from dispatch.models import DispatchControl
+from stops import models
+from utils.models import StopChoices
 
 
 class StopServiceIncidentHandler:

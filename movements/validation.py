@@ -21,6 +21,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from movements import models
 from utils.models import StatusChoices
 from worker.models import WorkerProfile
 
@@ -40,7 +41,7 @@ class MovementValidation:
         ValidationError: If any validation fails.
     """
 
-    def __init__(self, *, movement):
+    def __init__(self, *, movement: models.Movement):
         """Initialize the `MovementValidation` class.
 
         Args:
@@ -100,7 +101,8 @@ class MovementValidation:
         """
 
         if (
-            self.movement.primary_worker.profile.license_expiration_date
+            self.movement.primary_worker
+            and self.movement.primary_worker.profile.license_expiration_date
             and self.movement.primary_worker.profile.license_expiration_date
             < timezone.now().date()
         ):
@@ -110,7 +112,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.primary_worker.profile.physical_due_date
+            self.movement.primary_worker
+            and self.movement.primary_worker.profile.physical_due_date
             and self.movement.primary_worker.profile.physical_due_date
             < timezone.now().date()
         ):
@@ -120,7 +123,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.primary_worker.profile.medical_cert_date
+            self.movement.primary_worker
+            and self.movement.primary_worker.profile.medical_cert_date
             and self.movement.primary_worker.profile.medical_cert_date
             < timezone.now().date()
         ):
@@ -130,7 +134,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.primary_worker.profile.medical_cert_date
+            self.movement.primary_worker
+            and self.movement.primary_worker.profile.medical_cert_date
             and self.movement.primary_worker.profile.medical_cert_date
             < timezone.now().date()
         ):
@@ -140,7 +145,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.primary_worker.profile.mvr_due_date
+            self.movement.primary_worker
+            and self.movement.primary_worker.profile.mvr_due_date
             and self.movement.primary_worker.profile.mvr_due_date
             < timezone.now().date()
         ):
@@ -149,7 +155,10 @@ class MovementValidation:
                 " profile and try again."
             )
 
-        if self.movement.primary_worker.profile.termination_date:
+        if (
+            self.movement.primary_worker
+            and self.movement.primary_worker.profile.termination_date
+        ):
             self.errors["primary_worker"] = _(
                 "Cannot assign a terminated worker. Please update the worker's profile and try again."
             )
@@ -165,7 +174,8 @@ class MovementValidation:
         """
 
         if (
-            self.movement.secondary_worker.profile.license_expiration_date
+            self.movement.secondary_worker
+            and self.movement.secondary_worker.profile.license_expiration_date
             and self.movement.secondary_worker.profile.license_expiration_date
             < timezone.now().date()
         ):
@@ -175,7 +185,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.secondary_worker.profile.physical_due_date
+            self.movement.secondary_worker
+            and self.movement.secondary_worker.profile.physical_due_date
             and self.movement.secondary_worker.profile.physical_due_date
             < timezone.now().date()
         ):
@@ -185,7 +196,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.secondary_worker.profile.medical_cert_date
+            self.movement.secondary_worker
+            and self.movement.secondary_worker.profile.medical_cert_date
             and self.movement.secondary_worker.profile.medical_cert_date
             < timezone.now().date()
         ):
@@ -195,7 +207,8 @@ class MovementValidation:
             )
 
         if (
-            self.movement.secondary_worker.profile.mvr_due_date
+            self.movement.secondary_worker
+            and self.movement.secondary_worker.profile.mvr_due_date
             and self.movement.secondary_worker.profile.mvr_due_date
             < timezone.now().date()
         ):
@@ -204,7 +217,10 @@ class MovementValidation:
                 " profile and try again."
             )
 
-        if self.movement.secondary_worker.profile.termination_date:
+        if (
+            self.movement.secondary_worker
+            and self.movement.secondary_worker.profile.termination_date
+        ):
             self.errors["secondary_worker"] = _(
                 "Cannot assign a terminated worker. Please update the worker's profile and try again."
             )

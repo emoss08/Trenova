@@ -21,7 +21,10 @@ from equipment import models
 
 
 def create_equipment_type_details(
-    sender: models.EquipmentType, instance: models.EquipmentType, created: bool, **kwargs: Any
+    sender: models.EquipmentType,
+    instance: models.EquipmentType,
+    created: bool,
+    **kwargs: Any,
 ) -> None:
     """Create Equipment Type details
 

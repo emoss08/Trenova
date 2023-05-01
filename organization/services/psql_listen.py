@@ -16,11 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
+import select
 from pathlib import Path
 
 import psycopg2
 from environ import environ
-import select
+
 from organization.selectors import get_active_table_alerts
 
 env = environ.Env()
@@ -45,7 +46,7 @@ class PSQLListener:
     """
 
     @classmethod
-    def connect(cls) -> psycopg2.connection:
+    def connect(cls) -> psycopg2.extensions.connection:
         """
         Connect to a PostgreSQL database using psycopg2.
 
@@ -55,7 +56,6 @@ class PSQLListener:
         Returns:
             psycopg2.connection: A connection to the PostgreSQL database.
         """
-
         conn = psycopg2.connect(
             host="localhost",
             database=env("DB_NAME"),
