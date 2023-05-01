@@ -15,14 +15,19 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import TYPE_CHECKING
+
 from django.core.management import call_command
 
 from backend.celery import app
 from core.exceptions import CommandCallException
 
+if TYPE_CHECKING:
+    from celery.app.task import Task
+
 
 @app.task(name="table_change_alerts", bind=True, max_retries=3, default_retry_delay=60)
-def table_change_alerts(self) -> None:  # type: ignore
+def table_change_alerts(self: "Task") -> None:
     """
     A Celery task that listens for table change notifications from a PostgreSQL database and retries on errors.
 

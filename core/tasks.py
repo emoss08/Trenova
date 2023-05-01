@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import TYPE_CHECKING
 import datetime
 
 from django.core.management import call_command
@@ -24,10 +25,14 @@ from backend.celery import app
 from core.exceptions import CommandCallException
 
 
+if TYPE_CHECKING:
+    from celery.app.task import Task
+
+
 @app.task(
     name="delete_audit_log_records", bind=True, max_retries=3, default_retry_delay=60
 )
-def delete_audit_log_records(self) -> str:  # type: ignore
+def delete_audit_log_records(self: "Task") -> str:
     """Delete audit log records older than 30 days.
 
     This task uses the Django management command `auditlogflush` to delete
