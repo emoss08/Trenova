@@ -20,7 +20,7 @@ from typing import Any
 from requests import Response
 from rest_framework.request import Request
 
-from location import models, serializers, selectors
+from location import models, selectors, serializers
 from utils.views import OrganizationMixin
 
 
@@ -66,8 +66,8 @@ class LocationViewSet(OrganizationMixin):
             wait_time_avg = selectors.get_avg_wait_time(location=location_obj)
             location["wait_time_avg"] = wait_time_avg
 
-
         return response  # type: ignore
+
 
 class LocationContactViewSet(OrganizationMixin):
     """A viewset for viewing and editing Location Contact information in the system.

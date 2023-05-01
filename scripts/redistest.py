@@ -18,14 +18,13 @@
 # --------------------------------------------------------------------------------------------------
 
 import time
-from typing import Dict
 
 import redis
 
 redis_client = redis.Redis(host="localhost", port=6379, db=0, decode_responses=True)
 
 
-def redis_set(data: Dict) -> int:
+def redis_set(data: dict) -> int:
     """
     Sets key-value pairs in Redis.
 
@@ -40,7 +39,7 @@ def redis_set(data: Dict) -> int:
     return len(data)
 
 
-def redis_get(data: Dict) -> int:
+def redis_get(data: dict) -> int:
     """
     Retrieves values for given keys from Redis.
 

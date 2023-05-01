@@ -19,8 +19,9 @@ from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import StatusChoices
 from stops import models
+from utils.models import StatusChoices
+
 
 class StopValidation:
     """
@@ -174,7 +175,10 @@ class StopValidation:
                 sequence__exact=self.instance.sequence + 1
             ).first()
 
-            if next_stop and self.instance.appointment_time > next_stop.appointment_time:
+            if (
+                next_stop
+                and self.instance.appointment_time > next_stop.appointment_time
+            ):
                 self.errors["appointment_time"] = _(
                     "Appointment time must be before next stop. Please try again."
                 )

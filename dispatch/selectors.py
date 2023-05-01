@@ -15,9 +15,20 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from dispatch import models
 from django.db.models import QuerySet
 
+from dispatch import models
 
-def get_rate_billing_table_by_rate(*, rate: models.Rate) -> QuerySet[models.RateBillingTable]:
+
+def get_rate_billing_table_by_rate(
+    *, rate: models.Rate
+) -> QuerySet[models.RateBillingTable]:
+    """Get rate billing table by rate
+
+    Args:
+        rate (models.Rate): Rate object
+
+    Returns:
+        QuerySet[models.RateBillingTable]: Rate billing table queryset
+    """
     return models.RateBillingTable.objects.filter(rate=rate).all()

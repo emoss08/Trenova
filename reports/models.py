@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytz
 import textwrap
 import uuid
+
+import pytz
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -245,7 +246,7 @@ class ScheduledReport(GenericModel):
     Attributes:
         id (UUID): The ID of the scheduled report.
         is_active (bool): Whether the scheduled report is active.
-        report (:model:`reports.CustomReport`): The report that the scheduled report is for.
+        custom_report (:model:`reports.CustomReport`): The report that the scheduled report is for.
         user (:model:`accounts.User`): The user that the scheduled report is for.
         schedule_type (str): The type of schedule for the scheduled report.
         time (TimeField): The time of the scheduled report.
@@ -270,7 +271,7 @@ class ScheduledReport(GenericModel):
         default=True,
         help_text=_("Whether the scheduled report is active."),
     )
-    report = models.ForeignKey(
+    custom_report = models.ForeignKey(
         CustomReport,
         on_delete=models.CASCADE,
         related_name="scheduled_reports",
@@ -317,7 +318,7 @@ class ScheduledReport(GenericModel):
         Returns:
             str: The name of the scheduled report.
         """
-        return textwrap.shorten(self.report.name, width=50, placeholder="...")
+        return textwrap.shorten(self.custom_report.name, width=50, placeholder="...")
 
     class Meta:
         """
@@ -333,11 +334,11 @@ class ScheduledReport(GenericModel):
 
         verbose_name = _("Scheduled Report")
         verbose_name_plural = _("Scheduled Reports")
-        ordering = ("report",)
+        ordering = ("custom_report",)
         db_table = "scheduled_report"
         constraints = [
             models.UniqueConstraint(
-                fields=["report", "organization"],
+                fields=["custom_report", "organization"],
                 name="unique_scheduled_report_report_organization",
             )
         ]

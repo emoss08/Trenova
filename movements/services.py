@@ -14,12 +14,16 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import TYPE_CHECKING
+
 from django.db import IntegrityError
 
 from movements import models
-from order.models import Order
 from stops.models import Stop
 from utils.models import StopChoices
+
+if TYPE_CHECKING:
+    from order.models import Order
 
 
 def set_ref_number() -> str:
@@ -35,7 +39,7 @@ def set_ref_number() -> str:
 
 
 def create_initial_stops(
-    *, movement: models.Movement, order: Order
+    *, movement: models.Movement, order: "Order"
 ) -> tuple[Stop, Stop]:
     """Create Initial Stops for Orders
 

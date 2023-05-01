@@ -15,10 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Generator
+from collections.abc import Generator
+from typing import Any
 
 import pytest
+
 from reports.tests import factories
+
 
 @pytest.fixture
 def custom_report() -> Generator[Any, Any, None]:
@@ -34,6 +37,7 @@ def report_column() -> Generator[Any, Any, None]:
     Report Column Fixture
     """
     yield factories.ReportColumnFactory()
+
 
 @pytest.fixture
 def scheduled_report() -> Generator[Any, Any, None]:

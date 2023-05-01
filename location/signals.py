@@ -16,8 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import Any
-from location import models, selectors, utils
+
 from integration.services import geocode_location_service
+from location import models, selectors, utils
 
 
 def geocode_location(instance: models.Location, created: bool, **kwargs: Any) -> None:

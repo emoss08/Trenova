@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Sequence
-from typing import Any, TypeVar, Union
+from typing import Any, TypeVar
 
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
@@ -104,7 +104,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Union[_M, None] = None,
+        obj: _M | None = None,
         change: bool = False,
         **kwargs: Any,
     ) -> type[ModelForm[_M]]:

@@ -18,7 +18,9 @@
 
 import os
 import sys
+
 import core.rich_traceback_hook  # noqa: F401
+
 
 def main():
     """Run administrative tasks."""

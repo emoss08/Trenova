@@ -15,14 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+
 class CustomReportException(Exception):
     """Custom report exception class."""
-    pass
+
 
 class InvalidScheduleTypeException(CustomReportException):
     """Invalid schedule type exception class."""
-    pass
+
 
 class InvalidTableException(CustomReportException):
     """Invalid table exception class."""
-    pass

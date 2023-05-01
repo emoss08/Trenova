@@ -15,11 +15,15 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from integration import models, exceptions
-from organization.models import Organization
+from typing import TYPE_CHECKING
+
+from integration import exceptions, models
+
+if TYPE_CHECKING:
+    from organization.models import Organization
 
 
-def get_maps_api_key(*, organization: Organization) -> str:
+def get_maps_api_key(*, organization: "Organization") -> str:
     """Get the Google Maps API key for the given organization.
 
     Args:
@@ -40,7 +44,7 @@ def get_maps_api_key(*, organization: Organization) -> str:
 
 
 def get_organization_google_api(
-    *, organization: Organization
+    *, organization: "Organization"
 ) -> models.GoogleAPI | None:
     try:
         return models.GoogleAPI.objects.get(organization=organization)

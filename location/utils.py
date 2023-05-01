@@ -15,7 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from location import models
-def has_address_changed(*, old_instance: models.Location, new_instance: models.Location) -> bool:
+
+
+def has_address_changed(
+    *, old_instance: models.Location, new_instance: models.Location
+) -> bool:
     return (
         old_instance.address_line_1 != new_instance.address_line_1
         or old_instance.address_line_2 != new_instance.address_line_2

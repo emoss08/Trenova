@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Dict
 
 from customer import models
 
@@ -34,7 +33,7 @@ def generate_fuel_surcharge(
     base_charge: float,
     fuel_surcharge_increment: float,
     fuel_method: float,
-) -> Dict[float, float]:
+) -> dict[float, float]:
     fuel_surcharge = {}
     fuel_price = fuel_price_from
     while fuel_price <= fuel_price_to:

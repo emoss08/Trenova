@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Type
 
 from django.db.models import QuerySet
 
@@ -28,7 +27,9 @@ class GeneralLedgerAccountViewSet(OrganizationMixin):
     General Ledger Account ViewSet
     """
 
-    serializer_class: Type[serializers.GeneralLedgerAccountSerializer] = serializers.GeneralLedgerAccountSerializer
+    serializer_class: type[
+        serializers.GeneralLedgerAccountSerializer
+    ] = serializers.GeneralLedgerAccountSerializer
     queryset = models.GeneralLedgerAccount.objects.all()
     filterset_fields = (
         "is_active",
@@ -45,7 +46,9 @@ class RevenueCodeViewSet(OrganizationMixin):
     Revenue Code ViewSet
     """
 
-    serializer_class: Type[serializers.RevenueCodeSerializer] = serializers.RevenueCodeSerializer
+    serializer_class: type[
+        serializers.RevenueCodeSerializer
+    ] = serializers.RevenueCodeSerializer
     queryset = models.RevenueCode.objects.all()
     filterset_fields = (
         "expense_account",
@@ -58,7 +61,9 @@ class DivisionCodeViewSet(OrganizationMixin):
     Division Code ViewSet
     """
 
-    serializer_class: Type[serializers.DivisionCodeSerializer] = serializers.DivisionCodeSerializer
+    serializer_class: type[
+        serializers.DivisionCodeSerializer
+    ] = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
     filterset_fields = (
         "is_active",

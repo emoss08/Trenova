@@ -15,12 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Tuple
+from typing import Any
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 from django.db import transaction
 from django.utils import timezone
+from rich.progress import Progress
 
 from accounts.models import JobTitle, User
 from customer.models import Customer
@@ -28,7 +29,6 @@ from equipment.models import EquipmentType
 from location.models import Location
 from order.models import Order, OrderType
 from organization.models import Organization
-from rich.progress import Progress
 
 DESCRIPTION = "GENERATED FROM CREATE TEST ORDERS COMMAND"
 
@@ -167,7 +167,7 @@ class Command(BaseCommand):
         return user
 
     @staticmethod
-    def create_location(organization: Organization) -> Tuple[Location, Location]:
+    def create_location(organization: Organization) -> tuple[Location, Location]:
         """
         Creates two new `Location` objects associated with the specified organization.
 

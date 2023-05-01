@@ -15,15 +15,18 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import datetime
-from typing import Tuple, Any
+from typing import TYPE_CHECKING, Any
 
-from django.db.models import Avg, F, ExpressionWrapper, fields
+from django.db.models import Avg, ExpressionWrapper, F, fields
+
 from location import models
 from stops.models import Stop
-from utils.types import ModelUUID
+
+if TYPE_CHECKING:
+    from utils.types import ModelUUID
 
 
-def get_location_by_pk(*, location_id: ModelUUID) -> models.Location | None:
+def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
     try:
         return models.Location.objects.get(pk=location_id)
     except models.Location.DoesNotExist:
@@ -53,7 +56,7 @@ def get_avg_wait_time(*, location: models.Location) -> datetime.timedelta | Any:
     )
 
 
-def get_avg_wait_time_hours_minutes(*, location: models.Location) -> Tuple[int, int]:
+def get_avg_wait_time_hours_minutes(*, location: models.Location) -> tuple[int, int]:
     """Returns the average wait time in hours and minutes for a given location, formatted as a tuple of integers.
 
     Args:

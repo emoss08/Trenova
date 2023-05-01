@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Union
+from typing import Any
 
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.utils.deconstruct import deconstructible
@@ -36,8 +36,8 @@ class ImageSizeValidator:
         self,
         width: int,
         height: int,
-        less_than: Union[bool, None],
-        greater_than: Union[bool, None],
+        less_than: bool | None,
+        greater_than: bool | None,
     ) -> None:
         self.width = width
         self.height = height

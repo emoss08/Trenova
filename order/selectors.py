@@ -14,16 +14,22 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import QuerySet
+
+from typing import TYPE_CHECKING
+
 from django.db.models.aggregates import Sum
 
 from movements.models import Movement
 from order import models
 from stops.models import Stop
-from utils.types import ModelUUID
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
+    from utils.types import ModelUUID
 
 
-def get_order_by_id(*, order_id: ModelUUID) -> models.Order | None:
+def get_order_by_id(*, order_id: "ModelUUID") -> models.Order | None:
     """Get an Order model instance by its ID.
 
     Args:
@@ -38,7 +44,7 @@ def get_order_by_id(*, order_id: ModelUUID) -> models.Order | None:
         return None
 
 
-def get_order_movements(*, order: models.Order) -> QuerySet[Movement]:
+def get_order_movements(*, order: models.Order) -> "QuerySet[Movement]":
     """Get the movements of an order.
 
     Args:
@@ -50,7 +56,7 @@ def get_order_movements(*, order: models.Order) -> QuerySet[Movement]:
     return Movement.objects.filter(order=order)
 
 
-def get_order_stops(*, order: models.Order) -> QuerySet[Stop]:
+def get_order_stops(*, order: models.Order) -> "QuerySet[Stop]":
     """Get the stops of an order.
 
     Args:

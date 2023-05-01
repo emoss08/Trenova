@@ -96,6 +96,7 @@ class RateViewSet(OrganizationMixin):
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
 
+
 class RateBillingTableViewSet(OrganizationMixin):
     """
     Django Rest Framework ViewSet for the RateBillingTable model.

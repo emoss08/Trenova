@@ -43,9 +43,7 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
         """
 
         model = models.EquipmentTypeDetail
-        extra_fields = (
-            "equipment_class",
-        )
+        extra_fields = ("equipment_class",)
         extra_read_only_fields = ("equipment_type",)
 
 

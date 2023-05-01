@@ -15,8 +15,23 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import TYPE_CHECKING
+
 from reports import models
 
+if TYPE_CHECKING:
+    from utils.types import ModelUUID
 
-def get_scheduled_report_by_id(report_id: str) -> models.ScheduledReport:
+
+def get_scheduled_report_by_id(report_id: "ModelUUID") -> models.ScheduledReport:
+    """
+    Get a scheduled report by its ID.
+
+    Args:
+        report_id (ModelUUID): The ID of the scheduled report.
+
+    Returns:
+        models.ScheduledReport: The scheduled report with the specified ID.
+    """
+
     return models.ScheduledReport.objects.get(pk__exact=report_id)

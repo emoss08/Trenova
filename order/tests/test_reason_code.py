@@ -31,6 +31,7 @@ def test_list(reason_code: models.ReasonCode) -> None:
     """
     assert reason_code is not None
 
+
 def test_create(organization: Organization) -> None:
     """
     Test Reason Code Create
@@ -48,6 +49,7 @@ def test_create(organization: Organization) -> None:
     assert r_code.code == "foobo"
     assert r_code.description == "foo bar"
     assert r_code.code_type == "VOIDED"
+
 
 def test_update(reason_code: models.ReasonCode) -> None:
     """
@@ -71,6 +73,7 @@ def test_get(api_client: APIClient) -> None:
     response = api_client.get("/api/reason_codes/")
     assert response.status_code == 200
 
+
 def test_get_by_id(api_client: APIClient, reason_code_api: Response) -> None:
     """
     Test get Reason Code by id
@@ -83,7 +86,10 @@ def test_get_by_id(api_client: APIClient, reason_code_api: Response) -> None:
     assert response.data["is_active"] is True
     assert response.data["code_type"] == "VOIDED"
 
-def test_put(api_client: APIClient, reason_code_api: Response, organization: Organization) -> None:
+
+def test_put(
+    api_client: APIClient, reason_code_api: Response, organization: Organization
+) -> None:
     """
     Test put Reason Code
     """
@@ -102,6 +108,7 @@ def test_put(api_client: APIClient, reason_code_api: Response, organization: Org
     assert response.data["code"] == "FOBO"
     assert response.data["description"] == "New Description"
     assert response.data["is_active"] is False
+
 
 def test_delete(api_client: APIClient, reason_code_api: Response) -> None:
     """

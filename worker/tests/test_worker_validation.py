@@ -35,6 +35,7 @@ def test_date_of_birth(worker: Worker) -> None:
         "Worker must be at least 18 years old to be entered. Please try again."
     ]
 
+
 def test_hazmat_endorsement(worker: Worker) -> None:
     """
     Test when adding a worker with hazmat endorsement and no hazmat_expiration_date,
@@ -47,6 +48,7 @@ def test_hazmat_endorsement(worker: Worker) -> None:
         "Hazmat expiration date is required for this endorsement. Please try again."
     ]
 
+
 def test_x_endorsement(worker: Worker) -> None:
     """
     Test when adding a worker with X endorsement and no hazmat_expiration_date,
@@ -58,6 +60,7 @@ def test_x_endorsement(worker: Worker) -> None:
     assert excinfo.value.message_dict["hazmat_expiration_date"] == [
         "Hazmat expiration date is required for this endorsement. Please try again."
     ]
+
 
 def test_license_state(worker: Worker) -> None:
     """
@@ -73,6 +76,7 @@ def test_license_state(worker: Worker) -> None:
         "You must provide license state. Please try again."
     ]
 
+
 def test_license_expiration_date(worker: Worker) -> None:
     """
     Test when adding a worker with a license_number,
@@ -87,6 +91,7 @@ def test_license_expiration_date(worker: Worker) -> None:
         "You must provide license expiration date. Please try again."
     ]
 
+
 def test_worker_endorsement_choices(worker: Worker) -> None:
     """
     Test Worker Endorsement choices throws ValidationError
@@ -99,6 +104,7 @@ def test_worker_endorsement_choices(worker: Worker) -> None:
     assert excinfo.value.message_dict["endorsements"] == [
         "Value 'invalid' is not a valid choice."
     ]
+
 
 def test_worker_sex_choices(worker: Worker) -> None:
     """

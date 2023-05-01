@@ -17,22 +17,22 @@
 
 from typing import Any
 
+from django.dispatch import Signal
+
 from billing.models import BillingControl
+from dispatch.models import DispatchControl
 from invoicing.models import InvoiceControl
 from kubectl.models import KubeConfiguration
-from organization import models
-from dispatch.models import DispatchControl
 from order.models import OrderControl
+from organization import models
 from organization.models import EmailControl
 from organization.services.psql_triggers import drop_trigger_and_function
 from organization.services.table_change import (
-    set_trigger_name_requirements,
     create_trigger_based_on_db_action,
     drop_trigger_and_create,
+    set_trigger_name_requirements,
 )
 from route.models import RouteControl
-
-from django.dispatch import Signal
 
 restart_psql_listener_signal = Signal()
 

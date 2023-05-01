@@ -15,12 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpRequest, HttpResponse
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
 from reports import models, services
-
 from utils.models import generate_random_string
 
 

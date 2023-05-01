@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import Dict, List
 
 import requests
 
@@ -23,7 +22,7 @@ GITHUB_REPO_API_URL = (
 )
 
 
-def get_plugin_list() -> List[Dict[str, str]]:
+def get_plugin_list() -> list[dict[str, str]]:
     response = requests.get(GITHUB_REPO_API_URL)
     response_data = response.json()
     plugin_list = []

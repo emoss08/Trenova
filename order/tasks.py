@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from backend.celery import app
-
 from core.exceptions import ServiceException
 from order import selectors, services
 from utils.types import ModelUUID
