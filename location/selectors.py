@@ -15,15 +15,17 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import datetime
-from typing import Tuple, Any
+from typing import Tuple, Any, TYPE_CHECKING
 
 from django.db.models import Avg, F, ExpressionWrapper, fields
 from location import models
 from stops.models import Stop
-from utils.types import ModelUUID
+
+if TYPE_CHECKING:
+    from utils.types import ModelUUID
 
 
-def get_location_by_pk(*, location_id: ModelUUID) -> models.Location | None:
+def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
     try:
         return models.Location.objects.get(pk=location_id)
     except models.Location.DoesNotExist:

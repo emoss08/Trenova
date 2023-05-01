@@ -108,12 +108,6 @@ def test_custom_report_str_representation(custom_report) -> None:
     """
     assert str(custom_report) == custom_report.name
 
-#
-# def test_custom_report_get_absolute_url(custom_report) -> None:
-#     """
-#     Test Custom Report Get Absolute URL
-#     """
-#     assert custom_report.get_absolute_url() == f"/api/custom_report/{custom_report.id}"
 
 def test_custom_report_clean_method_with_valid_data(custom_report) -> None:
     """

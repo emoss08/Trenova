@@ -15,14 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Union
+from typing import Any
 
 from django.core.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
 
-def django_error_handler(exc: Any, context: Any) -> Union[Response, None]:
+def django_error_handler(exc: Any, context: Any) -> Response | None:
     """Django error handler
 
     Args:

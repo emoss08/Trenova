@@ -15,8 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import uuid
-from collections.abc import Iterable
 from typing import TYPE_CHECKING, List
+from collections.abc import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError

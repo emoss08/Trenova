@@ -18,27 +18,43 @@
 import contextlib
 from typing import Any
 
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
 from django_celery_beat.models import PeriodicTask
 
 from reports import models, services
 
 
-@receiver(
-    m2m_changed,
-    sender=models.ScheduledReport.day_of_week.through,
-    dispatch_uid="day_of_week_changed",
-)
 def update_scheduled_task(
     sender: models.ScheduledReport, instance: models.ScheduledReport, **kwargs: Any
 ) -> None:
+    """
+    Update the scheduled task when the day of the week is changed.
+
+    Args:
+        sender (models.ScheduledReport): Sender of the signal.
+        instance (models.ScheduledReport): The instance of the sender.
+        **kwargs (Any): Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
     services.create_scheduled_task(instance)
 
 
 def delete_scheduled_report_periodic_task(
     sender: models.ScheduledReport, instance: models.ScheduledReport, **kwargs: Any
 ) -> None:
+    """
+    Delete the scheduled task when the scheduled report is deleted.
+
+    Args:
+        sender (models.ScheduledReport): Sender of the signal.
+        instance (models.ScheduledReport): The instance of the sender.
+        **kwargs (Any): Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
     with contextlib.suppress(PeriodicTask.DoesNotExist):
         periodic_task = PeriodicTask.objects.get(
             name=f"Send scheduled report {instance.pk}"

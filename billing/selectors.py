@@ -14,23 +14,37 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 import uuid
-from typing import List
+from typing import List, TYPE_CHECKING
 
 from django.db.models import Q, QuerySet
 from notifications.signals import notify
 
-from accounts.models import User
 from billing import models
-from order.models import Order
-from organization.models import Organization
 from utils.models import StatusChoices
-from utils.types import ModelUUID
+
+if TYPE_CHECKING:
+    from utils.types import ModelUUID
+    from organization.models import Organization
+    from order.models import Order
+    from accounts.models import User
 
 
 def get_billable_orders(
-    *, organization: Organization, order_pros: List[str] | None = None
-) -> QuerySet[Order] | None:
+    *, organization: "Organization", order_pros: List[str] | None = None
+) -> QuerySet["Order"] | None:
+    """Retrieve billable orders for a given organization based on specified criteria.
+
+    Args:
+        organization (Organization): The organization for which to retrieve billable orders.
+        order_pros (List[str] | None, optional): A list of order PRO numbers to filter by, if specified.
+            Defaults to None.
+
+    Returns:
+        QuerySet[Order] | None: A queryset of billable orders, or None if no billable orders are found.
+    """
+
     # Map BillingControl.OrderTransferCriteriaChoices to the corresponding query
     criteria_to_query = {
         models.BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED: Q(
@@ -65,13 +79,31 @@ def get_billable_orders(
     return orders if orders.exists() else None
 
 
-def get_billing_queue_information(*, order: Order) -> models.BillingQueue | None:
-    return models.BillingQueue.objects.filter(order=order).last()
+def get_billing_queue_information(*, order: "Order") -> models.BillingQueue | None:
+    """Retrieve the most recent billing queue information for a given order.
+
+    Args:
+        order (Order): The order for which to retrieve billing queue information.
+
+    Returns:
+        models.BillingQueue | None: The most recent BillingQueue instance for the given order,
+            or None if no billing queue information is found.
+    """
+    return models.BillingQueue.objects.get(order=order).last()
 
 
 def get_billing_queue(
-    *, user: User, task_id: str | uuid.UUID
+    *, user: "User", task_id: str | uuid.UUID
 ) -> QuerySet[models.BillingQueue]:
+    """Retrieve the billing queue for a given user's organization.
+
+    Args:
+        user (User): The user whose organization's billing queue should be retrieved.
+        task_id (str | uuid.UUID): The ID of the task that initiated the retrieval.
+
+    Returns:
+        QuerySet[models.BillingQueue]: A queryset of BillingQueue instances for the user's organization.
+    """
     billing_queue = models.BillingQueue.objects.filter(organization=user.organization)
     if not billing_queue:
         notify.send(
@@ -85,7 +117,16 @@ def get_billing_queue(
     return billing_queue
 
 
-def get_invoice_by_id(*, invoice_id: ModelUUID) -> models.BillingQueue | None:
+def get_invoice_by_id(*, invoice_id: "ModelUUID") -> models.BillingQueue | None:
+    """Retrieve a BillingQueue instance by its invoice ID.
+
+    Args:
+        invoice_id (ModelUUID): The ID of the invoice to retrieve.
+
+    Returns:
+        models.BillingQueue | None: The BillingQueue instance with the specified invoice ID,
+            or None if the invoice is not found.
+    """
     try:
         return models.BillingQueue.objects.get(pk__exact=invoice_id)
     except models.BillingQueue.DoesNotExist:

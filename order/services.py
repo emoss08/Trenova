@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -23,10 +24,12 @@ from pypdf import PdfMerger
 from billing.models import DocumentClassification
 from movements.models import Movement
 from order import models
-from organization.models import Organization
+
+if TYPE_CHECKING:
+    from organization.models import Organization
 
 
-def set_pro_number(*, organization: Organization) -> str:
+def set_pro_number(*, organization: "Organization") -> str:
     """Generate a unique pro number for an order.
 
     Returns:

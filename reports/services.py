@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import json
-from typing import Type, Union
+from typing import Type
 import io
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter

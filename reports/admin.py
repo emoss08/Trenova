@@ -45,7 +45,7 @@ class ReportColumnAdmin(GenericTabularInline[models.ReportColumn, models.CustomR
             None,
             {
                 "fields": (
-                    "report",
+                    "custom_report",
                     "column_name",
                     "column_order",
                 )
@@ -184,7 +184,7 @@ class ScheduledReportAdmin(GenericAdmin[models.ScheduledReport]):
         ordering (tuple): A tuple containing the fields to use for ordering ScheduledReport objects in the list view.
     """
 
-    list_display = ("report", "organization")
-    search_fields = ("report",)
+    list_display = ("custom_report", "organization")
+    search_fields = ("custom_report",)
     list_filter = ("organization",)
     ordering = ("schedule_type",)

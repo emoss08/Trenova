@@ -14,21 +14,26 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from typing import TYPE_CHECKING
 from kubectl import models
-from organization.models import Organization
+
+if TYPE_CHECKING:
+    from organization.models import Organization
 
 
 def get_kube_config_by_organization(
-    *, organization: Organization
+    *, organization: "Organization"
 ) -> models.KubeConfiguration | None:
     """Get KubeConfiguration by organization
 
     Args:
-        organization (Organization):
+        organization (Organization): Organization instance
 
     Returns:
         models.KubeConfiguration: KubeConfiguration
     """
 
-    return models.KubeConfiguration.objects.filter(organization=organization).first() or None
+    return (
+        models.KubeConfiguration.objects.filter(organization=organization).first()
+        or None
+    )

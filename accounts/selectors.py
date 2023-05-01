@@ -14,15 +14,19 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import TYPE_CHECKING
+
 from django.db.models import QuerySet
-from django.http import HttpRequest
 
 from accounts import models
-from utils.types import ModelUUID
+
+if TYPE_CHECKING:
+    from utils.types import ModelUUID
+    from django.http import HttpRequest
 
 
 def get_users_by_organization_id(
-    *, organization_id: ModelUUID
+    *, organization_id: "ModelUUID"
 ) -> QuerySet[models.User] | None:
     """
     Get Users by organization_id
@@ -46,7 +50,7 @@ def get_users_by_organization_id(
         return None
 
 
-def get_user_auth_token_from_request(*, request: HttpRequest) -> str:
+def get_user_auth_token_from_request(*, request: "HttpRequest") -> str:
     """
     Retrieve or create an authentication token for a user.
 
