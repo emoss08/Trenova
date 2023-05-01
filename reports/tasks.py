@@ -14,6 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
+from typing import TYPE_CHECKING
 from celery import shared_task
 from celery_singleton import Singleton
 from django.core.mail import EmailMessage
@@ -21,6 +23,9 @@ from django.core.mail import EmailMessage
 from core.exceptions import ServiceException
 from reports import selectors
 from reports.services import generate_excel_report_as_file
+
+if TYPE_CHECKING:
+    from celery.app.task import Task
 
 
 @shared_task(
@@ -30,7 +35,7 @@ from reports.services import generate_excel_report_as_file
     default_retry_delay=60,
     base=Singleton,
 )
-def send_scheduled_report(self, *, report_id: str) -> None:  # type: ignore
+def send_scheduled_report(self: "Task", *, report_id: str) -> None:
     """A Celery task that sends a scheduled report to the user who created it.
 
     This task generates an Excel file from the report and sends it to the user who created the report.

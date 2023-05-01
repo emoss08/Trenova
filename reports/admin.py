@@ -116,10 +116,9 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
             for form in formset.forms:
                 if not form.cleaned_data.get("DELETE"):
                     column_name = form.cleaned_data.get("column_name")
-                    table_name = form.cleaned_data["report"].table
+                    table_name = form.cleaned_data["custom_report"].table
 
                     if table_name and column_name:
-                        # Replace the following URL with the appropriate URL for your API endpoint
                         api_url = f"http://localhost:8000/api/table_columns/?table_name={table_name}"
                         response = requests.get(api_url)
                         data = json.loads(response.text)
@@ -189,3 +188,12 @@ class ScheduledReportAdmin(GenericAdmin[models.ScheduledReport]):
     search_fields = ("custom_report",)
     list_filter = ("organization",)
     ordering = ("schedule_type",)
+
+
+@admin.register(models.Weekday)
+class WeekdayAdmin(admin.ModelAdmin[models.Weekday]):
+    """
+    Admin class for managing weekday object in the Django admin interface.
+    """
+
+    list_display = ("name",)

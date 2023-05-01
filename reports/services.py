@@ -20,6 +20,7 @@ import json
 
 from django.apps import apps
 from django.db.models import Model
+from django.utils import timezone
 from django_celery_beat.models import CrontabSchedule, PeriodicTask
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
@@ -151,8 +152,13 @@ def create_scheduled_task(instance: models.ScheduledReport) -> None:
         defaults={
             "crontab": schedule if task_type == "crontab" else None,
             "interval": schedule if task_type == "interval" else None,
-            "task": "reports.tasks.send_scheduled_report",
-            "args": json.dumps([str(instance.pk)]),
+            "task": "send_scheduled_report",
+            "kwargs": json.dumps(
+                {
+                    "report_id": str(instance.pk),
+                }
+            ),
+            "start_time": timezone.now(),
         },
     )
 
