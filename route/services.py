@@ -15,18 +15,17 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Tuple, Any, TypeAlias, Union, Optional
+from typing import Any, Optional, Tuple, TypeAlias, Union
+
+from geopy.distance import geodesic
 
 from integration.services import google_distance_matrix_service
 from order.models import Order
-from geopy.distance import geodesic
-
-from organization.models import Organization
 from route import models
 from route.models import RouteControl
 
 Coordinates: TypeAlias = (
-    Tuple[Tuple[float | None, float | None], Tuple[float | None, float | None]] | None
+    tuple[tuple[float | None, float | None], tuple[float | None, float | None]] | None
 )
 
 
@@ -95,9 +94,9 @@ def get_coordinates(*, order: Order) -> Coordinates:
 def calculate_distance(
     *,
     route_control: RouteControl,
-    point_1: Union[Tuple[Optional[float], Optional[float]], Any],
-    point_2: Union[Tuple[Optional[float], Optional[float]], Any],
-) -> Tuple[float, float, str]:
+    point_1: tuple[float | None, float | None] | Any,
+    point_2: tuple[float | None, float | None] | Any,
+) -> tuple[float, float, str]:
     """
     Calculate the distance and duration between two points on the Earth's surface using the Haversine formula or the Google Distance
     Matrix API.

@@ -44,8 +44,6 @@ class ServiceException(Exception):
     Base Service Exception for all services.
     """
 
-    pass
-
 
 class CommandCallException(Exception):
     """
@@ -54,5 +52,3 @@ class CommandCallException(Exception):
     This exception is raised when a django command is called with invalid arguments,
     or when the command fails to execute.
     """
-
-    pass

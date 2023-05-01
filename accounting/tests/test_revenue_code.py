@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from accounting import models
-from accounting.models import RevenueCode, GeneralLedgerAccount
+from accounting.models import GeneralLedgerAccount, RevenueCode
 
 pytestmark = pytest.mark.django_db
 

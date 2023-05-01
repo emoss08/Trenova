@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import TYPE_CHECKING
+
 from django.db.models.aggregates import Sum
 
 from movements.models import Movement
@@ -23,8 +24,9 @@ from order import models
 from stops.models import Stop
 
 if TYPE_CHECKING:
-    from utils.types import ModelUUID
     from django.db.models import QuerySet
+
+    from utils.types import ModelUUID
 
 
 def get_order_by_id(*, order_id: "ModelUUID") -> models.Order | None:

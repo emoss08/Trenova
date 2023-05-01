@@ -17,7 +17,7 @@
 
 import textwrap
 import uuid
-from typing import final, Any
+from typing import final
 
 from django.core.exceptions import ValidationError
 from django.db import models

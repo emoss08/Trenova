@@ -16,11 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
+import select
 from pathlib import Path
 
 import psycopg2
 from environ import environ
-import select
+
 from organization.selectors import get_active_table_alerts
 
 env = environ.Env()

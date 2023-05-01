@@ -33,7 +33,8 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 
 import pytest
 

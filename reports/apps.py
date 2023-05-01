@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_delete, m2m_changed
+from django.db.models.signals import m2m_changed, post_delete
 
 
 class ReportsConfig(AppConfig):
@@ -24,7 +24,7 @@ class ReportsConfig(AppConfig):
     name = "reports"
 
     def ready(self) -> None:
-        from reports import signals, models
+        from reports import models, signals
 
         post_delete.connect(
             signals.delete_scheduled_report_periodic_task,

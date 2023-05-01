@@ -59,8 +59,8 @@ class KeepAliveConsumer(AsyncWebsocketConsumer):
 
     async def receive(
         self,
-        text_data: Optional[Union[str, bytes]] = None,
-        bytes_data: Optional[bytearray] = None,
+        text_data: str | bytes | None = None,
+        bytes_data: bytearray | None = None,
     ) -> None:
         """Receives messages from the client and broadcasts them to the "keepalive" group.
 

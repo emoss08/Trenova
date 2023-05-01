@@ -104,7 +104,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: Union[_M, None] = None,
+        obj: _M | None = None,
         change: bool = False,
         **kwargs: Any,
     ) -> type[ModelForm[_M]]:

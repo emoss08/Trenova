@@ -15,19 +15,19 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, final, Union, Optional
 import secrets
 import string
+from typing import Any, Optional, Union, final
+
+import pendulum
 from django.core import checks
 from django.core.checks import CheckMessage, Error
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from pendulum import DateTime
 
 from organization.models import Organization
-import pendulum
 
 
 def generate_random_string(length: int = 10) -> str:
@@ -116,14 +116,14 @@ class ChoiceField(CharField):
     description = _("Choice Field")
 
     def __init__(
-        self, *args: Any, db_collation: Union[str, None] = None, **kwargs: Any
+        self, *args: Any, db_collation: str | None = None, **kwargs: Any
     ) -> None:
         super().__init__(*args, **kwargs)
         self.db_collation = db_collation
         if self.choices:
             self.max_length = max(len(choice[0]) for choice in self.choices)
 
-    def check(self, **kwargs: Any) -> list[Union[CheckMessage, CheckMessage]]:
+    def check(self, **kwargs: Any) -> list[CheckMessage | CheckMessage]:
         """Check the field for errors.
 
         Check the fields for errors and return a list of Error objects.
@@ -139,7 +139,7 @@ class ChoiceField(CharField):
             *self._validate_choices_attribute(**kwargs),
         ]
 
-    def _validate_choices_attribute(self, **kwargs: Any) -> Union[list[Error], list]:
+    def _validate_choices_attribute(self, **kwargs: Any) -> list[Error] | list:
         """Validate the choices attribute for the field.
 
         Validate the choices attribute is set in the field, if not return a list of
@@ -164,17 +164,17 @@ class ChoiceField(CharField):
 
 
 class PendulumDateTimeField(models.DateTimeField):
-    def to_python(self, value: Any) -> Optional[pendulum.DateTime]:
+    def to_python(self, value: Any) -> pendulum.DateTime | None:
         if isinstance(value, pendulum.DateTime):
             return value
         return super().to_python(value) if value is not None else value
 
     def from_db_value(
-        self, value: Optional[Any], expression: Any, connection: Any
-    ) -> Optional[pendulum.DateTime]:
+        self, value: Any | None, expression: Any, connection: Any
+    ) -> pendulum.DateTime | None:
         return pendulum.instance(value) if value is not None else value
 
-    def get_prep_value(self, value: Optional[pendulum.DateTime]) -> Optional[Any]:
+    def get_prep_value(self, value: pendulum.DateTime | None) -> Any | None:
         if value is not None:
             value = pendulum.instance(value).naive()
         return super().get_prep_value(value)

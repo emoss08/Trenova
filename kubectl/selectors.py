@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from typing import TYPE_CHECKING
+
 from kubectl import models
 
 if TYPE_CHECKING:

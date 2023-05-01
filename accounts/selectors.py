@@ -21,8 +21,9 @@ from django.db.models import QuerySet
 from accounts import models
 
 if TYPE_CHECKING:
-    from utils.types import ModelUUID
     from django.http import HttpRequest
+
+    from utils.types import ModelUUID
 
 
 def get_users_by_organization_id(

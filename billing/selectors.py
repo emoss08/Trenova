@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import uuid
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from django.db.models import Q, QuerySet
 from notifications.signals import notify
@@ -25,14 +25,14 @@ from billing import models
 from utils.models import StatusChoices
 
 if TYPE_CHECKING:
-    from utils.types import ModelUUID
-    from organization.models import Organization
-    from order.models import Order
     from accounts.models import User
+    from order.models import Order
+    from organization.models import Organization
+    from utils.types import ModelUUID
 
 
 def get_billable_orders(
-    *, organization: "Organization", order_pros: List[str] | None = None
+    *, organization: "Organization", order_pros: list[str] | None = None
 ) -> QuerySet["Order"] | None:
     """Retrieve billable orders for a given organization based on specified criteria.
 

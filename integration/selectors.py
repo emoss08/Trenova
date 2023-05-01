@@ -16,7 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import TYPE_CHECKING
-from integration import models, exceptions
+
+from integration import exceptions, models
 
 if TYPE_CHECKING:
     from organization.models import Organization

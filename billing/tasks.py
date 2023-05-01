@@ -17,18 +17,16 @@
 
 from typing import List
 
-from celery_singleton import Singleton
-
-from backend.celery import app
-
-from core.exceptions import ServiceException
-from utils.types import ModelUUID
-
-from organization.models import Organization
-from accounts.models import User
-from django.db.models import QuerySet
-from billing import selectors, services
 from celery import shared_task
+from celery_singleton import Singleton
+from django.db.models import QuerySet
+
+from accounts.models import User
+from backend.celery import app
+from billing import selectors, services
+from core.exceptions import ServiceException
+from organization.models import Organization
+from utils.types import ModelUUID
 
 
 @app.task(
@@ -81,7 +79,7 @@ def automate_mass_order_billing(self) -> str:  # type: ignore
 
 @shared_task(name="transfer_to_billing_task", bind=True, base=Singleton)
 def transfer_to_billing_task(  # type: ignore
-    self, *, user_id: ModelUUID, order_pros: List[str]
+    self, *, user_id: ModelUUID, order_pros: list[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.

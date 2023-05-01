@@ -21,8 +21,8 @@ from uuid import UUID
 from django.db.models import UUIDField
 
 ModelUUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
-HealthStatus: TypeAlias = Union[Dict[str, Union[str, int, int, int]]]
+HealthStatus: TypeAlias = Union[dict[str, Union[str, int, int, int]]]
 HealthStatusAndTime: TypeAlias = Union[
-    Dict[str, Union[str, int, int, int, float, float]]
+    dict[str, Union[str, int, int, int, float, float]]
 ]
-DiskUsage: TypeAlias = Tuple[int, int, int]
+DiskUsage: TypeAlias = tuple[int, int, int]

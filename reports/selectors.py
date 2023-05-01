@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import TYPE_CHECKING
+
 from reports import models
 
 if TYPE_CHECKING:

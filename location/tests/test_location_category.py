@@ -21,6 +21,7 @@ from location import factories, models
 
 pytestmark = pytest.mark.django_db
 
+
 @pytest.fixture()
 def location_category():
     """

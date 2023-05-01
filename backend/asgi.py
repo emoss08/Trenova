@@ -17,15 +17,21 @@
 
 import os
 import sys
+
 from art import *
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from rich.console import Console
+
 from organization.routing import websocket_urlpatterns
 
 if sys.implementation.name == "pypy":
     import warnings
-    warnings.warn("Running on PyPy is not fully supported. Be aware some features may not work as expected.", RuntimeWarning)
+
+    warnings.warn(
+        "Running on PyPy is not fully supported. Be aware some features may not work as expected.",
+        RuntimeWarning,
+    )
 
 console = Console()
 logo = text2art("MONTA", font="Larry 3D")  # type: ignore

@@ -15,9 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import pytest
 import uuid
 
+import pytest
 from django.core.exceptions import ValidationError
 from pydantic import BaseModel
 

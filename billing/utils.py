@@ -20,10 +20,10 @@ from django.core.mail import send_mail
 from django.utils import timezone
 
 from accounts.models import User
-from customer.models import CustomerContact, CustomerBillingProfile, Customer
+from billing import exceptions, models
+from customer.models import Customer, CustomerBillingProfile, CustomerContact
 from movements.models import Movement
 from order.models import Order
-from billing import models, exceptions
 from organization.models import Organization
 
 
@@ -97,7 +97,7 @@ def order_billing_actions(*, invoice: models.BillingQueue, user: User) -> None:
     send_billing_email(order=invoice.order, user=user)
 
 
-def set_order_documents(*, invoice: models.BillingQueue) -> List[str]:
+def set_order_documents(*, invoice: models.BillingQueue) -> list[str]:
     """Set the document ids for a given order.
 
     Args:
@@ -220,7 +220,7 @@ def send_billing_email(*, order: Order, user: User) -> None:
     )
 
 
-def set_billing_requirements(*, customer: Customer) -> bool | List[str]:
+def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
     """Set the billing requirements for a given customer.
 
     Args:

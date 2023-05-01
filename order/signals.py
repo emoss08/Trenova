@@ -21,7 +21,6 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 from movements.models import Movement
-
 from order import models, services
 from route.services import get_order_mileage
 

@@ -20,9 +20,7 @@ from typing import Any
 from customer import models, services
 
 
-def generate_customer_code(
-    instance: models.Customer, **kwargs: Any
-) -> None:
+def generate_customer_code(instance: models.Customer, **kwargs: Any) -> None:
     """
     Generate a unique customer code for a new or existing customer instance.
 

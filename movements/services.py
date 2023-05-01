@@ -14,8 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db import IntegrityError
 from typing import TYPE_CHECKING
+
+from django.db import IntegrityError
+
 from movements import models
 from stops.models import Stop
 from utils.models import StopChoices

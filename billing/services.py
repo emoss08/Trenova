@@ -15,8 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import uuid
-from typing import TYPE_CHECKING, List
 from collections.abc import Iterable
+from typing import TYPE_CHECKING, List
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -65,7 +65,7 @@ def generate_invoice_number(*, instance: models.BillingQueue) -> str:
 
 
 def transfer_to_billing_queue_service(
-    *, user_id: "ModelUUID", order_pros: List[str], task_id: str
+    *, user_id: "ModelUUID", order_pros: list[str], task_id: str
 ) -> str:
     """Transfer eligible orders to the billing queue.
 

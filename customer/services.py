@@ -34,7 +34,7 @@ def generate_fuel_surcharge(
     base_charge: float,
     fuel_surcharge_increment: float,
     fuel_method: float,
-) -> Dict[float, float]:
+) -> dict[float, float]:
     fuel_surcharge = {}
     fuel_price = fuel_price_from
     while fuel_price <= fuel_price_to:

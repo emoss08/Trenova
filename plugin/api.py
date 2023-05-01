@@ -20,7 +20,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from plugin import utils, serializers
+from plugin import serializers, utils
 
 
 @api_view(["GET"])

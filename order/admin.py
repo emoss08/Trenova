@@ -29,7 +29,7 @@ class OrderDocumentationInline(
     Order documentation inline
     """
 
-    model: Type[models.OrderDocumentation] = models.OrderDocumentation
+    model: type[models.OrderDocumentation] = models.OrderDocumentation
 
 
 class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]):
@@ -37,7 +37,7 @@ class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]
     Order comment inline
     """
 
-    model: Type[models.OrderComment] = models.OrderComment
+    model: type[models.OrderComment] = models.OrderComment
 
 
 class AdditionalChargeInline(
@@ -47,7 +47,7 @@ class AdditionalChargeInline(
     Order Additional Charge inline
     """
 
-    model: Type[models.AdditionalCharge] = models.AdditionalCharge
+    model: type[models.AdditionalCharge] = models.AdditionalCharge
 
 
 @admin.register(models.OrderType)

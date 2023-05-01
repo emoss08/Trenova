@@ -22,6 +22,7 @@ from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
+
 def test_dispatch_control_creation(organization: Organization) -> None:
     """
     Test dispatch control is created from
@@ -43,4 +44,3 @@ def test_service_incident_control_choices(organization: Organization) -> None:
     assert excinfo.value.message_dict["record_service_incident"] == [
         "Value 'invalid' is not a valid choice."
     ]
-

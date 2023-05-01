@@ -18,7 +18,6 @@
 from django.contrib import admin
 
 from movements import models
-from utils.admin import GenericAdmin
 
 
 @admin.register(models.Movement)
@@ -26,6 +25,7 @@ class MovementAdmin(admin.ModelAdmin[models.Movement]):
     """
     Movement Admin
     """
+
     exclude = ()
 
     list_display = (

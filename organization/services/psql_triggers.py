@@ -18,6 +18,7 @@
 from django.db import connection, transaction
 
 from utils.types import ModelUUID
+
 from .table_choices import TableChoiceService
 
 table_service = TableChoiceService()
