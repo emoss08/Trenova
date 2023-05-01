@@ -15,8 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
 from collections.abc import Generator
+from typing import Any
 
 import pytest
 from django.test import Client

@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Dict, Tuple, TypeAlias, Union
+from typing import Any, TypeAlias, Union
 from uuid import UUID
 
 from django.db.models import UUIDField

@@ -17,9 +17,9 @@
 
 import os
 import shutil
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from collections.abc import Generator
 
 import pytest
 

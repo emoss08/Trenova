@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from django.conf import settings
 from django.contrib import admin, messages

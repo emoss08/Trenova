@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Iterable
-from typing import Optional, Tuple, Union
 
 from django.contrib.sessions.models import Session
 from django.db import connection

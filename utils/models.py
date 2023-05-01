@@ -17,7 +17,7 @@
 
 import secrets
 import string
-from typing import Any, Optional, Union, final
+from typing import Any, final
 
 import pendulum
 from django.core import checks

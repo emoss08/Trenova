@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import json
-from typing import Any, Optional, Union
+from typing import Any
 
 from channels.generic.websocket import AsyncWebsocketConsumer
 

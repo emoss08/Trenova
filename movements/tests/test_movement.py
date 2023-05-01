@@ -15,9 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from collections.abc import Generator
 from datetime import timedelta
 from typing import Any
-from collections.abc import Generator
 
 import pytest
 from django.core.exceptions import ValidationError

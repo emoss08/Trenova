@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import uuid
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError

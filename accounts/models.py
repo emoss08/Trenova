@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import textwrap
 import uuid
-from typing import Any, Union, final
+from typing import Any, final
 
 from django.contrib.auth.models import (
     AbstractBaseUser,

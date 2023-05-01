@@ -17,7 +17,6 @@
 
 import io
 import json
-from typing import Type
 
 from django.apps import apps
 from django.db.models import Model

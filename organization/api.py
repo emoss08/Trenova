@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import threading
-from typing import List
 
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes

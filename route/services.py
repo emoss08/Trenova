@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Optional, Tuple, TypeAlias, Union
+from typing import Any, TypeAlias
 
 from geopy.distance import geodesic
 

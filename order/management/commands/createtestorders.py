@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Tuple
+from typing import Any
 
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser

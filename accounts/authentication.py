@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Tuple
 
 from django.utils import timezone
 from rest_framework import HTTP_HEADER_ENCODING, authentication, exceptions

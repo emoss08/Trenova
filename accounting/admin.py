@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Tuple, Type, Union
+from typing import Any
 
 from django.contrib import admin
 from django.forms import ModelForm
