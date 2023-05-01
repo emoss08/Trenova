@@ -38,7 +38,7 @@ def update_scheduled_task(
         None: This function does not return anything.
     """
 
-    services.create_scheduled_task(instance)
+    services.create_scheduled_task(instance=instance)
 
 
 def delete_scheduled_report_periodic_task(
@@ -56,7 +56,12 @@ def delete_scheduled_report_periodic_task(
         None: This function does not return anything.
     """
     with contextlib.suppress(PeriodicTask.DoesNotExist):
+        print(
+            f"Deleting scheduled task for scheduled report {instance.user_id}-{instance.pk}"
+        )
         periodic_task = PeriodicTask.objects.get(
-            name=f"Send scheduled report {instance.pk}"
+            name=f"Send scheduled report {instance.user_id}-{instance.pk}"
         )
         periodic_task.delete()
+        crontab_schedule = periodic_task.crontab
+        crontab_schedule.delete()

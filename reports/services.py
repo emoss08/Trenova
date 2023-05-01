@@ -21,11 +21,11 @@ import json
 from django.apps import apps
 from django.db.models import Model
 from django.utils import timezone
-from django_celery_beat.models import CrontabSchedule, PeriodicTask
+from django_celery_beat.models import PeriodicTask
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
-from reports import exceptions, models
+from reports import exceptions, models, utils
 
 
 def get_model_by_table_name(table_name: str) -> type[Model] | None:
@@ -86,66 +86,22 @@ def generate_excel_report_as_file(report: models.CustomReport) -> io.BytesIO:
     return file_obj
 
 
-def create_scheduled_task(instance: models.ScheduledReport) -> None:
-    """
-    Creates or updates a scheduled task for sending reports based on the schedule type provided in
-    the instance object.
+def create_scheduled_task(*, instance: models.ScheduledReport) -> None:
+    """Create or update a PeriodicTask for the given scheduled report instance.
 
     Args:
-        instance (ScheduledReport): An instance of the ScheduledReport model containing the schedule
-        details.
+        instance (models.ScheduledReport): The scheduled report instance.
 
     Returns:
-        None
+        None: This function does not return anything.
 
-    Raises:
-        exceptions.InvalidScheduleType: Raised when an invalid schedule type is provided.
-
-    The function creates or updates a schedule using CrontabSchedule objects from Django. The
-    schedule type is determined from the instance object, which can be daily, weekly, or monthly. If the
-    schedule type is daily, a schedule is created or updated based on the instance time and timezone. If
-    the schedule type is weekly, a schedule is created or updated based on the instance day of the week,
-    time, and timezone. If the schedule type is monthly, a schedule is created or updated based on the
-    instance day of the month, time, and timezone.
-
-    Once the schedule is created or updated, a periodic task is created or updated using
-    PeriodicTask objects from Django. The name of the task is created using the instance primary key.
-    The schedule type and details are stored in the task, along with the function to call and the
-    arguments to pass to the function. The function called is 'reports.tasks.send_scheduled_report', and
-    the argument is a JSON-encoded string containing the primary key of the ScheduledReport instance.
-
-    If a periodic task with the same name already exists, the task is updated with the new schedule
-    and arguments. If the task type is not 'crontab', the task's 'interval' attribute is set to the new
-    schedule.
-
-    If an invalid schedule type is provided, a ValueError is raised.
+    The function first retrieves or creates the appropriate CrontabSchedule object
+    based on the schedule type and scheduled report instance. Then, it creates or updates
+    a PeriodicTask object with the necessary parameters.
     """
-    if instance.schedule_type == models.ScheduleType.DAILY:
-        schedule, _ = CrontabSchedule.objects.update_or_create(
-            hour=instance.time.hour,
-            minute=instance.time.minute,
-            timezone=instance.timezone,
-        )
-        task_type = "crontab"
-    elif instance.schedule_type == models.ScheduleType.WEEKLY:
-        weekdays = ",".join([str(weekday.id) for weekday in instance.day_of_week.all()])
-        schedule, _ = CrontabSchedule.objects.update_or_create(
-            day_of_week=weekdays,
-            hour=instance.time.hour,
-            minute=instance.time.minute,
-            timezone=instance.timezone,
-        )
-        task_type = "crontab"
-    elif instance.schedule_type == models.ScheduleType.MONTHLY:
-        schedule, _ = CrontabSchedule.objects.update_or_create(
-            day_of_month=instance.day_of_month,
-            hour=instance.time.hour,
-            minute=instance.time.minute,
-            timezone=instance.timezone,
-        )
-        task_type = "crontab"
-    else:
-        raise exceptions.InvalidScheduleTypeException("Invalid schedule type.")
+    schedule, task_type = utils.get_crontab_schedule(
+        schedule_type=instance.schedule_type, instance=instance
+    )
 
     task, created_task = PeriodicTask.objects.update_or_create(
         name=f"Send scheduled report {instance.user_id}-{instance.pk}",
@@ -153,16 +109,12 @@ def create_scheduled_task(instance: models.ScheduledReport) -> None:
             "crontab": schedule if task_type == "crontab" else None,
             "interval": schedule if task_type == "interval" else None,
             "task": "send_scheduled_report",
-            "kwargs": json.dumps(
-                {
-                    "report_id": str(instance.pk),
-                }
-            ),
+            "kwargs": json.dumps({"report_id": str(instance.pk)}),
             "start_time": timezone.now(),
         },
     )
 
     if not created_task:
         setattr(task, task_type, schedule)
-        task.args = json.dumps([str(instance.pk)])
+        task.kwargs = json.dumps({"report_id": str(instance.pk)})
         task.save()
