@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from datetime import timedelta
 
 import factory
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -87,21 +88,13 @@ class OrderFactory(factory.django.DjangoModelFactory):
     status = "N"
     revenue_code = factory.SubFactory("accounting.tests.factories.RevenueCodeFactory")
     origin_location = factory.SubFactory("location.factories.LocationFactory")
-    origin_appointment_window_start = factory.Faker(
-        "date_time", tzinfo=timezone.get_current_timezone()
-    )
-    origin_appointment_window_end = factory.Faker(
-        "date_time", tzinfo=timezone.get_current_timezone()
-    )
+    origin_appointment_window_start = timezone.now()
+    origin_appointment_window_end = timezone.now()
     destination_location = factory.SubFactory("location.factories.LocationFactory")
     rate_method = RatingMethodChoices.FLAT
     freight_charge_amount = FuzzyDecimal(10, 1000000, 4)
-    destination_appointment_window_start = factory.Faker(
-        "date_time", tzinfo=timezone.get_current_timezone()
-    )
-    destination_appointment_window_end = factory.Faker(
-        "date_time", tzinfo=timezone.get_current_timezone()
-    )
+    destination_appointment_window_start = timezone.now() + timedelta(days=1)
+    destination_appointment_window_end = timezone.now() + timedelta(days=1)
     customer = factory.SubFactory("customer.factories.CustomerFactory")
     equipment_type = factory.SubFactory(
         "equipment.tests.factories.EquipmentTypeFactory"
