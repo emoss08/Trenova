@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Generator
+from datetime import timedelta
 from typing import Any
 
 import pytest
@@ -187,9 +188,11 @@ def order_api(
             "order_type": f"{order_type.id}",
             "revenue_code": f"{revenue_code.id}",
             "origin_location": f"{origin_location.id}",
-            "origin_appointment": f"{timezone.now()}",
+            "origin_appointment_window_start": f"{timezone.now()}",
+            "origin_appointment_window_end": f"{timezone.now()}",
             "destination_location": f"{destination_location.id}",
-            "destination_appointment": f"{timezone.now()}",
+            "destination_appointment_window_start": f"{timezone.now() + timedelta(days=2)}",
+            "destination_appointment_window_end": f"{timezone.now() + timedelta(days=2)}",
             "freight_charge_amount": 100.00,
             "customer": f"{customer.id}",
             "equipment_type": f"{equipment_type.id}",

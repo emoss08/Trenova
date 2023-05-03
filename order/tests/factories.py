@@ -87,13 +87,19 @@ class OrderFactory(factory.django.DjangoModelFactory):
     status = "N"
     revenue_code = factory.SubFactory("accounting.tests.factories.RevenueCodeFactory")
     origin_location = factory.SubFactory("location.factories.LocationFactory")
-    origin_appointment = factory.Faker(
+    origin_appointment_window_start = factory.Faker(
+        "date_time", tzinfo=timezone.get_current_timezone()
+    )
+    origin_appointment_window_end = factory.Faker(
         "date_time", tzinfo=timezone.get_current_timezone()
     )
     destination_location = factory.SubFactory("location.factories.LocationFactory")
     rate_method = RatingMethodChoices.FLAT
     freight_charge_amount = FuzzyDecimal(10, 1000000, 4)
-    destination_appointment = factory.Faker(
+    destination_appointment_window_start = factory.Faker(
+        "date_time", tzinfo=timezone.get_current_timezone()
+    )
+    destination_appointment_window_end = factory.Faker(
         "date_time", tzinfo=timezone.get_current_timezone()
     )
     customer = factory.SubFactory("customer.factories.CustomerFactory")

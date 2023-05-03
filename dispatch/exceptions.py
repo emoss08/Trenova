@@ -15,39 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import factory
-from django.utils import timezone
+
+class FeasibilityControlNotFound(Exception):
+    """Raised when the FeasibilityControl criteria are not found in the database."""
 
 
-class StopFactory(factory.django.DjangoModelFactory):
-    """
-    Stop Factory
-    """
+class WorkerOTPCalculationError(Exception):
+    """Raised when there is an error calculating the worker's On Time Performance."""
 
-    class Meta:
-        """
-        Metaclass for StopFactory
-        """
 
-        model = "stops.Stop"
-        django_get_or_create = (
-            "organization",
-            "movement",
-            "location",
-        )
-
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    status = "N"
-    sequence = 1
-    movement = factory.SubFactory("movements.tests.factories.MovementFactory")
-    location = factory.SubFactory("location.factories.LocationFactory")
-    pieces = factory.Faker("pyint", min_value=1, max_value=100)
-    weight = factory.Faker("pyint", min_value=1, max_value=100)
-    address_line = factory.Faker("street_address", locale="en_US")
-    appointment_time_window_start = factory.Faker(
-        "date_time", tzinfo=timezone.get_current_timezone()
-    )
-    appointment_time_window_end = factory.Faker(
-        "date_time", tzinfo=timezone.get_current_timezone()
-    )
-    stop_type = "P"
+class OperatorNotFound(Exception):
+    """Raised when the Operator criteria are not found in the database."""

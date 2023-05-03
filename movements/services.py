@@ -62,7 +62,8 @@ def create_initial_stops(
             stop_type=StopChoices.PICKUP,
             location=order.origin_location,
             address_line=order.origin_address,
-            appointment_time=order.origin_appointment,
+            appointment_time_window_start=order.origin_appointment_window_start,
+            appointment_time_window_end=order.origin_appointment_window_end,
         )
         destination_stop: Stop = Stop.objects.create(
             organization=movement.organization,
@@ -70,8 +71,8 @@ def create_initial_stops(
             sequence=2,
             stop_type=StopChoices.DELIVERY,
             location=order.destination_location,
-            address_line=order.destination_address,
-            appointment_time=order.destination_appointment,
+            appointment_time_window_start=order.destination_appointment_window_start,
+            appointment_time_window_end=order.destination_appointment_window_end,
         )
 
     except IntegrityError as stop_creation_error:

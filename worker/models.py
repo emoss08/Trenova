@@ -765,32 +765,6 @@ class WorkerTimeAway(GenericModel):
 
 
 class WorkerHOS(GenericModel):
-    """
-    A Django model representing a worker's hours of service.
-
-    Attributes:
-        id (UUIDField): The UUID field representing the primary key of the model. It is set to be the primary key,
-            read-only, and unique.
-        worker (ForeignKey): The foreign key field representing the worker associated with the hours of service.
-            It uses the Worker model as the related model, and it uses the CASCADE delete rule.
-        drive_time (PositiveIntegerField): The positive integer field representing the drive time in minutes.
-        off_duty_time (PositiveIntegerField): The positive integer field representing the off duty time in minutes.
-        sleeper_berth_time (PositiveIntegerField): The positive integer field representing the sleeper berth time in
-            minutes.
-        on_duty_time (PositiveIntegerField): The positive integer field representing the on duty time in minutes.
-
-    Methods:
-        __str__ (str): Returns the string representation of the Worker HOS.
-        get_absolute_url (str): Returns the absolute URL to view the detail of the Worker HOS.
-
-    Meta:
-        verbose_name (str): A human-readable name for the model. The default value is "Worker HOS".
-        verbose_name_plural (str): A human-readable plural name for the model. The default value is "Worker HOS".
-        ordering (list of str): A list of model field names used to specify the default ordering of records. The
-            default value is ["worker"].
-        db_table (str): The name of the database table to use for the model. The default value is "worker_hos".
-    """
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -827,6 +801,12 @@ class WorkerHOS(GenericModel):
         _("Current Location"),
         max_length=50,
         help_text=_("Current location of the driver"),
+    )
+    seventy_hour_time = models.PositiveIntegerField(
+        _("70 Hour Time"), help_text=_("70 hour time in minutes")
+    )
+    miles_driven = models.PositiveIntegerField(
+        _("Miles Driven"), help_text=_("Miles driven")
     )
     log_date = models.DateField(_("Log Date"), help_text=_("Log date"))
     last_reset_date = models.DateField(

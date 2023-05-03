@@ -330,8 +330,14 @@ class Order(GenericModel):  # type:ignore
         blank=True,
         help_text=_("Origin Address of the Order"),
     )
-    origin_appointment = models.DateTimeField(
+    origin_appointment_window_start = models.DateTimeField(
         _("Origin Appointment"),
+        help_text=_(
+            "The time the equipment is expected to arrive at the origin/pickup."
+        ),
+    )
+    origin_appointment_window_end = models.DateTimeField(
+        _("Origin Appointment Window End"),
         help_text=_(
             "The time the equipment is expected to arrive at the origin/pickup."
         ),
@@ -350,8 +356,14 @@ class Order(GenericModel):  # type:ignore
         max_length=255,
         blank=True,
     )
-    destination_appointment = models.DateTimeField(
+    destination_appointment_window_start = models.DateTimeField(
         _("Destination Appointment Time"),
+        help_text=_(
+            "The time the equipment is expected to arrive at the destination/drop-off."
+        ),
+    )
+    destination_appointment_window_end = models.DateTimeField(
+        _("Destination Appointment Window End"),
         help_text=_(
             "The time the equipment is expected to arrive at the destination/drop-off."
         ),

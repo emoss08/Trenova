@@ -53,7 +53,8 @@ def test_create(
         organization=organization,
         movement=movement,
         location=location,
-        appointment_time=timezone.now(),
+        appointment_time_window_start=timezone.now(),
+        appointment_time_window_end=timezone.now(),
         stop_type=models.StopChoices.PICKUP,
     )
 
@@ -87,7 +88,8 @@ def test_location_address(
         organization=organization,
         movement=movement,
         location=location,
-        appointment_time=timezone.now(),
+        appointment_time_window_start=timezone.now(),
+        appointment_time_window_end=timezone.now(),
         stop_type=models.StopChoices.PICKUP,
     )
 
@@ -130,7 +132,8 @@ def test_post(
             "location": location.id,
             "movement": movement.id,
             "sequence": 1,
-            "appointment_time": timezone.now() + timedelta(days=1),
+            "appointment_time_window_start": timezone.now(),
+            "appointment_time_window_end": timezone.now(),
             "stop_type": "SP",
         },
     )
@@ -159,7 +162,10 @@ def test_put(
             "organization": organization.id,
             "location": location.id,
             "movement": movement.id,
-            "appointment_time": stop_api.data["appointment_time"],
+            "appointment_time_window_start": stop_api.data[
+                "appointment_time_window_start"
+            ],
+            "appointment_time_window_end": stop_api.data["appointment_time_window_end"],
             "stop_type": "SD",
         },
     )
@@ -240,6 +246,8 @@ def test_cannot_change_status_to_in_progress_or_completed_if_first_stop_is_not_c
     Test ValidationError is thrown when the status of the stop is changed to `IN_PROGRESS`
     or `COMPLETED` if the previous stop in the movement is not `COMPLETED`.
     """
+
+    print(movement.id)
 
     StopFactory(movement=movement, arrival_time=timezone.now(), status="N", sequence=1)
 

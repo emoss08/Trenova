@@ -88,8 +88,10 @@ def test_initial_stop_creation_hook(worker: Worker, tractor: Tractor) -> None:
     Test that an initial stop is created when a movement is created.
     """
     order = OrderFactory(
-        origin_appointment=timezone.now(),
-        destination_appointment=timezone.now() + timedelta(days=2),
+        origin_appointment_window_start=timezone.now(),
+        origin_appointment_window_end=timezone.now(),
+        destination_appointment_window_start=timezone.now() + timedelta(days=2),
+        destination_appointment_window_end=timezone.now() + timedelta(days=2),
     )
 
     movement = models.Movement.objects.create(

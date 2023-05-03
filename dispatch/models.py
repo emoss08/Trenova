@@ -826,3 +826,106 @@ class RateBillingTable(GenericModel):  # type:ignore
             str: The absolute URL for the detail view of the RateBillingTable instance.
         """
         return reverse("rate-billing-tables-detail", kwargs={"pk": self.pk})
+
+
+class FeasibilityToolControl(GenericModel):
+    @final
+    class OperatorChoices(models.TextChoices):
+        EQUALS = "eq", _("Equals")
+        NOT_EQUALS = "ne", _("Not Equals")
+        GREATER_THAN = "gt", _("Greater Than")
+        GREATER_THAN_OR_EQUAL_TO = "gte", _("Greater Than or Equal To")
+        LESS_THAN = "lt", _("Less Than")
+        LESS_THAN_OR_EQUAL_TO = "lte", _("Less Than or Equal To")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.OneToOneField(
+        "organization.Organization",
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="feasibility_tool_control",
+    )
+    mpw_operator = ChoiceField(
+        _("MPW Operator"),
+        choices=OperatorChoices.choices,
+        default=OperatorChoices.EQUALS,
+        help_text=_("Miles Per Week Operator (e.g. Equals, Not Equals, etc.)"),
+    )
+    mpw_criteria = models.FloatField(
+        _("MPW Criteria"),
+        default=0,
+        help_text=_("Miles Per Week criteria of the feasibility control. (e.g. 0.5)"),
+    )
+    mpd_operator = ChoiceField(
+        _("MPD Operator"),
+        choices=OperatorChoices.choices,
+        default=OperatorChoices.EQUALS,
+        help_text=_("Miles Per Day Operator (e.g. Equals, Not Equals, etc.)"),
+    )
+    mpd_criteria = models.FloatField(
+        _("MPD Criteria"),
+        default=0,
+        help_text=_("Miles Per Day criteria of the feasibility control. (e.g. 0.5)"),
+    )
+    mpg_operator = ChoiceField(
+        _("MPG Operator"),
+        choices=OperatorChoices.choices,
+        default=OperatorChoices.EQUALS,
+        help_text=_("Miles Per Gallon Operator (e.g. Equals, Not Equals, etc.)"),
+    )
+    mpg_criteria = models.FloatField(
+        _("MPG Criteria"),
+        default=0,
+        help_text=_("Miles Per Gallon criteria of the feasibility control. (e.g. 0.5)"),
+    )
+    otp_operator = ChoiceField(
+        _("OTP Operator"),
+        choices=OperatorChoices.choices,
+        default=OperatorChoices.EQUALS,
+        help_text=_("On Time Performance Operator (e.g. Equals, Not Equals, etc.)"),
+    )
+    otp_criteria = models.FloatField(
+        _("OTP Criteria"),
+        default=0,
+        help_text=_(
+            "On Time Performance criteria of the feasibility control. (e.g. 0.5)"
+        ),
+    )
+
+    class Meta:
+        """
+        Metaclass for the FeasibilityToolControl model.
+        """
+
+        verbose_name = _("Feasibility Tool Control")
+        verbose_name_plural = _("Feasibility Tool Controls")
+        db_table = "feasibility_tool_control"
+
+    def __str__(self) -> str:
+        """
+        Return the string representation of a FeasibilityToolControl instance.
+
+        The string representation of a FeasibilityToolControl instance is the value of its organization field.
+
+        Returns:
+            str: The organization field of the FeasibilityToolControl instance.
+        """
+        return textwrap.shorten(
+            f"Feasibility Control for {self.organization.name}",
+            width=30,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """
+        Return the absolute URL for the detail view of a FeasibilityToolControl instance.
+
+        Returns:
+            str: The absolute URL for the detail view of the FeasibilityToolControl instance.
+        """
+        return reverse("feasibility-tool-control-detail", kwargs={"pk": self.pk})

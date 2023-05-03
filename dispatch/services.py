@@ -15,11 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from typing import TYPE_CHECKING
+
 from django.utils import timezone
 
 from dispatch import models, selectors
 from order.models import AdditionalCharge, Order
 from order.selectors import sum_order_additional_charges
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 
 def get_rate(*, order: Order) -> models.Rate | None:
@@ -93,3 +98,83 @@ def generate_rate_number() -> str:
     """
     code = f"R{models.Rate.objects.count() + 1:05d}"
     return "R00001" if models.Rate.objects.filter(rate_number=code).exists() else code
+
+
+def feasibility_tool(
+    *,
+    drive_time: int,
+    on_duty_time: int,
+    seventy_hour_time: int,
+    origin_appointment: "datetime",
+    destination_appointment: "datetime",
+    travel_time: int,
+    driver_daily_miles: int,
+    total_order_miles: int,
+    pickup_time_window_start: "datetime",
+    pickup_time_window_end: "datetime",
+    delivery_time_window_start: "datetime",
+) -> tuple[int, float] | None:
+    # Calculate the number of days between the origin and destination appointments
+    days_between_appointments = (destination_appointment - origin_appointment).days
+
+    # Calculate the maximum possible miles the driver can drive based on their daily average
+    max_possible_miles = days_between_appointments * driver_daily_miles
+
+    # Check if the driver can cover the total order miles within the available days
+    if total_order_miles > max_possible_miles:
+        return None
+
+    # Calculate the number of breaks required to complete the order
+    breaks_required = (travel_time - 1) // (11 * 60)
+
+    # Calculate the total driving time required to complete the order, including breaks
+    total_driving_time_required = travel_time + breaks_required * 10 * 60
+
+    # Calculate the total on-duty time required to complete the order, including breaks
+    total_on_duty_time_required = total_driving_time_required + breaks_required * 3 * 60
+
+    if (
+        drive_time < total_driving_time_required
+        or on_duty_time < total_on_duty_time_required
+    ):
+        return None
+
+    # Calculate the breaks duration
+    breaks_duration = breaks_required * 10 * 60
+
+    # Calculate the time left on the driver's 70-hour clock after taking the order
+    time_left_after_order = seventy_hour_time - total_on_duty_time_required
+
+    # Check if the driver can reach the pickup location within the pickup time window
+    time_until_pickup_start = (
+        pickup_time_window_start - origin_appointment
+    ).total_seconds() / 60
+    can_reach_pickup = (
+        time_left_after_order >= time_until_pickup_start
+        and time_until_pickup_start <= travel_time
+    )
+
+    # Calculate the time spent at the pickup location
+    time_spent_at_pickup = (
+        pickup_time_window_end - pickup_time_window_start
+    ).total_seconds() / 60
+
+    # Check if the driver can reach the destination within the delivery time window
+    time_until_delivery_start = (
+        delivery_time_window_start - destination_appointment
+    ).total_seconds() / 60
+    total_time_required = travel_time + breaks_duration + time_spent_at_pickup
+
+    can_reach_delivery = (
+        time_left_after_order >= time_until_delivery_start
+        and time_until_delivery_start <= total_time_required
+    )
+
+    # If both conditions are met, the driver is eligible for the order
+    if can_reach_pickup and can_reach_delivery:
+        return (
+            (breaks_required, time_left_after_order)
+            if time_left_after_order >= 0
+            else None
+        )
+    return None

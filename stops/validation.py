@@ -170,18 +170,18 @@ class StopValidation:
                 "Departure time must be after arrival time. Please try again."
             )
 
-        if self.instance.sequence < self.instance.movement.stops.count():
-            next_stop = self.instance.movement.stops.filter(
-                sequence__exact=self.instance.sequence + 1
-            ).first()
-
-            if (
-                next_stop
-                and self.instance.appointment_time > next_stop.appointment_time
-            ):
-                self.errors["appointment_time"] = _(
-                    "Appointment time must be before next stop. Please try again."
-                )
+        # if self.instance.sequence < self.instance.movement.stops.count():
+        #     next_stop = self.instance.movement.stops.filter(
+        #         sequence__exact=self.instance.sequence + 1
+        #     ).first()
+        #
+        #     if (
+        #         next_stop
+        #         and self.instance.appointment_time > next_stop.appointment_time
+        #     ):
+        #         self.errors["appointment_time"] = _(
+        #             "Appointment time must be before next stop. Please try again."
+        #         )
 
     def ensure_location(self):
         """Ensure location is entered

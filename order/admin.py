@@ -121,10 +121,12 @@ class OrderAdmin(GenericAdmin[models.Order]):
                 "fields": (
                     "origin_location",
                     "origin_address",
-                    "origin_appointment",
+                    "origin_appointment_window_start",
+                    "origin_appointment_window_end",
                     "destination_location",
                     "destination_address",
-                    "destination_appointment",
+                    "destination_appointment_window_start",
+                    "destination_appointment_window_end",
                 )
             },
         ),
