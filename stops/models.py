@@ -143,9 +143,13 @@ class Stop(GenericModel):
         help_text=_("Stop Address"),
         blank=True,
     )
-    appointment_time = models.DateTimeField(
+    appointment_time_window_start = models.DateTimeField(
         _("Stop Appointment Time"),
         help_text=_("The time the equipment is expected to arrive at the stop."),
+    )
+    appointment_time_window_end = models.DateTimeField(
+        _("Stop Appointment Time"),
+        help_text=_("The time the equipment is expected to depart from the stop."),
     )
     arrival_time = models.DateTimeField(
         _("Stop Arrival Time"),

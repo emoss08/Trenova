@@ -52,7 +52,7 @@ class StopServiceIncidentHandler:
         is_late = (
             self.instance.arrival_time
             and self.instance.arrival_time
-            > self.instance.appointment_time
+            > self.instance.appointment_time_window_end
             + timedelta(minutes=self.dispatch_control.grace_period)
         )
         if not self.instance.arrival_time or not is_late:
@@ -86,7 +86,8 @@ class StopServiceIncidentHandler:
                 organization=self.instance.organization,
                 movement=self.instance.movement,
                 stop=self.instance,
-                delay_time=self.instance.arrival_time - self.instance.appointment_time,
+                delay_time=self.instance.arrival_time
+                - self.instance.appointment_time_window_end,
             )
 
     def create_service_incident_if_needed(self) -> None:

@@ -286,8 +286,19 @@ class OrderValidation:
                 ("destination_location", "Destination location"),
                 ("origin_address", "Origin address"),
                 ("destination_address", "Destination address"),
-                ("origin_appointment", "Origin appointment"),
-                ("destination_appointment", "Destination appointment"),
+                (
+                    "origin_appointment_window_start",
+                    "Origin appointment window (start)",
+                ),
+                ("origin_appointment_window_end", "Origin appointment window (end)"),
+                (
+                    "destination_appointment_window_start",
+                    "Destination appointment window (start)",
+                ),
+                (
+                    "destination_appointment_window_end",
+                    "Destination appointment window (end)",
+                ),
             ]
 
             for attribute, display_name in location_attributes:

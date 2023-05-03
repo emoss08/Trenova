@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from datetime import timedelta
 from typing import Any
 
 from django.core.management import BaseCommand
@@ -342,10 +342,14 @@ class Command(BaseCommand):
                     order_type=order_type,
                     customer=customer,
                     origin_location=location_1,
-                    origin_appointment=timezone.now(),
                     freight_charge_amount=100,
                     destination_location=location_2,
-                    destination_appointment=timezone.now(),
+                    origin_appointment_window_start=timezone.now(),
+                    origin_appointment_window_end=timezone.now(),
+                    destination_appointment_window_start=timezone.now()
+                    + timedelta(days=2),
+                    destination_appointment_window_end=timezone.now()
+                    + timedelta(days=2),
                     equipment_type=equipment_type,
                     entered_by=user,
                     bol_number="123456789",

@@ -69,9 +69,12 @@ def test_create(
         order_type=order_type,
         revenue_code=revenue_code,
         origin_location=origin_location,
-        origin_appointment=timezone.now(),
         destination_location=destination_location,
-        destination_appointment=timezone.now(),
+        origin_appointment_window_start=timezone.now(),
+        origin_appointment_window_end=timezone.now(),
+        destination_appointment_window_start=timezone.now()
+        + datetime.timedelta(days=2),
+        destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
         equipment_type=equipment_type,
@@ -128,9 +131,12 @@ def test_first_stop_completion_puts_order_movement_in_progress(
         order_type=order_type,
         revenue_code=revenue_code,
         origin_location=origin_location,
-        origin_appointment=timezone.now(),
         destination_location=destination_location,
-        destination_appointment=timezone.now(),
+        origin_appointment_window_start=timezone.now(),
+        origin_appointment_window_end=timezone.now(),
+        destination_appointment_window_start=timezone.now()
+        + datetime.timedelta(days=2),
+        destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
         equipment_type=equipment_type,
@@ -170,7 +176,7 @@ def test_first_stop_completion_puts_order_movement_in_progress(
     assert order_movement.order.status == StatusChoices.COMPLETED
 
 
-def test_create_initial_movement_hook(
+def test_create_initial_movement_signal(
     organization: Organization,
     order_type: models.OrderType,
     revenue_code: RevenueCode,
@@ -189,9 +195,12 @@ def test_create_initial_movement_hook(
         order_type=order_type,
         revenue_code=revenue_code,
         origin_location=origin_location,
-        origin_appointment=timezone.now(),
         destination_location=destination_location,
-        destination_appointment=timezone.now(),
+        origin_appointment_window_start=timezone.now(),
+        origin_appointment_window_end=timezone.now(),
+        destination_appointment_window_start=timezone.now()
+        + datetime.timedelta(days=2),
+        destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
         customer=customer,
         freight_charge_amount=100.00,
         equipment_type=equipment_type,
@@ -264,8 +273,10 @@ def test_put(
             "destination_location": f"{destination_location.id}",
             "order_type": f"{order_type.id}",
             "revenue_code": f"{revenue_code.id}",
-            "origin_appointment": f"{timezone.now()}",
-            "destination_appointment": f"{timezone.now()}",
+            "origin_appointment_window_start": f"{timezone.now()}",
+            "origin_appointment_window_end": f"{timezone.now()}",
+            "destination_appointment_window_start": f"{timezone.now() + datetime.timedelta(days=2)}",
+            "destination_appointment_window_end": f"{timezone.now() + datetime.timedelta(days=2)}",
             "customer": f"{customer.id}",
             "equipment_type": f"{equipment_type.id}",
             "entered_by": f"{user.id}",
@@ -489,7 +500,12 @@ def test_set_total_piece_and_weight_signal(
 
     for stop in stops:
         if stop.sequence == 2:
-            stop.appointment_time = timezone.now() + datetime.timedelta(days=1)
+            stop.appointment_time_window_start = timezone.now() + datetime.timedelta(
+                days=1
+            )
+            stop.appointment_time_window_end = timezone.now() + datetime.timedelta(
+                days=1
+            )
 
         stop.arrival_time = timezone.now()
         stop.departure_time = timezone.now() + datetime.timedelta(hours=1)
