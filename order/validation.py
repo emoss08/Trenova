@@ -57,7 +57,7 @@ class OrderValidation:
         self.validate_order_movement_in_progress()
         self.validate_order_movements_completed()
         # self.validate_location_information_cannot_change_once_order_completed()
-
+        self.validate_appointment_windows()
         if self.errors:
             raise ValidationError(self.errors)
 
@@ -306,3 +306,25 @@ class OrderValidation:
                     self.errors[attribute] = _(
                         f"{display_name} cannot be changed once the order is completed. Please try again."
                     )
+
+    def validate_appointment_windows(self) -> None:
+        """Validate origin and destination appointment window ends is not before the start.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        if (
+            self.order.origin_appointment_window_end
+            < self.order.origin_appointment_window_start
+        ):
+            self.errors["origin_appointment_window_end"] = _(
+                "Origin appointment window end cannot be before the start. Please try again."
+            )
+
+        if (
+            self.order.destination_appointment_window_end
+            < self.order.destination_appointment_window_start
+        ):
+            self.errors["destination_appointment_window_end"] = _(
+                "Destination appointment window end cannot be before the start. Please try again."
+            )

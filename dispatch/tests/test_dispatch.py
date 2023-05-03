@@ -120,6 +120,7 @@ def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
         travel_time=travel_time,
         workers_hos=workers_hos,
         total_order_miles=100,
+        last_reset_date=worker_hos.last_reset_date,
     )
 
     assert worker_hos in eligible_workers_hos
@@ -208,6 +209,7 @@ def test_feasibility_tool_not_eligible(organization: Organization) -> None:
         travel_time=travel_time,
         workers_hos=workers_hos,
         total_order_miles=100,
+        last_reset_date=worker_hos.last_reset_date,
     )
 
     assert worker_hos in ineligible_workers_hos

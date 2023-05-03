@@ -15,15 +15,15 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import TYPE_CHECKING
 
 from dispatch import exceptions, models, services
 from movements.models import Movement
-from organization.models import Organization
 from worker.models import Worker, WorkerHOS
 
 if TYPE_CHECKING:
+    from organization.models import Organization
     from django.db.models import QuerySet
 
 
@@ -33,9 +33,7 @@ def calculate_worker_miles_per_week(*, worker: Worker) -> float:
     return sum(hos.miles_driven for hos in worker_weekly_hos)
 
 
-def calculate_worker_miles_per_day(
-    *, worker: Worker, reference_date: datetime.date
-) -> float:
+def calculate_worker_miles_per_day(*, worker: Worker, reference_date: date) -> float:
     week_start = reference_date - timedelta(days=reference_date.weekday())
     week_end = reference_date  # Update the week_end to be the reference_date
 
@@ -78,7 +76,10 @@ def calculate_worker_otp(*, worker: Worker) -> float:
     for movement in movements:
         stops = movement.stops.all()
         for stop in stops:
-            if stop.arrival_time <= stop.appointment_time_window_end:
+            if (
+                stop.arrival_time
+                and stop.arrival_time <= stop.appointment_time_window_end
+            ):
                 on_time_stops += 1
             total_stops += 1
 
@@ -91,11 +92,12 @@ def get_eligible_drivers(
     origin_appointment: datetime,
     destination_appointment: datetime,
     travel_time: int,
-    organization: Organization,
+    organization: "Organization",
     total_order_miles: int,
     pickup_time_window_start: datetime,
     pickup_time_window_end: datetime,
     delivery_time_window_start: datetime,
+    last_reset_date: datetime,
 ) -> tuple[list[WorkerHOS], list[WorkerHOS]]:
     eligible_workers_hos = []
     ineligible_workers_hos = []
@@ -104,6 +106,11 @@ def get_eligible_drivers(
     feasibility_control = models.FeasibilityToolControl.objects.filter(
         organization=organization
     ).first()
+
+    if not feasibility_control:
+        raise exceptions.FeasibilityControlNotFound(
+            f"Feasibility tool control not found for organization {organization.name}"
+        )
 
     for worker_hos in workers_hos:
         worker = worker_hos.worker
@@ -141,6 +148,7 @@ def get_eligible_drivers(
                 pickup_time_window_start=pickup_time_window_start,
                 pickup_time_window_end=pickup_time_window_end,
                 delivery_time_window_start=delivery_time_window_start,
+                last_reset_date=last_reset_date,
             )
 
             # If driver_info is not None, the worker is eligible

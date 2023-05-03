@@ -113,12 +113,20 @@ def feasibility_tool(
     pickup_time_window_start: "datetime",
     pickup_time_window_end: "datetime",
     delivery_time_window_start: "datetime",
+    last_reset_date: "datetime",
 ) -> tuple[int, float] | None:
     # Calculate the number of days between the origin and destination appointments
     days_between_appointments = (destination_appointment - origin_appointment).days
 
     # Calculate the maximum possible miles the driver can drive based on their daily average
     max_possible_miles = days_between_appointments * driver_daily_miles
+
+    time_since_last_reset = (origin_appointment.date() - last_reset_date).days  # type: ignore
+    eligible_for_restart = time_since_last_reset >= 8
+
+    if eligible_for_restart:
+        # Update the seventy_hour_time to the maximum allowed value after the restart
+        seventy_hour_time = 70 * 60
 
     # Check if the driver can cover the total order miles within the available days
     if total_order_miles > max_possible_miles:
@@ -170,8 +178,16 @@ def feasibility_tool(
         and time_until_delivery_start <= total_time_required
     )
 
-    # If both conditions are met, the driver is eligible for the order
     if can_reach_pickup and can_reach_delivery:
+        if time_left_after_order < total_time_required:
+            sleeper_berth_time = on_duty_time - drive_time
+            can_use_sleeper_berth = (
+                sleeper_berth_time >= 8 * 60
+                and total_on_duty_time_required - drive_time <= sleeper_berth_time
+            )
+            if not can_use_sleeper_berth:
+                return None
+
         return (
             (breaks_required, time_left_after_order)
             if time_left_after_order >= 0

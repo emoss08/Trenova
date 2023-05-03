@@ -514,3 +514,47 @@ def test_set_total_piece_and_weight_signal(
         stop.save()
 
     order.refresh_from_db()
+
+
+def test_validate_origin_appointment_window_start_not_after_end(
+    order: models.Order,
+) -> None:
+    """Test origin appointment window end is not before the start of the window..
+
+    Args:
+        order (models.Order): Order object
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order.origin_appointment_window_start = timezone.now()
+    order.origin_appointment_window_end = timezone.now() - datetime.timedelta(days=1)
+    with pytest.raises(ValidationError) as excinfo:
+        order.clean()
+
+    assert excinfo.value.message_dict["origin_appointment_window_end"] == [
+        "Origin appointment window end cannot be before the start. Please try again."
+    ]
+
+
+def test_validate_destination_appointment_window_start_not_after_end(
+    order: models.Order,
+) -> None:
+    """Test destination appointment window end is not before the start of the window.
+
+    Args:
+        order (models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order.destination_appointment_window_start = timezone.now()
+    order.destination_appointment_window_end = timezone.now() - datetime.timedelta(
+        days=1
+    )
+    with pytest.raises(ValidationError) as excinfo:
+        order.clean()
+
+    assert excinfo.value.message_dict["destination_appointment_window_end"] == [
+        "Destination appointment window end cannot be before the start. Please try again."
+    ]
