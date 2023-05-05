@@ -64,7 +64,7 @@ class EquipmentTypeAdmin(GenericAdmin[models.EquipmentType]):
 
 
 @admin.register(models.Tractor)
-class EquipmentAdmin(GenericAdmin[models.Tractor]):
+class TractorAdmin(GenericAdmin[models.Tractor]):
     """
     Equipment Admin
     """
@@ -163,7 +163,7 @@ class EquipmentMaintenancePlanAdmin(GenericAdmin[models.EquipmentMaintenancePlan
         "equipment_types",
     )
     fieldsets = (
-        (None, {"fields": ("id", "equipment_types", "description")}),
+        (None, {"fields": ("name", "equipment_types", "description")}),
         (
             "Schedule Details",
             {

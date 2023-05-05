@@ -96,6 +96,7 @@ class LocationSerializer(GenericSerializer):
     Location information, as well as listing and retrieving them.
     """
 
+    wait_time_avg = serializers.DurationField(read_only=True)
     organization = serializers.PrimaryKeyRelatedField(
         queryset=Organization.objects.all()
     )
@@ -125,6 +126,7 @@ class LocationSerializer(GenericSerializer):
 
         model = models.Location
         extra_fields = (
+            "wait_time_avg",
             "organization",
             "location_category",
             "location_contacts",

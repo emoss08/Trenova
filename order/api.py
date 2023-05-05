@@ -141,7 +141,10 @@ class OrderViewSet(OrganizationMixin):
             organization=self.request.user.organization  # type: ignore
         ).prefetch_related(
             Prefetch(
-                "movements", queryset=Movement.objects.only("id", "order_id").all()
+                "movements",
+                queryset=Movement.objects.filter(
+                    organization=self.request.user.organization  # type: ignore
+                ).only("id", "order_id"),
             )
         )
 

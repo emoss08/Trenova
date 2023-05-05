@@ -15,23 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.apps import AppConfig
-from django.db.models.signals import post_save, post_delete
+from django.db import models
+from typing import Any, Type
 
-from core.signals import invalidate_cache
+from cacheops import invalidate_obj
 
 
-class RouteConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "route"
-
-    def ready(self) -> None:
-        # Route Control cache invalidations
-        post_save.connect(
-            invalidate_cache,
-            sender="route.RouteControl",
-        )
-        post_delete.connect(
-            invalidate_cache,
-            sender="route.RouteControl",
-        )
+def invalidate_cache(
+    sender: Type[models.Model], instance: Type[models.Model], **kwargs: Any
+) -> None:
+    invalidate_obj(instance)

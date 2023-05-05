@@ -158,12 +158,12 @@ router.register(
     basename="customer-billing-profiles",
 )
 
-
 # Equipment Routing
 router.register(
     r"equipment_types", equipment_api.EquipmentTypeViewSet, basename="equipment-types"
 )
 router.register(r"tractors", equipment_api.TractorViewSet, basename="tractor")
+router.register(r"trailers", equipment_api.TrailerViewSet, basename="trailer")
 router.register(
     r"equipment_manufacturers",
     equipment_api.EquipmentManufacturerViewSet,

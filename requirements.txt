@@ -6,7 +6,7 @@ channels==4.0.0
 channels_redis==4.1.0
 confluent-kafka==2.1.0
 daphne==4.0.0
-django==4.2
+django==4.2.1
 django-adminactions==2.0.0
 django-auditlog==2.2.2
 django-braces==1.15.0
@@ -17,7 +17,7 @@ django-cors-headers==3.14.0
 django-encrypted-model-fields==0.6.5
 django-environ==0.10.0
 django-extensions==3.2.1
-django-filter==23.1
+django-filter==23.2
 django-localflavor==4.0
 django-money==3.1.0
 django-nested-inline==0.4.6

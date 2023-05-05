@@ -16,8 +16,42 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
+from django.db.models.signals import post_save, post_delete
 
 
 class AccountConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "accounts"
+
+    def ready(self) -> None:
+        from core import signals
+
+        # JobTitle Cache Invalidations
+        post_save.connect(
+            signals.invalidate_cache,
+            sender="accounts.JobTitle",
+        )
+        post_delete.connect(
+            signals.invalidate_cache,
+            sender="accounts.JobTitle",
+        )
+
+        # Auth Group Cache Invalidations
+        post_save.connect(
+            signals.invalidate_cache,
+            sender="auth.Group",
+        )
+        post_delete.connect(
+            signals.invalidate_cache,
+            sender="auth.Group",
+        )
+
+        # Auth Permission Cache Invalidations
+        post_save.connect(
+            signals.invalidate_cache,
+            sender="auth.Permission",
+        )
+        post_delete.connect(
+            signals.invalidate_cache,
+            sender="auth.Permission",
+        )

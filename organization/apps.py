@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_delete, pre_save
+from django.db.models.signals import post_save, pre_delete, pre_save, post_delete
 
 
 class OrganizationConfig(AppConfig):
@@ -25,6 +25,7 @@ class OrganizationConfig(AppConfig):
 
     def ready(self) -> None:
         from organization import signals
+        from core.signals import invalidate_cache
 
         # Organization
         post_save.connect(
@@ -94,3 +95,38 @@ class OrganizationConfig(AppConfig):
             sender="organization.TableChangeAlert",
             dispatch_uid="delete_and_add_new_trigger",
         )
+
+        # Organization Cache Invalidations
+        post_save.connect(
+            invalidate_cache,
+            sender="organization.Organization",
+        )
+        post_delete.connect(invalidate_cache, sender="organization.Organization")
+
+        # Depot Cache Invalidations
+        post_save.connect(
+            invalidate_cache,
+            sender="organization.Depot",
+        )
+        post_delete.connect(invalidate_cache, sender="organization.Depot")
+
+        # Depot Detail Cache Invalidations
+        post_save.connect(
+            invalidate_cache,
+            sender="organization.DepotDetail",
+        )
+        post_delete.connect(invalidate_cache, sender="organization.DepotDetail")
+
+        # Department Cache Invalidations
+        post_save.connect(
+            invalidate_cache,
+            sender="organization.Department",
+        )
+        post_delete.connect(invalidate_cache, sender="organization.Department")
+
+        # Tax Rate Cache Invalidations
+        post_save.connect(
+            invalidate_cache,
+            sender="organization.TaxRate",
+        )
+        post_delete.connect(invalidate_cache, sender="organization.TaxRate")

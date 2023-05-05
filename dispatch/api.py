@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from django.db.models import QuerySet, Prefetch
 from rest_framework import permissions
 
 from dispatch import models, serializers
@@ -34,6 +34,12 @@ class CommentTypeViewSet(OrganizationMixin):
     queryset = models.CommentType.objects.all()
     serializer_class = serializers.CommentTypeSerializer
 
+    def get_queryset(self) -> QuerySet[models.CommentType]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only("id", "organization_id", "name", "description")
+        return queryset
+
 
 class DelayCodeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Delay Code information in the system.
@@ -47,6 +53,17 @@ class DelayCodeViewSet(OrganizationMixin):
 
     queryset = models.DelayCode.objects.all()
     serializer_class = serializers.DelayCodeSerializer
+
+    def get_queryset(self) -> QuerySet[models.DelayCode]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "organization_id",
+            "code",
+            "description",
+            "f_carrier_or_driver",
+        )
+        return queryset
 
 
 class FleetCodeViewSet(OrganizationMixin):
@@ -63,6 +80,21 @@ class FleetCodeViewSet(OrganizationMixin):
     queryset = models.FleetCode.objects.all()
     serializer_class = serializers.FleetCodeSerializer
     filterset_fields = ("is_active",)
+
+    def get_queryset(self) -> QuerySet[models.FleetCode]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "organization_id",
+            "code",
+            "description",
+            "is_active",
+            "revenue_goal",
+            "deadhead_goal",
+            "manager_id",
+            "mileage_goal",
+        )
+        return queryset
 
 
 class DispatchControlViewSet(OrganizationMixin):
@@ -81,6 +113,25 @@ class DispatchControlViewSet(OrganizationMixin):
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "put", "patch", "head", "options"]
 
+    def get_queryset(self) -> QuerySet[models.DispatchControl]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "organization_id",
+            "record_service_incident",
+            "trailer_continuity",
+            "driver_time_away_restriction",
+            "id",
+            "grace_period",
+            "dupe_trailer_check",
+            "deadhead_target",
+            "driver_assign",
+            "prev_orders_on_hold",
+            "regulatory_check",
+            "tractor_worker_fleet_constraint",
+        )
+        return queryset
+
 
 class RateViewSet(OrganizationMixin):
     """A viewset for viewing and editing Rate information in the system.
@@ -95,6 +146,44 @@ class RateViewSet(OrganizationMixin):
 
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
+
+    def get_queryset(self) -> QuerySet[models.Rate]:
+        queryset = self.queryset.prefetch_related(
+            Prefetch(
+                "rate_billing_tables",
+                queryset=models.RateBillingTable.objects.filter(
+                    organization=self.request.user.organization  # type: ignore
+                ).only(
+                    "id",
+                    "rate_id",
+                    "accessorial_charge_id",
+                    "description",
+                    "unit",
+                    "charge_amount",
+                    "charge_amount_currency",
+                    "sub_total",
+                    "sub_total_currency",
+                ),
+            )
+        ).only(
+            "id",
+            "rate_number",
+            "customer_id",
+            "effective_date",
+            "expiration_date",
+            "commodity_id",
+            "order_type_id",
+            "origin_location_id",
+            "destination_location_id",
+            "rate_method",
+            "rate_amount",
+            "rate_amount_currency",
+            "equipment_type_id",
+            "organization_id",
+            "distance_override",
+            "comments",
+        )
+        return queryset
 
 
 class RateBillingTableViewSet(OrganizationMixin):
@@ -114,3 +203,19 @@ class RateBillingTableViewSet(OrganizationMixin):
     queryset = models.RateBillingTable.objects.all()
     serializer_class = serializers.RateBillingTableSerializer
     filterset_fields = ("rate",)
+
+    def get_queryset(self) -> QuerySet[models.RateBillingTable]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "rate_id",
+            "accessorial_charge_id",
+            "description",
+            "unit",
+            "charge_amount",
+            "charge_amount_currency",
+            "sub_total",
+            "sub_total_currency",
+        )
+        return queryset

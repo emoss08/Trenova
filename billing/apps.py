@@ -16,7 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import pre_delete, pre_save
+from django.db.models.signals import pre_delete, pre_save, post_save, post_delete
+
+from core.signals import invalidate_cache
 
 
 class BillingConfig(AppConfig):
@@ -61,3 +63,7 @@ class BillingConfig(AppConfig):
             sender="billing.BillingHistory",
             dispatch_uid="check_billing_history",
         )
+
+        # Billing Control Cache Invalidations
+        post_save.connect(invalidate_cache, sender="billing.BillingControl")
+        post_delete.connect(invalidate_cache, sender="billing.BillingControl")

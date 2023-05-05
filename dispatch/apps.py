@@ -16,7 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save, post_delete
+
+from core.signals import invalidate_cache
 
 
 class DispatchConfig(AppConfig):
@@ -36,3 +38,7 @@ class DispatchConfig(AppConfig):
             sender="dispatch.RateBillingTable",
             dispatch_uid="set_charge_amount_on_billing_table",
         )
+
+        # Dispatch Control cache invalidations
+        post_save.connect(invalidate_cache, sender="dispatch.DispatchControl")
+        post_delete.connect(invalidate_cache, sender="dispatch.DispatchControl")

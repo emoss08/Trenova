@@ -18,7 +18,7 @@
 from typing import Any
 
 from django.contrib.auth.models import Group, Permission
-from django.db.models import QuerySet
+from django.db.models import QuerySet, Prefetch
 from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
@@ -71,7 +71,6 @@ class UserViewSet(OrganizationMixin):
         "is_staff",
         "username",
     )
-    ordering_fields = "__all__"
 
     # permission_classes = [MontaModelPermissions]
 
@@ -82,12 +81,56 @@ class UserViewSet(OrganizationMixin):
             QuerySet[models.User]: Filtered queryset
         """
 
-        return self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
-        ).select_related(
-            "profiles",
-            "profiles__job_title",
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related(
+                "profiles",
+                "organization",
+            )
+            .prefetch_related(
+                Prefetch("groups", queryset=Group.objects.only("id", "name")),
+                Prefetch(
+                    "user_permissions",
+                    queryset=Permission.objects.only(
+                        "id", "name", "content_type__app_label"
+                    ),
+                ),
+            )
+            .only(
+                "last_login",
+                "is_superuser",
+                "id",
+                "organization__id",
+                "department_id",
+                "is_active",
+                "username",
+                "email",
+                "is_staff",
+                "date_joined",
+                "online",
+                "groups",
+                "user_permissions",
+                "profiles__created",
+                "profiles__modified",
+                "profiles__organization_id",
+                "profiles__id",
+                "profiles__user",
+                "profiles__job_title_id",
+                "profiles__first_name",
+                "profiles__last_name",
+                "profiles__profile_picture",
+                "profiles__address_line_1",
+                "profiles__address_line_2",
+                "profiles__city",
+                "profiles__state",
+                "profiles__zip_code",
+                "profiles__phone_number",
+                "profiles__is_phone_verified",
+            )
         )
+        return queryset
 
 
 class UpdatePasswordView(generics.UpdateAPIView):
@@ -129,15 +172,16 @@ class JobTitleViewSet(OrganizationMixin):
     filterset_fields = ["is_active", "name"]
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
-        """Filter the queryset to only include the current user
-
-        Returns:
-            QuerySet[models.JobTitle]: Filtered queryset
-        """
-
-        return self.queryset.filter(
+        queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
-        ).select_related("organization")
+        ).only(
+            "id",
+            "is_active",
+            "description",
+            "name",
+            "organization_id",
+        )
+        return queryset
 
 
 class TokenVerifyView(views.APIView):
