@@ -22,6 +22,7 @@ from django.db.models import Prefetch, QuerySet
 from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
+from silk.profiling.profiler import silk_profile
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
@@ -74,6 +75,7 @@ class UserViewSet(OrganizationMixin):
 
     # permission_classes = [MontaModelPermissions]
 
+    @silk_profile(name="UserViewSet: list")
     def get_queryset(self) -> QuerySet[models.User]:  # type: ignore
         """Filter the queryset to only include the current user
 
@@ -87,7 +89,6 @@ class UserViewSet(OrganizationMixin):
             )
             .select_related(
                 "profiles",
-                "organization",
             )
             .prefetch_related(
                 Prefetch("groups", queryset=Group.objects.only("id", "name")),
@@ -102,7 +103,7 @@ class UserViewSet(OrganizationMixin):
                 "last_login",
                 "is_superuser",
                 "id",
-                "organization__id",
+                "organization_id",
                 "department_id",
                 "is_active",
                 "username",

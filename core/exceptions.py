@@ -15,29 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
-
-from django.core.exceptions import ValidationError
-from rest_framework.response import Response
-from rest_framework.views import exception_handler
-
-
-def django_error_handler(exc: Any, context: Any) -> Response | None:
-    """Django error handler
-
-    Args:
-        exc (Exception): Exception
-        context ():
-
-    Returns:
-        Response: Response
-    """
-
-    response: Response | None = exception_handler(exc, context)
-    if response is None and isinstance(exc, ValidationError):
-        return Response(status=400, data=exc.message_dict)
-    return response
-
 
 class ServiceException(Exception):
     """

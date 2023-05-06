@@ -46,16 +46,35 @@ necessary, our system can even send the relevant information to the driver via t
 
 Then there is pre-assignments....
 
+### Features
+
+- Order Management System
+- Billing & Invoicing System
+- Route Optimization System
+- Feasibility Analysis System
+- Dispatch System
+- Accounting System
+- Driver Management System
+- Customer Management System
+- Equipment Management System
+- Custom Reporting System
+- Automated Task Management System
+- Plugin System
+- and more ...
+
 ### Developer Features
 
-Monta incorporates a number of developer-friendly features that make it easy to customize and extend the system to suit your
+Monta incorporates a number of developer-friendly features that make it easy to customize and extend the system to suit
+your
 unique requirements. These include:
 
 <details>
 <summary>Traceback</summary>
 
-Monta incorporates an abstract representation of [Rich Tracebacks](https://rich.readthedocs.io/en/latest/traceback.html), which enhances the
-debugging experience of your code. This feature is enabled by default, but you have the option to disable it by setting the MONTA_TRACEBACK
+Monta incorporates an abstract representation
+of [Rich Tracebacks](https://rich.readthedocs.io/en/latest/traceback.html), which enhances the
+debugging experience of your code. This feature is enabled by default, but you have the option to disable it by setting
+the MONTA_TRACEBACK
 environment variable to 0.
 
 Check out the example below to see how it works:

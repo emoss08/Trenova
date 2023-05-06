@@ -48,14 +48,6 @@ def general_ledger_account() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def revenue_code() -> Generator[Any, Any, None]:
-    """
-    Revenue Code Fixture
-    """
-    yield RevenueCodeFactory()
-
-
-@pytest.fixture
 def expense_account() -> Generator[Any, Any, None]:
     """
     Expense Code General Ledger Account Fixture
