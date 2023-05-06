@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, List, Tuple, Type
+from typing import Any
 
 from django.db.models import Model
 from django.utils.functional import cached_property

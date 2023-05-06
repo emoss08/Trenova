@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Tuple
 
 from django_celery_beat.models import CrontabSchedule
 

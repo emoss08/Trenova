@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Type
+from typing import Any
 
 from cacheops import invalidate_obj
 from django.db import models
