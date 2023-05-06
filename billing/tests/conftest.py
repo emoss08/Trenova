@@ -27,10 +27,7 @@ from billing.tests.factories import (
     DocumentClassificationFactory,
 )
 from commodities.factories import CommodityFactory
-from customer.factories import (
-    CustomerBillingProfileFactory,
-    CustomerFactory,
-)
+from customer.factories import CustomerBillingProfileFactory, CustomerFactory
 from order.tests.factories import OrderFactory, OrderTypeFactory
 from organization.factories import EmailProfileFactory
 from worker.factories import WorkerFactory

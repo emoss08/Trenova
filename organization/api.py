@@ -24,7 +24,7 @@ from django.conf import settings
 from django.db.models import Prefetch, QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, status, viewsets, views
+from rest_framework import permissions, status, views, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -35,7 +35,7 @@ from core.health_check.database_backend import DatabaseHealthCheck
 from core.health_check.disk_backend import DiskUsageHealthCheck
 from core.health_check.redis_backend import RedisHealthCheck
 from core.health_check.storage_backend import FileStorageHealthCheck
-from organization import models, selectors, serializers, exceptions
+from organization import exceptions, models, selectors, serializers
 from utils.views import OrganizationMixin
 
 

@@ -19,22 +19,14 @@
 class CacheManagerError(Exception):
     """Base exception class for CacheManager-related errors."""
 
-    pass
-
 
 class CacheKeyError(CacheManagerError):
     """Raised when there is an issue with a cache key."""
-
-    pass
 
 
 class CacheConnectionError(CacheManagerError):
     """Raised when there is an issue connecting to the cache."""
 
-    pass
-
 
 class CacheOperationError(CacheManagerError):
     """Raised when there is an issue performing a cache operation."""
-
-    pass
