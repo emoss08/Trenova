@@ -339,25 +339,18 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 SILKY_PYTHON_PROFILER = True
 
 # Cacheops configurations
-# CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
-#
-# CACHEOPS_DEFAULTS = {
-#     "timeout": 60 * 60,
-# }
-#
-# CACHEOPS = {
-#     "auth.*": {"ops": "all"},
-#     "accounts.job_title": {"ops": "all"},
-#     "order.ordercontrol": {"ops": "all"},
-#     "invoice.invoicecontrol": {"ops": "all"},
-#     "route.routecontrol": {"ops": "all"},
-#     "billing.billingcontrol": {"ops": "all"},
-#     "dispatch.dispatchcontrol": {"ops": "all"},
-#     "organization.organization": {"ops": "all"},
-#     "organization.depot": {"ops": "all"},
-#     "organization.depotdetail": {"ops": "all"},
-#     "organization.department": {"ops": "all"},
-#     "organization.taxrate": {"ops": "all"},
-# }
-#
-# CACHEOPS_DEGRADE_ON_FAILURE = True
+CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
+
+CACHEOPS_DEFAULTS = {
+    "timeout": 60 * 60,
+}
+
+CACHEOPS = {
+    "order.ordercontrol": {"ops": "all"},
+    "invoice.invoicecontrol": {"ops": "all"},
+    "route.routecontrol": {"ops": "all"},
+    "billing.billingcontrol": {"ops": "all"},
+    "dispatch.dispatchcontrol": {"ops": "all"},
+}
+
+CACHEOPS_DEGRADE_ON_FAILURE = True
