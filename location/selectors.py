@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.db.models import Avg, ExpressionWrapper, F, QuerySet
 from django.db.models.fields import DurationField
@@ -35,13 +35,18 @@ def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
 
 def get_avg_wait_time(
     *, queryset: QuerySet[models.Location]
-) -> QuerySet[models.Location]:
+) -> QuerySet[models.Location] | Any:
     """Annotates the given queryset with the average wait time for each location.
 
     Args:
         queryset: The queryset to annotate.
     """
-    return queryset.annotate(
+    if not isinstance(queryset, QuerySet):
+        raise TypeError(
+            f"Expected queryset to be of type {QuerySet}, got {type(queryset)}."
+        )
+
+    queryset: QuerySet[models.Location] = queryset.annotate(
         wait_time_avg=Avg(
             ExpressionWrapper(
                 F("stop__departure_time") - F("stop__arrival_time"),
@@ -49,6 +54,7 @@ def get_avg_wait_time(
             )
         )
     )
+    return queryset
 
 
 def get_avg_wait_time_hours_minutes(
