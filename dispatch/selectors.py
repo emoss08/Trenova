@@ -21,7 +21,6 @@ from django.utils import timezone
 from dispatch import models
 
 
-
 def get_rate_billing_table_by_rate(
     *, rate: models.Rate
 ) -> QuerySet[models.RateBillingTable]:

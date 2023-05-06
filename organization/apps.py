@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_delete, pre_save, post_delete
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 
 
 class OrganizationConfig(AppConfig):
@@ -24,8 +24,8 @@ class OrganizationConfig(AppConfig):
     name = "organization"
 
     def ready(self) -> None:
-        from organization import signals
         from core.signals import invalidate_cache
+        from organization import signals
 
         # Organization
         post_save.connect(

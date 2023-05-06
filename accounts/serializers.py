@@ -15,11 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, TypeVar
+from typing import Any
 
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
-from django.db.models import Model
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 

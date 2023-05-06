@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, Type, Tuple, List
+from typing import Any, List, Tuple, Type
 
 from django.db.models import Model
 from django.utils.functional import cached_property
@@ -37,10 +37,10 @@ class GenericSerializer(serializers.ModelSerializer):
         class.
         """
 
-        model: Type[Model]
-        exclude: Tuple[str, ...] = ()
-        extra_fields: List[str] = []
-        extra_read_only_fields: List[str] = []
+        model: type[Model]
+        exclude: tuple[str, ...] = ()
+        extra_fields: list[str] = []
+        extra_read_only_fields: list[str] = []
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the serializer
@@ -104,7 +104,7 @@ class GenericSerializer(serializers.ModelSerializer):
         """
         Set the fields for the serializer.
         """
-        read_only_fields: Tuple[str, ...] = ("organization", "created", "modified")
+        read_only_fields: tuple[str, ...] = ("organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)
         excluded_fields = set(getattr(self.Meta, "exclude", ()))

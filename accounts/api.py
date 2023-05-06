@@ -18,7 +18,7 @@
 from typing import Any
 
 from django.contrib.auth.models import Group, Permission
-from django.db.models import QuerySet, Prefetch
+from django.db.models import Prefetch, QuerySet
 from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request

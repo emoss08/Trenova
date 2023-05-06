@@ -15,15 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import TYPE_CHECKING
 import datetime
+from typing import TYPE_CHECKING
 
 from django.core.management import call_command
 from django.utils import timezone
 
 from backend.celery import app
 from core.exceptions import CommandCallException
-
 
 if TYPE_CHECKING:
     from celery.app.task import Task

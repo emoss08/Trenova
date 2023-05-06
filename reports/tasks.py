@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import TYPE_CHECKING
+
 from celery import shared_task
 from celery_singleton import Singleton
 from django.core.mail import EmailMessage

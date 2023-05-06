@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db.models import QuerySet, Prefetch
+from django.db.models import Prefetch, QuerySet
 
 from customer import models, serializers
 from utils.views import OrganizationMixin

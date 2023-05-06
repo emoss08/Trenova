@@ -15,13 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db import models
 from typing import Any, Type
 
 from cacheops import invalidate_obj
+from django.db import models
 
 
 def invalidate_cache(
-    sender: Type[models.Model], instance: Type[models.Model], **kwargs: Any
+    sender: type[models.Model], instance: type[models.Model], **kwargs: Any
 ) -> None:
     invalidate_obj(instance)

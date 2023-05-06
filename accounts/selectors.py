@@ -16,12 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 from typing import TYPE_CHECKING
 
-from django.db.models import QuerySet, F
+from django.db.models import QuerySet
 
 from accounts import models
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
+
     from utils.types import ModelUUID
 
 
