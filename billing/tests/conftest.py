@@ -27,11 +27,7 @@ from billing.tests.factories import (
     DocumentClassificationFactory,
 )
 from commodities.factories import CommodityFactory
-from customer.factories import (
-    CustomerBillingProfileFactory,
-    CustomerContactFactory,
-    CustomerFactory,
-)
+from customer.factories import CustomerBillingProfileFactory, CustomerFactory
 from order.tests.factories import OrderFactory, OrderTypeFactory
 from organization.factories import EmailProfileFactory
 from worker.factories import WorkerFactory
@@ -109,30 +105,6 @@ def email_profile() -> Generator[Any, Any, None]:
     Email Profile fixture
     """
     yield EmailProfileFactory()
-
-
-@pytest.fixture
-def order() -> Generator[Any, Any, None]:
-    """
-    Order fixture
-    """
-    yield OrderFactory()
-
-
-@pytest.fixture
-def customer() -> Generator[Any, Any, None]:
-    """
-    Customer fixture
-    """
-    yield CustomerFactory()
-
-
-@pytest.fixture
-def customer_contact() -> Generator[Any, Any, None]:
-    """
-    Customer Contact fixture
-    """
-    yield CustomerContactFactory()
 
 
 @pytest.fixture
