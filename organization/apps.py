@@ -125,3 +125,15 @@ class OrganizationConfig(AppConfig):
             sender="organization.TaxRate",
         )
         post_delete.connect(invalidate_cache, sender="organization.TaxRate")
+
+        # Notification Types & Settings
+        post_save.connect(
+            signals.create_notification_types,
+            sender="organization.Organization",
+            dispatch_uid="create_notification_types",
+        )
+        post_save.connect(
+            signals.create_notification_settings,
+            sender="organization.NotificationType",
+            dispatch_uid="create_notification_settings",
+        )

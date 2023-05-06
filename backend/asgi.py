@@ -34,7 +34,7 @@ if sys.implementation.name == "pypy":
     )
 
 console = Console()
-logo = text2art("MONTA", font="Larry 3D")  # type: ignore
+logo = text2art("MONTA", font="Larry 3D")
 console.print(logo, style="bold purple")
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
