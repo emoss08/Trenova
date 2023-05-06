@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import apps
+from django.db.models import QuerySet
 from rest_framework import generics
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -77,8 +78,7 @@ class TableColumnsAPIView(generics.GenericAPIView):
 
 
 class CustomReportViewSet(OrganizationMixin):
-    """
-    A viewset for managing CustomReport objects, with filters for name and table.
+    """A viewset for managing CustomReport objects, with filters for name and table.
 
     Attributes:
         queryset (QuerySet): The queryset used for retrieving CustomReport objects.
@@ -92,3 +92,14 @@ class CustomReportViewSet(OrganizationMixin):
         "name",
         "table",
     )
+
+    def get_queryset(self) -> QuerySet[models.CustomReport]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "table",
+            "name",
+            "organization_id",
+        )
+        return queryset
