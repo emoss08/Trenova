@@ -125,32 +125,6 @@ class ReasonCodeSerializer(GenericSerializer):
 
 
 class OrderSerializer(GenericSerializer):
-    """A serializer for the `Order` model.
-
-    A serializer class for the Order Model. This serializer is used
-    to convert the Order model instances into a Python dictionary
-    format that can be rendered into a JSON response. It also defines the fields
-    that should be included in the serialized representation of the model.
-
-    Attributes:
-        order_type (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the type of the order.
-        revenue_code (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the revenue code of the order.
-        origin_location (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the origin location of the order.
-        destination_location (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the destination location of the order.
-        customer (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the customer of the order.
-        commodity (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the commodity of the order.
-        entered_by (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the user that entered the order.
-        hazmat (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the hazardous material of the order.
-    """
-
     order_type = serializers.PrimaryKeyRelatedField(
         queryset=models.OrderType.objects.all(),
     )
