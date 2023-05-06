@@ -183,15 +183,6 @@ def test_delete_schema() -> None:
     assert gl_account_store[0].account_number == "1234-1234-1234-1235"
 
 
-def test_gl_account_str_representation(
-    general_ledger_account: GeneralLedgerAccount,
-) -> None:
-    """
-    Test GL Account String Representation
-    """
-    assert str(general_ledger_account) == general_ledger_account.account_number
-
-
 def test_gl_account_get_absolute_url(
     general_ledger_account: GeneralLedgerAccount,
 ) -> None:

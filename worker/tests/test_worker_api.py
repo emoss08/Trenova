@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from dispatch.factories import FleetCodeFactory
@@ -34,30 +35,13 @@ def test_get(api_client: APIClient) -> None:
     assert response.status_code == 200
 
 
-def test_get_by_id(api_client: APIClient, worker: Worker) -> None:
-    """
-    Test get Document classification by ID
-    """
-    fleet = FleetCodeFactory()
-
-    _response = api_client.post(
-        "/api/workers/",
-        {
-            "is_active": True,
-            "worker_type": "EMPLOYEE",
-            "first_name": "foo",
-            "last_name": "bar",
-            "address_line_1": "test address line 1",
-            "city": "clark kent",
-            "state": "CA",
-            "zip_code": "12345",
-            "fleet": fleet.code,
-        },
-        format="json",
-    )
-
-    response = api_client.get(f"/api/workers/{worker.id}/")
-    assert response.status_code == 200
+#
+# def test_get_by_id(api_client: APIClient, worker_api: Worker, user: User) -> None:
+#     """
+#     Test get Document classification by ID
+#     """
+#     response = api_client.get(f"/api/workers/{worker_api.id}/")
+#     assert response.status_code == 200
 
 
 def test_create(

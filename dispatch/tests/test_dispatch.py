@@ -80,7 +80,7 @@ def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
         sleeper_berth_time=0,
         on_duty_time=14 * 60,
         violation_time=0,
-        miles_driven=100,
+        miles_driven=400,
         seventy_hour_time=70 * 60,
         current_status="On Duty",
         current_location="Test Location",
