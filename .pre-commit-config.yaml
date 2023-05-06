@@ -30,4 +30,4 @@ repos:
     rev: 'v0.0.265'
     hooks:
       - id: ruff
-        args: [ --check, --fix, --ignore=E501 ]
+        args: [ --fix, --ignore=E501 ]
