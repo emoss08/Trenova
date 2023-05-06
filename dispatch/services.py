@@ -129,7 +129,7 @@ def feasibility_tool(
         seventy_hour_time = 70 * 60
 
     # Check if the driver can cover the total order miles within the available days
-    if total_order_miles > max_possible_miles:
+    if total_order_miles >= max_possible_miles:
         return None
 
     # Calculate the number of breaks required to complete the order

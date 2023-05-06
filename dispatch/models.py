@@ -59,16 +59,12 @@ class DispatchControl(GenericModel):
             value is True.
         trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default
             value is False.
-        distance_method (ChoiceField): ChoiceField that selects the distance method from the available choices
-            (Google, Monta). Default value is "Monta".
         dupe_trailer_check (BooleanField): Boolean field that enforces the duplicate trailer check for the company.
             Default value is False.
         regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default
             value is False.
         prev_orders_on_hold (BooleanField): Boolean field that prevents dispatch of orders on hold for the company.
             Default value is False.
-        generate_routes (BooleanField): Boolean field that indicates whether routes should be generated for the
-            company. Default value is False.
 
     Methods:
         meta: Meta class for the DispatchControl model.

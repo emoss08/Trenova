@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import threading
 
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import permissions, status, viewsets
@@ -57,9 +57,28 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        queryset: QuerySet[models.Organization] = self.queryset.prefetch_related(
-            "depots",
-            "depots__details",
+        queryset = (
+            self.queryset.filter(id=self.request.user.organization_id)  # type: ignore
+            .prefetch_related(
+                Prefetch(
+                    "depots",
+                    queryset=models.Depot.objects.filter(
+                        organization=self.request.user.organization
+                    ).only("id", "organization_id"),
+                ),
+            )
+            .only(
+                "id",
+                "name",
+                "scac_code",
+                "org_type",
+                "timezone",
+                "language",
+                "currency",
+                "date_format",
+                "time_format",
+                "logo",
+            )
         )
         return queryset
 
@@ -79,6 +98,33 @@ class DepotViewSet(OrganizationMixin):
     serializer_class = serializers.DepotSerializer
     queryset = models.Depot.objects.all()
 
+    def get_queryset(self) -> QuerySet[models.Depot]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("detail")
+            .only(
+                "id",
+                "organization_id",
+                "name",
+                "description",
+                "detail__id",
+                "detail__organization_id",
+                "detail__address_line_1",
+                "detail__address_line_2",
+                "detail__city",
+                "detail__state",
+                "detail__zip_code",
+                "detail__phone_number",
+                "detail__alternate_phone_number",
+                "detail__fax_number",
+                "detail__created",
+                "detail__modified",
+            )
+        )
+        return queryset
+
 
 @extend_schema(
     parameters=[
@@ -95,6 +141,18 @@ class DepartmentViewSet(OrganizationMixin):
     serializer_class = serializers.DepartmentSerializer
     queryset = models.Department.objects.all()
 
+    def get_queryset(self) -> QuerySet[models.Department]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "description",
+            "depot__id",
+            "name",
+        )
+        return queryset
+
 
 class EmailProfileViewSet(OrganizationMixin):
     """
@@ -103,6 +161,22 @@ class EmailProfileViewSet(OrganizationMixin):
 
     serializer_class = serializers.EmailProfileSerializer
     queryset = models.EmailProfile.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.EmailProfile]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "name",
+            "host",
+            "port",
+            "username",
+            "protocol",
+            "password",
+            "email",
+        )
+        return queryset
 
 
 class EmailControlViewSet(OrganizationMixin):
@@ -115,6 +189,12 @@ class EmailControlViewSet(OrganizationMixin):
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "put", "patch", "head", "options"]
 
+    def get_queryset(self) -> QuerySet[models.EmailControl]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only("id", "organization_id", "billing_email_profile_id")
+        return queryset
+
 
 class EmailLogViewSet(viewsets.ModelViewSet):
     """
@@ -125,6 +205,54 @@ class EmailLogViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.EmailLogSerializer
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "head", "options"]
+
+
+class TaxRateViewSet(OrganizationMixin):
+    """
+    TaxRate ViewSet to manage requests to the tax rate endpoint
+    """
+
+    serializer_class = serializers.TaxRateSerializer
+    queryset = models.TaxRate.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.TaxRate]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "rate",
+            "name",
+        )
+        return queryset
+
+
+class TableChangeAlertViewSet(OrganizationMixin):
+    """
+    TableChangeAlert ViewSet to manage requests to the table change alert endpoint
+    """
+
+    serializer_class = serializers.TableChangeAlertSerializer
+    queryset = models.TableChangeAlert.objects.all()
+
+    def get_queryset(self) -> QuerySet[models.TableChangeAlert]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "is_active",
+            "name",
+            "database_action",
+            "table",
+            "description",
+            "email_profile_id",
+            "function_name",
+            "trigger_name",
+            "listener_name",
+            "effective_date",
+            "expiration_date",
+        )
+        return queryset
 
 
 @extend_schema(
@@ -317,21 +445,3 @@ def active_threads(request: Request) -> Response:
         for thread in threads
     ]
     return Response(thread_list, status=status.HTTP_200_OK)
-
-
-class TaxRateViewSet(OrganizationMixin):
-    """
-    TaxRate ViewSet to manage requests to the tax rate endpoint
-    """
-
-    serializer_class = serializers.TaxRateSerializer
-    queryset = models.TaxRate.objects.all()
-
-
-class TableChangeAlertViewSet(OrganizationMixin):
-    """
-    TableChangeAlert ViewSet to manage requests to the table change alert endpoint
-    """
-
-    serializer_class = serializers.TableChangeAlertSerializer
-    queryset = models.TableChangeAlert.objects.all()

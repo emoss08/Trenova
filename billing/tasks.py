@@ -82,7 +82,7 @@ def automate_mass_order_billing(self: "Task") -> str:
 
 @shared_task(name="transfer_to_billing_task", bind=True, base=Singleton)
 def transfer_to_billing_task(
-    self: "Task", *, user_id: ModelUUID, order_pros: list[str]
+    self: "Task", *, user_id: str, order_pros: list[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged in user.

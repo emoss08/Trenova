@@ -15,30 +15,13 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.apps import AppConfig
-from django.db.models.signals import post_delete, post_save, pre_save
+from typing import Any
 
-from core.signals import invalidate_cache
+from cacheops import invalidate_obj
+from django.db import models
 
 
-class DispatchConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "dispatch"
-
-    def ready(self) -> None:
-        from dispatch import signals
-
-        pre_save.connect(
-            signals.set_rate_number,
-            sender="dispatch.Rate",
-            dispatch_uid="set_rate_number",
-        )
-        pre_save.connect(
-            signals.set_charge_amount_on_billing_table,
-            sender="dispatch.RateBillingTable",
-            dispatch_uid="set_charge_amount_on_billing_table",
-        )
-
-        # Dispatch Control cache invalidations
-        post_save.connect(invalidate_cache, sender="dispatch.DispatchControl")
-        post_delete.connect(invalidate_cache, sender="dispatch.DispatchControl")
+def invalidate_cache(
+    sender: type[models.Model], instance: type[models.Model], **kwargs: Any
+) -> None:
+    invalidate_obj(instance)

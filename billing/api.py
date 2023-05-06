@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import permissions, status
@@ -51,6 +51,22 @@ class BillingControlViewSet(OrganizationMixin):
     serializer_class = serializers.BillingControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
 
+    def get_queryset(self) -> QuerySet[models.BillingControl]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "order_transfer_criteria",
+            "auto_mark_ready_to_bill",
+            "remove_billing_history",
+            "validate_customer_rates",
+            "auto_bill_criteria",
+            "auto_bill_orders",
+            "enforce_customer_billing",
+            "organization__id",
+        )
+        return queryset
+
 
 class BillingQueueViewSet(OrganizationMixin):
     """
@@ -76,6 +92,45 @@ class BillingQueueViewSet(OrganizationMixin):
     )
     http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
+    def get_queryset(self) -> QuerySet[models.BillingQueue]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+            .only(
+                "id",
+                "freight_charge_amount_currency",
+                "commodity__id",
+                "bol_number",
+                "total_amount_currency",
+                "other_charge_total_currency",
+                "commodity_descr",
+                "consignee_ref_number",
+                "mileage",
+                "total_amount",
+                "pieces",
+                "user__id",
+                "freight_charge_amount",
+                "invoice_number",
+                "customer__id",
+                "bill_date",
+                "weight",
+                "ready_to_bill",
+                "is_cancelled",
+                "worker__id",
+                "other_charge_total",
+                "order_type__id",
+                "organization__id",
+                "order__id",
+                "revenue_code__id",
+                "is_summary",
+                "bill_type",
+            )
+        )
+
+        return queryset
+
 
 class BillingHistoryViewSet(OrganizationMixin):
     """
@@ -100,6 +155,43 @@ class BillingHistoryViewSet(OrganizationMixin):
         "order_type",
     )
     http_method_names = ["get", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[models.BillingHistory]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+            .only(
+                "id",
+                "freight_charge_amount_currency",
+                "commodity__id",
+                "bol_number",
+                "total_amount_currency",
+                "other_charge_total_currency",
+                "commodity_descr",
+                "consignee_ref_number",
+                "mileage",
+                "total_amount",
+                "pieces",
+                "user__id",
+                "freight_charge_amount",
+                "invoice_number",
+                "customer__id",
+                "bill_date",
+                "weight",
+                "is_cancelled",
+                "worker__id",
+                "other_charge_total",
+                "order_type__id",
+                "organization__id",
+                "order__id",
+                "revenue_code__id",
+                "is_summary",
+                "bill_type",
+            )
+        )
+        return queryset
 
 
 class BillingTransferLogViewSet(OrganizationMixin):
@@ -139,6 +231,21 @@ class ChargeTypeViewSet(OrganizationMixin):
     serializer_class = serializers.ChargeTypeSerializer
     filterset_fields = ("name",)
 
+    def get_queryset(self) -> QuerySet[models.ChargeType]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+            .only(
+                "id",
+                "organization__id",
+                "name",
+                "description",
+            )
+        )
+        return queryset
+
 
 class AccessorialChargeViewSet(OrganizationMixin):
     """
@@ -158,6 +265,26 @@ class AccessorialChargeViewSet(OrganizationMixin):
     serializer_class = serializers.AccessorialChargeSerializer
     filterset_fields = ("code", "is_detention", "method")
 
+    def get_queryset(self) -> QuerySet[models.AccessorialCharge]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+            .only(
+                "id",
+                "is_detention",
+                "charge_amount",
+                "code",
+                "description",
+                "method",
+                "organization__id",
+                "charge_amount_currency",
+            )
+        )
+
+        return queryset
+
 
 class DocumentClassificationViewSet(OrganizationMixin):
     """
@@ -176,6 +303,21 @@ class DocumentClassificationViewSet(OrganizationMixin):
     queryset = models.DocumentClassification.objects.all()
     serializer_class = serializers.DocumentClassificationSerializer
     filterset_fields = ("name",)
+
+    def get_queryset(self) -> QuerySet[models.DocumentClassification]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("organization")
+            .only(
+                "id",
+                "name",
+                "organization__id",
+                "description",
+            )
+        )
+        return queryset
 
 
 @extend_schema(
@@ -317,7 +459,9 @@ def transfer_to_billing(request: Request) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    tasks.transfer_to_billing_task.delay(user_id=request.user.id, order_pros=order_pros)
+    tasks.transfer_to_billing_task.delay(
+        user_id=str(request.user.id), order_pros=order_pros
+    )
 
     return Response(
         {"message": "Transfer to billing task started."}, status=status.HTTP_200_OK

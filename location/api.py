@@ -17,8 +17,9 @@
 
 from typing import Any
 
-from requests import Response
+from django.db.models import Prefetch, QuerySet
 from rest_framework.request import Request
+from rest_framework.response import Response
 
 from location import models, selectors, serializers
 from utils.views import OrganizationMixin
@@ -56,17 +57,74 @@ class LocationViewSet(OrganizationMixin):
     serializer_class = serializers.LocationSerializer
     filterset_fields = ("location_category__name", "depot__name", "is_geocoded")
 
-    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:  # type: ignore
-        response = super().list(request, *args, **kwargs)
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        queryset = self.filter_queryset(self.get_queryset())
 
-        locations = response.data["results"]
+        # Annotate the queryset with average wait time
+        queryset = selectors.get_avg_wait_time(queryset=queryset)
 
-        for location in locations:
-            location_obj = models.Location.objects.get(id=location["id"])
-            wait_time_avg = selectors.get_avg_wait_time(location=location_obj)
-            location["wait_time_avg"] = wait_time_avg
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = serializer.data
 
-        return response  # type: ignore
+            # Manually add wait_time_avg to the serialized data
+            for item, obj in zip(data, page):
+                item["wait_time_avg"] = obj.wait_time_avg
+
+            return self.get_paginated_response(data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+
+        # Manually add wait_time_avg to the serialized data
+        for item, obj in zip(data, queryset):
+            item["wait_time_avg"] = obj.wait_time_avg
+
+        return Response(data)
+
+    def get_queryset(self) -> QuerySet[models.Location]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .prefetch_related(
+                Prefetch(
+                    lookup="location_comments",
+                    queryset=models.LocationComment.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only(
+                        "id",
+                    ),
+                ),
+                Prefetch(
+                    lookup="location_contacts",
+                    queryset=models.LocationContact.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only(
+                        "id",
+                    ),
+                ),
+            )
+            .only(
+                "id",
+                "organization_id",
+                "description",
+                "longitude",
+                "address_line_1",
+                "address_line_2",
+                "is_geocoded",
+                "zip_code",
+                "latitude",
+                "place_id",
+                "city",
+                "depot",
+                "location_category_id",
+                "code",
+                "state",
+            )
+        )
+        return queryset
 
 
 class LocationContactViewSet(OrganizationMixin):
@@ -82,6 +140,20 @@ class LocationContactViewSet(OrganizationMixin):
     queryset = models.LocationContact.objects.all()
     serializer_class = serializers.LocationContactSerializer
 
+    def get_queryset(self) -> QuerySet[models.LocationContact]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "location_id",
+            "organization_id",
+            "fax",
+            "phone",
+            "email",
+            "name",
+        )
+        return queryset
+
 
 class LocationCommentViewSet(OrganizationMixin):
     """A viewset for viewing and editing Location Comments information in the system.
@@ -94,5 +166,16 @@ class LocationCommentViewSet(OrganizationMixin):
     Filter is also available, with the ability to filter by Comment Type Name.
     """
 
-    queryset = models.LocationContact.objects.all()
+    queryset = models.LocationComment.objects.all()
     serializer_class = serializers.LocationCommentSerializer
+
+    def get_queryset(self) -> QuerySet[models.LocationComment]:
+        queryset = self.queryset.filter().only(
+            "id",
+            "comment_type_id",
+            "location_id",
+            "entered_by_id",
+            "comment",
+            "organization_id",
+        )
+        return queryset

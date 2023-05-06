@@ -68,9 +68,6 @@ class StopCommentSerializer(GenericSerializer):
         determines the user who entered the stop comment.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
     stop = serializers.PrimaryKeyRelatedField(
         queryset=models.Stop.objects.all(),
     )
@@ -129,9 +126,6 @@ class ServiceIncidentSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
     movement = serializers.PrimaryKeyRelatedField(
         queryset=Movement.objects.all(),
     )

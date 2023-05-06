@@ -14,13 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import datetime
-from typing import TYPE_CHECKING, Any
 
-from django.db.models import Avg, ExpressionWrapper, F, fields
+from typing import TYPE_CHECKING
+
+from django.db.models import Avg, ExpressionWrapper, F, QuerySet
+from django.db.models.fields import DurationField
 
 from location import models
-from stops.models import Stop
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID
@@ -33,44 +33,42 @@ def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
         return None
 
 
-def get_avg_wait_time(*, location: models.Location) -> datetime.timedelta | Any:
-    """Calculates the average wait time for a given location and returns it as a `datetime.timedelta` object.
+def get_avg_wait_time(
+    *, queryset: QuerySet[models.Location]
+) -> QuerySet[models.Location]:
+    """Annotates the given queryset with the average wait time for each location.
 
     Args:
-        location (models.Location): The location for which to calculate the average wait time.
-
-    Returns:
-        datetime.timedelta: A `datetime.timedelta` object representing the average wait time for the given
-        location. The object represents a duration as a combination of days, seconds,
-        and microseconds.
+        queryset: The queryset to annotate.
     """
-    return (
-        Stop.objects.filter(location=location)
-        .annotate(
-            wait_time=ExpressionWrapper(
-                F("departure_time") - F("arrival_time"),
-                output_field=fields.DurationField(),
+    return queryset.annotate(
+        wait_time_avg=Avg(
+            ExpressionWrapper(
+                F("stop__departure_time") - F("stop__arrival_time"),
+                output_field=DurationField(),
             )
         )
-        .aggregate(avg_wait_time=Avg("wait_time"))["avg_wait_time"]
     )
 
 
-def get_avg_wait_time_hours_minutes(*, location: models.Location) -> tuple[int, int]:
+def get_avg_wait_time_hours_minutes(
+    *, queryset: QuerySet[models.Location]
+) -> tuple[int, int]:
     """Returns the average wait time in hours and minutes for a given location, formatted as a tuple of integers.
 
     Args:
-        location (models.Location): The location for which to calculate the average wait time.
+        queryset: The queryset to annotate.
 
     Returns:
         Tuple[int, int]: A tuple of integers representing the average wait time in hours and minutes. The
         first element of the tuple is the number of hours in the average wait time, and
         the second element is the number of minutes in the average wait time.
     """
-    avg_wait_time = get_avg_wait_time(location=location)
+    avg_wait_time = get_avg_wait_time(queryset=queryset)
 
-    total_seconds = int(avg_wait_time.total_seconds())
-    hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    return hours, minutes
+    for location in avg_wait_time:
+        total_seconds = location.wait_time_avg.total_seconds()
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return hours, minutes
+    return 0, 0

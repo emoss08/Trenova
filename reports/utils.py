@@ -15,16 +15,15 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Tuple
 
 from django_celery_beat.models import CrontabSchedule
 
-from reports import models, exceptions
+from reports import exceptions, models
 
 
 def get_crontab_schedule(
     *, schedule_type: str, instance: models.ScheduledReport
-) -> Tuple[CrontabSchedule, str]:
+) -> tuple[CrontabSchedule, str]:
     """Get or create a CrontabSchedule object based on the schedule type and scheduled report instance.
 
     Args:

@@ -598,6 +598,7 @@ class Trailer(GenericModel):
         help_text=_("VIN number of the equipment."),
         validators=[us_vin_number_validator],
     )
+    # TODO (wolfred): Change this to fleet_code
     fleet = models.ForeignKey(
         "dispatch.FleetCode",
         on_delete=models.CASCADE,
