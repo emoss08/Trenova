@@ -334,14 +334,10 @@ class DepotDetail(TimeStampedModel):
     )
     state = USStateField(
         _("State"),
-        blank=True,
-        null=True,
         help_text=_("The state of the depot."),
     )
     zip_code = USZipCodeField(
         _("Zip Code"),
-        blank=True,
-        null=True,
         help_text=_("The zip code of the depot."),
     )
     phone_number = PhoneNumberField(

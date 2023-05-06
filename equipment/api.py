@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.db.models import Prefetch, QuerySet
 
 from equipment import models, serializers
 from utils.views import OrganizationMixin
@@ -34,6 +35,30 @@ class EquipmentTypeViewSet(OrganizationMixin):
     queryset = models.EquipmentType.objects.all()
     serializer_class = serializers.EquipmentTypeSerializer
 
+    def get_queryset(self) -> QuerySet[models.EquipmentType]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .select_related("equipment_type_detail")
+            .only(
+                "organization_id",
+                "name",
+                "description",
+                "id",
+                "equipment_type_detail__id",
+                "equipment_type_detail__idling_fuel_usage",
+                "equipment_type_detail__height",
+                "equipment_type_detail__exempt_from_tolls",
+                "equipment_type_detail__equipment_type__id",
+                "equipment_type_detail__variable_cost",
+                "equipment_type_detail__weight",
+                "equipment_type_detail__equipment_class",
+                "equipment_type_detail__fixed_cost",
+            )
+        )
+        return queryset
+
 
 class TractorViewSet(OrganizationMixin):
     """A viewset for viewing and editing tractors information in the system.
@@ -53,10 +78,47 @@ class TractorViewSet(OrganizationMixin):
         "is_active",
         "manufacturer",
         "equipment_type__name",
-        "fleet__code",
         "has_berth",
         "highway_use_tax",
     )
+
+    def get_queryset(self) -> QuerySet[models.Tractor]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization__id",
+            "equipment_type__id",
+            "transmission_manufacturer",
+            "num_of_axles",
+            "leased",
+            "leased_date",
+            "ifta_qualified",
+            "odometer",
+            "manufacturer",
+            "primary_worker__id",
+            "vin_number",
+            "engine_hours",
+            "highway_use_tax",
+            "is_active",
+            "fuel_draw_capacity",
+            "secondary_worker__id",
+            "model_year",
+            "state",
+            "license_plate_number",
+            "code",
+            "hos_exempt",
+            "transmission_type",
+            "model",
+            "owner_operated",
+            "has_electronic_engine",
+            "manufactured_date",
+            "fleet__code",
+            "has_berth",
+            "description",
+            "aux_power_unit_type",
+        )
+        return queryset
 
 
 class TrailerViewSet(OrganizationMixin):
@@ -75,6 +137,38 @@ class TrailerViewSet(OrganizationMixin):
     serializer_class = serializers.TrailerSerializer
     filterset_fields = ("is_active", "equipment_type__name", "fleet__code", "is_leased")
 
+    def get_queryset(self) -> QuerySet[models.Tractor]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "make",
+            "lease_expiration_date",
+            "fleet_id",
+            "axles",
+            "owner",
+            "license_plate_number",
+            "length",
+            "model",
+            "tag_identifier",
+            "leased_date",
+            "planning_comment",
+            "license_plate_expiration_date",
+            "code",
+            "vin_number",
+            "is_leased",
+            "is_active",
+            "state",
+            "equipment_type_id",
+            "width",
+            "year",
+            "last_inspection",
+            "height",
+            "license_plate_state",
+        )
+        return queryset
+
 
 class EquipmentManufacturerViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
@@ -91,6 +185,17 @@ class EquipmentManufacturerViewSet(OrganizationMixin):
     queryset = models.EquipmentManufacturer.objects.all()
     serializer_class = serializers.EquipmentManufacturerSerializer
 
+    def get_queryset(self) -> QuerySet[models.EquipmentManufacturer]:
+        queryset = self.queryset.filter(
+            organization__exact=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "name",
+            "organization_id",
+            "description",
+        )
+        return queryset
+
 
 class EquipmentMaintenancePlanViewSet(OrganizationMixin):
     """A viewset for viewing and editing customer information in the system.
@@ -106,3 +211,31 @@ class EquipmentMaintenancePlanViewSet(OrganizationMixin):
 
     queryset = models.EquipmentMaintenancePlan.objects.all()
     serializer_class = serializers.EquipmentMaintenancePlanSerializer
+
+    def get_queryset(self) -> QuerySet[models.EquipmentMaintenancePlan]:
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .prefetch_related(
+                Prefetch(
+                    "equipment_types",
+                    queryset=models.EquipmentType.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only("id"),
+                )
+            )
+            .only(
+                "organization_id",
+                "id",
+                "miles",
+                "by_engine_hours",
+                "name",
+                "by_distance",
+                "months",
+                "by_time",
+                "engine_hours",
+                "description",
+            )
+        )
+        return queryset

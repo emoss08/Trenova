@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.db.models import QuerySet
 
 from movements import models, serializers
 from utils.views import OrganizationMixin
@@ -43,3 +44,18 @@ class MovementViewSet(OrganizationMixin):
         "secondary_worker__code",
         "order__pro_number",
     )
+
+    def get_queryset(self) -> QuerySet[models.Movement]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "order_id",
+            "ref_num",
+            "status",
+            "secondary_worker_id",
+            "primary_worker_id",
+            "tractor_id",
+            "organization_id",
+        )
+        return queryset

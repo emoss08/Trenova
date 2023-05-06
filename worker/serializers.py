@@ -85,6 +85,7 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
+    id = serializers.UUIDField(required=False)
     depot = serializers.PrimaryKeyRelatedField(  # type: ignore
         queryset=Depot.objects.all(),
         allow_null=True,
@@ -99,7 +100,7 @@ class WorkerSerializer(GenericSerializer):
     is_active = serializers.BooleanField(default=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
-    code = serializers.CharField(required=False)
+    code = serializers.CharField(required=False, allow_null=True)
     comments = WorkerCommentSerializer(many=True, required=False)
 
     class Meta:

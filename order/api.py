@@ -48,6 +48,26 @@ class OrderControlViewSet(OrganizationMixin):
     serializer_class = serializers.OrderControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
 
+    def get_queryset(self) -> QuerySet[models.OrderControl]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "auto_rate_orders",
+            "calculate_distance",
+            "enforce_rev_code",
+            "enforce_voided_comm",
+            "generate_routes",
+            "enforce_commodity",
+            "auto_sequence_stops",
+            "auto_order_total",
+            "enforce_origin_destination",
+            "check_for_duplicate_bol",
+            "remove_orders",
+        )
+        return queryset
+
 
 class OrderTypeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Order types in the system.
@@ -71,6 +91,18 @@ class OrderTypeViewSet(OrganizationMixin):
     serializer_class = serializers.OrderTypeSerializer
     filterset_fields = ("is_active",)
 
+    def get_queryset(self) -> QuerySet[models.OrderType]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "name",
+            "is_active",
+            "description",
+        )
+        return queryset
+
 
 class ReasonCodeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Reason codes in the system.
@@ -93,6 +125,19 @@ class ReasonCodeViewSet(OrganizationMixin):
     queryset = models.ReasonCode.objects.all()
     serializer_class = serializers.ReasonCodeSerializer
     filterset_fields = ("is_active",)
+
+    def get_queryset(self) -> QuerySet[models.ReasonCode]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "is_active",
+            "code",
+            "code_type",
+            "description",
+        )
+        return queryset
 
 
 class OrderViewSet(OrganizationMixin):
@@ -137,13 +182,82 @@ class OrderViewSet(OrganizationMixin):
         Returns:
             The filtered queryset.
         """
-        return self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
-        ).prefetch_related(
-            Prefetch(
-                "movements", queryset=Movement.objects.only("id", "order_id").all()
+        queryset = (
+            self.queryset.filter(
+                organization=self.request.user.organization  # type: ignore
+            )
+            .prefetch_related(
+                Prefetch(
+                    lookup="movements",
+                    queryset=Movement.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only("id", "order_id"),
+                ),
+                Prefetch(
+                    lookup="order_documentation",
+                    queryset=models.OrderDocumentation.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only("id", "order_id"),
+                ),
+                Prefetch(
+                    lookup="order_comments",
+                    queryset=models.OrderComment.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only("id", "order_id"),
+                ),
+                Prefetch(
+                    lookup="additional_charges",
+                    queryset=models.AdditionalCharge.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    ).only("id", "order_id"),
+                ),
+            )
+            .only(
+                "pro_number",
+                "hazmat_id",
+                "sub_total_currency",
+                "id",
+                "destination_address",
+                "billing_transfer_date",
+                "voided_comm",
+                "destination_appointment_window_start",
+                "weight",
+                "billed",
+                "sub_total",
+                "bol_number",
+                "other_charge_amount",
+                "revenue_code_id",
+                "temperature_min",
+                "mileage",
+                "other_charge_amount_currency",
+                "auto_rate",
+                "origin_appointment_window_start",
+                "origin_appointment_window_end",
+                "status",
+                "freight_charge_amount",
+                "freight_charge_amount_currency",
+                "bill_date",
+                "pieces",
+                "destination_appointment_window_end",
+                "entered_by_id",
+                "consignee_ref_number",
+                "origin_address",
+                "origin_location_id",
+                "equipment_type_id",
+                "transferred_to_billing",
+                "ready_to_bill",
+                "order_type_id",
+                "comment",
+                "temperature_max",
+                "destination_location_id",
+                "commodity_id",
+                "rate_method",
+                "rate_id",
+                "customer_id",
             )
         )
+
+        return queryset
 
 
 class OrderDocumentationViewSet(OrganizationMixin):
@@ -163,6 +277,17 @@ class OrderDocumentationViewSet(OrganizationMixin):
 
     queryset = models.OrderDocumentation.objects.all()
     serializer_class = serializers.OrderDocumentationSerializer
+
+    def get_queryset(self) -> QuerySet[models.OrderDocumentation]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "document",
+            "order_id",
+            "document_class_id",
+        )
+        return queryset
 
 
 class OrderCommentViewSet(OrganizationMixin):
@@ -190,6 +315,18 @@ class OrderCommentViewSet(OrganizationMixin):
         "entered_by",
     )
 
+    def get_queryset(self) -> QuerySet[models.OrderComment]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "comment",
+            "order_id",
+            "comment_type_id",
+            "entered_by_id",
+        )
+        return queryset
+
 
 class AdditionalChargeViewSet(OrganizationMixin):
     """A viewset for viewing and editing Additional charges in the system.
@@ -215,3 +352,20 @@ class AdditionalChargeViewSet(OrganizationMixin):
         "accessorial_charge",
         "entered_by",
     )
+
+    def get_queryset(self) -> QuerySet[models.AdditionalCharge]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "accessorial_charge_id",
+            "order_id",
+            "description",
+            "charge_amount",
+            "unit",
+            "entered_by_id",
+            "sub_total",
+            "charge_amount_currency",
+            "sub_total_currency",
+        )
+        return queryset

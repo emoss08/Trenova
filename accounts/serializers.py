@@ -15,19 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any, TypeVar
+from typing import Any
 
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
-from django.db.models import Model
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
 from organization.models import Department, Organization
 from utils.serializers import GenericSerializer
-
-_MT = TypeVar("_MT", bound=Model)
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -223,7 +220,7 @@ class UserProfileSerializer(GenericSerializer):
         """
 
         model = models.UserProfile
-        extra_fields = ("job_title", "title_name")
+        extra_fields = ("job_title", "title_name", "organization")
         extra_read_only_fields = (
             "id",
             "user",
@@ -300,15 +297,14 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-        allow_null=True,
-        required=False,
+    organization = serializers.UUIDField(
+        source="organization.id",
+        read_only=True,
     )
     department = serializers.PrimaryKeyRelatedField(
         queryset=Department.objects.all(),
-        allow_null=True,
         required=False,
+        allow_null=True,
     )
     profile = UserProfileSerializer(required=False)
 
@@ -318,7 +314,7 @@ class UserSerializer(GenericSerializer):
         """
 
         model = models.User
-        extra_fields = ("profile", "department")
+        extra_fields = ("profile", "organization")
         extra_read_only_fields = ("groups", "user_permissions", "is_staff", "is_active")
         extra_kwargs = {
             "password": {"write_only": True, "required": False},

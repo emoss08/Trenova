@@ -83,6 +83,8 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
                 .only(
                     "user__id",
                     "user__organization",
+                    "user__is_active",
+                    "user__username",
                     "key",
                     "expires",
                     "id",

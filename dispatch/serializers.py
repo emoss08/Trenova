@@ -163,6 +163,12 @@ class RateSerializer(GenericSerializer):
     equipment_type = serializers.PrimaryKeyRelatedField(
         queryset=EquipmentType.objects.all(), required=False, allow_null=True
     )
+    rate_billing_tables = serializers.PrimaryKeyRelatedField(
+        queryset=models.RateBillingTable.objects.all(),
+        required=False,
+        allow_null=True,
+        many=True,
+    )
 
     class Meta:
         """
@@ -176,6 +182,7 @@ class RateSerializer(GenericSerializer):
             "commodity",
             "order_type",
             "equipment_type",
+            "rate_billing_tables",
         )
 
 

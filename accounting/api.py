@@ -27,9 +27,7 @@ class GeneralLedgerAccountViewSet(OrganizationMixin):
     General Ledger Account ViewSet
     """
 
-    serializer_class: type[
-        serializers.GeneralLedgerAccountSerializer
-    ] = serializers.GeneralLedgerAccountSerializer
+    serializer_class = serializers.GeneralLedgerAccountSerializer
     queryset = models.GeneralLedgerAccount.objects.all()
     filterset_fields = (
         "is_active",
@@ -40,20 +38,52 @@ class GeneralLedgerAccountViewSet(OrganizationMixin):
         "account_classification",
     )
 
+    def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "organization_id",
+            "id",
+            "cash_flow_type",
+            "account_number",
+            "description",
+            "account_type",
+            "account_sub_type",
+            "account_classification",
+            "is_active",
+        )
+        return queryset
+
 
 class RevenueCodeViewSet(OrganizationMixin):
     """
     Revenue Code ViewSet
     """
 
-    serializer_class: type[
-        serializers.RevenueCodeSerializer
-    ] = serializers.RevenueCodeSerializer
+    serializer_class = serializers.RevenueCodeSerializer
     queryset = models.RevenueCode.objects.all()
     filterset_fields = (
         "expense_account",
         "revenue_account",
     )
+
+    def get_queryset(self) -> QuerySet[models.RevenueCode]:
+        """Filter the queryset to only include the current user's organization
+
+        Returns:
+            QuerySet[models.RevenueCode]: Filtered queryset
+        """
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "code",
+            "description",
+            "organization_id",
+            "expense_account_id",
+            "revenue_account_id",
+        )
+        return queryset
 
 
 class DivisionCodeViewSet(OrganizationMixin):
@@ -61,9 +91,7 @@ class DivisionCodeViewSet(OrganizationMixin):
     Division Code ViewSet
     """
 
-    serializer_class: type[
-        serializers.DivisionCodeSerializer
-    ] = serializers.DivisionCodeSerializer
+    serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
     filterset_fields = (
         "is_active",
@@ -78,22 +106,18 @@ class DivisionCodeViewSet(OrganizationMixin):
         Returns:
             QuerySet[models.DivisionCode]: Filtered queryset
         """
-        return (
-            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
-            .select_related(
-                "organization",
-                "cash_account",
-                "ap_account",
-                "expense_account",
-            )
-            .only(
-                "id",
-                "is_active",
-                "code",
-                "description",
-                "organization__id",
-                "cash_account",
-                "ap_account",
-                "expense_account",
-            )
+
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "is_active",
+            "code",
+            "description",
+            "organization_id",
+            "cash_account_id",
+            "ap_account_id",
+            "expense_account_id",
         )
+
+        return queryset

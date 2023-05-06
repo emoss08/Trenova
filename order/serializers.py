@@ -192,6 +192,24 @@ class OrderSerializer(GenericSerializer):
         allow_null=True,
         required=False,
     )
+    order_documentation = serializers.PrimaryKeyRelatedField(
+        queryset=models.OrderDocumentation.objects.all(),
+        many=True,
+        allow_null=True,
+        required=False,
+    )
+    order_comments = serializers.PrimaryKeyRelatedField(
+        queryset=models.OrderComment.objects.all(),
+        many=True,
+        allow_null=True,
+        required=False,
+    )
+    additional_charges = serializers.PrimaryKeyRelatedField(
+        queryset=models.AdditionalCharge.objects.all(),
+        many=True,
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         """Metaclass for OrderSerializer
@@ -214,6 +232,9 @@ class OrderSerializer(GenericSerializer):
             "entered_by",
             "hazmat",
             "movements",
+            "order_documentation",
+            "order_comments",
+            "additional_charges",
         )
 
 

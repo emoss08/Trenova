@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING
 
 from dispatch import exceptions, models, services
@@ -23,8 +23,9 @@ from movements.models import Movement
 from worker.models import Worker, WorkerHOS
 
 if TYPE_CHECKING:
-    from organization.models import Organization
     from django.db.models import QuerySet
+
+    from organization.models import Organization
 
 
 def calculate_worker_miles_per_week(*, worker: Worker) -> float:

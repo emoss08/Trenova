@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.db.models import QuerySet
 
 from stops import models, serializers
 from utils.views import OrganizationMixin
@@ -36,6 +37,16 @@ class QualifierCodeViewSet(OrganizationMixin):
     queryset = models.QualifierCode.objects.all()
     serializer_class = serializers.QualifierCodeSerializer
 
+    def get_queryset(self) -> QuerySet[models.QualifierCode]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "organization_id",
+            "code",
+            "description",
+        )
+        return queryset
+
 
 class StopCommentViewSet(OrganizationMixin):
     """A viewset for viewing and editing StopComment information in the system.
@@ -53,6 +64,19 @@ class StopCommentViewSet(OrganizationMixin):
 
     queryset = models.StopComment.objects.all()
     serializer_class = serializers.StopCommentSerializer
+
+    def get_queryset(self) -> QuerySet[models.StopComment]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "stop_id",
+            "comment_type_id",
+            "qualifier_code_id",
+            "comment",
+            "entered_by_id",
+        )
+        return queryset
 
 
 class StopViewSet(OrganizationMixin):
@@ -79,6 +103,27 @@ class StopViewSet(OrganizationMixin):
     )
     filterset_fields = ("status", "stop_type")
     ordering_fields = "__all__"
+
+    def get_queryset(self) -> QuerySet[models.Stop]:
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "status",
+            "sequence",
+            "movement_id",
+            "location_id",
+            "pieces",
+            "weight",
+            "address_line",
+            "organization_id",
+            "appointment_time_window_start",
+            "appointment_time_window_end",
+            "arrival_time",
+            "departure_time",
+            "stop_type",
+        )
+        return queryset
 
 
 class ServiceIncidentViewSet(OrganizationMixin):

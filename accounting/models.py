@@ -154,7 +154,9 @@ class GeneralLedgerAccount(GenericModel):
         Returns:
             str: GeneralLedgerAccount string representation
         """
-        return textwrap.wrap(self.account_number, 20)[0]
+        return textwrap.shorten(
+            f"{self.account_type} - {self.account_number}", width=40, placeholder="..."
+        )
 
     def clean(self) -> None:
         """General ledger account clean method
