@@ -42,11 +42,6 @@ class MovementsConfig(AppConfig):
             sender="movements.Movement",
             dispatch_uid="generate_ref_number",
         )
-        pre_save.connect(
-            signals.validate_movement_order,
-            sender="movements.Movement",
-            dispatch_uid="validate_movement_order",
-        )
         pre_delete.connect(
             signals.check_movement_removal_policy,
             sender="movements.Movement",

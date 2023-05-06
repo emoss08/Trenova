@@ -45,5 +45,5 @@ def get_expired_rates() -> QuerySet[models.Rate] | None:
     try:
         today = timezone.now().date()
         return models.Rate.objects.filter(expiration_date__lte=today).all()
-    except models.Rate.DoesNotExist as no_rates_found_exc:
+    except models.Rate.DoesNotExist:
         return None

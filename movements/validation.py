@@ -69,6 +69,7 @@ class MovementValidation:
         self.validate_worker_compare()
         self.validate_movement_worker()
         self.validate_worker_tractor_fleet()
+        self.validate_movement_order()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -390,3 +391,37 @@ class MovementValidation:
                 "The primary worker and tractor must belong to the same fleet to add or update a record. "
                 "Please ensure they are part of the same fleet and try again."
             )
+
+    def validate_movement_order(self) -> None:
+        """Validate previous movement is completed before setting current movement in progress
+
+        This method validates the given instance of the Movement model before saving it. Specifically,
+        it checks if the instance's status is set to 'IN_PROGRESS' and if there are any previous movements
+        with the same order that are not completed. If there are any previous movements that are not
+        completed, it raises a validation error with a message indicating that the previous movement(s) must
+        be completed before the current movement can be set to 'IN_PROGRESS'.
+
+        Raises:
+            ValidationError: If the instance status is set to IN_PROGRESS and the previous movement(s) with the same order are not completed.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        if self.movement.status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]:
+            previous_movements = models.Movement.objects.filter(
+                order=self.movement.order, id__lt=self.movement.id
+            )
+
+            for movement in previous_movements:
+                if movement.status != StatusChoices.COMPLETED:
+                    raise ValidationError(
+                        {
+                            "status": _(
+                                f"The previous movement (ID: {movement.ref_num}) must be completed before"
+                                f" this movement can be set to `{self.movement.get_status_display()}`"
+                                " Please try again."
+                            )
+                        },
+                        code="invalid",
+                    )

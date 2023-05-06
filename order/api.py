@@ -141,26 +141,6 @@ class ReasonCodeViewSet(OrganizationMixin):
 
 
 class OrderViewSet(OrganizationMixin):
-    """A viewset for viewing and editing Orders in the system.
-
-    The viewset provides default operations for creating, updating and deleting orders,
-    as well as listing and retrieving Orders. It uses the ``OrderSerializer`` class to
-    convert the order instances to and from JSON-formatted data.
-
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by order type by order_type,
-    revenue_code, customer, transferred_to_billing, equipment_type, commodity, entered_by
-    and hazmat.
-
-
-    Attributes:
-        queryset (QuerySet): A queryset of Order objects that will be used to
-        retrieve and update Order objects.
-
-        serializer_class (OrderSerializer): A serializer class that will be used to
-        convert Order objects to and from JSON-formatted data.
-    """
-
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
     filterset_fields = (
@@ -175,13 +155,6 @@ class OrderViewSet(OrganizationMixin):
     )
 
     def get_queryset(self) -> QuerySet[models.Order]:
-        """Get the queryset for the viewset.
-
-        The queryset is filtered by the organization of the user making the request.
-
-        Returns:
-            The filtered queryset.
-        """
         queryset = (
             self.queryset.filter(
                 organization=self.request.user.organization  # type: ignore
@@ -191,25 +164,25 @@ class OrderViewSet(OrganizationMixin):
                     lookup="movements",
                     queryset=Movement.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id"),
+                    ).only("id", "order_id", "organization_id"),
                 ),
                 Prefetch(
                     lookup="order_documentation",
                     queryset=models.OrderDocumentation.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id"),
+                    ).only("id", "order_id", "organization_id"),
                 ),
                 Prefetch(
                     lookup="order_comments",
                     queryset=models.OrderComment.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id"),
+                    ).only("id", "order_id", "organization_id"),
                 ),
                 Prefetch(
                     lookup="additional_charges",
                     queryset=models.AdditionalCharge.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id"),
+                    ).only("id", "order_id", "organization_id"),
                 ),
             )
             .only(

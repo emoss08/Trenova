@@ -63,7 +63,7 @@ Then there is pre-assignments....
 - and more ...
 
 Discover Monta's future plans
-by checking out our roadmap at https://github.com/Monta-Application/Monta/blob/main/roadmap.md.
+by checking out our roadmap at <https://github.com/Monta-Application/Monta/blob/main/roadmap.md>.
 
 ### Developer Features
 

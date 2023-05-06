@@ -26,7 +26,6 @@ from rest_framework.test import APIClient
 
 from billing.models import DocumentClassification
 from order import models
-from order.models import OrderDocumentation
 from organization.models import Organization
 
 pytestmark = pytest.mark.django_db

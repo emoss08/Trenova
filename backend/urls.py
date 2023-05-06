@@ -35,7 +35,6 @@ from dispatch import api as dispatch_api
 from equipment import api as equipment_api
 from integration import api as integration_api
 from invoicing import api as invoicing_api
-from kubectl import api as kubectl_views
 from location import api as location_api
 from movements import api as movement_api
 from order import api as order_api
@@ -304,7 +303,6 @@ urlpatterns = [
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
     path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),
     path("api/active_threads/", org_api.active_threads, name="active-threads"),
-    path("api/active_k8/", kubectl_views.get_active_clusters, name="active-threads"),
     path(
         "api/table_columns/",
         reports_api.TableColumnsAPIView.as_view(),
@@ -322,6 +320,14 @@ urlpatterns = [
     ),
     path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
     path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
+    path(
+        "api/cache_manager/", org_api.CacheManagerView.as_view(), name="cache_manager"
+    ),
+    path(
+        "api/cache_manager/<str:model_path>/",
+        org_api.CacheManagerView.as_view(),
+        name="cache_manager_clear",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
