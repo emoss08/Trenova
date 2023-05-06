@@ -21,6 +21,8 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Check if running on pypy. If so, monkey patch psycopg2cffiq
 if sys.implementation.name == "pypy":
@@ -40,7 +42,24 @@ DEBUG = env("DEBUG")
 CORS_ORIGIN_ALLOW_ALL = True
 INTERNAL_IPS = [
     "127.0.0.1",
+    "monta.local",
 ]
+ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
+
+# Sentry Configuration
+sentry_sdk.init(
+    dsn=env("SENTRY_DSN"),
+    integrations=[
+        DjangoIntegration(),
+    ],
+    traces_sample_rate=1.0,
+    send_default_pii=True,
+    # To set a uniform sample rate
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production
+    profiles_sample_rate=1.0,
+)
 
 # Application definition
 INSTALLED_APPS = [
@@ -62,15 +81,12 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     "phonenumber_field",
-    # "compressor",
     "django_celery_results",
     "django_celery_beat",
     "silk",
     "encrypted_model_fields",
-    # "pgtrigger",
     "nested_inline",
     "drf_spectacular",
-    "auditlog",
     "djmoney",
     "notifications",
     # Monta Apps
@@ -94,7 +110,6 @@ INSTALLED_APPS = [
     "fuel",
     "invoicing",
     "reports",
-    "kubectl",
     "plugin",
 ]
 
@@ -102,7 +117,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -110,8 +125,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "auditlog.middleware.AuditlogMiddleware",
-    "core.middleware.logging_middleware.CustomLoggingMiddleware",
 ]
 ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
@@ -283,33 +296,6 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "rich_handler": {
-            "level": "INFO",
-            "class": "core.formatters.CustomRichHandler",
-        },
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["rich_handler"],
-            "level": "INFO",
-            "propagate": True,
-        },
-        "django.server": {
-            "handlers": [],
-            "level": "WARNING",
-            "propagate": False,
-        },
-    },
-    "root": {
-        "handlers": ["rich_handler"],
-        "level": "INFO",
-    },
-}
-
 # Celery Configurations
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/2"
 CELERY_RESULT_BACKEND = "django-db"
@@ -335,9 +321,6 @@ SPECTACULAR_SETTINGS = {
 # Django Email Backend
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-# Silk Configurations
-SILKY_PYTHON_PROFILER = True
-
 # Cacheops configurations
 CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
 
@@ -347,10 +330,13 @@ CACHEOPS_DEFAULTS = {
 
 CACHEOPS = {
     "order.ordercontrol": {"ops": "all"},
-    "invoice.invoicecontrol": {"ops": "all"},
+    "invoicing.invoicecontrol": {"ops": "all"},
     "route.routecontrol": {"ops": "all"},
     "billing.billingcontrol": {"ops": "all"},
     "dispatch.dispatchcontrol": {"ops": "all"},
+    "organization.emailcontrol": {"ops": "all"},
 }
 
 CACHEOPS_DEGRADE_ON_FAILURE = True
+
+SILKY_PYTHON_PROFILER = True

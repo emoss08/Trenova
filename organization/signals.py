@@ -22,7 +22,6 @@ from django.dispatch import Signal
 from billing.models import BillingControl
 from dispatch.models import DispatchControl
 from invoicing.models import InvoiceControl
-from kubectl.models import KubeConfiguration
 from order.models import OrderControl
 from organization import models
 from organization.models import EmailControl
@@ -185,28 +184,6 @@ def create_depot_detail(
         models.DepotDetail.objects.create(
             organization=instance.organization, depot=instance
         )
-
-
-def create_kube_configuration(
-    sender: models.Organization,
-    instance: models.Organization,
-    created: bool,
-    **kwargs: Any,
-) -> None:
-    """Create a KubeConfiguration model instance for a new Organization model instance.
-
-    This function is called as a signal when an Organization model instance is saved.
-    If a new Organization instance is created, it creates a KubeConfiguration model
-    instance with the organization reference.
-
-    Args:
-        sender (models.Organization): The class of the sending instance.
-        instance (models.Organization): The instance of the Organization model being saved.
-        created (bool): True if a new record was created, False otherwise.
-        **kwargs: Additional keyword arguments.
-    """
-    if created:
-        KubeConfiguration.objects.create(organization=instance)
 
 
 def save_trigger_name_requirements(

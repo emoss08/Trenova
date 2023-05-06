@@ -14,43 +14,27 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.shortcuts import get_object_or_404
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.request import Request
-from rest_framework.response import Response
-
-from accounts.models import User
-from kubectl.helpers import (
-    get_node_info,
-    get_node_metadata,
-    organization_kube_api_client,
-)
 
 
-@api_view(["GET"])
-def get_active_clusters(request: Request) -> Response:
-    """Handles GET requests to retrieve information about active clusters from the organization's
-     Kubernetes API.
+class CacheManagerError(Exception):
+    """Base exception class for CacheManager-related errors."""
 
-    Args:
-        request(Request): A HTTP request object containing metadata about the client's request.
+    pass
 
-    Returns:
-        Response (Response): A HTTP response object containing a list of dictionaries, where each dictionary contains information
-        about an active cluster, including the cluster's name, node information, and metadata.
-    """
-    user = get_object_or_404(User, username=request.user.username)
 
-    api = organization_kube_api_client(organization=user.organization)
-    node = api.list_node()
+class CacheKeyError(CacheManagerError):
+    """Raised when there is an issue with a cache key."""
 
-    response = [
-        {
-            "name": node.metadata.name,
-            "node_info": get_node_info(node=node),
-            "metadata": get_node_metadata(node=node),
-        }
-        for node in node.items
-    ]
-    return Response(response, status=status.HTTP_200_OK)
+    pass
+
+
+class CacheConnectionError(CacheManagerError):
+    """Raised when there is an issue connecting to the cache."""
+
+    pass
+
+
+class CacheOperationError(CacheManagerError):
+    """Raised when there is an issue performing a cache operation."""
+
+    pass

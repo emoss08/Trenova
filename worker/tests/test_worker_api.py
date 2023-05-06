@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from dispatch.factories import FleetCodeFactory

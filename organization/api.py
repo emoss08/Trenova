@@ -14,12 +14,17 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import json
 import threading
 
+import redis
+from cacheops import invalidate_model
+from django.apps import apps
+from django.conf import settings
 from django.db.models import Prefetch, QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, status, viewsets, views
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -30,7 +35,7 @@ from core.health_check.database_backend import DatabaseHealthCheck
 from core.health_check.disk_backend import DiskUsageHealthCheck
 from core.health_check.redis_backend import RedisHealthCheck
 from core.health_check.storage_backend import FileStorageHealthCheck
-from organization import models, selectors, serializers
+from organization import models, selectors, serializers, exceptions
 from utils.views import OrganizationMixin
 
 
@@ -445,3 +450,105 @@ def active_threads(request: Request) -> Response:
         for thread in threads
     ]
     return Response(thread_list, status=status.HTTP_200_OK)
+
+
+class CacheManagerView(views.APIView):
+    """
+    View that allows you to manage the cache.
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request: Request) -> Response:
+        """Get cache stats and keys
+
+        Args:
+            request (Request): The request object.
+
+        Returns:
+            Response: A Response object containing a list of dictionaries representing the cache keys,
+        """
+        search_term = request.query_params.get("search", "")
+
+        # Parse Redis URL
+        redis_url = settings.CACHEOPS_REDIS
+
+        # Connect to Redis
+        r = redis.StrictRedis.from_url(redis_url)
+
+        # Get all Redis keys and filter based on your application's specific key patterns and the search term
+        all_keys: list[str | bytes] = r.keys("*")
+        cache_keys = [
+            key.decode("utf-8")
+            for key in all_keys
+            if (key.startswith(b"schemes:") or key.startswith(b"conj:"))
+            and search_term in key.decode("utf-8")
+        ]
+
+        # Cache stats
+        info = r.info()
+        cache_stats = {
+            "hits": info["keyspace_hits"],
+            "misses": info["keyspace_misses"],
+            "total_keys": len(all_keys),
+        }
+
+        # Cache key size and content
+        key_details = []
+        for key in cache_keys:
+            key_size = r.memory_usage(key)
+            key_ttl = r.ttl(key)
+            key_type = r.type(key).decode("utf-8")
+
+            if key_type == "string":
+                key_content = r.get(key)
+                if key_content:
+                    try:
+                        key_content = json.loads(key_content)
+                    except (json.JSONDecodeError, TypeError):
+                        key_content = str(key_content)
+            elif key_type == "hash":
+                key_content = r.hgetall(key)
+            elif key_type == "set":
+                key_content = list(r.smembers(key))
+            else:
+                key_content = None
+
+            key_details.append(
+                {
+                    "key": key,
+                    "size": key_size,
+                    "ttl": key_ttl,
+                    "type": key_type,
+                    "content": key_content,
+                }
+            )
+
+        return Response(
+            {"cache_keys": key_details, "cache_stats": cache_stats},
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request: Request, model_path: str | None = None) -> Response:
+        """Clear cache for a specific model.
+
+        Args:
+            request (Request): The request object.
+            model_path: The model path in the format of app_label.model_name.
+
+        Returns:
+            Response: A Response object containing a message indicating whether the cache was cleared successfully.
+        """
+        if not model_path:
+            return Response(
+                {"error": "Model path is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            app_label, model_name = model_path.split(".")
+            model = apps.get_model(app_label, model_name)
+            invalidate_model(model)
+            return Response({"detail": f"Cache for {model_path} cleared."})
+        except exceptions.CacheOperationError as cache_exc:
+            return Response(
+                {"error": str(cache_exc)}, status=status.HTTP_400_BAD_REQUEST
+            )

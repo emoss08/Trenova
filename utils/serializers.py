@@ -26,43 +26,18 @@ from organization.models import Organization
 
 
 class GenericSerializer(serializers.ModelSerializer):
-    """
-    Generic Serializer. This works when the serializer
-    doesn't have nested serializers.
-    """
-
     class Meta:
-        """
-        A class representing the metadata for the `GenericSerializer`
-        class.
-        """
-
         model: type[Model]
         exclude: tuple[str, ...] = ()
         extra_fields: list[str] = []
         extra_read_only_fields: list[str] = []
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Initialize the serializer
-
-        Args:
-            args (Any): Arguments
-            kwargs (Any): Keyword arguments
-
-        Returns:
-            None
-        """
-
         super().__init__(*args, **kwargs)
         self.set_fields()
 
     @cached_property
     def get_organization(self) -> Organization:
-        """Get the organization from the request
-        Returns:
-            str: Organization
-        """
-
         if self.context["request"].user.is_authenticated:
             _organization: Organization = self.context["request"].user.organization
             return _organization
@@ -70,40 +45,18 @@ class GenericSerializer(serializers.ModelSerializer):
         return Token.objects.get(key=token).user.organization
 
     def create(self, validated_data: Any) -> Any:
-        """Create the object
-
-        Args:
-            validated_data (Any): Validated data
-
-        Returns:
-            _MT: Created object
-        """
-
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
         return super().create(validated_data)
 
     def update(self, instance: Model, validated_data: Any) -> Any:
-        """Update the object
-
-        Args:
-            instance (_M): Instance of the model
-            validated_data (Any): Validated data
-
-        Returns:
-            _MT: Updated instance
-        """
-
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
         return super().update(instance, validated_data)
 
     def set_fields(self) -> None:
-        """
-        Set the fields for the serializer.
-        """
         read_only_fields: tuple[str, ...] = ("organization", "created", "modified")
 
         original_fields = getattr(self.Meta, "fields", None)

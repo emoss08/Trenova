@@ -19,9 +19,7 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
-from celery.exceptions import Retry
 from django.core.management import call_command
-from kombu.exceptions import OperationalError
 
 from organization import factories, models
 from organization.services.psql_triggers import (
@@ -47,7 +45,7 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
     )
 
     assert table_charge.organization == organization
-    assert table_charge.is_active == True
+    assert table_charge.is_active is True
     assert table_charge.name == "Test"
     assert (
         table_charge.database_action
@@ -84,8 +82,8 @@ def test_table_change_insert_adds_insert_trigger() -> None:
     print("TRIGGER CHECK", trigger_check)
     print("FUNCTION CHECK", function_check)
 
-    assert trigger_check == True
-    assert function_check == True
+    assert trigger_check is True
+    assert function_check is True
 
 
 def test_delete_table_change_removes_trigger() -> None:
@@ -98,8 +96,8 @@ def test_delete_table_change_removes_trigger() -> None:
         table_name=table_change.table, trigger_name=table_change.trigger_name
     )
     function_check = check_function_exists(function_name=table_change.function_name)
-    assert trigger_check == True
-    assert function_check == True
+    assert trigger_check is True
+    assert function_check is True
 
     table_change.delete()
 
@@ -108,8 +106,8 @@ def test_delete_table_change_removes_trigger() -> None:
     )
     function_check_2 = check_function_exists(function_name=table_change.function_name)
 
-    assert trigger_check_2 == False
-    assert function_check_2 == False
+    assert trigger_check_2 is False
+    assert function_check_2 is False
 
 
 def test_table_change_database_action_update() -> None:
