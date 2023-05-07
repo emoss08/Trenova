@@ -62,13 +62,13 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             QuerySet[models.Organization]: Filtered queryset
         """
 
-        queryset = (
+        queryset: QuerySet[models.Organization] = (
             self.queryset.filter(id=self.request.user.organization_id)  # type: ignore
             .prefetch_related(
                 Prefetch(
                     "depots",
                     queryset=models.Depot.objects.filter(
-                        organization=self.request.user.organization
+                        organization=self.request.user.organization  # type: ignore
                     ).only("id", "organization_id"),
                 ),
             )
@@ -104,7 +104,7 @@ class DepotViewSet(OrganizationMixin):
     queryset = models.Depot.objects.all()
 
     def get_queryset(self) -> QuerySet[models.Depot]:
-        queryset = (
+        queryset: QuerySet[models.Depot] = (
             self.queryset.filter(
                 organization=self.request.user.organization  # type: ignore
             )
@@ -138,7 +138,7 @@ class DepotViewSet(OrganizationMixin):
         ),
     ]
 )
-class DepartmentViewSet(OrganizationMixin):
+class DepartmentViewSet(viewsets.ModelViewSet):
     """
     Department ViewSet to manage requests to the department endpoint
     """
@@ -147,7 +147,7 @@ class DepartmentViewSet(OrganizationMixin):
     queryset = models.Department.objects.all()
 
     def get_queryset(self) -> QuerySet[models.Department]:
-        queryset = self.queryset.filter(
+        queryset: QuerySet[models.Department] = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
             "id",
@@ -168,7 +168,7 @@ class EmailProfileViewSet(OrganizationMixin):
     queryset = models.EmailProfile.objects.all()
 
     def get_queryset(self) -> QuerySet[models.EmailProfile]:
-        queryset = self.queryset.filter(
+        queryset: QuerySet[models.EmailProfile] = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
             "id",
@@ -195,7 +195,7 @@ class EmailControlViewSet(OrganizationMixin):
     http_method_names = ["get", "put", "patch", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.EmailControl]:
-        queryset = self.queryset.filter(
+        queryset: QuerySet[models.EmailControl] = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only("id", "organization_id", "billing_email_profile_id")
         return queryset
@@ -221,7 +221,7 @@ class TaxRateViewSet(OrganizationMixin):
     queryset = models.TaxRate.objects.all()
 
     def get_queryset(self) -> QuerySet[models.TaxRate]:
-        queryset = self.queryset.filter(
+        queryset: QuerySet[models.TaxRate] = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
             "id",
@@ -240,7 +240,7 @@ class TableChangeAlertViewSet(OrganizationMixin):
     queryset = models.TableChangeAlert.objects.all()
 
     def get_queryset(self) -> QuerySet[models.TableChangeAlert]:
-        queryset = self.queryset.filter(
+        queryset: QuerySet[models.TableChangeAlert] = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
             "id",
@@ -477,7 +477,7 @@ class CacheManagerView(views.APIView):
         r = redis.StrictRedis.from_url(redis_url)
 
         # Get all Redis keys and filter based on your application's specific key patterns and the search term
-        all_keys: list[str | bytes] = r.keys("*")
+        all_keys: list[bytes] = r.keys("*")
         cache_keys = [
             key.decode("utf-8")
             for key in all_keys
@@ -506,11 +506,11 @@ class CacheManagerView(views.APIView):
                     try:
                         key_content = json.loads(key_content)
                     except (json.JSONDecodeError, TypeError):
-                        key_content = str(key_content)
+                        key_content = str(key_content)  # type: ignore
             elif key_type == "hash":
-                key_content = r.hgetall(key)
+                key_content = r.hgetall(key)  # type: ignore
             elif key_type == "set":
-                key_content = list(r.smembers(key))
+                key_content = list(r.smembers(key))  # type: ignore
             else:
                 key_content = None
 

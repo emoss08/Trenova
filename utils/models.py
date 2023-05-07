@@ -31,6 +31,15 @@ from organization.models import Organization
 
 
 def generate_random_string(length: int = 10) -> str:
+    """
+    Generate a random string of letters and digits
+
+    Args:
+        length: Length of the string to generate (default: 10)
+
+    Returns:
+        str: Random string of letters and digits
+    """
     return "".join(
         secrets.choice(string.ascii_letters + string.digits) for _ in range(length)
     )

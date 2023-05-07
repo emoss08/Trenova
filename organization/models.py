@@ -28,7 +28,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .services.table_choices import TABLE_NAME_CHOICES
-from .validators.organization import validate_org_timezone
+from .validators import validate_org_timezone, validate_format_string
 
 
 class Organization(TimeStampedModel):
@@ -582,6 +582,15 @@ class EmailControl(TimeStampedModel):
         null=True,
         blank=True,
     )
+    rate_expiration_email_profile = models.ForeignKey(
+        EmailProfile,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Rate Expiration Email Profile"),
+        related_name="rate_expiration_email_control",
+        help_text=_("The email profile that will be used for rate expiration emails."),
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         """
@@ -722,7 +731,7 @@ class TaxRate(TimeStampedModel):
 
 class TableChangeAlert(TimeStampedModel):
     """
-    Stores the table change alert information for a related :model:`organization.Organization`
+    Stores the table changes alert information for a related :model:`organization.Organization`
     """
 
     @final
@@ -867,3 +876,162 @@ class TableChangeAlert(TimeStampedModel):
         """
 
         return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})
+
+
+class NotificationType(TimeStampedModel):
+    """
+    Stores the notification type information for a related :model:`organization.Organization`
+    """
+
+    class NotificationChoices(models.TextChoices):
+        """
+        Notification types choices
+        """
+
+        RATE_EXPIRATION = "RATE_EXPIRATION", _("Rate Expiration Notification")
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="notification_types",
+        help_text=_("The organization that the notification type belongs to."),
+    )
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text=_("The name of the notification type."),
+        choices=NotificationChoices.choices,
+    )
+    description = models.TextField(
+        blank=True,
+        help_text=_("The description of the notification type."),
+    )
+
+    class Meta:
+        """
+        Metaclass for the NotificationType model
+        """
+
+        verbose_name = _("Notification Type")
+        verbose_name_plural = _("Notification Types")
+        ordering = ("name",)
+        db_table = "notification_type"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "organization"],
+                name="unique_name_organization_notification_type",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """NotificationType string representation.
+
+        Returns:
+            str: String representation of the notification type.
+        """
+
+        return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    def get_absolute_url(self) -> str:
+        """NotificationType absolute URL
+
+        Returns:
+            str: The absolute url for the notification type.
+        """
+
+        return reverse("notification-types-detail", kwargs={"pk": self.pk})
+
+
+class NotificationSetting(TimeStampedModel):
+    """
+    Stores notification settings related to a :model:`organization.NotificationType`.
+    """
+
+    organization = models.OneToOneField(
+        Organization,
+        on_delete=models.CASCADE,
+        verbose_name=_("Organization"),
+        related_name="notification_setting",
+        help_text=_("The organization that the notification setting belongs to."),
+    )
+    notification_type = models.ForeignKey(
+        NotificationType,
+        on_delete=models.CASCADE,
+        verbose_name=_("Notification Type"),
+        related_name="notification_settings",
+        help_text=_("The notification type that the notification setting belongs to."),
+    )
+    send_notification = models.BooleanField(
+        _("Send Notification"),
+        default=True,
+        help_text=_("Whether the notification setting will send notifications."),
+    )
+    email_recipients = models.TextField(default="", blank=True)
+    email_profile = models.ForeignKey(
+        EmailProfile,
+        on_delete=models.CASCADE,
+        verbose_name=_("Email Profile"),
+        related_name="notification_settings",
+        help_text=_("The email profile that the notification setting will use."),
+        blank=True,
+        null=True,
+    )
+    custom_subject = models.CharField(
+        _("Custom Subject"),
+        max_length=255,
+        help_text=_("The custom subject that the notification setting will use."),
+        blank=True,
+        validators=[validate_format_string],
+    )
+    custom_content = models.TextField(
+        _("Custom Content"),
+        help_text=_("The custom content that the notification setting will use."),
+        blank=True,
+        validators=[validate_format_string],
+    )
+
+    class Meta:
+        """
+        Metaclass for the NotificationSetting model
+        """
+
+        verbose_name = _("Notification Setting")
+        verbose_name_plural = _("Notification Settings")
+        ordering = ("organization", "notification_type")
+        db_table = "notification_setting"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["organization", "notification_type"],
+                name="unique_organization_notification_type_notification_setting",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """NotificationSetting string representation.
+
+        Returns:
+            str: String representation of the notification setting.
+        """
+
+        return textwrap.shorten(
+            f"{self.organization} - {self.notification_type}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_email_recipients(self) -> list[str]:
+        """Get the email recipients as a list of strings.
+
+        Returns:
+            list[str]: The email recipients as a list of strings.
+        """
+        return [
+            email.strip() for email in self.email_recipients.split(",") if email.strip()
+        ]

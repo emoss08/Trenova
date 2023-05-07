@@ -30,3 +30,7 @@ class CacheConnectionError(CacheManagerError):
 
 class CacheOperationError(CacheManagerError):
     """Raised when there is an issue performing a cache operation."""
+
+
+class InvalidEmailProtocal(Exception):
+    """Raised when an invalid email protocol is used."""

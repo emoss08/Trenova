@@ -184,3 +184,31 @@ class TableChangeAlertAdmin(GenericAdmin[models.TableChangeAlert]):
 
     list_filter = ("name",)
     search_fields = ("name",)
+
+
+class NotificationSettingStackedInline(
+    GenericStackedInline[models.NotificationType, models.NotificationSetting]
+):
+    """
+    Notification Type Admin
+    """
+
+    model = models.NotificationSetting
+    can_delete = False
+    verbose_name_plural = "Notification Settings"
+
+
+@admin.register(models.NotificationType)
+class NotificationTypeAdmin(GenericAdmin[models.NotificationType]):
+    """
+    Notification Setting Admin
+    """
+
+    list_display = (
+        "name",
+        "description",
+    )
+
+    list_filter = ("name",)
+    search_fields = ("name",)
+    inlines = (NotificationSettingStackedInline,)
