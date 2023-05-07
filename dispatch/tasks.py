@@ -18,9 +18,12 @@ from typing import TYPE_CHECKING
 
 from celery import shared_task
 from celery_singleton import Singleton
+from django.core.mail import EmailMessage
 
 from core.exceptions import ServiceException
 from dispatch import selectors
+from organization.models import NotificationType, NotificationSetting
+from organization.utils import send_email_using_profile
 
 if TYPE_CHECKING:
     from celery.app.task import Task
@@ -39,10 +42,46 @@ def send_expired_rates_notification(self: "Task") -> None:
 
     expired_rates = selectors.get_expired_rates()
     if not expired_rates:
-        print("No expired rates found")
         return
+
     try:
-        for rate in expired_rates:
-            print(f"Sending notification for rate {rate.id}")
+        rate_expiration_type = NotificationType.objects.get(name="RATE_EXPIRATION")
+
+        notification_settings = NotificationSetting.objects.filter(
+            send_notification=True, notification_type=rate_expiration_type
+        )
+
+        for setting in notification_settings:
+            recipients = setting.get_email_recipients()
+            if not recipients:
+                continue
+
+            for rate in expired_rates:
+                # Set the default subject and content
+                subject = f"Notification: Rate {rate.rate_number} has expired"
+                content = f"The rate with ID {rate.rate_number} has expired."
+
+                # Use custom subject and content if available
+                if setting.custom_subject:
+                    subject = setting.custom_subject.format(rate=rate)
+                if setting.custom_content:
+                    content = setting.custom_content.format(rate=rate)
+
+                # Send email
+                if setting.email_profile:
+                    send_email_using_profile(
+                        profile=setting.email_profile,
+                        subject=subject,
+                        content=content,
+                        recipients=recipients,
+                    )
+                else:
+                    email = EmailMessage(subject, content, to=recipients)
+                    email.send()
+
+                print(
+                    f"Sent notification for rate {rate.id} to {', '.join(recipients)}"
+                )
+
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
