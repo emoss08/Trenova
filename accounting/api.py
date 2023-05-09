@@ -19,10 +19,10 @@
 from django.db.models import QuerySet
 
 from accounting import models, serializers
-from utils.views import OrganizationMixin
+from rest_framework import viewsets
 
 
-class GeneralLedgerAccountViewSet(OrganizationMixin):
+class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
     """
     General Ledger Account ViewSet
     """
@@ -55,7 +55,7 @@ class GeneralLedgerAccountViewSet(OrganizationMixin):
         return queryset
 
 
-class RevenueCodeViewSet(OrganizationMixin):
+class RevenueCodeViewSet(viewsets.ModelViewSet):
     """
     Revenue Code ViewSet
     """
@@ -86,7 +86,7 @@ class RevenueCodeViewSet(OrganizationMixin):
         return queryset
 
 
-class DivisionCodeViewSet(OrganizationMixin):
+class DivisionCodeViewSet(viewsets.ModelViewSet):
     """
     Division Code ViewSet
     """

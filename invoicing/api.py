@@ -14,14 +14,17 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import QuerySet
-from rest_framework import permissions
+
+from typing import TYPE_CHECKING
+from rest_framework import permissions, viewsets
 
 from invoicing import models, serializers
-from utils.views import OrganizationMixin
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
-class InvoiceControlViewSet(OrganizationMixin):
+class InvoiceControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing InvoiceControl in the system.
 
     The viewset provides default operations for creating, updating Order Control,
@@ -46,7 +49,7 @@ class InvoiceControlViewSet(OrganizationMixin):
     serializer_class = serializers.InvoiceControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
 
-    def get_queryset(self) -> QuerySet[models.InvoiceControl]:
+    def get_queryset(self) -> "QuerySet[models.InvoiceControl]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(

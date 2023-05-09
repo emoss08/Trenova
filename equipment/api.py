@@ -17,10 +17,10 @@
 from django.db.models import Prefetch, QuerySet
 
 from equipment import models, serializers
-from utils.views import OrganizationMixin
+from rest_framework import viewsets
 
 
-class EquipmentTypeViewSet(OrganizationMixin):
+class EquipmentTypeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -60,7 +60,7 @@ class EquipmentTypeViewSet(OrganizationMixin):
         return queryset
 
 
-class TractorViewSet(OrganizationMixin):
+class TractorViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing tractors information in the system.
 
     The viewset provides default operations for creating, updating, and deleting tractors,
@@ -121,7 +121,7 @@ class TractorViewSet(OrganizationMixin):
         return queryset
 
 
-class TrailerViewSet(OrganizationMixin):
+class TrailerViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting trailers,
@@ -170,7 +170,7 @@ class TrailerViewSet(OrganizationMixin):
         return queryset
 
 
-class EquipmentManufacturerViewSet(OrganizationMixin):
+class EquipmentManufacturerViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -197,7 +197,7 @@ class EquipmentManufacturerViewSet(OrganizationMixin):
         return queryset
 
 
-class EquipmentMaintenancePlanViewSet(OrganizationMixin):
+class EquipmentMaintenancePlanViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,

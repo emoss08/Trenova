@@ -17,6 +17,8 @@
 
 import pytest
 from django.core.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 from commodities import models
 
@@ -58,3 +60,128 @@ def test_commodity_is_hazmat_if_hazmat_class(commodity: models.Commodity) -> Non
     Test commodity hazardous material creation
     """
     assert commodity.is_hazmat is True
+
+
+def test_get_commodities(api_client: APIClient) -> None:
+    """
+    Retrieve a list of commodities
+
+    Args:
+        api_client (APIClient): API Client
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = api_client.get("/api/commodities/")
+    assert response.status_code == 200
+
+
+def test_get_commodity_by_id(api_client: APIClient, commodity_api: Response) -> None:
+    """
+    Retrieve a commodity by id
+
+    Args:
+        api_client (APIClient): API Client
+        commodity_api (): Response from commodity_api fixture
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = api_client.get(f"/api/commodities/{commodity_api.data['id']}/")
+
+    assert response.status_code == 200
+    assert response.data["name"] == "TEST3"
+    assert response.data["description"] == "Test Description"
+
+
+def test_put_commodity(api_client: APIClient, commodity_api: Response) -> None:
+    """
+    Update a commodity by id
+
+    Args:
+        api_client (APIClient): API Client
+        commodity_api (): Response from commodity_api fixture
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = api_client.put(
+        f"/api/commodities/{commodity_api.data['id']}/",
+        {
+            "name": "TEST4",
+            "description": "Test Description",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.data["name"] == "TEST4"
+    assert response.data["description"] == "Test Description"
+
+
+def test_patch_commodity(api_client: APIClient, commodity_api: Response) -> None:
+    """
+    Update a commodity by id
+
+    Args:
+        api_client (APIClient): API Client
+        commodity_api (Response): Response from commodity_api fixture
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = api_client.patch(
+        f"/api/commodities/{commodity_api.data['id']}/",
+        {
+            "name": "TEST4",
+            "description": "Test Description",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.data["name"] == "TEST4"
+    assert response.data["description"] == "Test Description"
+
+
+def test_post_commodity(api_client: APIClient) -> None:
+    """
+    Create a commodity
+
+    Args:
+        api_client (APIClient): API Client
+
+    Returns:
+        None: This function does not return anything.
+    """
+    response = api_client.post(
+        "/api/commodities/",
+        {
+            "name": "TEST3",
+            "description": "Test Description",
+        },
+    )
+    assert response.status_code == 201
+    assert response.data["name"] == "TEST3"
+    assert response.data["description"] == "Test Description"
+
+
+def test_delete_commodity(api_client: APIClient, commodity_api: Response) -> None:
+    """
+    Delete a commodity by id
+
+    Args:
+        api_client (APIClient): API Client
+        commodity_api (Response): Response from commodity_api fixture
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = api_client.delete(
+        f"/api/commodities/{commodity_api.data['id']}/",
+    )
+
+    assert response.status_code == 204

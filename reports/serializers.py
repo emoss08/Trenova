@@ -17,8 +17,6 @@
 
 from rest_framework import serializers
 
-from organization.models import Organization
-from organization.services.table_choices import TABLE_NAME_CHOICES
 from reports import models
 from utils.serializers import GenericSerializer
 
@@ -48,17 +46,9 @@ class CustomReportSerializer(GenericSerializer):
     and vice versa. It uses the specified fields (name, description, and code) to create the serialized
     representation of the `CustomReport` model.
 
-    Attributes:
-        table (str): The name of the table.
-
     See Also:
         `GenericSerializer`
     """
-
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    table = serializers.ChoiceField(choices=TABLE_NAME_CHOICES)
 
     class Meta:
         """
@@ -66,7 +56,3 @@ class CustomReportSerializer(GenericSerializer):
         """
 
         model = models.CustomReport
-        extra_fields = (
-            "table",
-            "organization",
-        )

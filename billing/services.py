@@ -31,19 +31,12 @@ if TYPE_CHECKING:
     from utils.types import ModelUUID
 
 
-def generate_invoice_number(*, instance: models.BillingQueue) -> str:
-    """Generate a new invoice number for a BillingQueue instance.
-
-    Args:
-        instance (models.BillingQueue): The BillingQueue instance to generate an invoice number for.
-
-    Returns:
-        str: The generated invoice number.
-    """
-
+def generate_invoice_number(
+    *, instance: models.BillingQueue, is_credit_memo: bool = False
+) -> str:
     if not instance.invoice_number:
-        if (
-            latest_invoice := models.BillingQueue.objects.only("invoice_number")
+        if latest_invoice := (
+            models.BillingQueue.objects.filter(invoice_number__isnull=False)
             .order_by("invoice_number")
             .last()
         ):
@@ -60,6 +53,24 @@ def generate_invoice_number(*, instance: models.BillingQueue) -> str:
             instance.invoice_number = (
                 f"{instance.organization.invoice_control.invoice_number_prefix}00001"
             )
+
+        if instance.order.billing_queue.exists():
+            non_credit_memos = instance.order.billing_queue.exclude(
+                bill_type=models.BillingQueue.BillTypeChoices.CREDIT
+            )
+            non_credit_memos_count = non_credit_memos.count()
+
+            if is_credit_memo:
+                instance.invoice_number = (
+                    instance.order.billing_queue.first().invoice_number
+                )
+                instance.bill_type = models.BillingQueue.BillTypeChoices.CREDIT
+            else:
+                suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                instance.invoice_number = (
+                    instance.order.billing_queue.first().invoice_number
+                    + suffixes[non_credit_memos_count - 1]
+                )
 
     return instance.invoice_number
 

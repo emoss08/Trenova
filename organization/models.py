@@ -17,7 +17,7 @@
 
 import textwrap
 import uuid
-from typing import final
+from typing import final, Any
 
 from django.db import models
 from django.urls import reverse
@@ -180,6 +180,20 @@ class Organization(TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def save(self, **kwargs: Any) -> None:
+        """
+        Organization save method.  Ensures that the scac_code is always uppercase.
+
+        Args:
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        self.scac_code = self.scac_code.upper()
+        super().save(**kwargs)
+
     @cached_property
     def get_address_combination(self) -> str:
         """
@@ -203,18 +217,6 @@ class Organization(TimeStampedModel):
             str: String representation of the organization address.
         """
         return f"{self.city}, {self.state} {self.zip_code}"
-
-    def before_create(self) -> None:
-        """Actions before saving an Organization instance.
-
-        Returns:
-            None: None
-        """
-
-        # TODO: Move this to save method
-
-        # Upper case the scac code before saving
-        self.scac_code = self.scac_code.upper()
 
     def get_absolute_url(self) -> str:
         """
@@ -954,6 +956,12 @@ class NotificationSetting(TimeStampedModel):
     Stores notification settings related to a :model:`organization.NotificationType`.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     organization = models.OneToOneField(
         Organization,
         on_delete=models.CASCADE,
@@ -973,7 +981,12 @@ class NotificationSetting(TimeStampedModel):
         default=True,
         help_text=_("Whether the notification setting will send notifications."),
     )
-    email_recipients = models.TextField(default="", blank=True)
+    email_recipients = models.TextField(
+        _("Email Recipients"),
+        help_text=_("The email recipients that the notification setting will use."),
+        default="",
+        blank=True,
+    )
     email_profile = models.ForeignKey(
         EmailProfile,
         on_delete=models.CASCADE,
@@ -1035,3 +1048,11 @@ class NotificationSetting(TimeStampedModel):
         return [
             email.strip() for email in self.email_recipients.split(",") if email.strip()
         ]
+
+    def get_absolute_url(self) -> str:
+        """NotificationSetting absolute URL
+
+        Returns:
+            str: The absolute url for the notification setting.
+        """
+        return reverse("notification-settings-detail", kwargs={"pk": self.pk})

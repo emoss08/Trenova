@@ -25,7 +25,6 @@ from rest_framework.request import Request
 
 from accounts import models, serializers
 from utils.exceptions import InvalidTokenException
-from utils.views import OrganizationMixin
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -52,7 +51,7 @@ class PermissionViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class UserViewSet(OrganizationMixin):
+class UserViewSet(viewsets.ModelViewSet):
     """
     User ViewSet to manage requests to the user endpoint
     """
@@ -161,7 +160,7 @@ class UpdatePasswordView(generics.UpdateAPIView):
         )
 
 
-class JobTitleViewSet(OrganizationMixin):
+class JobTitleViewSet(viewsets.ModelViewSet):
     """
     Job Title ViewSet to manage requests to the job title endpoint
     """

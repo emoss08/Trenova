@@ -17,10 +17,9 @@
 from django.db.models import QuerySet
 
 from movements import models, serializers
-from utils.views import OrganizationMixin
+from rest_framework import viewsets
 
-
-class MovementViewSet(OrganizationMixin):
+class MovementViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Movement information in the system.
 
     The viewset provides default operations for creating, updating and deleting movements,

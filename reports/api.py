@@ -14,15 +14,17 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import TYPE_CHECKING
 
 from django.apps import apps
-from django.db.models import QuerySet
-from rest_framework import generics
+from rest_framework import generics, viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from reports import models, serializers
-from utils.views import OrganizationMixin
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
 class TableColumnsAPIView(generics.GenericAPIView):
@@ -77,7 +79,7 @@ class TableColumnsAPIView(generics.GenericAPIView):
             return Response({"error": "Table not found."})
 
 
-class CustomReportViewSet(OrganizationMixin):
+class CustomReportViewSet(viewsets.ModelViewSet):
     """A viewset for managing CustomReport objects, with filters for name and table.
 
     Attributes:
@@ -93,8 +95,8 @@ class CustomReportViewSet(OrganizationMixin):
         "table",
     )
 
-    def get_queryset(self) -> QuerySet[models.CustomReport]:
-        queryset = self.queryset.filter(
+    def get_queryset(self) -> "QuerySet[models.CustomReport]":
+        queryset: "QuerySet[models.CustomReport]" = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
             "id",

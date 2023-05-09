@@ -17,11 +17,8 @@
 
 from typing import Any
 
-from rest_framework import serializers
 
-from dispatch.models import FleetCode
 from equipment import models
-from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -32,10 +29,6 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
     Equipment Type Detail, as well as listing and retrieving them.
     """
 
-    equipment_class = serializers.ChoiceField(
-        choices=models.EquipmentTypeDetail.EquipmentClassChoices.choices
-    )
-
     class Meta:
         """
         A class representing the metadata for the `EquipmentTypeDetailSerializer`
@@ -43,7 +36,6 @@ class EquipmentTypeDetailSerializer(GenericSerializer):
         """
 
         model = models.EquipmentTypeDetail
-        extra_fields = ("equipment_class",)
         extra_read_only_fields = ("equipment_type",)
 
 
@@ -124,10 +116,6 @@ class EquipmentManufacturerSerializer(GenericSerializer):
     Equipment Manufacturer, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `EquipmentManufacturerSerializer`
@@ -135,7 +123,6 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         """
 
         model = models.EquipmentManufacturer
-        extra_fields = ("organization",)
 
 
 class TractorSerializer(GenericSerializer):
@@ -145,24 +132,12 @@ class TractorSerializer(GenericSerializer):
     Tractors, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    fleet_code = serializers.PrimaryKeyRelatedField(
-        queryset=FleetCode.objects.all(), required=False, allow_null=True
-    )
-    equipment_type = serializers.PrimaryKeyRelatedField(
-        queryset=models.EquipmentType.objects.all(), required=False, allow_null=True
-    )
-    is_active = serializers.BooleanField(default=True)
-
     class Meta:
         """
         A class representing the metadata for the `TractorSerializer` class.
         """
 
         model = models.Tractor
-        extra_fields = ("organization", "is_active", "fleet_code", "equipment_type")
 
 
 class TrailerSerializer(GenericSerializer):
@@ -172,24 +147,12 @@ class TrailerSerializer(GenericSerializer):
     Trailers, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    fleet_code = serializers.PrimaryKeyRelatedField(
-        queryset=FleetCode.objects.all(), required=False, allow_null=True
-    )
-    equipment_type = serializers.PrimaryKeyRelatedField(
-        queryset=models.EquipmentType.objects.all(), required=False, allow_null=True
-    )
-    is_active = serializers.BooleanField(default=True)
-
     class Meta:
         """
         A class representing the metadata for the `TrailerSerializer` class.
         """
 
         model = models.Trailer
-        extra_fields = ("organization", "is_active", "fleet_code", "equipment_type")
 
 
 class EquipmentMaintenancePlanSerializer(GenericSerializer):
@@ -199,10 +162,6 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
     Equipment Maintenance Plan, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `EquipmentMaintenancePlanSerializer`
@@ -210,4 +169,3 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
         """
 
         model = models.EquipmentMaintenancePlan
-        extra_fields = ("organization",)

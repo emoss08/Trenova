@@ -19,8 +19,6 @@ from typing import Any
 from django.db import transaction
 from rest_framework import serializers
 
-from accounts.models import User
-from organization.models import Depot
 from utils.serializers import GenericSerializer
 from worker import models
 
@@ -38,10 +36,7 @@ class WorkerCommentSerializer(GenericSerializer):
         """
 
         model = models.WorkerComment
-        extra_fields = (
-            "organization",
-            "id",
-        )
+        extra_fields = ("id",)
         extra_read_only_fields = ("worker",)
 
 
@@ -85,22 +80,16 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
-    id = serializers.UUIDField(required=False)
-    depot = serializers.PrimaryKeyRelatedField(  # type: ignore
-        queryset=Depot.objects.all(),
-        allow_null=True,
+    id = serializers.UUIDField(
         required=False,
+        allow_null=True,
     )
-    manager = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
+    code = serializers.CharField(
+        required=False,
+        allow_null=True,
     )
-    entered_by = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-    )
-    is_active = serializers.BooleanField(default=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
-    code = serializers.CharField(required=False, allow_null=True)
     comments = WorkerCommentSerializer(many=True, required=False)
 
     class Meta:

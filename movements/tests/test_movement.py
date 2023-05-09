@@ -15,9 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from collections.abc import Generator
 from datetime import timedelta
-from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -113,28 +111,6 @@ def test_movement_ref_num_hook(movement: models.Movement) -> None:
     assert movement.ref_num is not None
 
 
-@pytest.fixture
-def movement_api(
-    api_client: APIClient,
-    organization: Organization,
-    order: Order,
-    tractor: Tractor,
-    worker: Worker,
-) -> Generator[Any, Any, None]:
-    """
-    Movement Factory
-    """
-    return api_client.post(
-        "/api/movements/",
-        {
-            "organization": f"{organization.id}",
-            "order": f"{order.id}",
-            "primary_worker": f"{worker.id}",
-            "tractor": f"{tractor.id}",
-        },
-    )
-
-
 def test_get(api_client: APIClient) -> None:
     """
     Test get Movement
@@ -157,6 +133,43 @@ def test_get_by_id(
     response = api_client.get(f"/api/movements/{movement_api.data['id']}/")
 
     assert response.status_code == 200
+    assert response.data is not None
+    assert response.data["order"] == order.id
+    assert response.data["primary_worker"] == worker.id
+    assert response.data["tractor"] == tractor.id
+
+
+def test_post_movement(
+    api_client: APIClient,
+    organization: Organization,
+    order: Order,
+    worker: Worker,
+    tractor: Tractor,
+) -> None:
+    """
+    Test post Movement
+
+    Args:
+        api_client (APIClient): API Client
+        organization (): Organization instance
+        order (): Order instance
+        worker (): Worker instance
+        tractor (): Tractor instance
+
+    Returns:
+        None: This function does not return anything.
+
+    """
+    response = api_client.post(
+        "/api/movements/",
+        {
+            "organization": f"{organization.id}",
+            "order": f"{order.id}",
+            "primary_worker": f"{worker.id}",
+            "tractor": f"{tractor.id}",
+        },
+    )
+    assert response.status_code == 201
     assert response.data is not None
     assert response.data["order"] == order.id
     assert response.data["primary_worker"] == worker.id
@@ -293,7 +306,7 @@ def test_primary_worker_tractor_fleet_validation(worker: Worker, organization) -
     ]
 
 
-def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat():
+def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
     """
     Test ValidationError is thrown when the worker is being assigned
     to a movement with hazardous material and the worker does not have
@@ -313,7 +326,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat():
     ]
 
 
-def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
+def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> None:
     """
     Test ValidationError is thrown when the worker is being assigned
     to a movement with hazardous material and the worker does not have
@@ -337,7 +350,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
 
 
 # --- Secondary Worker tests ---
-def test_secondary_worker_license_expiration_date():
+def test_secondary_worker_license_expiration_date() -> None:
     """
     Test ValidationError is thrown when the secondary worker
     license_expiration_date is less than today's date.
@@ -359,7 +372,7 @@ def test_secondary_worker_license_expiration_date():
     ]
 
 
-def test_secondary_worker_physical_due_date():
+def test_secondary_worker_physical_due_date() -> None:
     """
     Test ValidationError is thrown when the secondary worker
     license_expiration_date is less than today's date.
@@ -380,7 +393,7 @@ def test_secondary_worker_physical_due_date():
     ]
 
 
-def test_secondary_worker_medical_cert_date():
+def test_secondary_worker_medical_cert_date() -> None:
     """
     Test ValidationError is thrown when the secondary worker
     license_expiration_date is less than today's date.
@@ -401,7 +414,7 @@ def test_secondary_worker_medical_cert_date():
     ]
 
 
-def test_secondary_worker_mvr_due_date():
+def test_secondary_worker_mvr_due_date() -> None:
     """
     Test ValidationError is thrown when the secondary worker
     mvr_due_date is less than today's date.
@@ -422,7 +435,7 @@ def test_secondary_worker_mvr_due_date():
     ]
 
 
-def test_secondary_worker_termination_date():
+def test_secondary_worker_termination_date() -> None:
     """
     Test ValidationError is thrown when the secondary worker
     termination_date is filled with any date.
@@ -443,7 +456,7 @@ def test_secondary_worker_termination_date():
     ]
 
 
-def test_second_worker_cannot_be_assigned_to_movement_without_hazmat():
+def test_second_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
     """
     Test ValidationError is thrown when the worker is being assigned
     to a movement with hazardous material and the worker does not have
@@ -467,7 +480,7 @@ def test_second_worker_cannot_be_assigned_to_movement_without_hazmat():
     ]
 
 
-def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
+def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> None:
     """
     Test ValidationError is thrown when the worker is being assigned
     to a movement with hazardous material and the worker does not have
@@ -497,7 +510,7 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat():
     ]
 
 
-def test_workers_cannot_be_the_same():
+def test_workers_cannot_be_the_same() -> None:
     """
     Test ValidationError is thrown when the primary worker and the
     secondary worker are the same.
@@ -516,19 +529,19 @@ def test_workers_cannot_be_the_same():
     ]
 
 
-def test_movement_changed_to_in_progress_with_no_worker():
+def test_movement_changed_to_in_progress_with_no_worker(order: Order) -> None:
     """
     Test ValidationError is thrown when the movement status is changed
     to in progress or completed and no worker or tractor is assigned.
     """
+    movement = models.Movement.objects.filter(order=order).first()
 
     with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(
-            status="P",
-            primary_worker=None,
-            secondary_worker=None,
-            tractor=None,
-        )
+        movement.status = "P"
+        movement.primary_worker = None
+        movement.secondary_worker = None
+        movement.tractor = None
+        movement.clean()
 
     assert excinfo.value.message_dict["primary_worker"] == [
         "Primary worker is required before movement status can be changed to `In Progress` or `Completed`. Please try again."
@@ -538,39 +551,37 @@ def test_movement_changed_to_in_progress_with_no_worker():
     ]
 
 
-def test_movement_cannot_change_status_in_in_progress_if_stops_are_new():
+def test_movement_cannot_change_status_in_in_progress_if_stops_are_new(
+    order: Order,
+) -> None:
     """
-    Test ValidationError is thrown when the movement status is
-    changed to in progress ,but none of the stops associated are
-    in progress.
+    Test ValidationError is thrown when the movement status is changed to in progress ,but
+    none of the stops associated are in progress.
     """
-    movement = MovementFactory()
-
-    StopFactory(movement=movement)
-    StopFactory(movement=movement)
+    movement = models.Movement.objects.filter(order=order).first()
 
     with pytest.raises(ValidationError) as excinfo:
         movement.status = "P"
-        movement.save()
+        movement.clean()
 
     assert excinfo.value.message_dict["status"] == [
         "Cannot change status to anything other than `NEW` if any of the stops are not in progress. Please try again."
     ]
 
 
-def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress():
+def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress(
+    order: Order,
+) -> None:
     """
     Test ValidationError is thrown when the movement status is
     changed to in new, but the stops status is in progress.
     """
-    movement = MovementFactory()
 
-    StopFactory(movement=movement, status="P")
-    StopFactory(movement=movement, status="P")
+    movement = models.Movement.objects.filter(order=order).first()
 
     with pytest.raises(ValidationError) as excinfo:
         movement.status = "C"
-        movement.save()
+        movement.clean()
 
     assert excinfo.value.message_dict["status"] == [
         "Cannot change status to `COMPLETED` if any of the stops are in progress or new. Please try again."

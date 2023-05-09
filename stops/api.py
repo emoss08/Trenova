@@ -17,10 +17,10 @@
 from django.db.models import QuerySet
 
 from stops import models, serializers
-from utils.views import OrganizationMixin
+from rest_framework import viewsets
 
 
-class QualifierCodeViewSet(OrganizationMixin):
+class QualifierCodeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing QualifierCode information in the system.
 
     The viewset provides default operations for creating, updating and deleting routes,
@@ -48,7 +48,7 @@ class QualifierCodeViewSet(OrganizationMixin):
         return queryset
 
 
-class StopCommentViewSet(OrganizationMixin):
+class StopCommentViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing StopComment information in the system.
 
     The viewset provides default operations for creating, updating and deleting stop comments,
@@ -79,7 +79,7 @@ class StopCommentViewSet(OrganizationMixin):
         return queryset
 
 
-class StopViewSet(OrganizationMixin):
+class StopViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Stop information in the system.
 
     The viewset provides default operations for creating, updating and deleting stops,
@@ -102,7 +102,6 @@ class StopViewSet(OrganizationMixin):
         "location__code",
     )
     filterset_fields = ("status", "stop_type")
-    ordering_fields = "__all__"
 
     def get_queryset(self) -> QuerySet[models.Stop]:
         queryset = self.queryset.filter(
@@ -126,7 +125,7 @@ class StopViewSet(OrganizationMixin):
         return queryset
 
 
-class ServiceIncidentViewSet(OrganizationMixin):
+class ServiceIncidentViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing ServiceIncident information in the system.
 
     The viewset provides default operations for creating, updating and deleting service incidents,

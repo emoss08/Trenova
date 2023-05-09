@@ -18,6 +18,7 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from rest_framework.test import APIClient
 
 from commodities import factories
 
@@ -28,3 +29,36 @@ def commodity() -> Generator[Any, Any, None]:
     Commodity fixture
     """
     yield factories.CommodityFactory()
+
+
+@pytest.fixture
+def commodity_api(api_client: APIClient) -> Generator[Any, Any, None]:
+    """
+    Commodity API Fixture
+    """
+    yield api_client.post(
+        "/api/commodities/",
+        {
+            "name": "TEST3",
+            "description": "Test Description",
+        },
+    )
+
+
+@pytest.fixture
+def hazardous_material() -> Generator[Any, Any, None]:
+    """
+    Hazardous material fixture
+    """
+    yield factories.HazardousMaterialFactory()
+
+
+@pytest.fixture
+def hazardous_material_api(api_client: APIClient) -> Generator[Any, Any, None]:
+    """
+    Hazardous material API fixture
+    """
+    yield api_client.post(
+        "/api/hazardous_materials/",
+        {"name": "TEST3", "description": "Test Description", "hazard_class": "1.1"},
+    )

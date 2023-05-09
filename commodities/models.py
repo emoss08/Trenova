@@ -160,7 +160,7 @@ class HazardousMaterial(GenericModel):  # type: ignore
         Returns:
             str: Hazardous Material Absolute URL
         """
-        return reverse("order:hazardousmaterial_detail", kwargs={"pk": self.pk})
+        return reverse("hazardous-materials-detail", kwargs={"pk": self.pk})
 
 
 class Commodity(GenericModel):  # type: ignore
@@ -320,4 +320,4 @@ class Commodity(GenericModel):  # type: ignore
         Returns:
             str: Commodity Absolute URL
         """
-        return reverse("commodity:commodity_detail", kwargs={"pk": self.pk})
+        return reverse("commodity-details", kwargs={"pk": self.pk})

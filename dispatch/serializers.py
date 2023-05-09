@@ -15,15 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
 
-from billing.models import AccessorialCharge
-from commodities.models import Commodity
-from customer.models import Customer
 from dispatch import models
-from equipment.models import EquipmentType
-from order.models import OrderType
-from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -39,17 +32,12 @@ class CommentTypeSerializer(GenericSerializer):
     Filtering is also available, with the ability to filter by ID, and name.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `CommentTypeSerializer` class.
         """
 
         model = models.CommentType
-        extra_fields = ("organization",)
 
 
 class DelayCodeSerializer(GenericSerializer):
@@ -64,17 +52,12 @@ class DelayCodeSerializer(GenericSerializer):
     Filtering is also available, with the ability to filter by ID, and name.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `DelayCodeSerializer` class.
         """
 
         model = models.DelayCode
-        extra_fields = ("organization",)
 
 
 class FleetCodeSerializer(GenericSerializer):
@@ -89,21 +72,12 @@ class FleetCodeSerializer(GenericSerializer):
     Filtering is also available, with the ability to filter by ID, and name.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
-    is_active = serializers.BooleanField(default=True)
-
     class Meta:
         """
         A class representing the metadata for the `FleetCodeSerializer` class.
         """
 
         model = models.FleetCode
-        extra_fields = (
-            "organization",
-            "is_active",
-        )
 
 
 class DispatchControlSerializer(GenericSerializer):
@@ -118,17 +92,12 @@ class DispatchControlSerializer(GenericSerializer):
     Filtering is also available, with the ability to filter by ID, and name.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
-
     class Meta:
         """
         A class representing the metadata for the `DispatchControlSerializer` class.
         """
 
         model = models.DispatchControl
-        extra_fields = ("organization",)
 
 
 class RateSerializer(GenericSerializer):
@@ -136,39 +105,7 @@ class RateSerializer(GenericSerializer):
 
     This class extends the `GenericSerializer` class and serializes the `Rate` model,
     including fields for the related `Customer`, `Commodity`, `OrderType`, and `EquipmentType` models.
-
-    Attributes:
-        customer (serializers.PrimaryKeyRelatedField): The related `Customer` model, with a queryset of all `Customer` objects and
-        the option to allow `None` values.
-        commodity (serializers.PrimaryKeyRelatedField): The related `Commodity` model, with a queryset of all `Commodity` objects and
-        the option to allow `None` values.
-        order_type (serializers.PrimaryKeyRelatedField): The related `OrderType` model, with a queryset of all `OrderType` objects and
-        the option to allow `None` values.
-        equipment_type (serializers.PrimaryKeyRelatedField): The related `EquipmentType` model, with a queryset of all `EquipmentType`
-        objects and the option to allow `None` values.
     """
-
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
-    customer = serializers.PrimaryKeyRelatedField(
-        queryset=Customer.objects.all(), required=False, allow_null=True
-    )
-    commodity = serializers.PrimaryKeyRelatedField(
-        queryset=Commodity.objects.all(), required=False, allow_null=True
-    )
-    order_type = serializers.PrimaryKeyRelatedField(
-        queryset=OrderType.objects.all(), required=False, allow_null=True
-    )
-    equipment_type = serializers.PrimaryKeyRelatedField(
-        queryset=EquipmentType.objects.all(), required=False, allow_null=True
-    )
-    rate_billing_tables = serializers.PrimaryKeyRelatedField(
-        queryset=models.RateBillingTable.objects.all(),
-        required=False,
-        allow_null=True,
-        many=True,
-    )
 
     class Meta:
         """
@@ -176,14 +113,6 @@ class RateSerializer(GenericSerializer):
         """
 
         model = models.Rate
-        extra_fields = (
-            "organization",
-            "customer",
-            "commodity",
-            "order_type",
-            "equipment_type",
-            "rate_billing_tables",
-        )
 
 
 class RateBillingTableSerializer(GenericSerializer):
@@ -191,17 +120,7 @@ class RateBillingTableSerializer(GenericSerializer):
 
     This class extends the `GenericSerializer` class and serializes the `RateBillingTable` model,
     including fields for the related `Rate` and `AccessorialCharge` models.
-
-    Attributes:
-        rate (serializers.PrimaryKeyRelatedField): The related `Rate` model, with a queryset of all `Rate` objects.
-        accessorial_charge (serializers.PrimaryKeyRelatedField): The related `AccessorialCharge` model, with a queryset of
-        all `AccessorialCharge` objects.
     """
-
-    rate = serializers.PrimaryKeyRelatedField(queryset=models.Rate.objects.all())
-    accessorial_charge = serializers.PrimaryKeyRelatedField(
-        queryset=AccessorialCharge.objects.all()
-    )
 
     class Meta:
         """

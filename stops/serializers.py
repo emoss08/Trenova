@@ -15,12 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
 
-from accounts.models import User
-from dispatch.models import CommentType, DelayCode
-from movements.models import Movement
-from organization.models import Organization
 from stops import models
 from utils.serializers import GenericSerializer
 
@@ -34,10 +29,6 @@ class QualifierCodeSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
-
     class Meta:
         """Metaclass for the `QualifierCodeSerializer` class
 
@@ -46,7 +37,6 @@ class QualifierCodeSerializer(GenericSerializer):
         """
 
         model = models.QualifierCode
-        extra_fields = ("organization",)
 
 
 class StopCommentSerializer(GenericSerializer):
@@ -56,30 +46,7 @@ class StopCommentSerializer(GenericSerializer):
     to convert the StopComment model instances into a Python dictionary
     format that can be rendered into a JSON response. It also defines the fields
     that should be included in the serialized representation of the model.
-
-    Attributes:
-        stop (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the stop that the comment is for.
-        comment_type (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the comment type of the stop comment.
-        qualifier_code (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the qualifier code of the stop comment.
-        entered_by (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the user who entered the stop comment.
     """
-
-    stop = serializers.PrimaryKeyRelatedField(
-        queryset=models.Stop.objects.all(),
-    )
-    comment_type = serializers.PrimaryKeyRelatedField(
-        queryset=CommentType.objects.all(),
-    )
-    qualifier_code = serializers.PrimaryKeyRelatedField(
-        queryset=models.QualifierCode.objects.all(),
-    )
-    entered_by = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-    )
 
     class Meta:
         """Metaclass for the `StopCommentSerializer` class
@@ -91,13 +58,6 @@ class StopCommentSerializer(GenericSerializer):
         """
 
         model = models.StopComment
-        extra_fields = (
-            "organization",
-            "stop",
-            "comment_type",
-            "qualifier_code",
-            "entered_by",
-        )
 
 
 class StopSerializer(GenericSerializer):
@@ -126,18 +86,6 @@ class ServiceIncidentSerializer(GenericSerializer):
     that should be included in the serialized representation of the model.
     """
 
-    movement = serializers.PrimaryKeyRelatedField(
-        queryset=Movement.objects.all(),
-    )
-    stop = serializers.PrimaryKeyRelatedField(
-        queryset=models.Stop.objects.all(),
-    )
-    delay_code = serializers.PrimaryKeyRelatedField(
-        queryset=DelayCode.objects.all(),
-        allow_null=True,
-        required=False,
-    )
-
     class Meta:
         """Metaclass for the `ServiceIncidentSerializer` class
 
@@ -148,9 +96,3 @@ class ServiceIncidentSerializer(GenericSerializer):
         """
 
         model = models.ServiceIncident
-        extra_fields = (
-            "organization",
-            "movement",
-            "stop",
-            "delay_code",
-        )

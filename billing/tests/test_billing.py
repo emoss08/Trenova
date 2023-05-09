@@ -24,6 +24,7 @@ from django.core.exceptions import ValidationError
 from accounts.models import User
 from accounts.tests.factories import UserFactory
 from billing import models, selectors, services
+from billing.services import generate_invoice_number
 from customer.factories import CustomerFactory
 from customer.models import Customer
 from order.models import Order
@@ -33,6 +34,78 @@ from utils.models import StatusChoices
 from worker.models import Worker
 
 pytestmark = pytest.mark.django_db
+
+
+def test_generate_invoice_number(organization: Organization) -> None:
+    """
+    Test that invoice number increments by 1 for each new invoice
+    and adds the correct suffix when an order is rebilled.
+    """
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    order_2 = OrderFactory()
+
+    order_2_movements = order_2.movements.all()
+    order_2_movements.update(status="C")
+
+    order_2.status = "C"
+    order_2.save()
+
+    # Test first invoice
+    invoice_1 = models.BillingQueue.objects.create(
+        organization=organization, order=order_1, user=user, customer=order_1.customer
+    )
+    assert (
+        invoice_1.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+    )
+
+    # Test second invoice
+    invoice_2 = models.BillingQueue.objects.create(
+        organization=organization, order=order_2, user=user, customer=order_2.customer
+    )
+    assert (
+        invoice_2.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00002"
+    )
+
+    # Test rebilling first invoice (Credit Memo)
+    invoice_1_cm = models.BillingQueue.objects.create(
+        organization=organization,
+        order=order_1,
+        user=user,
+        bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
+        customer=order_2.customer,
+    )
+    assert (
+        invoice_1_cm.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+    )
+
+    # Test rebilling first invoice again (New invoice with A suffix)
+    invoice_1_a = models.BillingQueue.objects.create(
+        organization=organization, order=order_1, user=user, customer=order_1.customer
+    )
+    assert (
+        invoice_1_a.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001A"
+    )
+
+    # Test rebilling first invoice one more time (New invoice with B suffix)
+    invoice_1_b = models.BillingQueue.objects.create(
+        organization=organization, order=order_1, user=user, customer=order_1.customer
+    )
+    assert (
+        invoice_1_b.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}00001B"
+    )
 
 
 def test_invoice_number_generation(
@@ -101,6 +174,9 @@ def test_invoice_number_increments(
         bol_number=order.bol_number,
         user=user,
     )
+    invoice.invoice_number = generate_invoice_number(instance=invoice)
+    invoice.save()
+
     second_invoice = models.BillingQueue.objects.create(
         organization=user.organization,
         order_type=order_2.order_type,
@@ -112,6 +188,8 @@ def test_invoice_number_increments(
         bol_number=order_2.bol_number,
         user=user,
     )
+    second_invoice.invoice_number = generate_invoice_number(instance=second_invoice)
+    second_invoice.save()
 
     assert invoice.invoice_number is not None
     assert (

@@ -15,9 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
 
-from organization.models import Organization
 from route import models
 from utils.serializers import GenericSerializer
 
@@ -30,10 +28,6 @@ class RouteSerializer(GenericSerializer):
     listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `RouteSerializer`
@@ -41,7 +35,6 @@ class RouteSerializer(GenericSerializer):
         """
 
         model = models.Route
-        extra_fields = ("organization",)
 
 
 class RouteControlSerializer(GenericSerializer):
@@ -52,18 +45,6 @@ class RouteControlSerializer(GenericSerializer):
     listing and retrieving data.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    mileage_unit = serializers.ChoiceField(
-        choices=models.RouteControl.RouteDistanceUnitChoices.choices,
-        default=models.RouteControl.RouteDistanceUnitChoices.IMPERIAL,
-    )
-    traffic_model = serializers.ChoiceField(
-        choices=models.RouteControl.RouteModelChoices.choices,
-        default=models.RouteControl.RouteModelChoices.BEST_GUESS,
-    )
-
     class Meta:
         """
         A class representing for the metadata for the
@@ -71,8 +52,3 @@ class RouteControlSerializer(GenericSerializer):
         """
 
         model = models.RouteControl
-        extra_fields = (
-            "mileage_unit",
-            "traffic_model",
-            "organization",
-        )

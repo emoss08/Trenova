@@ -15,23 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from collections.abc import Generator
-from typing import Any
-
 import pytest
 from django.core.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
-from commodities import factories, models
+from commodities import models
 
 pytestmark = pytest.mark.django_db
-
-
-@pytest.fixture
-def hazardous_material() -> Generator[Any, Any, None]:
-    """
-    Hazardous material fixture
-    """
-    yield factories.HazardousMaterialFactory()
 
 
 def test_hazardous_material_creation(
@@ -80,3 +71,142 @@ def test_hazardous_material_update(
     hazardous_material.name = "New name"
     hazardous_material.save()
     assert hazardous_material.name == "New name"
+
+
+def test_get_hazardous_materials(
+    api_client: APIClient,
+) -> None:
+    """
+    Retrieve a list of hazardous materials
+
+    Args:
+        api_client (APIClient): Api client
+
+    Returns:
+        None: this function returns nothing.
+    """
+    response = api_client.get("/api/hazardous_materials/")
+    assert response.status_code == 200
+
+
+def test_get_hazardous_material_by_id(
+    api_client: APIClient, hazardous_material_api: Response
+) -> None:
+    """
+    Retrieve a hazardous material by id
+
+    Args:
+        api_client (APIClient): Api client
+        hazardous_material_api (Response): hazardous material response
+
+    Returns:
+        None: this function returns nothing.
+    """
+    response = api_client.get(
+        f"/api/hazardous_materials/{hazardous_material_api.data['id']}/"
+    )
+    assert response.status_code == 200
+    assert response.data["name"] == "TEST3"
+    assert response.data["description"] == "Test Description"
+    assert response.data["hazard_class"] == "1.1"
+
+
+def test_put_hazardous_material(
+    api_client: APIClient, hazardous_material_api: Response
+) -> None:
+    """
+    Update a hazardous material by id
+
+    Args:
+        api_client (APIClient): Api client
+        hazardous_material_api (Response): hazardous material response
+
+    Returns:
+        None: this function returns nothing.
+    """
+    response = api_client.put(
+        f"/api/hazardous_materials/{hazardous_material_api.data['id']}/",
+        {
+            "name": "TEST3",
+            "description": "Test Description",
+            "hazard_class": "1.1",
+            "packing_group": "I",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
+    assert response.data["name"] == "TEST3"
+    assert response.data["description"] == "Test Description"
+    assert response.data["hazard_class"] == "1.1"
+    assert response.data["packing_group"] == "I"
+
+
+def test_post_hazardous_material(api_client: APIClient) -> None:
+    """
+    Create a hazardous material
+
+    Args:
+        api_client (APIClient): Api client
+
+    Returns:
+        None: this function returns nothing.
+    """
+    response = api_client.post(
+        "/api/hazardous_materials/",
+        {"name": "TEST3", "description": "Test Description", "hazard_class": "1.1"},
+    )
+
+    assert response.status_code == 201
+    assert response.data["name"] == "TEST3"
+    assert response.data["description"] == "Test Description"
+    assert response.data["hazard_class"] == "1.1"
+
+
+def test_patch_hazardous_material(
+    api_client: APIClient, hazardous_material_api: Response
+) -> None:
+    """
+    Update a hazardous material by id
+
+    Args:
+        api_client (APIClient): Api client
+        hazardous_material_api (Response): hazardous material response
+
+    Returns:
+        None: this function returns nothing.
+    """
+    response = api_client.patch(
+        f"/api/hazardous_materials/{hazardous_material_api.data['id']}/",
+        {
+            "name": "TEST3",
+            "description": "Test Description",
+            "hazard_class": "1.1",
+            "packing_group": "I",
+        },
+        format="json",
+    )
+    assert response.status_code == 200
+    assert response.data["name"] == "TEST3"
+    assert response.data["description"] == "Test Description"
+    assert response.data["hazard_class"] == "1.1"
+    assert response.data["packing_group"] == "I"
+
+
+def test_delete_hazardous_material(
+    api_client: APIClient, hazardous_material_api: Response
+) -> None:
+    """
+    Delete a hazardous material by id
+
+    Args:
+        api_client (APIClient): Api client
+        hazardous_material_api (Response): hazardous material response
+
+    Returns:
+        None: this function returns nothing.
+    """
+    response = api_client.delete(
+        f"/api/hazardous_materials/{hazardous_material_api.data['id']}/",
+        format="json",
+    )
+    assert response.status_code == 204

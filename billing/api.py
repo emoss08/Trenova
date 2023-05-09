@@ -17,16 +17,15 @@
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, status
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
 from billing import models, serializers, tasks
-from utils.views import OrganizationMixin
 
 
-class BillingControlViewSet(OrganizationMixin):
+class BillingControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing BillingControl in the system.
 
     The viewset provides default operations for creating, updating Order Control,
@@ -68,7 +67,7 @@ class BillingControlViewSet(OrganizationMixin):
         return queryset
 
 
-class BillingQueueViewSet(OrganizationMixin):
+class BillingQueueViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing billing queue in the system.
 
@@ -132,7 +131,7 @@ class BillingQueueViewSet(OrganizationMixin):
         return queryset
 
 
-class BillingHistoryViewSet(OrganizationMixin):
+class BillingHistoryViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing billing history in the system.
 
@@ -194,7 +193,7 @@ class BillingHistoryViewSet(OrganizationMixin):
         return queryset
 
 
-class BillingTransferLogViewSet(OrganizationMixin):
+class BillingTransferLogViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing billing transfers in the system.
 
@@ -215,7 +214,7 @@ class BillingTransferLogViewSet(OrganizationMixin):
     http_method_names = ["get", "head", "options"]
 
 
-class ChargeTypeViewSet(OrganizationMixin):
+class ChargeTypeViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing charge types in the system.
 
@@ -247,7 +246,7 @@ class ChargeTypeViewSet(OrganizationMixin):
         return queryset
 
 
-class AccessorialChargeViewSet(OrganizationMixin):
+class AccessorialChargeViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing accessorial charges in the system.
 
@@ -286,7 +285,7 @@ class AccessorialChargeViewSet(OrganizationMixin):
         return queryset
 
 
-class DocumentClassificationViewSet(OrganizationMixin):
+class DocumentClassificationViewSet(viewsets.ModelViewSet):
     """
     A viewset for viewing and editing document classifications in the system.
 

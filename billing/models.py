@@ -560,7 +560,7 @@ class BillingQueue(GenericModel):  # type:ignore
     )
     invoice_number = models.CharField(
         _("Invoice Number"),
-        max_length=10,
+        max_length=50,
         blank=True,
         help_text=_("Invoice number for the billing queue"),
     )

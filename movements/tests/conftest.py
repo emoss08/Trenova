@@ -14,19 +14,26 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from collections.abc import Generator
+from typing import Any
 
 import pytest
+from rest_framework.test import APIClient
 
+from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements.tests.factories import MovementFactory
+from order.models import Order
 from order.tests.factories import OrderFactory
+from organization.models import Organization
 from worker.factories import WorkerFactory
+from worker.models import Worker
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def movement():
+def movement() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Movement
     """
@@ -34,7 +41,7 @@ def movement():
 
 
 @pytest.fixture
-def worker():
+def worker() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Worker
     """
@@ -42,7 +49,7 @@ def worker():
 
 
 @pytest.fixture
-def tractor():
+def tractor() -> Generator[Any, Any, None]:
     """
     Pytest fixture for Equipment
     """
@@ -50,8 +57,30 @@ def tractor():
 
 
 @pytest.fixture
-def order():
+def order() -> Generator[Any, Any, None]:
     """
     Pytest fixture for Order
     """
     yield OrderFactory()
+
+
+@pytest.fixture
+def movement_api(
+    api_client: APIClient,
+    organization: Organization,
+    order: Order,
+    tractor: Tractor,
+    worker: Worker,
+) -> Generator[Any, Any, None]:
+    """
+    Movement Factory
+    """
+    yield api_client.post(
+        "/api/movements/",
+        {
+            "organization": f"{organization.id}",
+            "order": f"{order.id}",
+            "primary_worker": f"{worker.id}",
+            "tractor": f"{tractor.id}",
+        },
+    )

@@ -91,6 +91,16 @@ router.register(
     org_api.TableChangeAlertViewSet,
     basename="table-change-alerts",
 )
+router.register(
+    r"notification_types",
+    org_api.NotificationTypeViewSet,
+    basename="notification-types",
+)
+router.register(
+    r"notification_settings",
+    org_api.NotificationSettingViewSet,
+    basename="notification-settings",
+)
 
 # Worker Routing
 router.register(r"workers", worker_api.WorkerViewSet, basename="worker")

@@ -111,16 +111,8 @@ def transfer_order_details_to_billing_history(
 def generate_invoice_number_on_billing_queue(
     instance: models.BillingQueue, **kwargs: Any
 ) -> None:
-    """Generates the invoice number on the billing queue
-
-    Args:
-        instance (models.BillingQueue): Billing Queue instance
-        **kwargs (Any): Any additional arguments
-
-    Returns:
-        None: This function does not return anything
-    """
-    services.generate_invoice_number(instance=instance)
+    is_credit_memo = instance.bill_type == models.BillingQueue.BillTypeChoices.CREDIT
+    services.generate_invoice_number(instance=instance, is_credit_memo=is_credit_memo)
 
 
 def transfer_order_details_to_billing_queue(

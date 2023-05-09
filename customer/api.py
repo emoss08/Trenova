@@ -16,12 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-
+from rest_framework import viewsets
 from customer import models, serializers
-from utils.views import OrganizationMixin
 
 
-class CustomerViewSet(OrganizationMixin):
+class CustomerViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customers,
@@ -79,7 +78,7 @@ class CustomerViewSet(OrganizationMixin):
         return queryset
 
 
-class CustomerBillingProfileViewSet(OrganizationMixin):
+class CustomerBillingProfileViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer billing profile information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customer
@@ -110,7 +109,7 @@ class CustomerBillingProfileViewSet(OrganizationMixin):
         return queryset
 
 
-class CustomerFuelTableViewSet(OrganizationMixin):
+class CustomerFuelTableViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer fuel table information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customer
@@ -169,7 +168,7 @@ class CustomerFuelTableViewSet(OrganizationMixin):
         return queryset
 
 
-class CustomerRuleProfileViewSet(OrganizationMixin):
+class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer rule profile information in the system.
 
     The viewset provides default operations for creating, updating, and deleting customer

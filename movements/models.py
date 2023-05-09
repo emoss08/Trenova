@@ -110,7 +110,7 @@ class Movement(GenericModel):
             str: String representation of the Movement
         """
         return textwrap.shorten(
-            f"Movement {self.ref_num}, Status: {self.status}, Order: {self.order.pro_number}",
+            f"Movement {self.ref_num}, Status: {self.status}",
             width=30,
             placeholder="...",
         )

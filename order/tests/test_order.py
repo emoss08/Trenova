@@ -19,9 +19,10 @@ import datetime
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.test import RequestFactory
 from django.utils import timezone
 from rest_framework.response import Response
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APIRequestFactory
 
 from accounting.models import RevenueCode
 from accounts.models import User
@@ -33,6 +34,7 @@ from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
 from order import models, selectors
+from order.api import OrderViewSet
 from order.selectors import get_order_stops
 from order.tests.factories import OrderFactory
 from organization.models import Organization
