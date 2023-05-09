@@ -15,13 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from django.db.models import QuerySet
-from rest_framework import permissions
+from rest_framework import permissions, viewsets
 
 from route import models, serializers
-from utils.views import OrganizationMixin
 
 
-class RouteViewSet(OrganizationMixin):
+class RouteViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Route information in the system.
 
     The viewset provides default operations for creating, updating and deleting routes,
@@ -54,7 +53,7 @@ class RouteViewSet(OrganizationMixin):
         return queryset
 
 
-class RouteControlViewSet(OrganizationMixin):
+class RouteControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing RouteControl information in the system.
 
     The viewset provides default operations for creating, updating and deleting route

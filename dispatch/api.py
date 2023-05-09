@@ -15,13 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from django.db.models import Prefetch, QuerySet
-from rest_framework import permissions
+from rest_framework import permissions, viewsets
 
 from dispatch import models, serializers
-from utils.views import OrganizationMixin
 
 
-class CommentTypeViewSet(OrganizationMixin):
+class CommentTypeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Comment Type information in the system.
 
     The viewset provides default operations for creating, updating, and deleting Comment
@@ -41,7 +40,7 @@ class CommentTypeViewSet(OrganizationMixin):
         return queryset
 
 
-class DelayCodeViewSet(OrganizationMixin):
+class DelayCodeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Delay Code information in the system.
 
     The viewset provides default operations for creating, updating, and deleting Delay
@@ -66,7 +65,7 @@ class DelayCodeViewSet(OrganizationMixin):
         return queryset
 
 
-class FleetCodeViewSet(OrganizationMixin):
+class FleetCodeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Fleet Code information in the system.
 
     The viewset provides default operations for creating, updating, and deleting Fleet Codes,
@@ -97,7 +96,7 @@ class FleetCodeViewSet(OrganizationMixin):
         return queryset
 
 
-class DispatchControlViewSet(OrganizationMixin):
+class DispatchControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Dispatch Control in the system.
 
     The viewset provides default operations for updating, as well as listing and retrieving
@@ -133,7 +132,7 @@ class DispatchControlViewSet(OrganizationMixin):
         return queryset
 
 
-class RateViewSet(OrganizationMixin):
+class RateViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Rate information in the system.
 
     The viewset provides default operations for creating, updating, and deleting Rates,
@@ -186,12 +185,12 @@ class RateViewSet(OrganizationMixin):
         return queryset
 
 
-class RateBillingTableViewSet(OrganizationMixin):
+class RateBillingTableViewSet(viewsets.ModelViewSet):
     """
     Django Rest Framework ViewSet for the RateBillingTable model.
 
     The RateBillingTableViewSet class provides the CRUD operation for the RateBillingTable model
-    through the Django Rest Framework. The class is a subclass of OrganizationMixin,
+    through the Django Rest Framework. The class is a subclass of viewsets.ModelViewSet,
     which provides the organization-related functionality.
 
     Attributes:

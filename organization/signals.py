@@ -313,20 +313,6 @@ def delete_and_recreate_trigger_and_function(
         )
 
 
-def create_notification_types(
-    sender: models.Organization,
-    instance: models.Organization,
-    created: bool,
-    **kwargs: Any,
-) -> None:
-    if created:
-        notification_choices = models.NotificationType.NotificationChoices.choices
-        for name, description in notification_choices:
-            models.NotificationType.objects.get_or_create(
-                organization=instance, name=name, description=description
-            )
-
-
 def create_notification_settings(
     sender: models.NotificationType,
     instance: models.NotificationType,

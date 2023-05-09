@@ -18,7 +18,6 @@
 from rest_framework import serializers
 
 from location import models
-from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -29,10 +28,6 @@ class LocationCategorySerializer(GenericSerializer):
     Location Category, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `LocationCategorySerializer`
@@ -40,11 +35,6 @@ class LocationCategorySerializer(GenericSerializer):
         """
 
         model = models.LocationCategory
-        extra_fields = (
-            "name",
-            "description",
-            "organization",
-        )
 
 
 class LocationContactSerializer(GenericSerializer):
@@ -54,10 +44,6 @@ class LocationContactSerializer(GenericSerializer):
     Location Contact, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `LocationContactSerializer`
@@ -65,7 +51,6 @@ class LocationContactSerializer(GenericSerializer):
         """
 
         model = models.LocationContact
-        extra_fields = ("organization",)
 
 
 class LocationCommentSerializer(GenericSerializer):
@@ -75,10 +60,6 @@ class LocationCommentSerializer(GenericSerializer):
     Location Comment information, as well as listing and retrieving them.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-
     class Meta:
         """
         A class representing the metadata for the `LocationCommentSerializer`
@@ -86,7 +67,6 @@ class LocationCommentSerializer(GenericSerializer):
         """
 
         model = models.LocationComment
-        extra_fields = ("organization",)
 
 
 class LocationSerializer(GenericSerializer):
@@ -97,26 +77,6 @@ class LocationSerializer(GenericSerializer):
     """
 
     wait_time_avg = serializers.DurationField(read_only=True)
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    location_category = serializers.PrimaryKeyRelatedField(
-        queryset=models.LocationCategory.objects.all(),
-        allow_null=True,
-        required=False,
-    )
-    location_contacts = serializers.PrimaryKeyRelatedField(
-        queryset=models.LocationContact.objects.all(),
-        many=True,
-        allow_null=True,
-        required=False,
-    )
-    location_comments = serializers.PrimaryKeyRelatedField(
-        queryset=models.LocationComment.objects.all(),
-        many=True,
-        allow_null=True,
-        required=False,
-    )
 
     class Meta:
         """
@@ -125,10 +85,4 @@ class LocationSerializer(GenericSerializer):
         """
 
         model = models.Location
-        extra_fields = (
-            "wait_time_avg",
-            "organization",
-            "location_category",
-            "location_contacts",
-            "location_comments",
-        )
+        extra_fields = ("wait_time_avg",)

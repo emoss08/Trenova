@@ -36,7 +36,6 @@ from core.health_check.disk_backend import DiskUsageHealthCheck
 from core.health_check.redis_backend import RedisHealthCheck
 from core.health_check.storage_backend import FileStorageHealthCheck
 from organization import exceptions, models, selectors, serializers
-from utils.views import OrganizationMixin
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -95,7 +94,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         ),
     ]
 )
-class DepotViewSet(OrganizationMixin):
+class DepotViewSet(viewsets.ModelViewSet):
     """
     Depot ViewSet to manage requests to the depot endpoint
     """
@@ -159,7 +158,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class EmailProfileViewSet(OrganizationMixin):
+class EmailProfileViewSet(viewsets.ModelViewSet):
     """
     EmailProfile ViewSet to manage requests to the Email profile endpoint
     """
@@ -184,7 +183,7 @@ class EmailProfileViewSet(OrganizationMixin):
         return queryset
 
 
-class EmailControlViewSet(OrganizationMixin):
+class EmailControlViewSet(viewsets.ModelViewSet):
     """
     EmailControl ViewSet to manage requests to the email control endpoint
     """
@@ -212,7 +211,7 @@ class EmailLogViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "head", "options"]
 
 
-class TaxRateViewSet(OrganizationMixin):
+class TaxRateViewSet(viewsets.ModelViewSet):
     """
     TaxRate ViewSet to manage requests to the tax rate endpoint
     """
@@ -231,7 +230,7 @@ class TaxRateViewSet(OrganizationMixin):
         return queryset
 
 
-class TableChangeAlertViewSet(OrganizationMixin):
+class TableChangeAlertViewSet(viewsets.ModelViewSet):
     """
     TableChangeAlert ViewSet to manage requests to the table change alert endpoint
     """
@@ -552,3 +551,51 @@ class CacheManagerView(views.APIView):
             return Response(
                 {"error": str(cache_exc)}, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class NotificationTypeViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows notification types to be viewed or edited.
+    """
+
+    queryset = models.NotificationType.objects.all()
+    serializer_class = serializers.NotificationTypeSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self) -> QuerySet[models.NotificationType]:
+        queryset: QuerySet[models.NotificationType] = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "name",
+            "description",
+        )
+        return queryset
+
+
+class NotificationSettingViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows notification settings to be viewed or edited.
+    """
+
+    queryset = models.NotificationSetting.objects.all()
+    serializer_class = serializers.NotificationSettingSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self) -> QuerySet[models.NotificationSetting]:
+        queryset: QuerySet[
+            models.NotificationSetting
+        ] = models.NotificationSetting.objects.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "notification_type_id",
+            "send_notification",
+            "email_recipients",
+            "email_profile_id",
+            "custom_content",
+            "custom_subject",
+        )
+        return queryset

@@ -27,6 +27,7 @@ from rest_framework.test import APIClient
 from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
+from order.models import Order
 from organization.models import Organization
 from stops import models
 from stops.tests.factories import StopFactory
@@ -240,16 +241,14 @@ def test_stop_has_location_or_address_line():
 
 
 def test_cannot_change_status_to_in_progress_or_completed_if_first_stop_is_not_completed(
-    movement: Movement,
+    order: Order,
 ) -> None:
     """
     Test ValidationError is thrown when the status of the stop is changed to `IN_PROGRESS`
     or `COMPLETED` if the previous stop in the movement is not `COMPLETED`.
     """
 
-    print(movement.id)
-
-    StopFactory(movement=movement, arrival_time=timezone.now(), status="N", sequence=1)
+    movement = Movement.objects.filter(order=order).first()
 
     with pytest.raises(ValidationError) as excinfo:
         StopFactory(

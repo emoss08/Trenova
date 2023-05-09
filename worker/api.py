@@ -16,12 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-
-from utils.views import OrganizationMixin
+from rest_framework import viewsets
 from worker import models, serializers
 
 
-class WorkerCommentViewSet(OrganizationMixin):
+class WorkerCommentViewSet(viewsets.ModelViewSet):
     queryset = models.WorkerComment.objects.all()
     serializer_class = serializers.WorkerCommentSerializer
 
@@ -39,7 +38,7 @@ class WorkerCommentViewSet(OrganizationMixin):
         return queryset
 
 
-class WorkerContactViewSet(OrganizationMixin):
+class WorkerContactViewSet(viewsets.ModelViewSet):
     queryset = models.WorkerContact.objects.all()
     serializer_class = serializers.WorkerContactSerializer
 
@@ -60,7 +59,7 @@ class WorkerContactViewSet(OrganizationMixin):
         return queryset
 
 
-class WorkerProfileViewSet(OrganizationMixin):
+class WorkerProfileViewSet(viewsets.ModelViewSet):
     queryset = models.WorkerProfile.objects.all()
     serializer_class = serializers.WorkerProfileSerializer
 
@@ -90,7 +89,7 @@ class WorkerProfileViewSet(OrganizationMixin):
         return queryset
 
 
-class WorkerViewSet(OrganizationMixin):
+class WorkerViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing workers in the system.
 
     The viewset provides default operations for creating, updating, and deleting workers,

@@ -14,16 +14,16 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from django.db.models import Prefetch, QuerySet
-from rest_framework import permissions
+from rest_framework import permissions, viewsets
 
 from movements.models import Movement
 from order import models, serializers
-from utils.views import OrganizationMixin
+from django.db.models import Prefetch, Case, When, Value, BooleanField, Exists, OuterRef
+
+from django.db.models import QuerySet, Prefetch
 
 
-class OrderControlViewSet(OrganizationMixin):
+class OrderControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing OrderControl in the system.
 
     The viewset provides default operations for creating, updating Order Control,
@@ -48,7 +48,7 @@ class OrderControlViewSet(OrganizationMixin):
     serializer_class = serializers.OrderControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
 
-    def get_queryset(self) -> QuerySet[models.OrderControl]:
+    def get_queryset(self) -> "QuerySet[models.OrderControl]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
@@ -69,7 +69,7 @@ class OrderControlViewSet(OrganizationMixin):
         return queryset
 
 
-class OrderTypeViewSet(OrganizationMixin):
+class OrderTypeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Order types in the system.
 
     The viewset provides default operations for creating, updating and deleting order types,
@@ -91,7 +91,7 @@ class OrderTypeViewSet(OrganizationMixin):
     serializer_class = serializers.OrderTypeSerializer
     filterset_fields = ("is_active",)
 
-    def get_queryset(self) -> QuerySet[models.OrderType]:
+    def get_queryset(self) -> "QuerySet[models.OrderType]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
@@ -104,7 +104,7 @@ class OrderTypeViewSet(OrganizationMixin):
         return queryset
 
 
-class ReasonCodeViewSet(OrganizationMixin):
+class ReasonCodeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Reason codes in the system.
 
     The viewset provides default operations for creating, updating and deleting reason codes,
@@ -126,7 +126,7 @@ class ReasonCodeViewSet(OrganizationMixin):
     serializer_class = serializers.ReasonCodeSerializer
     filterset_fields = ("is_active",)
 
-    def get_queryset(self) -> QuerySet[models.ReasonCode]:
+    def get_queryset(self) -> "QuerySet[models.ReasonCode]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
@@ -140,7 +140,7 @@ class ReasonCodeViewSet(OrganizationMixin):
         return queryset
 
 
-class OrderViewSet(OrganizationMixin):
+class OrderViewSet(viewsets.ModelViewSet):
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
     filterset_fields = (
@@ -154,35 +154,43 @@ class OrderViewSet(OrganizationMixin):
         "hazmat",
     )
 
-    def get_queryset(self) -> QuerySet[models.Order]:
+    def get_queryset(self) -> "QuerySet[models.Order]":
         queryset = (
             self.queryset.filter(
                 organization=self.request.user.organization  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
+                    "additional_charges",
+                    queryset=models.AdditionalCharge.objects.filter(
+                        organization=self.request.user.organization  # type: ignore
+                    )
+                    .only("id", "order_id", "organization_id")
+                    .all(),
+                ),
+                Prefetch(
                     lookup="movements",
                     queryset=Movement.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id", "organization_id"),
+                    )
+                    .only("id", "order_id", "organization_id")
+                    .all(),
                 ),
                 Prefetch(
                     lookup="order_documentation",
                     queryset=models.OrderDocumentation.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id", "organization_id"),
+                    )
+                    .only("id", "order_id", "organization_id")
+                    .all(),
                 ),
                 Prefetch(
                     lookup="order_comments",
                     queryset=models.OrderComment.objects.filter(
                         organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id", "organization_id"),
-                ),
-                Prefetch(
-                    lookup="additional_charges",
-                    queryset=models.AdditionalCharge.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
-                    ).only("id", "order_id", "organization_id"),
+                    )
+                    .only("id", "order_id", "organization_id", "created")
+                    .all(),
                 ),
             )
             .only(
@@ -233,7 +241,7 @@ class OrderViewSet(OrganizationMixin):
         return queryset
 
 
-class OrderDocumentationViewSet(OrganizationMixin):
+class OrderDocumentationViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Order documentation in the system.
 
     The viewset provides default operations for creating, updating and deleting order documentation,
@@ -251,7 +259,7 @@ class OrderDocumentationViewSet(OrganizationMixin):
     queryset = models.OrderDocumentation.objects.all()
     serializer_class = serializers.OrderDocumentationSerializer
 
-    def get_queryset(self) -> QuerySet[models.OrderDocumentation]:
+    def get_queryset(self) -> "QuerySet[models.OrderDocumentation]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
@@ -263,7 +271,7 @@ class OrderDocumentationViewSet(OrganizationMixin):
         return queryset
 
 
-class OrderCommentViewSet(OrganizationMixin):
+class OrderCommentViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Order comments in the system.
 
     The viewset provides default operations for creating, updating and deleting order comments,
@@ -288,7 +296,7 @@ class OrderCommentViewSet(OrganizationMixin):
         "entered_by",
     )
 
-    def get_queryset(self) -> QuerySet[models.OrderComment]:
+    def get_queryset(self) -> "QuerySet[models.OrderComment]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(
@@ -301,7 +309,7 @@ class OrderCommentViewSet(OrganizationMixin):
         return queryset
 
 
-class AdditionalChargeViewSet(OrganizationMixin):
+class AdditionalChargeViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Additional charges in the system.
 
     The viewset provides default operations for creating, updating and deleting additional charges,
@@ -326,7 +334,7 @@ class AdditionalChargeViewSet(OrganizationMixin):
         "entered_by",
     )
 
-    def get_queryset(self) -> QuerySet[models.AdditionalCharge]:
+    def get_queryset(self) -> "QuerySet[models.AdditionalCharge]":
         queryset = self.queryset.filter(
             organization=self.request.user.organization  # type: ignore
         ).only(

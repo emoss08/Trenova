@@ -15,10 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
 
 from commodities import models
-from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -31,24 +29,12 @@ class HazardousMaterialSerializer(GenericSerializer):
     representation of the `HazardousMaterial` model.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
-    is_active = serializers.BooleanField(default=True)
-    hazard_class = serializers.ChoiceField(
-        choices=models.HazardousMaterial.HazardousClassChoices.choices
-    )
-    packing_group = serializers.ChoiceField(
-        choices=models.HazardousMaterial.PackingGroupChoices.choices
-    )
-
     class Meta:
         """
         A class representing the metadata for the `HazardousMaterialSerializer` class.
         """
 
         model = models.HazardousMaterial
-        extra_fields = ("organization", "is_active", "hazard_class", "packing_group")
 
 
 class CommoditySerializer(GenericSerializer):
@@ -60,26 +46,9 @@ class CommoditySerializer(GenericSerializer):
     representation of the `Commodity` model.
     """
 
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all(),
-    )
-    unit_of_measure = serializers.ChoiceField(
-        choices=models.Commodity.UnitOfMeasureChoices.choices
-    )
-    hazmat = serializers.PrimaryKeyRelatedField(
-        queryset=models.HazardousMaterial.objects.all(),
-        allow_null=True,
-        required=False,
-    )
-
     class Meta:
         """
         A class representing the metadata for the `CommoditySerializer` class.
         """
 
         model = models.Commodity
-        extra_fields = (
-            "organization",
-            "unit_of_measure",
-            "hazmat",
-        )

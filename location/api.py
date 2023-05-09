@@ -20,12 +20,11 @@ from typing import Any
 from django.db.models import Prefetch, QuerySet
 from rest_framework.request import Request
 from rest_framework.response import Response
-
+from rest_framework import viewsets
 from location import models, selectors, serializers
-from utils.views import OrganizationMixin
 
 
-class LocationCategoryViewSet(OrganizationMixin):
+class LocationCategoryViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing location information in the system.
 
     The viewset provides default operations for creating, updating and deleting locations,
@@ -41,7 +40,7 @@ class LocationCategoryViewSet(OrganizationMixin):
     serializer_class = serializers.LocationCategorySerializer
 
 
-class LocationViewSet(OrganizationMixin):
+class LocationViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing location information in the system.
 
     The viewset provides default operations for creating, updating and deleting locations,
@@ -127,7 +126,7 @@ class LocationViewSet(OrganizationMixin):
         return queryset
 
 
-class LocationContactViewSet(OrganizationMixin):
+class LocationContactViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Location Contact information in the system.
 
     The viewset provides default operations for creating, updating and deleting Location
@@ -155,7 +154,7 @@ class LocationContactViewSet(OrganizationMixin):
         return queryset
 
 
-class LocationCommentViewSet(OrganizationMixin):
+class LocationCommentViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Location Comments information in the system.
 
     The viewset provides default operations for creating, updating and deleting Location

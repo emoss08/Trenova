@@ -45,35 +45,6 @@ def validate_org_timezone(value: str) -> None:
         ) from e
 
 
-def validate_org_time_format(value: str) -> None:
-    """Validate that the time format is valid.
-
-    Notes: NO LONGER USED, but leaving for migration purposes
-
-    Ensure that the time format put in by the user is a valid time format.
-
-    Args:
-        value (str):
-
-    Returns:
-        None: This function does not return anything.
-
-    Raises:
-        ValidationError: If the time format is not valid.
-    """
-
-    time_formats: list[str] = [
-        "HH:mm",
-        "HH:mm:ss",
-    ]
-
-    if value not in time_formats:
-        raise ValidationError(
-            _("%(value)s is not a valid time format"),
-            params={"value": value},
-        )
-
-
 def validate_format_string(value: str) -> None:
     """
     Validate that the format string is valid.

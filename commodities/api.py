@@ -16,12 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import QuerySet
-
+from rest_framework import viewsets
 from commodities import models, serializers
-from utils.views import OrganizationMixin
 
 
-class HazardousMaterialViewSet(OrganizationMixin):
+class HazardousMaterialViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing hazardous materials in the system.
 
     The viewset provides default operations for creating, updating, and deleting hazardous materials,
@@ -41,27 +40,23 @@ class HazardousMaterialViewSet(OrganizationMixin):
     )
 
     def get_queryset(self) -> QuerySet[models.HazardousMaterial]:
-        queryset = (
-            self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
-            )
-            .select_related("organization")
-            .only(
-                "id",
-                "packing_group",
-                "hazard_class",
-                "organization__id",
-                "name",
-                "description",
-                "is_active",
-                "erg_number",
-                "proper_shipping_name",
-            )
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "packing_group",
+            "hazard_class",
+            "organization_id",
+            "name",
+            "description",
+            "is_active",
+            "erg_number",
+            "proper_shipping_name",
         )
         return queryset
 
 
-class CommodityViewSet(OrganizationMixin):
+class CommodityViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing commodities in the system.
 
     The viewset provides default operations for creating, updating, and deleting commodities,
@@ -84,23 +79,19 @@ class CommodityViewSet(OrganizationMixin):
         Returns:
             The queryset of commodities that are associated with the current user's organization.
         """
-        queryset = (
-            self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
-            )
-            .select_related("organization")
-            .only(
-                "id",
-                "min_temp",
-                "organization__id",
-                "is_hazmat",
-                "name",
-                "description",
-                "set_point_temp",
-                "unit_of_measure",
-                "hazmat__id",
-                "max_temp",
-            )
+        queryset = self.queryset.filter(
+            organization=self.request.user.organization  # type: ignore
+        ).only(
+            "id",
+            "min_temp",
+            "organization_id",
+            "is_hazmat",
+            "name",
+            "description",
+            "set_point_temp",
+            "unit_of_measure",
+            "hazmat__id",
+            "max_temp",
         )
 
         return queryset

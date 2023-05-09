@@ -78,10 +78,6 @@ def test_table_change_insert_adds_insert_trigger() -> None:
     )
     function_check = check_function_exists(function_name=table_change.function_name)
 
-    print("table change", table_change)
-    print("TRIGGER CHECK", trigger_check)
-    print("FUNCTION CHECK", function_check)
-
     assert trigger_check is True
     assert function_check is True
 

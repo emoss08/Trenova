@@ -15,10 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
 
 from invoicing import models
-from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
@@ -30,10 +28,6 @@ class InvoiceControlSerializer(GenericSerializer):
     that can be rendered into a JSON response. It also defined the fields that
     should be included in the serialized representation of the model
     """
-
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
 
     class Meta:
         """

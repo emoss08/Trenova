@@ -15,14 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
 
-from equipment.models import Tractor
 from movements import models
-from order.models import Order
-from organization.models import Organization
 from utils.serializers import GenericSerializer
-from worker.models import Worker
 
 
 class MovementSerializer(GenericSerializer):
@@ -32,55 +27,14 @@ class MovementSerializer(GenericSerializer):
     to convert the Movement model instances into a Python dictionary
     format that can be rendered into a JSON response. It also defines the fields
     that should be included in the serialized representation of the model.
-
-    Attributes:
-        order (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the order of the movement.
-        tractor (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the tractor of the movement.
-        primary_worker (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the primary worker of the movement.
-        secondary_worker (serializers.PrimaryKeyRelatedField): A primary key related field that
-        determines the secondary worker of the movement.
     """
-
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    order = serializers.PrimaryKeyRelatedField(
-        queryset=Order.objects.all(),
-    )
-    tractor = serializers.PrimaryKeyRelatedField(
-        queryset=Tractor.objects.all(),
-        allow_null=True,
-        required=False,
-    )
-    primary_worker = serializers.PrimaryKeyRelatedField(
-        queryset=Worker.objects.all(),
-        allow_null=True,
-        required=False,
-    )
-    secondary_worker = serializers.PrimaryKeyRelatedField(
-        queryset=Worker.objects.all(),
-        allow_null=True,
-        required=False,
-    )
 
     class Meta:
         """Metaclass for OrderSerializer
 
         Attributes:
             model (models.Order): The model that the serializer is for.
-            extra_fields (tuple): A tuple of extra fields that should be included
-            in the serialized representation of the model.
         """
 
         model = models.Movement
-        extra_fields = (
-            "organization",
-            "order",
-            "tractor",
-            "primary_worker",
-            "secondary_worker",
-        )
         extra_read_only_fields = ("id", "ref_num")
