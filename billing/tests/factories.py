@@ -68,3 +68,17 @@ class DocumentClassificationFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
+
+
+class BillingQueueFactory(factory.django.DjangoModelFactory):
+    """
+    Billing Queue Factory
+    """
+
+    class Meta:
+        model = "billing.BillingQueue"
+        django_get_or_create = ("order", "organization", "customer")
+
+    order = factory.SubFactory("order.tests.factories.OrderFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    customer = factory.SubFactory("customer.factories.CustomerFactory")

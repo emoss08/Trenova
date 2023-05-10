@@ -331,12 +331,17 @@ urlpatterns = [
     path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
     path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
     path(
-        "api/cache_manager/", org_api.CacheManagerView.as_view(), name="cache_manager"
+        "api/cache_manager/", org_api.CacheManagerView.as_view(), name="cache-manager"
     ),
     path(
         "api/cache_manager/<str:model_path>/",
         org_api.CacheManagerView.as_view(),
-        name="cache_manager_clear",
+        name="cache-manager-clear",
+    ),
+    path(
+        "api/untransfer_invoice/",
+        billing_api.untransfer_orders,
+        name="untransfer-invoice",
     ),
 ]
 

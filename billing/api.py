@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -22,7 +23,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from billing import models, serializers, tasks
+from billing import models, serializers, tasks, services
 
 
 class BillingControlViewSet(viewsets.ModelViewSet):
@@ -465,3 +466,25 @@ def transfer_to_billing(request: Request) -> Response:
     return Response(
         {"message": "Transfer to billing task started."}, status=status.HTTP_200_OK
     )
+
+
+@api_view(["POST"])
+def untransfer_orders(request: Request) -> Response:
+    invoice_numbers = request.data.get("invoice_numbers")
+
+    if not invoice_numbers:
+        return Response({"error": "No invoice numbers provided."}, status=400)
+
+    if isinstance(invoice_numbers, list):
+        invoice_numbers_list = invoice_numbers
+    else:
+        invoice_numbers_list = [invoice_numbers]
+
+    try:
+        billing_queues = models.BillingQueue.objects.filter(
+            invoice_number__in=invoice_numbers_list
+        )
+        services.untransfer_order_service(billing_queues)
+        return Response({"success": "Orders untransferred successfully."})
+    except ObjectDoesNotExist:
+        return Response({"error": "Invoice numbers not found."}, status=404)

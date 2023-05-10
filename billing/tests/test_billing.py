@@ -20,11 +20,14 @@ import uuid
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.urls import reverse
+from rest_framework.test import APIClient
 
 from accounts.models import User
 from accounts.tests.factories import UserFactory
 from billing import models, selectors, services
 from billing.services import generate_invoice_number
+from billing.tests.factories import BillingQueueFactory
 from customer.factories import CustomerFactory
 from customer.models import Customer
 from order.models import Order
@@ -647,3 +650,73 @@ def test_single_order_billing_service(
         mail.outbox[0].body
         == f"Please see attached invoice for invoice: {order.pro_number}"
     )
+
+
+def test_untransfer_single_order(
+    api_client: APIClient, organization: Organization
+) -> None:
+    order = OrderFactory(organization=organization)
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.ready_to_bill = True
+    order.transferred_to_billing = False
+    order.billing_transfer_date = None
+    order.save()
+    BillingQueueFactory(order=order, invoice_number="INV12345")
+
+    response = api_client.post(
+        reverse("untransfer-invoice"), {"invoice_numbers": "INV12345"}, format="json"
+    )
+
+    assert response.status_code == 200
+    assert response.data == {"success": "Orders untransferred successfully."}
+    order.refresh_from_db()
+    assert not order.transferred_to_billing
+    assert order.billing_transfer_date is None
+
+
+def test_untransfer_multiple_orders(
+    api_client: APIClient, organization: Organization
+) -> None:
+    order1 = OrderFactory(organization=organization)
+
+    order_movements = order1.movements.all()
+    order_movements.update(status="C")
+
+    order1.status = "C"
+    order1.ready_to_bill = True
+    order1.transferred_to_billing = False
+    order1.billing_transfer_date = None
+    order1.save()
+
+    order2 = OrderFactory(organization=organization)
+
+    order_movements = order2.movements.all()
+    order_movements.update(status="C")
+
+    order2.status = "C"
+    order2.ready_to_bill = True
+    order2.transferred_to_billing = False
+    order2.billing_transfer_date = None
+    order2.save()
+
+    BillingQueueFactory(order=order1, invoice_number="INV12345")
+    BillingQueueFactory(order=order2, invoice_number="INV67890")
+
+    response = api_client.post(
+        reverse("untransfer-invoice"),
+        {"invoice_numbers": ["INV12345", "INV67890"]},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.data == {"success": "Orders untransferred successfully."}
+    order1.refresh_from_db()
+    order2.refresh_from_db()
+    assert not order1.transferred_to_billing
+    assert order1.billing_transfer_date is None
+    assert not order2.transferred_to_billing
+    assert order2.billing_transfer_date is None
