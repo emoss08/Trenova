@@ -42,6 +42,7 @@ class BillingQueueAdmin(GenericAdmin[BillingQueue]):
         "order",
         "bol_number",
         "invoice_number",
+        "bill_type",
     )
     search_fields = ("invoice_number", "order", "bol_number")
 

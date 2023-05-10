@@ -20,12 +20,14 @@ from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from order.models import Order
+import re
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID
@@ -41,9 +43,12 @@ def generate_invoice_number(
             .last()
         ):
             latest_invoice_number = int(
-                latest_invoice.invoice_number.split(
-                    instance.organization.invoice_control.invoice_number_prefix
-                )[-1]
+                re.search(
+                    r"\d+",
+                    latest_invoice.invoice_number.split(
+                        instance.organization.invoice_control.invoice_number_prefix
+                    )[-1],
+                ).group()
             )
             instance.invoice_number = "{}{:05d}".format(
                 instance.organization.invoice_control.invoice_number_prefix,
@@ -55,23 +60,29 @@ def generate_invoice_number(
             )
 
         if instance.order.billing_queue.exists():
-            non_credit_memos = instance.order.billing_queue.exclude(
-                bill_type=models.BillingQueue.BillTypeChoices.CREDIT
-            )
-            non_credit_memos_count = non_credit_memos.count()
-
             if is_credit_memo:
-                instance.invoice_number = (
-                    instance.order.billing_queue.first().invoice_number
-                )
+                # Find the latest non-credit memo in the billing queue.
+                latest_non_credit_memo = instance.order.billing_queue.exclude(
+                    bill_type=models.BillingQueue.BillTypeChoices.CREDIT
+                ).last()
+
+                # Assign the invoice_number of the latest non-credit memo.
+                instance.invoice_number = latest_non_credit_memo.invoice_number
                 instance.bill_type = models.BillingQueue.BillTypeChoices.CREDIT
             else:
+                non_credit_memos = instance.order.billing_queue.exclude(
+                    bill_type=models.BillingQueue.BillTypeChoices.CREDIT
+                )
+                non_credit_memos_count = non_credit_memos.count()
                 suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 instance.invoice_number = (
-                    instance.order.billing_queue.first().invoice_number
-                    + suffixes[non_credit_memos_count - 1]
+                    (
+                        non_credit_memos.first().invoice_number
+                        + suffixes[non_credit_memos_count - 2]
+                    )
+                    if non_credit_memos_count > 1
+                    else non_credit_memos.first().invoice_number
                 )
-
     return instance.invoice_number
 
 
@@ -220,3 +231,11 @@ def bill_orders(
         else:
             # If the customer billing requirements are met or not enforced, bill the order
             utils.order_billing_actions(invoice=invoice, user=user)
+
+
+def untransfer_order_service(invoice_numbers: QuerySet[models.BillingQueue]) -> None:
+    for invoice_number in invoice_numbers:
+        invoice_number.order.transferred_to_billing = False
+        invoice_number.order.billing_transfer_date = None
+        invoice_number.order.save()
+        invoice_number.delete()
