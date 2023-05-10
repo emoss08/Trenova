@@ -19,3 +19,9 @@ management of cached data and helps to optimize the performance of your Monta ap
     - Billing Control
     - Route Control
     - Dispatch Control
+
+### Api Endpoints
+
+- GET api/cache_manager/ - View all items in the cache.
+- GET api/cache_manager/{model_path}/ - View a specific cache for a specific Model.
+- DELETE api/cache_manager/{model_path}/ - Delete a cache for a specific Model.
