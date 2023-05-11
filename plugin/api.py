@@ -30,6 +30,7 @@ def get_plugin_list_api(request: Request) -> Response:
     return Response(serializer.data)
 
 
+# TODO: Change this to POST METHOD, and body should be a JSON with the plugin name
 @api_view(["GET"])
 def plugin_install_api(request: Request) -> Response:
     plugin_name = request.query_params.get("plugin_name", None)

@@ -15,15 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import { useEffect } from "react";
+import axios from "../lib/axiosConfig";
+import { useAuthStore } from "../stores/authStore";
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": "/src"
-    }
-  }
-});
+const useVerifyToken = () => {
+  const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
+  const setLoading = useAuthStore((state) => state.setLoading);
+
+  useEffect(() => {
+    const verifyToken = () => {
+      const token = localStorage.getItem("mt_token");
+      if (token) {
+        try {
+          axios.post("verify_token/", { token });
+          setLoading(false);
+          setIsAuthenticated(true);
+        } catch (error) {
+          setLoading(false);
+          setIsAuthenticated(false);
+          localStorage.removeItem("mt_token");
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
+      setLoading(false);
+    };
+    verifyToken();
+  }, [setIsAuthenticated, setLoading]);
+};
+
+export default useVerifyToken;
