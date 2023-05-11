@@ -15,17 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from 'react';
+import React from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 const LoadingScreen: React.FC = () => {
   return (
-    <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center">
-      <div className="LoadingScreenCard">
-        <h1>Loading...</h1>
-        <p>Monta is loading. Please wait.</p>
-        <p>If this takes longer than 10 seconds, please check your internet connection. If the problem persists, please contact your system administrator.</p>
+    <>
+      <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center">
+        <Card>
+          <CardHeader>
+            <CardTitle>Loading...</CardTitle>
+            <CardDescription>
+              Monta is loading. Please wait.
+            </CardDescription>
+            <Separator />
+          </CardHeader>
+          <CardContent>
+            <p>If the operation exceeds a duration of 10 seconds, kindly verify the status of your internet
+              connectivity. <br />
+              In case of persistent difficulty, please get in touch with your designated system administrator.</p>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </>
   );
 };
 

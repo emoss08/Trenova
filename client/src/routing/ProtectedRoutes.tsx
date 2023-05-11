@@ -15,27 +15,29 @@
  * Grant, and not modifying the license in any other way.
  */
 
-@import url('https://rsms.me/inter/inter.css');
+import React from "react";
+import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
+import { routes } from "@/routing/AppRoutes";
+import { useAuthStore } from "@/stores/authStore";
 
-@tailwind base;
+const ProtectedRoutes: React.FC = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-@layer base {
-    h1 {
-        @apply text-2xl;
-    }
+  return (
+    <Routes>
+      {routes.map((route: RouteObject, i: number) => {
+        if (route.path === "/login") {
+          return <Route key={i} path={route.path} element={route.element} />;
+        } else {
+          return isAuthenticated ? (
+            <Route key={i} path={route.path} element={route.element} />
+          ) : (
+            <Route key={i} path={route.path} element={<Navigate to="/login" replace />} />
+          );
+        }
+      })}
+    </Routes>
+  );
+};
 
-    h2 {
-        @apply text-xl;
-    }
-
-    h3 {
-        @apply text-lg;
-    }
-
-    a {
-        @apply text-blue-600 underline;
-    }
-}
-
-@tailwind components;
-@tailwind utilities;
+export default ProtectedRoutes;

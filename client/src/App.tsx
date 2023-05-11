@@ -15,34 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BrowserRouter, Navigate, Route, RouteObject, Routes } from "react-router-dom";
-import { routes } from "./routing/AppRoutes";
+import { BrowserRouter } from "react-router-dom";
 import { Suspense } from "react";
-import { useAuthStore } from "./stores/authStore";
 import LoadingScreen from "./components/LoadingScreen";
+import ProtectedRoutes from "./routing/ProtectedRoutes";
+import useVerifyToken from "./hooks/withTokenVerification";
 
 function App() {
-  const [isAuthenticated] = useAuthStore.use("isAuthenticated");
+  useVerifyToken();
 
   return (
     <>
       <BrowserRouter>
         <Suspense fallback={<LoadingScreen />}>
-          <Routes>
-            {routes.map((route: RouteObject, i: number) => {
-              if (route.path === "/login") {
-                return <Route key={i} path={route.path} element={route.element} />;
-              } else {
-                return isAuthenticated ? (
-                  <Route key={i} path={route.path} element={route.element} />
-                ) : (
-                  <Route key={i} path={route.path} element={<Navigate to="/login" replace />} />
-                );
-              }
-            })}
-          </Routes>
+          <ProtectedRoutes />
         </Suspense>
       </BrowserRouter>
+
     </>
   );
 }

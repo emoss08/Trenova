@@ -15,14 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from '../utils/zustand';
+import { create } from "zustand";
 
 type AuthState = {
   isAuthenticated: boolean;
   setIsAuthenticated: (isAuthenticated: boolean) => void;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
 
-export const useAuthStore = createGlobalStore<AuthState>({
+export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
-  setIsAuthenticated: (isAuthenticated) => ({ isAuthenticated }),
-});
+  setIsAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),
+  loading: true,
+  setLoading: (loading) => ({ loading })
+}));
