@@ -40,10 +40,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 CORS_ORIGIN_ALLOW_ALL = True
-INTERNAL_IPS = [
-    "127.0.0.1",
-    "monta.local",
-]
+INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
 ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
 
 # Sentry Configuration

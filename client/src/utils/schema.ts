@@ -14,41 +14,11 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import * as Yup from "yup";
 
-import { RouteObject } from "react-router-dom";
-import { lazy } from "react";
-
-const HomePage = lazy(() => import("../pages/HomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
-const OrderPage = lazy(() => import("../pages/OrderPage"));
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
-export const routes: RouteObject[] = [
-  {
-    path: "/",
-    element: <HomePage />
-  },
-  {
-    path: "/login",
-    element: <LoginPage />
-  },
-  {
-    path: "/logout",
-    element: <LogoutPage />
-  },
-  // User Management
-  {
-    path: "/users",
-    element: <UserManagementPage />
-  },
-  // Order Management
-  {
-    path: "/order/:orderId",
-    element: <OrderPage />
-  },
-  {
-    path: "*",
-    element: <ErrorPage />
-  }
-];
+export const LoginSchema = Yup.object().shape({
+  username: Yup.string()
+    .required("Username is required."),
+  password: Yup.string()
+    .required("Password is required.")
+});

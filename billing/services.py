@@ -33,56 +33,49 @@ if TYPE_CHECKING:
     from utils.types import ModelUUID
 
 
+import re
+
+
 def generate_invoice_number(
     *, instance: models.BillingQueue, is_credit_memo: bool = False
 ) -> str:
     if not instance.invoice_number:
-        if latest_invoice := (
-            models.BillingQueue.objects.filter(invoice_number__isnull=False)
-            .order_by("invoice_number")
-            .last()
-        ):
-            latest_invoice_number = int(
-                re.search(
-                    r"\d+",
-                    latest_invoice.invoice_number.split(
-                        instance.organization.invoice_control.invoice_number_prefix
-                    )[-1],
-                ).group()
-            )
-            instance.invoice_number = "{}{:05d}".format(
-                instance.organization.invoice_control.invoice_number_prefix,
-                latest_invoice_number + 1,
-            )
-        else:
-            instance.invoice_number = (
-                f"{instance.organization.invoice_control.invoice_number_prefix}00001"
-            )
+        prefix = instance.organization.invoice_control.invoice_number_prefix
+        order_pro_number = instance.order.pro_number
 
         if instance.order.billing_queue.exists():
-            if is_credit_memo:
-                # Find the latest non-credit memo in the billing queue.
-                latest_non_credit_memo = instance.order.billing_queue.exclude(
-                    bill_type=models.BillingQueue.BillTypeChoices.CREDIT
-                ).last()
+            non_credit_memos = instance.order.billing_queue.exclude(
+                bill_type=models.BillingQueue.BillTypeChoices.CREDIT
+            )
+            non_credit_memos_count = non_credit_memos.count()
+            suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-                # Assign the invoice_number of the latest non-credit memo.
+            if is_credit_memo:
+                latest_non_credit_memo = non_credit_memos.last()
                 instance.invoice_number = latest_non_credit_memo.invoice_number
                 instance.bill_type = models.BillingQueue.BillTypeChoices.CREDIT
             else:
-                non_credit_memos = instance.order.billing_queue.exclude(
-                    bill_type=models.BillingQueue.BillTypeChoices.CREDIT
-                )
-                non_credit_memos_count = non_credit_memos.count()
-                suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                instance.invoice_number = (
-                    (
-                        non_credit_memos.first().invoice_number
-                        + suffixes[non_credit_memos_count - 2]
-                    )
-                    if non_credit_memos_count > 1
-                    else non_credit_memos.first().invoice_number
-                )
+                if non_credit_memos_count > 1:
+                    latest_non_credit_memo = non_credit_memos.last()
+                    if latest_non_credit_memo.invoice_number[-1] in suffixes:
+                        instance.invoice_number = (
+                            latest_non_credit_memo.invoice_number[:-1]
+                            + suffixes[
+                                suffixes.index(
+                                    latest_non_credit_memo.invoice_number[-1]
+                                )
+                                + 1
+                            ]
+                        )
+                    else:
+                        instance.invoice_number = (
+                            latest_non_credit_memo.invoice_number + suffixes[0]
+                        )
+                else:
+                    instance.invoice_number = non_credit_memos.first().invoice_number
+        else:
+            instance.invoice_number = f"{prefix}{order_pro_number}"
+
     return instance.invoice_number
 
 
@@ -234,6 +227,15 @@ def bill_orders(
 
 
 def untransfer_order_service(invoice_numbers: QuerySet[models.BillingQueue]) -> None:
+    """Untransfer the specified orders from the billing queue.
+
+    Args:
+        invoice_numbers (QuerySet[models.BillingQueue]): QuerySet of BillingQueue objects to be untransferred.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
     for invoice_number in invoice_numbers:
         invoice_number.order.transferred_to_billing = False
         invoice_number.order.billing_transfer_date = None

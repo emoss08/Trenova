@@ -15,40 +15,37 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { RouteObject } from "react-router-dom";
-import { lazy } from "react";
+export type UserProfile = {
+  id: string;
+  organization: string;
+  first_name: string;
+  last_name: string;
+  user: string;
+  job_title: string;
+  address_line_1: string
+  address_line_2: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  phone_number: string;
+  profile_picture: string;
+  is_phone_verified: boolean;
 
-const HomePage = lazy(() => import("../pages/HomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
-const OrderPage = lazy(() => import("../pages/OrderPage"));
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
-export const routes: RouteObject[] = [
-  {
-    path: "/",
-    element: <HomePage />
-  },
-  {
-    path: "/login",
-    element: <LoginPage />
-  },
-  {
-    path: "/logout",
-    element: <LogoutPage />
-  },
-  // User Management
-  {
-    path: "/users",
-    element: <UserManagementPage />
-  },
-  // Order Management
-  {
-    path: "/order/:orderId",
-    element: <OrderPage />
-  },
-  {
-    path: "*",
-    element: <ErrorPage />
-  }
-];
+}
+
+export type User = {
+  id: string;
+  username: string;
+  organization: string;
+  email: string;
+  department: string;
+  date_joined: string;
+  is_superuser: boolean;
+  is_staff: boolean;
+  is_active: string;
+  groups: number[];
+  user_permissions: number[];
+  online: boolean;
+  last_login: string;
+  profile: UserProfile;
+}

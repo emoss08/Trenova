@@ -20,9 +20,15 @@ import { Suspense } from "react";
 import LoadingScreen from "./components/LoadingScreen";
 import ProtectedRoutes from "./routing/ProtectedRoutes";
 import useVerifyToken from "./hooks/withTokenVerification";
+import { useAuthStore } from "@/stores/authStore";
 
 function App() {
   useVerifyToken();
+  const initialLoading = useAuthStore((state) => state.initialLoading);
+
+  if (initialLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <>
@@ -31,7 +37,6 @@ function App() {
           <ProtectedRoutes />
         </Suspense>
       </BrowserRouter>
-
     </>
   );
 }
