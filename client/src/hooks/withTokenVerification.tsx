@@ -17,22 +17,21 @@
 
 import { useEffect } from "react";
 import axios from "../lib/axiosConfig";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 
 const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
+  const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
 
   useEffect(() => {
-    const verifyToken = () => {
+    const verifyToken = async () => {
       const token = localStorage.getItem("mt_token");
       if (token) {
         try {
-          axios.post("verify_token/", { token });
-          setLoading(false);
+          await axios.post("verify_token/", { token });
           setIsAuthenticated(true);
         } catch (error) {
-          setLoading(false);
           setIsAuthenticated(false);
           localStorage.removeItem("mt_token");
         }
@@ -40,9 +39,11 @@ const useVerifyToken = () => {
         setIsAuthenticated(false);
       }
       setLoading(false);
+      setInitialLoading(false);
     };
     verifyToken();
-  }, [setIsAuthenticated, setLoading]);
+  }, [setIsAuthenticated, setLoading, setInitialLoading]);
 };
 
 export default useVerifyToken;
+

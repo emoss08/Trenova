@@ -15,40 +15,40 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { RouteObject } from "react-router-dom";
-import { lazy } from "react";
-
-const HomePage = lazy(() => import("../pages/HomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
-const OrderPage = lazy(() => import("../pages/OrderPage"));
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
-export const routes: RouteObject[] = [
+import { ColumnDef } from "@tanstack/react-table";
+import { User } from "@/types/user";
+export const columns: ColumnDef<User>[] = [
   {
-    path: "/",
-    element: <HomePage />
+    id: "user-details",
+    header: "User Details",
+    cell: ({ row }) => {
+      const user = row.original as User;
+      const firstName = user.profile?.first_name ?? "-";
+      const lastName = user.profile?.last_name ?? "-";
+      return (
+        <div className="flex items-center">
+          <div className="flex flex-col">
+            <p className="text-sm font-medium">{`${firstName} ${lastName}`}</p>
+            <p className="text-sm text-muted-foreground">{user.username}</p>
+          </div>
+        </div>
+      );
+    }
   },
   {
-    path: "/login",
-    element: <LoginPage />
+    accessorKey: "email",
+    header: "Email"
   },
   {
-    path: "/logout",
-    element: <LogoutPage />
-  },
-  // User Management
-  {
-    path: "/users",
-    element: <UserManagementPage />
-  },
-  // Order Management
-  {
-    path: "/order/:orderId",
-    element: <OrderPage />
+    accessorKey: "date_joined",
+    header: "Date Joined"
   },
   {
-    path: "*",
-    element: <ErrorPage />
+    accessorKey: "is_active",
+    header: "Active"
+  },
+  {
+    accessorKey: "last_login",
+    header: "Last Login"
   }
 ];

@@ -67,7 +67,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
     assert (
         invoice_1.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}"
     )
 
     # Test second invoice
@@ -76,7 +76,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
     assert (
         invoice_2.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00002"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_2.order.pro_number}"
     )
 
     # Test rebilling first invoice (Credit Memo)
@@ -89,7 +89,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
     assert (
         invoice_1_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1_cm.order.pro_number}"
     )
 
     # Test rebilling first invoice again (New invoice with A suffix)
@@ -98,7 +98,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
     assert (
         invoice_1_a.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001A"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1_a.order.pro_number}A"
     )
 
     # Test rebilling first invoice one more time (New invoice with B suffix)
@@ -107,7 +107,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
     assert (
         invoice_1_b.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001B"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1_b.order.pro_number}B"
     )
 
 
@@ -140,7 +140,7 @@ def test_invoice_number_generation(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}00001"
     )
 
 
@@ -197,12 +197,12 @@ def test_invoice_number_increments(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}00001"
     )
     assert second_invoice.invoice_number is not None
     assert (
         second_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00002"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.order.pro_number}00002"
     )
 
 
@@ -442,7 +442,7 @@ def test_generate_invoice_number_before_save(order: Order) -> None:
 
     assert (
         billing_queue.invoice_number
-        == f"{order.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{order.organization.invoice_control.invoice_number_prefix}{billing_queue.order.pro_number}"
     )
 
 

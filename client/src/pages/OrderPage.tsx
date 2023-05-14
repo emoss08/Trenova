@@ -15,40 +15,31 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { RouteObject } from "react-router-dom";
-import { lazy } from "react";
+import axios from "@/lib/axiosConfig";
+import React, { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import OrderDetails from "@/components/order-management/OrderDetails";
 
-const HomePage = lazy(() => import("../pages/HomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
-const OrderPage = lazy(() => import("../pages/OrderPage"));
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
-export const routes: RouteObject[] = [
-  {
-    path: "/",
-    element: <HomePage />
-  },
-  {
-    path: "/login",
-    element: <LoginPage />
-  },
-  {
-    path: "/logout",
-    element: <LogoutPage />
-  },
-  // User Management
-  {
-    path: "/users",
-    element: <UserManagementPage />
-  },
-  // Order Management
-  {
-    path: "/order/:orderId",
-    element: <OrderPage />
-  },
-  {
-    path: "*",
-    element: <ErrorPage />
-  }
-];
+const OrderPage: React.FC = () => {
+  const { orderId } = useParams<{ orderId: string }>();
+  const [order, setOrder] = React.useState<any>(null);
+
+  useEffect((): void => {
+    const fetchOrder = async (): Promise<void> => {
+      try {
+        const response = await axios.get(`/orders/${orderId}/`);
+        setOrder(response.data);
+      } catch {
+        console.log("error");
+      }
+    };
+    fetchOrder().then((): void => {
+    });
+  }, [orderId]);
+
+  return (
+    <div>{order ? <OrderDetails order={order} /> : <div>Loading...</div>}</div>
+  );
+};
+
+export default OrderPage;

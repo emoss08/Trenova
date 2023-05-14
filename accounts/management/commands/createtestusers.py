@@ -140,7 +140,7 @@ class Command(BaseCommand):
                 new_profile = UserProfile(
                     user=user,
                     organization=system_org,
-                    title=job_title,
+                    job_title=job_title,
                     first_name="Test",
                     last_name=f"User-{i}",
                     address_line_1="123 Test Street",

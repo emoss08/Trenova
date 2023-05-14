@@ -15,14 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "react-query";
+import App from "./App";
 // import './styles/App.css'
-import './styles/globals.css'
+import "./styles/globals.css";
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+const queryClient = new QueryClient(
+  {
+    defaultOptions: {
+      queries: {
+        retry: false
+      }
+    }
+  }
+);
+
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </React.StrictMode>
+);

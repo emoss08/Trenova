@@ -14,41 +14,16 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { create } from "zustand";
 
-import { RouteObject } from "react-router-dom";
-import { lazy } from "react";
+type LoginErrorStore = {
+  errorMessages: string[];
+  setErrorMessages: (messages: string[]) => void;
+  clearErrorMessages: () => void;
+}
 
-const HomePage = lazy(() => import("../pages/HomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
-const OrderPage = lazy(() => import("../pages/OrderPage"));
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
-export const routes: RouteObject[] = [
-  {
-    path: "/",
-    element: <HomePage />
-  },
-  {
-    path: "/login",
-    element: <LoginPage />
-  },
-  {
-    path: "/logout",
-    element: <LogoutPage />
-  },
-  // User Management
-  {
-    path: "/users",
-    element: <UserManagementPage />
-  },
-  // Order Management
-  {
-    path: "/order/:orderId",
-    element: <OrderPage />
-  },
-  {
-    path: "*",
-    element: <ErrorPage />
-  }
-];
+export const useErrorStore = create<LoginErrorStore>((set) => ({
+  errorMessages: [],
+  setErrorMessages: (messages) => set({ errorMessages: messages }),
+  clearErrorMessages: () => set({ errorMessages: [] })
+}));

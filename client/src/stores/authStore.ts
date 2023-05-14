@@ -22,11 +22,15 @@ type AuthState = {
   setIsAuthenticated: (isAuthenticated: boolean) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
-}
+  initialLoading: boolean;
+  setInitialLoading: (initialLoading: boolean) => void;
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   setIsAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),
   loading: true,
-  setLoading: (loading) => ({ loading })
+  setLoading: (loading: boolean) => set({ loading }),
+  initialLoading: true,
+  setInitialLoading: (initialLoading: boolean) => set({ initialLoading })
 }));
