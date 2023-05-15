@@ -720,3 +720,86 @@ def test_untransfer_multiple_orders(
     assert order1.billing_transfer_date is None
     assert not order2.transferred_to_billing
     assert order2.billing_transfer_date is None
+
+
+def test_validate_invoice_number_does_not_start_with_invoice_prefix(
+    organization: Organization, customer: Customer, user: User, worker: Worker
+) -> None:
+    """
+    Test that validates if invoice number is manually entered, it must start with invoice prefix
+    from Organization's invoice_control
+
+    Args:
+        organization (Organization): Organization object
+        customer (Customer): Customer object
+        user (User): User object
+        worker (Worker): Worker object
+
+    Returns:
+        None: This function does return anything.
+    """
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.save()
+
+    with pytest.raises(ValidationError) as excinfo:
+        models.BillingQueue.objects.create(
+            organization=user.organization,
+            order_type=order.order_type,
+            order=order,
+            revenue_code=order.revenue_code,
+            customer=customer,
+            worker=worker,
+            commodity=order.commodity,
+            bol_number=order.bol_number,
+            user=user,
+            invoice_number="RANDOMINVOICE",
+        )
+
+    assert excinfo.value.message_dict["invoice_number"] == [
+        "Invoice number must start with invoice prefix from Organization's invoice_control. Please try again."
+    ]
+
+
+def test_validate_invoice_number_does_start_with_invoice_prefix(
+    organization: Organization, customer: Customer, user: User, worker: Worker
+) -> None:
+    """
+    Test that validates if invoice number is manually entered, it must start with invoice prefix
+    from Organization's invoice_control
+
+    Args:
+        organization (Organization): Organization object
+        customer (Customer): Customer object
+        user (User): User object
+        worker (Worker): Worker object
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order = OrderFactory()
+
+    order_movements = order.movements.all()
+    order_movements.update(status="C")
+
+    order.status = "C"
+    order.save()
+
+    invoice = models.BillingQueue.objects.create(
+        organization=user.organization,
+        order_type=order.order_type,
+        order=order,
+        revenue_code=order.revenue_code,
+        customer=customer,
+        worker=worker,
+        commodity=order.commodity,
+        bol_number=order.bol_number,
+        user=user,
+        invoice_number="INV-00001",
+    )
+
+    assert invoice.invoice_number == "INV-00001"

@@ -247,9 +247,8 @@ class UserProfile(GenericModel):
     )
     profile_picture = models.ImageField(
         _("Profile Picture"),
-        upload_to="profiles/",
+        upload_to="user_profiles/pictures",
         help_text=_("The profile picture of the user"),
-        validators=[ImageSizeValidator(600, 600, False, True)],
         null=True,
         blank=True,
     )
