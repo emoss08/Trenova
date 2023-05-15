@@ -717,6 +717,7 @@ class BillingQueue(GenericModel):  # type:ignore
         errors = []
 
         # TODO (WOLFRED): Write validation tests for this.
+        # TODO (WOLFRED): Think about moving this into a validation.py file, and changing it to a dictionary of errors.
 
         # If order is already billed raise ValidationError
         if self.order.billed:
@@ -783,6 +784,20 @@ class BillingQueue(GenericModel):  # type:ignore
 
         if errors:
             raise ValidationError({"order": errors})
+
+        # if manually entered invoice number does not start with the organization's invoice prefix
+        # raise ValidationError
+        if self.invoice_number and not self.invoice_number.startswith(
+            self.order.organization.invoice_control.invoice_number_prefix
+        ):
+            raise ValidationError(
+                {
+                    "invoice_number": _(
+                        "Invoice number must start with invoice prefix from Organization's invoice_control. Please try again."
+                    )
+                },
+                code="invalid",
+            )
 
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url

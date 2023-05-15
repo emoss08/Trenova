@@ -82,7 +82,16 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     fieldsets = (
         (
             None,
-            {"fields": ("organization", "department", "username", "email", "password")},
+            {
+                "fields": (
+                    "is_active",
+                    "organization",
+                    "department",
+                    "username",
+                    "email",
+                    "password",
+                )
+            },
         ),
         (
             "Permissions",
