@@ -38,7 +38,7 @@ enabling you to stay ahead of the competition.
 - [Django Rest Framework](https://www.django-rest-framework.org/)
 - [PostgreSQL](https://www.postgresql.org/)
 - [Redis](https://redis.io/)
-- [Celery](https://docs.celeryq.dev/en/stable/index.html/)
+- [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html)
 
 ## Features
 
