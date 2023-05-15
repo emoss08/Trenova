@@ -15,37 +15,26 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type UserProfile = {
-  id: string;
-  organization: string;
-  first_name: string;
-  last_name: string;
-  user: string;
-  job_title: string;
-  address_line_1: string
-  address_line_2: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  phone_number: string;
-  profile_picture: string;
-  is_phone_verified: boolean;
+import React from "react";
 
+interface BadgeProps {
+  active: string;
 }
 
-export type User = {
-  id: string;
-  username: string;
-  organization: string;
-  email: string;
-  department?: string;
-  date_joined: string;
-  is_superuser: boolean;
-  is_staff: boolean;
-  is_active: string;
-  groups: number[];
-  user_permissions: number[];
-  online: boolean;
-  last_login: string;
-  profile: UserProfile;
-}
+const Badge: React.FC<BadgeProps> = ({ active }) => {
+  const badgeColor = active ? "fill-green-500" : "fill-rose-500";
+
+  return (
+    <>
+      <span
+        className="inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium text-dark dark:text-white ring-1 ring-inset ring-gray-800">
+        <svg className={`h-1.5 w-1.5 ${badgeColor}`} viewBox="0 0 6 6" aria-hidden="true">
+          <circle cx={3} cy={3} r={3} />
+        </svg>
+        {active ? "Active" : "Inactive"}
+      </span>
+    </>
+  );
+};
+
+export default Badge;
