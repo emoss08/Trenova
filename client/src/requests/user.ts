@@ -15,37 +15,32 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type UserProfile = {
-  id: string;
-  organization: string;
-  first_name: string;
-  last_name: string;
-  user: string;
-  job_title: string;
-  address_line_1: string
-  address_line_2: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  phone_number: string;
-  profile_picture: string;
-  is_phone_verified: boolean;
+import { User } from "@/types/user";
+import axios from "@/lib/axiosConfig";
 
+/**
+ * Return the user's job title information
+ * @param user
+ *
+ * @returns {Promise<any>}
+ */
+export async function getUserJobTitle(user: User): Promise<any> {
+  const response = await axios.get(`/job_titles/${user.profile?.job_title}/`);
+  return response.data;
 }
 
-export type User = {
-  id: string;
-  username: string;
-  organization: string;
-  email: string;
-  department?: string;
-  date_joined: string;
-  is_superuser: boolean;
-  is_staff: boolean;
-  is_active: string;
-  groups: number[];
-  user_permissions: number[];
-  online: boolean;
-  last_login: string;
-  profile: UserProfile;
+/***
+ * Return the user's organization information
+ * @param user
+ *
+ * @returns {Promise<any>}
+ */
+export async function getUserOrganization(user: User): Promise<any> {
+  const response = await axios.get(`/organizations/${user.organization}/`);
+  return response.data;
+}
+
+export async function getUserDepartment(user: User): Promise<any> {
+  const response = await axios.get(`/organizations/${user.organization}/departments/${user?.department}/`);
+  return response.data;
 }

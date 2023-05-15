@@ -15,37 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type UserProfile = {
-  id: string;
-  organization: string;
-  first_name: string;
-  last_name: string;
-  user: string;
-  job_title: string;
-  address_line_1: string
-  address_line_2: string;
-  city: string;
-  state: string;
-  zip_code: string;
-  phone_number: string;
-  profile_picture: string;
-  is_phone_verified: boolean;
+import { format, formatDistanceToNow, parseISO } from "date-fns";
 
+export function formatDate(date: string): string {
+  const parsedDate = parseISO(date);
+  return format(parsedDate, "yyyy/MM/dd HH:mm");
 }
 
-export type User = {
-  id: string;
-  username: string;
-  organization: string;
-  email: string;
-  department?: string;
-  date_joined: string;
-  is_superuser: boolean;
-  is_staff: boolean;
-  is_active: string;
-  groups: number[];
-  user_permissions: number[];
-  online: boolean;
-  last_login: string;
-  profile: UserProfile;
+export function formatDateToHumanReadable(date: string): string {
+  const parsedDate = parseISO(date);
+  return formatDistanceToNow(parsedDate, { addSuffix: true });
 }

@@ -17,6 +17,23 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user";
+import Badge from "./badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../.src/components/ui/tooltip";
+import { Menu, User as UserIcon, UserCog, UserMinus } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import React from "react";
+import { ViewUserDialog } from "@/components/user-management/users/ViewUserDialog";
+import { formatDate, formatDateToHumanReadable } from "@/utils/date";
+
 export const columns: ColumnDef<User>[] = [
   {
     id: "user-details",
@@ -25,9 +42,16 @@ export const columns: ColumnDef<User>[] = [
       const user = row.original as User;
       const firstName = user.profile?.first_name ?? "-";
       const lastName = user.profile?.last_name ?? "-";
+      const usernameInitial = user.username ? user.username.charAt(0).toUpperCase() : "";
       return (
         <div className="flex items-center">
-          <div className="flex flex-col">
+          <div>
+            <Avatar>
+              <AvatarImage src={user.profile?.profile_picture} />
+              <AvatarFallback>{usernameInitial}</AvatarFallback>
+            </Avatar>
+          </div>
+          <div className="ml-2 flex flex-col">
             <p className="text-sm font-medium">{`${firstName} ${lastName}`}</p>
             <p className="text-sm text-muted-foreground">{user.username}</p>
           </div>
@@ -36,19 +60,106 @@ export const columns: ColumnDef<User>[] = [
     }
   },
   {
+    id: "is_active",
+    header: "Status",
+    cell: ({ row }) => {
+      const user = row.original as User;
+      return <Badge active={user.is_active} />;
+    }
+  },
+  {
     accessorKey: "email",
     header: "Email"
   },
   {
-    accessorKey: "date_joined",
-    header: "Date Joined"
+    id: "date_joined",
+    header: "Date Joined",
+    cell: ({ row }) => {
+      const user = row.original as User;
+      const dateJoined = user.date_joined;
+
+      if (dateJoined) {
+        const formattedDate = formatDate(dateJoined);
+        return (
+          <p className="text-sm text-muted-foreground">
+            {formattedDate}
+          </p>
+        );
+      }
+    }
   },
   {
-    accessorKey: "is_active",
-    header: "Active"
+    id: "last_login",
+    header: "Last Login",
+    cell: ({ row }) => {
+      const user = row.original as User;
+      const lastLogin = user.last_login;
+
+      if (lastLogin) {
+        const formattedDate = formatDateToHumanReadable(lastLogin);
+        const tooltipDate = formatDate(lastLogin);
+
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-sm text-muted-foreground">{formattedDate}</p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tooltipDate}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      } else {
+        return <p className="text-sm text-muted-foreground">-</p>;
+      }
+    }
   },
   {
-    accessorKey: "last_login",
-    header: "Last Login"
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const user = row.original as User;
+      const [isViewUserDialogOpen, setIsViewUserDialogOpen] = React.useState(false);
+
+      return (
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>User Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setIsViewUserDialogOpen(true)}>
+                  <UserIcon className="h-4 w-4 mr-2" />
+                  <span>View User</span>
+                  <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => console.log(`editing user ${user.username}`)}>
+                  <UserCog className="h-4 w-4 mr-2" />
+                  <span>Edit User</span>
+                  <DropdownMenuShortcut>⇧⌘B</DropdownMenuShortcut>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => console.log(`deleting user ${user.username}`)}>
+                  <UserMinus className="h-4 w-4 mr-2" />
+                  <span>Delete User</span>
+                  <DropdownMenuShortcut>⇧⌘X</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <ViewUserDialog
+            user={user}
+            isOpen={isViewUserDialogOpen}
+            onClose={() => setIsViewUserDialogOpen(false)}
+          />
+        </>
+      );
+    }
   }
 ];

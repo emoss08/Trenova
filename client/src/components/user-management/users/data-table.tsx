@@ -29,11 +29,10 @@ import { columns } from "@/components/user-management/users/columns";
 import { useQuery } from "react-query";
 
 export function UserDataTable({}) {
-
-
   const [page, setPage] = React.useState<number>(0);
   const [count, setCount] = React.useState<number>(10);
   const [currentUrl, setCurrentUrl] = React.useState<string>("");
+
   const fetchUsers = (url: string, pageSize: number) => {
     if (!url) {
       url = `http://localhost:8000/api/users/?limit=${pageSize}`;
@@ -46,7 +45,6 @@ export function UserDataTable({}) {
     () => fetchUsers(currentUrl, count),
     { keepPreviousData: true }
   );
-
 
   const [{ pageIndex, pageSize }, setPagination] = React.useState<PaginationState>({
     pageIndex: 0,
@@ -85,11 +83,11 @@ export function UserDataTable({}) {
     },
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
+    manualPagination: true
   });
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border mb-2">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
