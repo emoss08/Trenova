@@ -297,15 +297,6 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
-    organization = serializers.UUIDField(
-        source="organization.id",
-        read_only=True,
-    )
-    department = serializers.PrimaryKeyRelatedField(
-        queryset=Department.objects.all(),
-        required=False,
-        allow_null=True,
-    )
     profile = UserProfileSerializer(required=False)
 
     class Meta:
@@ -315,7 +306,13 @@ class UserSerializer(GenericSerializer):
 
         model = models.User
         extra_fields = ("profile", "organization")
-        extra_read_only_fields = ("groups", "user_permissions", "is_staff", "is_active")
+        extra_read_only_fields = (
+            "groups",
+            "user_permissions",
+            "is_staff",
+            "is_active",
+            "is_superuser",
+        )
         extra_kwargs = {
             "password": {"write_only": True, "required": False},
             "date_joined": {"read_only": True},
