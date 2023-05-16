@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
@@ -53,7 +54,7 @@ class BillingControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.BillingControl]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "order_transfer_criteria",
@@ -63,7 +64,7 @@ class BillingControlViewSet(viewsets.ModelViewSet):
             "auto_bill_criteria",
             "auto_bill_orders",
             "enforce_customer_billing",
-            "organization__id",
+            "organization_id",
         )
         return queryset
 
