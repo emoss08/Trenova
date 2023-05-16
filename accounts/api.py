@@ -82,7 +82,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         queryset: QuerySet[models.User] = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related(
                 "profiles",
