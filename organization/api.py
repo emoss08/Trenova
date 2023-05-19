@@ -130,13 +130,6 @@ class DepotViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-@extend_schema(
-    parameters=[
-        OpenApiParameter(
-            "organizations_pk", OpenApiTypes.UUID, OpenApiParameter.PATH, required=True
-        ),
-    ]
-)
 class DepartmentViewSet(viewsets.ModelViewSet):
     """
     Department ViewSet to manage requests to the department endpoint
@@ -147,7 +140,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.Department]:
         queryset: QuerySet[models.Department] = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
