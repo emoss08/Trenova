@@ -19,6 +19,7 @@ from typing import Any
 
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
+from django.utils import timezone
 from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
@@ -308,6 +309,9 @@ class TokenProvisionView(ObtainAuthToken):
         if token.is_expired:
             token.delete()
             token = models.Token.objects.create(user=user_obj)
+
+        user.last_login = timezone.now()
+        user.save()
 
         return response.Response(
             {
