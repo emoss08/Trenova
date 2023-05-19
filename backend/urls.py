@@ -77,9 +77,7 @@ organization_router.register(
     r"depots", org_api.DepotViewSet, basename="organization-depot"
 )
 # organization/<str:pk>/departments
-organization_router.register(
-    r"departments", org_api.DepartmentViewSet, basename="organization-department"
-)
+router.register(r"departments", org_api.DepartmentViewSet, basename="departments")
 router.register(r"email_control", org_api.EmailControlViewSet, basename="email-control")
 router.register(
     r"email_profiles", org_api.EmailProfileViewSet, basename="email-profiles"
@@ -284,42 +282,42 @@ urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
     path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
-    path("api/", include(router.urls)),
-    path("api/", include(organization_router.urls)),
+    path("api/v1/", include(router.urls)),
+    path("api/v1/", include(organization_router.urls)),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
-        "api/docs/",
+        "api/v1/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
     ),
     path(
-        "api/schema/redoc/",
+        "api/v1/schema/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
     ),
     path(
-        "api/login/",
+        "api/v1/login/",
         accounts_api.TokenProvisionView.as_view(),
         name="provision-token",
     ),
     path(
-        "api/verify_token/",
+        "api/v1/verify_token/",
         accounts_api.TokenVerifyView.as_view(),
         name="verify-token",
     ),
-    path("api/system_health/", org_api.health_check, name="system-health"),
-    path("api/bill_invoice/", billing_api.bill_invoice_view, name="bill-order"),
-    path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
-    path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
-    path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),
-    path("api/active_threads/", org_api.active_threads, name="active-threads"),
+    path("api/v1/system_health/", org_api.health_check, name="system-health"),
+    path("api/v1/bill_invoice/", billing_api.bill_invoice_view, name="bill-order"),
+    path("api/v1/active_triggers/", org_api.active_triggers, name="active-triggers"),
+    path("api/v1/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
+    path("api/v1/active_sessions/", org_api.active_sessions, name="active-sessions"),
+    path("api/v1/active_threads/", org_api.active_threads, name="active-threads"),
     path(
-        "api/table_columns/",
+        "api/v1/table_columns/",
         reports_api.TableColumnsAPIView.as_view(),
         name="table-columns",
     ),
     path(
-        "api/transfer_to_billing/",
+        "api/v1/transfer_to_billing/",
         billing_api.transfer_to_billing,
         name="transfer-to-billing",
     ),
@@ -328,18 +326,20 @@ urlpatterns = [
         reports_views.generate_excel_report,
         name="generate-excel-report",
     ),
-    path("api/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
-    path("api/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
+    path("api/v1/plugin_list/", plugin_api.get_plugin_list_api, name="plugin-list"),
+    path("api/v1/plugin_install/", plugin_api.plugin_install_api, name="plugin-list"),
     path(
-        "api/cache_manager/", org_api.CacheManagerView.as_view(), name="cache-manager"
+        "api/v1/cache_manager/",
+        org_api.CacheManagerView.as_view(),
+        name="cache-manager",
     ),
     path(
-        "api/cache_manager/<str:model_path>/",
+        "api/v1/cache_manager/<str:model_path>/",
         org_api.CacheManagerView.as_view(),
         name="cache-manager-clear",
     ),
     path(
-        "api/untransfer_invoice/",
+        "api/v1/untransfer_invoice/",
         billing_api.untransfer_orders,
         name="untransfer-invoice",
     ),
