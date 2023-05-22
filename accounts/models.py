@@ -37,7 +37,6 @@ from localflavor.us.models import USStateField, USZipCodeField
 
 from accounts import services
 from utils.models import ChoiceField, GenericModel
-from utils.validators import ImageSizeValidator
 
 
 class UserManager(BaseUserManager):

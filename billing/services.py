@@ -27,13 +27,9 @@ from django.utils import timezone
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from order.models import Order
-import re
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID
-
-
-import re
 
 
 def generate_invoice_number(

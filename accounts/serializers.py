@@ -23,7 +23,7 @@ from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
-from organization.models import Department, Organization
+from organization.models import Organization
 from utils.serializers import GenericSerializer
 
 
