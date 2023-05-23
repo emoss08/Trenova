@@ -17,7 +17,7 @@
 
 import textwrap
 import uuid
-from typing import final, Any
+from typing import Any, final
 
 from django.db import models
 from django.urls import reverse
@@ -28,7 +28,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from .services.table_choices import TABLE_NAME_CHOICES
-from .validators import validate_org_timezone, validate_format_string
+from .validators import validate_format_string, validate_org_timezone
 
 
 class Organization(TimeStampedModel):

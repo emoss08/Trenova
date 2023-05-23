@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from django.db.models import QuerySet
+from rest_framework import viewsets
 
 from movements import models, serializers
-from rest_framework import viewsets
+
 
 class MovementViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Movement information in the system.

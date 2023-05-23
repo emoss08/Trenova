@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from typing import TYPE_CHECKING
+
 from rest_framework import permissions, viewsets
 
 from invoicing import models, serializers

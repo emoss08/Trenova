@@ -32,7 +32,6 @@ from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
-from stops.tests.factories import StopFactory
 from worker.factories import WorkerFactory
 from worker.models import Worker
 
