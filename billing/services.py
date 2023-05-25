@@ -19,7 +19,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -27,62 +27,66 @@ from django.utils import timezone
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from order.models import Order
-import re
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID
 
 
-import re
-
-
 def generate_invoice_number(
     *, instance: models.BillingQueue, is_credit_memo: bool = False
 ) -> str:
-    if not instance.invoice_number:
-        prefix = instance.organization.invoice_control.invoice_number_prefix
-        order_pro_number = instance.order.pro_number
+    """
+    Generate an invoice number for a given BillingQueue instance.
 
-        if instance.order.billing_queue.exists():
-            non_credit_memos = instance.order.billing_queue.exclude(
-                bill_type=models.BillingQueue.BillTypeChoices.CREDIT
-            )
-            non_credit_memos_count = non_credit_memos.count()
+    This function generates an invoice number for a given BillingQueue instance, taking into
+    account whether the instance is a credit memo or not. For non-credit memos, the function
+    increments the invoice number with a letter suffix (A, B, C, etc.) for each new invoice
+    related to the same order. For credit memos, it assigns the invoice number of the latest
+    invoice related to the same order.
+
+    Args:
+        instance (models.BillingQueue): The instance for which to generate an invoice number.
+        is_credit_memo (bool, optional): Flag indicating whether the instance is a credit memo.
+            Defaults to False.
+
+    Returns:
+        str: The generated invoice number.
+
+    Time Complexity: O(1) - Constant time is required to generate the invoice number,
+        assuming that database lookups take constant time.
+    """
+    prefix = instance.organization.invoice_control.invoice_number_prefix
+    order_pro_number = instance.order.pro_number
+    if instance.order.billing_queue.exists():
+        latest_invoice = instance.order.billing_queue.latest("created")
+
+        if is_credit_memo:
+            instance.invoice_number = latest_invoice.invoice_number
+        else:
             suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-            if is_credit_memo:
-                latest_non_credit_memo = non_credit_memos.last()
-                instance.invoice_number = latest_non_credit_memo.invoice_number
-                instance.bill_type = models.BillingQueue.BillTypeChoices.CREDIT
+            if latest_invoice.invoice_number[-1] in suffixes:
+                next_suffix = suffixes[
+                    suffixes.index(latest_invoice.invoice_number[-1]) + 1
+                ]
+                instance.invoice_number = (
+                    latest_invoice.invoice_number[:-1] + next_suffix
+                )
             else:
-                if non_credit_memos_count > 1:
-                    latest_non_credit_memo = non_credit_memos.last()
-                    if latest_non_credit_memo.invoice_number[-1] in suffixes:
-                        instance.invoice_number = (
-                            latest_non_credit_memo.invoice_number[:-1]
-                            + suffixes[
-                                suffixes.index(
-                                    latest_non_credit_memo.invoice_number[-1]
-                                )
-                                + 1
-                            ]
-                        )
-                    else:
-                        instance.invoice_number = (
-                            latest_non_credit_memo.invoice_number + suffixes[0]
-                        )
-                else:
-                    instance.invoice_number = non_credit_memos.first().invoice_number
-        else:
-            instance.invoice_number = f"{prefix}{order_pro_number}"
+                instance.invoice_number = f"{latest_invoice.invoice_number}A"
+    else:
+        instance.invoice_number = f"{prefix}{order_pro_number}"
 
     return instance.invoice_number
 
 
+@transaction.atomic
 def transfer_to_billing_queue_service(
     *, user_id: "ModelUUID", order_pros: list[str], task_id: str
 ) -> str:
-    """Transfer eligible orders to the billing queue.
+    """
+    Atomically transfers eligible orders to the billing queue, logs the transfer,
+    and returns a success message. If any part of the operation fails, all changes are rolled back.
 
     Args:
         user_id (ModelUUID): The ID of the user transferring the orders.
@@ -93,9 +97,14 @@ def transfer_to_billing_queue_service(
         str: A message indicating the success of the transfer and the number of orders transferred.
 
     Raises:
-        exceptions.BillingException: If no eligible orders are found for transfer.
-    """
+        exceptions.BillingException: If no eligible orders are found for transfer or if an error occurs
+            while transferring an order. In case of an error, the transaction is aborted, ensuring that
+            no orders are transferred if there's a problem with any of them.
 
+    Time Complexity: O(n), where n is the number of orders. The main operations (creating BillingQueue
+        objects, updating Order objects, and creating BillingTransferLog objects) are performed for each order.
+        However, these operations are managed efficiently using bulk operations.
+    """
     # Get the user
     user = get_object_or_404(User, id=user_id)
 
@@ -184,19 +193,33 @@ def mass_order_billing_service(
 def bill_orders(
     *,
     user_id: "ModelUUID",
-    invoices: Iterable[models.BillingQueue] | models.BillingQueue,
+    invoices: QuerySet[models.BillingQueue] | models.BillingQueue,
 ) -> None:
-    """Bill the specified orders.
+    """
+    Bills the specified orders. If the organization enforces customer billing requirements,
+    checks these requirements before billing the order. If requirements are not met, a
+    BillingException is created.
 
     Args:
         user_id (ModelUUID): The ID of the user responsible for billing the orders.
-        invoices (Iterable[models.BillingQueue] | models.BillingQueue): An iterable of BillingQueue instances
+        invoices (QuerySet[models.BillingQueue] | models.BillingQueue): An iterable of BillingQueue instances
             or a single BillingQueue instance representing the orders to be billed.
 
     Returns:
         None: This function does not return anything.
-    """
 
+    Raises:
+        Http404: If the user with the given user_id does not exist.
+        exceptions.BillingException: If the customer billing requirements are not met.
+
+    Space Complexity: O(n), where n is the number of invoices. This is because a list of invoices
+        is created in memory when a single BillingQueue instance is provided. However, the function
+        does not create additional data structures that grow with the size of the input.
+
+    Time Complexity: O(n), where n is the number of invoices. The function performs operations (checking
+        billing requirements and calling 'order_billing_actions') for each invoice. The actual time complexity
+        might be affected by these operations and how they are implemented.
+    """
     user = get_object_or_404(User, id=user_id)
 
     # If invoices is a BillingQueue object, convert it to a list
@@ -241,3 +264,25 @@ def untransfer_order_service(invoice_numbers: QuerySet[models.BillingQueue]) -> 
         invoice_number.order.billing_transfer_date = None
         invoice_number.order.save()
         invoice_number.delete()
+
+
+def ready_to_bill_service(order: QuerySet[Order]) -> None:
+    """Automatically set orders ready to bill, if order passes billing requirement check.
+
+    Args:
+        order (QuerySet[Order]): Order Queryset
+
+    Returns:
+        None: This function does not return anything.
+    """
+    for order in order:
+        organization = order.organization
+
+        if organization.billing_control.auto_mark_ready_to_bill:
+            if utils.check_billing_requirements(user=order.created_by, invoice=order):
+                order.ready_to_bill = True
+                order.save()
+        elif order.customer.auto_mark_ready_to_bill:
+            if utils.check_billing_requirements(user=order.created_by, invoice=order):
+                order.ready_to_bill = True
+                order.save()

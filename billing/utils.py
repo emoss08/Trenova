@@ -255,7 +255,7 @@ def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
     return customer_billing_requirements
 
 
-def check_billing_requirements(*, invoice: models.BillingQueue, user: User) -> bool:
+def check_billing_requirements(*, invoice: models.BillingQueue | Order, user: User) -> bool:
     """Check if a BillingQueue instance satisfies the billing requirements of its customer.
 
     Args:
