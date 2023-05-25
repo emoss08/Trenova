@@ -109,6 +109,14 @@ class Customer(GenericModel):  # type: ignore
             "active or not."
         ),
     )
+    auto_mark_ready_to_bill = models.BooleanField(
+        _("Auto Mark Ready to Bill?"),
+        default=False,
+        help_text=_(
+            "Designates whether to automatically mark customer orders ready to bill. "
+            "if the order passes customer billing requirements."
+        ),
+    )
 
     class Meta:
         """

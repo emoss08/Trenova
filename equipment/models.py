@@ -250,7 +250,7 @@ class EquipmentManufacturer(GenericModel):
 
         verbose_name = _("Equipment Manufacturer")
         verbose_name_plural = _("Equipment Manufacturers")
-        ordering: list[str] = ["-id"]
+        ordering = ["-id"]
         db_table = "equipment_manufacturer"
         constraints = [
             models.UniqueConstraint(
