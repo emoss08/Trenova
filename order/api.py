@@ -143,27 +143,17 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
-    filterset_fields = (
-        "order_type",
-        "revenue_code",
-        "customer",
-        "transferred_to_billing",
-        "equipment_type",
-        "commodity",
-        "entered_by",
-        "hazmat",
-    )
 
     def get_queryset(self) -> "QuerySet[models.Order]":
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
                     "additional_charges",
                     queryset=models.AdditionalCharge.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     )
                     .only("id", "order_id", "organization_id")
                     .all(),
@@ -171,7 +161,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="movements",
                     queryset=Movement.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     )
                     .only("id", "order_id", "organization_id")
                     .all(),
@@ -179,7 +169,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="order_documentation",
                     queryset=models.OrderDocumentation.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     )
                     .only("id", "order_id", "organization_id")
                     .all(),
@@ -187,7 +177,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="order_comments",
                     queryset=models.OrderComment.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     )
                     .only("id", "order_id", "organization_id", "created")
                     .all(),
