@@ -21,6 +21,7 @@ from django.dispatch import Signal
 
 from billing.models import BillingControl
 from dispatch.models import DispatchControl
+from equipment.models import EquipmentManufacturer
 from invoicing.models import InvoiceControl
 from order.models import OrderControl
 from organization import models
@@ -323,4 +324,58 @@ def create_notification_settings(
         models.NotificationSetting.objects.get_or_create(
             organization=instance.organization,
             notification_type=instance,
+        )
+
+
+def create_equipment_manufacturers(
+    sender: models.Organization,
+    instance: models.Organization,
+    created: bool,
+    **kwargs: Any,
+) -> None:
+    if created:
+        manufacturers = [
+            {
+                "organization": instance,
+                "name": "Kenworth",
+                "description": "Kenworth is an American manufacturer of medium and heavy-duty Class 8 trucks.",
+            },
+            {
+                "organization": instance,
+                "name": "Ford",
+                "description": "Ford Motor Company, commonly known as Ford, is an American multinational automaker.",
+            },
+            {
+                "organization": instance,
+                "name": "Volvo",
+                "description": "The Volvo Group is a Swedish multinational manufacturing company.",
+            },
+            {
+                "organization": instance,
+                "name": "Peterbilt",
+                "description": "Peterbilt Motors Company is an American truck manufacturer.",
+            },
+            {
+                "organization": instance,
+                "name": "Freightliner",
+                "description": "Freightliner Trucks is an American truck manufacturer.",
+            },
+            {
+                "organization": instance,
+                "name": "Mack",
+                "description": "Mack Trucks is a truck-making company and a former manufacturer of buses and trolley buses.",
+            },
+            {
+                "organization": instance,
+                "name": "Isuzu",
+                "description": "Isuzu Motors Ltd. is a Japanese car, commercial vehicle and heavy truck manufacturing company.",
+            },
+            {
+                "organization": instance,
+                "name": "Navistar",
+                "description": "Navistar International Corporation is an American holding company that owns the manufacturer of International brand commercial trucks.",
+            },
+        ]
+        EquipmentManufacturer.objects.bulk_create(
+            [EquipmentManufacturer(**manufacturer) for manufacturer in manufacturers]
         )
