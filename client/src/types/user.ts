@@ -23,14 +23,13 @@ export type UserProfile = {
   user: string;
   job_title: string;
   address_line_1: string
-  address_line_2: string;
+  address_line_2?: string;
   city: string;
   state: string;
   zip_code: string;
-  phone_number: string;
+  phone_number?: string;
   profile_picture: string;
   is_phone_verified: boolean;
-
 }
 
 export type User = {
@@ -42,10 +41,10 @@ export type User = {
   date_joined: string;
   is_superuser: boolean;
   is_staff: boolean;
-  is_active: string;
+  is_active: boolean;
   groups: number[];
   user_permissions: number[];
   online: boolean;
   last_login: string;
-  profile: UserProfile;
+  profile?: UserProfile; // Set as optional due to Walle not having a profile
 }

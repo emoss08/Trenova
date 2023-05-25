@@ -18,12 +18,12 @@
 import { RouteObject } from "react-router-dom";
 import { lazy } from "react";
 
-const HomePage = lazy(() => import("../pages/HomePage"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
-const OrderPage = lazy(() => import("../pages/OrderPage"));
-const UserManagementPage = lazy(() => import("../pages/UserManagementPage"));
+const HomePage = lazy(() => import("../pages"));
+const LoginPage = lazy(() => import("../pages/login"));
+const ErrorPage = lazy(() => import("../pages/error-page"));
+const LogoutPage = lazy(() => import("../pages/logout"));
+const OrderPage = lazy(() => import("../pages/order-planning"));
+const UserManagementPage = lazy(() => import("../pages/user-management"));
 export const routes: RouteObject[] = [
   {
     path: "/",
@@ -39,7 +39,7 @@ export const routes: RouteObject[] = [
   },
   // User Management
   {
-    path: "/users",
+    path: "admin/users",
     element: <UserManagementPage />
   },
   // Order Management

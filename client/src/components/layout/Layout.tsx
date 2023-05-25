@@ -16,35 +16,20 @@
  */
 
 import React from "react";
-import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
-import { routes } from "@/routing/AppRoutes";
-import { useAuthStore } from "@/stores/authStore";
-import Layout from "@/components/layout/Layout";
 
-const ProtectedRoutes: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+interface LayoutProps {
+  children: React.ReactNode;
+}
 
+
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <Routes>
-      {routes.map((route: RouteObject, i: number) => {
-        const isPublicRoute = route.path === "/login" || route.path === "/logout";
-
-        const element = isPublicRoute || isAuthenticated
-          ? route.element
-          : <Navigate to="/login" replace />;
-
-        const wrappedElement = isPublicRoute
-          ? element
-          : <Layout>
-            {element}
-          </Layout>;
-
-        return (
-          <Route key={i} path={route.path} element={wrappedElement} />
-        );
-      })}
-    </Routes>
+    <>
+      <div className="container mx-auto">
+        {children}
+      </div>
+    </>
   );
 };
 
-export default ProtectedRoutes;
+export default Layout;

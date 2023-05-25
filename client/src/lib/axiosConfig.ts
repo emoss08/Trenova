@@ -16,28 +16,24 @@
  */
 
 import axios from "axios";
+import { getUserAuthToken, USER_INFO_KEY } from "@/lib/utils";
 
-const API_URL = import.meta.env.VITE_API_URL;
-export const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY;
-
-const getToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY);
-};
+const API_URL = import.meta.env.VITE_API_URL as string;
 
 axios.interceptors.request.use(
   req => {
     req.baseURL = API_URL;
-    const token = getToken();
+    const token = getUserAuthToken();
     if (token) {
       req.headers.Authorization = `Bearer ${token}`;
     }
     console.info(`Making request to ${req.baseURL}${req.url}`);
-    return req
+    return req;
   },
   (error: any) => {
     return Promise.reject(error);
   }
-)
+);
 
 axios.interceptors.response.use(
   (response) => {
@@ -45,7 +41,7 @@ axios.interceptors.response.use(
   },
   (error) => {
     if (error.response.status === 401) {
-      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_INFO_KEY);
     }
     return Promise.reject(error);
   }

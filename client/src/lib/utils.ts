@@ -18,6 +18,16 @@
 import { ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export const USER_INFO_KEY = import.meta.env.VITE_USER_INFO_KEY;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const getUserAuthToken = (): string | null => {
+  const userData = localStorage.getItem(USER_INFO_KEY);
+  if (userData) {
+    return JSON.parse(userData).token;
+  }
+  return null;
+};
