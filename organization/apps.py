@@ -132,3 +132,10 @@ class OrganizationConfig(AppConfig):
             sender="organization.NotificationType",
             dispatch_uid="create_notification_settings",
         )
+
+        # Equipment Manufacturer
+        post_save.connect(
+            signals.create_equipment_manufacturers,
+            sender="organization.Organization",
+            dispatch_uid="create_equipment_manufacturers",
+        )

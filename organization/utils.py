@@ -25,6 +25,8 @@ from organization import exceptions, models
 def send_email_using_profile(
     *, profile: models.EmailProfile, subject: str, content: str, recipients: str
 ) -> None:
+    smtp_class: type[SMTP] | type[SMTP_SSL]
+
     msg = MIMEMultipart()
     msg["From"] = profile.email
     msg["To"] = ", ".join(recipients)
@@ -42,6 +44,9 @@ def send_email_using_profile(
         smtp_class = SMTP
     else:
         raise exceptions.InvalidEmailProtocal("Invalid email protocol")
+
+    if not profile.port:
+        raise exceptions.InvalidEmailProfile("Port is required.")
 
     with smtp_class(profile.host, profile.port) as smtp:
         if profile.protocol == models.EmailProfile.EmailProtocolChoices.TLS:
