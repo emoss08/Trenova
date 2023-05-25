@@ -15,36 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
-import { routes } from "@/routing/AppRoutes";
-import { useAuthStore } from "@/stores/authStore";
-import Layout from "@/components/layout/Layout";
+import { create } from "zustand";
+import { User } from "@/types/user";
 
-const ProtectedRoutes: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+type UserState = {
+  user: User;
+  setUser: (user: User) => void;
+}
 
-  return (
-    <Routes>
-      {routes.map((route: RouteObject, i: number) => {
-        const isPublicRoute = route.path === "/login" || route.path === "/logout";
-
-        const element = isPublicRoute || isAuthenticated
-          ? route.element
-          : <Navigate to="/login" replace />;
-
-        const wrappedElement = isPublicRoute
-          ? element
-          : <Layout>
-            {element}
-          </Layout>;
-
-        return (
-          <Route key={i} path={route.path} element={wrappedElement} />
-        );
-      })}
-    </Routes>
-  );
-};
-
-export default ProtectedRoutes;
+export const useUserStore = create<UserState>((set) => ({
+  user: {} as User,
+  setUser: (user: User) => set({ user })
+}));

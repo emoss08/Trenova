@@ -16,7 +16,7 @@
  */
 
 import { BrowserRouter } from "react-router-dom";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 import LoadingScreen from "./components/LoadingScreen";
 import ProtectedRoutes from "./routing/ProtectedRoutes";
 import useVerifyToken from "./hooks/withTokenVerification";

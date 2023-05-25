@@ -15,36 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
-import { routes } from "@/routing/AppRoutes";
-import { useAuthStore } from "@/stores/authStore";
-import Layout from "@/components/layout/Layout";
+import axios from "@/lib/axiosConfig";
 
-const ProtectedRoutes: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+/**
+ * Returns all organizations
+ * @returns {Promise<any>}
+ */
+export async function getOrganizations(): Promise<any> {
+  const response = await axios.get("/organizations/");
+  return response.data.results;
+}
 
-  return (
-    <Routes>
-      {routes.map((route: RouteObject, i: number) => {
-        const isPublicRoute = route.path === "/login" || route.path === "/logout";
+/**
+ * Return the organization with the given id
+ * @returns {Promise<any>}
+ */
+export async function getDepartments(): Promise<any> {
+  const response = await axios.get("/departments/");
+  return response.data.results;
+}
 
-        const element = isPublicRoute || isAuthenticated
-          ? route.element
-          : <Navigate to="/login" replace />;
-
-        const wrappedElement = isPublicRoute
-          ? element
-          : <Layout>
-            {element}
-          </Layout>;
-
-        return (
-          <Route key={i} path={route.path} element={wrappedElement} />
-        );
-      })}
-    </Routes>
-  );
-};
-
-export default ProtectedRoutes;
+export async function getJobTitles(): Promise<any> {
+  const response = await axios.get("/job_titles/");
+  return response.data.results;
+}

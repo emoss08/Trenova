@@ -16,35 +16,25 @@
  */
 
 import React from "react";
-import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
-import { routes } from "@/routing/AppRoutes";
-import { useAuthStore } from "@/stores/authStore";
-import Layout from "@/components/layout/Layout";
 
-const ProtectedRoutes: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+interface BadgeProps {
+  active: boolean;
+}
 
+const Badge: React.FC<BadgeProps> = ({ active }) => {
+  const pillColor = active ? "fill-green-500" : "fill-rose-500";
+  const badgeColor = active ? "bg-green-100 text-green-700" : "bg-rose-100 text-rose-700";
   return (
-    <Routes>
-      {routes.map((route: RouteObject, i: number) => {
-        const isPublicRoute = route.path === "/login" || route.path === "/logout";
-
-        const element = isPublicRoute || isAuthenticated
-          ? route.element
-          : <Navigate to="/login" replace />;
-
-        const wrappedElement = isPublicRoute
-          ? element
-          : <Layout>
-            {element}
-          </Layout>;
-
-        return (
-          <Route key={i} path={route.path} element={wrappedElement} />
-        );
-      })}
-    </Routes>
+    <>
+      <span
+        className={`inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium ${badgeColor}`}>
+        <svg className={`h-1.5 w-1.5 ${pillColor}`} viewBox="0 0 6 6" aria-hidden="true">
+          <circle cx={3} cy={3} r={3} />
+        </svg>
+        {active ? "Active" : "Inactive"}
+      </span>
+    </>
   );
 };
 
-export default ProtectedRoutes;
+export default Badge;

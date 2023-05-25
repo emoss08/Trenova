@@ -15,36 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
-import { routes } from "@/routing/AppRoutes";
-import { useAuthStore } from "@/stores/authStore";
-import Layout from "@/components/layout/Layout";
-
-const ProtectedRoutes: React.FC = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-
-  return (
-    <Routes>
-      {routes.map((route: RouteObject, i: number) => {
-        const isPublicRoute = route.path === "/login" || route.path === "/logout";
-
-        const element = isPublicRoute || isAuthenticated
-          ? route.element
-          : <Navigate to="/login" replace />;
-
-        const wrappedElement = isPublicRoute
-          ? element
-          : <Layout>
-            {element}
-          </Layout>;
-
-        return (
-          <Route key={i} path={route.path} element={wrappedElement} />
-        );
-      })}
-    </Routes>
-  );
-};
-
-export default ProtectedRoutes;
+export function toCamelCase(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(toCamelCase);
+  } else if (obj !== null && obj.constructor === Object) {
+    return Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        key.replace(/([-_][a-z])/g, (group) =>
+          group.toUpperCase().replace("-", "").replace("_", "")
+        ),
+        toCamelCase(value)
+      ])
+    );
+  }
+  return obj;
+}

@@ -14,13 +14,12 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
+import React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user";
 import Badge from "./badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format, formatDistanceToNow, parseISO } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../../.src/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Menu, User as UserIcon, UserCog, UserMinus } from "lucide-react";
 import {
   DropdownMenu,
@@ -30,11 +29,11 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import React from "react";
-import { ViewUserDialog } from "@/components/user-management/users/ViewUserDialog";
 import { formatDate, formatDateToHumanReadable } from "@/utils/date";
+import { ViewUserDialog } from "@/components/user-management/view-user-dialog";
+import { EditUserDialog } from "@/components/user-management/edit-user-dialog";
 
-export const columns: ColumnDef<User>[] = [
+export const usersColumn: ColumnDef<User>[] = [
   {
     id: "user-details",
     header: "User Details",
@@ -122,7 +121,7 @@ export const columns: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const user = row.original as User;
       const [isViewUserDialogOpen, setIsViewUserDialogOpen] = React.useState(false);
-
+      const [isEditUserDialogOpen, setIsEditUserDialogOpen] = React.useState(false);
       return (
         <>
           <DropdownMenu>
@@ -140,7 +139,7 @@ export const columns: ColumnDef<User>[] = [
                   <span>View User</span>
                   <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log(`editing user ${user.username}`)}>
+                <DropdownMenuItem onClick={() => setIsEditUserDialogOpen(true)}>
                   <UserCog className="h-4 w-4 mr-2" />
                   <span>Edit User</span>
                   <DropdownMenuShortcut>⇧⌘B</DropdownMenuShortcut>
@@ -157,6 +156,11 @@ export const columns: ColumnDef<User>[] = [
             user={user}
             isOpen={isViewUserDialogOpen}
             onClose={() => setIsViewUserDialogOpen(false)}
+          />
+          <EditUserDialog
+            user={user}
+            isOpen={isEditUserDialogOpen}
+            onClose={() => setIsEditUserDialogOpen(false)}
           />
         </>
       );

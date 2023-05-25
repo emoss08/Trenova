@@ -25,8 +25,9 @@ import {
 import { DataTablePagination } from "@/components/ui/pagination";
 import React from "react";
 import axios from "@/lib/axiosConfig";
-import { columns } from "@/components/user-management/users/columns";
+import { usersColumn } from "@/components/user-management/users-column";
 import { useQuery } from "react-query";
+import { API_URL } from "@/utils/utils";
 
 export function UserDataTable({}) {
   const [page, setPage] = React.useState<number>(0);
@@ -35,7 +36,7 @@ export function UserDataTable({}) {
 
   const fetchUsers = (url: string, pageSize: number) => {
     if (!url) {
-      url = `http://localhost:8000/api/users/?limit=${pageSize}`;
+      url = `${API_URL}/?limit=${pageSize}`;
     }
     return axios.get(url).then((res) => res.data);
   };
@@ -56,7 +57,7 @@ export function UserDataTable({}) {
   };
 
   React.useEffect(() => {
-    setCurrentUrl(`http://localhost:8000/api/users/?limit=${count}&offset=${page * count}`);
+    setCurrentUrl(`${API_URL}/users/?limit=${count}&offset=${page * count}`);
   }, [page, count]);
 
   const handlePageSizeChange = (newPageSize: number) => {
@@ -76,7 +77,7 @@ export function UserDataTable({}) {
 
   const table = useReactTable({
     data: dataQuery.data?.results ?? defaultData,
-    columns: columns,
+    columns: usersColumn,
     pageCount: dataQuery.data?.count ?? 0,
     state: {
       pagination
@@ -123,7 +124,7 @@ export function UserDataTable({}) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={usersColumn.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
