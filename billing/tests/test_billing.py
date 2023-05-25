@@ -53,14 +53,6 @@ def test_generate_invoice_number(organization: Organization) -> None:
     order_1.status = "C"
     order_1.save()
 
-    order_2 = OrderFactory()
-
-    order_2_movements = order_2.movements.all()
-    order_2_movements.update(status="C")
-
-    order_2.status = "C"
-    order_2.save()
-
     # Test first invoice
     invoice_1 = models.BillingQueue.objects.create(
         organization=organization, order=order_1, user=user, customer=order_1.customer
@@ -70,44 +62,60 @@ def test_generate_invoice_number(organization: Organization) -> None:
         == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}"
     )
 
-    # Test second invoice
-    invoice_2 = models.BillingQueue.objects.create(
-        organization=organization, order=order_2, user=user, customer=order_2.customer
-    )
-    assert (
-        invoice_2.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_2.order.pro_number}"
-    )
-
-    # Test rebilling first invoice (Credit Memo)
     invoice_1_cm = models.BillingQueue.objects.create(
         organization=organization,
         order=order_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
-        customer=order_2.customer,
+        customer=order_1.customer,
     )
     assert (
         invoice_1_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1_cm.order.pro_number}"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}"
     )
 
-    # Test rebilling first invoice again (New invoice with A suffix)
-    invoice_1_a = models.BillingQueue.objects.create(
+    invoice_1_next_invoice = models.BillingQueue.objects.create(
         organization=organization, order=order_1, user=user, customer=order_1.customer
-    )
-    assert (
-        invoice_1_a.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1_a.order.pro_number}A"
     )
 
-    # Test rebilling first invoice one more time (New invoice with B suffix)
-    invoice_1_b = models.BillingQueue.objects.create(
+    assert (
+        invoice_1_next_invoice.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A"
+    )
+
+    invoice_1_next_invoice_cm = models.BillingQueue.objects.create(
+        organization=organization,
+        order=order_1,
+        user=user,
+        bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
+        customer=order_1.customer,
+    )
+
+    assert (
+        invoice_1_next_invoice_cm.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A"
+    )
+
+    invoice_1_final_invoice = models.BillingQueue.objects.create(
         organization=organization, order=order_1, user=user, customer=order_1.customer
     )
+
     assert (
-        invoice_1_b.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1_b.order.pro_number}B"
+        invoice_1_final_invoice.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B"
+    )
+
+    invoice_1_final_invoice_cm = models.BillingQueue.objects.create(
+        organization=organization,
+        order=order_1,
+        user=user,
+        bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
+        customer=order_1.customer,
+    )
+
+    assert (
+        invoice_1_final_invoice_cm.invoice_number
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B"
     )
 
 
@@ -140,7 +148,7 @@ def test_invoice_number_generation(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}"
     )
 
 
@@ -197,12 +205,12 @@ def test_invoice_number_increments(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}A"
     )
     assert second_invoice.invoice_number is not None
     assert (
         second_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.order.pro_number}00002"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.order.pro_number}A"
     )
 
 
@@ -573,7 +581,7 @@ def test_bill_orders(
     assert billing_history.bol_number == order.bol_number
     assert (
         billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}"
     )
 
     order.refresh_from_db()
@@ -639,7 +647,7 @@ def test_single_order_billing_service(
     assert billing_history.bol_number == order.bol_number
     assert (
         billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}00001"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}"
     )
 
     order.refresh_from_db()
@@ -665,10 +673,10 @@ def test_untransfer_single_order(
     order.transferred_to_billing = False
     order.billing_transfer_date = None
     order.save()
-    BillingQueueFactory(order=order, invoice_number="INV12345")
+    BillingQueueFactory(order=order, invoice_number="INV-12345")
 
     response = api_client.post(
-        reverse("untransfer-invoice"), {"invoice_numbers": "INV12345"}, format="json"
+        reverse("untransfer-invoice"), {"invoice_numbers": "INV-12345"}, format="json"
     )
 
     assert response.status_code == 200
@@ -703,12 +711,12 @@ def test_untransfer_multiple_orders(
     order2.billing_transfer_date = None
     order2.save()
 
-    BillingQueueFactory(order=order1, invoice_number="INV12345")
-    BillingQueueFactory(order=order2, invoice_number="INV67890")
+    BillingQueueFactory(order=order1, invoice_number="INV-12345")
+    BillingQueueFactory(order=order2, invoice_number="INV-67890")
 
     response = api_client.post(
         reverse("untransfer-invoice"),
-        {"invoice_numbers": ["INV12345", "INV67890"]},
+        {"invoice_numbers": ["INV-12345", "INV-67890"]},
         format="json",
     )
 
@@ -802,4 +810,4 @@ def test_validate_invoice_number_does_start_with_invoice_prefix(
         invoice_number="INV-00001",
     )
 
-    assert invoice.invoice_number == "INV-00001"
+    assert invoice.invoice_number == f"INV-{order.pro_number}"
