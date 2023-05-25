@@ -34,3 +34,7 @@ class CacheOperationError(CacheManagerError):
 
 class InvalidEmailProtocal(Exception):
     """Raised when an invalid email protocol is used."""
+
+
+class InvalidEmailProfile(Exception):
+    """Raised when an invalid email profile is used."""
