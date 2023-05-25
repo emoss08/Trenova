@@ -184,3 +184,67 @@ def test_user_cannot_change_password_on_update(user: User) -> None:
     )
     assert "code='invalid'" in str(excinfo.value.detail)
     assert excinfo.value.default_code == "invalid"
+
+
+def test_inactive_user_cannot_login(api_client: APIClient, user_api: Response) -> None:
+    """
+    Test inactive user cannot login
+
+    Args:
+        api_client (APIClient): API Client
+        user_api (Response): User API Response
+
+    Returns:
+        None: This function does not return anything.
+    """
+    user = User.objects.get(id=user_api.data["id"])
+    user.is_active = False
+    user.save()
+
+    response = api_client.post(
+        "/api/login/",
+        {"username": user_api.data["username"], "password": "trashuser12345%"},
+    )
+    assert response.status_code == 400
+
+
+def test_login_user(unauthenticated_api_client: APIClient, user_api: Response) -> None:
+    """
+    Test login user
+
+    Args:
+        unauthenticated_api_client (APIClient): API Client
+        user_api (Response): User API Response
+
+    Returns:
+        None: This function does not return anything.
+
+    """
+    response = unauthenticated_api_client.post(
+        "/api/login/",
+        {"username": user_api.data["username"], "password": "trashuser12345%"},
+    )
+    assert response.status_code == 200
+    assert response.data["token"]
+
+    user = User.objects.get(id=user_api.data["id"])
+    assert user.online is True
+    assert user.last_login
+
+
+def test_logout_user(api_client: APIClient, user_api: Response) -> None:
+    """
+    Test logout user
+
+    Args:
+        api_client (APIClient): API Client
+        user_api (Response): User API Response
+
+    Returns:
+        None: This function does not return anything.
+    """
+    response = api_client.post("/api/logout/")
+    assert response.status_code == 204
+
+    user = User.objects.get(id=user_api.data["id"])
+    assert user.online is False
