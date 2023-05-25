@@ -184,8 +184,8 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
 
         verbose_name = _("User")
         verbose_name_plural = _("Users")
-        ordering: list[str] = ["-date_joined"]
         db_table = "user"
+        permissions = [("view_all_users", "Can view all users")]
 
     def __str__(self) -> str:
         """

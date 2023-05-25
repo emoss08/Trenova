@@ -62,3 +62,13 @@ def api_client(token: Token) -> APIClient:
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {token.key}")
     yield client
+
+
+@pytest.fixture
+def unauthenticated_api_client() -> APIClient:
+    """API client Fixture
+
+    Returns:
+        APIClient: Authenticated Api object
+    """
+    yield APIClient()

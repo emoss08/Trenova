@@ -90,6 +90,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
                     "username",
                     "email",
                     "password",
+                    "online",
                 )
             },
         ),
@@ -120,7 +121,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     change_password_form: type[AdminPasswordChangeForm] = AdminPasswordChangeForm
     list_display = ("username", "email", "is_staff")
     list_filter = ("is_staff", "is_superuser", "groups")
-    search_fields = ("username", "first_name", "last_name", "email")
+    search_fields = ("username", "email")
     ordering = ("username",)
     filter_horizontal = (
         "groups",
