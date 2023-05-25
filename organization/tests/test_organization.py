@@ -19,6 +19,7 @@ import pytest
 from django.core.management import call_command
 from django_celery_beat.models import IntervalSchedule
 
+from equipment.models import EquipmentManufacturer
 from organization import models
 
 pytestmark = pytest.mark.django_db
@@ -118,3 +119,19 @@ def test_create_celery_beat_configurations_command() -> None:
 
     # Check that configurations have been created
     assert IntervalSchedule.objects.count() > 0
+
+
+def test_equipment_manufacturer_signal(organization: models.Organization) -> None:
+    """
+    Test when organization is created, the equipment manufacturers are created.
+
+    Args:
+        organization (models.Organization): Organization instance
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    manufacturers = EquipmentManufacturer.objects.filter(organization=organization)
+
+    assert manufacturers.count() > 0
