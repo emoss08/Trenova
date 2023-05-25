@@ -20,12 +20,25 @@ from typing import Any
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
 from django.utils import timezone
-from rest_framework import generics, permissions, response, status, views, viewsets
+from rest_framework import (
+    generics,
+    permissions,
+    response,
+    status,
+    views,
+    viewsets,
+    exceptions,
+)
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
 
 from accounts import models, serializers
+from accounts.permissions import ViewAllUsersPermission
 from utils.exceptions import InvalidTokenException
+from django.http import HttpResponse
+import json
+
+from utils.permissions import MontaModelPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -71,8 +84,7 @@ class UserViewSet(viewsets.ModelViewSet):
         "is_staff",
         "username",
     )
-
-    # permission_classes = [MontaModelPermissions]
+    permission_classes = [permissions.IsAuthenticated, ViewAllUsersPermission]
 
     def get_queryset(self) -> QuerySet[models.User]:
         """Filter the queryset to only include the current user
@@ -172,7 +184,7 @@ class JobTitleViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "is_active",
@@ -190,6 +202,7 @@ class TokenVerifyView(views.APIView):
 
     permission_classes: list[Any] = []
     serializer_class = serializers.VerifyTokenSerializer
+    http_method_names = ["post"]
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """Handle Post requests
@@ -207,68 +220,11 @@ class TokenVerifyView(views.APIView):
         token = serializer.data.get("token")
 
         try:
-            token = (
-                models.Token.objects.select_related("user")
-                .only("key", "user__id")
-                .get(key=token)
-            )
+            token = models.Token.objects.get(key=token)
         except models.Token.DoesNotExist as e:
             raise InvalidTokenException("Token is invalid") from e
 
-        user = (
-            models.User.objects.select_related(
-                "profiles",
-                "profiles__job_title",
-                "organization",
-                "department",
-            )
-            .only(
-                "id",
-                "username",
-                "email",
-                "last_login",
-                "is_staff",
-                "is_superuser",
-                "organization__id",
-                "department__id",
-                "profiles__first_name",
-                "profiles__last_name",
-                "profiles__job_title__name",
-                "profiles__address_line_1",
-                "profiles__address_line_2",
-                "profiles__city",
-                "profiles__state",
-                "profiles__zip_code",
-                "profiles__phone_number",
-                "profiles__is_phone_verified",
-            )
-            .get(id=token.user.id)
-        )
-
-        return response.Response(
-            {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "first_name": user.profile.first_name,
-                "last_name": user.profile.last_name,
-                "full_name": f"{user.profile.first_name} {user.profile.last_name}",
-                "organization_id": user.organization.id,
-                "department_id": user.department.id if user.department else None,
-                "job_title": user.profile.job_title.name,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
-                "address_line_1": user.profile.address_line_1,
-                "address_line_2": user.profile.address_line_2,
-                "city": user.profile.city,
-                "state": user.profile.state,
-                "zip_code": user.profile.zip_code,
-                "full_address": user.profile.get_full_address_combo,
-                "phone_number": user.profile.phone_number,
-                "phone_verified": user.profile.is_phone_verified,
-                "token": token.key,
-            }
-        )
+        return response.Response({"token": token.key}, status=status.HTTP_200_OK)
 
 
 class TokenProvisionView(ObtainAuthToken):
@@ -279,61 +235,51 @@ class TokenProvisionView(ObtainAuthToken):
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user_obj = serializer.validated_data["user"]
-        token, _ = models.Token.objects.get_or_create(user=user_obj)
-        user = (
-            models.User.objects.select_related(
-                "profiles", "profiles__job_title", "organization", "department"
-            )
-            .only(
-                "id",
-                "username",
-                "email",
-                "profiles__first_name",
-                "profiles__last_name",
-                "organization__id",
-                "department__id",
-                "profiles__job_title__name",
-                "is_staff",
-                "is_superuser",
-                "profiles__address_line_1",
-                "profiles__address_line_2",
-                "profiles__city",
-                "profiles__state",
-                "profiles__zip_code",
-                "profiles__phone_number",
-                "profiles__is_phone_verified",
-            )
-            .get(id=user_obj.id)
-        )
+        user = serializer.validated_data["user"]
+        token, _ = models.Token.objects.get_or_create(user=user)
+
         if token.is_expired:
             token.delete()
-            token = models.Token.objects.create(user=user_obj)
+            token = models.Token.objects.create(user=user)
 
+        user.online = True
         user.last_login = timezone.now()
         user.save()
 
         return response.Response(
             {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "first_name": user.profile.first_name,
-                "last_name": user.profile.last_name,
-                "full_name": f"{user.profile.first_name} {user.profile.last_name}",
-                "organization_id": user.organization.id,
-                "department_id": user.department.id if user.department else None,
-                "job_title": user.profile.job_title.name,
-                "is_staff": user.is_staff,
-                "is_superuser": user.is_superuser,
-                "address_line_1": user.profile.address_line_1,
-                "address_line_2": user.profile.address_line_2,
-                "city": user.profile.city,
-                "state": user.profile.state,
-                "zip_code": user.profile.zip_code,
-                "full_address": user.profile.get_full_address_combo,
-                "phone_number": user.profile.phone_number,
-                "phone_verified": user.profile.is_phone_verified,
                 "token": token.key,
-            }
+                "user_id": user.id,
+                "organization_id": user.organization_id,
+            },
+            status=status.HTTP_200_OK,
         )
+
+
+class UserLogoutView(views.APIView):
+    """
+    Rest API endpoint for users can logout
+    """
+
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ["post"]
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
+        """Handle Post requests
+
+        Args:
+            request (Request): Request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Response: Response of token and user id
+        """
+
+        user = request.user
+        models.Token.objects.filter(user=user).delete()
+
+        user.online = False  # type: ignore
+        user.save()
+
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
