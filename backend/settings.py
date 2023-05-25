@@ -261,6 +261,22 @@ CACHES = {
 # Session Configurations
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Strict"
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# CSRF Configurations
+CSRF_COOKIE_SECURE = True
+
+# Security Configurations
+SECURE_HSTS_SECONDS = 31536000
+# SECURE_SSL_REDIRECT = True
+SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
@@ -271,6 +287,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.DjangoObjectPermissions",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -291,6 +308,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
 }
 
 # Celery Configurations
@@ -333,7 +351,6 @@ CACHEOPS = {
     "dispatch.dispatchcontrol": {"ops": "all"},
     "organization.emailcontrol": {"ops": "all"},
 }
-
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
 SILKY_PYTHON_PROFILER = True
