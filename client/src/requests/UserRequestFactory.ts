@@ -15,14 +15,32 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import { User } from "@/types/user";
+import axios from "@/lib/axiosConfig";
 
-const HomePage: React.FC = () => {
-  return (
-    <div>
-      Home
-    </div>
-  );
-};
+/**
+ * Return the user's job title information
+ * @param user
+ *
+ * @returns {Promise<any>}
+ */
+export async function getUserJobTitle(user: User): Promise<any> {
+  const response = await axios.get(`/job_titles/${user.profile?.job_title}/`);
+  return response.data;
+}
 
-export default HomePage;
+/***
+ * Return the user's organization information
+ * @param user
+ *
+ * @returns {Promise<any>}
+ */
+export async function getUserOrganization(user: User): Promise<any> {
+  const response = await axios.get(`/organizations/${user.organization}/`);
+  return response.data;
+}
+
+export async function getUserDepartment(user: User): Promise<any> {
+  const response = await axios.get(`/departments/${user?.department}/`);
+  return response.data;
+}
