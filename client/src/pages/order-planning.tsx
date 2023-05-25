@@ -15,32 +15,31 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { User } from "@/types/user";
 import axios from "@/lib/axiosConfig";
+import React, { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import OrderDetails from "@/components/order-management/OrderDetails";
 
-/**
- * Return the user's job title information
- * @param user
- *
- * @returns {Promise<any>}
- */
-export async function getUserJobTitle(user: User): Promise<any> {
-  const response = await axios.get(`/job_titles/${user.profile?.job_title}/`);
-  return response.data;
-}
+const OrderPlanning: React.FC = () => {
+  const { orderId } = useParams<{ orderId: string }>();
+  const [order, setOrder] = React.useState<any>(null);
 
-/***
- * Return the user's organization information
- * @param user
- *
- * @returns {Promise<any>}
- */
-export async function getUserOrganization(user: User): Promise<any> {
-  const response = await axios.get(`/organizations/${user.organization}/`);
-  return response.data;
-}
+  useEffect((): void => {
+    const fetchOrder = async (): Promise<void> => {
+      try {
+        const response = await axios.get(`/orders/${orderId}/`);
+        setOrder(response.data);
+      } catch {
+        console.log("error");
+      }
+    };
+    fetchOrder().then((): void => {
+    });
+  }, [orderId]);
 
-export async function getUserDepartment(user: User): Promise<any> {
-  const response = await axios.get(`/organizations/${user.organization}/departments/${user?.department}/`);
-  return response.data;
-}
+  return (
+    <div>{order ? <OrderDetails order={order} /> : <div>Loading...</div>}</div>
+  );
+};
+
+export default OrderPlanning;

@@ -20,8 +20,10 @@ import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import axios from "@/lib/axiosConfig";
+import { USER_INFO_KEY } from "@/lib/utils";
 
-const LogoutPage: React.FC = () => {
+const Logout: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore(
     (state) => [state.isAuthenticated, state.setIsAuthenticated]
   );
@@ -33,11 +35,14 @@ const LogoutPage: React.FC = () => {
         navigate("/login");
         return;
       }
-
-      localStorage.removeItem("mt_token");
-      setIsAuthenticated(false);
-      navigate("/login");
+      axios.post("logout/").then(() => {
+        localStorage.removeItem(USER_INFO_KEY);
+        setIsAuthenticated(false);
+        navigate("/login");
+      });
     };
+
+    console.info("isAuthenticated: ", isAuthenticated);
 
     handleLogout();
   }, [isAuthenticated, setIsAuthenticated, navigate]);
@@ -64,4 +69,4 @@ const LogoutPage: React.FC = () => {
   );
 };
 
-export default LogoutPage;
+export default Logout;
