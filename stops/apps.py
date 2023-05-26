@@ -36,3 +36,9 @@ class StopsConfig(AppConfig):
             sender="stops.Stop",
             dispatch_uid="update_movement_status",
         )
+
+        post_save.connect(
+            signals.create_service_incident,
+            sender="stops.Stop",
+            dispatch_uid="create_service_incident",
+        )

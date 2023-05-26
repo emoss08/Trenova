@@ -20,7 +20,7 @@ from typing import Any
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
-from stops import models
+from stops import models, services
 from utils.models import StatusChoices
 
 
@@ -75,3 +75,8 @@ def check_stop_removal_policy(
             },
             code="invalid",
         )
+
+
+def create_service_incident(instance: models.Stop, **kwargs: Any) -> None:
+    if instance.arrival_time:
+        services.create_service_incident_if_needed(obj=instance)

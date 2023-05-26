@@ -57,6 +57,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     password = factory.Faker("password")
     email = factory.Faker("email")
     is_staff = True
+    is_superuser = True
     date_joined = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
 
     @factory.post_generation
