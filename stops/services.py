@@ -18,78 +18,53 @@
 
 from datetime import timedelta
 
-from django.shortcuts import get_object_or_404
-
 from dispatch.models import DispatchControl
 from stops import models
-from utils.models import StopChoices
 
 
-class StopServiceIncidentHandler:
-    def __init__(
-        self,
-        instance: models.Stop,
-        dc_object: DispatchControl,
-    ) -> None:
-        """Initialize the Create Service Incident class
+def is_late(*, obj: models.Stop) -> bool:
+    if not obj.arrival_time:
+        return False
+    grace_period = timedelta(minutes=obj.organization.dispatch_control.grace_period)
+    return obj.arrival_time > obj.appointment_time_window_end + grace_period
 
-        Assign instances to get around circular imports.
 
-        Args:
-            instance (Stop): The stop to create service incident
-            dc_object (DispatchControl): The dispatch object
+def control_choice_matches_stop(*, control_choice, obj: models.Stop) -> bool:
+    stop_type = obj.stop_type
+    si_choices = DispatchControl.ServiceIncidentControlChoices
 
-        Returns:
-            None
-        """
-
-        self.instance = instance
-        self.dispatch_control = get_object_or_404(
-            dc_object, organization=self.instance.organization
-        )
-
-    def should_create_service_incident(self, stop_type: str) -> bool:
-        is_late = (
-            self.instance.arrival_time
-            and self.instance.arrival_time
-            > self.instance.appointment_time_window_end
-            + timedelta(minutes=self.dispatch_control.grace_period)
-        )
-        if not self.instance.arrival_time or not is_late:
-            return False
-
-        control_choice = self.dispatch_control.record_service_incident
-
-        if control_choice == self.dispatch_control.ServiceIncidentControlChoices.PICKUP:
-            return stop_type == StopChoices.PICKUP
-        elif (
-            control_choice
-            == self.dispatch_control.ServiceIncidentControlChoices.DELIVERY
-        ):
-            return stop_type == StopChoices.DELIVERY
-        elif (
-            control_choice
-            == self.dispatch_control.ServiceIncidentControlChoices.PICKUP_DELIVERY
-        ):
-            return True
-        elif (
-            control_choice
-            == self.dispatch_control.ServiceIncidentControlChoices.ALL_EX_SHIPPER
-        ):
-            return stop_type != StopChoices.PICKUP and self.instance.sequence != 1
-
+    if control_choice == si_choices.PICKUP:
+        return stop_type == models.StopChoices.PICKUP
+    elif control_choice == si_choices.DELIVERY:
+        return stop_type == models.StopChoices.DELIVERY
+    elif control_choice == si_choices.PICKUP_DELIVERY:
+        return True
+    elif control_choice == si_choices.ALL_EX_SHIPPER:
+        return stop_type != models.StopChoices.PICKUP
+    else:
         return False
 
-    def create_service_incident(self) -> None:
-        if self.instance.arrival_time:
-            models.ServiceIncident.objects.create(
-                organization=self.instance.organization,
-                movement=self.instance.movement,
-                stop=self.instance,
-                delay_time=self.instance.arrival_time
-                - self.instance.appointment_time_window_end,
-            )
 
-    def create_service_incident_if_needed(self) -> None:
-        if self.should_create_service_incident(self.instance.stop_type):
-            self.create_service_incident()
+def should_create_service_incident(*, obj: models.Stop) -> bool:
+    dispatch_control = obj.organization.dispatch_control
+    if not is_late(obj=obj):
+        return False
+    return control_choice_matches_stop(
+        control_choice=dispatch_control.record_service_incident, obj=obj
+    )
+
+
+def create_service_incident(*, obj: models.Stop) -> None:
+    if obj.arrival_time:
+        delay_time = obj.arrival_time - obj.appointment_time_window_end
+        models.ServiceIncident.objects.create(
+            organization=obj.organization,
+            movement=obj.movement,
+            stop=obj,
+            delay_time=delay_time,
+        )
+
+
+def create_service_incident_if_needed(obj: models.Stop) -> None:
+    if should_create_service_incident(obj=obj):
+        create_service_incident(obj=obj)

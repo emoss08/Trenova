@@ -22,11 +22,14 @@ import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from accounting.tests.factories import RevenueCodeFactory
+from customer.factories import CustomerFactory
+from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
-from order.tests.factories import OrderFactory
+from order.tests.factories import OrderFactory, OrderTypeFactory
 from organization.models import Organization
 from stops import models
 from stops.tests.factories import StopFactory
@@ -88,3 +91,51 @@ def stop_api(
         },
         format="json",
     )
+
+
+@pytest.fixture
+def order_type() -> Generator[Any, Any, None]:
+    """
+    Order type fixture
+    """
+    yield OrderTypeFactory()
+
+
+@pytest.fixture
+def revenue_code() -> Generator[Any, Any, None]:
+    """
+    Revenue code fixture
+    """
+    yield RevenueCodeFactory()
+
+
+@pytest.fixture
+def origin_location() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Origin Location
+    """
+    yield LocationFactory()
+
+
+@pytest.fixture
+def destination_location() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Destination Location
+    """
+    yield LocationFactory()
+
+
+@pytest.fixture
+def customer() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Customer
+    """
+    yield CustomerFactory()
+
+
+@pytest.fixture
+def equipment_type() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Equipment Type
+    """
+    yield EquipmentTypeFactory()
