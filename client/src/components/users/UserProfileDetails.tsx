@@ -122,6 +122,9 @@ const UserProfileDetails: React.FC<Props> = ({ user, isLoading, jobTitle }) => {
                           </div>
                         </Grid.Col>
                       </Grid>
+                      <Text mt={20}>
+                        TODO: Add Analytics based on job function
+                      </Text>
                     </Flex>
                   </Grid.Col>
                 </Grid>

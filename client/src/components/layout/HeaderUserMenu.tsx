@@ -40,6 +40,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
+import { Link } from "react-router-dom";
 
 interface HeaderUserMenuProps {
   user: User;
@@ -221,31 +222,33 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
             </Menu.Item>
 
             <Menu.Label>Settings</Menu.Label>
-            <Menu.Item
-              icon={<FontAwesomeIcon icon={faGear} stroke="1.5" />}
-              component="a"
-              href={`account/settings/${user.id}`}
+            <Link
+              to={`/account/settings/${user.id}/`}
+              style={{ textDecoration: "none" }}
             >
-              Account settings
-            </Menu.Item>
+              <Menu.Item icon={<FontAwesomeIcon icon={faGear} stroke="1.5" />}>
+                Account settings
+              </Menu.Item>
+            </Link>
             <Menu.Item
               icon={<IconSwitchHorizontal size="0.9rem" stroke={1.5} />}
             >
               Change account
             </Menu.Item>
-            <Menu.Item
-              icon={
-                <FontAwesomeIcon
-                  size="sm"
-                  icon={faRightFromBracket}
-                  stroke="1.5"
-                />
-              }
-              component="a"
-              href="/logout"
-            >
-              Logout
-            </Menu.Item>
+
+            <Link to="/logout/" style={{ textDecoration: "none" }}>
+              <Menu.Item
+                icon={
+                  <FontAwesomeIcon
+                    size="sm"
+                    icon={faRightFromBracket}
+                    stroke="1.5"
+                  />
+                }
+              >
+                Logout
+              </Menu.Item>
+            </Link>
 
             <Menu.Divider />
 

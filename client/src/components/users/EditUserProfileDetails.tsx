@@ -14,36 +14,3 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
-import { ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export const USER_INFO_KEY = import.meta.env.VITE_USER_INFO_KEY;
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-export const getUserAuthToken = (): string | null => {
-  const userData = localStorage.getItem(USER_INFO_KEY);
-  if (userData) {
-    return JSON.parse(userData).token;
-  }
-  return null;
-};
-
-export const getUserId = (): string | null => {
-  const userData = localStorage.getItem(USER_INFO_KEY);
-  if (userData) {
-    return JSON.parse(userData).user_id;
-  }
-  return null;
-};
-
-export const getUserOrganizationId = (): string | null => {
-  const userData = localStorage.getItem(USER_INFO_KEY);
-  if (userData) {
-    return JSON.parse(userData).organization_id;
-  }
-  return null;
-};
