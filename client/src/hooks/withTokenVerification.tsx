@@ -43,8 +43,7 @@ const useVerifyToken = () => {
       setLoading(false);
       setInitialLoading(false);
     };
-    verifyToken().then(() => {
-    });
+    verifyToken().then(() => {});
   }, [setIsAuthenticated, setLoading, setInitialLoading]);
 };
 

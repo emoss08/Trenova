@@ -44,3 +44,8 @@ export async function getUserDepartment(user: User): Promise<any> {
   const response = await axios.get(`/departments/${user?.department}/`);
   return response.data;
 }
+
+export async function getUserDetails(id: string): Promise<any> {
+  const response = await axios.get(`/users/${id}/`);
+  return response.data;
+}

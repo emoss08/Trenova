@@ -20,10 +20,10 @@ type LoginErrorStore = {
   errorMessages: string[];
   setErrorMessages: (messages: string[]) => void;
   clearErrorMessages: () => void;
-}
+};
 
 export const useErrorStore = create<LoginErrorStore>((set) => ({
   errorMessages: [],
   setErrorMessages: (messages) => set({ errorMessages: messages }),
-  clearErrorMessages: () => set({ errorMessages: [] })
+  clearErrorMessages: () => set({ errorMessages: [] }),
 }));

@@ -15,30 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import OrderDetails from "@/components/order-management/OrderDetails";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { nprogress, NavigationProgress } from "@mantine/nprogress";
 
-const OrderPlanning: React.FC = () => {
-  const { orderId } = useParams<{ orderId: string }>();
-  const [order, setOrder] = React.useState<any>(null);
+export function RouterTransition() {
+  const location = useLocation();
 
-  useEffect((): void => {
-    const fetchOrder = async (): Promise<void> => {
-      try {
-        const response = await axios.get(`/orders/${orderId}/`);
-        setOrder(response.data);
-      } catch {
-        console.log("error");
-      }
-    };
-    fetchOrder().then((): void => {});
-  }, [orderId]);
+  useEffect(() => {
+    // Start the progress bar whenever the location changes
+    nprogress.start();
 
-  return (
-    <div>{order ? <OrderDetails order={order} /> : <div>Loading...</div>}</div>
-  );
-};
+    // After starting, complete the progress bar after some delay
+    setTimeout(() => {
+      nprogress.complete();
+    }, 1000); // adjust the delay time as needed
+  }, [location]); // Re-run this effect when location changes
 
-export default OrderPlanning;
+  return <NavigationProgress />;
+}

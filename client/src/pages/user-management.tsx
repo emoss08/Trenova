@@ -24,9 +24,7 @@ const UserManagement: React.FC = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>
-            User Management
-          </CardTitle>
+          <CardTitle>User Management</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="container mx-auto py-10">

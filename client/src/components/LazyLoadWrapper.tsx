@@ -15,14 +15,17 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from 'react';
+import React from "react";
 
 interface LazyLoadWrapperProps {
   setLoading: (loading: boolean) => void;
   children: React.ReactNode;
 }
 
-const LazyLoadWrapper: React.FC<LazyLoadWrapperProps> = ({ setLoading, children }) => {
+const LazyLoadWrapper: React.FC<LazyLoadWrapperProps> = ({
+  setLoading,
+  children,
+}) => {
   React.useEffect(() => {
     setLoading(true);
     return () => setLoading(false);

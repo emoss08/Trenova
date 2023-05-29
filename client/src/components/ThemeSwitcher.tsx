@@ -15,30 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import OrderDetails from "@/components/order-management/OrderDetails";
+import { ActionIcon, useMantineColorScheme } from "@mantine/core";
+import { IconSun, IconMoonStars } from "@tabler/icons-react";
 
-const OrderPlanning: React.FC = () => {
-  const { orderId } = useParams<{ orderId: string }>();
-  const [order, setOrder] = React.useState<any>(null);
-
-  useEffect((): void => {
-    const fetchOrder = async (): Promise<void> => {
-      try {
-        const response = await axios.get(`/orders/${orderId}/`);
-        setOrder(response.data);
-      } catch {
-        console.log("error");
-      }
-    };
-    fetchOrder().then((): void => {});
-  }, [orderId]);
+const ThemeSwitcher = () => {
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const dark = colorScheme === "dark";
 
   return (
-    <div>{order ? <OrderDetails order={order} /> : <div>Loading...</div>}</div>
+    <ActionIcon
+      variant="outline"
+      color={dark ? "yellow" : "blue"}
+      onClick={() => toggleColorScheme()}
+      title="Toggle color scheme"
+    >
+      {dark ? <IconSun size="1.1rem" /> : <IconMoonStars size="1.1rem" />}
+    </ActionIcon>
   );
 };
 
-export default OrderPlanning;
+export default ThemeSwitcher;

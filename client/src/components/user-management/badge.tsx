@@ -23,12 +23,19 @@ interface BadgeProps {
 
 const Badge: React.FC<BadgeProps> = ({ active }) => {
   const pillColor = active ? "fill-green-500" : "fill-rose-500";
-  const badgeColor = active ? "bg-green-100 text-green-700" : "bg-rose-100 text-rose-700";
+  const badgeColor = active
+    ? "bg-green-100 text-green-700"
+    : "bg-rose-100 text-rose-700";
   return (
     <>
       <span
-        className={`inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium ${badgeColor}`}>
-        <svg className={`h-1.5 w-1.5 ${pillColor}`} viewBox="0 0 6 6" aria-hidden="true">
+        className={`inline-flex items-center gap-x-1.5 rounded-md px-2 py-1 text-xs font-medium ${badgeColor}`}
+      >
+        <svg
+          className={`h-1.5 w-1.5 ${pillColor}`}
+          viewBox="0 0 6 6"
+          aria-hidden="true"
+        >
           <circle cx={3} cy={3} r={3} />
         </svg>
         {active ? "Active" : "Inactive"}

@@ -17,7 +17,12 @@
 
 import { Order } from "@/types/order";
 import React from "react";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type Props = {
   order: Order;
@@ -30,7 +35,9 @@ const OrderDetails: React.FC<Props> = ({ order }) => {
         <Card className="w-[350px]">
           <CardHeader>
             <CardTitle>Order Details</CardTitle>
-            <CardDescription>Currently Viewing Order: {order.pro_number}</CardDescription>
+            <CardDescription>
+              Currently Viewing Order: {order.pro_number}
+            </CardDescription>
           </CardHeader>
         </Card>
         <p>
@@ -47,7 +54,10 @@ const OrderDetails: React.FC<Props> = ({ order }) => {
           Destination Address: {order.destination_address} <br />
           Movements: {order.movements} <br />
           Equipment Type: {order.equipment_type} <br />
-          Origin Appointment Window End: {order.origin_appointment_window_end} <br />
+          Origin Appointment Window End: {
+            order.origin_appointment_window_end
+          }{" "}
+          <br />
           Ready to Bill: {order.ready_to_bill} <br />
           Order Comments: {order.order_comments} <br />
           Freight Charge Amount: {order.freight_charge_amount} <br />
@@ -63,14 +73,22 @@ const OrderDetails: React.FC<Props> = ({ order }) => {
           Voided Commission: {order.voided_comm} <br />
           Origin Location: {order.origin_location} <br />
           Origin Address: {order.origin_address} <br />
-          Freight Charge Amount Currency: {order.freight_charge_amount_currency} <br />
+          Freight Charge Amount Currency: {
+            order.freight_charge_amount_currency
+          }{" "}
+          <br />
           Other Charge Amount: {order.other_charge_amount} <br />
           Order Documentation: {order.order_documentation} <br />
           Hazmat: {order.hazmat} <br />
           Status: {order.status} <br />
-          Other Charge Amount Currency: {order.other_charge_amount_currency} <br />
-          Destination Appointment Window Start: {order.destination_appointment_window_start} <br />
-          Destination Appointment Window End: {order.destination_appointment_window_end} <br />
+          Other Charge Amount Currency: {
+            order.other_charge_amount_currency
+          }{" "}
+          <br />
+          Destination Appointment Window Start:{" "}
+          {order.destination_appointment_window_start} <br />
+          Destination Appointment Window End:{" "}
+          {order.destination_appointment_window_end} <br />
           Customer: {order.customer} <br />
           Pieces: {order.pieces} <br />
           Auto Rate: {order.auto_rate} <br />

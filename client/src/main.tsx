@@ -19,19 +19,17 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "react-query";
 import App from "./App";
-import "./styles/globals.css";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import { MantineProvider } from "@mantine/core";
 
-const queryClient = new QueryClient(
-  {
-    defaultOptions: {
-      queries: {
-        retry: false
-      }
-    }
-  }
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
@@ -47,8 +45,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       pauseOnHover={false}
       theme="light"
     />
+    <MantineProvider
+      theme={{
+        colorScheme: "dark",
+      }}
+      withGlobalStyles
+      withNormalizeCSS
+      withCSSVariables
+    >
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
+    </MantineProvider>
   </React.StrictMode>
 );

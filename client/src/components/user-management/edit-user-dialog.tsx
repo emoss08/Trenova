@@ -23,12 +23,16 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { getDepartments, getJobTitles, getOrganizations } from "@/requests/OrganizationRequestFactory";
+import {
+  getDepartments,
+  getJobTitles,
+  getOrganizations,
+} from "@/requests/OrganizationRequestFactory";
 import { Loader2 } from "lucide-react";
 import {
   Select,
@@ -37,7 +41,7 @@ import {
   SelectItem,
   SelectLabel,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Department, Organization } from "@/types/organization";
 import { Switch } from "@/components/ui/switch";
@@ -56,8 +60,14 @@ interface EditUserDialogProps {
   onClose: () => void;
 }
 
-export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, onClose }) => {
-  const [buttonStatus, setButtonStatus] = React.useState<"idle" | "processing" | "error" | "success">("idle");
+export const EditUserDialog: React.FC<EditUserDialogProps> = ({
+  user,
+  isOpen,
+  onClose,
+}) => {
+  const [buttonStatus, setButtonStatus] = React.useState<
+    "idle" | "processing" | "error" | "success"
+  >("idle");
   const { errorMessages, setErrorMessages } = useErrorStore();
   const formikProps = useFormikContext();
   const queryClient = useQueryClient();
@@ -71,7 +81,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
         setButtonStatus("success");
         toast("🚀 Successfully updated user!", {
           closeOnClick: true,
-          autoClose: 1500
+          autoClose: 1500,
         });
       },
       onError: (error: any) => {
@@ -80,32 +90,33 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
       },
       onSettled: () => {
         setButtonStatus("idle");
-      }
+      },
+    }
+  );
+
+  const { data: organizationData, isLoading: isOrganizationsLoading } =
+    useQuery(["organization"], () => getOrganizations(), {
+      enabled: isOpen,
     });
 
-  const {
-    data: organizationData,
-    isLoading: isOrganizationsLoading
-  } = useQuery(["organization"], () => getOrganizations(), {
-    enabled: isOpen
-  });
+  const { data: departmentData, isLoading: isDepartmentsLoading } = useQuery(
+    ["department"],
+    () => getDepartments(),
+    {
+      enabled: isOpen,
+    }
+  );
 
-  const {
-    data: departmentData,
-    isLoading: isDepartmentsLoading
-  } = useQuery(["department"], () => getDepartments(), {
-    enabled: isOpen
-  });
+  const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery(
+    ["job_title"],
+    () => getJobTitles(),
+    {
+      enabled: isOpen,
+    }
+  );
 
-
-  const {
-    data: jobTitleData,
-    isLoading: isJobTitlesLoading
-  } = useQuery(["job_title"], () => getJobTitles(), {
-    enabled: isOpen
-  });
-
-  const isLoading = isOrganizationsLoading || isDepartmentsLoading || isJobTitlesLoading;
+  const isLoading =
+    isOrganizationsLoading || isDepartmentsLoading || isJobTitlesLoading;
 
   interface EditUserFormValues {
     id: string;
@@ -122,7 +133,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
       last_name: string;
       user: string;
       job_title: string;
-      address_line_1: string
+      address_line_1: string;
       address_line_2?: string;
       city: string;
       state: string;
@@ -134,16 +145,27 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
   }
 
   const InnerEditUserForm = (props: FormikProps<EditUserFormValues>) => {
-    const { touched, errors, handleSubmit, handleBlur, handleChange, isSubmitting, values, setFieldValue } = props;
+    const {
+      touched,
+      errors,
+      handleSubmit,
+      handleBlur,
+      handleChange,
+      isSubmitting,
+      values,
+      setFieldValue,
+    } = props;
 
     const renderErrorMessages = (): JSX.Element | null => {
       if (errorMessages.length > 0) {
         return (
           <div className="flex flex-col space-y-2 text-center">
             {errorMessages.map((message: any, index: any) => {
-              return <p key={index} className={cn(
-                "text-sm text-rose-700"
-              )}>{message}</p>;
+              return (
+                <p key={index} className={cn("text-sm text-rose-700")}>
+                  {message}
+                </p>
+              );
             })}
           </div>
         );
@@ -168,24 +190,34 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                   <div className="flex flex-col sm:flex-row">
                     <div className="flex-1">
                       <Label htmlFor="organization">Organization</Label>
-                      <Select value={values.organization} onValueChange={
-                        (value) => setFieldValue("organization", value)
-                      }>
+                      <Select
+                        value={values.organization}
+                        onValueChange={(value) =>
+                          setFieldValue("organization", value)
+                        }
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select an organization" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
                             <SelectLabel>Organizations</SelectLabel>
-                            {organizationData && organizationData.map((organization: Organization) => (
-                              <SelectItem value={organization.id}>{organization.name}</SelectItem>
-                            ))}
+                            {organizationData &&
+                              organizationData.map(
+                                (organization: Organization) => (
+                                  <SelectItem value={organization.id}>
+                                    {organization.name}
+                                  </SelectItem>
+                                )
+                              )}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
-                      {errors.organization && touched.organization &&
-                        <p className={cn("text-sm text-rose-700")}>{errors.organization}</p>}
-
+                      {errors.organization && touched.organization && (
+                        <p className={cn("text-sm text-rose-700")}>
+                          {errors.organization}
+                        </p>
+                      )}
                     </div>
                     <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
                       <Label htmlFor="email">Username</Label>
@@ -202,20 +234,24 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                   <div className="flex flex-col sm:flex-row mt-2">
                     <div className="flex-1">
                       <Label htmlFor="department_id">Department</Label>
-                      <Select defaultValue={values.department} onValueChange={
-                        (value) => {
+                      <Select
+                        defaultValue={values.department}
+                        onValueChange={(value) => {
                           setFieldValue("department", value);
-                        }
-                      }>
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select an department" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
                             <SelectLabel>Departments</SelectLabel>
-                            {departmentData && departmentData.map((department: Department) => (
-                              <SelectItem value={department.id}>{department.name}</SelectItem>
-                            ))}
+                            {departmentData &&
+                              departmentData.map((department: Department) => (
+                                <SelectItem value={department.id}>
+                                  {department.name}
+                                </SelectItem>
+                              ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -238,7 +274,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         <div className="space-y-1 mr-5">
                           <Label htmlFor="is_active">Is Active</Label>
                           <div className="text-sm font-semibold text-gray-500">
-                            Whether this user should be treated as active. Unselect this instead of deleting accounts.
+                            Whether this user should be treated as active.
+                            Unselect this instead of deleting accounts.
                           </div>
                         </div>
                         <label className="flex items-center cursor-pointer">
@@ -252,8 +289,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                               const fakeEvent = {
                                 target: {
                                   name: "is_active",
-                                  value: checked
-                                }
+                                  value: checked,
+                                },
                               };
                               // Call Formik's handleChange
                               handleChange(fakeEvent);
@@ -261,8 +298,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                             }}
                           />
                           <span className="ml-2 text-sm font-medium text-gray-500">
-                          Yes
-                      </span>
+                            Yes
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -273,7 +310,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         <div className="space-y-1 mr-5">
                           <Label htmlFor="is_superuser">Is Superuser</Label>
                           <div className="text-sm font-semibold text-gray-500">
-                            Designates that this user has all permissions without explicitly assigning them.
+                            Designates that this user has all permissions
+                            without explicitly assigning them.
                           </div>
                         </div>
                         <label className="flex items-center cursor-pointer">
@@ -285,8 +323,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                             onChange={handleChange}
                           />
                           <span className="ml-2 text-sm font-medium text-gray-500">
-                          Yes
-                      </span>
+                            Yes
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -297,7 +335,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         <div className="space-y-1 mr-5">
                           <Label htmlFor="">Is Staff</Label>
                           <div className="text-sm font-semibold text-gray-500">
-                            Designates whether the user can log into this admin site.
+                            Designates whether the user can log into this admin
+                            site.
                           </div>
                         </div>
                         <label className="flex items-center cursor-pointer">
@@ -309,8 +348,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                             onChange={handleChange}
                           />
                           <span className="ml-2 text-sm font-medium text-gray-500">
-                          Yes
-                      </span>
+                            Yes
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -361,7 +400,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         placeholder="Address Line 2"
                         value={values.profile?.address_line_2}
                         onBlur={handleBlur}
-                        onChange={handleChange} />
+                        onChange={handleChange}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row mt-2">
@@ -373,7 +413,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         placeholder="City"
                         value={values.profile?.city}
                         onBlur={handleBlur}
-                        onChange={handleChange} />
+                        onChange={handleChange}
+                      />
                     </div>
                     <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
                       <Label htmlFor="state">State</Label>
@@ -383,7 +424,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         placeholder="state"
                         value={values.profile?.state}
                         onBlur={handleBlur}
-                        onChange={handleChange} />
+                        onChange={handleChange}
+                      />
                     </div>
                     <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
                       <Label htmlFor="zip_code">Zip/Postal Code</Label>
@@ -398,20 +440,24 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                   <div className="flex flex-col sm:flex-row mt-2">
                     <div className="flex-1">
                       <Label htmlFor="city">Job Title</Label>
-                      <Select defaultValue={values.profile?.job_title} onValueChange={
-                        (value) => {
+                      <Select
+                        defaultValue={values.profile?.job_title}
+                        onValueChange={(value) => {
                           setFieldValue("profile.job_title", value);
-                        }
-                      }>
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select an job title" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
                             <SelectLabel>Job Titles</SelectLabel>
-                            {jobTitleData && jobTitleData.map((jobTitle: any) => (
-                              <SelectItem value={jobTitle.id}>{jobTitle.name}</SelectItem>
-                            ))}
+                            {jobTitleData &&
+                              jobTitleData.map((jobTitle: any) => (
+                                <SelectItem value={jobTitle.id}>
+                                  {jobTitle.name}
+                                </SelectItem>
+                              ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -424,14 +470,17 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                         placeholder="Phone Number"
                         value={values.profile?.phone_number}
                         onBlur={handleBlur}
-                        onChange={handleChange} />
+                        onChange={handleChange}
+                      />
                     </div>
                   </div>
                   <div className="flex-1 mt-2">
                     <div className="items-top flex space-x-2">
                       <div className="flex justify-between items-center">
                         <div className="space-y-1 mr-5">
-                          <Label htmlFor="is_phone_verified">Is Phone Verified</Label>
+                          <Label htmlFor="is_phone_verified">
+                            Is Phone Verified
+                          </Label>
                           <div className="text-sm font-semibold text-gray-500">
                             Whether this user has verified their phone number.
                           </div>
@@ -441,15 +490,16 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
                             id="is_phone_verified"
                             name="is_phone_verified"
                             defaultChecked={values.profile?.is_phone_verified}
-                            onCheckedChange={
-                              (checked) => {
-                                setFieldValue("profile.is_phone_verified", checked);
-                              }
-                            }
+                            onCheckedChange={(checked) => {
+                              setFieldValue(
+                                "profile.is_phone_verified",
+                                checked
+                              );
+                            }}
                           />
                           <span className="ml-2 text-sm font-medium text-gray-500">
-                          Yes
-                      </span>
+                            Yes
+                          </span>
                         </label>
                       </div>
                     </div>
@@ -465,7 +515,11 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
               type="submit"
               className={cn(
                 "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input h-10 py-2 px-4 mt-2",
-                buttonStatus === "error" ? "bg-red-500 text-white" : buttonStatus === "success" ? "bg-green-500 text-white" : "hover:bg-accent hover:text-accent-foreground"
+                buttonStatus === "error"
+                  ? "bg-red-500 text-white"
+                  : buttonStatus === "success"
+                  ? "bg-green-500 text-white"
+                  : "hover:bg-accent hover:text-accent-foreground"
               )}
             >
               {buttonStatus === "processing" ? (
@@ -483,7 +537,6 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
             </Button>
           </DialogFooter>
         </form>
-
       </>
     );
   };
@@ -511,8 +564,8 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
         state: user.profile?.state,
         zip_code: user.profile?.zip_code,
         phone_number: user.profile?.phone_number,
-        is_phone_verified: user.profile?.is_phone_verified
-      }
+        is_phone_verified: user.profile?.is_phone_verified,
+      },
     }),
     handleSubmit: async (values, { setSubmitting }) => {
       setButtonStatus("processing");
@@ -522,7 +575,7 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
         setButtonStatus("error");
       }
       setSubmitting(false);
-    }
+    },
   })(InnerEditUserForm);
 
   const resetFormAndButton = () => {
@@ -531,16 +584,20 @@ export const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, isOpen, on
   };
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={() => {
-        onClose();
-        resetFormAndButton();
-      }}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={() => {
+          onClose();
+          resetFormAndButton();
+        }}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{user.username}</DialogTitle>
             <DialogDescription>
-              You are currently editing the profile
-              of {user.profile?.first_name ?? "-"} {user.profile?.last_name ?? "-"} ({user.username}).
+              You are currently editing the profile of{" "}
+              {user.profile?.first_name ?? "-"} {user.profile?.last_name ?? "-"}{" "}
+              ({user.username}).
             </DialogDescription>
           </DialogHeader>
           <UserEditDialogForm />

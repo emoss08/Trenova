@@ -39,3 +39,8 @@ export async function getJobTitles(): Promise<any> {
   const response = await axios.get("/job_titles/");
   return response.data.results;
 }
+
+export async function getJobTitleDetails(id: string): Promise<any> {
+  const response = await axios.get(`/job_titles/${id}/`);
+  return response.data;
+}

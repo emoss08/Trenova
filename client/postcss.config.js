@@ -20,4 +20,4 @@ export default {
     tailwindcss: {},
     autoprefixer: {},
   },
-}
+};
