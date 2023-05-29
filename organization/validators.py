@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import string
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-import string
 
 
 def validate_org_timezone(value: str) -> None:

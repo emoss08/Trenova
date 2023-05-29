@@ -15,9 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 from django.db.models import Prefetch, QuerySet
+from rest_framework import viewsets
 
 from equipment import models, serializers
-from rest_framework import viewsets
 
 
 class EquipmentTypeViewSet(viewsets.ModelViewSet):

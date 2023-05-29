@@ -20,25 +20,13 @@ from typing import Any
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
 from django.utils import timezone
-from rest_framework import (
-    generics,
-    permissions,
-    response,
-    status,
-    views,
-    viewsets,
-    exceptions,
-)
+from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
 
 from accounts import models, serializers
 from accounts.permissions import ViewAllUsersPermission
 from utils.exceptions import InvalidTokenException
-from django.http import HttpResponse
-import json
-
-from utils.permissions import MontaModelPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):

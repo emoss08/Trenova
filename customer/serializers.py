@@ -17,7 +17,6 @@
 
 from typing import Any
 
-
 from customer import models
 from utils.serializers import GenericSerializer
 
