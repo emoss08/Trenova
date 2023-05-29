@@ -166,6 +166,7 @@ class Organization(TimeStampedModel):
         _("Login Background Image"),
         upload_to="organizations/login_background_image/",
         null=True,
+        blank=True,
     )
 
     class Meta:
@@ -186,8 +187,7 @@ class Organization(TimeStampedModel):
         return textwrap.wrap(self.name, 50)[0]
 
     def save(self, **kwargs: Any) -> None:
-        """
-        Organization save method.  Ensures that the scac_code is always uppercase.
+        """Organization save method.
 
         Args:
             **kwargs (Any): Keyword arguments
@@ -197,6 +197,7 @@ class Organization(TimeStampedModel):
         """
 
         self.scac_code = self.scac_code.upper()
+        self.name = self.name.title()
         super().save(**kwargs)
 
     @cached_property
