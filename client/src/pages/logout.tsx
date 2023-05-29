@@ -18,15 +18,15 @@
 import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import axios from "@/lib/axiosConfig";
 import { USER_INFO_KEY } from "@/lib/utils";
+import { Card, Flex, Text } from "@mantine/core";
 
 const Logout: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useAuthStore(
-    (state) => [state.isAuthenticated, state.setIsAuthenticated]
-  );
+  const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
+    state.isAuthenticated,
+    state.setIsAuthenticated,
+  ]);
   const navigate = useNavigate();
 
   useEffect((): void => {
@@ -49,22 +49,24 @@ const Logout: React.FC = () => {
 
   return (
     <>
-      <div className="fixed top-0 left-0 w-full h-full flex items-center justify-center">
-        <Card>
-          <CardHeader>
-            <CardTitle>Logging out...</CardTitle>
-            <CardDescription>
-              Logging out of Monta. Please wait...
-            </CardDescription>
-            <Separator />
-          </CardHeader>
-          <CardContent>
-            <p>If the operation exceeds a duration of 10 seconds, kindly verify the status of your internet
-              connectivity. <br />
-              In case of persistent difficulty, please get in touch with your designated system administrator.</p>
-          </CardContent>
+      <Flex
+        direction={{ base: "column", sm: "row" }}
+        justify={{ sm: "center" }}
+        align={{ sm: "center" }}
+        style={{ height: "90vh" }}
+      >
+        <Card padding="xl" withBorder>
+          <Text weight={500} size="lg">
+            Logging out... Please wait.
+          </Text>
+          <Text mt="xs" color="dimmed" size="sm">
+            If the operation exceeds a duration of 10 seconds, kindly verify the
+            status of your internet connectivity. <br />
+            In case of persistent difficulty, please get in touch with your
+            designated system administrator.
+          </Text>
         </Card>
-      </div>
+      </Flex>
     </>
   );
 };

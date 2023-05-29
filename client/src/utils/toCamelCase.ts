@@ -24,7 +24,7 @@ export function toCamelCase(obj: any): any {
         key.replace(/([-_][a-z])/g, (group) =>
           group.toUpperCase().replace("-", "").replace("_", "")
         ),
-        toCamelCase(value)
+        toCamelCase(value),
       ])
     );
   }

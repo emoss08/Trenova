@@ -21,7 +21,7 @@ import { getUserAuthToken, USER_INFO_KEY } from "@/lib/utils";
 const API_URL = import.meta.env.VITE_API_URL as string;
 
 axios.interceptors.request.use(
-  req => {
+  (req) => {
     req.baseURL = API_URL;
     const token = getUserAuthToken();
     if (token) {

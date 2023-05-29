@@ -27,7 +27,7 @@ export type Organization = {
   zip_code?: string;
   phone_number?: string;
   website?: string;
-  org_type: string
+  org_type: string;
   timezone: string;
   language: string;
   currency: string;
@@ -35,7 +35,7 @@ export type Organization = {
   time_format: string;
   logo: string;
   token_expiration_days: number;
-}
+};
 
 export type Department = {
   id: string;
@@ -43,4 +43,4 @@ export type Department = {
   organization: string;
   description: string;
   depot: string;
-}
+};

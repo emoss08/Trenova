@@ -27,21 +27,23 @@ const ProtectedRoutes: React.FC = () => {
   return (
     <Routes>
       {routes.map((route: RouteObject, i: number) => {
-        const isPublicRoute = route.path === "/login" || route.path === "/logout";
+        const isPublicRoute =
+          route.path === "/login" || route.path === "/logout";
 
-        const element = isPublicRoute || isAuthenticated
-          ? route.element
-          : <Navigate to="/login" replace />;
+        const element =
+          isPublicRoute || isAuthenticated ? (
+            route.element
+          ) : (
+            <Navigate to="/login" replace />
+          );
 
-        const wrappedElement = isPublicRoute
-          ? element
-          : <Layout>
-            {element}
-          </Layout>;
-
-        return (
-          <Route key={i} path={route.path} element={wrappedElement} />
+        const wrappedElement = isPublicRoute ? (
+          element
+        ) : (
+          <Layout>{element}</Layout>
         );
+
+        return <Route key={i} path={route.path} element={wrappedElement} />;
       })}
     </Routes>
   );

@@ -21,9 +21,9 @@ import { User } from "@/types/user";
 type UserState = {
   user: User;
   setUser: (user: User) => void;
-}
+};
 
 export const useUserStore = create<UserState>((set) => ({
   user: {} as User,
-  setUser: (user: User) => set({ user })
+  setUser: (user: User) => set({ user }),
 }));

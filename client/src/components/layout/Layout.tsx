@@ -16,18 +16,33 @@
  */
 
 import React from "react";
+import { AppShell, Container, useMantineTheme } from "@mantine/core";
+import { HeaderMegaMenu } from "@/components/layout/Header";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const theme = useMantineTheme();
+
   return (
     <>
-      <div className="container mx-auto">
-        {children}
-      </div>
+      <AppShell
+        styles={{
+          main: {
+            background:
+              theme.colorScheme === "dark"
+                ? theme.colors.dark[8]
+                : theme.colors.gray[0],
+          },
+        }}
+        header={<HeaderMegaMenu />}
+      >
+        <Container size="lg" style={{ paddingTop: 10 }}>
+          {children}
+        </Container>
+      </AppShell>
     </>
   );
 };

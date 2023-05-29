@@ -19,36 +19,41 @@ import { RouteObject } from "react-router-dom";
 import { lazy } from "react";
 
 const HomePage = lazy(() => import("../pages"));
-const LoginPage = lazy(() => import("../pages/login"));
+const LoginPage = lazy(() => import("../pages/LoginPage"));
 const ErrorPage = lazy(() => import("../pages/error-page"));
 const LogoutPage = lazy(() => import("../pages/logout"));
 const OrderPage = lazy(() => import("../pages/order-planning"));
 const UserManagementPage = lazy(() => import("../pages/user-management"));
+const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 export const routes: RouteObject[] = [
   {
     path: "/",
-    element: <HomePage />
+    element: <HomePage />,
   },
   {
     path: "/login",
-    element: <LoginPage />
+    element: <LoginPage />,
   },
   {
     path: "/logout",
-    element: <LogoutPage />
+    element: <LogoutPage />,
   },
   // User Management
   {
     path: "admin/users",
-    element: <UserManagementPage />
+    element: <UserManagementPage />,
+  },
+  {
+    path: "account/settings/:userId",
+    element: <UserSettingsPage />,
   },
   // Order Management
   {
     path: "/order/:orderId",
-    element: <OrderPage />
+    element: <OrderPage />,
   },
   {
     path: "*",
-    element: <ErrorPage />
-  }
+    element: <ErrorPage />,
+  },
 ];

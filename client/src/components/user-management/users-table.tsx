@@ -15,12 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   flexRender,
   getCoreRowModel,
   PaginationState,
-  useReactTable
+  useReactTable,
 } from "@tanstack/react-table";
 import { DataTablePagination } from "@/components/ui/pagination";
 import React from "react";
@@ -47,10 +54,11 @@ export function UserDataTable({}) {
     { keepPreviousData: true }
   );
 
-  const [{ pageIndex, pageSize }, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10
-  });
+  const [{ pageIndex, pageSize }, setPagination] =
+    React.useState<PaginationState>({
+      pageIndex: 0,
+      pageSize: 10,
+    });
 
   const handlePageIndexChange = (pageIndex: number) => {
     setPage(pageIndex);
@@ -70,7 +78,7 @@ export function UserDataTable({}) {
   const pagination = React.useMemo(
     () => ({
       pageIndex,
-      pageSize
+      pageSize,
     }),
     [pageIndex, pageSize]
   );
@@ -80,11 +88,11 @@ export function UserDataTable({}) {
     columns: usersColumn,
     pageCount: dataQuery.data?.count ?? 0,
     state: {
-      pagination
+      pagination,
     },
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    manualPagination: true
+    manualPagination: true,
   });
   return (
     <>
@@ -99,9 +107,9 @@ export function UserDataTable({}) {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   );
                 })}
@@ -117,14 +125,20 @@ export function UserDataTable({}) {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={usersColumn.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={usersColumn.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>

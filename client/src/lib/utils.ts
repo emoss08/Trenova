@@ -31,3 +31,11 @@ export const getUserAuthToken = (): string | null => {
   }
   return null;
 };
+
+export const getUserId = (): string | null => {
+  const userData = localStorage.getItem(USER_INFO_KEY);
+  if (userData) {
+    return JSON.parse(userData).user_id;
+  }
+  return null;
+};

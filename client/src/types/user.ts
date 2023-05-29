@@ -22,7 +22,7 @@ export type UserProfile = {
   last_name: string;
   user: string;
   job_title: string;
-  address_line_1: string
+  address_line_1: string;
   address_line_2?: string;
   city: string;
   state: string;
@@ -30,7 +30,7 @@ export type UserProfile = {
   phone_number?: string;
   profile_picture: string;
   is_phone_verified: boolean;
-}
+};
 
 export type User = {
   id: string;
@@ -47,4 +47,12 @@ export type User = {
   online: boolean;
   last_login: string;
   profile?: UserProfile; // Set as optional due to Walle not having a profile
-}
+};
+
+export type JobTitle = {
+  id: string;
+  name: string;
+  description: string;
+  is_active: boolean;
+  organization: string;
+};

@@ -14,29 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 @tailwind base;
-@tailwind components;
 @tailwind utilities;
-
-.LoadingScreenCard {
-  background-color: #3b82f6;
-  border-radius: 16px;
-  padding: 48px;
-  margin: 32px auto auto;
-  max-width: 768px;
-}
-
-.LoadingScreenCard h1 {
-  color: #fff;
-  font-style: italic;
-  font-weight: 700;
-  padding-bottom: 12px;
-}
-
-.LoadingScreenCard p {
-  color: #bfdbfe;
-  font-style: italic;
-  padding-bottom: 15px;
-  font-weight: 700;
-  line-height: 1.0;
-}
+@tailwind components;

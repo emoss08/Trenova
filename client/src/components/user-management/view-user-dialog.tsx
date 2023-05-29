@@ -22,10 +22,14 @@ import {
   DialogContent,
   DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
-import { getUserDepartment, getUserJobTitle, getUserOrganization } from "@/requests/UserRequestFactory";
+import {
+  getUserDepartment,
+  getUserJobTitle,
+  getUserOrganization,
+} from "@/requests/UserRequestFactory";
 import { useQuery } from "react-query";
 import { formatDate } from "@/utils/date";
 import { Separator } from "@/components/ui/separator";
@@ -36,29 +40,37 @@ interface ViewUserDialogProps {
   onClose: () => void;
 }
 
-export const ViewUserDialog: React.FC<ViewUserDialogProps> = ({ user, isOpen, onClose }) => {
-  const {
-    data: jobTitleData,
-    isLoading: isJobTitleLoading
-  } = useQuery(["jobTitle", user.profile?.job_title], () => getUserJobTitle(user), {
-    enabled: isOpen && !!user.profile?.job_title
-  });
+export const ViewUserDialog: React.FC<ViewUserDialogProps> = ({
+  user,
+  isOpen,
+  onClose,
+}) => {
+  const { data: jobTitleData, isLoading: isJobTitleLoading } = useQuery(
+    ["jobTitle", user.profile?.job_title],
+    () => getUserJobTitle(user),
+    {
+      enabled: isOpen && !!user.profile?.job_title,
+    }
+  );
 
-  const {
-    data: organizationData,
-    isLoading: isOrganizationLoading
-  } = useQuery(["organization", user.profile?.organization], () => getUserOrganization(user), {
-    enabled: isOpen
-  });
+  const { data: organizationData, isLoading: isOrganizationLoading } = useQuery(
+    ["organization", user.profile?.organization],
+    () => getUserOrganization(user),
+    {
+      enabled: isOpen,
+    }
+  );
 
-  const {
-    data: departmentData,
-    isLoading: isDepartmentLoading
-  } = useQuery(["department", user?.department], () => getUserDepartment(user), {
-    enabled: isOpen && !!user?.department
-  });
+  const { data: departmentData, isLoading: isDepartmentLoading } = useQuery(
+    ["department", user?.department],
+    () => getUserDepartment(user),
+    {
+      enabled: isOpen && !!user?.department,
+    }
+  );
 
-  const isLoading = isJobTitleLoading || isOrganizationLoading || isDepartmentLoading;
+  const isLoading =
+    isJobTitleLoading || isOrganizationLoading || isDepartmentLoading;
   const jobTitle = jobTitleData?.name ?? "-";
   const organization = organizationData?.name ?? "-";
   const department = departmentData?.name ?? "-";
@@ -67,10 +79,13 @@ export const ViewUserDialog: React.FC<ViewUserDialogProps> = ({ user, isOpen, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{user.profile?.first_name ?? "-"} {user.profile?.last_name ?? "-"}</DialogTitle>
+          <DialogTitle>
+            {user.profile?.first_name ?? "-"} {user.profile?.last_name ?? "-"}
+          </DialogTitle>
           <DialogDescription>
-            You are currently viewing the profile
-            of {user.profile?.first_name ?? "-"} {user.profile?.last_name ?? "-"} ({user.username}).
+            You are currently viewing the profile of{" "}
+            {user.profile?.first_name ?? "-"} {user.profile?.last_name ?? "-"} (
+            {user.username}).
           </DialogDescription>
         </DialogHeader>
         {isLoading ? (
@@ -83,41 +98,64 @@ export const ViewUserDialog: React.FC<ViewUserDialogProps> = ({ user, isOpen, on
           <div className="mt-4">
             <div className="flex flex-col sm:flex-row">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500">Username</div>
-                <div className="mt-1 text-sm text-gray-900">{user.username}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Username
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.username}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
                 <div className="text-sm font-medium text-gray-500">Email</div>
                 <div className="mt-1 text-sm text-gray-900">{user.email}</div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Organization</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Organization
+                </div>
                 <div className="mt-1 text-sm text-gray-900">{organization}</div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row mt-4">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500">Department</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Department
+                </div>
                 <div className="mt-1 text-sm text-gray-900">{department}</div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Super User?</div>
-                <div className="mt-1 text-sm text-gray-900">{user.is_superuser ? "Yes" : "No"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Super User?
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.is_superuser ? "Yes" : "No"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Staff Member?</div>
-                <div className="mt-1 text-sm text-gray-900">{user.is_staff ? "Yes" : "No"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Staff Member?
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.is_staff ? "Yes" : "No"}
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row mt-4">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500">Is Active?</div>
-                <div className="mt-1 text-sm text-gray-900">{user.is_active ? "Yes" : "No"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Is Active?
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.is_active ? "Yes" : "No"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Last Login Date</div>
-                <div
-                  className="mt-1 text-sm text-gray-900">{user.last_login ? formatDate(user.last_login) : "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Last Login Date
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.last_login ? formatDate(user.last_login) : "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4"></div>
             </div>
@@ -125,53 +163,83 @@ export const ViewUserDialog: React.FC<ViewUserDialogProps> = ({ user, isOpen, on
             <Separator />
             <div className="flex flex-col sm:flex-row mt-4">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500">First Name</div>
-                <div className="mt-1 text-sm text-gray-900">{user.profile?.first_name ?? "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  First Name
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.first_name ?? "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Last Name</div>
-                <div className="mt-1 text-sm text-gray-900">{user.profile?.last_name ?? "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Last Name
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.last_name ?? "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Job Title</div>
-                <div
-                  className="mt-1 text-sm text-gray-900">{jobTitle}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Job Title
+                </div>
+                <div className="mt-1 text-sm text-gray-900">{jobTitle}</div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row mt-4">
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-500">Address Line 1</div>
-                <div className="mt-1 text-sm text-gray-900">{user.profile?.address_line_1 ?? "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Address Line 1
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.address_line_1 ?? "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Address Line 2</div>
-                <div className="mt-1 text-sm text-gray-900">{user.profile?.address_line_2 ?? "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Address Line 2
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.address_line_2 ?? "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
                 <div className="text-sm font-medium text-gray-500">City</div>
-                <div
-                  className="mt-1 text-sm text-gray-900">{user.profile?.city ?? "-"}</div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.city ?? "-"}
+                </div>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row mt-4">
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-500">State</div>
-                <div className="mt-1 text-sm text-gray-900">{user.profile?.state ?? "-"}</div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.state ?? "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Zip Code</div>
-                <div className="mt-1 text-sm text-gray-900">{user.profile?.zip_code ?? "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Zip Code
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.zip_code ?? "-"}
+                </div>
               </div>
               <div className="flex-1 mt-4 sm:mt-0 sm:ml-4">
-                <div className="text-sm font-medium text-gray-500">Phone Number</div>
-                <div
-                  className="mt-1 text-sm text-gray-900">{user.profile?.phone_number ?? "-"}</div>
+                <div className="text-sm font-medium text-gray-500">
+                  Phone Number
+                </div>
+                <div className="mt-1 text-sm text-gray-900">
+                  {user.profile?.phone_number ?? "-"}
+                </div>
               </div>
             </div>
             <div className="mt-4">
-              <div className="text-sm font-medium text-gray-500">Phone Number Verified?</div>
-              <div
-                className="mt-1 text-sm text-gray-900">{user.profile?.is_phone_verified ? "Yes" : "No"}</div>
+              <div className="text-sm font-medium text-gray-500">
+                Phone Number Verified?
+              </div>
+              <div className="mt-1 text-sm text-gray-900">
+                {user.profile?.is_phone_verified ? "Yes" : "No"}
+              </div>
             </div>
           </div>
         )}

@@ -19,14 +19,22 @@ import { ColumnDef } from "@tanstack/react-table";
 import { User } from "@/types/user";
 import Badge from "./badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Menu, User as UserIcon, UserCog, UserMinus } from "lucide-react";
 import {
   DropdownMenu,
-  DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuShortcut,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDateToHumanReadable } from "@/utils/date";
@@ -41,7 +49,9 @@ export const usersColumn: ColumnDef<User>[] = [
       const user = row.original as User;
       const firstName = user.profile?.first_name ?? "-";
       const lastName = user.profile?.last_name ?? "-";
-      const usernameInitial = user.username ? user.username.charAt(0).toUpperCase() : "";
+      const usernameInitial = user.username
+        ? user.username.charAt(0).toUpperCase()
+        : "";
       return (
         <div className="flex items-center">
           <div>
@@ -56,7 +66,7 @@ export const usersColumn: ColumnDef<User>[] = [
           </div>
         </div>
       );
-    }
+    },
   },
   {
     id: "is_active",
@@ -64,11 +74,11 @@ export const usersColumn: ColumnDef<User>[] = [
     cell: ({ row }) => {
       const user = row.original as User;
       return <Badge active={user.is_active} />;
-    }
+    },
   },
   {
     accessorKey: "email",
-    header: "Email"
+    header: "Email",
   },
   {
     id: "date_joined",
@@ -79,13 +89,9 @@ export const usersColumn: ColumnDef<User>[] = [
 
       if (dateJoined) {
         const formattedDate = formatDate(dateJoined);
-        return (
-          <p className="text-sm text-muted-foreground">
-            {formattedDate}
-          </p>
-        );
+        return <p className="text-sm text-muted-foreground">{formattedDate}</p>;
       }
-    }
+    },
   },
   {
     id: "last_login",
@@ -113,15 +119,17 @@ export const usersColumn: ColumnDef<User>[] = [
       } else {
         return <p className="text-sm text-muted-foreground">-</p>;
       }
-    }
+    },
   },
   {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
       const user = row.original as User;
-      const [isViewUserDialogOpen, setIsViewUserDialogOpen] = React.useState(false);
-      const [isEditUserDialogOpen, setIsEditUserDialogOpen] = React.useState(false);
+      const [isViewUserDialogOpen, setIsViewUserDialogOpen] =
+        React.useState(false);
+      const [isEditUserDialogOpen, setIsEditUserDialogOpen] =
+        React.useState(false);
       return (
         <>
           <DropdownMenu>
@@ -144,7 +152,9 @@ export const usersColumn: ColumnDef<User>[] = [
                   <span>Edit User</span>
                   <DropdownMenuShortcut>⇧⌘B</DropdownMenuShortcut>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log(`deleting user ${user.username}`)}>
+                <DropdownMenuItem
+                  onClick={() => console.log(`deleting user ${user.username}`)}
+                >
                   <UserMinus className="h-4 w-4 mr-2" />
                   <span>Delete User</span>
                   <DropdownMenuShortcut>⇧⌘X</DropdownMenuShortcut>
@@ -164,6 +174,6 @@ export const usersColumn: ColumnDef<User>[] = [
           />
         </>
       );
-    }
-  }
+    },
+  },
 ];

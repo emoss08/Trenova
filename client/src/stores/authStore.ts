@@ -32,5 +32,5 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: true,
   setLoading: (loading: boolean) => set({ loading }),
   initialLoading: true,
-  setInitialLoading: (initialLoading: boolean) => set({ initialLoading })
+  setInitialLoading: (initialLoading: boolean) => set({ initialLoading }),
 }));
