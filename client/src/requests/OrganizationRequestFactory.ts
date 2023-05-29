@@ -28,6 +28,16 @@ export async function getOrganizations(): Promise<any> {
 
 /**
  * Return the organization with the given id
+ * @param id
+ * @returns {Promise<any>}
+ */
+export async function getOrganizationDetails(id: string): Promise<any> {
+  const response = await axios.get(`/organizations/${id}/`);
+  return response.data;
+}
+
+/**
+ * Return all departments
  * @returns {Promise<any>}
  */
 export async function getDepartments(): Promise<any> {
@@ -35,11 +45,20 @@ export async function getDepartments(): Promise<any> {
   return response.data.results;
 }
 
+/**
+ * Return all job titles
+ * @returns {Promise<any>}
+ */
 export async function getJobTitles(): Promise<any> {
   const response = await axios.get("/job_titles/");
   return response.data.results;
 }
 
+/**
+ * Return a job title with the given id
+ * @param id
+ * @returns {Promise<any>}
+ */
 export async function getJobTitleDetails(id: string): Promise<any> {
   const response = await axios.get(`/job_titles/${id}/`);
   return response.data;

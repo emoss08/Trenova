@@ -28,7 +28,6 @@ import {
   Group,
   Header,
   HoverCard,
-  Indicator,
   rem,
   ScrollArea,
   SimpleGrid,
@@ -36,11 +35,12 @@ import {
   Text,
   ThemeIcon,
   UnstyledButton,
+  Image,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React from "react";
 import HeaderUserMenu from "@/components/layout/HeaderUserMenu";
-import { getUserId } from "@/lib/utils";
+import { getUserId, getUserOrganizationId } from "@/lib/utils";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import { useQuery } from "react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -54,6 +54,7 @@ import {
 } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
 import ActionButton from "../ActionButton";
+import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
 
 const useStyles = createStyles((theme) => ({
   link: {
@@ -150,7 +151,14 @@ export function HeaderMegaMenu() {
     ["user", userId],
     () => getUserDetails(userId)
   );
-  const isLoading = isUserDataLoading;
+
+  const organizationId = getUserOrganizationId() || "";
+  const { data: organizationData, isLoading: isOrganizationDataLoading } =
+    useQuery(["organization", userId], () =>
+      getOrganizationDetails(organizationId)
+    );
+
+  const isLoading = isUserDataLoading || isOrganizationDataLoading;
 
   const customerServiceLinks = navigationLinks.map((item) => (
     <UnstyledButton className={classes.subLink} key={item.title}>
@@ -174,9 +182,26 @@ export function HeaderMegaMenu() {
     <>
       <Header height={60} px="md">
         <Group position="apart" sx={{ height: "100%" }}>
-          <Text size="lg" weight={500}>
-            Monta
-          </Text>
+          {isLoading ? (
+            <Skeleton width={rem(150)} height={rem(40)} />
+          ) : organizationData.logo ? (
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <Image
+                radius="md"
+                width={rem(120)}
+                height={rem(40)}
+                maw={rem(150)}
+                src={organizationData.logo}
+                alt="Organization Logo"
+              />
+            </Link>
+          ) : (
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <Text size="lg" fw={600} color="white">
+                {organizationData.name}
+              </Text>
+            </Link>
+          )}
           <Group
             sx={{ height: "100%" }}
             spacing={0}
