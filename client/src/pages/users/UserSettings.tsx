@@ -16,11 +16,13 @@
  */
 
 import { getUserDetails } from "@/requests/UserRequestFactory";
-import React, { useEffect } from "react";
+import React from "react";
 import { useQuery } from "react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
 import UserProfileDetails from "@/components/users/UserProfileDetails";
+import EditUserProfileDetails from "@/components/users/EditUserProfileDetails";
+import { Skeleton, Stack } from "@mantine/core";
 
 const UserSettings: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -29,12 +31,6 @@ const UserSettings: React.FC = () => {
   if (!userId) {
     throw new Error("No user ID provided");
   }
-
-  useEffect(() => {
-    if (!userId) {
-      navigate("/error");
-    }
-  }, [userId, navigate]);
 
   const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery(
     ["userDetails", userId],
@@ -56,11 +52,20 @@ const UserSettings: React.FC = () => {
 
   return (
     <>
-      <UserProfileDetails
-        user={userDetails}
-        isLoading={isLoading}
-        jobTitle={jobTitleData}
-      />
+      {isLoading ? (
+        <Stack>
+          <Skeleton height={250} />
+          <Skeleton height={500} />
+          <Skeleton height={100} />
+        </Stack>
+      ) : (
+        <>
+          <Stack>
+            <UserProfileDetails user={userDetails} jobTitle={jobTitleData} />
+            <EditUserProfileDetails user={userDetails} />
+          </Stack>
+        </>
+      )}
     </>
   );
 };

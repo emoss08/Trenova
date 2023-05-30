@@ -38,14 +38,13 @@ import {
 type Props = {
   user: User;
   jobTitle: JobTitle;
-  isLoading: boolean;
 };
 
 const useStyles = createStyles(() => ({
   card: {
     width: "100%",
     maxWidth: "100%",
-    height: "250px",
+    height: "auto",
     "@media (max-width: 576px)": {
       height: "auto",
       maxHeight: "none",
@@ -63,76 +62,71 @@ const useStyles = createStyles(() => ({
   },
 }));
 
-const UserProfileDetails: React.FC<Props> = ({ user, isLoading, jobTitle }) => {
+const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
   const { classes } = useStyles();
 
   return (
     <>
-      {isLoading ? (
-        <Skeleton height={250} />
-      ) : (
-        <Flex>
-          <Card className={classes.card} withBorder>
-            <Container mx="xs" my="xs">
-              <SimpleGrid cols={2} className={classes.grid}>
-                <Avatar src={user.profile?.profile_picture} size={200} />
-                <Grid className={classes.grid}>
-                  <Grid.Col>
-                    <Flex direction="column" justify="start">
-                      <Text color="white" fz="35px" fw={650}>
-                        {user.profile?.first_name} {user.profile?.last_name}
-                      </Text>
-                      <Grid grow gutter={30} align="flex-start">
-                        <Grid.Col span={1}>
-                          <div
-                            style={{
-                              display: "flex",
-                            }}
-                          >
-                            <FontAwesomeIcon
-                              icon={faCircleUser}
-                              color="white"
-                              className={classes.icon}
-                            />
-                            <Text color="white">{jobTitle.name}</Text>
-                          </div>
-                        </Grid.Col>
-                        <Grid.Col span={6}>
-                          <div className={classes.div}>
-                            <FontAwesomeIcon
-                              icon={faMapPin}
-                              color="white"
-                              className={classes.icon}
-                            />
-                            <Text color="white">
-                              {user.profile?.address_line_1}{" "}
-                              {user.profile?.city} {user.profile?.state}{" "}
-                              {user.profile?.zip_code}
-                            </Text>
-                          </div>
-                        </Grid.Col>
-                        <Grid.Col span={1}>
-                          <div className={classes.div}>
-                            <FontAwesomeIcon
-                              icon={faEnvelope}
-                              color="white"
-                              className={classes.icon}
-                            />
-                            <Text color="white">{user.email}</Text>
-                          </div>
-                        </Grid.Col>
-                      </Grid>
-                      <Text mt={20}>
-                        TODO: Add Analytics based on job function
-                      </Text>
-                    </Flex>
-                  </Grid.Col>
-                </Grid>
-              </SimpleGrid>
-            </Container>
-          </Card>
-        </Flex>
-      )}
+      <Flex>
+        <Card className={classes.card} withBorder>
+          <Container mx="xs" my="xs">
+            <SimpleGrid cols={2} className={classes.grid}>
+              <Avatar src={user.profile?.profile_picture} size={200} />
+              <Grid className={classes.grid}>
+                <Grid.Col>
+                  <Flex direction="column" justify="start">
+                    <Text color="white" fz="35px" fw={650}>
+                      {user.profile?.first_name} {user.profile?.last_name}
+                    </Text>
+                    <Grid grow gutter={30} align="flex-start">
+                      <Grid.Col span={1}>
+                        <div
+                          style={{
+                            display: "flex",
+                          }}
+                        >
+                          <FontAwesomeIcon
+                            icon={faCircleUser}
+                            color="white"
+                            className={classes.icon}
+                          />
+                          <Text color="white">{jobTitle.name}</Text>
+                        </div>
+                      </Grid.Col>
+                      <Grid.Col span={6}>
+                        <div className={classes.div}>
+                          <FontAwesomeIcon
+                            icon={faMapPin}
+                            color="white"
+                            className={classes.icon}
+                          />
+                          <Text color="white">
+                            {user.profile?.address_line_1} {user.profile?.city}{" "}
+                            {user.profile?.state} {user.profile?.zip_code}
+                          </Text>
+                        </div>
+                      </Grid.Col>
+                      <Grid.Col span={1}>
+                        <div className={classes.div}>
+                          <FontAwesomeIcon
+                            icon={faEnvelope}
+                            color="white"
+                            className={classes.icon}
+                          />
+                          <Text color="white">{user.email}</Text>
+                        </div>
+                      </Grid.Col>
+                    </Grid>
+                    <Text mt={20}>
+                      TODO: Add Analytics based on job function
+                    </Text>
+                  </Flex>
+                </Grid.Col>
+              </Grid>
+            </SimpleGrid>
+          </Container>
+        </Card>
+      </Flex>
     </>
   );
 };
