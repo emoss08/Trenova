@@ -83,3 +83,19 @@ def get_active_triggers() -> Iterable[tuple] | None:
     with connection.cursor() as conn:
         conn.execute("SELECT * FROM information_schema.triggers")
         return conn.fetchall() if conn.rowcount > 0 else None
+
+
+def get_active_kafka_table_change_alerts() -> QuerySet[models.TableChangeAlert] | None:
+    """Get Active Table Change Alerts where source is Kafka.
+
+    Returns:
+
+    """
+    query: Q = Q(is_active=True) & Q(effective_date__lte=timezone.now()) | Q(
+        effective_date__isnull=True
+    ) & (Q(expiration_date__gte=timezone.now()) | Q(expiration_date__isnull=True)) & Q(
+        source="KAFKA"
+    )
+
+    active_alerts = models.TableChangeAlert.objects.filter(query)
+    return active_alerts if active_alerts.exists() else None
