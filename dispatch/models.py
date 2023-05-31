@@ -254,7 +254,7 @@ class DelayCode(GenericModel):
 
         verbose_name = _("Delay Code")
         verbose_name_plural = _("Delay Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
         db_table = "delay_code"
         constraints = [
             models.UniqueConstraint(
