@@ -30,8 +30,7 @@ environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
 
 
 class PSQLListener:
-    """
-    A class representing a PostgreSQL listener for table change alerts.
+    """A class representing a PostgreSQL listener for table change alerts.
 
     This class provides methods to connect to a PostgreSQL database and
     listen to notifications on specific channels. It sets up listeners for
@@ -40,21 +39,19 @@ class PSQLListener:
     Methods:
         connect() -> psycopg2.extensions.connection:
             Establishes a connection to a PostgreSQL database using psycopg2.
-
         listen() -> None:
             Sets up listeners for table change alerts and handles notifications.
     """
 
     @classmethod
     def ensure_trigger_exists(cls, conn: psycopg2.extensions.connection) -> None:
-        """
-        Ensures that a specific trigger exists on a given table.
+        """Ensures that a specific trigger exists on a given table.
 
         Args:
-            conn: A psycopg2.extensions.connection instance.
+            conn(connection): A psycopg2.extensions.connection instance.
 
         Returns:
-            None
+            None: This function does not return anything.
         """
         trigger_name = "table_change_alert_trigger"
         trigger_function_name = "notify_table_change"
@@ -110,8 +107,7 @@ class PSQLListener:
 
     @classmethod
     def connect(cls) -> psycopg2.extensions.connection:
-        """
-        Connect to a PostgreSQL database using psycopg2.
+        """Connect to a PostgreSQL database using psycopg2.
 
         This method reads database connection information from environment
         variables and returns a connection to the specified database.
@@ -131,8 +127,7 @@ class PSQLListener:
 
     @classmethod
     def listen(cls) -> None:
-        """
-        Set up listeners for table change alerts and handle notifications.
+        """Set up listeners for table change alerts and handle notifications.
 
         This method connects to the database, sets up listeners for table
         change alerts, and handles notifications by printing them. If a
@@ -142,7 +137,6 @@ class PSQLListener:
         Returns:
             None: This function does not return anything.
         """
-
         conn = cls.connect()
         cls.ensure_trigger_exists(conn)
         table_changes = get_active_table_alerts()
