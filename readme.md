@@ -16,8 +16,9 @@ enabling you to stay ahead of the competition.
 
 - Python 3.10+ or latest
 - PostgreSQL 12+ (no plans to support other databases)
-- Kafka 3.4.0+
+- Kafka 3.4.0+ (optional, required for some features)
 - Zookeeper 3.7.1+ (required for Kafka)
+- Debezium 2.3.0+ (required in conjunction with Kafka)
 - Redis 6.0+
 - Node.js (version 14+ or latest)
 - pnpm (Node.js package manager)
