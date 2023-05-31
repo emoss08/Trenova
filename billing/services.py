@@ -224,7 +224,7 @@ def bill_orders(
 
     # If invoices is a BillingQueue object, convert it to a list
     if isinstance(invoices, models.BillingQueue):
-        invoices = [invoices]
+        invoices = [invoices]  # type: ignore
 
     # Check the organization enforces customer billing_requirements
     organization_enforces_billing = utils.check_organization_enforces_customer_billing(

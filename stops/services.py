@@ -29,7 +29,9 @@ def is_late(*, obj: models.Stop) -> bool:
     return obj.arrival_time > obj.appointment_time_window_end + grace_period
 
 
-def control_choice_matches_stop(*, control_choice, obj: models.Stop) -> bool:
+def control_choice_matches_stop(
+    *, control_choice: DispatchControl.ServiceIncidentControlChoices, obj: models.Stop
+) -> bool:
     stop_type = obj.stop_type
     si_choices = DispatchControl.ServiceIncidentControlChoices
 
