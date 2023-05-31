@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import final, Any
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -27,8 +28,12 @@ from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
+from kafka.kafka_service import KafkaManager
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_org_timezone, validate_format_string
+
+kafka_manager = KafkaManager()
+AVAILABLE_TOPICS = kafka_manager.get_topics()
 
 
 class Organization(TimeStampedModel):
@@ -752,6 +757,15 @@ class TableChangeAlert(TimeStampedModel):
         UPDATE = "UPDATE", _("Update")
         BOTH = "BOTH", _("Both")
 
+    @final
+    class SourceChoices(models.TextChoices):
+        """
+        Source choices
+        """
+
+        KAFKA = "KAFKA", _("Kafka")
+        POSTGRES = "POSTGRES", _("Postgres")
+
     ACTION_NAMES = {
         "INSERT": {
             "function": "notify_new",
@@ -805,6 +819,23 @@ class TableChangeAlert(TimeStampedModel):
         max_length=255,
         help_text=_("The table that the table change alert is for."),
         choices=TABLE_NAME_CHOICES,
+        blank=True,
+    )
+    source = models.CharField(
+        _("Source"),
+        max_length=50,
+        help_text=_("Where the table change alert will get its data from."),
+        choices=SourceChoices.choices,
+        default=SourceChoices.POSTGRES,
+    )
+    topic = models.CharField(
+        _("Topic"),
+        max_length=255,
+        choices=AVAILABLE_TOPICS,  # type: ignore
+        help_text=_(
+            "The topic that the table change alert will use. Usually the same as the table name."
+        ),
+        blank=True,
     )
     description = models.TextField(
         _("Description"),
@@ -875,6 +906,31 @@ class TableChangeAlert(TimeStampedModel):
         """
 
         return textwrap.wrap(self.name, 50)[0]
+
+    def clean(self) -> None:
+        """TableChangeAlert clean method.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        super().clean()
+        self.validate_alert()
+
+    def validate_alert(self):
+        """
+        Validate the table change alert based on source type
+
+        Raises:
+            ValidationError: If required information based on source type is not provided.
+        """
+        if self.source == self.SourceChoices.KAFKA and not self.topic:
+            raise ValidationError(
+                {"topic": _("Topic is required when source is Kafka.")}
+            )
+        elif self.source == self.SourceChoices.POSTGRES and not self.table:
+            raise ValidationError(
+                {"table": _("Table is required when source is Postgres.")},
+            )
 
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL
