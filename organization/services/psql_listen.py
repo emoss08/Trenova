@@ -46,6 +46,69 @@ class PSQLListener:
     """
 
     @classmethod
+    def ensure_trigger_exists(cls, conn: psycopg2.extensions.connection) -> None:
+        """
+        Ensures that a specific trigger exists on a given table.
+
+        Args:
+            conn: A psycopg2.extensions.connection instance.
+
+        Returns:
+            None
+        """
+        trigger_name = "table_change_alert_trigger"
+        trigger_function_name = "notify_table_change"
+        table_name = "public.table_change_alert"
+
+        with conn.cursor() as cur:
+            # Check if the function exists
+            cur.execute(
+                f"""
+                SELECT 1
+                FROM pg_proc
+                WHERE proname = '{trigger_function_name}';
+            """
+            )
+            function_exists = cur.fetchone()
+
+            # Create the function if it doesn't exist
+            if not function_exists:
+                print(f"Function {trigger_function_name} does not exist. Creating...")
+                cur.execute(
+                    f"""
+                    CREATE OR REPLACE FUNCTION {trigger_function_name}() RETURNS TRIGGER AS $$
+                    BEGIN
+                        PERFORM pg_notify('table_change_alert_updated', TG_TABLE_NAME || ' ' || TG_OP);
+                        RETURN NEW;
+                    END;
+                    $$ LANGUAGE plpgsql;
+                """
+                )
+                print(f"Function {trigger_function_name} created.")
+
+            # Check if the trigger exists
+            cur.execute(
+                f"""
+                SELECT 1
+                FROM pg_trigger
+                WHERE tgname = '{trigger_name}';
+            """
+            )
+            trigger_exists = cur.fetchone()
+
+            # Create the trigger if it doesn't exist
+            if not trigger_exists:
+                print(f"Trigger {trigger_name} does not exist. Creating...")
+                cur.execute(
+                    f"""
+                    CREATE TRIGGER {trigger_name}
+                    AFTER INSERT OR UPDATE OR DELETE ON {table_name}
+                    FOR EACH ROW EXECUTE PROCEDURE {trigger_function_name}();
+                """
+                )
+                print(f"Trigger {trigger_name} created.")
+
+    @classmethod
     def connect(cls) -> psycopg2.extensions.connection:
         """
         Connect to a PostgreSQL database using psycopg2.
@@ -81,6 +144,7 @@ class PSQLListener:
         """
 
         conn = cls.connect()
+        cls.ensure_trigger_exists(conn)
         table_changes = get_active_table_alerts()
         table_change_alert_channel = "table_change_alert_updated"
 
