@@ -1,5 +1,4 @@
-version: '2'
-
+version: '3'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
@@ -35,7 +34,27 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
     restart: always
+
+  connect:
+    image: debezium/connect:1.7
+    container_name: connect
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: broker:29092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+    depends_on:
+      - broker
+    restart: on-failure
+
 
   pgadmin:
     image: dpage/pgadmin4
