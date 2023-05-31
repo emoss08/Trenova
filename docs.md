@@ -1,5 +1,8 @@
 # Monta Developer Documentation
 
+The file contains developer documentation for the Monta project. It provides information on various Django admin
+commands and Celery task schedules.
+
 ## Django Admin Commands
 
 ### Setup Celery Beat
@@ -65,35 +68,31 @@ py manage.py createsystemuser
 ### Setup PSQL Triggers
 
 ```postgresql
-CREATE OR REPLACE FUNCTION notify_table_change_alert_update()
-    RETURNS trigger
-    LANGUAGE 'plpgsql'
-AS
-$BODY$
-DECLARE
+CREATE OR REPLACE FUNCTION notify_table_change() RETURNS TRIGGER AS
+$$
 BEGIN
-    IF (TG_OP = 'INSERT' OR TG_OP = 'UPDATE') THEN
-        PERFORM pg_notify('table_change_alert_updated', NEW.id::text);
-    END IF;
-    RETURN NULL;
-END
-$BODY$;
-```
+    PERFORM pg_notify('table_change_alert_updated', TG_TABLE_NAME || ' ' || TG_OP);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-```postgresql
-CREATE OR REPLACE TRIGGER table_change_alert_update_trigger
-    AFTER INSERT OR UPDATE
+CREATE TRIGGER table_change_alert_trigger
+    AFTER INSERT OR UPDATE OR DELETE
     ON public.table_change_alert
     FOR EACH ROW
-EXECUTE PROCEDURE notify_table_change_alert_update();
+EXECUTE PROCEDURE notify_table_change();
 ```
 
 #### Description
 
-`notify_table_change_alert_update` function notifies the `table_change_alert_updated` channel when a row is inserted or
+`notify_table_change` function notifies the `table_change_alert_updated` channel when a row is inserted or
 updated in the `table_change_alert` table.
 
 ## Celery Task Schedules
+
+#### Description
+
+Celery tasks are scheduled using the `IntervalSchedule` model. The following tasks are scheduled by default:
 
 ### Send Expired Rates Notification
 
@@ -115,6 +114,11 @@ Interval Schedule: `Every 15 minutes`
 
 Start Datetime: `now`
 
-    Note: This task should only be enabled if the customer has purchased the billing module, and auto-billing package.
+This task should only be enabled if the customer has purchased the billing module, and auto-billing package.
+
+## Kafka Setup
+
+If you're using Docker, you can run the docker-compose file in the `.docker` directory to set up Kafka.
+If you're not using Docker, reference the `setup.md` file in the `kafka` directory.
 
 

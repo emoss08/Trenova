@@ -16,6 +16,8 @@ enabling you to stay ahead of the competition.
 
 - Python 3.10+ or latest
 - PostgreSQL 12+ (no plans to support other databases)
+- Kafka 3.4.0+
+- Zookeeper 3.7.1+ (required for Kafka)
 - Redis 6.0+
 - Node.js (version 14+ or latest)
 - pnpm (Node.js package manager)
@@ -26,9 +28,7 @@ enabling you to stay ahead of the competition.
 ### Frontend
 
 - [React](https://reactjs.org/)
-- [Radix UI](https://www.radix-ui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [Shadcn](https://ui.shadcn.com/)
+- [Mantine](https://mantine.dev/)
 - [React Query](https://react-query.tanstack.com/)
 
 ### Backend
@@ -37,6 +37,8 @@ enabling you to stay ahead of the competition.
 - [Django](https://www.djangoproject.com/)
 - [Django Rest Framework](https://www.django-rest-framework.org/)
 - [PostgreSQL](https://www.postgresql.org/)
+- [Kafka](https://kafka.apache.org/)
+- [Zookeeper](https://zookeeper.apache.org/)
 - [Redis](https://redis.io/)
 - [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html)
 
