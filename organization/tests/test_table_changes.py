@@ -19,9 +19,11 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 
 from organization import factories, models
+from organization.models import TableChangeAlert
 from organization.services.psql_triggers import (
     check_function_exists,
     check_trigger_exists,
@@ -138,3 +140,47 @@ def test_command() -> None:
 def test_table_change_alerts_success(mock_call_command) -> None:
     table_change_alerts()
     mock_call_command.assert_called_once_with("psql_listener")
+
+
+def test_save_table_change_alert_kafka_without_topic(
+    organization: models.Organization,
+) -> None:
+    """Tests that a ValidationError is raised when trying to save a TableChangeAlert with source as
+    Kafka but no topic.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    # Create a TableChangeAlert instance with source as Kafka but no topic
+    kafka_alert = TableChangeAlert(source=TableChangeAlert.SourceChoices.KAFKA)
+
+    # Expect a ValidationError when trying to save
+    with pytest.raises(ValidationError) as excinfo:
+        kafka_alert.save()
+
+    # Check if the error message is correct
+    assert excinfo.value.message_dict["topic"] == [
+        "Topic is required when source is Kafka."
+    ]
+
+
+def test_save_table_change_alert_postgres_without_table(
+    organization: models.Organization,
+) -> None:
+    """Tests that a ValidationError is raised when trying to save a TableChangeAlert with source as
+    Postgres but no table.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    # Create a TableChangeAlert instance with source as Postgres but no table
+    alert = TableChangeAlert(source=TableChangeAlert.SourceChoices.POSTGRES)
+
+    # Expect a ValidationError when trying to save
+    with pytest.raises(ValidationError) as excinfo:
+        alert.save()
+
+    # Check if the error message is correct
+    assert excinfo.value.message_dict["table"] == [
+        "Table is required when source is Postgres."
+    ]
