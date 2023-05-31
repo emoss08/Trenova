@@ -25,7 +25,6 @@ import {
   Flex,
   Grid,
   SimpleGrid,
-  Skeleton,
   Text,
 } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -40,7 +39,7 @@ type Props = {
   jobTitle: JobTitle;
 };
 
-const useStyles = createStyles(() => ({
+const useStyles = createStyles((theme) => ({
   card: {
     width: "100%",
     maxWidth: "100%",
@@ -49,6 +48,9 @@ const useStyles = createStyles(() => ({
       height: "auto",
       maxHeight: "none",
     },
+  },
+  text: {
+    color: theme.colorScheme === "dark" ? "white" : "black",
   },
   icon: {
     marginRight: "5px",
@@ -75,32 +77,26 @@ const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
               <Grid className={classes.grid}>
                 <Grid.Col>
                   <Flex direction="column" justify="start">
-                    <Text color="white" fz="35px" fw={650}>
+                    <Text className={classes.text} fz="35px" fw={650}>
                       {user.profile?.first_name} {user.profile?.last_name}
                     </Text>
                     <Grid grow gutter={30} align="flex-start">
                       <Grid.Col span={1}>
-                        <div
-                          style={{
-                            display: "flex",
-                          }}
-                        >
+                        <div className={classes.div}>
                           <FontAwesomeIcon
                             icon={faCircleUser}
-                            color="white"
                             className={classes.icon}
                           />
-                          <Text color="white">{jobTitle.name}</Text>
+                          <Text className={classes.text}>{jobTitle.name}</Text>
                         </div>
                       </Grid.Col>
                       <Grid.Col span={6}>
                         <div className={classes.div}>
                           <FontAwesomeIcon
                             icon={faMapPin}
-                            color="white"
                             className={classes.icon}
                           />
-                          <Text color="white">
+                          <Text className={classes.text}>
                             {user.profile?.address_line_1} {user.profile?.city}{" "}
                             {user.profile?.state} {user.profile?.zip_code}
                           </Text>
@@ -110,10 +106,9 @@ const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
                         <div className={classes.div}>
                           <FontAwesomeIcon
                             icon={faEnvelope}
-                            color="white"
                             className={classes.icon}
                           />
-                          <Text color="white">{user.email}</Text>
+                          <Text className={classes.text}>{user.email}</Text>
                         </div>
                       </Grid.Col>
                     </Grid>

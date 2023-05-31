@@ -92,6 +92,9 @@ const useStyles = createStyles((theme) => {
     div: {
       display: "flex",
     },
+    text: {
+      color: theme.colorScheme === "dark" ? "white" : "black",
+    },
     grid: {
       display: "flex",
     },
@@ -144,7 +147,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
             className={classes.form}
             onSubmit={(event) => event.preventDefault()}
           >
-            <Text fz="xl" fw={700} color="white">
+            <Text fz="xl" fw={700} className={classes.text}>
               Profile Details
             </Text>
 
@@ -212,10 +215,9 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                 variant="filled"
                 {...form.getInputProps("profile.zip_code")}
               />
-
               <Group position="right" mt="md">
-                <Button type="submit" className={classes.control}>
-                  Send message
+                <Button color="white" type="submit" className={classes.control}>
+                  Submit
                 </Button>
               </Group>
             </div>

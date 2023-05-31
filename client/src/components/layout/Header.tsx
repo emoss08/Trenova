@@ -51,7 +51,7 @@ import {
   faMagnifyingGlass,
   faMessage,
   faTruckFast,
-} from "@fortawesome/pro-regular-svg-icons";
+} from "@fortawesome/pro-solid-svg-icons";
 import { Link } from "react-router-dom";
 import ActionButton from "../ActionButton";
 import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
@@ -97,7 +97,9 @@ const useStyles = createStyles((theme) => ({
 
     "&:active": theme.activeStyles,
   },
-
+  logoText: {
+    color: theme.colorScheme === "dark" ? "white" : "black",
+  },
   dropdownFooter: {
     backgroundColor:
       theme.colorScheme === "dark"
@@ -197,7 +199,7 @@ export function HeaderMegaMenu() {
             </Link>
           ) : (
             <Link to="/" style={{ textDecoration: "none" }}>
-              <Text size="lg" fw={600} color="white">
+              <Text size="lg" fw={600} className={classes.logoText}>
                 {organizationData.name}
               </Text>
             </Link>

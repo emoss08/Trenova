@@ -23,10 +23,17 @@ import React from "react";
 interface MyComponentProps {
   icon: IconProp;
 }
+
 const useStyles = createStyles((theme) => ({
   hoverEffect: {
+    svg: {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[5]
+          : theme.colors.gray[9],
+    },
     "&:hover svg": {
-      color: theme.fn.primaryColor(),
+      color: theme.colors.gray[0],
     },
   },
 }));
