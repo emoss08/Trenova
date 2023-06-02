@@ -17,6 +17,7 @@
 from typing import Any
 
 from django.core.management import BaseCommand
+
 from kafka import services
 
 
