@@ -28,7 +28,7 @@ from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from kafka.kafka_service import KafkaManager
+from kafka.services import KafkaManager
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_org_timezone, validate_format_string
 
@@ -851,6 +851,17 @@ class TableChangeAlert(TimeStampedModel):
         blank=True,
         null=True,
     )
+    email_recipients = models.TextField(
+        _("Email Recipients"),
+        help_text=_("Comma separated list of email addresses to send the alert to."),
+        blank=True,
+    )
+    custom_subject = models.CharField(
+        _("Custom Subject"),
+        max_length=255,
+        help_text=_("The custom subject that the table change alert will use."),
+        blank=True,
+    )
     function_name = models.CharField(
         _("Function Name"),
         max_length=50,
@@ -913,8 +924,8 @@ class TableChangeAlert(TimeStampedModel):
         Returns:
             None: This function does not return anything.
         """
-        super().clean()
         self.validate_alert()
+        super().clean()
 
     def validate_alert(self):
         """
@@ -1046,7 +1057,6 @@ class NotificationSetting(TimeStampedModel):
     email_recipients = models.TextField(
         _("Email Recipients"),
         help_text=_("The email recipients that the notification setting will use."),
-        default="",
         blank=True,
     )
     email_profile = models.ForeignKey(
