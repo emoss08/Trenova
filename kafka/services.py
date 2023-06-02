@@ -52,7 +52,7 @@ class KafkaManager:
     _instance: KafkaManager | None = None
     __initialized: bool
 
-    def __new__(cls) -> "KafkaManager":
+    def __new__(cls) -> KafkaManager:
         """Creates a new instance of KafkaManager if it doesn't exist already.
 
         Overrides the __new__ method to make KafkaManager a Singleton.
@@ -61,7 +61,7 @@ class KafkaManager:
             KafkaManager: The single instance of KafkaManager.
         """
         if cls._instance is None:
-            cls._instance = super(KafkaManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance.__initialized = False
         return cls._instance
 
@@ -102,7 +102,7 @@ class KafkaManager:
             sock = socket.create_connection((host, port), timeout=timeout)
             sock.close()
             return True
-        except socket.error as err:
+        except OSError as err:
             rprint(f"[red]Kafka is not available: {err}[/]")
             return False
 
