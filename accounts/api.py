@@ -27,7 +27,6 @@ from rest_framework import (
     status,
     views,
     viewsets,
-    exceptions,
 )
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
@@ -35,10 +34,6 @@ from rest_framework.request import Request
 from accounts import models, serializers
 from accounts.permissions import ViewAllUsersPermission
 from utils.exceptions import InvalidTokenException
-from django.http import HttpResponse
-import json
-
-from utils.permissions import MontaModelPermissions
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -121,8 +116,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 "is_staff",
                 "date_joined",
                 "online",
-                "groups",
-                "user_permissions",
                 "profiles__created",
                 "profiles__modified",
                 "profiles__organization_id",
