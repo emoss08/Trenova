@@ -694,7 +694,6 @@ class BillingQueue(GenericModel):  # type:ignore
 
         verbose_name = _("Billing Queue")
         verbose_name_plural = _("Billing Queues")
-        ordering = ["order"]
         db_table = "billing_queue"
 
     def __str__(self) -> str:
