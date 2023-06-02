@@ -63,7 +63,7 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
             subject=f"Your scheduled report: {report.name}",
             body=f"Hi {user.profile.first_name},\n\nAttached is your scheduled report: {report.name}.",
             from_email="reports@monta.io",
-            to=[user.email],
+            to=[user.email],  # TODO(Wolfred): Add support for multiple recipients
         )
 
         email.attach(
