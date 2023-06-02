@@ -42,7 +42,7 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
             request (Request): The incoming request.
 
         Returns:
-            Tuple[models.User, models.Token] | None: The authenticated user and token.
+            Tuple[models.User, models.Token] | None: The authenticated user and token.`
         """
         auth: list[bytes] = get_authorization_header(request).split()
 
@@ -79,15 +79,13 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
         """
         try:
             token = (
-                self.model.objects.select_related("user", "user__organization")
+                self.model.objects.select_related("user")
                 .only(
-                    "user__id",
-                    "user__organization",
+                    "user_id",
                     "user__is_active",
-                    "user__username",
+                    "user__organization_id",
                     "key",
                     "expires",
-                    "id",
                     "last_used",
                 )
                 .get(key=key)
