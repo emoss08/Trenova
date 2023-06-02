@@ -27,10 +27,13 @@ class ViewAllUsersPermission(permissions.BasePermission):
     Admin users, or users with the 'accounts.view_all_users' permission, can view all user data.
 
     Methods:
-        has_permission(request, view): Returns True if the user has 'accounts.view_all_users' permission,
-                                       or the request is for retrieving (viewing) a user's own record.
-        has_object_permission(request, view, obj): Returns True if the user is trying to access their own record,
-                                                    or the user has 'accounts.view_all_users' permission.
+        has_permission(request, view):
+            Returns True if the user has 'accounts.view_all_users' permission,
+            or the request is for retrieving (viewing) a user's own record.
+
+        has_object_permission(request, view, obj):
+            Returns True if the user is trying to access their own record,
+            or the user has 'accounts.view_all_users' permission.
     """
 
     def has_permission(self, request: Request, view: views.APIView) -> bool:
@@ -48,7 +51,10 @@ class ViewAllUsersPermission(permissions.BasePermission):
         if view.action == "retrieve":  # type: ignore
             return True
 
-        return request.user.has_perm("accounts.view_all_users")
+        return (
+            request.user.has_perm("accounts.view_all_users")
+            or request.user.is_superuser
+        )
 
     def has_object_permission(
         self, request: Request, view: views.APIView, obj: models.User
