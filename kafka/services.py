@@ -17,18 +17,19 @@
 
 from __future__ import annotations
 
+import json
+import os
+import signal
 import socket
-from rich import print as rprint
+from pathlib import Path
 
-from confluent_kafka import Consumer, Message, KafkaException
+from confluent_kafka import Consumer, KafkaException, Message
 from django.core.mail import send_mail
 from django.db.models import QuerySet
 from environ import environ
-from pathlib import Path
-import os
-from organization import selectors, models
-import signal
-import json
+from rich import print as rprint
+
+from organization import models, selectors
 
 # Load environment variables
 env = environ.Env()

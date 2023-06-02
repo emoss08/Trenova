@@ -15,10 +15,11 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from smtplib import SMTP_SSL, SMTP
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.utils import formatdate
+from smtplib import SMTP, SMTP_SSL
+
 from organization import exceptions, models
 
 
