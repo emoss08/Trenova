@@ -94,40 +94,36 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.BillingQueue]:
-        queryset = (
-            self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
-            )
-            .select_related("organization")
-            .only(
-                "id",
-                "freight_charge_amount_currency",
-                "commodity__id",
-                "bol_number",
-                "total_amount_currency",
-                "other_charge_total_currency",
-                "commodity_descr",
-                "consignee_ref_number",
-                "mileage",
-                "total_amount",
-                "pieces",
-                "user__id",
-                "freight_charge_amount",
-                "invoice_number",
-                "customer__id",
-                "bill_date",
-                "weight",
-                "ready_to_bill",
-                "is_cancelled",
-                "worker__id",
-                "other_charge_total",
-                "order_type__id",
-                "organization__id",
-                "order__id",
-                "revenue_code__id",
-                "is_summary",
-                "bill_type",
-            )
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "freight_charge_amount_currency",
+            "commodity_id",
+            "bol_number",
+            "total_amount_currency",
+            "other_charge_total_currency",
+            "commodity_descr",
+            "consignee_ref_number",
+            "mileage",
+            "total_amount",
+            "pieces",
+            "user_id",
+            "freight_charge_amount",
+            "invoice_number",
+            "customer_id",
+            "bill_date",
+            "weight",
+            "ready_to_bill",
+            "is_cancelled",
+            "worker_id",
+            "other_charge_total",
+            "order_type_id",
+            "organization_id",
+            "order_id",
+            "revenue_code_id",
+            "is_summary",
+            "bill_type",
         )
 
         return queryset
