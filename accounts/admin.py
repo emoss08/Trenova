@@ -130,7 +130,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     autocomplete_fields: tuple[str, ...] = ("organization", "department")
     inlines: tuple[type[ProfileInline]] = (ProfileInline,)
 
-    def get_fieldsets(self, request: HttpRequest, obj: models.User | None = None):  # type: ignore
+    def get_fieldsets(self, request: HttpRequest, obj: models.User | None = None):
         """Return fieldsets for add/change view
 
         Args:

@@ -27,7 +27,7 @@ def get_authorization_header(request: Request) -> bytes:
     auth = request.META.get("HTTP_AUTHORIZATION", b"")
     if isinstance(auth, str):
         auth: bytes = auth.encode(HTTP_HEADER_ENCODING)  # type: ignore
-    return auth  # type: ignore
+    return auth
 
 
 class BearerTokenAuthentication(authentication.BaseAuthentication):
