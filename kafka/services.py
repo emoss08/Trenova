@@ -20,170 +20,19 @@ from __future__ import annotations
 import json
 import os
 import signal
-import socket
 from pathlib import Path
-
+from typing import Any
+import types
 from confluent_kafka import Consumer, KafkaException, Message
 from django.core.mail import send_mail
 from django.db.models import QuerySet
 from environ import environ
-from rich import print as rprint
-
 from organization import models, selectors
 
 # Load environment variables
 env = environ.Env()
 ENV_DIR = Path(__file__).parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
-
-
-class KafkaManager:
-    """Manages the Kafka connection and related operations.
-
-    This class serves as a Singleton manager for Kafka related operations. This includes
-    creating a Kafka consumer, checking Kafka server availability, getting available topics,
-    and closing the Kafka consumer.
-
-    Attributes:
-        _instance (KafkaManager | None): The single instance of KafkaManager, None initially.
-        __initialized (bool): A flag indicating whether the KafkaManager instance is initialized.
-    """
-
-    _instance: KafkaManager | None = None
-    __initialized: bool
-
-    def __new__(cls) -> KafkaManager:
-        """Creates a new instance of KafkaManager if it doesn't exist already.
-
-        Overrides the __new__ method to make KafkaManager a Singleton.
-
-        Returns:
-            KafkaManager: The single instance of KafkaManager.
-        """
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.__initialized = False
-        return cls._instance
-
-    def __init__(self):
-        """Initializes the KafkaManager instance with consumer configuration.
-
-        Only performs initialization the first time this instance is created.
-        """
-        if self.__initialized:
-            return
-        self.__initialized = True
-
-        self.consumer_conf = {
-            "bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS"),
-            "group.id": env("KAFKA_GROUP_ID"),
-            "auto.offset.reset": "latest",
-        }
-        self.kafka_host = env("KAFKA_HOST")
-        self.kafka_port = env("KAFKA_PORT")
-        self.consumer = None
-
-    @staticmethod
-    def is_kafka_available(*, host: str, port: int, timeout: int = 5) -> bool:
-        """Checks if the Kafka server is available.
-
-        This method tries to create a socket connection to the Kafka server with the given host and port.
-        If the connection is successful, the Kafka server is considered available.
-
-        Args:
-            host (str): The hostname of the Kafka server.
-            port (int): The port number of the Kafka server.
-            timeout (int, optional): The maximum time to wait for a connection. Default is 5 seconds.
-
-        Returns:
-            bool: True if the Kafka server is available, False otherwise.
-        """
-        try:
-            sock = socket.create_connection((host, port), timeout=timeout)
-            sock.close()
-            return True
-        except OSError as err:
-            rprint(f"[red]Kafka is not available: {err}[/]")
-            return False
-
-    def create_open_consumer(self) -> Consumer:
-        """Creates and opens a Kafka consumer.
-
-        This method tries to create a Kafka consumer with the consumer configuration provided
-        during initialization. If successful, the consumer is stored in the instance variable `self.consumer`.
-
-        Returns:
-            Consumer: The Kafka consumer.
-        """
-        try:
-            self.consumer = Consumer(self.consumer_conf)
-        except KafkaException as ke:
-            rprint(f"[red]Failed to create Kafka consumer: {ke}[/]")
-            self.consumer = None
-
-    def get_available_topics(self) -> list[tuple]:
-        """Fetches the list of available topics from the Kafka server.
-
-        If the consumer is not available or the Kafka server is not available,
-        this method returns an empty list. Otherwise, it fetches the metadata from the
-        Kafka server, extracts the topic names, and returns them as a list of tuples
-        for use in Django choices.
-
-        Returns:
-            list[tuple]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
-        """
-        if self.consumer is None:
-            return []
-
-        if not self.is_kafka_available(host=self.kafka_host, port=self.kafka_port):
-            return []
-
-        try:
-            # set timeout for metadata fetch, e.g., 5 seconds
-            cluster_metadata = self.consumer.list_topics()
-
-            topics = cluster_metadata.topics
-
-            # Create 2-tuples for Django choices
-            return [(topic, topic) for topic in topics.keys()]
-        except KafkaException as ke:
-            rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
-            return []
-
-    def close_consumer(self) -> None:
-        """Closes the Kafka consumer.
-
-        If a consumer has been created and opened, this method closes the consumer.
-
-        Returns:
-            None: This function does not return anything.
-        """
-        if self.consumer is not None:
-            self.consumer.close()
-
-    def get_topics(self) -> list[tuple] | list:
-        """Creates a Kafka consumer, fetches available topics, and then closes the consumer.
-
-        This method handles the overall process of fetching available topics from the Kafka server.
-        If any step fails, it returns an empty list.
-
-        Returns:
-            list[tuple] | list: A list of tuples with available topics from the Kafka server, or an empty list in case of failure.
-        """
-        try:
-            # Create consumer
-            self.create_open_consumer()
-
-            # Get available topics
-            topics = self.get_available_topics()
-
-            # Close consumer after fetching metadata
-            self.close_consumer()
-
-            return topics
-        except KafkaException as ke:
-            rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
-            return []
 
 
 class KafkaListener:
@@ -214,7 +63,7 @@ class KafkaListener:
     # TODO(Wolfred): Replace all prints with SSE or websockets. Still haven't decided.
 
     @classmethod
-    def signal_handler(cls, signal: int, frame) -> None:
+    def signal_handler(cls, signal: int, frame: types.FrameType | None) -> None:
         """Handles a signal interruption.
 
         This method changes the 'interrupted' class variable to True if a signal interruption
@@ -222,7 +71,7 @@ class KafkaListener:
 
         Args:
             signal (int): The identifier of the received signal.
-            frame: The current stack frame.
+            frame (FrameType | None): The current stack frame.
 
         Returns:
             None: This method does not return anything.
@@ -249,7 +98,7 @@ class KafkaListener:
         return Consumer(config), Consumer(config)
 
     @staticmethod
-    def get_topic_list() -> QuerySet[models.TableChangeAlert] | list:
+    def get_topic_list() -> QuerySet | list:
         """Retrieves the list of active Kafka table change alerts.
 
         This method queries the database for all active table change alerts and returns
@@ -286,7 +135,7 @@ class KafkaListener:
         cls,
         *,
         data_consumer: Consumer,
-        table_changes: QuerySet[models.TableChangeAlert] | list,
+        table_changes: QuerySet | list,
     ) -> None:
         """Updates the topic subscription list of the data_consumer.
 
@@ -322,7 +171,7 @@ class KafkaListener:
             )
 
     @staticmethod
-    def parse_message(*, message: Message) -> dict:
+    def parse_message(*, message: Message) -> dict[str, Any]:
         """Parses a Kafka message.
 
         This method extracts the value from the Kafka message, decodes it from bytes to string,
@@ -334,14 +183,12 @@ class KafkaListener:
         Returns:
             dict: The payload of the Kafka message as a dictionary.
         """
-        if message.value() is not None:
-            message_value = message.value().decode("utf-8")
-            data = json.loads(message_value)
-            return data.get("payload", {})
-        return {}
+        message_value = message.value().decode("utf-8")
+        data = json.loads(message_value)
+        return data.get("payload", {})
 
     @staticmethod
-    def format_message(field_value_dict: dict) -> str:
+    def format_message(*, field_value_dict: dict) -> str:
         """Formats a dictionary into a human-readable string message.
 
         This method takes a dictionary of field and value pairs and converts it into a string.
@@ -375,14 +222,19 @@ class KafkaListener:
         Returns:
             None: This method does not return anything.
         """
+        if not data_message.value():
+            return
 
         data = cls.parse_message(message=data_message)
+
+        op_type: str | None = data.get("op")
 
         op_type_mapping = {
             "c": models.TableChangeAlert.DatabaseActionChoices.INSERT,
             "u": models.TableChangeAlert.DatabaseActionChoices.UPDATE,
         }
-        op_type = data.get("op")
+        if not op_type:
+            return
         translated_op_type = op_type_mapping.get(op_type)
 
         # If op_type is None or not in database_action, return immediately
@@ -390,11 +242,9 @@ class KafkaListener:
             not translated_op_type
             or translated_op_type not in associated_table_change.database_action
         ):
-            print("No matching database action.")
             return
 
         field_value_dict = data.get("after") or {}
-        print(f"Field value dict: {field_value_dict}")
 
         recipient_list = (
             associated_table_change.email_recipients.split(",")
@@ -409,7 +259,7 @@ class KafkaListener:
         print(f"Sending email to {recipient_list} with subject {subject}")
         send_mail(
             subject=subject,
-            message=KafkaListener.format_message(field_value_dict),
+            message=KafkaListener.format_message(field_value_dict=field_value_dict),
             from_email="table_change@monta.io",
             recipient_list=recipient_list,
         )
