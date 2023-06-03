@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import json
 import threading
+from typing import Sequence
 
 import redis
 from cacheops import invalidate_model
@@ -469,7 +470,7 @@ class CacheManagerView(views.APIView):
         r = redis.StrictRedis.from_url(redis_url)
 
         # Get all Redis keys and filter based on your application's specific key patterns and the search term
-        all_keys: list[bytes] = r.keys("*")
+        all_keys: Sequence[bytes] | list[bytes] = r.keys("*")
         cache_keys = [
             key.decode("utf-8")
             for key in all_keys
