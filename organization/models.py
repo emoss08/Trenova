@@ -27,11 +27,9 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
-
-from kafka.services import KafkaManager
-
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
+from kafka.managers import KafkaManager
 
 kafka_manager = KafkaManager()
 AVAILABLE_TOPICS = kafka_manager.get_topics()
@@ -855,7 +853,6 @@ class TableChangeAlert(TimeStampedModel):
     email_recipients = models.TextField(
         _("Email Recipients"),
         help_text=_("Comma separated list of email addresses to send the alert to."),
-        blank=True,
     )
     custom_subject = models.CharField(
         _("Custom Subject"),
