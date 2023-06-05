@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 import json
 import threading
-from typing import Sequence
+from collections.abc import Sequence
 
 import redis
 from cacheops import invalidate_model
@@ -30,12 +30,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from core.health_check.cache_backend import CacheBackendHealthCheck
-from core.health_check.celery_backend import CeleryHealthCheck
-from core.health_check.database_backend import DatabaseHealthCheck
-from core.health_check.disk_backend import DiskUsageHealthCheck
-from core.health_check.redis_backend import RedisHealthCheck
-from core.health_check.storage_backend import FileStorageHealthCheck
+from core import utils, checks
 from organization import exceptions, models, selectors, serializers
 
 
@@ -324,12 +319,13 @@ def health_check(request: Request) -> Response:
         celery, and database.
     """
     health_status = {
-        "cache_backend": CacheBackendHealthCheck.check_caches_and_time(),
-        "storage": FileStorageHealthCheck.check_file_storage(),
-        "redis": RedisHealthCheck.check_redis(),
-        "disk_usage": DiskUsageHealthCheck().check_disk_usage_and_time(),
-        "celery": CeleryHealthCheck.check_celery(),
-        "database": DatabaseHealthCheck.check_database(),
+        "cache_backend": checks.check_caches_and_time(),
+        "storage": checks.check_file_storage(),
+        "redis": checks.check_redis(),
+        "disk_usage": checks.check_disk_usage_and_time(),
+        "celery": checks.check_celery(),
+        "database": checks.check_database(),
+        "kafka": checks.check_kafka(),
     }
 
     return Response(health_status, status=status.HTTP_200_OK)
@@ -593,3 +589,20 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
             "custom_subject",
         )
         return queryset
+
+
+@api_view(["GET"])
+def process_list(request: Request) -> Response:
+    queryset = utils.get_running_processes()
+    pid = request.query_params.get("pid", None)
+    name = request.query_params.get("name", None)
+    username = request.query_params.get("username", None)
+
+    if pid is not None:
+        queryset = [proc for proc in queryset if proc["pid"] == int(pid)]
+    if name is not None:
+        queryset = [proc for proc in queryset if proc["name"] == name]
+    if username is not None:
+        queryset = [proc for proc in queryset if proc["username"] == username]
+
+    return Response(queryset)

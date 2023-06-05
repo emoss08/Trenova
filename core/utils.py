@@ -15,44 +15,31 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from timeit import default_timer as timer
-
-from celery.exceptions import TaskRevokedError, TimeoutError
-
-from .tasks import add
+import psutil
 
 
-class CeleryHealthCheck:
-    """
-    The `CeleryHealthCheck` class is used to check the health of a Celery instance.
-    """
-
-    @staticmethod
-    def check_celery() -> dict:
-        """
-        The `check_celery` method is used to check the health of a Celery instance.
-        It returns a dictionary indicating the status and time taken to perform the check.
-        The status will be either `'Working'` if it is Working properly, `'Offline'` if it
-        is not Working properly, or `'slow'` if it is taking too long to respond.
-
-        Returns:
-            Dict[str, Union[str, float]]: The result of the Celery health check, including the status
-            and time taken to perform the check.
-        """
-        start = timer()
+def get_running_processes():
+    process_list = []
+    for proc in psutil.process_iter(
+        [
+            "pid",
+            "name",
+            "cmdline",
+            "username",
+            "status",
+            "cpu_percent",
+            "memory_percent",
+        ]
+    ):
+        # Obtain a list of open files and connections
         try:
-            result = add.delay(3, 5)
-            result.get(timeout=3)
-            end = timer()
-            result_time = end - start
-            if result.result != 8:
-                return {"status": "Offline", "time": result_time}
-        except TimeoutError:
-            end = timer()
-            result_time = end - start
-            return {"status": "Offline", "time": result_time}
-        except TaskRevokedError:
-            end = timer()
-            result_time = end - start
-            return {"status": "Offline", "time": result_time}
-        return {"status": "Working", "time": result_time}
+            proc.info["open_files"] = proc.open_files()
+            proc.info["connections"] = proc.connections()
+        except psutil.AccessDenied:
+            # If access is denied to these details, set them to None
+            proc.info["open_files"] = None
+            proc.info["connections"] = None
+
+        process_list.append(proc.info)
+
+    return process_list
