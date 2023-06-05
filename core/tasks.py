@@ -18,6 +18,7 @@
 import datetime
 from typing import TYPE_CHECKING
 
+from celery import shared_task
 from django.core.management import call_command
 from django.utils import timezone
 
@@ -55,3 +56,7 @@ def delete_audit_log_records(self: "Task") -> str:
         raise self.retry(exc=exc) from exc
 
     return f"Successfully deleted audit log records. older than {formatted_date}."
+
+@shared_task(ignore_result=False)
+def add(x: int, y: int) -> int:
+    return x + y
