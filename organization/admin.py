@@ -29,17 +29,9 @@ class OrganizationAdmin(admin.ModelAdmin[models.Organization]):
     Organization Admin
     """
 
-    list_display = (
-        "name",
-        "scac_code",
-        "org_type",
-        "timezone",
-    )
+    list_display = ("name", "scac_code", "org_type", "timezone")
     list_filter = ("org_type",)
-    search_fields = (
-        "name",
-        "scac_code",
-    )
+    search_fields = ("name", "scac_code")
 
     def has_delete_permission(
         self, request: HttpRequest, obj: models.EmailLog | None = None
@@ -73,10 +65,7 @@ class DepotAdmin(GenericAdmin[models.Depot]):
     Depot Admin
     """
 
-    list_display = (
-        "name",
-        "description",
-    )
+    list_display = ("name", "description")
     list_filter = ("name",)
     search_fields = ("name",)
     inlines = (DepotDetailInline,)
@@ -88,10 +77,7 @@ class DepartmentAdmin(GenericAdmin[models.Department]):
     Department Admin
     """
 
-    list_display = (
-        "name",
-        "description",
-    )
+    list_display = ("name", "description")
     list_filter = ("name",)
     search_fields = ("name",)
 
@@ -102,14 +88,8 @@ class EmailProfileAdmin(GenericAdmin[models.EmailProfile]):
     Email Profile Admin
     """
 
-    list_display = (
-        "name",
-        "email",
-    )
-    search_fields = (
-        "name",
-        "email",
-    )
+    list_display = ("name", "email")
+    search_fields = ("name", "email")
 
 
 @admin.register(models.EmailControl)
@@ -163,10 +143,7 @@ class TaxRateAdmin(GenericAdmin[models.TaxRate]):
     Tax Rate Admin
     """
 
-    list_display = (
-        "name",
-        "rate",
-    )
+    list_display = ("name", "rate")
     list_filter = ("name",)
     search_fields = ("name",)
 
@@ -177,13 +154,10 @@ class TableChangeAlertAdmin(GenericAdmin[models.TableChangeAlert]):
     Table Change Alert Admin
     """
 
-    list_display = (
-        "name",
-        "table",
-    )
+    list_display = ("name", "table", "source", "topic")
 
-    list_filter = ("name",)
-    search_fields = ("name",)
+    list_filter = ("name", "source", "topic", "table")
+    search_fields = ("name", "source", "topic", "table")
 
 
 class NotificationSettingStackedInline(
@@ -204,10 +178,7 @@ class NotificationTypeAdmin(GenericAdmin[models.NotificationType]):
     Notification Setting Admin
     """
 
-    list_display = (
-        "name",
-        "description",
-    )
+    list_display = ("name", "description")
 
     list_filter = ("name",)
     search_fields = ("name",)

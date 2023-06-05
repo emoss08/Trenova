@@ -14,13 +14,20 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.db.models import (
+    BooleanField,
+    Case,
+    Exists,
+    OuterRef,
+    Prefetch,
+    QuerySet,
+    Value,
+    When,
+)
 from rest_framework import permissions, viewsets
 
 from movements.models import Movement
 from order import models, serializers
-from django.db.models import Prefetch, Case, When, Value, BooleanField, Exists, OuterRef
-
-from django.db.models import QuerySet, Prefetch
 
 
 class OrderControlViewSet(viewsets.ModelViewSet):
