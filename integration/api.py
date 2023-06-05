@@ -15,8 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from integration import models, serializers
 from rest_framework import viewsets
+
+from integration import models, serializers
 
 
 class IntegrationVendorViewSet(viewsets.ModelViewSet):

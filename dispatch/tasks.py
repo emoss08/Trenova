@@ -22,7 +22,7 @@ from django.core.mail import EmailMessage
 
 from core.exceptions import ServiceException
 from dispatch import selectors
-from organization.models import NotificationType, NotificationSetting
+from organization.models import NotificationSetting, NotificationType
 from organization.utils import send_email_using_profile
 
 if TYPE_CHECKING:

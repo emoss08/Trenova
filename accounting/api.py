@@ -17,9 +17,9 @@
 
 
 from django.db.models import QuerySet
+from rest_framework import viewsets
 
 from accounting import models, serializers
-from rest_framework import viewsets
 
 
 class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
