@@ -90,8 +90,8 @@ def create_trigger_based_on_db_action(
 
     Raises:
         ValueError: If an invalid database action is specified in `instance`.
-
     """
+
     trigger_actions = {
         "INSERT": create_insert_trigger,
         "UPDATE": create_update_trigger,
@@ -105,7 +105,7 @@ def create_trigger_based_on_db_action(
     if action is None:
         raise ValueError(f"Invalid database action: {instance.database_action}")
     else:
-        action(
+        action(  # type: ignore
             trigger_name=instance.trigger_name,
             function_name=instance.function_name,
             listener_name=instance.listener_name,
@@ -127,8 +127,8 @@ def drop_trigger_and_create(*, instance: TableChangeAlert) -> None:
 
     Returns:
         None: This function has no return value.
-
     """
+
     trigger_exists = check_trigger_exists(
         table_name=instance.table, trigger_name=instance.trigger_name
     )

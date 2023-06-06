@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from __future__ import annotations
-
 import concurrent
 import json
 import logging
@@ -44,6 +43,20 @@ logger = logging.getLogger("kafka")
 
 
 class KafkaListener:
+    """`KafkaListener` is a class that provides functionality to listen to specific Kafka topics
+    and process their messages accordingly. It is primarily responsible for handling table change alerts.
+
+    Class Attributes:
+        KAFKA_HOST (str): The hostname or IP address of the Kafka service to connect to.
+        KAFKA_PORT (str): The port number on which the Kafka service is running.
+        KAFKA_GROUP_ID (str): The unique group identifier for this Kafka consumer instance.
+        ALERT_UPDATE_TOPIC (str): The Kafka topic that this listener instance subscribes to for alert updates.
+        POLL_TIMEOUT (float): The time in seconds that the listener should wait for a response from the Kafka service.
+        NO_ALERTS_MSG (str): The default message to display when there are no active alerts.
+        running (bool): A flag that indicates whether the listener instance is currently running.
+        MAX_CONCURRENT_JOBS (int): The maximum number of jobs that this listener instance can process concurrently.
+    """
+
     KAFKA_HOST = env("KAFKA_HOST")
     KAFKA_PORT = env("KAFKA_PORT")
     KAFKA_GROUP_ID = env("KAFKA_GROUP_ID")
@@ -56,15 +69,39 @@ class KafkaListener:
     # TODO(Wolfred): Replace all prints with SSE or websockets. Still haven't decided.
 
     def __repr__(self) -> str:
+        """A built-in function that provides a string representation of the KafkaListener instance.
+
+        Returns:
+            str: The string representation includes the host, port, and group id of the Kafka consumer.
+        """
+
         return f"KafkaListener({self.KAFKA_HOST}, {self.KAFKA_PORT}, {self.KAFKA_GROUP_ID})"
 
     @classmethod
-    def _signal_handler(cls, signal: int, frame: types.FrameType | None) -> None:
+    def _signal_handler(cls, _signal: int, frame: types.FrameType | None) -> None:
+        """A signal handler method that sets the `running` attribute to False on receiving a termination signal,
+        thereby controlling the runtime of the listener.
+
+        Args:
+            _signal (int): The identification number of the received signal.
+            frame (types.FrameType | None): The current stack frame (relevant for traceback information).
+
+        Returns:
+            None: This function does not return anything.
+        """
+
         print("Signal received, shutting down...")
         cls.running = False
 
     @classmethod
     def _connect(cls) -> tuple[Consumer, Consumer] | None:
+        """A private method to establish a connection to the Kafka service.
+        In case of connection failure, it retries until the listener stops running or a connection is established.
+
+        Returns:
+            tuple[Consumer, Consumer] | None: Returns a tuple of Consumer instances if connection is successful, else None.
+        """
+
         config = {
             "bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS"),
             "group.id": env("KAFKA_GROUP_ID"),
@@ -89,12 +126,30 @@ class KafkaListener:
 
     @staticmethod
     def _get_topic_list() -> QuerySet | list:
+        """Fetches the list of currently active Kafka table change alerts from the database.
+
+        Returns:
+            QuerySet | list: Returns a QuerySet or list of active Kafka table change alerts.
+        """
+
         return selectors.get_active_kafka_table_change_alerts() or []
 
     @classmethod
     def _get_messages(
         cls, *, consumer: Consumer, timeout: float, max_messages: int = 100
     ) -> list[Message]:
+        """Consumes a batch of messages from the Kafka topic within the specified timeout.
+        It filters out messages that are None or contain errors.
+
+        Args:
+            consumer (Consumer): Kafka Consumer instance to consume messages.
+            timeout (float): Maximum time, in seconds, to block waiting for a message.
+            max_messages (int, optional): Maximum number of messages to return. Defaults to 100.
+
+        Returns:
+            list[Message]: List of valid Kafka Message instances.
+        """
+
         messages = consumer.consume(max_messages, timeout)
         valid_messages = []
         for message in messages:
@@ -108,6 +163,16 @@ class KafkaListener:
 
     @staticmethod
     def _parse_message(*, message: Message) -> dict[str, Any] | None:
+        """Parses the JSON payload of a Kafka message. In case the message value can't be decoded as JSON,
+        it logs an error message and returns None.
+
+        Args:
+            message (Message): Kafka Message instance to parse.
+
+        Returns:
+            dict[str, Any] | None: The parsed JSON data as dictionary if the message is valid, else None.
+        """
+
         message_value = message.value().decode("utf-8")
         try:
             data = json.loads(message_value)
@@ -118,6 +183,16 @@ class KafkaListener:
 
     @classmethod
     def _get_message(cls, *, consumer: Consumer, timeout: float) -> Message:
+        """Fetches a single message from the Kafka topic within the specified timeout.
+
+        Args:
+            consumer (Consumer): Kafka Consumer instance to consume the message.
+            timeout (float): Maximum time, in seconds, to block waiting for a message.
+
+        Returns:
+            Message: A Kafka Message instance.
+        """
+
         message = consumer.poll(timeout)
         if message is None:
             return None
@@ -133,6 +208,17 @@ class KafkaListener:
         data_consumer: Consumer,
         table_changes: QuerySet | list,
     ) -> None:
+        """Updates the subscription list of the Kafka Consumer to include the topics specified in the table_changes.
+        It unsubscribes from any topics not present in the table_changes.
+
+        Args:
+            data_consumer (Consumer): Kafka Consumer instance.
+            table_changes (QuerySet | list): A QuerySet or list containing the updated list of Kafka topics.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
         old_table_changes = {
             table_change.get_topic_display() for table_change in table_changes
         }
@@ -155,6 +241,15 @@ class KafkaListener:
 
     @staticmethod
     def _format_message(*, field_value_dict: dict) -> str:
+        """Formats the Kafka message fields and their corresponding values into a human-readable string.
+
+        Args:
+            field_value_dict (dict): Dictionary where keys are field names and values are corresponding field values.
+
+        Returns:
+            str: String representation of each field and its corresponding value, each on a new line.
+        """
+
         return "\n".join(
             f"Field: {field}, Value: {value}"
             for field, value in field_value_dict.items()
@@ -164,6 +259,14 @@ class KafkaListener:
     def _process_message(
         cls, *, data_message: Message, associated_table_change: models.TableChangeAlert
     ) -> None:
+        """Processes an individual message from a Kafka topic. If the operation type matches the alert criteria,
+        it sends an email to the designated recipients.
+
+        Args:
+            data_message (Message): Kafka Message instance to process.
+            associated_table_change (models.TableChangeAlert): The table change alert associated with the topic of the message.
+        """
+
         if not data_message.value():
             return
 
@@ -210,6 +313,14 @@ class KafkaListener:
 
     @classmethod
     def listen(cls) -> None:
+        """Initiates the Kafka listener. It establishes a connection to the Kafka service, subscribes to the necessary topics,
+        and begins processing messages. This method runs indefinitely until the listener receives a termination signal.
+        It also handles exceptions due to lost connection to the Kafka service by attempting to reconnect.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
         signal.signal(signal.SIGINT, cls._signal_handler)
         signal.signal(signal.SIGTERM, cls._signal_handler)
         consumers = cls._connect()
