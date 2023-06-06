@@ -60,11 +60,12 @@ class PSQLListener:
         with conn.cursor() as cur:
             # Check if the function exists
             cur.execute(
-                f"""
+                """
                 SELECT 1
                 FROM pg_proc
-                WHERE proname = '{trigger_function_name}';
-            """
+                WHERE proname = %s;
+            """,
+                (trigger_function_name,),
             )
             function_exists = cur.fetchone()
 
@@ -85,11 +86,12 @@ class PSQLListener:
 
             # Check if the trigger exists
             cur.execute(
-                f"""
+                """
                 SELECT 1
                 FROM pg_trigger
-                WHERE tgname = '{trigger_name}';
-            """
+                WHERE tgname = %s;
+            """,
+                (trigger_name,),
             )
             trigger_exists = cur.fetchone()
 
@@ -149,10 +151,10 @@ class PSQLListener:
 
         with conn.cursor() as cur:
             for change in table_changes:
-                cur.execute(f"LISTEN {change.listener_name};")
+                cur.execute("LISTEN %s;", (change.listener_name,))
                 print(f"Listening to channel: {change.listener_name}")
 
-            cur.execute(f"LISTEN {table_change_alert_channel};")
+            cur.execute("LISTEN %s;", (table_change_alert_channel,))
             print(f"Listening to channel: {table_change_alert_channel}")
 
             while True:
@@ -169,9 +171,9 @@ class PSQLListener:
                             cur.execute("UNLISTEN *;")
                             print("Restarting listener due to new TableChangeAlert...")
                             for change in table_changes:
-                                cur.execute(f"LISTEN {change.listener_name};")
+                                cur.execute("LISTEN %s;", (change.listener_name,))
                                 print(f"Listening to channel: {change.listener_name}")
 
-                            cur.execute(f"LISTEN {table_change_alert_channel};")
+                            cur.execute("LISTEN %s;", (table_change_alert_channel,))
                 else:
                     print("Timeout reached, no notifications received.")
