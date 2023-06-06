@@ -57,6 +57,7 @@ def delete_audit_log_records(self: "Task") -> str:
 
     return f"Successfully deleted audit log records. older than {formatted_date}."
 
+
 @shared_task(ignore_result=False)
 def add(x: int, y: int) -> int:
     return x + y

@@ -30,7 +30,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from core import utils, checks
+from core import checks, utils
 from organization import exceptions, models, selectors, serializers
 
 

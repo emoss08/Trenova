@@ -23,7 +23,6 @@ from timeit import default_timer as timer
 from celery.exceptions import TaskRevokedError, TimeoutError
 from django.conf import settings
 from django.core.cache import BaseCache, caches
-
 from django.core.files.base import ContentFile
 from django.core.files.storage import Storage, get_storage_class
 from django.db import DatabaseError, connections
