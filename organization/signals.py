@@ -17,7 +17,10 @@
 
 from typing import Any
 
-from django.dispatch import Signal
+from django.conf import settings
+from django.db import connections
+from django.db.models.signals import post_migrate
+from django.dispatch import Signal, receiver
 
 from billing.models import BillingControl
 from dispatch.models import DispatchControl
@@ -54,6 +57,9 @@ def create_dispatch_control(
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
 
     if created:
@@ -77,6 +83,9 @@ def create_order_control(
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if created:
         OrderControl.objects.create(organization=instance)
@@ -95,6 +104,9 @@ def create_route_control(
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if created:
         RouteControl.objects.create(organization=instance)
@@ -117,6 +129,9 @@ def create_billing_control(
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if created:
         BillingControl.objects.create(organization=instance)
@@ -139,6 +154,9 @@ def create_email_control(
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if created:
         EmailControl.objects.create(organization=instance)
@@ -161,6 +179,9 @@ def create_invoice_control(
         instance (models.Organization): The instance of the Organization model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if created:
         InvoiceControl.objects.create(organization=instance)
@@ -180,6 +201,9 @@ def create_depot_detail(
         instance (models.Depot): The instance of the Depot model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
     if created:
         models.DepotDetail.objects.create(
@@ -200,7 +224,13 @@ def save_trigger_name_requirements(
         sender (models.TableChangeAlert): The class of the sending instance.
         instance (models.TableChangeAlert): The instance of the TableChangeAlert model being saved.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
+    if instance.source == models.TableChangeAlert.SourceChoices.KAFKA:
+        return
+
     set_trigger_name_requirements(instance=instance)
 
 
@@ -221,8 +251,15 @@ def create_trigger_signal(
         instance (models.TableChangeAlert): The instance of the TableChangeAlert model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
-    if created:
+    if (
+        created
+        and instance.source == models.TableChangeAlert.SourceChoices.POSTGRES
+        and instance.table
+    ):
         create_trigger_based_on_db_action(
             instance=instance,
             organization_id=instance.organization_id,
@@ -241,7 +278,13 @@ def drop_trigger_and_function_signal(
         sender (models.TableChangeAlert): The class of the sending instance.
         instance (models.TableChangeAlert): The instance of the TableChangeAlert model being deleted.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
+    if instance.source == models.TableChangeAlert.SourceChoices.KAFKA:
+        return
+
     drop_trigger_and_function(
         trigger_name=instance.trigger_name,
         function_name=instance.function_name,
@@ -262,7 +305,12 @@ def delete_and_add_new_trigger(
         sender (models.TableChangeAlert): The class of the sending instance.
         instance (models.TableChangeAlert): The instance of the TableChangeAlert model being saved.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
+    if instance.source == models.TableChangeAlert.SourceChoices.KAFKA:
+        return
 
     try:
         old_instance = sender.objects.get(pk__exact=instance.pk)
@@ -287,7 +335,13 @@ def delete_and_recreate_trigger_and_function(
         sender (models.TableChangeAlert): The class of the sending instance.
         instance (models.TableChangeAlert): The instance of the TableChangeAlert model being saved.
         **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
     """
+    if instance.source == models.TableChangeAlert.SourceChoices.KAFKA:
+        return
+
     try:
         old_instance = sender.objects.get(pk__exact=instance.pk)
     except sender.DoesNotExist:
@@ -327,55 +381,48 @@ def create_notification_settings(
         )
 
 
-def create_equipment_manufacturers(
-    sender: models.Organization,
-    instance: models.Organization,
-    created: bool,
-    **kwargs: Any,
-) -> None:
-    if created:
-        manufacturers = [
-            {
-                "organization": instance,
-                "name": "Kenworth",
-                "description": "Kenworth is an American manufacturer of medium and heavy-duty Class 8 trucks.",
-            },
-            {
-                "organization": instance,
-                "name": "Ford",
-                "description": "Ford Motor Company, commonly known as Ford, is an American multinational automaker.",
-            },
-            {
-                "organization": instance,
-                "name": "Volvo",
-                "description": "The Volvo Group is a Swedish multinational manufacturing company.",
-            },
-            {
-                "organization": instance,
-                "name": "Peterbilt",
-                "description": "Peterbilt Motors Company is an American truck manufacturer.",
-            },
-            {
-                "organization": instance,
-                "name": "Freightliner",
-                "description": "Freightliner Trucks is an American truck manufacturer.",
-            },
-            {
-                "organization": instance,
-                "name": "Mack",
-                "description": "Mack Trucks is a truck-making company and a former manufacturer of buses and trolley buses.",
-            },
-            {
-                "organization": instance,
-                "name": "Isuzu",
-                "description": "Isuzu Motors Ltd. is a Japanese car, commercial vehicle and heavy truck manufacturing company.",
-            },
-            {
-                "organization": instance,
-                "name": "Navistar",
-                "description": "Navistar International Corporation is an American holding company that owns the manufacturer of International brand commercial trucks.",
-            },
-        ]
-        EquipmentManufacturer.objects.bulk_create(
-            [EquipmentManufacturer(**manufacturer) for manufacturer in manufacturers]
+@receiver(post_migrate)
+def set_replica_identity(sender: Any, **kwargs: Any) -> None:
+    """
+    Signal receiver function to set REPLICA IDENTITY FULL on all tables in a PostgreSQL database after a migration event.
+
+    In the context of logical decoding and change data capture, the REPLICA IDENTITY configuration of a table
+    determines what information is included in the WAL (Write-Ahead Log) for DELETE and UPDATE operations. The
+    FULL option specifies that the entire row should be logged.
+
+    This function is triggered after a Django migration event. It checks if the database engine of the migrated
+    database is PostgreSQL. If it is, for each table in the public schema that doesn't already have
+    REPLICA IDENTITY set to FULL, it will issue an ALTER TABLE statement to change the REPLICA IDENTITY setting to FULL.
+
+    This function makes use of the Django database connection and cursor to execute raw SQL commands. The function
+    gets the list of table names from the system catalog table, pg_class, and then loops over this list to execute
+    the ALTER TABLE command.
+
+    Args:
+        sender (Any): The signal sender.
+        **kwargs (Any): Additional keyword arguments. In this case, we're interested in 'using' which indicates
+                  the alias of the database on which the migration was performed.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    db_alias = kwargs["using"]
+    # Check if the database engine is Postgres
+    if "postgresql" in settings.DATABASES[db_alias]["ENGINE"]:
+        connection = connections[db_alias]
+        cursor = connection.cursor()
+
+        # get all table names where replica identity is not full
+        cursor.execute(
+            """
+            SELECT c.relname 
+            FROM pg_catalog.pg_class c 
+            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relreplident != 'f'
+        """
         )
+        table_names = [row[0] for row in cursor.fetchall()]
+
+        # set REPLICA IDENTITY FULL for each table
+        for table_name in table_names:
+            cursor.execute(f'ALTER TABLE "{table_name}" REPLICA IDENTITY FULL;')
