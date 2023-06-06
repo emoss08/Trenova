@@ -24,7 +24,6 @@ from django.dispatch import Signal, receiver
 
 from billing.models import BillingControl
 from dispatch.models import DispatchControl
-from equipment.models import EquipmentManufacturer
 from invoicing.models import InvoiceControl
 from order.models import OrderControl
 from organization import models
