@@ -14,10 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import (
-    Prefetch,
-    QuerySet,
-)
+from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions, viewsets
 
 from movements.models import Movement

@@ -414,8 +414,8 @@ def set_replica_identity(sender: Any, **kwargs: Any) -> None:
         # get all table names where replica identity is not full
         cursor.execute(
             """
-            SELECT c.relname 
-            FROM pg_catalog.pg_class c 
+            SELECT c.relname
+            FROM pg_catalog.pg_class c
             JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
             WHERE c.relkind = 'r' AND n.nspname = 'public' AND c.relreplident != 'f'
         """

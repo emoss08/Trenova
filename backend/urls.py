@@ -316,7 +316,6 @@ urlpatterns = [
     path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
     path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),
     path("api/active_threads/", org_api.active_threads, name="active-threads"),
-    path("api/processes/", org_api.process_list, name="process_list"),
     path(
         "api/table_columns/",
         reports_api.TableColumnsAPIView.as_view(),

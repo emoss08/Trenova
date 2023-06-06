@@ -37,3 +37,4 @@ celerybeat-schedule
 /app_frontend/cypress.config.ts
 my_pypy_ven
 */migrations/*
+kafka_listener_pid.txt

@@ -21,8 +21,6 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
 
 # Check if running on pypy. If so, monkey patch psycopg2cffiq
 if sys.implementation.name == "pypy":
@@ -44,19 +42,19 @@ INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
 ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
 
 # Sentry Configuration
-sentry_sdk.init(
-    dsn=env("SENTRY_DSN"),
-    integrations=[
-        DjangoIntegration(),
-    ],
-    traces_sample_rate=1.0,
-    send_default_pii=True,
-    # To set a uniform sample rate
-    # Set profiles_sample_rate to 1.0 to profile 100%
-    # of sampled transactions.
-    # We recommend adjusting this value in production
-    profiles_sample_rate=1.0,
-)
+# sentry_sdk.init(
+#     dsn=env("SENTRY_DSN"),
+#     integrations=[
+#         DjangoIntegration(),
+#     ],
+#     traces_sample_rate=1.0,
+#     send_default_pii=True,
+#     # To set a uniform sample rate
+#     # Set profiles_sample_rate to 1.0 to profile 100%
+#     # of sampled transactions.
+#     # We recommend adjusting this value in production
+#     profiles_sample_rate=1.0,
+# )
 
 # Application definition
 INSTALLED_APPS = [
@@ -260,23 +258,46 @@ CACHES = {
 
 # Session Configurations
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "sessions"
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Strict"
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# SESSION_CACHE_ALIAS = "sessions"
+# SESSION_COOKIE_SECURE = True
+# SESSION_COOKIE_HTTPONLY = True
+# SESSION_COOKIE_SAMESITE = "Strict"
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # CSRF Configurations
-CSRF_COOKIE_SECURE = True
-
+# CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_HTTPONLY = True
 # Security Configurations
-SECURE_HSTS_SECONDS = 31536000
+# SECURE_HSTS_SECONDS = 31536000
 # SECURE_SSL_REDIRECT = True
-SECURE_HSTS_PRELOAD = True
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = "DENY"
+# SECURE_HSTS_PRELOAD = True
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_BROWSER_XSS_FILTER = True
+# SECURE_CONTENT_TYPE_NOSNIFF = True
+# X_FRAME_OPTIONS = "DENY"
+
+#
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "handlers": {
+#         "kafka_file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/kafka/listener.log",
+#             "when": "D",
+#             "interval": 1,  # 1 day
+#             "backupCount": 30,
+#         },
+#     },
+#     "loggers": {
+#         "kafka": {
+#             "handlers": ["kafka_file"],
+#             "level": "DEBUG",
+#             "propagate": True,
+#         },
+#     },
+# }
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {

@@ -27,9 +27,11 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
+
+from kafka.managers import KafkaManager
+
 from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
-from kafka.managers import KafkaManager
 
 kafka_manager = KafkaManager()
 AVAILABLE_TOPICS = kafka_manager.get_topics()
@@ -754,7 +756,8 @@ class TableChangeAlert(TimeStampedModel):
 
         INSERT = "INSERT", _("Insert")
         UPDATE = "UPDATE", _("Update")
-        BOTH = "BOTH", _("Both")
+        DELETE = "DELETE", _("Delete")
+        BOTH = "BOTH", _("Insert & Update")
 
     @final
     class SourceChoices(models.TextChoices):
@@ -829,7 +832,7 @@ class TableChangeAlert(TimeStampedModel):
     )
     topic = models.CharField(
         _("Topic"),
-        max_length=255,
+        max_length=150,
         choices=AVAILABLE_TOPICS,  # type: ignore
         help_text=_(
             "The topic that the table change alert will use. Usually the same as the table name."
@@ -922,24 +925,44 @@ class TableChangeAlert(TimeStampedModel):
         Returns:
             None: This function does not return anything.
         """
-        self.validate_alert()
-        super().clean()
 
-    def validate_alert(self):
-        """
-        Validate the table change alert based on source type
+        manager = KafkaManager()
 
-        Raises:
-            ValidationError: If required information based on source type is not provided.
-        """
         if self.source == self.SourceChoices.KAFKA and not self.topic:
             raise ValidationError(
-                {"topic": _("Topic is required when source is Kafka.")}
+                {"topic": _("Topic is required when source is Kafka.")}, code="invalid"
             )
         elif self.source == self.SourceChoices.POSTGRES and not self.table:
             raise ValidationError(
                 {"table": _("Table is required when source is Postgres.")},
+                code="invalid",
             )
+
+        if self.source == self.SourceChoices.KAFKA and not manager.is_kafka_available():
+            raise ValidationError(
+                {
+                    "source": _(
+                        f"Unable to connect to Kafka at {manager.kafka_host}:{manager.kafka_port}."
+                        f" Please check your connection and try again."
+                    )
+                },
+                code="invalid",
+            )
+
+        if (
+            self.database_action == self.DatabaseActionChoices.DELETE
+            and self.source != self.SourceChoices.KAFKA
+        ):
+            raise ValidationError(
+                {
+                    "database_action": _(
+                        "Database action can only be delete when source is Kafka."
+                        " Please change the source to Kafka and try again."
+                    )
+                },
+                code="invalid",
+            )
+        super().clean()
 
     def get_absolute_url(self) -> str:
         """TableChangeAlert absolute URL

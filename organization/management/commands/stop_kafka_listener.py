@@ -15,31 +15,25 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import psutil
+from typing import Any
+
+from django.core.management import BaseCommand
 
 
-def get_running_processes():
-    process_list = []
-    for proc in psutil.process_iter(
-        [
-            "pid",
-            "name",
-            "cmdline",
-            "username",
-            "status",
-            "cpu_percent",
-            "memory_percent",
-        ]
-    ):
-        # Obtain a list of open files and connections
-        try:
-            proc.info["open_files"] = proc.open_files()
-            proc.info["connections"] = proc.connections()
-        except psutil.AccessDenied:
-            # If access is denied to these details, set them to None
-            proc.info["open_files"] = None
-            proc.info["connections"] = None
+class Command(BaseCommand):
+    help = "Stop the Kafka Listner Process"
 
-        process_list.append(proc.info)
+    def handle(self, *args: Any, **options: Any):
+        # Read the PID from the file
+        with open("kafka_listener_pid.txt") as f:
+            pid = int(f.read())
 
-    return process_list
+        # Kill the process
+        import os
+
+        os.kill(pid, 9)
+
+        # Delete the file
+        import os
+
+        os.remove("kafka_listener_pid.txt")

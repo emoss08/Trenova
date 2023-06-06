@@ -93,32 +93,31 @@ class KafkaManager:
             None: This function does not return anything.
         """
         with contextlib.suppress(Exception):
-            self._close_consumer()
+            self.close_consumer()
 
-    @staticmethod
-    def _is_kafka_available(*, host: str, port: int, timeout: int = 5) -> bool:
+    def is_kafka_available(self, *, timeout: int = 5) -> bool:
         """Checks if the Kafka server is available.
 
         This method tries to create a socket connection to the Kafka server with the given host and port.
         If the connection is successful, the Kafka server is considered available.
 
         Args:
-            host (str): The hostname of the Kafka server.
-            port (int): The port number of the Kafka server.
             timeout (int, optional): The maximum time to wait for a connection. Default is 5 seconds.
 
         Returns:
             bool: True if the Kafka server is available, False otherwise.
         """
         try:
-            sock = socket.create_connection((host, port), timeout=timeout)
+            sock = socket.create_connection(
+                (self.kafka_host, self.kafka_port), timeout=timeout
+            )
             sock.close()
             return True
         except OSError as err:
             rprint(f"[red]Kafka is not available: {err}[/]")
             return False
 
-    def _create_open_consumer(self) -> Consumer:
+    def create_open_consumer(self) -> Consumer:
         """Creates and opens a Kafka consumer.
 
         This method tries to create a Kafka consumer with the consumer configuration provided
@@ -133,7 +132,7 @@ class KafkaManager:
             rprint(f"[red]Failed to create Kafka consumer: {ke}[/]")
             self.consumer = None
 
-    def _get_available_topics(self) -> list[tuple]:
+    def get_available_topics(self) -> list[tuple]:
         """Fetches the list of available topics from the Kafka server.
 
         If the consumer is not available or the Kafka server is not available,
@@ -147,7 +146,7 @@ class KafkaManager:
         if self.consumer is None:
             return []
 
-        if not self._is_kafka_available(host=self.kafka_host, port=self.kafka_port):
+        if not self.is_kafka_available():
             return []
 
         try:
@@ -162,7 +161,7 @@ class KafkaManager:
             rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
             return []
 
-    def _close_consumer(self) -> None:
+    def close_consumer(self) -> None:
         """Closes the Kafka consumer.
 
         If a consumer has been created and opened, this method closes the consumer.
@@ -184,13 +183,13 @@ class KafkaManager:
         """
         try:
             # Create consumer
-            self._create_open_consumer()
+            self.create_open_consumer()
 
             # Get available topics
-            topics = self._get_available_topics()
+            topics = self.get_available_topics()
 
             # Close consumer after fetching metadata
-            self._close_consumer()
+            self.close_consumer()
 
             return topics
         except KafkaException as ke:

@@ -30,7 +30,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from core import checks, utils
+from core import checks
 from organization import exceptions, models, selectors, serializers
 
 
@@ -589,20 +589,3 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
             "custom_subject",
         )
         return queryset
-
-
-@api_view(["GET"])
-def process_list(request: Request) -> Response:
-    queryset = utils.get_running_processes()
-    pid = request.query_params.get("pid", None)
-    name = request.query_params.get("name", None)
-    username = request.query_params.get("username", None)
-
-    if pid is not None:
-        queryset = [proc for proc in queryset if proc["pid"] == int(pid)]
-    if name is not None:
-        queryset = [proc for proc in queryset if proc["name"] == name]
-    if username is not None:
-        queryset = [proc for proc in queryset if proc["username"] == username]
-
-    return Response(queryset)
