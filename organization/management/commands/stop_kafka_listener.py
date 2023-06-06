@@ -14,14 +14,26 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from typing import Any
 
 from django.core.management import BaseCommand
 
-from kafka import services
-
 
 class Command(BaseCommand):
+    help = "Stop the Kafka Listner Process"
+
     def handle(self, *args: Any, **options: Any):
-        listener = services.KafkaListener()
-        listener.listen()
+        # Read the PID from the file
+        with open("kafka_listener_pid.txt") as f:
+            pid = int(f.read())
+
+        # Kill the process
+        import os
+
+        os.kill(pid, 9)
+
+        # Delete the file
+        import os
+
+        os.remove("kafka_listener_pid.txt")

@@ -16,12 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 
+from kafka.managers import KafkaManager
 from organization import factories, models
 from organization.models import TableChangeAlert
 from organization.services.psql_triggers import (
@@ -35,8 +36,10 @@ pytestmark = pytest.mark.django_db
 
 
 def test_create_table_charge_alert(organization: models.Organization) -> None:
-    """
-    Tests the creation a table charge alert.
+    """Tests the creation a table charge alert.
+
+    Returns:
+        None: This function does not return anything.
     """
     table_charge = models.TableChangeAlert.objects.create(
         organization=organization,
@@ -57,9 +60,11 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
 
 
 def test_table_change_insert_database_action_save() -> None:
-    """
-    Tests the creation of a table change alert with INSERT Action adds the proper function,
+    """Tests the creation of a table change alert with INSERT Action adds the proper function,
     trigger, and listener name.
+
+    Returns:
+        None: This function does not return anything.
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
@@ -69,9 +74,11 @@ def test_table_change_insert_database_action_save() -> None:
 
 
 def test_table_change_insert_adds_insert_trigger() -> None:
-    """
-    Tests that the insert trigger is added to the database when a table change alert is created
+    """Tests that the insert trigger is added to the database when a table change alert is created
     with INSERT action.
+
+    Returns:
+        None: This function does not return anything.
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
@@ -87,6 +94,9 @@ def test_table_change_insert_adds_insert_trigger() -> None:
 def test_delete_table_change_removes_trigger() -> None:
     """
     Tests that the trigger is removed from the database when a table change alert is deleted.
+
+    Returns:
+        None: This function does not return anything.
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
@@ -109,9 +119,11 @@ def test_delete_table_change_removes_trigger() -> None:
 
 
 def test_table_change_database_action_update() -> None:
-    """
-    Test changing the database action removes and adds the proper function, trigger, and listener
+    """Test changing the database action removes and adds the proper function, trigger, and listener
     names.
+
+    Returns:
+        None: This function does not return anything.
     """
     table_change = factories.TableChangeAlertFactory(database_action="INSERT")
 
@@ -128,6 +140,11 @@ def test_table_change_database_action_update() -> None:
 
 
 def test_command() -> None:
+    """Tests that the psql_listener command runs successfully.
+
+    Returns:
+        None: This function does not return anything.
+    """
     with patch("psycopg2.connect"), patch(
         "django.core.management.color.supports_color", return_value=False
     ):
@@ -137,7 +154,15 @@ def test_command() -> None:
 
 
 @patch("organization.tasks.call_command")
-def test_table_change_alerts_success(mock_call_command) -> None:
+def test_table_change_alerts_success(mock_call_command: Mock) -> None:
+    """Tests that the table_change_alerts task calls the psql_listener command.
+
+    Args:
+        mock_call_command (Mock): Mock of the call_command function.
+
+    Returns:
+        None: This function does not return anything.
+    """
     table_change_alerts()
     mock_call_command.assert_called_once_with("psql_listener")
 
@@ -146,7 +171,7 @@ def test_save_table_change_alert_kafka_without_topic(
     organization: models.Organization,
 ) -> None:
     """Tests that a ValidationError is raised when trying to save a TableChangeAlert with source as
-    Kafka but no topic.
+    ``Kafka`` but no topic.
 
     Returns:
         None: This function does not return anything.
@@ -156,7 +181,7 @@ def test_save_table_change_alert_kafka_without_topic(
 
     # Expect a ValidationError when trying to save
     with pytest.raises(ValidationError) as excinfo:
-        kafka_alert.save()
+        kafka_alert.clean()
 
     # Check if the error message is correct
     assert excinfo.value.message_dict["topic"] == [
@@ -170,17 +195,82 @@ def test_save_table_change_alert_postgres_without_table(
     """Tests that a ValidationError is raised when trying to save a TableChangeAlert with source as
     Postgres but no table.
 
+    Args:
+        organization (models.Organization); Organization instance.
+
     Returns:
         None: This function does not return anything.
     """
     # Create a TableChangeAlert instance with source as Postgres but no table
-    alert = TableChangeAlert(source=TableChangeAlert.SourceChoices.POSTGRES)
+    alert = TableChangeAlert(
+        organization=organization,
+        source=TableChangeAlert.SourceChoices.POSTGRES,
+    )
 
     # Expect a ValidationError when trying to save
     with pytest.raises(ValidationError) as excinfo:
-        alert.save()
+        alert.clean()
 
     # Check if the error message is correct
     assert excinfo.value.message_dict["table"] == [
         "Table is required when source is Postgres."
+    ]
+
+
+def test_cannot_save_if_kafka_offline(organization: models.Organization) -> None:
+    """Test validationError is thrown if source is ``KAFKA`` and Kafka is offline.
+
+    Args:
+        organization (models.Organization): Organization instance.
+
+    Returns:
+        None: This function does not return anything.
+
+    Notes:
+        This test requires Kafka to be offline. If Kafka is online, this test will fail.
+    """
+
+    manager = KafkaManager()
+
+    if manager.is_kafka_available():
+        pytest.skip("Kafka is online. Skipping test.")
+
+    alert = TableChangeAlert(
+        organization=organization,
+        source=TableChangeAlert.SourceChoices.KAFKA,
+        topic="test",
+    )
+
+    with pytest.raises(ValidationError) as excinfo:
+        alert.clean()
+
+    assert excinfo.value.message_dict["source"] == [
+        f"Unable to connect to Kafka at {manager.kafka_host}:{manager.kafka_port}. Please check your connection and try again."
+    ]
+
+
+def test_cannot_save_delete_if_source_not_kafka(
+    organization: models.Organization,
+) -> None:
+    """Test ValidationError is thrown if ``database_action`` is ``delete`` and source is not ``KAFKA``.
+
+    Args:
+        organization (models.Organization): Organization instance.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    alert = TableChangeAlert(
+        organization=organization,
+        source=TableChangeAlert.SourceChoices.POSTGRES,
+        table=TABLE_NAME_CHOICES[0][0],
+        database_action=TableChangeAlert.DatabaseActionChoices.DELETE,
+    )
+    with pytest.raises(ValidationError) as excinfo:
+        alert.clean()
+
+    assert excinfo.value.message_dict["database_action"] == [
+        "Database action can only be delete when source is Kafka."
+        " Please change the source to Kafka and try again."
     ]

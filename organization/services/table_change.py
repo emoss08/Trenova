@@ -105,7 +105,7 @@ def create_trigger_based_on_db_action(
     if action is None:
         raise ValueError(f"Invalid database action: {instance.database_action}")
     else:
-        action(  # type: ignore
+        action(
             trigger_name=instance.trigger_name,
             function_name=instance.function_name,
             listener_name=instance.listener_name,
