@@ -46,7 +46,9 @@ def run_test(test, data):
     end: float = time.time()
     elapsed_time: float = end - start
     ops_per_sec: float = ops / elapsed_time
-    total_ops: int = len(data) * 2  # assuming each test does one operation per item in data
+    total_ops: int = (
+        len(data) * 2
+    )  # assuming each test does one operation per item in data
     print(
         f"{test.__name__} elapsed time: {elapsed_time:.4f} seconds, {ops} ops, {ops_per_sec:.2f} ops/sec, {total_ops} total ops"
     )
