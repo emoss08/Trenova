@@ -276,27 +276,28 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 # SECURE_CONTENT_TYPE_NOSNIFF = True
 # X_FRAME_OPTIONS = "DENY"
 
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "kafka_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/kafka/listener.log",
-            "when": "D",
-            "interval": 1,  # 1 day
-            "backupCount": 30,
-        },
-    },
-    "loggers": {
-        "kafka": {
-            "handlers": ["kafka_file"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-    },
-}
+#
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "handlers": {
+#         "kafka_file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/kafka/listener.log",
+#             "when": "D",
+#             "interval": 1,  # 1 day
+#             "backupCount": 30,
+#         },
+#     },
+#     "loggers": {
+#         "kafka": {
+#             "handlers": ["kafka_file"],
+#             "level": "DEBUG",
+#             "propagate": True,
+#         },
+#     },
+# }
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
