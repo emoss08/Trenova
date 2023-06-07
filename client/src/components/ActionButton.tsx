@@ -33,7 +33,10 @@ const useStyles = createStyles((theme) => ({
           : theme.colors.gray[9],
     },
     "&:hover svg": {
-      color: theme.colors.gray[0],
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[0]
+          : theme.colors.gray[7],
     },
   },
 }));
