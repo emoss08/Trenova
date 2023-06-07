@@ -23,6 +23,7 @@ import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
 import UserProfileDetails from "@/components/users/UserProfileDetails";
 import EditUserProfileDetails from "@/components/users/EditUserProfileDetails";
 import { Skeleton, Stack } from "@mantine/core";
+import { SignInMethod } from "@/components/users/SignInMethod";
 
 const UserSettings: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -63,6 +64,7 @@ const UserSettings: React.FC = () => {
           <Stack>
             <UserProfileDetails user={userDetails} jobTitle={jobTitleData} />
             <EditUserProfileDetails user={userDetails} />
+            <SignInMethod user={userDetails} />
           </Stack>
         </>
       )}
