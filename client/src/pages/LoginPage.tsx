@@ -18,8 +18,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
-import { useErrorStore } from "@/stores/errorStore";
-import { Loader2 } from "lucide-react";
 import { useUserStore } from "@/stores/userStore";
 import {
   Anchor,
@@ -78,7 +76,6 @@ const LoginPage: React.FC = () => {
       });
 
       setUserInfo(response.data);
-      // localStorage.setItem("mt_user_info", JSON.stringify(response.data));
       setIsAuthenticated(true);
       setUser(response.data);
     } catch (error: any) {
