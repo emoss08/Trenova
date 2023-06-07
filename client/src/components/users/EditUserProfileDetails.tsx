@@ -28,15 +28,26 @@ import {
   Group,
   Divider,
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { useForm, yupResolver } from "@mantine/form";
 import { StateSelect } from "../ui/StateSelect";
+import * as Yup from "yup";
+import { useMutation, useQueryClient } from "react-query";
+import axios from "@/lib/axiosConfig";
+import { useErrorStore } from "@/stores/errorStore";
+import { notifications } from "@mantine/notifications";
+import { faCheck, faCircleCheck } from "@fortawesome/pro-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 type Props = {
   user: User;
 };
 
 interface FormValues {
+  id: string;
+  username: string;
+  email: string;
   profile: {
+    organization: string;
     first_name: string;
     last_name: string;
     address_line_1: string;
@@ -45,7 +56,6 @@ interface FormValues {
     state: string;
     zip_code: string;
     phone_number?: string;
-    profile_picture: string;
   };
 }
 
@@ -122,10 +132,60 @@ const useStyles = createStyles((theme) => {
 
 const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
   const { classes } = useStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const { errorMessages, setErrorMessages } = useErrorStore();
+
+  const schema = Yup.object().shape({
+    profile: Yup.object().shape({
+      first_name: Yup.string().required("First name is required"),
+      last_name: Yup.string().required("Last name is required"),
+      address_line_1: Yup.string().required("Address Line 1 is required"),
+      city: Yup.string().required("City is required"),
+      state: Yup.string().required("State is required"),
+      zip_code: Yup.string().required("Zip Code is required"),
+      phone_number: Yup.string().matches(
+        /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
+        "Invalid phone number format"
+      ),
+    }),
+  });
+
+  const mutation = useMutation(
+    (values: FormValues) => axios.put(`/users/${values.id}/`, values),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries("users");
+        notifications.show({
+          title: "Success",
+          message: "User profile updated",
+          color: "green",
+          withCloseButton: true,
+          icon: <FontAwesomeIcon icon={faCheck} />,
+        });
+      },
+      onError: (error: any) => {
+        setErrorMessages(error.response.data);
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    }
+  );
+
+  const submitForm = (values: FormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
 
   const form = useForm<FormValues>({
+    validate: yupResolver(schema),
     initialValues: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
       profile: {
+        organization: user.profile?.organization || "",
         first_name: user.profile?.first_name || "",
         last_name: user.profile?.last_name || "",
         address_line_1: user.profile?.address_line_1 || "",
@@ -134,7 +194,6 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
         state: user.profile?.state || "",
         zip_code: user.profile?.zip_code || "",
         phone_number: user.profile?.phone_number || "",
-        profile_picture: user.profile?.profile_picture || "",
       },
     },
   });
@@ -145,7 +204,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
         <Card className={classes.card} withBorder>
           <form
             className={classes.form}
-            onSubmit={(event) => event.preventDefault()}
+            onSubmit={form.onSubmit((values) => submitForm(values))}
           >
             <Text fz="xl" fw={700} className={classes.text}>
               Profile Details
@@ -160,7 +219,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   label="First Name"
                   placeholder="First Name"
                   variant="filled"
-                  required
+                  withAsterisk
                   {...form.getInputProps("profile.first_name")}
                 />
                 <TextInput
@@ -168,7 +227,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   label="Last Name"
                   placeholder="Last Name"
                   variant="filled"
-                  required
+                  withAsterisk
                   {...form.getInputProps("profile.last_name")}
                 />
               </SimpleGrid>
@@ -178,7 +237,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   label="Address Line 1"
                   placeholder="Address Line 1"
                   variant="filled"
-                  required
+                  withAsterisk
                   {...form.getInputProps("profile.address_line_1")}
                 />
                 <TextInput
@@ -195,7 +254,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   label="City"
                   placeholder="City"
                   variant="filled"
-                  required
+                  withAsterisk
                   {...form.getInputProps("profile.city")}
                 />
                 <StateSelect
@@ -213,10 +272,24 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                 label="Zip Code"
                 placeholder="Zip Code"
                 variant="filled"
+                withAsterisk
                 {...form.getInputProps("profile.zip_code")}
               />
+              <TextInput
+                className={classes.field}
+                label="Phone Number"
+                placeholder="Phone Number"
+                variant="filled"
+                withAsterisk
+                {...form.getInputProps("profile.phone_number")}
+              />
               <Group position="right" mt="md">
-                <Button color="white" type="submit" className={classes.control}>
+                <Button
+                  color="white"
+                  type="submit"
+                  className={classes.control}
+                  loading={loading}
+                >
                   Submit
                 </Button>
               </Group>
