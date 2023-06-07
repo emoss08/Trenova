@@ -20,8 +20,8 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "react-query";
 import App from "./App";
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer } from "react-toastify";
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,18 +33,6 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <ToastContainer
-      position="top-right"
-      autoClose={5000}
-      hideProgressBar={false}
-      newestOnTop
-      closeOnClick
-      rtl={false}
-      pauseOnFocusLoss={false}
-      draggable
-      pauseOnHover={false}
-      theme="light"
-    />
     <MantineProvider
       theme={{
         colorScheme: "dark",
@@ -53,6 +41,8 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
       withNormalizeCSS
       withCSSVariables
     >
+      <Notifications limit={5} position="top-right" zIndex={2077} />
+
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
