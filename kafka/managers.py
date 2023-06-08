@@ -17,12 +17,11 @@
 
 from __future__ import annotations
 
-import contextlib
 import os
 import socket
 from pathlib import Path
 
-from confluent_kafka import Consumer, KafkaException
+from confluent_kafka import KafkaException, admin
 from environ import environ
 from rich import print as rprint
 
@@ -68,15 +67,11 @@ class KafkaManager:
         if self.__initialized:
             return
         self.__initialized = True
-
-        self.consumer_conf = {
-            "bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS"),
-            "group.id": env("KAFKA_GROUP_ID"),
-            "auto.offset.reset": "latest",
-        }
         self.kafka_host = env("KAFKA_HOST")
         self.kafka_port = env("KAFKA_PORT")
-        self.consumer = None
+        self.admin_client = admin.AdminClient(
+            {"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")}
+        )
 
     def __str__(self) -> str:
         """Returns the string representation of the KafkaManager instance.
@@ -84,16 +79,7 @@ class KafkaManager:
         Returns:
             str: The string representation of the KafkaManager instance.
         """
-        return f"KafkaManager(bootstrap_servers={self.consumer_conf['bootstrap.servers']}, group_id={self.consumer_conf['group.id']})"
-
-    def __del__(self) -> None:
-        """Destructor for the KafkaManager class.
-
-        Returns:
-            None: This function does not return anything.
-        """
-        with contextlib.suppress(Exception):
-            self.close_consumer()
+        return f"KafkaManager(bootstrap_servers={env('KAFKA_BOOTSTRAP_SERVERS')})"
 
     def is_kafka_available(self, *, timeout: int = 5) -> bool:
         """Checks if the Kafka server is available.
@@ -117,25 +103,10 @@ class KafkaManager:
             rprint(f"[red]Kafka is not available: {err}[/]")
             return False
 
-    def create_open_consumer(self) -> Consumer:
-        """Creates and opens a Kafka consumer.
-
-        This method tries to create a Kafka consumer with the consumer configuration provided
-        during initialization. If successful, the consumer is stored in the instance variable `self.consumer`.
-
-        Returns:
-            Consumer: The Kafka consumer.
-        """
-        try:
-            self.consumer = Consumer(self.consumer_conf)
-        except KafkaException as ke:
-            rprint(f"[red]Failed to create Kafka consumer: {ke}[/]")
-            self.consumer = None
-
     def get_available_topics(self) -> list[tuple]:
         """Fetches the list of available topics from the Kafka server.
 
-        If the consumer is not available or the Kafka server is not available,
+        If the ``admin_client`` is not available or the Kafka server is not available,
         this method returns an empty list. Otherwise, it fetches the metadata from the
         Kafka server, extracts the topic names, and returns them as a list of tuples
         for use in Django choices.
@@ -143,55 +114,125 @@ class KafkaManager:
         Returns:
             list[tuple]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
-        if self.consumer is None:
+        if self.admin_client is None:
             return []
 
         if not self.is_kafka_available():
             return []
 
         try:
-            # set timeout for metadata fetch, e.g., 5 seconds
-            cluster_metadata = self.consumer.list_topics()
-
-            topics = cluster_metadata.topics
-
-            # Create 2-tuples for Django choices
-            return [(topic, topic) for topic in topics.keys()]
+            topic_metadata = self.admin_client.list_topics(timeout=5)
+            return [
+                (topic, topic)
+                for topic in list(topic_metadata.topics.keys())
+                if not topic.startswith("__")
+            ]
         except KafkaException as ke:
             rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
             return []
 
-    def close_consumer(self) -> None:
-        """Closes the Kafka consumer.
+    def create_topic(
+        self, topic: str, num_partitions: int, replication_factor: int
+    ) -> None:
+        """Creates a new Kafka topic.
 
-        If a consumer has been created and opened, this method closes the consumer.
+        Args:
+            topic (str): The name of the topic to be created.
+            num_partitions (int): The number of partitions for the new topic.
+            replication_factor (int): The replication factor for the new topic.
 
         Returns:
             None: This function does not return anything.
         """
-        if self.consumer is not None:
-            self.consumer.close()
+        new_topic = admin.NewTopic(topic, num_partitions, replication_factor)
+        self.admin_client.create_topics([new_topic])
 
-    def get_topics(self) -> list[tuple] | list:
-        """Creates a Kafka consumer, fetches available topics, and then closes the consumer.
+    def delete_topic(self, topic: str) -> None:
+        """Deletes the specified Kafka topic.
 
-        This method handles the overall process of fetching available topics from the Kafka server.
-        If any step fails, it returns an empty list.
+        Args:
+            topic (str): The name of the topic to be deleted.
 
         Returns:
-            list[tuple] | list: A list of tuples with available topics from the Kafka server, or an empty list in case of failure.
+            None: This function does not return anything.
         """
-        try:
-            # Create consumer
-            self.create_open_consumer()
+        self.admin_client.delete_topics([topic])
 
-            # Get available topics
-            topics = self.get_available_topics()
+    def increase_topic_partitions(self, topic: str, new_partitions: int) -> None:
+        """Increases the number of partitions for the specified Kafka topic.
 
-            # Close consumer after fetching metadata
-            self.close_consumer()
+        Args:
+            topic (str): The name of the topic.
+            new_partitions (int): The new total number of partitions for the topic.
 
-            return topics
-        except KafkaException as ke:
-            rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
-            return []
+        Returns:
+            None: This function does not return anything.
+        """
+        new_partitions = admin.NewPartitions(topic, new_partitions)
+        self.admin_client.create_partitions([new_partitions])
+
+    def list_consumer_groups(self) -> list[str]:
+        """Lists all consumer group IDs.
+
+        Returns:
+            list[str]: A list of all consumer group IDs.
+        """
+        return list(self.admin_client.list_groups().groups.keys())
+
+    def describe_topic(self, topic_name: str) -> dict[str, str]:
+        """Describe a specific topic's configuration.
+
+        Args:
+            topic_name (str): The name of the topic.
+
+        Returns:
+            dict[str, str]: A dictionary representing the configuration of the topic.
+        """
+        resource = admin.ConfigResource(admin.ResourceType.TOPIC, topic_name)
+        config = self.admin_client.describe_configs([resource])
+        return {
+            config_entry[0]: config_entry[1].value
+            for config_entry in config[topic_name].items()
+        }
+
+    def alter_topic_config(self, topic_name: str, config_dict: dict[str, str]) -> None:
+        """Alter the configuration of a topic.
+
+        Args:
+            topic_name (str): The name of the topic.
+            config_dict (Dict[str, str]): A dictionary representing the new configuration of the topic.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        resource = admin.ConfigResource(admin.ResourceType.TOPIC, topic_name)
+        entries = {
+            key: admin.NewPartitions(value) for key, value in config_dict.items()
+        }
+        self.admin_client.alter_configs({resource: entries})
+
+    def describe_consumer_group(self, group_id: str) -> dict[str, str]:
+        """Describe a specific consumer group.
+
+        Args:
+            group_id (str): The id of the consumer group.
+
+        Returns:
+            dict[str, str]: A dictionary representing the configuration of the consumer group.
+        """
+        group_description = self.admin_client.list_groups([group_id]).groups[group_id]
+        return {
+            "state": group_description.state,
+            "protocol_type": group_description.protocol_type,
+            "protocol": group_description.protocol,
+            "members": [
+                {
+                    "id": member.id,
+                    "client_id": member.client_id,
+                    "client_host": member.client_host,
+                    "member_metadata": member.member_metadata,
+                    "member_assignment": member.member_assignment,
+                }
+                for member in group_description.members
+            ],
+        }
