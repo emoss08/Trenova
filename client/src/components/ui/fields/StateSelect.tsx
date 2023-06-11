@@ -15,14 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 import React, { forwardRef } from "react";
-import { Text, Select, SelectProps } from "@mantine/core";
+import { Text, Select, SelectProps, createStyles } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
 interface StateProp {
   label: string;
   value: string;
 }
 
-const data: StateProp[] = [
+export const stateData: StateProp[] = [
   { label: "Alabama", value: "AL" },
   { label: "Alaska", value: "AK" },
   { label: "Arizona", value: "AZ" },
@@ -74,14 +75,24 @@ const data: StateProp[] = [
   { label: "Wisconsin", value: "WI" },
   { label: "Wyoming", value: "WY" },
 ];
+const useStyles = createStyles((theme) => {
+  return {
+    invalid: {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.fn.rgba(theme.colors.red[8], 0.15)
+          : theme.colors.red[0],
+    },
+    invalidIcon: {
+      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+    },
+  };
+});
 
-interface StateSelectProps extends Partial<SelectProps> {
-  formProps: any; // TODO: Find out what type this should be
-  label: string;
-  className: string;
-  variant: string;
-  required: boolean;
-  placeholder: string;
+interface StateSelectProps<TFormValues extends object>
+  extends Omit<SelectProps, "data"> {
+  form: any;
+  name: keyof TFormValues & string; // enforce 'name' to be a string type
   searchable: boolean;
 }
 
@@ -99,32 +110,41 @@ const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
   )
 );
 
-export const StateSelect = ({
-  formProps,
-  label,
-  className,
-  variant,
-  required,
-  placeholder,
+export const StateSelect = <StateFormValues extends object>({
+  form,
+  name,
   searchable,
-}: StateSelectProps) => {
+  ...rest
+}: StateSelectProps<StateFormValues>) => {
+  const { classes } = useStyles();
+  const error = form.errors[name as string];
+
   return (
     <>
       <Select
-        placeholder={placeholder}
-        className={className}
+        {...rest}
         itemComponent={SelectItem}
-        label={label}
-        required={required}
-        variant={variant}
-        data={data}
-        searchable={searchable}
+        data={stateData}
         maxDropdownHeight={200}
         nothingFound="Nothing found"
         filter={(value, item: any) =>
           item.label.toLowerCase().includes(value.toLowerCase().trim())
         }
-        {...formProps}
+        {...form.getInputProps(name)}
+        error={error}
+        searchable={searchable}
+        classNames={{
+          input: error ? classes.invalid : "",
+        }}
+        rightSection={
+          error && (
+            <IconAlertTriangle
+              stroke={1.5}
+              size="1.1rem"
+              className={classes.invalidIcon}
+            />
+          )
+        }
       />
     </>
   );

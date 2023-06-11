@@ -18,7 +18,6 @@
 import { JobTitle, User } from "@/types/user";
 import React from "react";
 import {
-  Avatar,
   Card,
   Container,
   createStyles,
@@ -33,6 +32,7 @@ import {
   faEnvelope,
   faMapPin,
 } from "@fortawesome/pro-duotone-svg-icons";
+import AvatarInput from "../ui/fields/AvatarInput";
 
 type Props = {
   user: User;
@@ -58,6 +58,11 @@ const useStyles = createStyles((theme) => ({
   },
   div: {
     display: "flex",
+    "&:hover": {
+      "& *": {
+        color: theme.colors.blue[6],
+      },
+    },
   },
   grid: {
     display: "flex",
@@ -72,8 +77,11 @@ const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
       <Flex>
         <Card className={classes.card} withBorder>
           <Container mx="xs" my="xs">
-            <SimpleGrid cols={2} className={classes.grid}>
-              <Avatar src={user.profile?.profile_picture} size={200} />
+            <SimpleGrid cols={3} className={classes.grid}>
+              <AvatarInput
+                defaultAvatar={user.profile?.profile_picture}
+                user={user}
+              />
               <Grid className={classes.grid}>
                 <Grid.Col>
                   <Flex direction="column" justify="start">
