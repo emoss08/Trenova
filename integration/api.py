@@ -21,11 +21,13 @@ from integration import models, serializers
 
 
 class IntegrationVendorViewSet(viewsets.ModelViewSet):
-    """A viewset for viewing and editing Integration Vendor information in the system.
+    """A viewset for viewing and editing Integration Vendor information in the
+    system.
 
-    This viewset provides default operations for creating, updating, and deleting Integration
-    Vendors, as well as listing and retrieving information. It uses the `IntegrationVendorSerializer`
-    class to convert the integration vendor instances to and from JSON-formatted data.
+    This viewset provides default operations for creating, updating, and
+    deleting Integration Vendors, as well as listing and retrieving
+    information. It uses the `IntegrationVendorSerializer` class to convert the
+    integration vendor instances to and from JSON-formatted data.
     """
 
     queryset = models.IntegrationVendor.objects.all()
@@ -35,9 +37,10 @@ class IntegrationVendorViewSet(viewsets.ModelViewSet):
 class IntegrationViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing integration information in the system.
 
-    The viewset provides default operations for creating, updating, and deleting customers,
-    as well as listing and retrieving integrations. It uses the `IntegrationSerializer`
-    class to convert the integration instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating, and
+    deleting customers, as well as listing and retrieving integrations. It uses
+    the `IntegrationSerializer` class to convert the integration instances to
+    and from JSON-formatted data.
     """
 
     queryset = models.Integration.objects.all()
@@ -47,11 +50,13 @@ class IntegrationViewSet(viewsets.ModelViewSet):
 class GoogleAPIViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing Google API keys in the system.
 
-    The viewset provides default operations for creating, updating, and deleting Google API keys,
-    as well as listing and retrieving Google API keys. It uses the `GoogleAPISerializer`
-    class to convert the Google API key instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating, and
+    deleting Google API keys, as well as listing and retrieving Google API
+    keys. It uses the `GoogleAPISerializer` class to convert the Google API key
+    instances to and from JSON-formatted data.
 
-    Only authenticated users and admins are allowed to access the views provided by this viewset.
+    Only authenticated users and admins are allowed to access the views
+    provided by this viewset.
     """
 
     queryset = models.GoogleAPI.objects.all()
