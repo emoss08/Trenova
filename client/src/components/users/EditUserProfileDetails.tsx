@@ -23,20 +23,20 @@ import {
   rem,
   Text,
   SimpleGrid,
-  TextInput,
   Button,
   Group,
   Divider,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
-import { StateSelect } from "../ui/StateSelect";
 import * as Yup from "yup";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/axiosConfig";
-import { useErrorStore } from "@/stores/errorStore";
 import { notifications } from "@mantine/notifications";
-import { faCheck, faCircleCheck } from "@fortawesome/pro-solid-svg-icons";
+import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ValidatedTextInput } from "../ui/fields/ValidatedTextInput";
+import { StateSelect } from "../ui/fields/StateSelect";
+import { CityAutoCompleteField } from "../ui/fields/CityAutoCompleteField";
 
 type Props = {
   user: User;
@@ -72,18 +72,6 @@ const useStyles = createStyles((theme) => {
         maxHeight: "none",
       },
     },
-    form: {
-      boxSizing: "border-box",
-      flex: 1,
-      padding: theme.spacing.xl,
-      paddingLeft: `calc(${theme.spacing.xl} * 2)`,
-      borderLeft: 0,
-
-      [BREAKPOINT]: {
-        padding: theme.spacing.md,
-        paddingLeft: theme.spacing.md,
-      },
-    },
     title: {
       marginBottom: `calc(${theme.spacing.xl} * 1.5)`,
       fontFamily: `Greycliff CF, ${theme.fontFamily}`,
@@ -93,7 +81,7 @@ const useStyles = createStyles((theme) => {
       },
     },
     fields: {
-      marginTop: rem(-12),
+      marginTop: rem(10),
     },
     icon: {
       marginRight: "5px",
@@ -113,19 +101,14 @@ const useStyles = createStyles((theme) => {
         flex: 1,
       },
     },
-    field: {
-      marginTop: theme.spacing.md,
-      // overwrite input field BackgroundColor
-      "& input": {
-        backgroundColor: "rgba(0,0,0,0.10)",
-      },
-      // overwrite input field textColor to be more white on dark background, but darker on light background
-      "& input::placeholder": {
-        color:
-          theme.colorScheme === "dark"
-            ? "rgba(255,255,255,0.50)"
-            : "rgb(101,101,101)",
-      },
+    invalid: {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.fn.rgba(theme.colors.red[8], 0.15)
+          : theme.colors.red[0],
+    },
+    invalidIcon: {
+      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
     },
   };
 });
@@ -134,7 +117,6 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
   const { classes } = useStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
-  const { errorMessages, setErrorMessages } = useErrorStore();
 
   const schema = Yup.object().shape({
     profile: Yup.object().shape({
@@ -146,7 +128,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
       zip_code: Yup.string().required("Zip Code is required"),
       phone_number: Yup.string().matches(
         /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
-        "Invalid phone number format"
+        "Phone number must be in the format (xxx) xxx-xxxx"
       ),
     }),
   });
@@ -155,17 +137,23 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
     (values: FormValues) => axios.put(`/users/${values.id}/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries("users");
-        notifications.show({
-          title: "Success",
-          message: "User profile updated",
-          color: "green",
-          withCloseButton: true,
-          icon: <FontAwesomeIcon icon={faCheck} />,
+        queryClient.invalidateQueries("user").then(() => {
+          notifications.show({
+            title: "Success",
+            message: "User profile updated",
+            color: "green",
+            withCloseButton: true,
+            icon: <FontAwesomeIcon icon={faCheck} />,
+          });
         });
       },
       onError: (error: any) => {
-        setErrorMessages(error.response.data);
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((error: any) => {
+            form.setFieldError(error.attr, error.detail);
+          });
+        }
       },
       onSettled: () => {
         setLoading(false);
@@ -202,10 +190,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
     <>
       <Flex>
         <Card className={classes.card} withBorder>
-          <form
-            className={classes.form}
-            onSubmit={form.onSubmit((values) => submitForm(values))}
-          >
+          <form onSubmit={form.onSubmit((values) => submitForm(values))}>
             <Text fz="xl" fw={700} className={classes.text}>
               Profile Details
             </Text>
@@ -214,74 +199,84 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
 
             <div className={classes.fields}>
               <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-                <TextInput
-                  className={classes.field}
+                <ValidatedTextInput
+                  form={form}
+                  className={classes.fields}
+                  name="profile.first_name"
                   label="First Name"
                   placeholder="First Name"
                   variant="filled"
                   withAsterisk
-                  {...form.getInputProps("profile.first_name")}
                 />
-                <TextInput
-                  className={classes.field}
+                <ValidatedTextInput
+                  form={form}
+                  className={classes.fields}
+                  name="profile.last_name"
                   label="Last Name"
                   placeholder="Last Name"
                   variant="filled"
                   withAsterisk
-                  {...form.getInputProps("profile.last_name")}
                 />
               </SimpleGrid>
               <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-                <TextInput
-                  className={classes.field}
+                <ValidatedTextInput
+                  form={form}
+                  className={classes.fields}
+                  name="profile.address_line_1"
                   label="Address Line 1"
                   placeholder="Address Line 1"
                   variant="filled"
                   withAsterisk
-                  {...form.getInputProps("profile.address_line_1")}
                 />
-                <TextInput
-                  className={classes.field}
+                <ValidatedTextInput
+                  form={form}
+                  className={classes.fields}
+                  name="profile.address_line_2"
                   label="Address Line 2"
                   placeholder="Address Line 2"
                   variant="filled"
-                  {...form.getInputProps("profile.address_line_2")}
+                  withAsterisk
                 />
               </SimpleGrid>
               <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-                <TextInput
-                  className={classes.field}
+                <CityAutoCompleteField
+                  form={form}
+                  stateSelection={form.values.profile.state}
+                  className={classes.fields}
+                  name="profile.city"
                   label="City"
                   placeholder="City"
                   variant="filled"
                   withAsterisk
-                  {...form.getInputProps("profile.city")}
                 />
                 <StateSelect
                   label="State"
+                  className={classes.fields}
                   placeholder="State"
                   variant="filled"
                   required={true}
                   searchable={true}
-                  className={classes.field}
-                  formProps={form.getInputProps("profile.state")}
+                  form={form}
+                  name="profile.state"
                 />
               </SimpleGrid>
-              <TextInput
-                className={classes.field}
+              <ValidatedTextInput
+                form={form}
+                className={classes.fields}
+                name="profile.zip_code"
                 label="Zip Code"
                 placeholder="Zip Code"
                 variant="filled"
                 withAsterisk
-                {...form.getInputProps("profile.zip_code")}
               />
-              <TextInput
-                className={classes.field}
+              <ValidatedTextInput
+                form={form}
+                className={classes.fields}
+                name="profile.phone_number"
                 label="Phone Number"
                 placeholder="Phone Number"
                 variant="filled"
                 withAsterisk
-                {...form.getInputProps("profile.phone_number")}
               />
               <Group position="right" mt="md">
                 <Button

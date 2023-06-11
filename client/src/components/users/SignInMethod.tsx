@@ -17,9 +17,11 @@
 
 import { User } from "@/types/user";
 import React from "react";
-import { Card, createStyles, Flex } from "@mantine/core";
+import { Card, createStyles, Divider, Flex, Text } from "@mantine/core";
 import { faShieldCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { Alert } from "@/components/ui/Alert";
+import { EmailChangeForm } from "@/components/users/EmailChange";
+import { PasswordChangeForm } from "@/components/users/PasswordChange";
 
 type Props = {
   user: User;
@@ -52,10 +54,19 @@ const useStyles = createStyles((theme) => ({
 
 export const SignInMethod: React.FC<Props> = ({ user }) => {
   const { classes } = useStyles();
+
   return (
     <>
       <Flex>
         <Card className={classes.card} withBorder>
+          <Text fz="xl" fw={700} className={classes.text}>
+            Sign-In Method
+          </Text>
+
+          <Divider my={10} />
+
+          <EmailChangeForm user={user} />
+          <PasswordChangeForm />
           <Alert
             color="blue"
             icon={faShieldCheck}
