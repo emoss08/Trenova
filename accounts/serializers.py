@@ -19,26 +19,13 @@ from typing import Any
 
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
+from django.core.mail import send_mail
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from accounts import models
 from organization.models import Organization
 from utils.serializers import GenericSerializer
-
-
-class GroupSerializer(serializers.ModelSerializer):
-    """
-    Group Serializer
-    """
-
-    class Meta:
-        """
-        Metaclass for GroupSerializer
-        """
-
-        model = Group
-        fields = ["id", "name", "permissions"]
 
 
 class PermissionSerializer(serializers.ModelSerializer):
@@ -53,6 +40,22 @@ class PermissionSerializer(serializers.ModelSerializer):
 
         model = Permission
         fields = ["id", "name", "codename"]
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    """
+    Group Serializer
+    """
+
+    permissions = PermissionSerializer(many=True, read_only=True)
+
+    class Meta:
+        """
+        Metaclass for GroupSerializer
+        """
+
+        model = Group
+        fields = ["id", "name", "permissions"]
 
 
 class JobTitleSerializer(GenericSerializer):
@@ -297,6 +300,12 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
+    # Make groups return the group name instead of the group id
+    groups = serializers.StringRelatedField(many=True, read_only=True)
+    # Make string related field return code name instead of id
+    user_permissions = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="codename"
+    )
     profile = UserProfileSerializer(required=False)
 
     class Meta:
@@ -307,6 +316,9 @@ class UserSerializer(GenericSerializer):
         model = models.User
         extra_fields = ("profile", "organization")
         extra_read_only_fields = (
+            "id",
+            "online",
+            "last_login",
             "groups",
             "user_permissions",
             "is_staff",
@@ -451,13 +463,127 @@ class ChangePasswordSerializer(serializers.Serializer):
         return user
 
 
+class ResetPasswordSerializer(serializers.Serializer):
+    """
+    Reset Password Serializer
+    """
+
+    email = serializers.EmailField(required=True)
+
+    def validate_email(self, value: str) -> str:
+        """Validate the email
+
+        Args:
+            value (str): Email
+
+        Returns:
+            str: Validated email
+        """
+
+        try:
+            user = models.User.objects.get(email=value)
+        except models.User.DoesNotExist as e:
+            raise serializers.ValidationError(
+                "No user found with the given email exists. Please try again."
+            ) from e
+
+        if not user.is_active:
+            raise serializers.ValidationError(
+                "This user is not active. Please contact support for assistance."
+            )
+        return value
+
+    def save(self, **kwargs: Any) -> models.User:
+        """Save the new password
+
+        Args:
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            models.User: User instance
+        """
+
+        user = models.User.objects.get(email=self.validated_data["email"])
+        new_password = models.User.objects.make_random_password()
+        user.set_password(new_password)
+        user.save()
+
+        send_mail(
+            "Your password has been reset",
+            f"Your new password is {new_password}. Please change it as soon as you log in.",
+            "noreply@monta.io",
+            [user.email],
+            fail_silently=False,
+        )
+        return user
+
+
+class UpdateEmailSerializer(serializers.Serializer):
+    """
+    Email Change Serializer
+    """
+
+    email = serializers.EmailField(required=True)
+    current_password = serializers.CharField(required=True)
+
+    def validate(self, attrs: Any) -> Any:
+        """Validate the token and new email
+
+        Args:
+            attrs (Any): Attributes
+
+        Returns:
+            dict[str, Any]: Validated attributes
+        """
+        current_password = attrs.get("current_password")
+        email = attrs.get("email")
+
+        user = self.context["request"].user
+
+        if not user.check_password(current_password):
+            raise serializers.ValidationError(
+                {"current_password": "Current password is incorrect. Please try again."}
+            )
+
+        if user.email == email:
+            raise serializers.ValidationError(
+                {"email": "New email cannot be the same as the current email."}
+            )
+
+        if models.User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                {"email": "A user with the given email already exists."}
+            )
+
+        return attrs
+
+    def save(self, **kwargs: Any) -> models.User:
+        """Save the new email
+
+        Args:
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            models.User: User instance
+        """
+
+        user = self.context["request"].user
+        user.email = self.validated_data["email"]
+        user.save()
+
+        return user
+
+
 class VerifyTokenSerializer(serializers.Serializer):
     """A serializer for token verification.
+
     The serializer provides a token field. The token field is used to verify the incoming token
     from the user. If the given token is valid then the user is given back the token and the user
     id in the response. Otherwise, the user is given an error message.
+
     Attributes:
         token (serializers.CharField): The token to be verified.
+
     Methods:
         validate(attrs: Any) -> Any: Validate the token.
     """
@@ -466,8 +592,10 @@ class VerifyTokenSerializer(serializers.Serializer):
 
     def validate(self, attrs: Any) -> Any:
         """Validate the token.
+
         Args:
             attrs (Any): Attributes
+
         Returns:
             dict[str, Any]: Validated attributes
         """
