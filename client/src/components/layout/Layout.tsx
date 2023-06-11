@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }}
         header={<HeaderMegaMenu />}
       >
-        <Container size="lg" style={{ paddingTop: 10 }}>
+        <Container size="xl" style={{ paddingTop: 10 }}>
           {children}
         </Container>
       </AppShell>

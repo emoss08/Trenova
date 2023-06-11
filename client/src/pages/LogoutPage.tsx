@@ -22,7 +22,7 @@ import axios from "@/lib/axiosConfig";
 import { USER_INFO_KEY } from "@/lib/utils";
 import { Card, Flex, Text } from "@mantine/core";
 
-const Logout: React.FC = () => {
+const LogoutPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
@@ -41,9 +41,6 @@ const Logout: React.FC = () => {
         navigate("/login");
       });
     };
-
-    console.info("isAuthenticated: ", isAuthenticated);
-
     handleLogout();
   }, [isAuthenticated, setIsAuthenticated, navigate]);
 
@@ -71,4 +68,4 @@ const Logout: React.FC = () => {
   );
 };
 
-export default Logout;
+export default LogoutPage;

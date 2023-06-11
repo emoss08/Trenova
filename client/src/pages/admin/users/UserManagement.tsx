@@ -16,22 +16,48 @@
  */
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserDataTable } from "@/components/user-management/users-table";
+import { Card, Container, createStyles, Flex } from "@mantine/core";
+import UsersAdminTable from "@/components/user-management/users-table";
+
+const useStyles = createStyles((theme) => ({
+  card: {
+    width: "100%",
+    maxWidth: "100%",
+    height: "auto",
+    "@media (max-width: 576px)": {
+      height: "auto",
+      maxHeight: "none",
+    },
+  },
+  text: {
+    color: theme.colorScheme === "dark" ? "white" : "black",
+  },
+  icon: {
+    marginRight: "5px",
+    marginTop: "5px",
+  },
+  div: {
+    display: "flex",
+    "&:hover": {
+      "& *": {
+        color: theme.colors.blue[6],
+      },
+    },
+  },
+  grid: {
+    display: "flex",
+  },
+}));
 
 const UserManagement: React.FC = () => {
+  const { classes } = useStyles();
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>User Management</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="container mx-auto py-10">
-            <UserDataTable />
-          </div>
-        </CardContent>
-      </Card>
+      <Flex>
+        <Card className={classes.card}>
+          <UsersAdminTable />
+        </Card>
+      </Flex>
     </>
   );
 };

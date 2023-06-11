@@ -63,6 +63,7 @@
     "embla-carousel-react": "8.0.0-rc05",
     "formik": "^2.2.9",
     "lucide-react": "^0.130.0",
+    "mantine-react-table": "^1.0.0-beta.8",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",

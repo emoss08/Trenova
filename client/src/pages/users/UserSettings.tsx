@@ -49,7 +49,6 @@ const UserSettings: React.FC = () => {
   );
 
   const isLoading = isUserDetailsLoading || isJobTitlesLoading;
-  // const isLoading = true;
 
   return (
     <>

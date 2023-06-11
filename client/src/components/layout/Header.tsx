@@ -160,7 +160,7 @@ export function HeaderMegaMenu() {
       getOrganizationDetails(organizationId)
     );
 
-  const isLoading = isUserDataLoading || isOrganizationDataLoading;
+  const isLoading = isOrganizationDataLoading || isUserDataLoading;
 
   const customerServiceLinks = navigationLinks.map((item) => (
     <UnstyledButton className={classes.subLink} key={item.title}>

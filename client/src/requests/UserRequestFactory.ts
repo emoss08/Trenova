@@ -40,12 +40,34 @@ export async function getUserOrganization(user: User): Promise<any> {
   return response.data;
 }
 
+/**
+ * Return the user's department information
+ * @param user
+ *
+ * @returns {Promise<any>}
+ */
 export async function getUserDepartment(user: User): Promise<any> {
   const response = await axios.get(`/departments/${user?.department}/`);
   return response.data;
 }
 
+/**
+ * Return the user's details
+ * @param id
+ *
+ * @returns {Promise<any>}
+ */
 export async function getUserDetails(id: string): Promise<any> {
   const response = await axios.get(`/users/${id}/`);
+  return response.data;
+}
+
+/**
+ * Return a group of users.
+ *
+ * @returns {Promise<any>}
+ */
+export async function getUsers(): Promise<any> {
+  const response = await axios.get("/users/");
   return response.data;
 }

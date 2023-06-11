@@ -20,16 +20,24 @@ import { lazy } from "react";
 
 const HomePage = lazy(() => import("../pages"));
 const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/error-page"));
-const LogoutPage = lazy(() => import("../pages/logout"));
-const OrderPage = lazy(() => import("../pages/order-planning"));
-const UserManagementPage = lazy(() => import("../pages/user-management"));
+const ErrorPage = lazy(() => import("../pages/ErrorPage"));
+const LogoutPage = lazy(() => import("../pages/LogoutPage"));
+const UserManagementPage = lazy(
+  () => import("../pages/admin/users/UserManagement")
+);
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
-export const routes: RouteObject[] = [
+const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
+
+export type RouteObjectWithPermission = RouteObject & {
+  permission?: string;
+};
+
+export const routes: RouteObjectWithPermission[] = [
   {
     path: "/",
     element: <HomePage />,
   },
+  // Authentication Pages
   {
     path: "/login",
     element: <LoginPage />,
@@ -37,6 +45,10 @@ export const routes: RouteObject[] = [
   {
     path: "/logout",
     element: <LogoutPage />,
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
   },
   // User Management
   {
@@ -46,11 +58,6 @@ export const routes: RouteObject[] = [
   {
     path: "account/settings/:userId",
     element: <UserSettingsPage />,
-  },
-  // Order Management
-  {
-    path: "/order/:orderId",
-    element: <OrderPage />,
   },
   {
     path: "*",

@@ -15,30 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import OrderDetails from "@/components/order-management/OrderDetails";
+import { TextInputProps } from "@mantine/core";
 
-const OrderPlanning: React.FC = () => {
-  const { orderId } = useParams<{ orderId: string }>();
-  const [order, setOrder] = React.useState<any>(null);
-
-  useEffect((): void => {
-    const fetchOrder = async (): Promise<void> => {
-      try {
-        const response = await axios.get(`/orders/${orderId}/`);
-        setOrder(response.data);
-      } catch {
-        console.log("error");
-      }
-    };
-    fetchOrder().then((): void => {});
-  }, [orderId]);
-
-  return (
-    <div>{order ? <OrderDetails order={order} /> : <div>Loading...</div>}</div>
-  );
-};
-
-export default OrderPlanning;
+export interface ValidatedTextInputProps<TFormValues extends object>
+  extends TextInputProps {
+  form: any;
+  name: keyof TFormValues & string;
+}

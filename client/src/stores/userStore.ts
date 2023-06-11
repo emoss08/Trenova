@@ -15,15 +15,32 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { create } from "zustand";
+import { create, GetState, SetState, StoreApi } from "zustand";
+
 import { User } from "@/types/user";
 
 type UserState = {
   user: User;
   setUser: (user: User) => void;
+  permissions: string[];
+  setPermissions: (permissions: string[]) => void;
+  groups: string[];
+  setGroups: (groups: string[]) => void;
+  reset: () => void;
 };
 
-export const useUserStore = create<UserState>((set) => ({
+const createStore = (
+  set: SetState<UserState>,
+  get: GetState<UserState>,
+  api: StoreApi<UserState>
+) => ({
   user: {} as User,
   setUser: (user: User) => set({ user }),
-}));
+  permissions: [],
+  setPermissions: (permissions: string[]) => set({ permissions }),
+  groups: [],
+  setGroups: (groups: string[]) => set({ groups }),
+  reset: () => set({ user: {} as User, permissions: [], groups: [] }),
+});
+
+export const useUserStore = create<UserState>(createStore);

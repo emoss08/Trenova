@@ -15,144 +15,379 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React, { useMemo, useState } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  flexRender,
-  getCoreRowModel,
-  PaginationState,
-  useReactTable,
-} from "@tanstack/react-table";
-import { DataTablePagination } from "@/components/ui/pagination";
-import React from "react";
-import axios from "@/lib/axiosConfig";
-import { usersColumn } from "@/components/user-management/users-column";
+  MantineReactTable,
+  MRT_ColumnDef,
+  MRT_GlobalFilterTextInput,
+  MRT_Icons,
+  MRT_PaginationState,
+} from "mantine-react-table";
 import { useQuery } from "react-query";
+import axios from "@/lib/axiosConfig";
 import { API_URL } from "@/utils/utils";
+import { User } from "@/types/user";
+import {
+  ActionIcon,
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Flex,
+  Menu,
+  Text,
+  Tooltip,
+} from "@mantine/core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import { DatePickerInput } from "@mantine/dates";
+import { formatDate, formatDateToHumanReadable } from "@/utils/date";
+import {
+  faArrowDownWideShort,
+  faBars,
+  faBarsStaggered,
+  faColumns,
+  faCompress,
+  faEllipsisH,
+  faEllipsisVertical,
+  faExpand,
+  faEyeSlash,
+  faFilter,
+  faFilterCircleXmark,
+  faSearch,
+  faSearchMinus,
+  faSortDown,
+  faThumbTack,
+  faFileExport,
+  faUser,
+  faUserGear,
+  faUserMinus,
+  faUserPlus,
+} from "@fortawesome/pro-duotone-svg-icons";
 
-export function UserDataTable({}) {
-  const [page, setPage] = React.useState<number>(0);
-  const [count, setCount] = React.useState<number>(10);
-  const [currentUrl, setCurrentUrl] = React.useState<string>("");
+config.autoAddCss = false;
 
-  const fetchUsers = (url: string, pageSize: number) => {
-    if (!url) {
-      url = `${API_URL}/?limit=${pageSize}`;
-    }
-    return axios.get(url).then((res) => res.data);
-  };
+type ApiResponse = {
+  results: User[];
+  count: number;
+};
 
-  const dataQuery = useQuery(
-    ["users", currentUrl],
-    () => fetchUsers(currentUrl, count),
-    { keepPreviousData: true }
-  );
+const fontAwesomeIcons: Partial<MRT_Icons> = {
+  IconArrowDown: (props: any) => (
+    <FontAwesomeIcon icon={faSortDown} {...props} />
+  ),
 
-  const [{ pageIndex, pageSize }, setPagination] =
-    React.useState<PaginationState>({
-      pageIndex: 0,
-      pageSize: 10,
-    });
+  IconClearAll: () => <FontAwesomeIcon icon={faBarsStaggered} />,
 
-  const handlePageIndexChange = (pageIndex: number) => {
-    setPage(pageIndex);
-  };
+  IconTallymark1: () => <FontAwesomeIcon icon={faBars} />,
 
-  React.useEffect(() => {
-    setCurrentUrl(`${API_URL}/users/?limit=${count}&offset=${page * count}`);
-  }, [page, count]);
+  IconTallymark2: () => <FontAwesomeIcon icon={faBars} />,
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    setCount(newPageSize);
-    setPage(0);
-  };
+  IconTallymark3: () => <FontAwesomeIcon icon={faBars} />,
 
-  const defaultData = React.useMemo(() => [], []);
+  IconTallymark4: () => <FontAwesomeIcon icon={faBars} />,
 
-  const pagination = React.useMemo(
-    () => ({
-      pageIndex,
-      pageSize,
-    }),
-    [pageIndex, pageSize]
-  );
+  IconTallymarks: () => <FontAwesomeIcon icon={faBars} />,
 
-  const table = useReactTable({
-    data: dataQuery.data?.results ?? defaultData,
-    columns: usersColumn,
-    pageCount: dataQuery.data?.count ?? 0,
-    state: {
-      pagination,
-    },
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
+  IconFilter: (props: any) => <FontAwesomeIcon icon={faFilter} {...props} />,
+
+  IconFilterOff: () => <FontAwesomeIcon icon={faFilterCircleXmark} />,
+
+  IconMinimize: () => <FontAwesomeIcon icon={faCompress} />,
+
+  IconMaximize: () => <FontAwesomeIcon icon={faExpand} />,
+
+  IconSearch: (props: any) => <FontAwesomeIcon icon={faSearch} {...props} />,
+
+  IconCircleOff: () => <FontAwesomeIcon icon={faSearchMinus} />,
+
+  IconColumns: () => <FontAwesomeIcon icon={faColumns} />,
+
+  IconDotsVertical: () => <FontAwesomeIcon icon={faEllipsisVertical} />,
+
+  IconDots: () => <FontAwesomeIcon icon={faEllipsisH} />,
+
+  IconArrowsSort: (props: any) => (
+    <FontAwesomeIcon icon={faArrowDownWideShort} {...props} /> //props so that style rotation transforms are applied
+  ),
+
+  IconPinned: (props: any) => (
+    <FontAwesomeIcon icon={faThumbTack} {...props} /> //props so that style rotation transforms are applied
+  ),
+
+  IconEyeOff: () => <FontAwesomeIcon icon={faEyeSlash} />,
+};
+const UsersAdminTable = () => {
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
   });
-  return (
-    <>
-      <div className="rounded-md border mb-2">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={usersColumn.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <DataTablePagination
-        table={table}
-        pageCount={Math.ceil(dataQuery.data?.count / pageSize)}
-        onPageIndexChange={handlePageIndexChange}
-        onPageSizeChange={handlePageSizeChange}
-        dataQuery={dataQuery}
-      />
-    </>
+  const [globalFilter, setGlobalFilter] = useState<string>("");
+
+  const { data, isError, isFetching, isLoading } = useQuery<ApiResponse>(
+    [
+      "user-table-data",
+      pagination.pageIndex,
+      pagination.pageSize,
+      globalFilter,
+    ],
+    async () => {
+      const offset = pagination.pageIndex * pagination.pageSize;
+      const url = `${API_URL}/users/?limit=${
+        pagination.pageSize
+      }&offset=${offset}${globalFilter ? `&search=${globalFilter}` : ""}`;
+      const response = await axios.get(url);
+      return response.data;
+    },
+    {
+      keepPreviousData: true,
+    }
   );
-}
+
+  const handlePaginationChange = (state: any) => {
+    setPagination(state);
+  };
+
+  const columns = useMemo(
+    () =>
+      [
+        {
+          id: "status",
+          accessorFn: (originalRow) =>
+            originalRow.is_active ? "true" : "false", //must be strings
+          header: "Status",
+          filterFn: "equals",
+          Cell: ({ cell }) => (
+            <Badge
+              color={cell.getValue() === "true" ? "green" : "red"}
+              variant="dot"
+            >
+              {cell.getValue() === "true" ? "Active" : "Inactive"}
+            </Badge>
+          ),
+          mantineFilterSelectProps: {
+            data: [
+              { value: "", label: "All" },
+              { value: "true", label: "Active" },
+              { value: "false", label: "Inactive" },
+            ] as any,
+          },
+          filterVariant: "select",
+        },
+        {
+          accessorFn: (row) =>
+            `${row.profile?.first_name} ${row.profile?.last_name}`,
+          id: "name",
+          header: "Name",
+          size: 250,
+          Cell: ({ renderedCellValue, row }) => (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: "16px",
+              }}
+            >
+              {row.original.profile?.profile_picture ? (
+                <Avatar
+                  src={row.original.profile?.profile_picture}
+                  alt={"Test"}
+                  radius="xl"
+                  size={30}
+                />
+              ) : (
+                <Avatar color="blue" radius="xl" size={30}>
+                  {row.original.profile?.first_name.charAt(0)}
+                  {row.original.profile?.last_name.charAt(0)}
+                </Avatar>
+              )}
+              <span>{renderedCellValue}</span>
+            </Box>
+          ),
+        },
+        {
+          accessorKey: "email",
+          header: "Email",
+        },
+        {
+          accessorFn: (row) => new Date(row.date_joined),
+          id: "date_joined",
+          header: "Date Joined",
+          filterFn: "lessThanOrEqualTo",
+          sortingFn: "datetime",
+          Cell: ({ cell }) => cell.getValue<Date>()?.toLocaleString(),
+          Header: ({ column }) => <em>{column.columnDef.header}</em>,
+          Filter: ({ column }) => (
+            <DatePickerInput
+              placeholder="Filter by Date Joined"
+              onChange={(newValue: Date) => {
+                column.setFilterValue(newValue);
+              }}
+              variant="filled"
+              mt={9}
+              value={column.getFilterValue() as Date}
+              modalProps={{ withinPortal: true }}
+            />
+          ),
+        },
+        {
+          id: "last_login",
+          header: "Last Login",
+          accessorFn: (row) => {
+            if (row.last_login) {
+              return formatDateToHumanReadable(row.last_login);
+            } else {
+              return null;
+            }
+          },
+          Cell: ({ renderedCellValue, row }) => {
+            if (!row.original.last_login) {
+              return <Text>Never</Text>;
+            }
+            const tooltipDate = formatDate(row.original.last_login);
+
+            return (
+              <Tooltip withArrow position="left" label={tooltipDate}>
+                <Text>{renderedCellValue}</Text>
+              </Tooltip>
+            );
+          },
+        },
+        {
+          id: "actions",
+          header: "Actions",
+          Cell: ({ row }) => (
+            <Menu width={200} shadow="md">
+              <Menu.Target>
+                <ActionIcon variant="transparent">
+                  <FontAwesomeIcon icon={faBars} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>User Actions</Menu.Label>
+                <Menu.Item icon={<FontAwesomeIcon icon={faUser} />}>
+                  View User Profile
+                </Menu.Item>
+                <Menu.Item icon={<FontAwesomeIcon icon={faUserGear} />}>
+                  Edit User Profile
+                </Menu.Item>
+                <Menu.Item
+                  color="red"
+                  icon={<FontAwesomeIcon icon={faUserMinus} />}
+                >
+                  Delete User Profile
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          ),
+        },
+      ] as MRT_ColumnDef<User>[],
+    []
+  );
+
+  return (
+    <MantineReactTable
+      columns={columns}
+      data={data?.results ?? []}
+      manualPagination
+      onPaginationChange={handlePaginationChange}
+      rowCount={data?.count ?? 0}
+      getRowId={(row) => row.id}
+      enableRowSelection
+      icons={fontAwesomeIcons}
+      state={{
+        isLoading,
+        pagination,
+        showAlertBanner: isError,
+        showSkeletons: isFetching,
+      }}
+      initialState={{
+        showGlobalFilter: true,
+      }}
+      positionGlobalFilter="left"
+      mantineSearchTextInputProps={{
+        placeholder: `Search ${data?.count} users...`,
+        sx: { minWidth: "300px" },
+        variant: "filled",
+      }}
+      enableGlobalFilterModes={false}
+      onGlobalFilterChange={setGlobalFilter}
+      mantineFilterTextInputProps={{
+        sx: { borderBottom: "unset", marginTop: "8px" },
+        variant: "filled",
+      }}
+      mantineFilterSelectProps={{
+        sx: { borderBottom: "unset", marginTop: "8px" },
+        variant: "filled",
+      }}
+      renderTopToolbar={({ table }) => (
+        <>
+          <Flex
+            sx={() => ({
+              borderRadius: "4px",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              padding: "24px 16px",
+              "@media max-width: 768px": {
+                flexDirection: "column",
+              },
+            })}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                gap: "16px",
+                flexWrap: "wrap",
+                flex: 1, // Add this
+                justifyContent: "flex-start", // Add this
+              }}
+            >
+              <MRT_GlobalFilterTextInput table={table} />
+            </Box>
+
+            <Flex
+              gap="xs"
+              align="center"
+              sx={{
+                flex: 1, // Add this
+                justifyContent: "flex-end", // Add this
+              }}
+            >
+              <Button
+                color="blue"
+                leftIcon={<FontAwesomeIcon icon={faFilter} />}
+              >
+                Filter
+              </Button>
+              <Button
+                color="blue"
+                leftIcon={<FontAwesomeIcon icon={faFileExport} />}
+              >
+                Export
+              </Button>
+              <Button
+                color="blue"
+                onClick={() => {
+                  alert("Add User");
+                }}
+                leftIcon={<FontAwesomeIcon icon={faUserPlus} />}
+              >
+                Create New User
+              </Button>
+              {/*<MRT_ToggleFiltersButton table={table} />*/}
+              {/*<MRT_ShowHideColumnsButton table={table} />*/}
+              {/*<Tooltip withArrow label="Print">*/}
+              {/*  <ActionIcon onClick={() => window.print()}>*/}
+              {/*    <FontAwesomeIcon icon={faPrint} />*/}
+              {/*  </ActionIcon>*/}
+              {/*</Tooltip>*/}
+            </Flex>
+          </Flex>
+        </>
+      )}
+    />
+  );
+};
+
+export default UsersAdminTable;
