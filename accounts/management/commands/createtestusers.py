@@ -67,12 +67,12 @@ class Command(BaseCommand):
             CommandError: If the organization does not exist or if the number of users is not a valid integer.
         """
         system_org_answer = input(
-            "What is the name of organization you'd like to add the test users to? "
+            "What is the name of organization you'd like to add the test users to? (Scac Code) "
         )
         number_of_users_answer = input("How many test users would you like to create? ")
 
         try:
-            system_org = Organization.objects.get(name=system_org_answer)
+            system_org = Organization.objects.get(scac_code=system_org_answer)
         except Organization.DoesNotExist as e:
             raise CommandError(
                 f"Organization {system_org_answer} does not exist."
