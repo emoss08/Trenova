@@ -30,6 +30,7 @@ from django.contrib.auth.forms import (
 )
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
+from django.db.models import QuerySet
 from django.forms.models import ModelForm
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -129,6 +130,21 @@ class UserAdmin(admin.ModelAdmin[models.User]):
     )
     autocomplete_fields: tuple[str, ...] = ("organization", "department")
     inlines: tuple[type[ProfileInline]] = (ProfileInline,)
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[models.User]:
+        """Get queryset for user admin
+
+        Args:
+            request (HttpRequest): Request object
+
+        Returns:
+            QuerySet[models.User]: Queryset for user admin
+        """
+        return (
+            super()
+            .get_queryset(request)
+            .filter(organization_id=request.user.organization_id)  # type: ignore
+        )
 
     def get_fieldsets(self, request: HttpRequest, obj: models.User | None = None):
         """Return fieldsets for add/change view
