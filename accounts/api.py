@@ -159,6 +159,73 @@ class UpdatePasswordView(generics.UpdateAPIView):
         )
 
 
+class ResetPasswordView(views.APIView):
+    """
+    An endpoint for changing password.
+    """
+
+    throttle_scope = "auth"
+    serializer_class = serializers.ResetPasswordSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
+        """Handle update requests
+
+        Args:
+            request (Request): Request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Response: Response of the updated user
+        """
+
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(
+                {
+                    "message": "Password reset successful. Please check your email for the new password."
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateEmailView(views.APIView):
+    """
+    An endpoint for changing password.
+    """
+
+    throttle_scope = "auth"
+    serializer_class = serializers.UpdateEmailSerializer
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
+        """Handle update requests
+
+        Args:
+            request (Request): Request object
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            Response: Response of the updated user
+        """
+
+        serializer = self.serializer_class(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(
+                {"message": "Email successfully changed."},
+                status=status.HTTP_200_OK,
+            )
+
+        return response.Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class JobTitleViewSet(viewsets.ModelViewSet):
     """
     Job Title ViewSet to manage requests to the job title endpoint
