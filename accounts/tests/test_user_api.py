@@ -22,8 +22,9 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from accounts.serializers import UserSerializer
-from accounts.tests.factories import JobTitleFactory
+from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.models import Organization
+from django.core import mail
 
 pytestmark = pytest.mark.django_db
 
@@ -248,3 +249,214 @@ def test_logout_user(api_client: APIClient, user_api: Response) -> None:
 
     user = User.objects.get(id=user_api.data["id"])
     assert user.online is False
+
+
+def test_reset_password(unauthenticated_api_client: APIClient, user: User) -> None:
+    """Test ``reset_password`` endpoint successfully resets password and sends email
+
+    Args:
+        unauthenticated_api_client (APIClient): Api Client
+        user (): User
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = unauthenticated_api_client.post(
+        "/api/reset_password/",
+        {"email": user.email},
+    )
+    assert response.status_code == 200
+    assert (
+        response.data["message"]
+        == "Password reset successful. Please check your email for the new password."
+    )
+    # Assert email was sent
+    assert len(mail.outbox) == 1
+    assert mail.outbox[0].subject == "Your password has been reset"
+
+
+def test_validate_reset_password(unauthenticated_api_client: APIClient) -> None:
+    """Test ``reset_password`` endpoint throws ValidationError if email is not found
+
+    Args:
+        unauthenticated_api_client (APIClient): API Client
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = unauthenticated_api_client.post(
+        "/api/reset_password/",
+        {"email": "random@monta.io"},
+    )
+    assert response.status_code == 400
+    assert (
+        response.data["email"][0]
+        == "No user found with the given email exists. Please try again."
+    )
+
+
+def test_validate_reset_password_with_invalid_email(
+    unauthenticated_api_client: APIClient,
+) -> None:
+    """Test ``reset_password`` endpoint throws ValidationError if email is not found
+
+    Args:
+        unauthenticated_api_client (APIClient): API Client
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = unauthenticated_api_client.post(
+        "/api/reset_password/",
+        {"email": "random"},
+    )
+    assert response.status_code == 400
+    assert response.data["email"][0] == "Enter a valid email address."
+
+
+def test_validate_reset_password_with_inactive_user(
+    unauthenticated_api_client: APIClient, user: User
+) -> None:
+    """Test ``reset_password`` endpoint throws ValidationError if email is not found
+
+    Args:
+        unauthenticated_api_client (APIClient): API Client
+        user (User): User
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    user.is_active = False
+    user.save()
+
+    response = unauthenticated_api_client.post(
+        "/api/reset_password/",
+        {"email": user.email},
+    )
+    assert response.status_code == 400
+    assert (
+        response.data["email"][0]
+        == "This user is not active. Please contact support for assistance."
+    )
+
+
+def test_change_email(user: User) -> None:
+    """Test ``reset_password`` endpoint successfully resets password and sends email
+
+    Args:
+        user (User): User
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    new_password = "new_password1234%"
+    user.set_password(new_password)
+    user.save()
+    user.refresh_from_db()
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/change_email/",
+        {"email": "anothertest@monta.io", "current_password": "new_password1234%"},
+    )
+    assert response.status_code == 200
+    assert response.data["message"] == "Email successfully changed."
+
+
+def test_change_email_with_invalid_password(user: User) -> None:
+    """Test ``reset_password`` endpoint throws ValidationError if email is not found
+
+    Args:
+        user (User): User
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    new_password = "new_password1234%"
+    user.set_password(new_password)
+    user.save()
+    user.refresh_from_db()
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/change_email/",
+        {"email": "test_email@monta.io", "current_password": "wrong_password"},
+    )
+
+    assert response.status_code == 400
+    assert (
+        response.data["current_password"][0]
+        == "Current password is incorrect. Please try again."
+    )
+
+
+def test_change_email_with_same_email(user: User) -> None:
+    """Test ``reset_password`` endpoint throws ValidationError if email is not found
+
+    Args:
+        user (User): User
+
+    Returns:
+        None: This function does not return anything.
+
+    """
+
+    new_password = "new_password1234%"
+    user.set_password(new_password)
+    user.save()
+    user.refresh_from_db()
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/change_email/",
+        {"email": user.email, "current_password": "new_password1234%"},
+    )
+
+    assert response.status_code == 400
+    assert (
+        response.data["email"][0]
+        == "New email cannot be the same as the current email."
+    )
+
+
+def test_change_email_with_other_users_email(user: User) -> None:
+    """Test ``reset_password`` endpoint throws ValidationError if email is not found
+
+    Args:
+        user (User): User
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    new_password = "new_password1234%"
+    user.set_password(new_password)
+    user.save()
+    user.refresh_from_db()
+
+    user_2 = UserFactory()
+    user_2.email = "test@monta.io"
+    user_2.save()
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.post(
+        "/api/change_email/",
+        {"email": user_2.email, "current_password": "new_password1234%"},
+    )
+
+    assert response.status_code == 400
+    assert response.data["email"][0] == "A user with the given email already exists."
