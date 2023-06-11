@@ -15,27 +15,50 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Route, RouteObject, Routes, Navigate } from "react-router-dom";
-import { routes } from "@/routing/AppRoutes";
+import React, { useEffect, useState } from "react";
+import { Route, Routes, Navigate } from "react-router-dom";
+import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
 import { useAuthStore } from "@/stores/authStore";
 import Layout from "@/components/layout/Layout";
+import { useUserStore } from "@/stores/userStore";
 
 const ProtectedRoutes: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const storePermissions = useUserStore((state) => state.permissions);
+  const isSuperUser = useUserStore((state) => state.user.is_superuser);
+  const [permissions, setPermissions] = useState(storePermissions);
+  const [isAdmin, setIsAdmin] = useState(isSuperUser);
 
+  useEffect(() => {
+    setPermissions(storePermissions);
+    setIsAdmin(isSuperUser);
+  }, [storePermissions]);
+
+  const userHasPermission = (permission: string) => {
+    return isAdmin || permissions.includes(permission);
+  };
   return (
     <Routes>
-      {routes.map((route: RouteObject, i: number) => {
+      {routes.map((route: RouteObjectWithPermission, i: number) => {
         const isPublicRoute =
-          route.path === "/login" || route.path === "/logout";
+          route.path === "/login" ||
+          route.path === "/logout" ||
+          route.path === "/reset-password";
 
-        const element =
-          isPublicRoute || isAuthenticated ? (
-            route.element
-          ) : (
-            <Navigate to="/login" replace />
-          );
+        let element: React.ReactNode;
+        if (isPublicRoute || isAuthenticated) {
+          if (route.permission) {
+            if (userHasPermission(route.permission)) {
+              element = route.element;
+            } else {
+              element = <Navigate to="/error" replace />;
+            }
+          } else {
+            element = route.element;
+          }
+        } else {
+          element = <Navigate to="/login" replace />;
+        }
 
         const wrappedElement = isPublicRoute ? (
           element

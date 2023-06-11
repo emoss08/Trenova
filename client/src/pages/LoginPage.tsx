@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { useUserStore } from "@/stores/userStore";
 import {
@@ -25,23 +25,32 @@ import {
   Container,
   Group,
   Paper,
-  PasswordInput,
-  TextInput,
   Text,
   Title,
   Button,
+  createStyles,
 } from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
 import { LoginFormValues } from "@/types/login";
 import axios from "@/lib/axiosConfig";
 import { useLocalStorage } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { ValidatedPasswordInput } from "@/components/ui/fields/ValidatedPasswordInput";
+import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
+import { getUserDetails } from "@/requests/UserRequestFactory";
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
   ]);
-  const [, setUser] = useUserStore((state) => [state.user, state.setUser]);
+  const [setUser, setPermissions, setGroups] = useUserStore((state) => [
+    state.setUser,
+    state.setPermissions,
+    state.setGroups,
+  ]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [, setUserInfo] = useLocalStorage({
     key: "mt_user_info",
@@ -75,13 +84,32 @@ const LoginPage: React.FC = () => {
         password: values.password,
       });
 
-      setUserInfo(response.data);
-      setIsAuthenticated(true);
-      setUser(response.data);
+      if (response.status === 200) {
+        setUserInfo(response.data);
+        setIsAuthenticated(true);
+        const userInfo = await getUserDetails(response.data.user_id);
+        setUser(userInfo);
+        setPermissions(userInfo.user_permissions);
+        setGroups(userInfo.groups);
+      }
     } catch (error: any) {
-      if (error.response && error.response.status === 400) {
-        const errors = error.response.data.errors;
-        console.log(errors);
+      if (error.response) {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((error: any) => {
+            form.setFieldError(error.attr, error.detail);
+            if (error.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: error.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
       }
     } finally {
       setLoading(false);
@@ -105,24 +133,28 @@ const LoginPage: React.FC = () => {
               login(values).then(() => {});
             })}
           >
-            <TextInput
+            <ValidatedTextInput
+              form={form}
+              name="username"
               label="Username"
               placeholder="Your Username"
               withAsterisk
-              {...form.getInputProps("username")}
             />
-            <PasswordInput
+            <ValidatedPasswordInput
+              form={form}
+              name="password"
               label="Password"
               placeholder="Your password"
               mt="md"
               withAsterisk
-              {...form.getInputProps("password")}
             />
             <Group position="apart" mt="lg">
               <Checkbox label="Remember me" />
-              <Anchor component="button" size="sm">
-                Forgot password?
-              </Anchor>
+              <Link to="/reset-password/">
+                <Anchor component="button" size="sm">
+                  Forgot password?
+                </Anchor>
+              </Link>
             </Group>
             <Button type="submit" fullWidth mt="xl" loading={loading}>
               Sign in

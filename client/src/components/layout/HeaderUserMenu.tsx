@@ -158,12 +158,19 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
                   position="bottom-end"
                   color="green"
                 >
-                  <Avatar
-                    src={user.profile?.profile_picture}
-                    alt={"Test"}
-                    radius="xl"
-                    size={30}
-                  />
+                  {user.profile?.profile_picture ? (
+                    <Avatar
+                      src={user.profile?.profile_picture}
+                      alt={"Test"}
+                      radius="xl"
+                      size={30}
+                    />
+                  ) : (
+                    <Avatar color="blue" radius="xl" size={30}>
+                      {user.profile?.first_name.charAt(0)}
+                      {user.profile?.last_name.charAt(0)}
+                    </Avatar>
+                  )}
                 </Indicator>
               </Group>
             </ActionIcon>
@@ -171,12 +178,22 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
           <Menu.Dropdown>
             {/* User Information */}
             <Group my={10}>
-              <Avatar
-                src={user.profile?.profile_picture}
-                alt={"Test"}
-                radius="xl"
-                size={40}
-              />
+              {user.profile?.profile_picture ? (
+                <Avatar
+                  src={user.profile?.profile_picture}
+                  alt={"Test"}
+                  radius="xl"
+                  size={40}
+                  ml={5}
+                  mb={2}
+                />
+              ) : (
+                <Avatar color="blue" radius="xl" ml={5} mb={2} size={40}>
+                  {user.profile?.first_name.charAt(0)}
+                  {user.profile?.last_name.charAt(0)}
+                </Avatar>
+              )}
+
               <div style={{ flex: 1 }}>
                 <Text size="sm" weight={500}>
                   {user.profile?.first_name} {user.profile?.last_name}
