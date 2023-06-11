@@ -18,7 +18,7 @@
 from typing import TYPE_CHECKING
 
 from django.conf import settings
-from django.core.files.storage import default_storage
+from django.core.files.storage import Storage, get_storage_class
 from pypdf import PdfMerger
 
 from billing.models import DocumentClassification
@@ -70,8 +70,9 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
     document_class = DocumentClassification.objects.get(name="CON")
     file_path = f"{settings.MEDIA_ROOT}/{order.id}.pdf"
     merger = PdfMerger()
+    storage_class: Storage = get_storage_class()()
 
-    if default_storage.exists(file_path):
+    if storage_class.exists(file_path):
         raise FileExistsError(f"File {file_path} already exists")
 
     for document in order.order_documentation.all():
@@ -80,7 +81,7 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
     merger.write(file_path)
     merger.close()
 
-    consolidated_document = default_storage.open(file_path, "rb")
+    consolidated_document = storage_class.open(file_path, "rb")
 
     documentation = models.OrderDocumentation.objects.create(
         organization=order.organization,
@@ -89,6 +90,6 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
         document_class=document_class,
     )
 
-    default_storage.delete(file_path)
+    storage_class.delete(file_path)
 
     return documentation
