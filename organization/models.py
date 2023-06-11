@@ -22,7 +22,6 @@ from typing import Any, final
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
-from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
@@ -34,7 +33,7 @@ from .services.table_choices import TABLE_NAME_CHOICES
 from .validators import validate_format_string, validate_org_timezone
 
 kafka_manager = KafkaManager()
-AVAILABLE_TOPICS = kafka_manager.get_topics()
+AVAILABLE_TOPICS = kafka_manager.get_available_topics()
 
 
 class Organization(TimeStampedModel):
@@ -186,7 +185,8 @@ class Organization(TimeStampedModel):
         db_table = "organization"
 
     def __str__(self) -> str:
-        """
+        """String representation of the organization.
+
         Returns:
             str: String representation of the organization.
         """
@@ -205,30 +205,6 @@ class Organization(TimeStampedModel):
         self.scac_code = self.scac_code.upper()
         self.name = self.name.title()
         super().save(**kwargs)
-
-    @cached_property
-    def get_address_combination(self) -> str:
-        """
-        Returns:
-            str: String representation of the organization address.
-        """
-        return f"{self.address_line_1} {self.address_line_2} {self.city} {self.state} {self.zip_code}"
-
-    @cached_property
-    def get_address(self) -> str:
-        """
-        Returns:
-            str: String representation of the organization address.
-        """
-        return f"{self.address_line_1} {self.address_line_2}"
-
-    @cached_property
-    def get_city_state_zip(self) -> str:
-        """
-        Returns:
-            str: String representation of the organization address.
-        """
-        return f"{self.city}, {self.state} {self.zip_code}"
 
     def get_absolute_url(self) -> str:
         """
