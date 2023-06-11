@@ -291,6 +291,21 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path(
+        "api/change_password/",
+        accounts_api.UpdatePasswordView.as_view(),
+        name="change-password",
+    ),
+    path(
+        "api/reset_password/",
+        accounts_api.ResetPasswordView.as_view(),
+        name="reset-password",
+    ),
+    path(
+        "api/change_email/",
+        accounts_api.UpdateEmailView.as_view(),
+        name="change-email",
+    ),
+    path(
         "api/schema/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
