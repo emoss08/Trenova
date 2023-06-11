@@ -20,15 +20,17 @@ from __future__ import annotations
 import os
 import socket
 from pathlib import Path
+from typing import Any, TypeAlias
 
 from confluent_kafka import KafkaException, admin
 from environ import environ
 from rich import print as rprint
 
-# Load environment variables
 env = environ.Env()
 ENV_DIR = Path(__file__).parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
+
+ConsumerGroupMetadata: TypeAlias = dict[str, list[dict[str, Any]]]
 
 
 class KafkaManager:
@@ -54,6 +56,7 @@ class KafkaManager:
         Returns:
             KafkaManager: The single instance of KafkaManager.
         """
+
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.__initialized = False
@@ -64,6 +67,7 @@ class KafkaManager:
 
         Only performs initialization the first time this instance is created.
         """
+
         if self.__initialized:
             return
         self.__initialized = True
@@ -79,6 +83,7 @@ class KafkaManager:
         Returns:
             str: The string representation of the KafkaManager instance.
         """
+
         return f"KafkaManager(bootstrap_servers={env('KAFKA_BOOTSTRAP_SERVERS')})"
 
     def is_kafka_available(self, *, timeout: int = 5) -> bool:
@@ -93,8 +98,9 @@ class KafkaManager:
         Returns:
             bool: True if the Kafka server is available, False otherwise.
         """
+
         try:
-            sock = socket.create_connection(
+            sock: socket = socket.create_connection(
                 (self.kafka_host, self.kafka_port), timeout=timeout
             )
             sock.close()
@@ -114,11 +120,12 @@ class KafkaManager:
         Returns:
             list[tuple]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
+
         if self.admin_client is None:
-            return []
+            raise KafkaException("Kafka admin client is not available.")
 
         if not self.is_kafka_available():
-            return []
+            raise KafkaException("Kafka is not available.")
 
         try:
             topic_metadata = self.admin_client.list_topics(timeout=5)
@@ -132,7 +139,7 @@ class KafkaManager:
             return []
 
     def create_topic(
-        self, topic: str, num_partitions: int, replication_factor: int
+        self, *, topic: str, num_partitions: int, replication_factor: int
     ) -> None:
         """Creates a new Kafka topic.
 
@@ -144,10 +151,11 @@ class KafkaManager:
         Returns:
             None: This function does not return anything.
         """
+
         new_topic = admin.NewTopic(topic, num_partitions, replication_factor)
         self.admin_client.create_topics([new_topic])
 
-    def delete_topic(self, topic: str) -> None:
+    def delete_topic(self, *, topic: str) -> None:
         """Deletes the specified Kafka topic.
 
         Args:
@@ -156,9 +164,10 @@ class KafkaManager:
         Returns:
             None: This function does not return anything.
         """
+
         self.admin_client.delete_topics([topic])
 
-    def increase_topic_partitions(self, topic: str, new_partitions: int) -> None:
+    def increase_topic_partitions(self, *, topic: str, new_partitions: int) -> None:
         """Increases the number of partitions for the specified Kafka topic.
 
         Args:
@@ -168,6 +177,7 @@ class KafkaManager:
         Returns:
             None: This function does not return anything.
         """
+
         new_partitions = admin.NewPartitions(topic, new_partitions)
         self.admin_client.create_partitions([new_partitions])
 
@@ -177,9 +187,10 @@ class KafkaManager:
         Returns:
             list[str]: A list of all consumer group IDs.
         """
+
         return list(self.admin_client.list_groups().groups.keys())
 
-    def describe_topic(self, topic_name: str) -> dict[str, str]:
+    def describe_topic(self, *, topic_name: str) -> dict[str, str]:
         """Describe a specific topic's configuration.
 
         Args:
@@ -188,6 +199,7 @@ class KafkaManager:
         Returns:
             dict[str, str]: A dictionary representing the configuration of the topic.
         """
+
         resource = admin.ConfigResource(admin.ResourceType.TOPIC, topic_name)
         config = self.admin_client.describe_configs([resource])
         return {
@@ -195,7 +207,9 @@ class KafkaManager:
             for config_entry in config[topic_name].items()
         }
 
-    def alter_topic_config(self, topic_name: str, config_dict: dict[str, str]) -> None:
+    def alter_topic_config(
+        self, *, topic_name: str, config_dict: dict[str, str]
+    ) -> None:
         """Alter the configuration of a topic.
 
         Args:
@@ -205,13 +219,14 @@ class KafkaManager:
         Returns:
             None: This function does not return anything.
         """
+
         resource = admin.ConfigResource(admin.ResourceType.TOPIC, topic_name)
         entries = {
             key: admin.NewPartitions(value) for key, value in config_dict.items()
         }
         self.admin_client.alter_configs({resource: entries})
 
-    def describe_consumer_group(self, group_id: str) -> dict[str, str]:
+    def describe_consumer_group(self, *, group_id: str) -> ConsumerGroupMetadata:
         """Describe a specific consumer group.
 
         Args:
@@ -220,6 +235,7 @@ class KafkaManager:
         Returns:
             dict[str, str]: A dictionary representing the configuration of the consumer group.
         """
+
         group_description = self.admin_client.list_groups([group_id]).groups[group_id]
         return {
             "state": group_description.state,
