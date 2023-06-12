@@ -155,32 +155,32 @@ class UserProfileSerializer(GenericSerializer):
         extra_read_only_fields: A tuple of field names that should be read-only in the
         serialized representation.
 
-    Example Usage:
+    Typical usage example:
         # In a view
-        class UserProfileView(generics.RetrieveUpdateAPIView):
-            serializer_class = UserProfileSerializer
-            queryset = models.UserProfile.objects.all()
+        >>> class UserProfileView(generics.RetrieveUpdateAPIView):
+            >>> serializer_class = UserProfileSerializer
+            >>> queryset = models.UserProfile.objects.all()
 
         # In a serializer class definition
-        class UserProfileSerializer(GenericSerializer):
-            job_title = serializers.PrimaryKeyRelatedField(
-                queryset=models.JobTitle.objects.all(),
-                required=False,
-                allow_null=True,
-            )
+        >>> class UserProfileSerializer(GenericSerializer):
+            >>> job_title = serializers.PrimaryKeyRelatedField(
+                >>> queryset=models.JobTitle.objects.all(),
+                >>> required=False,
+                >>> allow_null=True,
+            >>> )
 
-            title_name = JobTitleListingField(
-                source="title",
-                read_only=True,
-            )
+            >>> title_name = JobTitleListingField(
+                >>> source="title",
+                >>> read_only=True,
+            >>> )
 
-            class Meta:
-                model = models.UserProfile
-                extra_fields = ("title", "title_name")
-                extra_read_only_fields = (
-                    "id",
-                    "user",
-                )
+            >>> class Meta:
+                >>> model = models.UserProfile
+                >>> extra_fields = ("title", "title_name")
+                >>> extra_read_only_fields = (
+                    >>> "id",
+                    >>> "user",
+                >>> )
     """
 
     organization = serializers.PrimaryKeyRelatedField(
@@ -228,6 +228,9 @@ class UserProfileSerializer(GenericSerializer):
             "id",
             "user",
         )
+
+
+test = UserProfileSerializer()
 
 
 @extend_schema_serializer(
@@ -344,16 +347,32 @@ class UserSerializer(GenericSerializer):
         organization = super().get_organization
         validated_data["organization"] = organization
 
+        if validated_data.pop("password", None):
+            raise serializers.ValidationError(
+                {
+                    "password": "Password cannot be added directly to a user. Please use the password reset endpoint."
+                }
+            )
+
         # Popped data (profile)
         profile_data = validated_data.pop("profile", {})
         profile_data["organization"] = organization
 
         # Create the user
+        new_password = models.User.objects.make_random_password()
         user = models.User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
-            password=validated_data["password"],
+            password=new_password,
             organization=organization,
+        )
+
+        send_mail(
+            f"You have been added to {organization.name}",
+            f"Your username is {user.username} and your password is {new_password}. Please change your password after logging in.",
+            "noreply@monta.io",
+            [user.email],
+            fail_silently=False,
         )
 
         # Create the user profile

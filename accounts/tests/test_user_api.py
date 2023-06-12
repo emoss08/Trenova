@@ -55,7 +55,6 @@ def test_create_success(api_client: APIClient, organization: Organization) -> No
         "organization": organization.id,
         "username": "test_user",
         "email": "test_user@example.com",
-        "password": "test_password1234%",
         "profile": {
             "organization": organization.id,
             "first_name": "test",
@@ -71,12 +70,11 @@ def test_create_success(api_client: APIClient, organization: Organization) -> No
     response = api_client.post("/api/users/", payload, format="json")
 
     assert response.status_code == 201
-
-    user = User.objects.get(username=payload["username"])
-    assert user.check_password(payload["password"])
     assert "password" not in response.data
     assert response.data["username"] == payload["username"]
     assert response.data["email"] == payload["email"]
+    assert len(mail.outbox) == 1
+    assert "You have been added to " in mail.outbox[0].subject
 
 
 def test_user_with_email_exists_error(
@@ -88,7 +86,6 @@ def test_user_with_email_exists_error(
     payload = {
         "username": "test_user2",
         "email": "test_user@example.com",
-        "password": "test_password1234%",
         "profile": {
             "first_name": "test",
             "last_name": "user",
@@ -102,7 +99,6 @@ def test_user_with_email_exists_error(
         organization=organization,
         username=payload["username"],
         email=payload["email"],
-        password=payload["password"],
     )
     response = api_client.post("/api/users/", payload, format="json")
     assert response.status_code == 400
@@ -189,7 +185,7 @@ def test_user_cannot_change_password_on_update(user: User) -> None:
 
 def test_inactive_user_cannot_login(api_client: APIClient, user_api: Response) -> None:
     """
-    Test inactive user cannot login
+    Test inactive user cannot log in
 
     Args:
         api_client (APIClient): API Client
@@ -460,3 +456,38 @@ def test_change_email_with_other_users_email(user: User) -> None:
 
     assert response.status_code == 400
     assert response.data["email"][0] == "A user with the given email already exists."
+
+
+def test_validate_password_not_allowed_on_post(
+    api_client: APIClient, organization: Organization
+) -> None:
+    """
+    Test Create user
+    """
+    job_title = JobTitleFactory()
+
+    payload = {
+        "organization": organization.id,
+        "username": "test_user",
+        "email": "test_user@example.com",
+        "password": "test_password",
+        "profile": {
+            "organization": organization.id,
+            "first_name": "test",
+            "last_name": "user",
+            "address_line_1": "test",
+            "city": "test",
+            "state": "NC",
+            "zip_code": "12345",
+            "job_title": job_title.id,
+        },
+    }
+
+    response = api_client.post("/api/users/", payload, format="json")
+
+    assert response.status_code == 400
+    assert response.data["errors"][0]["attr"] == "password"
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Password cannot be added directly to a user. Please use the password reset endpoint."
+    )
