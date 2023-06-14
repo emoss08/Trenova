@@ -23,8 +23,6 @@ import { Notifications } from "@mantine/notifications";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <Notifications limit={5} position="top-right" zIndex={2077} />
-
     <App />
   </React.StrictMode>
 );
