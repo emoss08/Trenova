@@ -29,6 +29,7 @@ import {
 } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { useHotkeys, useLocalStorage } from "@mantine/hooks";
+import { Notifications } from "@mantine/notifications";
 
 function App() {
   useVerifyToken();
@@ -76,6 +77,7 @@ function App() {
           withNormalizeCSS
           withCSSVariables
         >
+          <Notifications limit={5} position="top-right" zIndex={2077} />
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <Suspense fallback={<LoadingScreen />}>
