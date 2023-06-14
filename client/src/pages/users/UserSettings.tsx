@@ -40,6 +40,7 @@ const UserSettings: React.FC = () => {
       onError: () => navigate("/error"),
     }
   );
+
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery(
     ["job_title"],
     () => getJobTitleDetails(userDetails.profile.job_title),
