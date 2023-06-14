@@ -41,6 +41,7 @@ import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
 import { LoginSchema } from "@/utils/schema";
+import background from "@/assets/login_background.png";
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [

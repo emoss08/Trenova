@@ -17,35 +17,14 @@
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { QueryClient, QueryClientProvider } from "react-query";
 import App from "./App";
 import "react-toastify/dist/ReactToastify.css";
-import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-    },
-  },
-});
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <MantineProvider
-      theme={{
-        colorScheme: "dark",
-      }}
-      withGlobalStyles
-      withNormalizeCSS
-      withCSSVariables
-    >
-      <Notifications limit={5} position="top-right" zIndex={2077} />
+    <Notifications limit={5} position="top-right" zIndex={2077} />
 
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </MantineProvider>
+    <App />
   </React.StrictMode>
 );
