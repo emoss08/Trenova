@@ -16,7 +16,7 @@
  */
 
 import React, { ChangeEvent, useState } from "react";
-import { Avatar, Input, Button, ActionIcon, Tooltip } from "@mantine/core";
+import { Avatar, Input, ActionIcon, Tooltip } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faPencil } from "@fortawesome/pro-solid-svg-icons";
 import { faXmark } from "@fortawesome/pro-regular-svg-icons";
@@ -33,7 +33,7 @@ interface AvatarInputProps {
 
 const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
   const [avatar, setAvatar] = useState<string | null>(defaultAvatar ?? null);
-  const [showRemove, setShowRemove] = useState<boolean>(false);
+  const [, setShowRemove] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {

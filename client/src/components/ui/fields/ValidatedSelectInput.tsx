@@ -15,11 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { TextInput } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
-import { createStyles } from "@mantine/styles";
 import { ValidatedTextInputProps } from "@/types/fields";
+import { createStyles } from "@mantine/styles";
+import { Select, Text, Loader } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
+import React, { forwardRef } from "react";
 
 const useStyles = createStyles((theme) => {
   return {
@@ -35,24 +35,51 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedTextInput = <
+interface ItemProps extends React.ComponentPropsWithoutRef<"div"> {
+  label: string;
+  value: string;
+  image: string;
+}
+
+export interface ValidatedSelectInputProps<TFormValues extends object>
+  extends ValidatedTextInputProps<TFormValues> {
+  data: ItemProps[];
+}
+
+const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
+  ({ label, value, image, ...others }: ItemProps, ref) => (
+    <div ref={ref} {...others}>
+      <Text size="sm">{label}</Text>
+    </div>
+  )
+);
+
+export const ValidatedSelectInput = <
   TFormValues extends Record<string, unknown>
 >({
   form,
+  data,
   name,
   ...rest
-}: ValidatedTextInputProps<TFormValues>) => {
+}: ValidatedSelectInputProps<TFormValues>) => {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
   return (
-    <TextInput
+    <Select
       {...rest}
       {...form.getInputProps(name as string)}
+      data={data}
       error={error}
+      maxDropdownHeight={200}
+      nothingFound={"Nothing found"}
+      itemComponent={SelectItem}
       classNames={{
         input: error ? classes.invalid : "",
       }}
+      filter={(value, item: any) =>
+        item.label.toLowerCase().includes(value.toLowerCase().trim())
+      }
       rightSection={
         error && (
           <IconAlertTriangle
@@ -62,6 +89,7 @@ export const ValidatedTextInput = <
           />
         )
       }
+      searchable
     />
   );
 };

@@ -14,7 +14,7 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { User } from "@/types/user";
+import { User, UserFormValues } from "@/types/user";
 import React from "react";
 import {
   Card,
@@ -28,7 +28,6 @@ import {
   Divider,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
-import * as Yup from "yup";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/axiosConfig";
 import { notifications } from "@mantine/notifications";
@@ -37,27 +36,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ValidatedTextInput } from "../ui/fields/ValidatedTextInput";
 import { StateSelect } from "../ui/fields/StateSelect";
 import { CityAutoCompleteField } from "../ui/fields/CityAutoCompleteField";
+import { UserSchema } from "@/utils/schema";
 
 type Props = {
   user: User;
 };
-
-interface FormValues {
-  id: string;
-  username: string;
-  email: string;
-  profile: {
-    organization: string;
-    first_name: string;
-    last_name: string;
-    address_line_1: string;
-    address_line_2?: string;
-    city: string;
-    state: string;
-    zip_code: string;
-    phone_number?: string;
-  };
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -118,23 +101,8 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
-  const schema = Yup.object().shape({
-    profile: Yup.object().shape({
-      first_name: Yup.string().required("First name is required"),
-      last_name: Yup.string().required("Last name is required"),
-      address_line_1: Yup.string().required("Address Line 1 is required"),
-      city: Yup.string().required("City is required"),
-      state: Yup.string().required("State is required"),
-      zip_code: Yup.string().required("Zip Code is required"),
-      phone_number: Yup.string().matches(
-        /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
-        "Phone number must be in the format (xxx) xxx-xxxx"
-      ),
-    }),
-  });
-
   const mutation = useMutation(
-    (values: FormValues) => axios.put(`/users/${values.id}/`, values),
+    (values: UserFormValues) => axios.put(`/users/${values.id}/`, values),
     {
       onSuccess: () => {
         queryClient.invalidateQueries("user").then(() => {
@@ -161,13 +129,13 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
     }
   );
 
-  const submitForm = (values: FormValues) => {
+  const submitForm = (values: UserFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
 
-  const form = useForm<FormValues>({
-    validate: yupResolver(schema),
+  const form = useForm<UserFormValues>({
+    validate: yupResolver(UserSchema),
     initialValues: {
       id: user.id,
       username: user.username,
@@ -235,7 +203,6 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   label="Address Line 2"
                   placeholder="Address Line 2"
                   variant="filled"
-                  withAsterisk
                 />
               </SimpleGrid>
               <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
@@ -245,6 +212,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   className={classes.fields}
                   name="profile.city"
                   label="City"
+                  value={form.values.profile.city}
                   placeholder="City"
                   variant="filled"
                   withAsterisk
@@ -254,7 +222,6 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   className={classes.fields}
                   placeholder="State"
                   variant="filled"
-                  required={true}
                   searchable={true}
                   form={form}
                   name="profile.state"

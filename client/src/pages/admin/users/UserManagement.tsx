@@ -16,8 +16,8 @@
  */
 
 import React from "react";
-import { Card, Container, createStyles, Flex } from "@mantine/core";
-import UsersAdminTable from "@/components/user-management/users-table";
+import { Text, Card, createStyles, Flex } from "@mantine/core";
+import UsersAdminTable from "@/components/user-management/UserTable";
 
 const useStyles = createStyles((theme) => ({
   card: {
@@ -53,6 +53,34 @@ const UserManagement: React.FC = () => {
   const { classes } = useStyles();
   return (
     <>
+      <div style={{ flex: 1, marginBottom: 10 }}>
+        <Text className={classes.text} fz={20} weight={600}>
+          User Management
+        </Text>
+        <Flex>
+          <Text
+            color="dimmed"
+            size="sm"
+            sx={{
+              marginRight: "5px",
+            }}
+          >
+            Home -
+          </Text>
+          <Text
+            color="dimmed"
+            size="sm"
+            sx={{
+              marginRight: "5px",
+            }}
+          >
+            User Management -
+          </Text>
+          <Text color="dimmed" size="sm">
+            User List
+          </Text>
+        </Flex>
+      </div>
       <Flex>
         <Card className={classes.card}>
           <UsersAdminTable />
