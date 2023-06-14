@@ -53,6 +53,7 @@ Our second release will include the following features:
 - Fuel Tax Module
 - Recurring Orders Module
 - Credit Memo Generation
+- Export reports to Excel, CSV, PDF
 
 ### 0.3.0 (November 1st, 2023)
 
