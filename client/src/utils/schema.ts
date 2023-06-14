@@ -14,9 +14,25 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import * as Yup from "yup";
 
 export const LoginSchema = Yup.object().shape({
   username: Yup.string().required("Username is required."),
   password: Yup.string().required("Password is required."),
+});
+
+export const UserSchema = Yup.object().shape({
+  profile: Yup.object().shape({
+    first_name: Yup.string().required("First name is required"),
+    last_name: Yup.string().required("Last name is required"),
+    address_line_1: Yup.string().required("Address Line 1 is required"),
+    city: Yup.string().required("City is required"),
+    state: Yup.string().required("State is required"),
+    zip_code: Yup.string().required("Zip Code is required"),
+    phone_number: Yup.string().matches(
+      /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
+      "Phone number must be in the format (xxx) xxx-xxxx"
+    ),
+  }),
 });

@@ -28,9 +28,8 @@ import {
   Text,
   Title,
   Button,
-  createStyles,
 } from "@mantine/core";
-import { isNotEmpty, useForm } from "@mantine/form";
+import { useForm, yupResolver } from "@mantine/form";
 import { LoginFormValues } from "@/types/login";
 import axios from "@/lib/axiosConfig";
 import { useLocalStorage } from "@mantine/hooks";
@@ -40,6 +39,8 @@ import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { ValidatedPasswordInput } from "@/components/ui/fields/ValidatedPasswordInput";
 import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
 import { getUserDetails } from "@/requests/UserRequestFactory";
+import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
+import { LoginSchema } from "@/utils/schema";
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
@@ -63,10 +64,7 @@ const LoginPage: React.FC = () => {
       password: "",
     },
 
-    validate: {
-      username: isNotEmpty("Username is required."),
-      password: isNotEmpty("Password is required."),
-    },
+    validate: yupResolver(LoginSchema),
   });
 
   const navigate = useNavigate();
@@ -79,7 +77,7 @@ const LoginPage: React.FC = () => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      const response = await axios.post("login/", {
+      const response = await axios.post("/login/", {
         username: values.username,
         password: values.password,
       });
@@ -139,6 +137,7 @@ const LoginPage: React.FC = () => {
               label="Username"
               placeholder="Your Username"
               withAsterisk
+              icon={<FontAwesomeIcon icon={faUser} />}
             />
             <ValidatedPasswordInput
               form={form}
@@ -147,6 +146,7 @@ const LoginPage: React.FC = () => {
               placeholder="Your password"
               mt="md"
               withAsterisk
+              icon={<FontAwesomeIcon icon={faLockKeyhole} />}
             />
             <Group position="apart" mt="lg">
               <Checkbox label="Remember me" />

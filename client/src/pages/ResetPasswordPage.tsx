@@ -19,7 +19,6 @@ import React from "react";
 import {
   Container,
   Paper,
-  TextInput,
   Text,
   Title,
   Button,
@@ -32,26 +31,11 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import { IconAlertTriangle } from "@tabler/icons-react";
-import { ValidatedTextInput } from "@/components/ui/ValidatedTextInput";
-
-const useStyles = createStyles((theme) => ({
-  invalid: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.rgba(theme.colors.red[8], 0.15)
-        : theme.colors.red[0],
-  },
-
-  icon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
+import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
 
 const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
   const navigate = useNavigate();
-  const { classes } = useStyles();
 
   interface FormValues {
     email: string;
