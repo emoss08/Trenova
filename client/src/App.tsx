@@ -16,11 +16,19 @@
  */
 
 import { BrowserRouter } from "react-router-dom";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import LoadingScreen from "./components/LoadingScreen";
 import ProtectedRoutes from "./routing/ProtectedRoutes";
 import useVerifyToken from "./hooks/withTokenVerification";
 import { useAuthStore } from "@/stores/authStore";
+import "./styles/App.css";
+import {
+  ColorScheme,
+  ColorSchemeProvider,
+  MantineProvider,
+} from "@mantine/core";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 
 function App() {
   useVerifyToken();
@@ -30,13 +38,53 @@ function App() {
     return <LoadingScreen />;
   }
 
+  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: "monta-color-scheme",
+    defaultValue: "light",
+    getInitialValueInEffect: true,
+  });
+  const toggleColorScheme = (value?: ColorScheme) =>
+    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+
+  // TODO(wolfred): remove in production leave for dev because it's useful for me to switch.
+  useHotkeys([["mod+J", () => toggleColorScheme()]]); // Acorn said this wasn't standard, and it would confuse users.
+
+  useEffect(() => {
+    document.body.className =
+      colorScheme === "dark" ? "dark-theme" : "light-theme";
+  }, [colorScheme]);
+
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
   return (
     <>
-      <BrowserRouter>
-        <Suspense fallback={<LoadingScreen />}>
-          <ProtectedRoutes />
-        </Suspense>
-      </BrowserRouter>
+      <ColorSchemeProvider
+        colorScheme={colorScheme}
+        toggleColorScheme={toggleColorScheme}
+      >
+        <MantineProvider
+          theme={{
+            colorScheme,
+          }}
+          withGlobalStyles
+          withNormalizeCSS
+          withCSSVariables
+        >
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <Suspense fallback={<LoadingScreen />}>
+                <ProtectedRoutes />
+              </Suspense>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </MantineProvider>
+      </ColorSchemeProvider>
     </>
   );
 }

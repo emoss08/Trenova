@@ -15,6 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-@tailwind base;
-@tailwind utilities;
-@tailwind components;
+body.light-theme {
+    background-image: url('../assets/images/background_white.png');
+}
+
+body.dark-theme {
+    background-image: url('../assets/images/background_dark.png');
+}
