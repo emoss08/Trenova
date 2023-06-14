@@ -38,7 +38,7 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.EquipmentType]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related("equipment_type_detail")
             .only(
@@ -84,7 +84,7 @@ class TractorViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization__id",
@@ -139,7 +139,7 @@ class TrailerViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -215,13 +215,13 @@ class EquipmentMaintenancePlanViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.EquipmentMaintenancePlan]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
                     "equipment_types",
                     queryset=models.EquipmentType.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only("id"),
                 )
             )

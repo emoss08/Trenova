@@ -86,13 +86,13 @@ class LocationViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.Location]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
                     lookup="location_comments",
                     queryset=models.LocationComment.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only(
                         "id",
                     ),
@@ -100,7 +100,7 @@ class LocationViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="location_contacts",
                     queryset=models.LocationContact.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only(
                         "id",
                     ),
@@ -142,7 +142,7 @@ class LocationContactViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.LocationContact]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "location_id",

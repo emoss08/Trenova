@@ -42,6 +42,7 @@ def test_get_by_id(api_client: APIClient, user_api: Response) -> None:
     Test get user by ID
     """
     response = api_client.get(f"/api/users/{user_api.data['id']}/")
+
     assert response.status_code == 200
 
 
@@ -217,6 +218,12 @@ def test_login_user(unauthenticated_api_client: APIClient, user_api: Response) -
         None: This function does not return anything.
 
     """
+
+    user = User.objects.get(id=user_api.data["id"])
+
+    user.set_password("trashuser12345%")
+    user.save()
+
     response = unauthenticated_api_client.post(
         "/api/login/",
         {"username": user_api.data["username"], "password": "trashuser12345%"},
@@ -224,7 +231,7 @@ def test_login_user(unauthenticated_api_client: APIClient, user_api: Response) -
     assert response.status_code == 200
     assert response.data["token"]
 
-    user = User.objects.get(id=user_api.data["id"])
+    user.refresh_from_db()
     assert user.online is True
     assert user.last_login
 

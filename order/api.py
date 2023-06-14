@@ -48,7 +48,7 @@ class OrderControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.OrderControl]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -91,7 +91,7 @@ class OrderTypeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.OrderType]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -126,7 +126,7 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.ReasonCode]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -249,7 +249,7 @@ class OrderDocumentationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.OrderDocumentation]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "document",
@@ -286,7 +286,7 @@ class OrderCommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.OrderComment]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "comment",
@@ -324,7 +324,7 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.AdditionalCharge]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "accessorial_charge_id",

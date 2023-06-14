@@ -56,7 +56,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
             super()
             .get_queryset(request)
             .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization=request.user.organization)  # type: ignore
+            .filter(organization_id=request.user.organization_id)  # type: ignore
         )
 
     def save_model(
@@ -169,7 +169,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
             super()
             .get_queryset(request)
             .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization=request.user.organization)  # type: ignore
+            .filter(organization_id=request.user.organization_id)  # type: ignore
         )
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:

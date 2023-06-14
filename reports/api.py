@@ -97,7 +97,7 @@ class CustomReportViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.CustomReport]":
         queryset: "QuerySet[models.CustomReport]" = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "table",

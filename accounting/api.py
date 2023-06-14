@@ -40,7 +40,7 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
             "id",
@@ -74,7 +74,7 @@ class RevenueCodeViewSet(viewsets.ModelViewSet):
             QuerySet[models.RevenueCode]: Filtered queryset
         """
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "code",
@@ -108,7 +108,7 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
         """
 
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "is_active",

@@ -80,7 +80,6 @@ def user_api(api_client, organization) -> Generator[Any, Any, None]:
             "organization": f"{organization.id}",
             "username": "foobar",
             "email": "foobar@user.com",
-            "password": "trashuser12345%",
             "profile": {
                 "organization": f"{organization.id}",
                 "first_name": "foo",
