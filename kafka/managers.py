@@ -122,10 +122,11 @@ class KafkaManager:
         """
 
         if self.admin_client is None:
-            raise KafkaException("Kafka admin client is not available.")
-
+            # raise KafkaException("Kafka admin client is not available.")
+            return []
         if not self.is_kafka_available():
-            raise KafkaException("Kafka is not available.")
+            # raise KafkaException("Kafka is not available.")
+            return []
 
         try:
             topic_metadata = self.admin_client.list_topics(timeout=5)

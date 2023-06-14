@@ -17,6 +17,10 @@
 
 from django.db import connection
 
+from kafka.managers import KafkaManager
+
+KAFKA_MANAGER = KafkaManager()
+
 
 class TableChoiceService:
     """A service for retrieving table and column information from a Django database.
@@ -76,7 +80,7 @@ class TableChoiceService:
         Notes:
             You have to pass an open cursor to the get_table_description otherwise,
             you will get an error like this:
-                >>> django.db.utils.ProgrammingError: cursor already closed
+                django.db.utils.ProgrammingError: cursor already closed
             This is because the cursor is closed when the connection is closed.
         """
 
@@ -89,4 +93,5 @@ class TableChoiceService:
 
 
 table_names: list[str] = TableChoiceService().get_all_table_names()
+
 TABLE_NAME_CHOICES = [(table_name, table_name) for table_name in table_names]

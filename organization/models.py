@@ -167,12 +167,6 @@ class Organization(TimeStampedModel):
         default=30,
         help_text=_("The number of days before a token expires."),
     )
-    login_background_image = models.ImageField(
-        _("Login Background Image"),
-        upload_to="organizations/login_background_image/",
-        null=True,
-        blank=True,
-    )
 
     class Meta:
         """
