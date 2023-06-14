@@ -27,7 +27,7 @@ class WorkerCommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.WorkerComment]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -45,7 +45,7 @@ class WorkerContactViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.WorkerContact]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "name",
@@ -66,7 +66,7 @@ class WorkerProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.WorkerProfile]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
             "worker_id",
@@ -111,7 +111,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
             QuerySet[models.Worker]: A queryset of workers for the current user's organization.
         """
         queryset = (
-            self.queryset.filter(organization=self.request.user.organization)  # type: ignore
+            self.queryset.filter(organization_id=self.request.user.organization_id)  # type: ignore
             .select_related(
                 "profiles",
             )
@@ -119,7 +119,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="comments",
                     queryset=models.WorkerComment.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only(
                         "id",
                         "entered_by_id",
@@ -132,7 +132,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     lookup="contacts",
                     queryset=models.WorkerContact.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only(
                         "id",
                         "phone",

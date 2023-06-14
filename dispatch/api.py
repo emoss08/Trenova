@@ -35,7 +35,7 @@ class CommentTypeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.CommentType]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only("id", "organization_id", "name", "description")
         return queryset
 
@@ -55,7 +55,7 @@ class DelayCodeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.DelayCode]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
             "code",
@@ -82,7 +82,7 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.FleetCode]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
             "code",
@@ -114,7 +114,7 @@ class DispatchControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.DispatchControl]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
             "record_service_incident",
@@ -151,7 +151,7 @@ class RateViewSet(viewsets.ModelViewSet):
             Prefetch(
                 "rate_billing_tables",
                 queryset=models.RateBillingTable.objects.filter(
-                    organization=self.request.user.organization  # type: ignore
+                    organization_id=self.request.user.organization_id  # type: ignore
                 ).only(
                     "id",
                     "rate_id",
@@ -205,7 +205,7 @@ class RateBillingTableViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.RateBillingTable]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "rate_id",

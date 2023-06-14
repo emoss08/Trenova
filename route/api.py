@@ -40,7 +40,7 @@ class RouteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.Route]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "origin_location_id",
@@ -71,7 +71,7 @@ class RouteControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.RouteControl]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",

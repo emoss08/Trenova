@@ -52,7 +52,7 @@ class InvoiceControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> "QuerySet[models.InvoiceControl]":
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "invoice_number_prefix",

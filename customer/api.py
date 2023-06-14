@@ -45,19 +45,19 @@ class CustomerViewSet(viewsets.ModelViewSet):
         """
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
                     lookup="contacts",
                     queryset=models.CustomerContact.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only("id", "customer_id"),
                 ),
                 Prefetch(
                     lookup="billing_profile",
                     queryset=models.CustomerBillingProfile.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only("id", "customer_id"),
                 ),
             )
@@ -98,7 +98,7 @@ class CustomerBillingProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.CustomerBillingProfile]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "is_active",
@@ -140,13 +140,13 @@ class CustomerFuelTableViewSet(viewsets.ModelViewSet):
         """
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
                     lookup="customer_fuel_table_details",
                     queryset=models.CustomerFuelTableDetail.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only(
                         "id",
                         "customer_fuel_table_id",
@@ -196,13 +196,13 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
         """
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .prefetch_related(
                 Prefetch(
                     lookup="document_class",
                     queryset=models.DocumentClassification.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only("id"),
                 )
             )

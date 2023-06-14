@@ -39,7 +39,7 @@ class QualifierCodeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.QualifierCode]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
             "code",
@@ -67,7 +67,7 @@ class StopCommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.StopComment]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "stop_id",
@@ -105,7 +105,7 @@ class StopViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.Stop]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "status",

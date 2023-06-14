@@ -54,7 +54,7 @@ class BillingControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.BillingControl]:
         queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
+            organization=self.request.user.organization  # type: ignore
         ).only(
             "id",
             "order_transfer_criteria",
@@ -156,7 +156,7 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.BillingHistory]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related("organization")
             .only(
@@ -231,7 +231,7 @@ class ChargeTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.ChargeType]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related("organization")
             .only(
@@ -265,7 +265,7 @@ class AccessorialChargeViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.AccessorialCharge]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related("organization")
             .only(
@@ -304,7 +304,7 @@ class DocumentClassificationViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.DocumentClassification]:
         queryset = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related("organization")
             .only(
