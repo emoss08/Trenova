@@ -49,7 +49,6 @@ export const CityAutoCompleteField = <TFormValues extends object>({
   const { classes } = useStyles();
   const error = form.errors[name as string];
   const timeoutRef = useRef<number>(-1);
-  const [value, setValue] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [data, setData] = useState<string[]>([]);
 
@@ -76,7 +75,6 @@ export const CityAutoCompleteField = <TFormValues extends object>({
 
   const handleChange = (val: string) => {
     window.clearTimeout(timeoutRef.current);
-    setValue(val);
     form.setFieldValue(name as string, val); // Update form value for the city
     setData([]);
 
@@ -97,12 +95,11 @@ export const CityAutoCompleteField = <TFormValues extends object>({
     <Autocomplete
       {...rest}
       {...form.getInputProps(name as string)}
-      data={data}
+      data={data ?? []}
       error={error}
       classNames={{
         input: error ? classes.invalid : "",
       }}
-      value={value}
       onChange={handleChange}
       rightSection={
         loading ? (
