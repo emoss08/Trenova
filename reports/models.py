@@ -357,3 +357,55 @@ class ScheduledReport(GenericModel):
             str: The absolute URL for the scheduled report.
         """
         return reverse("scheduled-report-detail", kwargs={"pk": self.pk})
+
+
+class UserReport(GenericModel):
+    """
+    Stores the user reports information for related :model:`accounts.User`.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="user_reports",
+        help_text=_("The user that the report belongs to"),
+        verbose_name=_("User"),
+    )
+    report = models.FileField(
+        _("Report"),
+        upload_to="reports/user/",
+        help_text=_("The report file"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the UserReport model
+        """
+
+        verbose_name = _("User Report")
+        verbose_name_plural = _("User Reports")
+        db_table = "user_report"
+
+    def __str__(self) -> str:
+        """UserReport string representation.
+
+        Returns:
+            str: String representation of the UserReport Model.
+        """
+        return textwrap.shorten(
+            f"{self.user.username} ({self.report.name})", width=30, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """Absolute URL for the UserReport.
+
+        Returns:
+            str: Get the absolute url of the user report
+        """
+        return reverse("user:user-report-view", kwargs={"pk": self.pk})

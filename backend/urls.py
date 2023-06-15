@@ -363,6 +363,16 @@ urlpatterns = [
         billing_api.untransfer_orders,
         name="untransfer-invoice",
     ),
+    path(
+        "api/get_columns/",
+        reports_api.get_model_columns_api,
+        name="get-model-columns",
+    ),
+    path(
+        "api/generate_report/",
+        reports_api.generate_report_api,
+        name="generate-report",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

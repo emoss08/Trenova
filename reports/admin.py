@@ -197,3 +197,12 @@ class WeekdayAdmin(admin.ModelAdmin[models.Weekday]):
     """
 
     list_display = ("name",)
+
+
+@admin.register(models.UserReport)
+class UserReportAdmin(admin.ModelAdmin[models.UserReport]):
+    """
+    Admin class for managing UserReport objects in the Django admin interface.
+    """
+
+    list_display = ("id", "user")

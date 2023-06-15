@@ -18,6 +18,7 @@
 from rest_framework import serializers
 
 from reports import models
+from reports.helpers import ALLOWED_MODELS
 from utils.serializers import GenericSerializer
 
 

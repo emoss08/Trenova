@@ -17,11 +17,14 @@
 from typing import TYPE_CHECKING
 
 from django.apps import apps
-from rest_framework import generics, viewsets
+from rest_framework import exceptions, generics, status, viewsets
+from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from reports import models, serializers
+from reports import models, serializers, tasks
+from reports.exceptions import DisallowedModelException
+from reports.helpers import ALLOWED_MODELS
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -57,7 +60,10 @@ class TableColumnsAPIView(generics.GenericAPIView):
         """
 
         if not (table_name := request.GET.get("table_name", None)):
-            return Response({"error": "Table name not provided."})
+            return Response(
+                {"error": "Table name not provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if model := next(
             (
                 app_model
@@ -74,9 +80,11 @@ class TableColumnsAPIView(generics.GenericAPIView):
                 for field in model._meta.get_fields()
                 if hasattr(field, "column")
             ]
-            return Response({"columns": columns})
+            return Response({"columns": columns}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Table not found."})
+            return Response(
+                {"error": "Table not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class CustomReportViewSet(viewsets.ModelViewSet):
@@ -105,3 +113,78 @@ class CustomReportViewSet(viewsets.ModelViewSet):
             "organization_id",
         )
         return queryset
+
+
+@api_view(["GET"])
+def get_model_columns_api(request: Request) -> Response:
+    model_name = request.query_params.get("model_name", None)
+
+    if not model_name:
+        return Response(
+            {"error": "Model name not provided."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        allowed_model = ALLOWED_MODELS[model_name]
+    except KeyError:
+        return Response(
+            {"error": f"Not allowed to generate reports for model: {model_name}"},
+            status=400,
+        )
+
+    # No need to handle related fields separately anymore
+    return Response(
+        {"results": allowed_model["allowed_fields"]}, status=status.HTTP_200_OK
+    )
+
+
+@api_view(["POST"])
+def generate_report_api(request: Request) -> Response:
+    model_name = request.data.get("model_name", None)
+    columns = request.data.get("columns", None)
+    file_format = request.data.get("file_format", None)
+
+    if not model_name:
+        return Response(
+            {"error": "Model name not provided."}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if not columns:
+        return Response(
+            {"error": "Columns not provided."}, status=status.HTTP_400_BAD_REQUEST
+        )
+    if not file_format:
+        return Response(
+            {"error": "File format not provided."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        allowed_model = ALLOWED_MODELS[model_name]
+    except DisallowedModelException:
+        return Response(
+            {"error": f"Not allowed to generate reports for model: {model_name}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Check if columns are valid for the model
+    for column in columns:
+        if column not in allowed_model["allowed_fields"]:
+            return Response(
+                {"error": f"Invalid column for model: {column}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    try:
+        tasks.generate_report.delay(
+            model_name=model_name,
+            columns=columns,
+            file_format=file_format,
+            user_id=request.user.id,
+        )
+        return Response(
+            {
+                "results": "Report Generation Job Created. We will notify you when the report is ready."
+            },
+            status=status.HTTP_202_ACCEPTED,
+        )
+    except exceptions.ValidationError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
