@@ -19,7 +19,6 @@ import secrets
 import string
 from typing import Any, final
 
-import pendulum
 from django.core import checks
 from django.core.checks import CheckMessage, Error
 from django.db import models
@@ -170,20 +169,3 @@ class ChoiceField(CharField):
                 )
             ]
         return []
-
-
-class PendulumDateTimeField(models.DateTimeField):
-    def to_python(self, value: Any) -> pendulum.DateTime | None:
-        if isinstance(value, pendulum.DateTime):
-            return value
-        return super().to_python(value) if value is not None else value
-
-    def from_db_value(
-        self, value: Any | None, expression: Any, connection: Any
-    ) -> pendulum.DateTime | None:
-        return pendulum.instance(value) if value is not None else value
-
-    def get_prep_value(self, value: pendulum.DateTime | None) -> Any | None:
-        if value is not None:
-            value = pendulum.instance(value).naive()
-        return super().get_prep_value(value)
