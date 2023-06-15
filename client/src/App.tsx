@@ -30,6 +30,7 @@ import {
 import { QueryClient, QueryClientProvider } from "react-query";
 import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { Notifications } from "@mantine/notifications";
+import { ModalsProvider } from "@mantine/modals";
 
 function App() {
   useVerifyToken();

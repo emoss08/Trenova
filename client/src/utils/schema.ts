@@ -36,3 +36,8 @@ export const UserSchema = Yup.object().shape({
     ),
   }),
 });
+
+export const ExportModelSchema = Yup.object().shape({
+  file_format: Yup.string().required("File format is required"),
+  columns: Yup.array().of(Yup.string()).required("Columns are required"),
+});

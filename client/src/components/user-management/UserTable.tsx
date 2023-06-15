@@ -35,6 +35,7 @@ import {
   Flex,
   Menu,
   Text,
+  TextInput,
   Tooltip,
 } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,6 +54,9 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { CreateUserDrawer } from "./CreateUserDrawer";
+import { useDisclosure } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
+import { ExportUsersModal } from "@/components/user-management/ExportUsersModal";
 
 config.autoAddCss = false;
 
@@ -68,7 +72,15 @@ const UsersAdminTable = () => {
   });
   const [globalFilter, setGlobalFilter] = useState<string>("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isExportModalOpen, setExportModalOpen] = useState(false);
 
+  const openExportUsersModal = () => {
+    setExportModalOpen(true);
+  };
+
+  const closeExportUsersModal = () => {
+    setExportModalOpen(false);
+  };
   const closeDrawer = () => setDrawerOpen(false);
   const openDrawer = () => setDrawerOpen(true);
 
@@ -88,6 +100,7 @@ const UsersAdminTable = () => {
       return response.data;
     },
     {
+      refetchOnWindowFocus: false,
       keepPreviousData: true,
     }
   );
@@ -310,6 +323,7 @@ const UsersAdminTable = () => {
               <Button
                 color="blue"
                 leftIcon={<FontAwesomeIcon icon={faFileExport} />}
+                onClick={openExportUsersModal}
               >
                 Export
               </Button>
@@ -320,6 +334,10 @@ const UsersAdminTable = () => {
               >
                 Create New User
               </Button>
+              <ExportUsersModal
+                onClose={closeExportUsersModal}
+                opened={isExportModalOpen}
+              />
               <CreateUserDrawer onClose={closeDrawer} opened={drawerOpen} />
             </Flex>
           </Flex>
