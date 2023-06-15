@@ -55,6 +55,7 @@ import {
 import { Link } from "react-router-dom";
 import ActionButton from "../ActionButton";
 import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
+import { faDownload } from "@fortawesome/pro-duotone-svg-icons";
 
 const useStyles = createStyles((theme) => ({
   link: {
@@ -278,7 +279,7 @@ export function HeaderMegaMenu() {
 
           <Group className={classes.hiddenMobile}>
             <ActionButton icon={faMagnifyingGlass} />
-            <ActionButton icon={faMessage} />
+            <ActionButton icon={faDownload} />
             <ActionButton icon={faBell} />
             {isLoading ? (
               <Skeleton width={rem(150)} height={rem(40)} circle />

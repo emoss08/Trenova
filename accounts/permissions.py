@@ -55,6 +55,7 @@ class ViewAllUsersPermission(permissions.BasePermission):
         return (
             request.user.has_perm("accounts.view_all_users")
             or request.user.is_superuser
+            or request.user.is_staff
         )
 
     def has_object_permission(

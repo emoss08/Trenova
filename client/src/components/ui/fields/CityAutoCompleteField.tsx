@@ -75,7 +75,7 @@ export const CityAutoCompleteField = <TFormValues extends object>({
 
   const handleChange = (val: string) => {
     window.clearTimeout(timeoutRef.current);
-    form.setFieldValue(name as string, val); // Update form value for the city
+    form.setFieldValue(name as string, val);
     setData([]);
 
     if (val.trim().length === 0 || val.includes("@")) {
