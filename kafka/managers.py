@@ -100,7 +100,7 @@ class KafkaManager:
         """
 
         try:
-            sock: socket = socket.create_connection(
+            sock: socket.socket = socket.create_connection(
                 (self.kafka_host, self.kafka_port), timeout=timeout
             )
             sock.close()
