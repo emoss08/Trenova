@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from django.core import mail
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -24,7 +25,6 @@ from accounts.models import User
 from accounts.serializers import UserSerializer
 from accounts.tests.factories import JobTitleFactory, UserFactory
 from organization.models import Organization
-from django.core import mail
 
 pytestmark = pytest.mark.django_db
 

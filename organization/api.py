@@ -536,7 +536,10 @@ class CacheManagerView(views.APIView):
             app_label, model_name = model_path.split(".")
             model = apps.get_model(app_label, model_name)
             invalidate_model(model)
-            return Response({"detail": f"Cache for {model_path} cleared."})
+            return Response(
+                {"detail": f"Cache for {model_path} cleared."},
+                status=status.HTTP_200_OK,
+            )
         except exceptions.CacheOperationError as cache_exc:
             return Response(
                 {"error": str(cache_exc)}, status=status.HTTP_400_BAD_REQUEST

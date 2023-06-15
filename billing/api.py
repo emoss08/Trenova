@@ -470,7 +470,10 @@ def untransfer_orders(request: Request) -> Response:
     invoice_numbers = request.data.get("invoice_numbers")
 
     if not invoice_numbers:
-        return Response({"error": "No invoice numbers provided."}, status=400)
+        return Response(
+            {"error": "No invoice numbers provided."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     if isinstance(invoice_numbers, list):
         invoice_numbers_list = invoice_numbers
@@ -482,6 +485,10 @@ def untransfer_orders(request: Request) -> Response:
             invoice_number__in=invoice_numbers_list
         )
         services.untransfer_order_service(billing_queues)
-        return Response({"success": "Orders untransferred successfully."})
+        return Response(
+            {"success": "Orders untransferred successfully."}, status=status.HTTP_200_OK
+        )
     except ObjectDoesNotExist:
-        return Response({"error": "Invoice numbers not found."}, status=404)
+        return Response(
+            {"error": "Invoice numbers not found."}, status=status.HTTP_404_NOT_FOUND
+        )
