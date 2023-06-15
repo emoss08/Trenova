@@ -85,7 +85,7 @@ def transfer_to_billing_task(
     self: "Task", *, user_id: str, order_pros: list[str]
 ) -> None:
     """
-    Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
+    Starts a Celery task to transfer the specified order(s) to billing for the logged-in user.
 
     Args:
         self: The Celery task instance.

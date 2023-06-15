@@ -20,10 +20,12 @@ from typing import TYPE_CHECKING
 from celery import shared_task
 from celery_singleton import Singleton
 from django.core.mail import EmailMessage
+from django.db.models import Model
 
+from accounts.models import User
 from core.exceptions import ServiceException
-from reports import selectors
-from reports.services import generate_excel_report_as_file
+from reports import selectors, services, utils
+from utils.types import ModelUUID
 
 if TYPE_CHECKING:
     from celery.app.task import Task
@@ -57,7 +59,7 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
         report = scheduled_report.custom_report
         user = scheduled_report.user
 
-        excel_file = generate_excel_report_as_file(report)
+        excel_file = services.generate_excel_report_as_file(report)
 
         email = EmailMessage(
             subject=f"Your scheduled report: {report.name}",
@@ -72,5 +74,42 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         email.send()
+    except ServiceException as exc:
+        raise self.retry(exc=exc) from exc
+
+
+@shared_task(
+    name="generate_report",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+)
+def generate_report(
+    self: "Task",
+    *,
+    model_name: str,
+    columns: list[str],
+    user_id: ModelUUID,
+    file_format: str,
+) -> str:
+    """A Celery task that generates a report.
+
+    This task generates an Excel file from the report and sends it to the user who created the report.
+
+    Args:
+        self (celery.app.task.Task): The task object.
+        model_name (str): The name of the model to generate the report for.
+        columns (list[str]): The columns to include in the report.
+        user_id (ModelUUID): The ID of the user who requested the report.
+        file_format (str): The file format to generate the report in.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    try:
+        utils.generate_report(
+            model_name=model_name, columns=columns, user_id=user_id, file_format=file_format  # type: ignore
+        )
+        return "Report generated successfully."
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc

@@ -26,3 +26,11 @@ class InvalidScheduleTypeException(CustomReportException):
 
 class InvalidTableException(CustomReportException):
     """Invalid table exception class."""
+
+
+class DisallowedModelException(CustomReportException):
+    """Disallowed model exception class."""
+
+
+class DisallowedFieldException(CustomReportException):
+    """Disallowed field exception class."""
