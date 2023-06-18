@@ -14,11 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from unittest.mock import Mock, patch
 
 import pytest
+from celery.exceptions import Retry
 
 from accounts.models import User
-from reports import models, utils
+from core.exceptions import ServiceException
+from reports import models, tasks, utils
 
 pytestmark = pytest.mark.django_db
 
@@ -58,8 +61,81 @@ def test_generate_report(file_format, user: User) -> None:
     ]
 
     utils.generate_report(
-        model=User, columns=columns, user=user, file_format=file_format
+        model_name="User", columns=columns, user_id=user.id, file_format=file_format
     )
     reports = models.UserReport.objects.all()
 
     assert reports.count() == 1
+
+
+@patch("reports.tasks.utils.generate_report")
+def test_generate_report_task(mock_generate_report: Mock, user: User) -> None:
+    """Test that the generate_report_task calls the generate_report function with the correct arguments.
+
+    Args:
+        mock_generate_report (Mock): Mocked function of the actual generate_report in reports.tasks.utils.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    mock_generate_report.return_value = None
+
+    model_name = "User"
+    columns = [
+        "username",
+        "email",
+        "date_joined",
+        "is_staff",
+    ]
+    user_id = user.id
+    file_format = "csv"
+
+    tasks.generate_report_task(
+        model_name=model_name,
+        columns=columns,
+        user_id=user_id,
+        file_format=file_format,
+    )
+
+    mock_generate_report.assert_called_with(
+        model_name=model_name,
+        columns=columns,
+        user_id=user_id,
+        file_format=file_format,
+    )
+    mock_generate_report.assert_called_once()
+
+
+@patch("reports.tasks.utils.generate_report")
+def test_generate_report_task_failure(generate_report: Mock, user: User) -> None:
+    """Test that a Retry exception is raised when the generate_report_task encounters an OperationalError.
+
+    Args:
+        generate_report: Mocked function of the actual generate_report in reports.tasks.utils.
+        user: The User object for the test.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    # Mock generate_report to throw an OperationalError
+    generate_report.side_effect = ServiceException()
+
+    with patch(
+        "reports.tasks.generate_report_task.retry", side_effect=Retry()
+    ) as generate_report_retry, pytest.raises(Retry):
+        tasks.generate_report_task(
+            model_name="InvalidModel",
+            columns=[
+                "username",
+                "email",
+                "date_joined",
+                "is_staff",
+            ],
+            user_id=user.id,
+            file_format="csv",
+        )
+
+    # Ensure that the retry method was called
+    generate_report_retry.assert_called_once()
