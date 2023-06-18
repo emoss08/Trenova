@@ -42,7 +42,7 @@ class HazardousMaterialViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.HazardousMaterial]:
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "packing_group",
@@ -81,7 +81,7 @@ class CommodityViewSet(viewsets.ModelViewSet):
             The queryset of commodities that are associated with the current user's organization.
         """
         queryset = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "min_temp",
