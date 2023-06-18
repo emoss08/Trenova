@@ -98,20 +98,6 @@ class OrganizationConfig(AppConfig):
         )
         post_delete.connect(invalidate_cache, sender="organization.Organization")
 
-        # Depot Cache Invalidations
-        post_save.connect(
-            invalidate_cache,
-            sender="organization.Depot",
-        )
-        post_delete.connect(invalidate_cache, sender="organization.Depot")
-
-        # Depot Detail Cache Invalidations
-        post_save.connect(
-            invalidate_cache,
-            sender="organization.DepotDetail",
-        )
-        post_delete.connect(invalidate_cache, sender="organization.DepotDetail")
-
         # Department Cache Invalidations
         post_save.connect(
             invalidate_cache,
@@ -119,12 +105,9 @@ class OrganizationConfig(AppConfig):
         )
         post_delete.connect(invalidate_cache, sender="organization.Department")
 
-        # Tax Rate Cache Invalidations
-        post_save.connect(
-            invalidate_cache,
-            sender="organization.TaxRate",
-        )
-        post_delete.connect(invalidate_cache, sender="organization.TaxRate")
+        # Email Control cache invalidations
+        post_save.connect(invalidate_cache, sender="organization.EmailControl")
+        post_delete.connect(invalidate_cache, sender="organization.EmailControl")
 
         # Notification Types & Settings
         post_save.connect(
