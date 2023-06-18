@@ -20,9 +20,7 @@ from typing import TYPE_CHECKING
 from celery import shared_task
 from celery_singleton import Singleton
 from django.core.mail import EmailMessage
-from django.db.models import Model
 
-from accounts.models import User
 from core.exceptions import ServiceException
 from reports import selectors, services, utils
 from utils.types import ModelUUID
@@ -84,7 +82,7 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
     max_retries=3,
     default_retry_delay=60,
 )
-def generate_report(
+def generate_report_task(
     self: "Task",
     *,
     model_name: str,
@@ -106,9 +104,13 @@ def generate_report(
     Returns:
         None: This function does not return anything.
     """
+
     try:
         utils.generate_report(
-            model_name=model_name, columns=columns, user_id=user_id, file_format=file_format  # type: ignore
+            model_name=model_name,
+            columns=columns,
+            user_id=user_id,
+            file_format=file_format,
         )
         return "Report generated successfully."
     except ServiceException as exc:

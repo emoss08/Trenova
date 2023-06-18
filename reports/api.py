@@ -174,7 +174,7 @@ def generate_report_api(request: Request) -> Response:
             )
 
     try:
-        tasks.generate_report.delay(
+        tasks.generate_report_task.delay(
             model_name=model_name,
             columns=columns,
             file_format=file_format,

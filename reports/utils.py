@@ -22,10 +22,14 @@ from django.core.files import File
 from django.db.models import Model
 from django.shortcuts import get_object_or_404
 from django_celery_beat.models import CrontabSchedule
-from reportlab.lib.pagesizes import landscape, letter
-from reportlab.platypus import SimpleDocTemplate, Table
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import Image, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus.para import Paragraph
 
 from accounts.models import User
+from organization.models import Organization
 from reports import exceptions, models
 from reports.helpers import ALLOWED_MODELS
 from utils.types import ModelUUID
@@ -74,16 +78,72 @@ def get_crontab_schedule(
     return schedule, "crontab"
 
 
-def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO) -> None:
+def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO, organization_id: str) -> None:
+    """Generates a PDF file from a pandas DataFrame and writes it to the provided buffer.
+
+    The DataFrame is converted into a ReportLab Table which is then included in a PDF
+    document. The resulting PDF also contains the logo and name of the specified
+    organization at the top. The size of the PDF is designed to be wide to accommodate
+    the full width of the DataFrame.
+
+    Args:
+        df (pd.DataFrame): The DataFrame to be converted to PDF.
+        buffer (BytesIO): The buffer to which the PDF is written.
+        organization_id (str): The organization ID of the user who is generating the PDF.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    # Define style elements
+    styles = getSampleStyleSheet()
+    normal_style = styles["BodyText"]
+    normal_style.fontName = "Helvetica"
+    normal_style.fontSize = 10
+
     # Transform dataframe to a list of lists (records) which ReportLab can work with
     data = [df.columns.to_list()] + df.values.tolist()
 
-    # Create a PDF with ReportLab
-    pdf = SimpleDocTemplate(buffer, pagesize=landscape(letter))
-    table = Table(data)
+    # Set custom page size
+    page_width = 2000  # you can adjust this as needed
+    page_height = 1190  # keep the height same as A3 height
+    pdf = SimpleDocTemplate(buffer, pagesize=(page_width, page_height))
 
-    # Add table to the elements to be added to the PDF
-    elements = [table]
+    elements = []
+
+    # Add organization logo to top left corner of the PDF, if it exists. Otherwise, add organization name same place, in black text.
+    organization = get_object_or_404(Organization, id=organization_id)
+
+    if organization.logo:
+        logo = BytesIO(organization.logo.read())
+        logo.seek(0)
+        elements.append(Image(logo, width=50, height=50))
+    elements.extend((Paragraph(organization.name, normal_style), Spacer(1, 0.2 * inch)))
+    # Create a table where the first row is the header
+    num_columns = len(data[0])
+    column_width = (
+        page_width - 2 * inch
+    ) / num_columns  # Assume half-inch margins on the left and right
+    table = Table(data, repeatRows=1, colWidths=[column_width] * num_columns)
+
+    # Define table style
+    table_style = TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 10),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ]
+    )
+
+    # Apply the table styles
+    table.setStyle(table_style)
+
+    elements.append(table)
 
     # Build the PDF
     pdf.build(elements)
@@ -92,22 +152,58 @@ def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO) -> None:
 def generate_report(
     *, model_name: str, columns: list[str], user_id: ModelUUID, file_format: str
 ) -> str:
+    """Generate a report in the specified format for a given user based on the specified model.
+
+    This function accepts a model name, a list of columns, a user ID and a file format,
+    and generates a report accordingly. It first checks if the given model name is
+    allowed. Then it retrieves the user with the given ID and the associated model.
+    After this, it creates a queryset filtering the model objects based on the organization
+    id of the user. It also converts timezone aware datetime columns to naive datetime.
+
+    The function generates a report in the specified format (CSV, XLSX, or PDF) and stores
+    it in a buffer. If the specified format is not one of the allowed formats, it raises a ValueError.
+
+    The report is then saved to the UserReport model and the instance is returned.
+
+    Args:
+        model_name (str): The name of the model on which the report is to be based.
+        columns (list[str]): The list of columns to be included in the report.
+        user_id (ModelUUID): The ID of the user for whom the report is being generated.
+        file_format (str): The format in which the report should be generated (csv, xlsx, pdf).
+
+    Returns:
+        str: The UserReport instance which has been created.
+
+    Raises:
+        ValueError: If the provided file format is not among the allowed formats (csv, xlsx, pdf).
+    """
+
+    # Check if the model name is allowed
     allowed_model = ALLOWED_MODELS[model_name]
 
-    user = get_object_or_404(User, id=user_id)
-    model = apps.get_model(allowed_model["app_label"], model_name)
+    # Get the user and the model
+    user = User.objects.get(pk__exact=user_id)
+    model: type[Model] = apps.get_model(allowed_model["app_label"], model_name)  # type: ignore
 
+    # Get the related fields
     related_fields = [field.split("__")[0] for field in columns if "__" in field]
 
-    queryset = model.objects.select_related(*related_fields).values(*columns)  # type: ignore
-    df = pd.DataFrame.from_records(queryset)
+    # Create the queryset
+    queryset = (
+        model.objects.filter(organization_id=user.organization_id)
+        .select_related(*related_fields)
+        .values(*columns)
+    )
 
+    # Convert timezone aware datetime columns to naive datetime
+    df = pd.DataFrame.from_records(queryset)
     for column in df.columns:
         if pd.api.types.is_datetime64tz_dtype(df[column]):
             df[column] = df[column].dt.tz_convert(None)
 
     buffer = BytesIO()
 
+    # Generate the report in the specified format
     if file_format.lower() == "csv":
         df.to_csv(buffer, index=False)
         file_name = "report.csv"
@@ -115,7 +211,7 @@ def generate_report(
         df.to_excel(buffer, index=False)
         file_name = "report.xlsx"
     elif file_format.lower() == "pdf":
-        generate_pdf(df=df, buffer=buffer)
+        generate_pdf(df=df, buffer=buffer, organization_id=user.organization_id)
         file_name = "report.pdf"
     else:
         raise ValueError("Invalid file format")
@@ -123,6 +219,7 @@ def generate_report(
     buffer.seek(0)
     django_file = File(buffer, name=file_name)
 
+    # Save the report to the UserReport model
     return models.UserReport.objects.create(
         organization=user.organization, user=user, report=django_file
     )
