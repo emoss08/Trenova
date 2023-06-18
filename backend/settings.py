@@ -110,7 +110,7 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
-    "silk.middleware.SilkyMiddleware",
+    # "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -371,7 +371,10 @@ CACHEOPS = {
     "billing.billingcontrol": {"ops": "all"},
     "dispatch.dispatchcontrol": {"ops": "all"},
     "organization.emailcontrol": {"ops": "all"},
+    "organization.organization": {"ops": "all"},
+    "organization.department": {"ops": "all"},
+    "accounts.user": {"ops": "all"},
+    "accounts.userprofile": {"ops": "all"},
+    "accounts.jobtitle": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
-
-SILKY_PYTHON_PROFILER = True

@@ -93,7 +93,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     "user_permissions",
                     queryset=Permission.objects.only(
-                        "id", "name", "content_type__app_label"
+                        "id", "name", "content_type__app_label", "codename"
                     ),
                 ),
             )

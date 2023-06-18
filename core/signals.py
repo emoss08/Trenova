@@ -24,4 +24,5 @@ from django.db import models
 def invalidate_cache(
     sender: type[models.Model], instance: type[models.Model], **kwargs: Any
 ) -> None:
+    print("Invalidating cache for", sender, instance)
     invalidate_obj(instance)

@@ -36,6 +36,14 @@ class AccountConfig(AppConfig):
             sender="accounts.JobTitle",
         )
 
+        # User Cache Invalidations
+        post_save.connect(signals.invalidate_cache, sender="accounts.User")
+        post_delete.connect(signals.invalidate_cache, sender="accounts.User")
+
+        # User Profile Cache Invalidations
+        post_save.connect(signals.invalidate_cache, sender="accounts.UserProfile")
+        post_delete.connect(signals.invalidate_cache, sender="accounts.UserProfile")
+
         # Auth Group Cache Invalidations
         post_save.connect(
             signals.invalidate_cache,
