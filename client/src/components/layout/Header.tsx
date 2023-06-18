@@ -43,7 +43,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import React from "react";
 import { getUserId, getUserOrganizationId } from "@/lib/utils";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBell,
@@ -170,6 +170,10 @@ export function HeaderMegaMenu() {
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
   const { classes, theme } = useStyles();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const [isDownloadMenuOpen, setDownloadMenuOpen] =
+    React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
   const getThemeIcon = () => {
     if (colorScheme === "light") {
       return <FontAwesomeIcon icon={faSun} />;
@@ -181,16 +185,35 @@ export function HeaderMegaMenu() {
   };
 
   const userId = getUserId() || "";
-  const { data: userData, isLoading: isUserDataLoading } = useQuery(
-    ["user", userId],
-    () => getUserDetails(userId)
-  );
+  const { data: userData, isLoading: isUserDataLoading } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => {
+      if (!userId) {
+        return Promise.resolve(null);
+      }
+      return getUserDetails(userId);
+    },
+    initialData: () => {
+      return queryClient.getQueryData(["user", userId]);
+    },
+    staleTime: Infinity, // never refetch
+  });
 
   const organizationId = getUserOrganizationId() || "";
   const { data: organizationData, isLoading: isOrganizationDataLoading } =
-    useQuery(["organization", userId], () =>
-      getOrganizationDetails(organizationId)
-    );
+    useQuery({
+      queryKey: ["organization", organizationId],
+      queryFn: () => {
+        if (!organizationId) {
+          return Promise.resolve(null);
+        }
+        return getOrganizationDetails(organizationId);
+      },
+      initialData: () => {
+        return queryClient.getQueryData(["organization", organizationId]);
+      },
+      staleTime: Infinity, // never refetch
+    });
 
   const isLoading = isOrganizationDataLoading || isUserDataLoading;
 
@@ -309,9 +332,34 @@ export function HeaderMegaMenu() {
           </Group>
 
           <Group className={classes.hiddenMobile}>
+            {/* Search */}
             <ActionButton icon={faMagnifyingGlass} />
-            <ActionButton icon={faDownload} />
+
+            {/* User Downloads */}
+            <Menu
+              position="bottom-end"
+              width={200}
+              opened={isDownloadMenuOpen}
+              onChange={setDownloadMenuOpen}
+              withinPortal
+            >
+              <Menu.Target>
+                <ActionIcon className={classes.hoverEffect}>
+                  <FontAwesomeIcon icon={faDownload} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Downloads</Menu.Label>
+                <Menu.Item icon={<FontAwesomeIcon icon={faDownload} />}>
+                  Weird file
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+
+            {/* Notifications */}
             <ActionButton icon={faBell} />
+
+            {/* Theme Switcher */}
             <Menu position="bottom-end" width={200} withinPortal>
               <Menu.Target>
                 <ActionIcon className={classes.hoverEffect}>
@@ -337,8 +385,10 @@ export function HeaderMegaMenu() {
             </Menu>
             {isLoading ? (
               <Skeleton width={rem(150)} height={rem(40)} circle />
-            ) : (
+            ) : userData ? (
               <HeaderUserMenu user={userData} />
+            ) : (
+              <div>No user data available</div>
             )}
           </Group>
 

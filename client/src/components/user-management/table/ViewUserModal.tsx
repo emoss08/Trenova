@@ -78,7 +78,7 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
       },
       enabled: opened && !!user?.organization,
       initialData: () => {
-        return queryClient.getQueryData(["organization", user?.id]);
+        return queryClient.getQueryData(["organization", user?.organization]);
       },
       staleTime: Infinity, // never refetch
     });
