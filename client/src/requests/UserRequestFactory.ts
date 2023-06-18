@@ -15,41 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { User } from "@/types/user";
-import axios from "@/lib/axiosConfig";
-
-/**
- * Return the user's job title information
- * @param user
- *
- * @returns {Promise<any>}
- */
-export async function getUserJobTitle(user: User): Promise<any> {
-  const response = await axios.get(`/job_titles/${user.profile?.job_title}/`);
-  return response.data;
-}
-
-/***
- * Return the user's organization information
- * @param user
- *
- * @returns {Promise<any>}
- */
-export async function getUserOrganization(user: User): Promise<any> {
-  const response = await axios.get(`/organizations/${user.organization}/`);
-  return response.data;
-}
-
-/**
- * Return the user's department information
- * @param user
- *
- * @returns {Promise<any>}
- */
-export async function getUserDepartment(user: User): Promise<any> {
-  const response = await axios.get(`/departments/${user?.department}/`);
-  return response.data;
-}
+import axios from "@/lib/AxiosConfig";
+import { User } from "@/types/apps/accounts";
 
 /**
  * Return the user's details
@@ -57,17 +24,7 @@ export async function getUserDepartment(user: User): Promise<any> {
  *
  * @returns {Promise<any>}
  */
-export async function getUserDetails(id: string): Promise<any> {
+export async function getUserDetails(id: string): Promise<User> {
   const response = await axios.get(`/users/${id}/`);
-  return response.data;
-}
-
-/**
- * Return a group of users.
- *
- * @returns {Promise<any>}
- */
-export async function getUsers(): Promise<any> {
-  const response = await axios.get("/users/");
   return response.data;
 }

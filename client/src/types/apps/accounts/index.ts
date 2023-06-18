@@ -15,6 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { ApiResponse } from "@/types/server";
+
 export type UserProfile = {
   id: string;
   organization: string;
@@ -42,19 +44,11 @@ export type User = {
   is_superuser: boolean;
   is_staff: boolean;
   is_active: boolean;
-  groups: number[];
-  user_permissions: number[];
+  groups: string[];
+  user_permissions: string[];
   online: boolean;
   last_login: string;
-  profile?: UserProfile; // Set as optional due to Walle not having a profile
-};
-
-export type JobTitle = {
-  id: string;
-  name: string;
-  description: string;
-  is_active: boolean;
-  organization: string;
+  profile?: UserProfile;
 };
 
 export interface UserFormValues {
@@ -73,3 +67,15 @@ export interface UserFormValues {
     phone_number?: string;
   };
 }
+
+export interface UserApiResponse extends ApiResponse {
+  results: User[];
+}
+
+export type JobTitle = {
+  id: string;
+  name: string;
+  description: string;
+  is_active: boolean;
+  organization: string;
+};

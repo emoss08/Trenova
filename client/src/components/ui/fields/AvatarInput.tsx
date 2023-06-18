@@ -20,11 +20,11 @@ import { Avatar, Input, ActionIcon, Tooltip } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faPencil } from "@fortawesome/pro-solid-svg-icons";
 import { faXmark } from "@fortawesome/pro-regular-svg-icons";
-import { User } from "@/types/user";
-import axios from "@/lib/axiosConfig";
 import { getUserAuthToken } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "react-query";
+import { User } from "@/types/apps/accounts";
+import axios from "@/lib/AxiosConfig";
 
 interface AvatarInputProps {
   defaultAvatar?: string;

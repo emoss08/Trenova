@@ -16,13 +16,16 @@
  */
 
 import React from "react";
-import { TextInput } from "@mantine/core";
+import { PasswordInput, rem } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { createStyles } from "@mantine/styles";
 import { ValidatedTextInputProps } from "@/types/fields";
 
 const useStyles = createStyles((theme) => {
   return {
+    fields: {
+      marginTop: rem(10),
+    },
     invalid: {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -35,9 +38,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedTextInput = <
-  TFormValues extends Record<string, unknown>
->({
+export const ValidatedPasswordInput = <TFormValues extends object>({
   form,
   name,
   ...rest
@@ -46,10 +47,11 @@ export const ValidatedTextInput = <
   const error = form.errors[name as string];
 
   return (
-    <TextInput
+    <PasswordInput
       {...rest}
       {...form.getInputProps(name as string)}
       error={error}
+      className={classes.fields}
       classNames={{
         input: error ? classes.invalid : "",
       }}

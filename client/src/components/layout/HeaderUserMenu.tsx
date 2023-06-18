@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { User } from "@/types/user";
 import React, { useState } from "react";
 import {
   Container,
@@ -41,6 +40,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
+import { User } from "@/types/apps/accounts";
 
 interface HeaderUserMenuProps {
   user: User;

@@ -17,10 +17,7 @@
 
 import { BrowserRouter } from "react-router-dom";
 import React, { Suspense, useEffect } from "react";
-import LoadingScreen from "./components/LoadingScreen";
-import ProtectedRoutes from "./routing/ProtectedRoutes";
 import useVerifyToken from "./hooks/withTokenVerification";
-import { useAuthStore } from "@/stores/authStore";
 import "./styles/App.css";
 import {
   ColorScheme,
@@ -30,7 +27,10 @@ import {
 import { QueryClient, QueryClientProvider } from "react-query";
 import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { Notifications } from "@mantine/notifications";
-import { ModalsProvider } from "@mantine/modals";
+import { ReactQueryDevtools } from "react-query/devtools";
+import { useAuthStore } from "./stores/AuthStore";
+import LoadingScreen from "./components/LoadingScreen";
+import { ProtectedRoutes } from "./routing/ProtectedRoutes";
 
 function App() {
   useVerifyToken();
@@ -85,6 +85,7 @@ function App() {
                 <ProtectedRoutes />
               </Suspense>
             </BrowserRouter>
+            <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
         </MantineProvider>
       </ColorSchemeProvider>

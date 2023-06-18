@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useAuthStore } from "@/stores/authStore";
 import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
-import axios from "@/lib/axiosConfig";
 import { USER_INFO_KEY } from "@/lib/utils";
 import { Card, Flex, Text } from "@mantine/core";
+import { useAuthStore } from "@/stores/AuthStore";
+import axios from "@/lib/AxiosConfig";
 
 const LogoutPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [

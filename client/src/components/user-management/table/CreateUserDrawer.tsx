@@ -29,25 +29,25 @@ import {
   Text,
 } from "@mantine/core";
 import React from "react";
-import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
-import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
-import { StateSelect } from "@/components/ui/fields/StateSelect";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { Department, Organization } from "@/types/organization";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck } from "@fortawesome/pro-solid-svg-icons";
+import * as Yup from "yup";
+import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { JobTitle } from "@/types/apps/accounts";
+import axios from "@/lib/AxiosConfig";
 import {
   getDepartments,
   getJobTitles,
   getOrganizations,
 } from "@/requests/OrganizationRequestFactory";
-import { ValidatedSelectInput } from "@/components/ui/fields/ValidatedSelectInput";
-import { Department, Organization } from "@/types/organization";
-import axios from "@/lib/axiosConfig";
-import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/pro-solid-svg-icons";
-import * as Yup from "yup";
-import { ValidatedSwitchInput } from "../ui/fields/ValidatedSwitchInput";
-import { JobTitle } from "@/types/user";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { StateSelect } from "@/components/ui/fields/StateSelect";
+import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
 
 interface CreateUserDrawerProps {
   onClose: () => void;
@@ -116,7 +116,7 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
     (values: CreateUserFormValues) => axios.post(`/users/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries("organizations").then(() => {
+        queryClient.invalidateQueries("user-table-data").then(() => {
           notifications.show({
             title: "Success",
             message: "User created successfully",
@@ -155,10 +155,20 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
       city: Yup.string().required("City is required"),
       state: Yup.string().required("State is required"),
       zip_code: Yup.string().required("Zip Code is required"),
-      phone_number: Yup.string().matches(
-        /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
-        "Phone number must be in the format (xxx) xxx-xxxx"
-      ),
+      job_title: Yup.string().required("Job Title is required"),
+      phone_number: Yup.string()
+        .nullable()
+        .test(
+          "phone_number_format",
+          "Phone number must be in the format (xxx) xxx-xxxx",
+          (value) => {
+            if (!value) {
+              return true;
+            } // if the string is null or undefined, skip the test
+            const regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+            return regex.test(value); // apply the regex test if string exists
+          }
+        ),
     }),
   });
 
@@ -185,15 +195,19 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
   });
 
   const submitForm = (values: CreateUserFormValues) => {
-    setLoading(true);
     form.setFieldValue("profile.organization", form.values.organization);
+    setLoading(true);
     mutation.mutate(values);
   };
 
   const { data: organizationsData, isLoading: isOrganizationsLoading } =
-    useQuery(["organizations"], () => getOrganizations(), {
+    useQuery({
+      queryKey: ["organizations"],
+      queryFn: () => getOrganizations(),
       enabled: opened,
     });
+
+  console.log("organizationsData", organizationsData);
 
   const { data: departmentsData, isLoading: isDepartmentLoading } = useQuery(
     ["departments"],
@@ -211,30 +225,26 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
     }
   );
 
-  const selectOrganizationData = organizationsData?.map(
-    (organization: Organization) => ({
-      value: organization.id,
-      label: organization.name,
-      name: organization.name,
-    })
-  );
-
-  const selectDepartmentData = departmentsData?.map(
-    (department: Department) => ({
-      value: department.id,
-      label: department.name,
-      name: department.name,
-    })
-  );
-
-  const selectJobTitleData = jobTitleData?.map((job_title: JobTitle) => ({
-    value: job_title.id,
-    label: job_title.name,
-    name: job_title.name,
-  }));
-
   const isLoading =
     isDepartmentLoading || isJobTitleLoading || isOrganizationsLoading;
+
+  const selectOrganizationData =
+    organizationsData?.map((organization: Organization) => ({
+      value: organization.id,
+      label: organization.name,
+    })) || [];
+
+  const selectDepartmentData =
+    departmentsData?.map((department: Department) => ({
+      value: department.id,
+      label: department.name,
+    })) || [];
+
+  const selectJobTitleData =
+    jobTitleData?.map((job_title: JobTitle) => ({
+      value: job_title.id,
+      label: job_title.name,
+    })) || [];
 
   return (
     <>
@@ -254,7 +264,7 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
                     cols={2}
                     breakpoints={[{ maxWidth: "sm", cols: 1 }]}
                   >
-                    <ValidatedSelectInput
+                    <SelectInput
                       form={form}
                       data={selectOrganizationData}
                       className={classes.fields}
@@ -288,7 +298,7 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
                       variant="filled"
                       withAsterisk
                     />
-                    <ValidatedSelectInput
+                    <SelectInput
                       form={form}
                       data={selectDepartmentData}
                       className={classes.fields}
@@ -298,7 +308,7 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
                       variant="filled"
                     />
                   </SimpleGrid>
-                  <ValidatedSwitchInput
+                  <SwitchInput
                     form={form}
                     size="md"
                     onChange={(event: any) =>
@@ -336,7 +346,7 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
                       withAsterisk
                     />
                   </SimpleGrid>
-                  <ValidatedSelectInput
+                  <SelectInput
                     form={form}
                     data={selectJobTitleData}
                     className={classes.fields}
@@ -409,7 +419,6 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
                     label="Phone Number"
                     placeholder="Phone Number"
                     variant="filled"
-                    withAsterisk
                   />
                   <Group position="right" mt="md">
                     <Button

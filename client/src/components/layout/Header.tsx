@@ -36,12 +36,13 @@ import {
   ThemeIcon,
   UnstyledButton,
   Image,
+  useMantineColorScheme,
+  Menu,
+  ActionIcon,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React from "react";
-import HeaderUserMenu from "@/components/layout/HeaderUserMenu";
 import { getUserId, getUserOrganizationId } from "@/lib/utils";
-import { getUserDetails } from "@/requests/UserRequestFactory";
 import { useQuery } from "react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -49,13 +50,19 @@ import {
   faBuildingColumns,
   faChevronDown,
   faMagnifyingGlass,
-  faMessage,
   faTruckFast,
 } from "@fortawesome/pro-solid-svg-icons";
 import { Link } from "react-router-dom";
-import ActionButton from "../ActionButton";
+import {
+  faDisplay,
+  faDownload,
+  faMoon,
+  faSun,
+} from "@fortawesome/pro-duotone-svg-icons";
 import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
-import { faDownload } from "@fortawesome/pro-duotone-svg-icons";
+import { getUserDetails } from "@/requests/UserRequestFactory";
+import ActionButton from "../ActionButton";
+import HeaderUserMenu from "./HeaderUserMenu";
 
 const useStyles = createStyles((theme) => ({
   link: {
@@ -126,6 +133,20 @@ const useStyles = createStyles((theme) => ({
       display: "none",
     },
   },
+  hoverEffect: {
+    svg: {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[5]
+          : theme.colors.gray[9],
+    },
+    "&:hover svg": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[0]
+          : theme.colors.gray[7],
+    },
+  },
 }));
 
 const navigationLinks = [
@@ -148,6 +169,16 @@ export function HeaderMegaMenu() {
     useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
   const { classes, theme } = useStyles();
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const getThemeIcon = () => {
+    if (colorScheme === "light") {
+      return <FontAwesomeIcon icon={faSun} />;
+    } else if (colorScheme === "dark") {
+      return <FontAwesomeIcon icon={faMoon} />;
+    } else {
+      return <FontAwesomeIcon icon={faDisplay} />;
+    }
+  };
 
   const userId = getUserId() || "";
   const { data: userData, isLoading: isUserDataLoading } = useQuery(
@@ -187,21 +218,21 @@ export function HeaderMegaMenu() {
         <Group position="apart" sx={{ height: "100%" }}>
           {isLoading ? (
             <Skeleton width={rem(150)} height={rem(40)} />
-          ) : organizationData.logo ? (
+          ) : organizationData?.logo ? (
             <Link to="/" style={{ textDecoration: "none" }}>
               <Image
                 radius="md"
                 width={rem(120)}
                 height={rem(40)}
                 maw={rem(150)}
-                src={organizationData.logo}
+                src={organizationData?.logo}
                 alt="Organization Logo"
               />
             </Link>
           ) : (
             <Link to="/" style={{ textDecoration: "none" }}>
               <Text size="lg" fw={600} className={classes.logoText}>
-                {organizationData.name}
+                {organizationData?.name}
               </Text>
             </Link>
           )}
@@ -269,7 +300,7 @@ export function HeaderMegaMenu() {
               </HoverCard.Dropdown>
             </HoverCard>
 
-            <Link to="admin/users/" className={classes.link}>
+            <Link to="/admin/users/" className={classes.link}>
               Admin Panel
             </Link>
             <a href="#" className={classes.link}>
@@ -281,6 +312,29 @@ export function HeaderMegaMenu() {
             <ActionButton icon={faMagnifyingGlass} />
             <ActionButton icon={faDownload} />
             <ActionButton icon={faBell} />
+            <Menu position="bottom-end" width={200} withinPortal>
+              <Menu.Target>
+                <ActionIcon className={classes.hoverEffect}>
+                  {getThemeIcon()}
+                </ActionIcon>
+              </Menu.Target>
+
+              <Menu.Dropdown>
+                <Menu.Label>Theme Mode</Menu.Label>
+                <Menu.Item
+                  onClick={() => toggleColorScheme("light")}
+                  icon={<FontAwesomeIcon icon={faSun} />}
+                >
+                  Light Theme
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => toggleColorScheme("dark")}
+                  icon={<FontAwesomeIcon icon={faMoon} />}
+                >
+                  Dark Theme
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
             {isLoading ? (
               <Skeleton width={rem(150)} height={rem(40)} circle />
             ) : (
@@ -295,7 +349,6 @@ export function HeaderMegaMenu() {
           />
         </Group>
       </Header>
-
       <Drawer
         opened={drawerOpened}
         onClose={closeDrawer}

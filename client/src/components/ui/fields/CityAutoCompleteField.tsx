@@ -18,8 +18,8 @@ import React, { useRef, useState } from "react";
 import { createStyles } from "@mantine/styles";
 import { ValidatedTextInputProps } from "@/types/fields";
 import { Autocomplete, Loader } from "@mantine/core";
-import { stateData } from "@/components/ui/fields/StateSelect";
 import { IconAlertTriangle } from "@tabler/icons-react";
+import { stateData } from "./StateSelect";
 
 interface CityAutoCompleteField<TFormValues extends object>
   extends ValidatedTextInputProps<TFormValues> {

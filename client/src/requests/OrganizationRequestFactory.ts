@@ -15,51 +15,38 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
+import axios from "@/lib/AxiosConfig";
+import { JobTitle } from "@/types/apps/accounts";
+import { Department, Organization } from "@/types/organization";
 
-/**
- * Returns all organizations
- * @returns {Promise<any>}
- */
-export async function getOrganizations(): Promise<any> {
+export async function getOrganizations(): Promise<Organization[]> {
   const response = await axios.get("/organizations/");
   return response.data.results;
 }
 
-/**
- * Return the organization with the given id
- * @param id
- * @returns {Promise<any>}
- */
-export async function getOrganizationDetails(id: string): Promise<any> {
+export async function getOrganizationDetails(
+  id: string
+): Promise<Organization> {
   const response = await axios.get(`/organizations/${id}/`);
   return response.data;
 }
 
-/**
- * Return all departments
- * @returns {Promise<any>}
- */
-export async function getDepartments(): Promise<any> {
+export async function getDepartments(): Promise<Department[]> {
   const response = await axios.get("/departments/");
   return response.data.results;
 }
 
-/**
- * Return all job titles
- * @returns {Promise<any>}
- */
-export async function getJobTitles(): Promise<any> {
+export async function getDepartmentDetails(id: string): Promise<Department> {
+  const response = await axios.get(`/departments/${id}/`);
+  return response.data;
+}
+
+export async function getJobTitles(): Promise<JobTitle[]> {
   const response = await axios.get("/job_titles/");
   return response.data.results;
 }
 
-/**
- * Return a job title with the given id
- * @param id
- * @returns {Promise<any>}
- */
-export async function getJobTitleDetails(id: string): Promise<any> {
+export async function getJobTitleDetails(id: string): Promise<JobTitle> {
   const response = await axios.get(`/job_titles/${id}/`);
   return response.data;
 }

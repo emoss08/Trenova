@@ -15,17 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { PasswordInput, rem, TextInput, TextInputProps } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
-import { createStyles } from "@mantine/styles";
 import { ValidatedTextInputProps } from "@/types/fields";
+import { createStyles } from "@mantine/styles";
+import { Select, SelectItemProps, Text } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
+import React, { forwardRef } from "react";
 
 const useStyles = createStyles((theme) => {
   return {
-    fields: {
-      marginTop: rem(10),
-    },
     invalid: {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -38,23 +35,44 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedPasswordInput = <TFormValues extends object>({
+export interface ValidatedSelectInputProps<
+  TFormValues extends Record<string, unknown>
+> extends ValidatedTextInputProps<TFormValues> {
+  data: SelectItemProps[];
+}
+
+const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
+  ({ label, value, ...others }: SelectItemProps, ref) => (
+    <div ref={ref} {...others}>
+      <Text size="sm">{label}</Text>
+    </div>
+  )
+);
+
+export const SelectInput = <TFormValues extends Record<string, unknown>>({
   form,
+  data,
   name,
   ...rest
-}: ValidatedTextInputProps<TFormValues>) => {
+}: ValidatedSelectInputProps<TFormValues>) => {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
   return (
-    <PasswordInput
+    <Select
       {...rest}
       {...form.getInputProps(name as string)}
+      data={data}
       error={error}
-      className={classes.fields}
+      maxDropdownHeight={200}
+      nothingFound={"Nothing found"}
+      itemComponent={SelectItem}
       classNames={{
         input: error ? classes.invalid : "",
       }}
+      filter={(value, item: any) =>
+        item.label.toLowerCase().includes(value.toLowerCase().trim())
+      }
       rightSection={
         error && (
           <IconAlertTriangle
@@ -64,6 +82,7 @@ export const ValidatedPasswordInput = <TFormValues extends object>({
           />
         )
       }
+      searchable
     />
   );
 };

@@ -15,35 +15,47 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { getUserDetails } from "@/requests/UserRequestFactory";
 import React from "react";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
-import UserProfileDetails from "@/components/users/UserProfileDetails";
-import EditUserProfileDetails from "@/components/users/EditUserProfileDetails";
 import { Skeleton, Stack } from "@mantine/core";
+import { getUserDetails } from "@/requests/UserRequestFactory";
+import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
+import EditUserProfileDetails from "@/components/users/EditUserProfileDetails";
+import { ViewUserProfileDetails } from "@/components/users/ViewUserProfileDetails";
 import { SignInMethod } from "@/components/users/SignInMethod";
 
 const UserSettings: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (!userId) {
     throw new Error("No user ID provided");
   }
 
-  const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery(
-    ["userDetails", userId],
-    () => getUserDetails(userId),
-    {
-      onError: () => navigate("/error"),
-    }
-  );
+  const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => {
+      if (!userId) {
+        return Promise.resolve(null);
+      }
+      return getUserDetails(userId);
+    },
+    onError: () => navigate("/error"),
+    initialData: () => {
+      return queryClient.getQueryData(["user", userId]);
+    },
+  });
 
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery(
     ["job_title"],
-    () => getJobTitleDetails(userDetails.profile.job_title),
+    () => {
+      if (!userDetails || !userDetails.profile) {
+        return Promise.resolve(null);
+      }
+      return getJobTitleDetails(userDetails.profile.job_title);
+    },
     {
       enabled: !!userDetails,
     }
@@ -62,9 +74,14 @@ const UserSettings: React.FC = () => {
       ) : (
         <>
           <Stack>
-            <UserProfileDetails user={userDetails} jobTitle={jobTitleData} />
-            <EditUserProfileDetails user={userDetails} />
-            <SignInMethod user={userDetails} />
+            {userDetails && jobTitleData && (
+              <ViewUserProfileDetails
+                user={userDetails}
+                jobTitle={jobTitleData}
+              />
+            )}
+            {userDetails && <EditUserProfileDetails user={userDetails} />}
+            {userDetails && <SignInMethod user={userDetails} />}
           </Stack>
         </>
       )}

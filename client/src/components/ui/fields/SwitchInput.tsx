@@ -24,9 +24,7 @@ interface ValidatedSwitchInputProps<
   name: keyof TFormValues & string;
 }
 
-export const ValidatedSwitchInput = <
-  TFormValues extends Record<string, unknown>
->(
+export const SwitchInput = <TFormValues extends Record<string, unknown>>(
   props: ValidatedSwitchInputProps<TFormValues>
 ) => {
   const { form, name, ...rest } = props;
