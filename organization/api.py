@@ -63,7 +63,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
                 Prefetch(
                     "depots",
                     queryset=models.Depot.objects.filter(
-                        organization=self.request.user.organization  # type: ignore
+                        organization_id=self.request.user.organization_id  # type: ignore
                     ).only("id", "organization_id"),
                 ),
             )
@@ -101,7 +101,7 @@ class DepotViewSet(viewsets.ModelViewSet):
     def get_queryset(self) -> QuerySet[models.Depot]:
         queryset: QuerySet[models.Depot] = (
             self.queryset.filter(
-                organization=self.request.user.organization  # type: ignore
+                organization_id=self.request.user.organization_id  # type: ignore
             )
             .select_related("detail")
             .only(
@@ -157,7 +157,7 @@ class EmailProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.EmailProfile]:
         queryset: QuerySet[models.EmailProfile] = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -184,7 +184,7 @@ class EmailControlViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.EmailControl]:
         queryset: QuerySet[models.EmailControl] = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only("id", "organization_id", "billing_email_profile_id")
         return queryset
 
@@ -210,7 +210,7 @@ class TaxRateViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.TaxRate]:
         queryset: QuerySet[models.TaxRate] = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "rate",
@@ -229,7 +229,7 @@ class TableChangeAlertViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.TableChangeAlert]:
         queryset: QuerySet[models.TableChangeAlert] = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -557,7 +557,7 @@ class NotificationTypeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self) -> QuerySet[models.NotificationType]:
         queryset: QuerySet[models.NotificationType] = self.queryset.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
@@ -580,7 +580,7 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
         queryset: QuerySet[
             models.NotificationSetting
         ] = models.NotificationSetting.objects.filter(
-            organization=self.request.user.organization  # type: ignore
+            organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
