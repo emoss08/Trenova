@@ -17,8 +17,6 @@
 
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
-import { useUserStore } from "@/stores/userStore";
 import {
   Anchor,
   Checkbox,
@@ -31,17 +29,18 @@ import {
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { LoginFormValues } from "@/types/login";
-import axios from "@/lib/axiosConfig";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { ValidatedPasswordInput } from "@/components/ui/fields/ValidatedPasswordInput";
-import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
-import { getUserDetails } from "@/requests/UserRequestFactory";
 import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
 import { LoginSchema } from "@/utils/schema";
-import background from "@/assets/login_background.png";
+import { useUserStore } from "@/stores/UserStore";
+import { useAuthStore } from "@/stores/AuthStore";
+import { getUserDetails } from "@/requests/UserRequestFactory";
+import axios from "@/lib/AxiosConfig";
+import { ValidatedPasswordInput } from "@/components/ui/fields/PasswordInput";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [

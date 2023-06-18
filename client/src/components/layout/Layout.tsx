@@ -17,7 +17,7 @@
 
 import React from "react";
 import { AppShell, Container, useMantineTheme } from "@mantine/core";
-import { HeaderMegaMenu } from "@/components/layout/Header";
+import { HeaderMegaMenu } from "./Header";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -37,11 +37,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 : theme.colors.gray[0],
           },
         }}
+        padding="md"
         header={<HeaderMegaMenu />}
       >
-        <Container size="xl" style={{ paddingTop: 10 }}>
-          {children}
-        </Container>
+        <Container size="xl">{children}</Container>
       </AppShell>
     </>
   );

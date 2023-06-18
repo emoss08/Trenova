@@ -15,14 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import Layout from "@/components/layout/Layout";
+import { useAuthStore } from "@/stores/AuthStore";
+import { useUserStore } from "@/stores/UserStore";
 import React, { useEffect, useState } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
-import { RouteObjectWithPermission, routes } from "@/routing/AppRoutes";
-import { useAuthStore } from "@/stores/authStore";
-import Layout from "@/components/layout/Layout";
-import { useUserStore } from "@/stores/userStore";
-
-const ProtectedRoutes: React.FC = () => {
+import { RouteObjectWithPermission, routes } from "./AppRoutes";
+export const ProtectedRoutes: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const storePermissions = useUserStore((state) => state.permissions);
   const isSuperUser = useUserStore((state) => state.user.is_superuser);
@@ -71,5 +70,3 @@ const ProtectedRoutes: React.FC = () => {
     </Routes>
   );
 };
-
-export default ProtectedRoutes;

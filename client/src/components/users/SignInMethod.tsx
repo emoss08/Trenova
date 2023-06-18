@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { User } from "@/types/user";
 import React from "react";
 import { Card, createStyles, Divider, Flex, Text } from "@mantine/core";
 import { faShieldCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { Alert } from "@/components/ui/Alert";
-import { EmailChangeForm } from "@/components/users/EmailChange";
-import { PasswordChangeForm } from "@/components/users/PasswordChange";
+import { User } from "@/types/apps/accounts";
+import { PasswordChangeForm } from "./PasswordChange";
+import { EmailChangeForm } from "./EmailChange";
 
 type Props = {
   user: User;

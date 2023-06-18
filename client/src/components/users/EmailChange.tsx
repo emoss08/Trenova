@@ -25,15 +25,15 @@ import {
   Divider,
   createStyles,
 } from "@mantine/core";
-import { User } from "@/types/user";
 import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
-import axios from "@/lib/axiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useQueryClient } from "react-query";
-import { ValidatedTextInput } from "../ui/fields/ValidatedTextInput";
+import { ValidatedTextInput } from "../ui/fields/TextInput";
+import { User } from "@/types/apps/accounts";
 
 interface EmailChangeFormProps {
   user: User;

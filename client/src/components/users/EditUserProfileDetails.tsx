@@ -14,7 +14,6 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { User, UserFormValues } from "@/types/user";
 import React from "react";
 import {
   Card,
@@ -29,14 +28,15 @@ import {
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/axiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ValidatedTextInput } from "../ui/fields/ValidatedTextInput";
+import { ValidatedTextInput } from "../ui/fields/TextInput";
 import { StateSelect } from "../ui/fields/StateSelect";
 import { CityAutoCompleteField } from "../ui/fields/CityAutoCompleteField";
 import { UserSchema } from "@/utils/schema";
+import { User, UserFormValues } from "@/types/apps/accounts";
 
 type Props = {
   user: User;
@@ -243,7 +243,6 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                 label="Phone Number"
                 placeholder="Phone Number"
                 variant="filled"
-                withAsterisk
               />
               <Group position="right" mt="md">
                 <Button

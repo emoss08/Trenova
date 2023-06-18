@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobTitle, User } from "@/types/user";
 import React from "react";
 import {
   Card,
@@ -32,6 +31,7 @@ import {
   faEnvelope,
   faMapPin,
 } from "@fortawesome/pro-duotone-svg-icons";
+import { JobTitle, User } from "@/types/apps/accounts";
 import AvatarInput from "../ui/fields/AvatarInput";
 
 type Props = {
@@ -66,10 +66,11 @@ const useStyles = createStyles((theme) => ({
   },
   grid: {
     display: "flex",
+    maxWidth: "100%",
   },
 }));
 
-const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
+export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
   const { classes } = useStyles();
 
   return (
@@ -95,10 +96,12 @@ const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
                             icon={faCircleUser}
                             className={classes.icon}
                           />
-                          <Text className={classes.text}>{jobTitle.name}</Text>
+                          <Text className={classes.text}>
+                            {jobTitle.name ?? ""}
+                          </Text>
                         </div>
                       </Grid.Col>
-                      <Grid.Col span={6}>
+                      <Grid.Col span={5}>
                         <div className={classes.div}>
                           <FontAwesomeIcon
                             icon={faMapPin}
@@ -133,5 +136,3 @@ const UserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
     </>
   );
 };
-
-export default UserProfileDetails;

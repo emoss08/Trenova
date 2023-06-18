@@ -16,22 +16,15 @@
  */
 
 import React from "react";
-import {
-  Container,
-  Paper,
-  Text,
-  Title,
-  Button,
-  createStyles,
-} from "@mantine/core";
+import { Container, Paper, Text, Title, Button } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
-import axios from "@/lib/axiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import axios from "@/lib/AxiosConfig";
 
 const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);

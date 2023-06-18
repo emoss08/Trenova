@@ -14,16 +14,32 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { create } from "zustand";
 
-type LoginErrorStore = {
-  errorMessages: string[];
-  setErrorMessages: (messages: string[]) => void;
-  clearErrorMessages: () => void;
+import { User } from "@/types/apps/accounts";
+import { create, GetState, SetState, StoreApi } from "zustand";
+
+type UserState = {
+  user: User;
+  setUser: (user: User) => void;
+  permissions: string[];
+  setPermissions: (permissions: string[]) => void;
+  groups: string[];
+  setGroups: (groups: string[]) => void;
+  reset: () => void;
 };
 
-export const useErrorStore = create<LoginErrorStore>((set) => ({
-  errorMessages: [],
-  setErrorMessages: (messages) => set({ errorMessages: messages }),
-  clearErrorMessages: () => set({ errorMessages: [] }),
-}));
+const createStore = (
+  set: SetState<UserState>,
+  get: GetState<UserState>,
+  api: StoreApi<UserState>
+) => ({
+  user: {} as User,
+  setUser: (user: User) => set({ user }),
+  permissions: [],
+  setPermissions: (permissions: string[]) => set({ permissions }),
+  groups: [],
+  setGroups: (groups: string[]) => set({ groups }),
+  reset: () => set({ user: {} as User, permissions: [], groups: [] }),
+});
+
+export const useUserStore = create<UserState>(createStore);

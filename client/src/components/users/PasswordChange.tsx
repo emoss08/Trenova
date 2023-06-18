@@ -25,13 +25,13 @@ import {
   SimpleGrid,
   Text,
 } from "@mantine/core";
-import axios from "@/lib/axiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { ValidatedTextInput } from "@/components/ui/fields/ValidatedTextInput";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 
 const useStyles = createStyles((theme) => ({
   text: {

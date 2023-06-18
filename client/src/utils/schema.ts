@@ -30,10 +30,19 @@ export const UserSchema = Yup.object().shape({
     city: Yup.string().required("City is required"),
     state: Yup.string().required("State is required"),
     zip_code: Yup.string().required("Zip Code is required"),
-    phone_number: Yup.string().matches(
-      /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
-      "Phone number must be in the format (xxx) xxx-xxxx"
-    ),
+    phone_number: Yup.string()
+      .nullable()
+      .test(
+        "phone_number_format",
+        "Phone number must be in the format (xxx) xxx-xxxx",
+        (value) => {
+          if (!value) {
+            return true;
+          } // if the string is null or undefined, skip the test
+          const regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+          return regex.test(value); // apply the regex test if string exists
+        }
+      ),
   }),
 });
 

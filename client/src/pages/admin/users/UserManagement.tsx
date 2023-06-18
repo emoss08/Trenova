@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Text, Card, createStyles, Flex } from "@mantine/core";
-import UsersAdminTable from "@/components/user-management/UserTable";
+import { UsersAdminTable } from "@/components/user-management/table/UserTable";
 
 const useStyles = createStyles((theme) => ({
   card: {

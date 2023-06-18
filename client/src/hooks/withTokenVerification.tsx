@@ -16,9 +16,9 @@
  */
 
 import { useEffect } from "react";
-import axios from "../lib/axiosConfig";
-import { useAuthStore } from "@/stores/authStore";
 import { getUserAuthToken, USER_INFO_KEY } from "@/lib/utils";
+import { useAuthStore } from "@/stores/AuthStore";
+import axios from "@/lib/AxiosConfig";
 
 const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);

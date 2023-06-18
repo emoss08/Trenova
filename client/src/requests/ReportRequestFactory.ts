@@ -15,18 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/axiosConfig";
+import axios from "@/lib/AxiosConfig";
 
-/**
- * Returns all organizations
- * @returns {Promise<any>}
- */
-export async function getModelColumns(
-  app_label: string,
-  model_name: string
-): Promise<any> {
-  const response = await axios.get(
-    `/get_columns/?app_label=${app_label}&model_name=${model_name}`
-  );
+export async function getColumns(model_name: string): Promise<any> {
+  const response = await axios.get(`/get_columns/?model_name=${model_name}`);
   return response.data.results;
 }
