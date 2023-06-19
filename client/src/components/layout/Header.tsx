@@ -16,6 +16,7 @@
  */
 
 import {
+  ActionIcon,
   Anchor,
   Box,
   Burger,
@@ -28,6 +29,8 @@ import {
   Group,
   Header,
   HoverCard,
+  Image,
+  Menu,
   rem,
   ScrollArea,
   SimpleGrid,
@@ -35,10 +38,7 @@ import {
   Text,
   ThemeIcon,
   UnstyledButton,
-  Image,
   useMantineColorScheme,
-  Menu,
-  ActionIcon,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React from "react";
@@ -63,91 +63,9 @@ import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import ActionButton from "../ActionButton";
 import HeaderUserMenu from "./HeaderUserMenu";
-
-const useStyles = createStyles((theme) => ({
-  link: {
-    display: "flex",
-    alignItems: "center",
-    height: "100%",
-    paddingLeft: theme.spacing.md,
-    paddingRight: theme.spacing.md,
-    textDecoration: "none",
-    color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    fontWeight: 500,
-    fontSize: theme.fontSizes.sm,
-
-    [theme.fn.smallerThan("sm")]: {
-      height: rem(42),
-      display: "flex",
-      alignItems: "center",
-      width: "100%",
-    },
-
-    ...theme.fn.hover({
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-    }),
-  },
-
-  subLink: {
-    width: "100%",
-    padding: `${theme.spacing.xs} ${theme.spacing.md}`,
-    borderRadius: theme.radius.md,
-
-    ...theme.fn.hover({
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[7]
-          : theme.colors.gray[0],
-    }),
-
-    "&:active": theme.activeStyles,
-  },
-  logoText: {
-    color: theme.colorScheme === "dark" ? "white" : "black",
-  },
-  dropdownFooter: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[7]
-        : theme.colors.gray[0],
-    margin: `calc(${theme.spacing.md} * -1)`,
-    marginTop: theme.spacing.sm,
-    padding: `${theme.spacing.md} calc(${theme.spacing.md} * 2)`,
-    paddingBottom: theme.spacing.xl,
-    borderTop: `${rem(1)} solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[5] : theme.colors.gray[1]
-    }`,
-  },
-
-  hiddenMobile: {
-    [theme.fn.smallerThan("sm")]: {
-      display: "none",
-    },
-  },
-
-  hiddenDesktop: {
-    [theme.fn.largerThan("sm")]: {
-      display: "none",
-    },
-  },
-  hoverEffect: {
-    svg: {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[5]
-          : theme.colors.gray[9],
-    },
-    "&:hover svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[0]
-          : theme.colors.gray[7],
-    },
-  },
-}));
+import { UserReports } from "./Header/_Partials/UserReports";
+import { useHeaderStyles } from "@/styles/HeaderStyles";
+import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
 
 const navigationLinks = [
   {
@@ -168,7 +86,7 @@ export function HeaderMegaMenu() {
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
-  const { classes, theme } = useStyles();
+  const { classes, theme } = useHeaderStyles();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [isDownloadMenuOpen, setDownloadMenuOpen] =
     React.useState<boolean>(false);
@@ -184,6 +102,7 @@ export function HeaderMegaMenu() {
     }
   };
 
+  // Get User data
   const userId = getUserId() || "";
   const { data: userData, isLoading: isUserDataLoading } = useQuery({
     queryKey: ["user", userId],
@@ -199,6 +118,7 @@ export function HeaderMegaMenu() {
     staleTime: Infinity, // never refetch
   });
 
+  // Get User organization data
   const organizationId = getUserOrganizationId() || "";
   const { data: organizationData, isLoading: isOrganizationDataLoading } =
     useQuery({
@@ -336,25 +256,7 @@ export function HeaderMegaMenu() {
             <ActionButton icon={faMagnifyingGlass} />
 
             {/* User Downloads */}
-            <Menu
-              position="bottom-end"
-              width={200}
-              opened={isDownloadMenuOpen}
-              onChange={setDownloadMenuOpen}
-              withinPortal
-            >
-              <Menu.Target>
-                <ActionIcon className={classes.hoverEffect}>
-                  <FontAwesomeIcon icon={faDownload} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Label>Downloads</Menu.Label>
-                <Menu.Item icon={<FontAwesomeIcon icon={faDownload} />}>
-                  Weird file
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+            <UserDownloads />
 
             {/* Notifications */}
             <ActionButton icon={faBell} />
