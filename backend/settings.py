@@ -110,7 +110,7 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
-    # "silk.middleware.SilkyMiddleware",
+    "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",

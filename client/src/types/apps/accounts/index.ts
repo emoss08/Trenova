@@ -79,3 +79,12 @@ export type JobTitle = {
   is_active: boolean;
   organization: string;
 };
+
+export type UserReport = {
+  id: string;
+  user: string;
+  report: string;
+  created: string;
+  file_name: string;
+  modified: string;
+};

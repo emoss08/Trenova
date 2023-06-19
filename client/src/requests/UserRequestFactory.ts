@@ -16,15 +16,25 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { User } from "@/types/apps/accounts";
+import { User, UserReport } from "@/types/apps/accounts";
 
 /**
  * Return the user's details
  * @param id
  *
- * @returns {Promise<any>}
+ * @returns {Promise<User>}
  */
 export async function getUserDetails(id: string): Promise<User> {
   const response = await axios.get(`/users/${id}/`);
   return response.data;
+}
+
+/**
+ * Return the User Reports
+ *
+ * @returns {Promise<UserReport[]>}
+ */
+export async function getUserReports(): Promise<UserReport[]> {
+  const response = await axios.get("/user_reports/");
+  return response.data.results;
 }
