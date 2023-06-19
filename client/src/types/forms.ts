@@ -30,8 +30,3 @@ export interface ExportModelFormValues {
   file_format: string;
   columns: string[];
 }
-
-export interface ExportModalProps {
-  onClose: () => void;
-  opened: boolean;
-}

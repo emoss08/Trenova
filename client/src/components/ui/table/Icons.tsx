@@ -18,67 +18,125 @@
 import { MRT_Icons } from "mantine-react-table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faArrowDownWideShort,
+  faAnglesDown,
   faBars,
   faBarsStaggered,
+  faChevronDown,
+  faCircleXmark,
   faColumns,
   faCompress,
+  faEdit,
   faEllipsisH,
-  faEllipsisVertical,
+  faEllipsisV,
   faExpand,
   faEyeSlash,
   faFilter,
   faFilterCircleXmark,
+  faFloppyDisk,
+  faGrip,
+  faLayerGroup,
   faSearch,
   faSearchMinus,
+  faSort,
   faSortDown,
+  faSortUp,
+  faTextWidth,
   faThumbTack,
+  faX,
 } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
 
 export const montaTableIcons: Partial<MRT_Icons> = {
   // Override the default ``mantine-react-table`` icons with custom ones from FontAwesome
-  IconArrowDown: (props: any) => (
-    <FontAwesomeIcon icon={faSortDown} {...props} />
+  IconArrowAutofitContent: (props: any) => (
+    <FontAwesomeIcon icon={faTextWidth} {...props} />
   ),
 
-  IconClearAll: () => <FontAwesomeIcon icon={faBarsStaggered} />,
+  IconArrowsSort: (props: any) => <FontAwesomeIcon icon={faSort} {...props} />,
 
-  IconTallymark1: () => <FontAwesomeIcon icon={faBars} />,
+  IconBoxMultiple: (props: any) => (
+    <FontAwesomeIcon icon={faLayerGroup} {...props} />
+  ),
 
-  IconTallymark2: () => <FontAwesomeIcon icon={faBars} />,
+  IconChevronDown: (props: any) => (
+    <FontAwesomeIcon icon={faChevronDown} {...props} />
+  ),
 
-  IconTallymark3: () => <FontAwesomeIcon icon={faBars} />,
+  IconChevronsDown: (props: any) => (
+    <FontAwesomeIcon icon={faAnglesDown} {...props} />
+  ),
 
-  IconTallymark4: () => <FontAwesomeIcon icon={faBars} />,
+  IconCircleX: (props: any) => (
+    <FontAwesomeIcon icon={faCircleXmark} {...props} />
+  ),
 
-  IconTallymarks: () => <FontAwesomeIcon icon={faBars} />,
+  IconClearAll: (props: any) => (
+    <FontAwesomeIcon icon={faBarsStaggered} {...props} />
+  ),
+
+  IconColumns: (props: any) => <FontAwesomeIcon icon={faColumns} {...props} />,
+
+  IconDeviceFloppy: (props: any) => (
+    <FontAwesomeIcon icon={faFloppyDisk} {...props} />
+  ),
+
+  IconDots: (props: any) => <FontAwesomeIcon icon={faEllipsisH} {...props} />,
+
+  IconDotsVertical: (props: any) => (
+    <FontAwesomeIcon icon={faEllipsisV} {...props} />
+  ),
+
+  IconEdit: (props: any) => <FontAwesomeIcon icon={faEdit} {...props} />,
+
+  IconEyeOff: (props: any) => <FontAwesomeIcon icon={faEyeSlash} {...props} />,
 
   IconFilter: (props: any) => <FontAwesomeIcon icon={faFilter} {...props} />,
 
-  IconFilterOff: () => <FontAwesomeIcon icon={faFilterCircleXmark} />,
+  IconFilterOff: (props: any) => (
+    <FontAwesomeIcon icon={faFilterCircleXmark} {...props} />
+  ),
 
-  IconMinimize: () => <FontAwesomeIcon icon={faCompress} />,
+  IconGripHorizontal: (props: any) => (
+    <FontAwesomeIcon icon={faGrip} {...props} />
+  ),
 
-  IconMaximize: () => <FontAwesomeIcon icon={faExpand} />,
+  IconMaximize: (props: any) => <FontAwesomeIcon icon={faExpand} {...props} />,
+
+  IconMinimize: (props: any) => (
+    <FontAwesomeIcon icon={faCompress} {...props} />
+  ),
+
+  IconPinned: (props: any) => <FontAwesomeIcon icon={faThumbTack} {...props} />,
+
+  IconPinnedOff: (props: any) => (
+    <FontAwesomeIcon icon={faThumbTack} {...props} />
+  ),
 
   IconSearch: (props: any) => <FontAwesomeIcon icon={faSearch} {...props} />,
 
-  IconCircleOff: () => <FontAwesomeIcon icon={faSearchMinus} />,
-
-  IconColumns: () => <FontAwesomeIcon icon={faColumns} />,
-
-  IconDotsVertical: () => <FontAwesomeIcon icon={faEllipsisVertical} />,
-
-  IconDots: () => <FontAwesomeIcon icon={faEllipsisH} />,
-
-  IconArrowsSort: (props: any) => (
-    <FontAwesomeIcon icon={faArrowDownWideShort} {...props} /> //props so that style rotation transforms are applied
+  IconSearchOff: (props: any) => (
+    <FontAwesomeIcon icon={faSearchMinus} {...props} />
   ),
 
-  IconPinned: (props: any) => (
-    <FontAwesomeIcon icon={faThumbTack} {...props} /> //props so that style rotation transforms are applied
+  IconSortAscending: (props: any) => (
+    <FontAwesomeIcon icon={faSortUp} {...props} />
   ),
 
-  IconEyeOff: () => <FontAwesomeIcon icon={faEyeSlash} />,
+  IconSortDescending: (props: any) => (
+    <FontAwesomeIcon icon={faSortDown} {...props} />
+  ),
+
+  IconBaselineDensityLarge: (props: any) => (
+    <FontAwesomeIcon icon={faBars} {...props} />
+  ),
+
+  IconBaselineDensityMedium: (props: any) => (
+    <FontAwesomeIcon icon={faBars} {...props} />
+  ),
+
+  IconBaselineDensitySmall: (props: any) => (
+    <FontAwesomeIcon icon={faBars} {...props} />
+  ),
+
+  IconX: (props: any) => <FontAwesomeIcon icon={faX} {...props} />,
 };

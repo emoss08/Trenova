@@ -78,7 +78,7 @@ export const CityAutoCompleteField = <TFormValues extends object>({
     form.setFieldValue(name as string, val);
     setData([]);
 
-    if (val.trim().length === 0 || val.includes("@")) {
+    if (val.trim().length === 0) {
       setLoading(false);
     } else {
       setLoading(true);
