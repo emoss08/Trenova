@@ -15,6 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import os
+
 from rest_framework import serializers
 
 from reports import models
@@ -56,3 +58,50 @@ class CustomReportSerializer(GenericSerializer):
         """
 
         model = models.CustomReport
+
+
+class UserReportSerializer(GenericSerializer):
+    """A serializer for the `UserReport` model.
+
+    This serializer converts instances of the `UserReport` model into JSON or other data formats,
+    and vice versa. It uses the specified fields (name, description, and code) to create the serialized
+    representation of the `UserReport` model.
+
+    See Also:
+        `GenericSerializer`
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `UserReportSerializer` class.
+        """
+
+        model = models.UserReport
+        fields = (
+            "id",
+            "organization",
+            "user",
+            "report",
+            "created",
+            "modified",
+        )
+
+    def to_representation(self, instance: models.UserReport) -> dict:
+        """Transforms the instance's data into a dictionary.
+
+        This method retrieves the data from an instance of `UserReport`, and then
+        transforms it into a dictionary format suitable for serialization.
+        It also adds a new field 'file_name' which extracts the name of the file from
+        the report attribute of the instance.
+
+        Args:
+            instance (models.UserReport): The `UserReport` model instance that will be serialized.
+
+        Returns:
+            dict: A dictionary containing the serialized data from the `UserReport` model instance,
+                  along with the file name from the report attribute.
+        """
+
+        representation = super().to_representation(instance)
+        representation["file_name"] = os.path.basename(instance.report.name)
+        return representation

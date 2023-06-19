@@ -408,4 +408,4 @@ class UserReport(GenericModel):
         Returns:
             str: Get the absolute url of the user report
         """
-        return reverse("user:user-report-view", kwargs={"pk": self.pk})
+        return reverse("user-report-detail", kwargs={"pk": self.pk})

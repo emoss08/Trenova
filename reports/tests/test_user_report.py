@@ -18,6 +18,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 from celery.exceptions import Retry
+from django.core.files.uploadedfile import SimpleUploadedFile
+from rest_framework.test import APIClient
 
 from accounts.models import User
 from core.exceptions import ServiceException
@@ -139,3 +141,42 @@ def test_generate_report_task_failure(generate_report: Mock, user: User) -> None
 
     # Ensure that the retry method was called
     generate_report_retry.assert_called_once()
+
+
+def test_user_report_get(api_client: APIClient) -> None:
+    """Test get ``user report`` get request
+
+    Args:
+        api_client (APIClient): APIClient object
+
+    Returns:
+        None: This function does not return anything.
+    """
+    response = api_client.get("/api/custom_reports/")
+    assert response.status_code == 200
+
+
+def test_user_report_post(api_client: APIClient, user: User) -> None:
+    """Test get ``user report`` post request
+
+    Args:
+        api_client (APIClient): APIClient object
+        user (User): User object
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    response = api_client.post(
+        "/api/user_reports/",
+        {
+            "organization": user.organization.id,
+            "user": user.id,
+            "report": SimpleUploadedFile(
+                "report.csv", b"file_content", content_type="text/csv"
+            ),
+        },
+    )
+    print(response.data)
+    assert response.status_code == 201
+    assert response.data["user"] == user.id

@@ -82,3 +82,21 @@ class ScheduledReportFactory(factory.django.DjangoModelFactory):
     time = "12:00"
     day_of_week = 0  # monday
     timezone = "UTC"
+
+
+class UserReportFactory(factory.django.DjangoModelFactory):
+    """
+    User Report Factory
+    """
+
+    class Meta:
+        """
+        Metaclass for UserReportFactory
+        """
+
+        model = "reports.UserReport"
+        django_get_or_create = ("organization",)
+
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    report = factory.django.FileField(filename="test_report.csv")
+    user = factory.SubFactory("accounts.tests.factories.UserFactory")
