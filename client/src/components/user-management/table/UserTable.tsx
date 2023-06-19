@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useMemo, useState } from "react";
-import { MantineReactTable, MRT_PaginationState } from "mantine-react-table";
+import React, { useMemo } from "react";
+import { MantineReactTable } from "mantine-react-table";
 import { useQuery } from "react-query";
 import { API_URL } from "@/utils/utils";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import { ExportUserModal } from "@/components/user-management/table/ExportUserModal";
-import { User, UserApiResponse } from "@/types/apps/accounts";
+import { UserApiResponse } from "@/types/apps/accounts";
 import { CreateUserDrawer } from "@/components/user-management/table/CreateUserDrawer";
 import { UserTableColumns } from "@/components/user-management/table/UserTableColumns";
 import axios from "@/lib/AxiosConfig";
@@ -30,61 +30,13 @@ import { montaTableIcons } from "@/components/ui/table/Icons";
 import { UserTableTopToolbar } from "./UserTableTopToolbar";
 import { ViewUserModal } from "./ViewUserModal";
 import { DeleteUserModal } from "@/components/user-management/table/DeleteUserModal";
+import { userTableStore } from "@/stores/UserTableStore";
 
 config.autoAddCss = false;
 
 export const UsersAdminTable = () => {
-  const [pagination, setPagination] = useState<MRT_PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-  const [viewUserModalOpen, setViewUserModalOpen] = useState<boolean>(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [globalFilter, setGlobalFilter] = useState<string>("");
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isExportModalOpen, setExportModalOpen] = useState(false);
-  const [isDeleteUserModalOpen, setDeleteUserModalOpen] = useState(false);
-  const [showColumnFilters, setShowColumnsFilters] = useState(false);
-
-  // Function to Open View User Modal
-  const openViewUserModal = (user: User) => {
-    setSelectedUser(user);
-    setViewUserModalOpen(true);
-  };
-
-  // Function to Close View User Modal
-  const closeViewUserModal = () => {
-    setViewUserModalOpen(false);
-    setSelectedUser(null);
-  };
-
-  // Function to Open Export Users Modal
-  const openExportUsersModal = () => {
-    setExportModalOpen(true);
-  };
-
-  // Function to Close Export Users Modal
-  const closeExportUsersModal = () => {
-    setExportModalOpen(false);
-  };
-
-  // Function to Open Delete User Modal
-  const openDeleteUserModal = (user: User) => {
-    setSelectedUser(user);
-    setDeleteUserModalOpen(true);
-  };
-
-  // Function to Close Delete User Modal
-  const closeDeleteUserModal = () => {
-    setDeleteUserModalOpen(false);
-    setSelectedUser(null);
-  };
-
-  // Function to Open Create User Drawer
-  const closeDrawer = () => setDrawerOpen(false);
-
-  // Function to Close Create User Drawer
-  const openDrawer = () => setDrawerOpen(true);
+  const [pagination] = userTableStore.use("pagination");
+  const [globalFilter, setGlobalFilter] = userTableStore.use("globalFilter");
 
   // Function to handle pagination
   const { data, isError, isFetching, isLoading } = useQuery<UserApiResponse>(
@@ -105,19 +57,12 @@ export const UsersAdminTable = () => {
     {
       refetchOnWindowFocus: false,
       keepPreviousData: true,
+      staleTime: 1000 * 60 * 5, // 5 minutes
     }
   );
 
-  // Function to handle pagination
-  const handlePaginationChange = (state: any) => {
-    setPagination(state);
-  };
-
   // Function to handle column filters
-  const columns = useMemo(
-    () => UserTableColumns(openDeleteUserModal, openViewUserModal),
-    [openDeleteUserModal, openViewUserModal]
-  );
+  const columns = useMemo(() => UserTableColumns(), []);
 
   return (
     <>
@@ -125,7 +70,9 @@ export const UsersAdminTable = () => {
         columns={columns}
         data={data?.results ?? []}
         manualPagination
-        onPaginationChange={handlePaginationChange}
+        onPaginationChange={(newPagination) => {
+          userTableStore.set("pagination", newPagination);
+        }}
         rowCount={data?.count ?? 0}
         getRowId={(row) => row.id}
         enableRowSelection
@@ -158,33 +105,12 @@ export const UsersAdminTable = () => {
           sx: { borderBottom: "unset", marginTop: "8px" },
           variant: "filled",
         }}
-        renderTopToolbar={({ table }) => (
-          <UserTableTopToolbar
-            table={table}
-            setShowColumnFilters={() =>
-              setShowColumnsFilters(!showColumnFilters)
-            }
-            showColumnFilters={showColumnFilters}
-            openExportUsersModal={openExportUsersModal}
-            openDrawer={openDrawer}
-          />
-        )}
+        renderTopToolbar={({ table }) => <UserTableTopToolbar table={table} />}
       />
-      <ExportUserModal
-        onClose={closeExportUsersModal}
-        opened={isExportModalOpen}
-      />
-      <CreateUserDrawer onClose={closeDrawer} opened={drawerOpen} />
-      <DeleteUserModal
-        onClose={closeDeleteUserModal}
-        opened={isDeleteUserModalOpen}
-        user={selectedUser}
-      />
-      <ViewUserModal
-        onClose={closeViewUserModal}
-        opened={viewUserModalOpen}
-        user={selectedUser}
-      />
+      <ExportUserModal />
+      <CreateUserDrawer />
+      <DeleteUserModal />
+      <ViewUserModal />
     </>
   );
 };

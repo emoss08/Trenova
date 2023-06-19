@@ -28,11 +28,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
-import {
-  ExportModalProps,
-  ExportModelFormValues,
-  exportModelTypes,
-} from "@/types/forms";
+import { ExportModelFormValues, exportModelTypes } from "@/types/forms";
 import { ExportModelSchema } from "@/utils/schema";
 import { notifications } from "@mantine/notifications";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
@@ -40,17 +36,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery } from "react-query";
 import { getColumns } from "@/requests/ReportRequestFactory";
 import axios from "@/lib/AxiosConfig";
+import { userTableStore } from "@/stores/UserTableStore";
 
-export const ExportUserModal: React.FC<ExportModalProps> = ({
-  onClose,
-  opened,
-}) => {
+export const ExportUserModal: React.FC = ({}) => {
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [showExportUserModal, setShowExportUserModal] =
+    userTableStore.use("exportModalOpen");
 
   const { data: columnsData, isLoading: isColumnsLoading } = useQuery({
     queryKey: ["user-columns"],
     queryFn: () => getColumns("User"),
-    enabled: opened,
+    enabled: showExportUserModal,
     staleTime: Infinity,
   });
 
@@ -78,7 +74,7 @@ export const ExportUserModal: React.FC<ExportModalProps> = ({
       });
 
       if (response.status === 202) {
-        onClose();
+        setShowExportUserModal(false);
         notifications.show({
           title: "Success",
           message: response.data.results,
@@ -102,8 +98,8 @@ export const ExportUserModal: React.FC<ExportModalProps> = ({
   return (
     <>
       <Modal.Root
-        opened={opened}
-        onClose={onClose}
+        opened={showExportUserModal}
+        onClose={() => setShowExportUserModal(false)}
         centered
         styles={{
           inner: {
@@ -173,7 +169,10 @@ export const ExportUserModal: React.FC<ExportModalProps> = ({
                       justifyContent: "flex-end",
                     }}
                   >
-                    <Button onClick={onClose} variant="light">
+                    <Button
+                      onClick={() => setShowExportUserModal(false)}
+                      variant="light"
+                    >
                       Cancel
                     </Button>
                     <Button

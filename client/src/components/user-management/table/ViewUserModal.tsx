@@ -25,18 +25,12 @@ import {
   Text,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
-import { User } from "@/types/apps/accounts";
 import {
   getDepartmentDetails,
   getOrganizationDetails,
 } from "@/requests/OrganizationRequestFactory";
 import React from "react";
-
-interface ViewUserModalProps {
-  onClose: () => void;
-  opened: boolean;
-  user: User | null;
-}
+import { userTableStore } from "@/stores/UserTableStore";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -59,12 +53,12 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ViewUserModal: React.FC<ViewUserModalProps> = ({
-  onClose,
-  opened,
-  user,
-}) => {
+export const ViewUserModal: React.FC = () => {
   const { classes } = useStyles();
+  const [showViewUserModalOpen, setViewUserModalOpen] =
+    userTableStore.use("viewUserModalOpen");
+  const [user] = userTableStore.use("selectedUser");
+
   const queryClient = useQueryClient();
 
   const { data: organizationData, isLoading: isOrganizationDataLoading } =
@@ -76,7 +70,7 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
         }
         return getOrganizationDetails(user.organization);
       },
-      enabled: opened && !!user?.organization,
+      enabled: showViewUserModalOpen && !!user?.organization,
       initialData: () => {
         return queryClient.getQueryData(["organization", user?.organization]);
       },
@@ -92,7 +86,7 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
         }
         return getDepartmentDetails(user.department);
       },
-      enabled: opened && !!user?.department,
+      enabled: showViewUserModalOpen && !!user?.department,
       initialData: () => {
         return queryClient.getQueryData(["department", user?.department]);
       },
@@ -105,7 +99,12 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
 
   return (
     <>
-      <Modal.Root opened={opened} onClose={onClose} size="lg" centered>
+      <Modal.Root
+        opened={showViewUserModalOpen}
+        onClose={() => setViewUserModalOpen(false)}
+        size="lg"
+        centered
+      >
         <Modal.Overlay />
         <Modal.Content>
           <Modal.Header>
