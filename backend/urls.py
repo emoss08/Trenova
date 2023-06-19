@@ -277,6 +277,7 @@ router.register(
 router.register(
     r"custom_reports", reports_api.CustomReportViewSet, basename="custom_reports"
 )
+router.register(r"user_reports", reports_api.UserReportViewSet, basename="user_reports")
 
 urlpatterns = [
     path("__debug__/", include("debug_toolbar.urls")),
