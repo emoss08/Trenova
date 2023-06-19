@@ -48,11 +48,7 @@ import {
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { StateSelect } from "@/components/ui/fields/StateSelect";
 import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
-
-interface CreateUserDrawerProps {
-  onClose: () => void;
-  opened: boolean;
-}
+import { userTableStore } from "@/stores/UserTableStore";
 
 interface CreateUserFormValues {
   organization: string;
@@ -103,13 +99,12 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
-  opened,
-  onClose,
-}) => {
+export const CreateUserDrawer: React.FC = () => {
   const { classes } = useStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const [checked, setChecked] = React.useState(false);
+  const [showCreateUserDrawer, setShowCreateUserDrawer] =
+    userTableStore.use("drawerOpen");
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
@@ -204,26 +199,32 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
     useQuery({
       queryKey: ["organizations"],
       queryFn: () => getOrganizations(),
-      enabled: opened,
+      enabled: showCreateUserDrawer,
+      initialData: () => {
+        return queryClient.getQueryData("organizations");
+      },
+      staleTime: Infinity,
     });
 
-  console.log("organizationsData", organizationsData);
+  const { data: departmentsData, isLoading: isDepartmentLoading } = useQuery({
+    queryKey: ["departments"],
+    queryFn: () => getDepartments(),
+    enabled: showCreateUserDrawer,
+    initialData: () => {
+      return queryClient.getQueryData("departments");
+    },
+    staleTime: Infinity,
+  });
 
-  const { data: departmentsData, isLoading: isDepartmentLoading } = useQuery(
-    ["departments"],
-    () => getDepartments(),
-    {
-      enabled: opened,
-    }
-  );
-
-  const { data: jobTitleData, isLoading: isJobTitleLoading } = useQuery(
-    ["job_titles"],
-    () => getJobTitles(),
-    {
-      enabled: opened,
-    }
-  );
+  const { data: jobTitleData, isLoading: isJobTitleLoading } = useQuery({
+    queryKey: ["job_titles"],
+    queryFn: () => getJobTitles(),
+    enabled: showCreateUserDrawer,
+    initialData: () => {
+      return queryClient.getQueryData("job_titles");
+    },
+    staleTime: Infinity,
+  });
 
   const isLoading =
     isDepartmentLoading || isJobTitleLoading || isOrganizationsLoading;
@@ -248,7 +249,12 @@ export const CreateUserDrawer: React.FC<CreateUserDrawerProps> = ({
 
   return (
     <>
-      <Drawer opened={opened} onClose={onClose} title="Create User" size="lg">
+      <Drawer
+        opened={showCreateUserDrawer}
+        onClose={() => setShowCreateUserDrawer(false)}
+        title="Create User"
+        size="lg"
+      >
         {isLoading ? (
           <Stack>
             <Skeleton height={300} />

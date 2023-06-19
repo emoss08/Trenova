@@ -24,22 +24,16 @@ import {
   faUserPlus,
 } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
+import { userTableStore } from "@/stores/UserTableStore";
 
 interface TopToolbarProps {
   table: any;
-  setShowColumnFilters: (value: boolean) => void;
-  showColumnFilters: boolean;
-  openExportUsersModal: () => void;
-  openDrawer: () => void;
 }
 
-export const UserTableTopToolbar: React.FC<TopToolbarProps> = ({
-  setShowColumnFilters,
-  showColumnFilters,
-  openExportUsersModal,
-  openDrawer,
-  table,
-}) => {
+export const UserTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
+  const [showColumnFilters, setShowColumnFilters] =
+    userTableStore.use("columnFilters");
+
   return (
     <>
       <Flex
@@ -99,10 +93,10 @@ export const UserTableTopToolbar: React.FC<TopToolbarProps> = ({
               <Checkbox
                 label="Show/Hide Column Filters"
                 onChange={(event) => {
-                  setShowColumnFilters(!event.target.checked);
-                  table.setShowColumnFilters(!event.target.checked);
+                  setShowColumnFilters(event.target.checked);
+                  table.setShowColumnFilters(event.target.checked);
                 }}
-                checked={!showColumnFilters}
+                checked={showColumnFilters}
                 size="sm"
               />
             </Popover.Dropdown>
@@ -111,13 +105,13 @@ export const UserTableTopToolbar: React.FC<TopToolbarProps> = ({
           <Button
             color="blue"
             leftIcon={<FontAwesomeIcon icon={faFileExport} />}
-            onClick={openExportUsersModal}
+            onClick={() => userTableStore.set("exportModalOpen", true)}
           >
             Export
           </Button>
           <Button
             color="blue"
-            onClick={openDrawer}
+            onClick={() => userTableStore.set("drawerOpen", true)}
             leftIcon={<FontAwesomeIcon icon={faUserPlus} />}
           >
             Create New User

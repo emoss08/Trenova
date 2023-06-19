@@ -27,11 +27,9 @@ import {
 import { MRT_ColumnDef } from "mantine-react-table";
 import { User } from "@/types/apps/accounts";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
+import { userTableStore } from "@/stores/UserTableStore";
 
-export const UserTableColumns = (
-  openDeleteUserModal: (user: User) => void,
-  openViewUserModal: (user: User) => void
-): MRT_ColumnDef<User>[] => {
+export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
   return [
     {
       id: "status",
@@ -152,7 +150,10 @@ export const UserTableColumns = (
               <Menu.Label>User Actions</Menu.Label>
               <Menu.Item
                 icon={<FontAwesomeIcon icon={faUser} />}
-                onClick={() => openViewUserModal(row.original)}
+                onClick={() => {
+                  userTableStore.set("selectedUser", row.original);
+                  userTableStore.set("viewUserModalOpen", true);
+                }}
               >
                 View User Profile
               </Menu.Item>
@@ -162,7 +163,10 @@ export const UserTableColumns = (
               <Menu.Item
                 color="red"
                 icon={<FontAwesomeIcon icon={faUserMinus} />}
-                onClick={() => openDeleteUserModal(row.original)}
+                onClick={() => {
+                  userTableStore.set("selectedUser", row.original);
+                  userTableStore.set("deleteUserModalOpen", true);
+                }}
               >
                 Delete User Profile
               </Menu.Item>

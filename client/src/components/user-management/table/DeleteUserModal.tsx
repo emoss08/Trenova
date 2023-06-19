@@ -23,19 +23,14 @@ import { Box, Button, Modal, Text } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import React from "react";
 import { useQueryClient } from "react-query";
+import { userTableStore } from "@/stores/UserTableStore";
 
-interface DeleteModalProps {
-  onClose: () => void;
-  opened: boolean;
-  user: User | null;
-}
-
-export const DeleteUserModal: React.FC<DeleteModalProps> = ({
-  onClose,
-  opened,
-  user,
-}) => {
+export const DeleteUserModal: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [showDeleteUserModal, setShowDeleteUserModal] = userTableStore.use(
+    "deleteUserModalOpen"
+  );
+  const [selectedUser] = userTableStore.use("selectedUser");
   const queryClient = useQueryClient();
 
   const handleDelete = async (user: User) => {
@@ -43,7 +38,7 @@ export const DeleteUserModal: React.FC<DeleteModalProps> = ({
     try {
       const response = await axios.delete(`users/${user.id}`);
       if (response.status === 204) {
-        queryClient.invalidateQueries("user-table-data").then(() => {
+        queryClient.invalidateQueries(["user-table-data"]).then(() => {
           notifications.show({
             title: "User deleted",
             message: "User has been deleted successfully",
@@ -57,15 +52,19 @@ export const DeleteUserModal: React.FC<DeleteModalProps> = ({
       console.log(error);
     } finally {
       setLoading(false);
-      onClose();
+      setShowDeleteUserModal(false);
     }
   };
 
-  if (!user) return null;
+  if (!selectedUser) return null;
 
   return (
     <>
-      <Modal.Root opened={opened} onClose={onClose} centered>
+      <Modal.Root
+        opened={showDeleteUserModal}
+        onClose={() => setShowDeleteUserModal(false)}
+        centered
+      >
         <Modal.Overlay />
         <Modal.Content>
           <Modal.Header>
@@ -85,7 +84,11 @@ export const DeleteUserModal: React.FC<DeleteModalProps> = ({
                 justifyContent: "flex-end",
               }}
             >
-              <Button onClick={onClose} variant="default" mr={10}>
+              <Button
+                onClick={() => setShowDeleteUserModal(false)}
+                variant="default"
+                mr={10}
+              >
                 No don't delete it
               </Button>
               <Button
@@ -94,7 +97,7 @@ export const DeleteUserModal: React.FC<DeleteModalProps> = ({
                 variant="filled"
                 ml={5}
                 loading={loading}
-                onClick={() => handleDelete(user)}
+                onClick={() => handleDelete(selectedUser)}
               >
                 Delete Account
               </Button>
