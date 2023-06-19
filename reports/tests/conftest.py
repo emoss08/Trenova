@@ -45,3 +45,11 @@ def scheduled_report() -> Generator[Any, Any, None]:
     Scheduled Report Fixture
     """
     yield factories.ScheduledReportFactory()
+
+
+@pytest.fixture
+def user_report() -> Generator[Any, Any, None]:
+    """
+    User Report Fixture
+    """
+    yield factories.UserReportFactory()

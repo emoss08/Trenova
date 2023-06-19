@@ -188,3 +188,35 @@ def generate_report_api(request: Request) -> Response:
         )
     except exceptions.ValidationError as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserReportViewSet(viewsets.ModelViewSet):
+    """A viewset for managing UserReport objects, with filters for name and table.
+
+    Attributes:
+        queryset (QuerySet): The queryset used for retrieving UserReport objects.
+        serializer_class (serializers.UserReportSerializer): The serializer class used for UserReport objects.
+        filterset_fields (tuple): A tuple containing the names of the fields that can be used to filter UserReport objects.
+    """
+
+    queryset = models.UserReport.objects.all()
+    serializer_class = serializers.UserReportSerializer
+    filterset_fields = ("user_id",)
+
+    def get_queryset(self) -> "QuerySet[models.UserReport]":
+        """Returns the queryset for the viewset.
+
+        Returns:
+            QuerySet[models.UserReport]: The queryset for the viewset.
+        """
+        queryset: "QuerySet[models.UserReport]" = self.queryset.filter(
+            organization_id=self.request.user.organization_id, user_id=self.request.user.id  # type: ignore
+        ).only(
+            "id",
+            "organization",
+            "user",
+            "report",
+            "created",
+            "modified",
+        )
+        return queryset

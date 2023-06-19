@@ -78,7 +78,9 @@ def get_crontab_schedule(
     return schedule, "crontab"
 
 
-def generate_pdf(*, df: pd.DataFrame, buffer: BytesIO, organization_id: str) -> None:
+def generate_pdf(
+    *, df: pd.DataFrame, buffer: BytesIO, organization_id: ModelUUID
+) -> None:
     """Generates a PDF file from a pandas DataFrame and writes it to the provided buffer.
 
     The DataFrame is converted into a ReportLab Table which is then included in a PDF
@@ -206,13 +208,13 @@ def generate_report(
     # Generate the report in the specified format
     if file_format.lower() == "csv":
         df.to_csv(buffer, index=False)
-        file_name = "report.csv"
+        file_name = f"{model_name}-report.csv"
     elif file_format.lower() == "xlsx":
         df.to_excel(buffer, index=False)
-        file_name = "report.xlsx"
+        file_name = f"{model_name}-report.xlsx"
     elif file_format.lower() == "pdf":
         generate_pdf(df=df, buffer=buffer, organization_id=user.organization_id)
-        file_name = "report.pdf"
+        file_name = f"{model_name}-report.pdf"
     else:
         raise ValueError("Invalid file format")
 
