@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
-import { MantineReactTable, MRT_RowSelectionState } from "mantine-react-table";
+import React, { useMemo } from "react";
+import { MantineReactTable } from "mantine-react-table";
 import { useQuery } from "react-query";
 import { API_URL } from "@/utils/utils";
 import "@fortawesome/fontawesome-svg-core/styles.css";
