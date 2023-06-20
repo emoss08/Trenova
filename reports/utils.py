@@ -17,11 +17,13 @@
 from io import BytesIO
 
 import pandas as pd
+from asgiref.sync import async_to_sync
 from django.apps import apps
 from django.core.files import File
 from django.db.models import Model
 from django.shortcuts import get_object_or_404
 from django_celery_beat.models import CrontabSchedule
+from notifications.signals import notify
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
@@ -33,6 +35,9 @@ from organization.models import Organization
 from reports import exceptions, models
 from reports.helpers import ALLOWED_MODELS
 from utils.types import ModelUUID
+from channels.layers import get_channel_layer
+
+channel_layer = get_channel_layer()
 
 
 def get_crontab_schedule(
@@ -153,7 +158,7 @@ def generate_pdf(
 
 def generate_report(
     *, model_name: str, columns: list[str], user_id: ModelUUID, file_format: str
-) -> str:
+) -> None:
     """Generate a report in the specified format for a given user based on the specified model.
 
     This function accepts a model name, a list of columns, a user ID and a file format,
@@ -172,9 +177,6 @@ def generate_report(
         columns (list[str]): The list of columns to be included in the report.
         user_id (ModelUUID): The ID of the user for whom the report is being generated.
         file_format (str): The format in which the report should be generated (csv, xlsx, pdf).
-
-    Returns:
-        str: The UserReport instance which has been created.
 
     Raises:
         ValueError: If the provided file format is not among the allowed formats (csv, xlsx, pdf).
@@ -222,6 +224,26 @@ def generate_report(
     django_file = File(buffer, name=file_name)
 
     # Save the report to the UserReport model
-    return models.UserReport.objects.create(
+    new_report = models.UserReport.objects.create(
         organization=user.organization, user=user, report=django_file
+    )
+
+    # Send notification to the user
+    notify.send(
+        user,
+        recipient=user,
+        verb="New Report is available",
+        description=f"New {model_name} report is available for download.",
+        public=False,
+        action_object=new_report,
+    )
+
+    # Send Websocket message to the user
+    async_to_sync(get_channel_layer().group_send)(
+        user.username,
+        {
+            "type": "send_notification",
+            "event": "New Report is available",
+            "description": f"New {model_name} report is available for download.",
+        },
     )
