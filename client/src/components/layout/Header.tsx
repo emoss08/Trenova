@@ -16,34 +16,27 @@
  */
 
 import {
-  ActionIcon,
   Anchor,
   Box,
   Burger,
   Button,
   Center,
   Collapse,
-  createStyles,
   Divider,
   Drawer,
   Group,
   Header,
   HoverCard,
-  Image,
-  Menu,
+  Indicator,
   rem,
   ScrollArea,
   SimpleGrid,
-  Skeleton,
   Text,
   ThemeIcon,
   UnstyledButton,
-  useMantineColorScheme,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React from "react";
-import { getUserId, getUserOrganizationId } from "@/lib/utils";
-import { useQuery, useQueryClient } from "react-query";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBell,
@@ -53,19 +46,14 @@ import {
   faTruckFast,
 } from "@fortawesome/pro-solid-svg-icons";
 import { Link } from "react-router-dom";
-import {
-  faDisplay,
-  faDownload,
-  faMoon,
-  faSun,
-} from "@fortawesome/pro-duotone-svg-icons";
-import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
-import { getUserDetails } from "@/requests/UserRequestFactory";
 import ActionButton from "../ActionButton";
-import HeaderUserMenu from "./HeaderUserMenu";
-import { UserReports } from "./Header/_Partials/UserReports";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
+import { ThemeSwitcher } from "./Header/_Partials/ThemeSwitcher";
+import { HeaderUserMenu } from "./HeaderUserMenu";
+import { HeaderLogo } from "@/components/layout/Header/_Partials/HeaderLogo";
+import { UserNotifications } from "./Header/UserNotifications";
+import { faGrid, faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
 
 const navigationLinks = [
   {
@@ -87,55 +75,6 @@ export function HeaderMegaMenu() {
     useDisclosure(false);
   const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
   const { classes, theme } = useHeaderStyles();
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const [isDownloadMenuOpen, setDownloadMenuOpen] =
-    React.useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const getThemeIcon = () => {
-    if (colorScheme === "light") {
-      return <FontAwesomeIcon icon={faSun} />;
-    } else if (colorScheme === "dark") {
-      return <FontAwesomeIcon icon={faMoon} />;
-    } else {
-      return <FontAwesomeIcon icon={faDisplay} />;
-    }
-  };
-
-  // Get User data
-  const userId = getUserId() || "";
-  const { data: userData, isLoading: isUserDataLoading } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => {
-      if (!userId) {
-        return Promise.resolve(null);
-      }
-      return getUserDetails(userId);
-    },
-    initialData: () => {
-      return queryClient.getQueryData(["user", userId]);
-    },
-    staleTime: Infinity, // never refetch
-  });
-
-  // Get User organization data
-  const organizationId = getUserOrganizationId() || "";
-  const { data: organizationData, isLoading: isOrganizationDataLoading } =
-    useQuery({
-      queryKey: ["organization", organizationId],
-      queryFn: () => {
-        if (!organizationId) {
-          return Promise.resolve(null);
-        }
-        return getOrganizationDetails(organizationId);
-      },
-      initialData: () => {
-        return queryClient.getQueryData(["organization", organizationId]);
-      },
-      staleTime: Infinity, // never refetch
-    });
-
-  const isLoading = isOrganizationDataLoading || isUserDataLoading;
 
   const customerServiceLinks = navigationLinks.map((item) => (
     <UnstyledButton className={classes.subLink} key={item.title}>
@@ -159,26 +98,7 @@ export function HeaderMegaMenu() {
     <>
       <Header height={60} px="md">
         <Group position="apart" sx={{ height: "100%" }}>
-          {isLoading ? (
-            <Skeleton width={rem(150)} height={rem(40)} />
-          ) : organizationData?.logo ? (
-            <Link to="/" style={{ textDecoration: "none" }}>
-              <Image
-                radius="md"
-                width={rem(120)}
-                height={rem(40)}
-                maw={rem(150)}
-                src={organizationData?.logo}
-                alt="Organization Logo"
-              />
-            </Link>
-          ) : (
-            <Link to="/" style={{ textDecoration: "none" }}>
-              <Text size="lg" fw={600} className={classes.logoText}>
-                {organizationData?.name}
-              </Text>
-            </Link>
-          )}
+          <HeaderLogo />
           <Group
             sx={{ height: "100%" }}
             spacing={0}
@@ -259,39 +179,16 @@ export function HeaderMegaMenu() {
             <UserDownloads />
 
             {/* Notifications */}
-            <ActionButton icon={faBell} />
+            <UserNotifications />
+
+            {/* Applications */}
+            <ActionButton icon={faGrid2} />
 
             {/* Theme Switcher */}
-            <Menu position="bottom-end" width={200} withinPortal>
-              <Menu.Target>
-                <ActionIcon className={classes.hoverEffect}>
-                  {getThemeIcon()}
-                </ActionIcon>
-              </Menu.Target>
+            <ThemeSwitcher />
 
-              <Menu.Dropdown>
-                <Menu.Label>Theme Mode</Menu.Label>
-                <Menu.Item
-                  onClick={() => toggleColorScheme("light")}
-                  icon={<FontAwesomeIcon icon={faSun} />}
-                >
-                  Light Theme
-                </Menu.Item>
-                <Menu.Item
-                  onClick={() => toggleColorScheme("dark")}
-                  icon={<FontAwesomeIcon icon={faMoon} />}
-                >
-                  Dark Theme
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-            {isLoading ? (
-              <Skeleton width={rem(150)} height={rem(40)} circle />
-            ) : userData ? (
-              <HeaderUserMenu user={userData} />
-            ) : (
-              <div>No user data available</div>
-            )}
+            {/* User Menu */}
+            <HeaderUserMenu />
           </Group>
 
           <Burger
