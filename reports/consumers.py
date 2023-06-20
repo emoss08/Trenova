@@ -14,13 +14,40 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import JsonWebsocketConsumer
+from channels.layers import get_channel_layer
 
-from django.urls import re_path
+from accounts.authentication import BearerTokenAuthentication
 
-from organization.consumers import KeepAliveConsumer
-from reports.consumers import NotificationConsumer
+channel_layer = get_channel_layer()
 
-websocket_urlpatterns = [
-    re_path(r"ws/keepalive/$", KeepAliveConsumer.as_asgi()),
-    re_path(r"ws/notifications/$", NotificationConsumer.as_asgi()),
-]
+
+class NotificationConsumer(JsonWebsocketConsumer):
+    def connect(self):
+        token_authenticator = BearerTokenAuthentication()
+
+        # Get the token from the URL
+        token = self.scope["query_string"].decode("utf-8").split("=")[1]
+
+        # Mocking a request to verify the token
+        mock_request = type("", (), {})()  # Create a blank class
+        mock_request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+        user_token = token_authenticator.authenticate(mock_request)
+        if user_token is None:
+            return
+
+        self.scope["user"] = user_token[0]
+
+        self.room_group_name = self.scope["user"].username
+        async_to_sync(channel_layer.group_add)(self.room_group_name, self.channel_name)
+        self.accept()
+
+    def disconnect(self, close_code):
+        async_to_sync(channel_layer.group_discard)(
+            self.room_group_name, self.channel_name
+        )
+
+    def send_notification(self, event):
+        self.send_json(event)
