@@ -97,6 +97,8 @@ export const ViewUserModal: React.FC = () => {
   const isUserDataLoading =
     isOrganizationDataLoading || isDepartmentDataLoading;
 
+  if (!showViewUserModalOpen) return null;
+
   return (
     <>
       <Modal.Root

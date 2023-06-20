@@ -17,6 +17,7 @@
 
 import { User } from "@/types/apps/accounts";
 import { createGlobalStore } from "@/utils/zustand";
+import { MRT_RowSelectionState } from "mantine-react-table";
 
 interface UserTableStoreProps {
   pagination: {
@@ -30,6 +31,7 @@ interface UserTableStoreProps {
   exportModalOpen: boolean;
   deleteUserModalOpen: boolean;
   columnFilters: boolean;
+  rowSelection: MRT_RowSelectionState;
 }
 
 export const userTableStore = createGlobalStore<UserTableStoreProps>({
@@ -44,4 +46,5 @@ export const userTableStore = createGlobalStore<UserTableStoreProps>({
   exportModalOpen: false,
   deleteUserModalOpen: false,
   columnFilters: false,
+  rowSelection: {},
 });
