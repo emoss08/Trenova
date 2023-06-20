@@ -17,6 +17,7 @@
 from typing import TYPE_CHECKING
 
 from django.apps import apps
+from notifications.helpers import get_notification_list
 from rest_framework import exceptions, generics, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
@@ -220,3 +221,15 @@ class UserReportViewSet(viewsets.ModelViewSet):
             "modified",
         )
         return queryset
+
+
+@api_view(["GET"])
+def get_user_notifications(request: Request) -> Response:
+    all_list = get_notification_list(request, "unread")
+
+    data = {
+        "unread_count": request.user.notifications.unread().count(),
+        "unread_list": all_list,
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
