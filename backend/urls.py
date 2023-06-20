@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -373,6 +374,11 @@ urlpatterns = [
         "api/generate_report/",
         reports_api.generate_report_api,
         name="generate-report",
+    ),
+    path(
+        "api/user/notifications/",
+        reports_api.get_user_notifications,
+        name="user-notifications",
     ),
 ]
 
