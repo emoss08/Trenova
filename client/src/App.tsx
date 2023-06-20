@@ -36,20 +36,16 @@ function App() {
   useVerifyToken();
   const initialLoading = useAuthStore((state) => state.initialLoading);
 
-  if (initialLoading) {
-    return <LoadingScreen />;
-  }
-
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
-    key: "monta-color-scheme",
+    key: "mt-color-scheme",
     defaultValue: "light",
     getInitialValueInEffect: true,
   });
+
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
-  // TODO(wolfred): remove in production leave for dev because it's useful for me to switch.
-  useHotkeys([["mod+J", () => toggleColorScheme()]]); // Acorn said this wasn't standard, and it would confuse users.
+  useHotkeys([["mod+J", () => toggleColorScheme()]]);
 
   useEffect(() => {
     document.body.className =
@@ -63,6 +59,10 @@ function App() {
       },
     },
   });
+
+  if (initialLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <>
