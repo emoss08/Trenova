@@ -17,25 +17,18 @@
 
 import Layout from "@/components/layout/Layout";
 import { useAuthStore } from "@/stores/AuthStore";
-import { useUserStore } from "@/stores/UserStore";
-import React, { useEffect, useState } from "react";
+import { userStore } from "@/stores/UserStore";
+import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
+
 export const ProtectedRoutes: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const storePermissions = useUserStore((state) => state.permissions);
-  const isSuperUser = useUserStore((state) => state.user.is_superuser);
-  const [permissions, setPermissions] = useState(storePermissions);
-  const [isAdmin, setIsAdmin] = useState(isSuperUser);
-
-  useEffect(() => {
-    setPermissions(storePermissions);
-    setIsAdmin(isSuperUser);
-  }, [storePermissions]);
-
+  const store = userStore.useAll();
   const userHasPermission = (permission: string) => {
-    return isAdmin || permissions.includes(permission);
+    return store.isAdmin || store.permissions.includes(permission);
   };
+
   return (
     <Routes>
       {routes.map((route: RouteObjectWithPermission, i: number) => {
