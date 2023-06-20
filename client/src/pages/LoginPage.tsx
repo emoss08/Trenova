@@ -35,22 +35,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
 import { LoginSchema } from "@/utils/schema";
-import { useUserStore } from "@/stores/UserStore";
 import { useAuthStore } from "@/stores/AuthStore";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import axios from "@/lib/AxiosConfig";
 import { ValidatedPasswordInput } from "@/components/ui/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { userStore } from "@/stores/UserStore";
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
-  ]);
-  const [setUser, setPermissions, setGroups] = useUserStore((state) => [
-    state.setUser,
-    state.setPermissions,
-    state.setGroups,
   ]);
   const [loading, setLoading] = React.useState<boolean>(false);
   const [, setUserInfo] = useLocalStorage({
@@ -84,11 +79,12 @@ const LoginPage: React.FC = () => {
 
       if (response.status === 200) {
         setUserInfo(response.data);
-        setIsAuthenticated(true);
         const userInfo = await getUserDetails(response.data.user_id);
-        setUser(userInfo);
-        setPermissions(userInfo.user_permissions);
-        setGroups(userInfo.groups);
+        userStore.set("user", userInfo);
+        userStore.set("permissions", userInfo.user_permissions);
+        userStore.set("groups", userInfo.groups);
+        userStore.set("isAdmin", userInfo.is_staff);
+        setIsAuthenticated(true);
       }
     } catch (error: any) {
       if (error.response) {

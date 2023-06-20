@@ -16,30 +16,18 @@
  */
 
 import { User } from "@/types/apps/accounts";
-import { create, GetState, SetState, StoreApi } from "zustand";
+import { createGlobalStore } from "@/utils/zustand";
 
-type UserState = {
+interface UserStoreProps {
   user: User;
-  setUser: (user: User) => void;
   permissions: string[];
-  setPermissions: (permissions: string[]) => void;
   groups: string[];
-  setGroups: (groups: string[]) => void;
-  reset: () => void;
-};
+  isAdmin: boolean;
+}
 
-const createStore = (
-  set: SetState<UserState>,
-  get: GetState<UserState>,
-  api: StoreApi<UserState>
-) => ({
+export const userStore = createGlobalStore<UserStoreProps>({
   user: {} as User,
-  setUser: (user: User) => set({ user }),
   permissions: [],
-  setPermissions: (permissions: string[]) => set({ permissions }),
   groups: [],
-  setGroups: (groups: string[]) => set({ groups }),
-  reset: () => set({ user: {} as User, permissions: [], groups: [] }),
+  isAdmin: false,
 });
-
-export const useUserStore = create<UserState>(createStore);
