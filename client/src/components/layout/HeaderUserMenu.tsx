@@ -27,6 +27,7 @@ import {
   createStyles,
   ActionIcon,
   Indicator,
+  Skeleton,
 } from "@mantine/core";
 import {
   IconHeart,
@@ -36,15 +37,13 @@ import {
   IconTrash,
   IconSwitchHorizontal,
 } from "@tabler/icons-react";
-import { useDisclosure } from "@mantine/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
-import { User } from "@/types/apps/accounts";
-
-interface HeaderUserMenuProps {
-  user: User;
-}
+import { getUserId } from "@/lib/utils";
+import { useQuery, useQueryClient } from "react-query";
+import { getUserDetails } from "@/requests/UserRequestFactory";
+import { headerStore } from "@/stores/HeaderStore";
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -119,21 +118,41 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-interface HeaderUserMenuProps {
-  user: User;
-}
-
-const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
+export const HeaderUserMenu: React.FC = () => {
   const { classes, theme } = useStyles();
-  const [opened, { toggle }] = useDisclosure(false);
-  const [, setUserMenuOpened] = useState(false);
+  const [headerMenuOpen] = headerStore.use("headerMenuOpen");
+  const queryClient = useQueryClient();
+
+  // Get User data
+  const userId = getUserId() || "";
+  const { data: userData, isLoading: isUserDataLoading } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => {
+      if (!userId) {
+        return Promise.resolve(null);
+      }
+      return getUserDetails(userId);
+    },
+    initialData: () => {
+      return queryClient.getQueryData(["user", userId]);
+    },
+    staleTime: Infinity, // never refetch
+  });
+
+  if (isUserDataLoading) {
+    return <Skeleton width={rem(150)} height={rem(40)} circle />;
+  }
+
+  if (!userData) {
+    return <div>No user data available</div>;
+  }
 
   return (
     <Container>
       <Group position="apart">
         <Burger
-          opened={opened}
-          onClick={toggle}
+          opened={headerMenuOpen}
+          onClick={() => headerStore.set("headerMenuOpen", !headerMenuOpen)}
           className={classes.burger}
           size="sm"
         />
@@ -142,8 +161,8 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
           width={260}
           position="bottom-end"
           transitionProps={{ transition: "pop-top-right" }}
-          onClose={() => setUserMenuOpened(false)}
-          onOpen={() => setUserMenuOpened(true)}
+          onClose={() => headerStore.set("headerMenuOpen", false)}
+          onOpen={() => headerStore.set("headerMenuOpen", true)}
           withinPortal
         >
           <Menu.Target>
@@ -158,17 +177,17 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
                   position="bottom-end"
                   color="green"
                 >
-                  {user.profile?.profile_picture ? (
+                  {userData.profile?.profile_picture ? (
                     <Avatar
-                      src={user.profile?.profile_picture}
+                      src={userData.profile?.profile_picture}
                       alt={"Test"}
                       radius="xl"
                       size={30}
                     />
                   ) : (
                     <Avatar color="blue" radius="xl" size={30}>
-                      {user.profile?.first_name.charAt(0)}
-                      {user.profile?.last_name.charAt(0)}
+                      {userData.profile?.first_name.charAt(0)}
+                      {userData.profile?.last_name.charAt(0)}
                     </Avatar>
                   )}
                 </Indicator>
@@ -178,9 +197,9 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
           <Menu.Dropdown>
             {/* User Information */}
             <Group my={10}>
-              {user.profile?.profile_picture ? (
+              {userData.profile?.profile_picture ? (
                 <Avatar
-                  src={user.profile?.profile_picture}
+                  src={userData.profile?.profile_picture}
                   alt={"Test"}
                   radius="xl"
                   size={40}
@@ -189,17 +208,17 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
                 />
               ) : (
                 <Avatar color="blue" radius="xl" ml={5} mb={2} size={40}>
-                  {user.profile?.first_name.charAt(0)}
-                  {user.profile?.last_name.charAt(0)}
+                  {userData.profile?.first_name.charAt(0)}
+                  {userData.profile?.last_name.charAt(0)}
                 </Avatar>
               )}
 
               <div style={{ flex: 1 }}>
                 <Text size="sm" weight={500}>
-                  {user.profile?.first_name} {user.profile?.last_name}
+                  {userData.profile?.first_name} {userData.profile?.last_name}
                 </Text>
                 <Text color="dimmed" size="xs">
-                  {user.email}
+                  {userData.email}
                 </Text>
               </div>
             </Group>
@@ -240,7 +259,7 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
 
             <Menu.Label>Settings</Menu.Label>
             <Link
-              to={`/account/settings/${user.id}/`}
+              to={`/account/settings/${userData.id}/`}
               style={{ textDecoration: "none" }}
             >
               <Menu.Item icon={<FontAwesomeIcon icon={faGear} stroke="1.5" />}>
@@ -285,5 +304,3 @@ const HeaderUserMenu = ({ user }: HeaderUserMenuProps) => {
     </Container>
   );
 };
-
-export default HeaderUserMenu;
