@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { User, UserReport } from "@/types/apps/accounts";
+import { User, UserNotification, UserReport } from "@/types/apps/accounts";
 
 /**
  * Return the user's details
@@ -37,4 +37,14 @@ export async function getUserDetails(id: string): Promise<User> {
 export async function getUserReports(): Promise<UserReport[]> {
   const response = await axios.get("/user_reports/");
   return response.data.results;
+}
+
+/**
+ * Return the User Notifications
+ *
+ * @returns {Promise<UserNotification[]>}
+ */
+export async function getUserNotifications(): Promise<UserNotification> {
+  const response = await axios.get("/user/notifications/?max=10");
+  return response.data;
 }
