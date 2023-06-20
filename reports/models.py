@@ -391,6 +391,7 @@ class UserReport(GenericModel):
         verbose_name = _("User Report")
         verbose_name_plural = _("User Reports")
         db_table = "user_report"
+        ordering = ("-created",)
 
     def __str__(self) -> str:
         """UserReport string representation.
