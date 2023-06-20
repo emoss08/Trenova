@@ -15,8 +15,28 @@
  * Grant, and not modifying the license in any other way.
  */
 
+// User info constants
 export const USER_INFO_KEY = import.meta.env.VITE_USER_INFO_KEY;
 
+// Web socket constants
+export const WEB_SOCKET_URL = import.meta.env.VITE_WS_URL;
+export const MAX_WEBSOCKET_RETRIES = import.meta.env.VITE_MAX_WEBSOCKET_RETRIES;
+export const WEBSOCKET_RETRY_INTERVAL = import.meta.env
+  .VITE_WEBSOCKET_RETRY_INTERVAL;
+export const ENABLE_WEBSOCKETS = import.meta.env.VITE_ENABLE_WEBSOCKETS;
+
+/**
+ * Returns the user's authentication token from local storage.
+ *
+ * @returns {string | null} The user's authentication token.
+ *
+ * @example
+ * const token = getUserAuthToken();
+ * if (token) {
+ *  // Do something with the token
+ *  console.log(token);
+ *  }
+ */
 export const getUserAuthToken = (): string | null => {
   const userData = localStorage.getItem(USER_INFO_KEY);
   if (userData) {
@@ -25,6 +45,18 @@ export const getUserAuthToken = (): string | null => {
   return null;
 };
 
+/**
+ * Returns the user's id from local storage.
+ *
+ * @returns {string | null} The user's id.
+ *
+ * @example
+ * const userId = getUserId();
+ * if (userId) {
+ * // Do something with the userId
+ * console.log(userId);
+ * }
+ */
 export const getUserId = (): string | null => {
   const userData = localStorage.getItem(USER_INFO_KEY);
   if (userData) {
@@ -33,6 +65,18 @@ export const getUserId = (): string | null => {
   return null;
 };
 
+/**
+ * Returns the user's organization id from local storage.
+ *
+ * @returns {string | null} The user's organization id.
+ *
+ * @example
+ * const organizationId = getUserOrganizationId();
+ * if (organizationId) {
+ * // Do something with the organizationId
+ * console.log(organizationId);
+ * }
+ */
 export const getUserOrganizationId = (): string | null => {
   const userData = localStorage.getItem(USER_INFO_KEY);
   if (userData) {
