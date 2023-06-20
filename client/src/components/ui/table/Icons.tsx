@@ -19,9 +19,14 @@ import { MRT_Icons } from "mantine-react-table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAnglesDown,
+  faArrowDownShortWide,
+  faArrowUpShortWide,
   faBars,
+  faBarsSort,
   faBarsStaggered,
   faChevronDown,
+  faChevronLeft,
+  faChevronRight,
   faCircleXmark,
   faColumns,
   faCompress,
@@ -52,18 +57,16 @@ export const montaTableIcons: Partial<MRT_Icons> = {
     <FontAwesomeIcon icon={faTextWidth} {...props} />
   ),
 
-  IconArrowsSort: (props: any) => <FontAwesomeIcon icon={faSort} {...props} />,
+  IconArrowsSort: (props: any) => (
+    <FontAwesomeIcon icon={faBarsSort} size="sm" {...props} />
+  ),
 
   IconBoxMultiple: (props: any) => (
-    <FontAwesomeIcon icon={faLayerGroup} {...props} />
+    <FontAwesomeIcon icon={faLayerGroup} size="sm" {...props} />
   ),
 
   IconChevronDown: (props: any) => (
     <FontAwesomeIcon icon={faChevronDown} {...props} />
-  ),
-
-  IconChevronsDown: (props: any) => (
-    <FontAwesomeIcon icon={faAnglesDown} {...props} />
   ),
 
   IconCircleX: (props: any) => (
@@ -119,11 +122,11 @@ export const montaTableIcons: Partial<MRT_Icons> = {
   ),
 
   IconSortAscending: (props: any) => (
-    <FontAwesomeIcon icon={faSortUp} {...props} />
+    <FontAwesomeIcon icon={faArrowUpShortWide} size="sm" {...props} />
   ),
 
   IconSortDescending: (props: any) => (
-    <FontAwesomeIcon icon={faSortDown} {...props} />
+    <FontAwesomeIcon icon={faArrowDownShortWide} size="sm" {...props} />
   ),
 
   IconBaselineDensityLarge: (props: any) => (
