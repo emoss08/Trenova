@@ -19,4 +19,7 @@ import { createGlobalStore } from "@/utils/zustand";
 
 export const headerStore = createGlobalStore({
   downloadMenuOpen: false,
+  themeSwitcherOpen: false,
+  headerMenuOpen: false,
+  notificationsMenuOpen: false,
 });
