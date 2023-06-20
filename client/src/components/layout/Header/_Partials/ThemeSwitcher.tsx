@@ -15,34 +15,35 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  ActionIcon,
-  Divider,
-  Indicator,
-  Menu,
-  ScrollArea,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Menu, useMantineColorScheme } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faDownload } from "@fortawesome/pro-duotone-svg-icons";
-import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
+import { faDisplay, faMoon, faSun } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
-import { headerStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
-import { Link } from "react-router-dom";
+import { headerStore } from "@/stores/HeaderStore";
 
-export const UserDownloads: React.FC = () => {
-  const [downloadMenuOpen] = headerStore.use("downloadMenuOpen");
+export const ThemeSwitcher: React.FC = () => {
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { classes } = useHeaderStyles();
+  const [themeSwitcherOpen] = headerStore.use("themeSwitcherOpen");
+  const getThemeIcon = () => {
+    if (colorScheme === "light") {
+      return <FontAwesomeIcon icon={faSun} />;
+    } else if (colorScheme === "dark") {
+      return <FontAwesomeIcon icon={faMoon} />;
+    } else {
+      return <FontAwesomeIcon icon={faDisplay} />;
+    }
+  };
 
   return (
     <>
       <Menu
         position="bottom-end"
-        width={230}
-        opened={downloadMenuOpen}
+        width={200}
+        opened={themeSwitcherOpen}
         onChange={(changeEvent) => {
-          headerStore.set("downloadMenuOpen", changeEvent);
+          headerStore.set("themeSwitcherOpen", changeEvent);
         }}
         withinPortal
         withArrow
@@ -50,35 +51,24 @@ export const UserDownloads: React.FC = () => {
       >
         <Menu.Target>
           <ActionIcon className={classes.hoverEffect}>
-            <FontAwesomeIcon icon={faDownload} />
+            {getThemeIcon()}
           </ActionIcon>
         </Menu.Target>
+
         <Menu.Dropdown>
-          <Menu.Label>Downloads</Menu.Label>
-          <ScrollArea h={250} scrollbarSize={4}>
-            <UserReports />
-          </ScrollArea>
-          <Divider mb={2} mt={10} />
-          <Link
-            to="#"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "5px",
-            }}
-            className={classes.link}
+          <Menu.Label>Theme Mode</Menu.Label>
+          <Menu.Item
+            onClick={() => toggleColorScheme("light")}
+            icon={<FontAwesomeIcon icon={faSun} />}
           >
-            View all{" "}
-            <FontAwesomeIcon
-              icon={faArrowRight}
-              size="sm"
-              style={{
-                marginLeft: "5px",
-                marginTop: "2px",
-              }}
-            />
-          </Link>
+            Light Theme
+          </Menu.Item>
+          <Menu.Item
+            onClick={() => toggleColorScheme("dark")}
+            icon={<FontAwesomeIcon icon={faMoon} />}
+          >
+            Dark Theme
+          </Menu.Item>
         </Menu.Dropdown>
       </Menu>
     </>
