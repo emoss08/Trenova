@@ -88,3 +88,31 @@ export type UserReport = {
   file_name: string;
   modified: string;
 };
+
+export type Notification = {
+  id: number;
+  level: string;
+  recipient: string;
+  unread: boolean;
+  actor_content_type: number;
+  actor_object_id: string;
+  verb: string;
+  description: string;
+  target_content_type: number;
+  target_object_id: string;
+  action_object_content_type: number;
+  action_object_object_id: string;
+  timestamp: string;
+  public: boolean;
+  deleted: boolean;
+  emailed: boolean;
+  data: string;
+  slug: number;
+  actor: string;
+  action_object: string;
+};
+
+export type UserNotification = {
+  unread_count: number;
+  unread_list: Notification[];
+};

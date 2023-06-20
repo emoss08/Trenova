@@ -15,7 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { format, formatDistanceToNow, parseISO } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  parseISO,
+  differenceInSeconds,
+  differenceInMinutes,
+  differenceInHours,
+  differenceInDays,
+} from "date-fns";
 
 export function formatDate(date: string): string {
   const parsedDate = parseISO(date);
@@ -25,4 +33,24 @@ export function formatDate(date: string): string {
 export function formatDateToHumanReadable(date: string): string {
   const parsedDate = parseISO(date);
   return formatDistanceToNow(parsedDate, { addSuffix: true });
+}
+
+export function formatTimestamp(timestamp: string) {
+  const date = parseISO(timestamp);
+  const now = new Date();
+
+  const diffInSeconds = differenceInSeconds(now, date);
+  const diffInMinutes = differenceInMinutes(now, date);
+  const diffInHours = differenceInHours(now, date);
+  const diffInDays = differenceInDays(now, date);
+
+  if (diffInSeconds < 60) {
+    return `${diffInSeconds} sec${diffInSeconds === 1 ? "" : "s"} ago`;
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} min${diffInMinutes === 1 ? "" : "s"} ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours} hr${diffInHours === 1 ? "" : "s"} ago`;
+  } else {
+    return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+  }
 }
