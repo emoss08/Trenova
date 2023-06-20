@@ -83,7 +83,7 @@ INSTALLED_APPS = [
     "nested_inline",
     "drf_spectacular",
     "djmoney",
-    # "notifications",
+    "notifications",
     # Monta Apps
     "backend",
     "core",
@@ -371,10 +371,10 @@ CACHEOPS = {
     "billing.billingcontrol": {"ops": "all"},
     "dispatch.dispatchcontrol": {"ops": "all"},
     "organization.emailcontrol": {"ops": "all"},
-    "organization.organization": {"ops": "all"},
-    "organization.department": {"ops": "all"},
-    "accounts.user": {"ops": "all"},
-    "accounts.userprofile": {"ops": "all"},
-    "accounts.jobtitle": {"ops": "all"},
+    # "organization.organization": {"ops": "all"},
+    # "organization.department": {"ops": "all"},
+    # "accounts.user": {"ops": "all"},
+    # "accounts.userprofile": {"ops": "all"},
+    # "accounts.jobtitle": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
