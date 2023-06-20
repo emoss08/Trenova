@@ -95,6 +95,8 @@ export const ExportUserModal: React.FC = ({}) => {
     }
   };
 
+  if (!showExportUserModal) return null;
+
   return (
     <>
       <Modal.Root

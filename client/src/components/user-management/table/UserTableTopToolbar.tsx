@@ -33,9 +33,19 @@ interface TopToolbarProps {
 export const UserTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
   const [showColumnFilters, setShowColumnFilters] =
     userTableStore.use("columnFilters");
+  // const rowSelection = table.getState().rowSelection;
+  //
+  // const selectedRowCount = Object.keys(rowSelection).filter(
+  //   (key) => rowSelection[key]
+  // ).length;
 
   return (
     <>
+      {/*{selectedRowCount > 0 && (*/}
+      {/*  <Text>*/}
+      {/*    {selectedRowCount} user{selectedRowCount > 1 && "s"} selected*/}
+      {/*  </Text>*/}
+      {/*)}*/}
       <Flex
         sx={() => ({
           borderRadius: "4px",

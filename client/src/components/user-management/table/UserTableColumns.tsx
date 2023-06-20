@@ -39,7 +39,7 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
       Cell: ({ cell }) => (
         <Badge
           color={cell.getValue() === "true" ? "green" : "red"}
-          variant="dot"
+          variant="outline"
           radius="xs"
         >
           {cell.getValue() === "true" ? "Active" : "Inactive"}

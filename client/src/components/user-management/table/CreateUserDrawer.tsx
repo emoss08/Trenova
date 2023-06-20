@@ -247,6 +247,8 @@ export const CreateUserDrawer: React.FC = () => {
       label: job_title.name,
     })) || [];
 
+  if (!showCreateUserDrawer) return null;
+
   return (
     <>
       <Drawer

@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useMemo } from "react";
-import { MantineReactTable } from "mantine-react-table";
+import React, { useEffect, useMemo, useState } from "react";
+import { MantineReactTable, MRT_RowSelectionState } from "mantine-react-table";
 import { useQuery } from "react-query";
 import { API_URL } from "@/utils/utils";
 import "@fortawesome/fontawesome-svg-core/styles.css";
@@ -37,6 +37,7 @@ config.autoAddCss = false;
 export const UsersAdminTable = () => {
   const [pagination] = userTableStore.use("pagination");
   const [globalFilter, setGlobalFilter] = userTableStore.use("globalFilter");
+  const [rowSelection, setRowSelection] = userTableStore.use("rowSelection");
 
   // Function to handle pagination
   const { data, isError, isFetching, isLoading } = useQuery<UserApiResponse>(
@@ -77,11 +78,13 @@ export const UsersAdminTable = () => {
         getRowId={(row) => row.id}
         enableRowSelection
         icons={montaTableIcons}
+        onRowSelectionChange={(row) => setRowSelection(row)} //connect internal row selection state to your own
         state={{
           isLoading,
           pagination: pagination,
           showAlertBanner: isError,
           showSkeletons: isFetching,
+          rowSelection,
         }}
         initialState={{
           showGlobalFilter: true,
