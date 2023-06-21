@@ -78,7 +78,7 @@ export const UsersAdminTable = () => {
         getRowId={(row) => row.id}
         enableRowSelection
         icons={montaTableIcons}
-        onRowSelectionChange={(row) => setRowSelection(row)} //connect internal row selection state to your own
+        onRowSelectionChange={(row) => setRowSelection(row)}
         state={{
           isLoading,
           pagination: pagination,
@@ -92,7 +92,9 @@ export const UsersAdminTable = () => {
         }}
         positionGlobalFilter="left"
         mantineSearchTextInputProps={{
-          placeholder: `Search ${data?.count} users...`,
+          placeholder: data?.count
+            ? `Search ${data.count} users...`
+            : "Search...",
           sx: { minWidth: "300px" },
           variant: "filled",
         }}
