@@ -70,7 +70,7 @@ export const Notifications: React.FC = () => {
       const humanReadableTimestamp = formatTimestamp(notification.timestamp);
       return (
         <>
-          <Group mt={5} mb={10} key={notification.id}>
+          <Group mt={5} mb={10} mr={10} key={notification.id}>
             <FontAwesomeIcon icon={faEnvelope} />
             <div style={{ flex: 1 }}>
               <Text fw={700} size="xs">
@@ -78,7 +78,7 @@ export const Notifications: React.FC = () => {
               </Text>
               <Text size="xs">{notification.description}</Text>
             </div>
-            <Badge size="xs" radius="xs" variant="outline" color="violet">
+            <Badge size="xs" radius="xs" variant="filled" color="violet">
               {humanReadableTimestamp}
             </Badge>
           </Group>
