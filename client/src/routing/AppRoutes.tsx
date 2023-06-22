@@ -54,7 +54,7 @@ export const routes: RouteObjectWithPermission[] = [
   {
     path: "admin/users",
     element: <UserManagementPage />,
-    // permission: "admin.users.view",
+    permission: "admin.users.view",
   },
   {
     path: "account/settings/:userId",

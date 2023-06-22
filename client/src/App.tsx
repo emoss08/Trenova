@@ -17,7 +17,6 @@
 
 import { BrowserRouter } from "react-router-dom";
 import React, { Suspense, useEffect } from "react";
-import useVerifyToken from "./hooks/withTokenVerification";
 import "./styles/App.css";
 import {
   ColorScheme,
@@ -31,6 +30,7 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import { useAuthStore } from "./stores/AuthStore";
 import LoadingScreen from "./components/LoadingScreen";
 import { ProtectedRoutes } from "./routing/ProtectedRoutes";
+import { useVerifyToken } from "./hooks/withTokenVerification";
 
 function App() {
   useVerifyToken();

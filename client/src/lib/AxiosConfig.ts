@@ -16,17 +16,14 @@
  */
 
 import axios from "axios";
-import { getUserAuthToken, USER_INFO_KEY } from "@/lib/utils";
+import { USER_ID_KEY } from "@/lib/utils";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
 axios.interceptors.request.use(
   (req) => {
     req.baseURL = API_URL;
-    const token = getUserAuthToken();
-    if (token) {
-      req.headers.Authorization = `Bearer ${token}`;
-    }
+    req.withCredentials = true;
     console.info(`Making request to ${req.baseURL}${req.url}`);
     return req;
   },
@@ -41,7 +38,7 @@ axios.interceptors.response.use(
   },
   (error) => {
     if (error.response.status === 401) {
-      localStorage.removeItem(USER_INFO_KEY);
+      sessionStorage.removeItem(USER_ID_KEY);
     }
     return Promise.reject(error);
   }

@@ -20,7 +20,6 @@ import { Avatar, Input, ActionIcon, Tooltip } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faPencil } from "@fortawesome/pro-solid-svg-icons";
 import { faXmark } from "@fortawesome/pro-regular-svg-icons";
-import { getUserAuthToken } from "@/lib/utils";
 import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "react-query";
 import { User } from "@/types/apps/accounts";
@@ -49,8 +48,8 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
         await axios.patch(`/users/${user.id}/`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${getUserAuthToken()}`,
           },
+          withCredentials: true,
         });
       } catch (error) {
         console.error(error);
@@ -79,7 +78,6 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
       const response = await axios.patch(`/users/${user.id}/`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${getUserAuthToken()}`,
         },
       });
       console.log(response.data);

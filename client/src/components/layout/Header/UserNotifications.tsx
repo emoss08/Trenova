@@ -33,15 +33,15 @@ import { Notifications } from "@/components/layout/Header/_Partials/Notification
 import { useQuery, useQueryClient } from "react-query";
 import { getUserNotifications } from "@/requests/UserRequestFactory";
 import {
-  ENABLE_WEBSOCKETS,
-  getUserAuthToken,
   getUserId,
-  MAX_WEBSOCKET_RETRIES,
-  WEB_SOCKET_URL,
   WEBSOCKET_RETRY_INTERVAL,
+  WEB_SOCKET_URL,
+  ENABLE_WEBSOCKETS,
 } from "@/lib/utils";
 import axios from "axios";
 import { notifications } from "@mantine/notifications";
+import { useAuthStore } from "@/stores/AuthStore";
+import { WebSocketManager } from "@/utils/utils";
 
 const useStyles = createStyles((theme) => ({
   button: {
@@ -67,81 +67,77 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
+const webSocketManager = new WebSocketManager();
+
 export const UserNotifications: React.FC = () => {
   const [notificationsMenuOpen] = headerStore.use("notificationsMenuOpen");
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
   const { classes } = useStyles();
-  const token = getUserAuthToken();
 
-  // Websocket connection for notifications
-  let socket: WebSocket | null = null;
-  let reconnectTimeout: any = null;
-  let reconnectAttempts = 0;
-
-  function connect(token: string, userId: string): void {
-    if (reconnectAttempts > MAX_WEBSOCKET_RETRIES) {
-      console.error("Max reconnect attempts reached.");
-      return;
-    }
-
-    socket = new WebSocket(`${WEB_SOCKET_URL}/notifications/?token=${token}`);
-
-    // Connection opened
-    socket.onopen = function (event: Event): void {
-      console.info("Connected to notifications websocket");
-      reconnectAttempts = 0; // reset reconnect attempts
-    };
-
-    // Listen for messages
-    socket.onmessage = function (event: MessageEvent): void {
-      const data = JSON.parse(event.data);
-      console.log("Message from notifications websocket", data);
-
-      queryClient.invalidateQueries(["userNotifications", userId]).then(() => {
-        notifications.show({
-          title: "New notification",
-          message: data.description,
-          color: "blue",
-          icon: <FontAwesomeIcon icon={faCheck} />,
-        });
-      });
-    };
-
-    // Connection closed
-    socket.onclose = function (event: CloseEvent): void {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-
-      if (event.wasClean) {
-        console.info(
-          `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
-        );
-      } else {
-        console.info(
-          "[close] Connection died. Reconnect will be attempted in 1 second."
-        );
-        reconnectTimeout = setTimeout(
-          () => connect(token, userId),
-          WEBSOCKET_RETRY_INTERVAL
-        );
-        reconnectAttempts += 1;
-      }
-    };
-
-    // Connection error
-    socket.onerror = function (error: Event): void {
-      console.log(`[error] ${error}`);
-    };
-  }
-
+  console.log("is authenticated", isAuthenticated);
   useEffect(() => {
-    if (token !== null && ENABLE_WEBSOCKETS) {
-      connect(token, userId);
+    if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
+      // Connecting the websocket
+      webSocketManager.connect(
+        "notifications",
+        `${WEB_SOCKET_URL}/notifications/`,
+        {
+          onOpen: () => console.info("Connected to notifications websocket"),
+
+          onMessage: (event: MessageEvent) => {
+            const data = JSON.parse(event.data);
+            console.log("Message from notifications websocket", data);
+
+            queryClient
+              .invalidateQueries(["userNotifications", userId])
+              .then(() => {
+                notifications.show({
+                  title: "New notification",
+                  message: data.description,
+                  color: "blue",
+                  icon: <FontAwesomeIcon icon={faCheck} />,
+                });
+              });
+          },
+
+          onClose: (event: CloseEvent) => {
+            if (event.wasClean) {
+              console.info(
+                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
+              );
+            } else {
+              console.info(
+                "[close] Connection died. Reconnect will be attempted in 1 second."
+              );
+              setTimeout(
+                () =>
+                  webSocketManager.connect(
+                    "notifications",
+                    `${WEB_SOCKET_URL}/notifications/`
+                  ),
+                WEBSOCKET_RETRY_INTERVAL
+              );
+            }
+          },
+
+          onError: (error: Event) => {
+            console.log(`[error] ${error}`);
+          },
+        }
+      );
+    } else if (isAuthenticated) {
+      webSocketManager.disconnect("notifications");
     }
-    return () => clearTimeout(reconnectTimeout);
-  }, []);
+
+    // On component unmount, disconnect the websocket
+    return () => {
+      if (isAuthenticated) {
+        webSocketManager.disconnect("notifications");
+      }
+    };
+  }, [isAuthenticated, userId]); // add dependencies here if necessary
 
   const { data: notificationsData } = useQuery({
     queryKey: ["userNotifications", userId],
