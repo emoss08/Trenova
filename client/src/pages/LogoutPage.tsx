@@ -17,18 +17,15 @@
 
 import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
-import { USER_INFO_KEY } from "@/lib/utils";
 import { Card, Flex, Text } from "@mantine/core";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
-import { userStore } from "@/stores/UserStore";
 
 const LogoutPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
   ]);
-
   const navigate = useNavigate();
 
   useEffect((): void => {
@@ -38,8 +35,7 @@ const LogoutPage: React.FC = () => {
         return;
       }
       axios.post("/logout/").then(() => {
-        userStore.reset();
-        localStorage.removeItem(USER_INFO_KEY);
+        sessionStorage.clear();
         setIsAuthenticated(false);
         navigate("/login");
       });

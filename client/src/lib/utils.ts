@@ -16,7 +16,8 @@
  */
 
 // User info constants
-export const USER_INFO_KEY = import.meta.env.VITE_USER_INFO_KEY;
+export const USER_ID_KEY = import.meta.env.VITE_USER_ID_KEY;
+export const ORGANIZATION_ID_KEY = import.meta.env.VITE_ORGANIZATION_ID_KEY;
 
 // Web socket constants
 export const WEB_SOCKET_URL = import.meta.env.VITE_WS_URL;
@@ -25,28 +26,25 @@ export const WEBSOCKET_RETRY_INTERVAL = import.meta.env
   .VITE_WEBSOCKET_RETRY_INTERVAL;
 export const ENABLE_WEBSOCKETS = import.meta.env.VITE_ENABLE_WEBSOCKETS;
 
-/**
- * Returns the user's authentication token from local storage.
- *
- * @returns {string | null} The user's authentication token.
- *
- * @example
- * const token = getUserAuthToken();
- * if (token) {
- *  // Do something with the token
- *  console.log(token);
- *  }
- */
-export const getUserAuthToken = (): string | null => {
-  const userData = localStorage.getItem(USER_INFO_KEY);
-  if (userData) {
-    return JSON.parse(userData).token;
+export const getUserCSRFToken = () => {
+  const csrfCookie = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("csrftoken="));
+
+  if (csrfCookie) {
+    return csrfCookie.split("=")[1];
+  } else {
+    console.log("No CSRF token found");
   }
-  return null;
+};
+
+export const getSessionItem = (key: string) => {
+  const item = sessionStorage.getItem(key);
+  return item ? JSON.parse(item) : null;
 };
 
 /**
- * Returns the user's id from local storage.
+ * Returns the user's id from Session Storage.
  *
  * @returns {string | null} The user's id.
  *
@@ -58,9 +56,9 @@ export const getUserAuthToken = (): string | null => {
  * }
  */
 export const getUserId = (): string | null => {
-  const userData = localStorage.getItem(USER_INFO_KEY);
-  if (userData) {
-    return JSON.parse(userData).user_id;
+  const userId = sessionStorage.getItem(USER_ID_KEY);
+  if (userId) {
+    return userId;
   }
   return null;
 };
@@ -78,9 +76,9 @@ export const getUserId = (): string | null => {
  * }
  */
 export const getUserOrganizationId = (): string | null => {
-  const userData = localStorage.getItem(USER_INFO_KEY);
-  if (userData) {
-    return JSON.parse(userData).organization_id;
+  const userOrganization = sessionStorage.getItem(ORGANIZATION_ID_KEY);
+  if (userOrganization) {
+    return userOrganization;
   }
   return null;
 };

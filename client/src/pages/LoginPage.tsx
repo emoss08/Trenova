@@ -29,7 +29,6 @@ import {
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { LoginFormValues } from "@/types/login";
-import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
@@ -40,7 +39,7 @@ import { getUserDetails } from "@/requests/UserRequestFactory";
 import axios from "@/lib/AxiosConfig";
 import { ValidatedPasswordInput } from "@/components/ui/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { userStore } from "@/stores/UserStore";
+import { getUserCSRFToken } from "@/lib/utils";
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
@@ -48,11 +47,7 @@ const LoginPage: React.FC = () => {
     state.setIsAuthenticated,
   ]);
   const [loading, setLoading] = React.useState<boolean>(false);
-  const [, setUserInfo] = useLocalStorage({
-    key: "mt_user_info",
-    serialize: (value: any) => JSON.stringify(value, null, 2),
-    deserialize: (localStorageValue) => JSON.parse(localStorageValue || "{}"),
-  });
+
   const form = useForm<LoginFormValues>({
     initialValues: {
       username: "",
@@ -61,6 +56,7 @@ const LoginPage: React.FC = () => {
 
     validate: yupResolver(LoginSchema),
   });
+  const csrfToken = getUserCSRFToken();
 
   const navigate = useNavigate();
   React.useEffect((): void => {
@@ -72,18 +68,37 @@ const LoginPage: React.FC = () => {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      const response = await axios.post("/login/", {
-        username: values.username,
-        password: values.password,
-      });
+      const response = await axios.post(
+        "/login/",
+        {
+          username: values.username,
+          password: values.password,
+        },
+        {
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          withCredentials: true,
+        }
+      );
 
       if (response.status === 200) {
-        setUserInfo(response.data);
+        sessionStorage.setItem("mt_user_id", response.data.user_id);
+        sessionStorage.setItem(
+          "mt_organization_id",
+          response.data.organization_id
+        );
+
         const userInfo = await getUserDetails(response.data.user_id);
-        userStore.set("user", userInfo);
-        userStore.set("permissions", userInfo.user_permissions);
-        userStore.set("groups", userInfo.groups);
-        userStore.set("isAdmin", userInfo.is_staff);
+        sessionStorage.setItem(
+          "mt_user_permissions",
+          JSON.stringify(userInfo.user_permissions)
+        );
+        sessionStorage.setItem(
+          "mt_user_groups",
+          JSON.stringify(userInfo.groups)
+        );
+        sessionStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
         setIsAuthenticated(true);
       }
     } catch (error: any) {

@@ -16,17 +16,20 @@
  */
 
 import Layout from "@/components/layout/Layout";
+import { getSessionItem } from "@/lib/utils";
 import { useAuthStore } from "@/stores/AuthStore";
-import { userStore } from "@/stores/UserStore";
 import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 
 export const ProtectedRoutes: React.FC = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const store = userStore.useAll();
+
+  const isAdmin = getSessionItem("mt_is_admin") === "true"; // remember it was stored as a string
+  const permissions = getSessionItem("mt_user_permissions") || [];
+
   const userHasPermission = (permission: string) => {
-    return store.isAdmin || store.permissions.includes(permission);
+    return isAdmin || permissions.includes(permission);
   };
 
   return (

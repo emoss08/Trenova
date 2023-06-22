@@ -16,37 +16,38 @@
  */
 
 import { useEffect } from "react";
-import { getUserAuthToken, USER_INFO_KEY } from "@/lib/utils";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
-import { userStore } from "@/stores/UserStore";
+import { getSessionItem, USER_ID_KEY } from "@/lib/utils";
 
-const useVerifyToken = () => {
+export const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
   const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
 
   useEffect(() => {
     const verifyToken = async () => {
-      const token = getUserAuthToken();
-      console.info("token", token);
-      if (token) {
-        try {
-          await axios.post("verify_token/", { token });
-          setIsAuthenticated(true);
-        } catch (error) {
-          userStore.reset();
-          setIsAuthenticated(false);
-          localStorage.removeItem(USER_INFO_KEY);
-        }
-      } else {
+      const userId = getSessionItem(USER_ID_KEY);
+
+      if (!userId) {
         setIsAuthenticated(false);
+        setInitialLoading(false);
+        return;
       }
-      setLoading(false);
-      setInitialLoading(false);
+
+      try {
+        setLoading(true);
+        await axios.post("verify_token/");
+        setIsAuthenticated(true);
+      } catch (error) {
+        sessionStorage.clear();
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+        setInitialLoading(false);
+      }
     };
-    verifyToken().then(() => {});
+
+    verifyToken();
   }, [setIsAuthenticated, setLoading, setInitialLoading]);
 };
-
-export default useVerifyToken;
