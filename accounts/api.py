@@ -14,11 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from datetime import timedelta
 from typing import Any
 
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
+from django.middleware import csrf
 from django.utils import timezone
 from rest_framework import generics, permissions, response, status, views, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -253,31 +254,54 @@ class TokenVerifyView(views.APIView):
     Rest API endpoint for users can verify a token
     """
 
-    permission_classes: list[Any] = []
-    serializer_class = serializers.VerifyTokenSerializer
+    permission_classes = []
     http_method_names = ["post"]
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """Handle Post requests
+
         Args:
             request (Request): Request object
             *args (Any): Arguments
             **kwargs (Any): Keyword Arguments
+
         Returns:
             Response: Response of token and user id
         """
 
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        token = request.COOKIES.get("auth_token")
+        token_expire_days = request.user.organization.token_expiration_days  # type: ignore
 
-        token = serializer.data.get("token")
+        if not token:
+            raise InvalidTokenException("No token provided")
 
         try:
-            token = models.Token.objects.get(key=token)
+            token_obj = models.Token.objects.get(key=token)
+            # Update token's expiration time
+            token_obj.expires = timezone.now() + timedelta(
+                days=token_expire_days
+            )  # set expires to 1 day from now
+            token_obj.save()
+
+            res = response.Response(
+                {"detail": "Token verified"}, status=status.HTTP_200_OK
+            )
+
+            # Set the token in the cookies again
+            res.set_cookie(
+                key="auth_token",
+                value=token_obj.key,
+                expires=token_obj.expires,
+                httponly=True,
+                secure=False,
+                samesite="Lax",
+                domain=None,
+            )
+
+            return res
+
         except models.Token.DoesNotExist as e:
             raise InvalidTokenException("Token is invalid") from e
-
-        return response.Response({"token": token.key}, status=status.HTTP_200_OK)
 
 
 class TokenProvisionView(ObtainAuthToken):
@@ -290,6 +314,7 @@ class TokenProvisionView(ObtainAuthToken):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, _ = models.Token.objects.get_or_create(user=user)
+        res = response.Response(status=status.HTTP_200_OK)
 
         if token.is_expired:
             token.delete()
@@ -299,14 +324,25 @@ class TokenProvisionView(ObtainAuthToken):
         user.last_login = timezone.now()
         user.save()
 
-        return response.Response(
-            {
-                "token": token.key,
-                "user_id": user.id,
-                "organization_id": user.organization_id,
-            },
-            status=status.HTTP_200_OK,
+        res.set_cookie("csrftoken", csrf.get_token(request))
+        res.set_cookie(
+            key="auth_token",
+            value=token.key,
+            expires=token.expires,
+            httponly=True,
+            secure=False,
+            samesite="Lax",
+            domain=None,
         )
+        csrf.get_token(request)
+
+        res.data = {
+            "token": token.key,
+            "user_id": user.id,
+            "organization_id": user.organization_id,
+        }
+
+        return res
 
 
 class UserLogoutView(views.APIView):
@@ -330,7 +366,6 @@ class UserLogoutView(views.APIView):
         """
 
         user = request.user
-        models.Token.objects.filter(user=user).delete()
 
         user.online = False  # type: ignore
         user.save()

@@ -193,12 +193,12 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         """
         return self.username
 
-    def get_absolute_url(self) -> str:
-        """
-        Returns:
-            str: Absolute URL for the User
-        """
-        return reverse("users:detail", kwargs={"pk": self.pk})
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # If user is not active, delete all tokens
+        if self.is_active is False:
+            tokens = self.tokens.all()
+            for token in tokens:
+                token.delete()
 
     def update_user(self, **kwargs: Any) -> None:
         """
@@ -207,6 +207,13 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
+
+    def get_absolute_url(self) -> str:
+        """
+        Returns:
+            str: Absolute URL for the User
+        """
+        return reverse("users-detail", kwargs={"pk": self.pk})
 
 
 class UserProfile(GenericModel):
@@ -577,6 +584,7 @@ class Token(models.Model):
         """
         if not self.key:
             self.key = services.generate_key()
+
         super().save(*args, **kwargs)
 
     @property
