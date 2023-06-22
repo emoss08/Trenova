@@ -27,7 +27,6 @@ import {
   Group,
   Header,
   HoverCard,
-  Indicator,
   rem,
   ScrollArea,
   SimpleGrid,
@@ -39,7 +38,6 @@ import { useDisclosure } from "@mantine/hooks";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faBell,
   faBuildingColumns,
   faChevronDown,
   faMagnifyingGlass,
@@ -53,7 +51,7 @@ import { ThemeSwitcher } from "./Header/_Partials/ThemeSwitcher";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 import { HeaderLogo } from "@/components/layout/Header/_Partials/HeaderLogo";
 import { UserNotifications } from "./Header/UserNotifications";
-import { faGrid, faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
+import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
 
 const navigationLinks = [
   {
