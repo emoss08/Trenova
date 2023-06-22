@@ -14,5 +14,73 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+type WebSocketEventHandlers = {
+  onOpen?: (event: Event) => void;
+  onMessage?: (event: MessageEvent) => void;
+  onClose?: (event: CloseEvent) => void;
+  onError?: (event: Event) => void;
+};
+
+class WebSocketConnection {
+  socket: WebSocket;
+
+  constructor(url: string, private eventHandlers: WebSocketEventHandlers = {}) {
+    this.socket = new WebSocket(url);
+
+    this.socket.onopen = this.handleOpen.bind(this);
+    this.socket.onmessage = this.handleMessage.bind(this);
+    this.socket.onclose = this.handleClose.bind(this);
+    this.socket.onerror = this.handleError.bind(this);
+  }
+
+  handleOpen(event: Event) {
+    this.eventHandlers.onOpen && this.eventHandlers.onOpen(event);
+  }
+
+  handleMessage(event: MessageEvent) {
+    this.eventHandlers.onMessage && this.eventHandlers.onMessage(event);
+  }
+
+  handleClose(event: CloseEvent) {
+    this.eventHandlers.onClose && this.eventHandlers.onClose(event);
+  }
+
+  handleError(event: Event) {
+    this.eventHandlers.onError && this.eventHandlers.onError(event);
+  }
+
+  close() {
+    this.socket.close();
+  }
+}
+
+export class WebSocketManager {
+  private connections = new Map<string, WebSocketConnection>();
+
+  connect(id: string, url: string, eventHandlers: WebSocketEventHandlers = {}) {
+    if (this.connections.has(id)) {
+      throw new Error(`WebSocket connection with id "${id}" already exists`);
+    }
+
+    const connection = new WebSocketConnection(url, eventHandlers);
+    this.connections.set(id, connection);
+  }
+
+  disconnect(id: string) {
+    const connection = this.connections.get(id);
+    if (!connection) {
+      throw new Error(`WebSocket connection with id "${id}" not found`);
+    }
+
+    connection.close();
+    this.connections.delete(id);
+  }
+
+  disconnectAll() {
+    for (const id of this.connections.keys()) {
+      this.disconnect(id);
+    }
+  }
+}
 
 export const API_URL = import.meta.env.VITE_API_URL as string;
