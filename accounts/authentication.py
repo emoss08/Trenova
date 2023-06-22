@@ -35,48 +35,33 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
     model = models.Token
 
     def authenticate(self, request: Request) -> tuple[models.User, models.Token] | None:
-        """
-        Authenticate the request using the Bearer token.
-
-        Args:
-            request (Request): The incoming request.
-
-        Returns:
-            Tuple[models.User, models.Token] | None: The authenticated user and token.`
-        """
         auth: list[bytes] = get_authorization_header(request).split()
 
-        if not auth or auth[0].lower() != self.keyword.lower().encode():
-            return None
+        if auth and auth[0].lower() == self.keyword.lower().encode():
+            if len(auth) == 1:
+                raise exceptions.AuthenticationFailed(
+                    "Invalid token header. No credentials provided. Please try again."
+                )
+            elif len(auth) > 2:
+                raise exceptions.AuthenticationFailed(
+                    "Invalid token header. Token string should not contain spaces. Please try again."
+                )
 
-        if len(auth) == 1:
-            raise exceptions.AuthenticationFailed(
-                "Invalid token header. No credentials provided. Please try again."
-            )
-        elif len(auth) > 2:
-            raise exceptions.AuthenticationFailed(
-                "Invalid token header. Token string should not contain spaces. Please try again."
-            )
+            try:
+                token = auth[1].decode()
+            except UnicodeError as e:
+                raise exceptions.AuthenticationFailed(
+                    "Invalid token header. Token string should not contain invalid characters."
+                ) from e
+        else:
+            token = request.COOKIES.get("auth_token")  # type: ignore
 
-        try:
-            token = auth[1].decode()
-        except UnicodeError as e:
-            raise exceptions.AuthenticationFailed(
-                "Invalid token header. Token string should not contain invalid characters."
-            ) from e
+            if not token:
+                return None
 
         return self.authenticate_credentials(key=token)
 
     def authenticate_credentials(self, *, key: str) -> tuple[models.User, models.Token]:
-        """
-        Authenticate the token and return the associated user and token.
-
-        Args:
-            key (str): Token key
-
-        Returns:
-            Tuple[models.User, models.Token]: The authenticated user and token.
-        """
         try:
             token = (
                 self.model.objects.select_related("user")
@@ -99,18 +84,6 @@ class BearerTokenAuthentication(authentication.BaseAuthentication):
 
     @staticmethod
     def validate_token(*, token: models.Token) -> None:
-        """
-        Validate the token and raise an AuthenticationFailed exception if invalid.
-
-        Args:
-            token (models.Token): The token to validate.
-
-        Raises:
-            exceptions.AuthenticationFailed: Raised if the token is invalid.
-
-        Returns:
-            None: This function does not return anything.
-        """
         if (
             not token.last_used
             or (timezone.now() - token.last_used).total_seconds() > 60

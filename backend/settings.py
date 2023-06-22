@@ -37,7 +37,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-CORS_ORIGIN_ALLOW_ALL = True
 INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
 ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
 
@@ -258,46 +257,19 @@ CACHES = {
 
 # Session Configurations
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-# SESSION_CACHE_ALIAS = "sessions"
-# SESSION_COOKIE_SECURE = True
-# SESSION_COOKIE_HTTPONLY = True
-# SESSION_COOKIE_SAMESITE = "Strict"
-# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Cors Configurations
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 # CSRF Configurations
-# CSRF_COOKIE_SECURE = True
-# CSRF_COOKIE_HTTPONLY = True
-# Security Configurations
-# SECURE_HSTS_SECONDS = 31536000
-# SECURE_SSL_REDIRECT = True
-# SECURE_HSTS_PRELOAD = True
-# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# SECURE_BROWSER_XSS_FILTER = True
-# SECURE_CONTENT_TYPE_NOSNIFF = True
-# X_FRAME_OPTIONS = "DENY"
-
-#
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "handlers": {
-#         "kafka_file": {
-#             "level": "DEBUG",
-#             "class": "logging.handlers.TimedRotatingFileHandler",
-#             "filename": "logs/kafka/listener.log",
-#             "when": "D",
-#             "interval": 1,  # 1 day
-#             "backupCount": 30,
-#         },
-#     },
-#     "loggers": {
-#         "kafka": {
-#             "handlers": ["kafka_file"],
-#             "level": "DEBUG",
-#             "propagate": True,
-#         },
-#     },
-# }
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+]
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {

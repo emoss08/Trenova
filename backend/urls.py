@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import notifications.urls
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
