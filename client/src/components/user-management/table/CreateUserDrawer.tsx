@@ -111,7 +111,7 @@ export const CreateUserDrawer: React.FC = () => {
     (values: CreateUserFormValues) => axios.post(`/users/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries("user-table-data").then(() => {
+        queryClient.invalidateQueries(["user-table-data", "users"]).then(() => {
           notifications.show({
             title: "Success",
             message: "User created successfully",
@@ -190,7 +190,6 @@ export const CreateUserDrawer: React.FC = () => {
   });
 
   const submitForm = (values: CreateUserFormValues) => {
-    form.setFieldValue("profile.organization", form.values.organization);
     setLoading(true);
     mutation.mutate(values);
   };
@@ -280,6 +279,13 @@ export const CreateUserDrawer: React.FC = () => {
                       label="Organization"
                       placeholder="Organization"
                       variant="filled"
+                      onMouseLeave={() => {
+                        form.setFieldValue(
+                          "profile.organization",
+                          form.values.organization
+                        );
+                        console.info(form.values.organization);
+                      }}
                       withAsterisk
                     />
                     <ValidatedTextInput
