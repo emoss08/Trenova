@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from typing import TYPE_CHECKING
 
 from django.apps import apps
@@ -32,8 +33,7 @@ if TYPE_CHECKING:
 
 
 class TableColumnsAPIView(generics.GenericAPIView):
-    """
-    A class-based view for retrieving column information for a specified database table.
+    """A class-based view for retrieving column information for a specified database table.
 
     Attributes:
         serializer_class (serializers.TableColumnSerializer): The serializer class used to serialize the response.
@@ -50,8 +50,7 @@ class TableColumnsAPIView(generics.GenericAPIView):
     permission_classes = []
 
     def get(self, request: Request) -> Response:
-        """
-        Retrieves the column information for a specified database table.
+        """Retrieves the column information for a specified database table.
 
         Args:
             request (Request): The HTTP request object containing the table_name parameter.
@@ -105,6 +104,12 @@ class CustomReportViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self) -> "QuerySet[models.CustomReport]":
+        """Returns the queryset for this viewset, filtered by the organization of the current user.
+
+        Returns:
+            QuerySet[models.CustomReport]: The queryset for this viewset, filtered by the organization
+             of the current user.
+        """
         queryset: "QuerySet[models.CustomReport]" = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -118,6 +123,29 @@ class CustomReportViewSet(viewsets.ModelViewSet):
 
 @api_view(["GET"])
 def get_model_columns_api(request: Request) -> Response:
+    """API endpoint that allows users to get the allowed fields (columns) for a given model.
+
+    This function takes a GET request with 'model_name' as a query parameter. If 'model_name' is not provided,
+    it responds with a 400 Bad Request error.
+
+    The function checks the 'model_name' against an allowed list of models. If the model is not in the allowed
+    list, it responds with a 400 Bad Request error.
+
+    If all validations pass, it responds with a 200 OK status and a list of the allowed fields for the model.
+
+    Args:
+        request (Request): The GET request sent to the endpoint. It should include 'model_name' in the
+        query parameters.
+
+    Returns:
+        Response: Django Rest Framework Response object. If the request was processed successfully, the response
+        includes a list of the allowed fields for the given model and HTTP status 200 (OK). In case of error(s),
+        it includes an error message and the corresponding HTTP error status.
+
+    Raises:
+        KeyError: If the provided 'model_name' is not in the allowed list of models.
+    """
+
     model_name = request.query_params.get("model_name", None)
 
     if not model_name:
@@ -141,6 +169,30 @@ def get_model_columns_api(request: Request) -> Response:
 
 @api_view(["POST"])
 def generate_report_api(request: Request) -> Response:
+    """API endpoint that allows users to generate a report based on a provided model, selected columns, and file format.
+
+    This function takes a POST request with 'model_name', 'columns', and 'file_format' in the request body.
+    If any of the required data is not provided, it responds with a 400 Bad Request error.
+
+    The function checks the model_name against an allowed list of models and validates the column names
+    for the given model. If either of these checks fail, it responds with a 400 Bad Request error.
+
+    If all validations pass, it creates a new report generation task and responds with a 202 Accepted status
+    along with a success message.
+
+    Args:
+        request (Request): The POST request sent to the endpoint. It should include 'model_name', 'columns',
+        and 'file_format' in the request body.
+
+    Returns:
+        Response: Django Rest Framework Response object. If the request was processed successfully, the response
+        includes a success message and HTTP status 202 (Accepted). In case of error(s), it includes an error message
+        and the corresponding HTTP error status.
+
+    Raises:
+        DisallowedModelException: If the provided 'model_name' is not in the allowed list of models.
+        exceptions.ValidationError: If any other validation on the request data fails.
+    """
     model_name = request.data.get("model_name", None)
     columns = request.data.get("columns", None)
     file_format = request.data.get("file_format", None)
@@ -210,6 +262,7 @@ class UserReportViewSet(viewsets.ModelViewSet):
         Returns:
             QuerySet[models.UserReport]: The queryset for the viewset.
         """
+
         queryset: "QuerySet[models.UserReport]" = self.queryset.filter(
             organization_id=self.request.user.organization_id, user_id=self.request.user.id  # type: ignore
         ).only(
@@ -225,10 +278,24 @@ class UserReportViewSet(viewsets.ModelViewSet):
 
 @api_view(["GET"])
 def get_user_notifications(request: Request) -> Response:
+    """API endpoint that allows users to get their unread notifications.
+
+    This function takes a GET request and retrieves all unread notifications for the authenticated user
+    making the request. It then returns a count of unread notifications and a list of all unread notifications.
+
+    Args:
+        request (Request): The GET request sent to the endpoint. The request should be authenticated with a user.
+
+    Returns:
+        Response: Django Rest Framework Response object. The response includes a dictionary with two keys:
+        'unread_count' which holds the count of unread notifications, and 'unread_list' which holds a list of
+        all unread notifications for the user. The HTTP status code is 200 (OK).
+    """
+
     all_list = get_notification_list(request, "unread")
 
     data = {
-        "unread_count": request.user.notifications.unread().count(),
+        "unread_count": request.user.notifications.unread().count(),  # type: ignore
         "unread_list": all_list,
     }
 

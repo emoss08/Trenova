@@ -18,6 +18,7 @@ from io import BytesIO
 
 import pandas as pd
 from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.apps import apps
 from django.core.files import File
 from django.db.models import Model
@@ -35,7 +36,6 @@ from organization.models import Organization
 from reports import exceptions, models
 from reports.helpers import ALLOWED_MODELS
 from utils.types import ModelUUID
-from channels.layers import get_channel_layer
 
 channel_layer = get_channel_layer()
 
