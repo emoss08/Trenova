@@ -20,7 +20,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import React from "react";
 
-interface MyComponentProps {
+interface ActionButtonProps {
   icon: IconProp;
   onClick?: () => void;
 }
@@ -42,7 +42,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const ActionButton: React.FC<MyComponentProps> = ({ icon, onClick }) => {
+const ActionButton: React.FC<ActionButtonProps> = ({ icon, onClick }) => {
   const { classes } = useStyles();
 
   return (
