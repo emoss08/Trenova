@@ -240,7 +240,7 @@ class KafkaListener:
             )
 
     @staticmethod
-    def _format_message(*, field_value_dict: dict) -> Text:
+    def _format_message(*, field_value_dict: dict) -> str:
         """Formats the Kafka message fields and their corresponding values into a human-readable string.
 
         Args:
@@ -275,7 +275,7 @@ class KafkaListener:
         if data is None:  # Added to handle cases where message is not valid JSON.
             return
 
-        op_type: Text | None = data.get("op")
+        op_type: str | None = data.get("op")
 
         op_type_mapping = {
             "c": models.TableChangeAlert.DatabaseActionChoices.INSERT,
