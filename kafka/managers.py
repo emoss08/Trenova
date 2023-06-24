@@ -73,9 +73,6 @@ class KafkaManager:
         self.__initialized = True
         self.kafka_host = env("KAFKA_HOST")
         self.kafka_port = env("KAFKA_PORT")
-        self.admin_client = admin.AdminClient(
-            {"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")}
-        )
 
     def __str__(self) -> str:
         """Returns the string representation of the KafkaManager instance.
@@ -109,6 +106,10 @@ class KafkaManager:
             rprint(f"[red]Kafka is not available: {err}[/]")
             return False
 
+    @property
+    def admin_client(self) -> admin.AdminClient:
+        return admin.AdminClient({"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")})
+
     def get_available_topics(self) -> list[tuple]:
         """Fetches the list of available topics from the Kafka server.
 
@@ -120,6 +121,8 @@ class KafkaManager:
         Returns:
             list[tuple]: A list of tuples with available topics from the Kafka server. Each tuple has two elements: the topic name and the topic name again.
         """
+
+        exclude_topics = ["localhost.public.silk_response"]
 
         if self.admin_client is None:
             # raise KafkaException("Kafka admin client is not available.")
@@ -133,7 +136,7 @@ class KafkaManager:
             return [
                 (topic, topic)
                 for topic in list(topic_metadata.topics.keys())
-                if not topic.startswith("__")
+                if not topic.startswith("__") and topic not in exclude_topics
             ]
         except KafkaException as ke:
             rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
