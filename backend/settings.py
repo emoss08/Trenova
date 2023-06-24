@@ -77,12 +77,14 @@ INSTALLED_APPS = [
     "phonenumber_field",
     "django_celery_results",
     "django_celery_beat",
-    "silk",
+    # "silk",
     "encrypted_model_fields",
     "nested_inline",
     "drf_spectacular",
     "djmoney",
+    "auditlog",
     "notifications",
+    "guardian",
     # Monta Apps
     "backend",
     "core",
@@ -109,7 +111,7 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
-    "silk.middleware.SilkyMiddleware",
+    # "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -119,6 +121,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "auditlog.middleware.AuditlogMiddleware",
 ]
 ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
@@ -202,6 +205,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+]
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
 ]
 
 # REDIS Configurations
@@ -350,3 +357,5 @@ CACHEOPS = {
     # "accounts.jobtitle": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
+
+GUARDIAN_MONKEY_PATCH = False
