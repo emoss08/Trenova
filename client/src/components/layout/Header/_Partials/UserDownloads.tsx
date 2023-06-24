@@ -15,14 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  ActionIcon,
-  Divider,
-  Indicator,
-  Menu,
-  ScrollArea,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Divider, Menu, ScrollArea } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faDownload } from "@fortawesome/pro-duotone-svg-icons";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
