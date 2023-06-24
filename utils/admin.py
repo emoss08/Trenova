@@ -24,6 +24,7 @@ from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm
 from django.forms.models import ModelForm
 from django.http import HttpRequest
+from guardian.admin import GuardedModelAdmin
 
 # Model Generic Type
 _M = TypeVar("_M", bound=Model)
@@ -35,7 +36,7 @@ _C = TypeVar("_C", bound=Model)
 _P = TypeVar("_P", bound=Model)
 
 
-class GenericAdmin(admin.ModelAdmin[_M]):
+class GenericAdmin(GuardedModelAdmin[_M]):
     """
     Generic Admin Class for all models
     """
