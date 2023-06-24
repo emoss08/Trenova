@@ -15,11 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Switch } from "@mantine/core";
+import { Switch, SwitchProps } from "@mantine/core";
 
-interface ValidatedSwitchInputProps<
-  TFormValues extends Record<string, unknown>
-> {
+interface ValidatedSwitchInputProps<TFormValues extends Record<string, unknown>>
+  extends SwitchProps {
   form: any;
   name: keyof TFormValues & string;
 }
