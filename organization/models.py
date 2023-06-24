@@ -896,8 +896,6 @@ class TableChangeAlert(TimeStampedModel):
             None: This function does not return anything.
         """
 
-        manager = KafkaManager()
-
         if self.source == self.SourceChoices.KAFKA and not self.topic:
             raise ValidationError(
                 {"topic": _("Topic is required when source is Kafka.")}, code="invalid"
@@ -908,11 +906,14 @@ class TableChangeAlert(TimeStampedModel):
                 code="invalid",
             )
 
-        if self.source == self.SourceChoices.KAFKA and not manager.is_kafka_available():
+        if (
+            self.source == self.SourceChoices.KAFKA
+            and not kafka_manager.is_kafka_available()
+        ):
             raise ValidationError(
                 {
                     "source": _(
-                        f"Unable to connect to Kafka at {manager.kafka_host}:{manager.kafka_port}."
+                        f"Unable to connect to Kafka at {kafka_manager.kafka_host}:{kafka_manager.kafka_port}."
                         f" Please check your connection and try again."
                     )
                 },
@@ -1033,7 +1034,7 @@ class NotificationSetting(TimeStampedModel):
         related_name="notification_setting",
         help_text=_("The organization that the notification setting belongs to."),
     )
-    notification_type = models.ForeignKey(
+    notification_type = models.OneToOneField(
         NotificationType,
         on_delete=models.CASCADE,
         verbose_name=_("Notification Type"),
