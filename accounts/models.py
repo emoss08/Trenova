@@ -21,6 +21,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from auditlog.registry import auditlog
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
@@ -33,6 +34,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from guardian.mixins import GuardianUserMixin
 from localflavor.us.models import USStateField, USZipCodeField
 
 from accounts import services
@@ -104,7 +106,7 @@ class UserManager(BaseUserManager):
         return self.create_user(username, email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
+class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):
     """
     Stores basic user information.
     """
@@ -122,6 +124,7 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
+        null=True,
     )
     department = models.ForeignKey(
         "organization.Department",
@@ -192,13 +195,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
             str: String representation of the User
         """
         return self.username
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        # If user is not active, delete all tokens
-        if self.is_active is False:
-            tokens = self.tokens.all()
-            for token in tokens:
-                token.delete()
 
     def update_user(self, **kwargs: Any) -> None:
         """
@@ -594,3 +590,8 @@ class Token(models.Model):
         """
 
         return self.expires is not None and timezone.now() >= self.expires
+
+
+# Audit Log Registration
+auditlog.register(User, exclude_fields=["online", "password"])
+auditlog.register(UserProfile, exclude_fields=["user"])
