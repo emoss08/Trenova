@@ -52,6 +52,7 @@ import { HeaderUserMenu } from "./HeaderUserMenu";
 import { HeaderLogo } from "@/components/layout/Header/_Partials/HeaderLogo";
 import { UserNotifications } from "./Header/UserNotifications";
 import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
+import { SearchSpotlight } from "@/components/layout/Header/Search";
 
 const navigationLinks = [
   {
@@ -171,7 +172,7 @@ export function HeaderMegaMenu() {
 
           <Group className={classes.hiddenMobile}>
             {/* Search */}
-            <ActionButton icon={faMagnifyingGlass} />
+            <SearchSpotlight />
 
             {/* User Downloads */}
             <UserDownloads />
