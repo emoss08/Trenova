@@ -17,10 +17,6 @@
 
 from django.db import connection
 
-from kafka.managers import KafkaManager
-
-KAFKA_MANAGER = KafkaManager()
-
 
 class TableChoiceService:
     """A service for retrieving table and column information from a Django database.
