@@ -108,7 +108,7 @@ export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
                             className={classes.icon}
                           />
                           <Text className={classes.text}>
-                            {user.profile?.address_line_1} {user.profile?.city}{" "}
+                            {user.profile?.address_line_1} {user.profile?.address_line_2 ?? ""} {user.profile?.city}{" "}
                             {user.profile?.state} {user.profile?.zip_code}
                           </Text>
                         </div>
