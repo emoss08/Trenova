@@ -29,39 +29,62 @@ const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
 
 export type RouteObjectWithPermission = RouteObject & {
+  title: string;
+  group: string;
+  path: string;
+  excludeFromMenu?: boolean;
   permission?: string;
 };
 
 export const routes: RouteObjectWithPermission[] = [
   {
+    title: "Home",
+    group: "main",
     path: "/",
     element: <HomePage />,
   },
   // Authentication Pages
   {
+    title: "Login",
+    group: "auth",
     path: "/login",
     element: <LoginPage />,
+    excludeFromMenu: true,
   },
   {
+    title: "Logout",
+    group: "auth",
     path: "/logout",
     element: <LogoutPage />,
+    excludeFromMenu: true,
   },
   {
+    title: "Reset Password",
+    group: "auth",
     path: "/reset-password",
     element: <ResetPasswordPage />,
+    excludeFromMenu: true,
   },
   // User Management
   {
-    path: "admin/users",
+    title: "User Management",
+    group: "admin",
+    path: "/admin/users",
     element: <UserManagementPage />,
     permission: "admin.users.view",
   },
   {
-    path: "account/settings/:userId",
+    title: "User Settings",
+    group: "user",
+    path: "/account/settings/:userId",
     element: <UserSettingsPage />,
+    excludeFromMenu: true,
   },
   {
+    title: "Error",
+    group: "error",
     path: "*",
     element: <ErrorPage />,
+    excludeFromMenu: true,
   },
 ];
