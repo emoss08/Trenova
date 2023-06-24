@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 from __future__ import annotations
 
 import concurrent
@@ -25,7 +24,7 @@ import signal
 import time
 import types
 from pathlib import Path
-from typing import Any
+from typing import Any, Text
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
 from django.core.mail import send_mail
@@ -241,14 +240,14 @@ class KafkaListener:
             )
 
     @staticmethod
-    def _format_message(*, field_value_dict: dict) -> str:
+    def _format_message(*, field_value_dict: dict) -> Text:
         """Formats the Kafka message fields and their corresponding values into a human-readable string.
 
         Args:
             field_value_dict (dict): Dictionary where keys are field names and values are corresponding field values.
 
         Returns:
-            str: String representation of each field and its corresponding value, each on a new line.
+            Text: String representation of each field and its corresponding value, each on a new line.
         """
 
         return "\n".join(
@@ -276,7 +275,7 @@ class KafkaListener:
         if data is None:  # Added to handle cases where message is not valid JSON.
             return
 
-        op_type: str | None = data.get("op")
+        op_type: Text | None = data.get("op")
 
         op_type_mapping = {
             "c": models.TableChangeAlert.DatabaseActionChoices.INSERT,
