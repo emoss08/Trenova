@@ -78,7 +78,7 @@ function App() {
           withNormalizeCSS
           withCSSVariables
         >
-          <Notifications limit={5} position="top-right" zIndex={2077} />
+          <Notifications limit={3} position="top-right" zIndex={2077} />
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <Suspense fallback={<LoadingScreen />}>
