@@ -17,8 +17,9 @@
 
 from http.cookies import SimpleCookie
 
-from asgiref.sync import async_to_sync
-from channels.generic.websocket import JsonWebsocketConsumer
+from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.layers import get_channel_layer
 
 from accounts.authentication import BearerTokenAuthentication
@@ -26,7 +27,7 @@ from accounts.authentication import BearerTokenAuthentication
 channel_layer = get_channel_layer()
 
 
-class NotificationConsumer(JsonWebsocketConsumer):
+class NotificationConsumer(AsyncJsonWebsocketConsumer):
     """This class inherits from JsonWebsocketConsumer and serves as a consumer for notifications.
 
     The NotificationConsumer class consumes notifications, authenticates the user from a provided token,
@@ -44,7 +45,7 @@ class NotificationConsumer(JsonWebsocketConsumer):
         send_notification: Sends the notification data to the user/client as JSON.
     """
 
-    def connect(self) -> None:
+    async def connect(self) -> None:
         """This method is called when the websocket is handshaking as part of the connection process.
 
         The method authenticates the user using a bearer token obtained from cookies, adds the user to
@@ -61,34 +62,33 @@ class NotificationConsumer(JsonWebsocketConsumer):
 
         token_authenticator = BearerTokenAuthentication()
 
-        # Parse cookies from headers
         headers = dict(self.scope["headers"])
         cookies = SimpleCookie()
         cookies.load(headers.get(b"cookie", b"").decode())
 
-        # Get the token from the cookie
         token = cookies.get("auth_token")
         token = token.value if token else None
 
         if token is None:
             return
 
-        # Mocking a request to verify the token
-        mock_request = type("", (), {})()  # Create a blank class
+        mock_request = type("", (), {})()
         mock_request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
 
-        user_token = token_authenticator.authenticate(mock_request)
+        user_token = await database_sync_to_async(token_authenticator.authenticate)(
+            mock_request
+        )
         if user_token is None:
             return
 
         self.scope["user"] = user_token[0]
+        self.room_group_name = sync_to_async(self.scope["user"].get_username)()
+        await self.channel_layer.group_add(
+            await self.room_group_name, self.channel_name
+        )
+        await self.accept()
 
-        self.room_group_name = self.scope["user"].username
-
-        async_to_sync(channel_layer.group_add)(self.room_group_name, self.channel_name)
-        self.accept()
-
-    def disconnect(self, close_code: int) -> None:
+    async def disconnect(self, close_code: int) -> None:
         """This method is called when the WebSocket closes for any reason.
 
         The method removes the user from the group.
@@ -99,11 +99,9 @@ class NotificationConsumer(JsonWebsocketConsumer):
         Returns:
             None: This function does not return anything.
         """
-        async_to_sync(channel_layer.group_discard)(
-            self.room_group_name, self.channel_name
-        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-    def send_notification(self, event: dict):
+    async def send_notification(self, event: dict):
         """Sends the notification data to the client as JSON.
 
         The event dict should follow the format {type: x, value: y}, where 'type' is the type of
@@ -115,4 +113,4 @@ class NotificationConsumer(JsonWebsocketConsumer):
         Returns:
             None: This function does not return anything.
         """
-        self.send_json(event)
+        await self.send_json(event)
