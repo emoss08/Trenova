@@ -22,6 +22,7 @@ import React from "react";
 
 interface MyComponentProps {
   icon: IconProp;
+  onClick?: () => void;
 }
 
 const useStyles = createStyles((theme) => ({
@@ -41,11 +42,11 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const ActionButton: React.FC<MyComponentProps> = ({ icon }) => {
+const ActionButton: React.FC<MyComponentProps> = ({ icon, onClick }) => {
   const { classes } = useStyles();
 
   return (
-    <ActionIcon className={classes.hoverEffect}>
+    <ActionIcon className={classes.hoverEffect} onClick={onClick}>
       <FontAwesomeIcon icon={icon} />
     </ActionIcon>
   );
