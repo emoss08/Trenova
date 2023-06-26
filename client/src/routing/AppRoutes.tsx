@@ -73,6 +73,7 @@ export const routes: RouteObjectWithPermission[] = [
   {
     title: "User Management",
     group: "admin",
+    subMenu: "users",
     path: "/admin/users",
     element: <UserManagementPage />,
     permission: "admin.users.view",
@@ -87,8 +88,8 @@ export const routes: RouteObjectWithPermission[] = [
   // Accounting Pages
   {
     title: "Division Codes",
-    subMenu: "master files",
     group: "accounting",
+    subMenu: "configuration files",
     path: "/accounting/division-codes",
     element: <DivisionCodesPage />,
     permission: "view_divisioncode",
