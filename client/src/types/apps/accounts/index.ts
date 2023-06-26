@@ -68,10 +68,6 @@ export interface UserFormValues {
   };
 }
 
-export interface UserApiResponse extends ApiResponse {
-  results: User[];
-}
-
 export type JobTitle = {
   id: string;
   name: string;

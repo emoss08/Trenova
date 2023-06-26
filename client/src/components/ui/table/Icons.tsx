@@ -18,15 +18,12 @@
 import { MRT_Icons } from "mantine-react-table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faAnglesDown,
   faArrowDownShortWide,
   faArrowUpShortWide,
   faBars,
   faBarsSort,
   faBarsStaggered,
   faChevronDown,
-  faChevronLeft,
-  faChevronRight,
   faCircleXmark,
   faColumns,
   faCompress,
@@ -42,9 +39,6 @@ import {
   faLayerGroup,
   faSearch,
   faSearchMinus,
-  faSort,
-  faSortDown,
-  faSortUp,
   faTextWidth,
   faThumbTack,
   faX,
