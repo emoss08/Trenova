@@ -15,16 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { PropsWithChildren } from "react";
 import { AppShell, Container, useMantineTheme } from "@mantine/core";
 import { HeaderMegaMenu } from "./Header";
 import { Breadcrumb } from "@/components/ui/BreadCrumbs";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<PropsWithChildren> = ({ children }) => {
   const theme = useMantineTheme();
 
   return (
@@ -42,7 +38,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         header={<HeaderMegaMenu />}
       >
         <Container size="xl">
-          <Breadcrumb />
+          {/*<Breadcrumb />*/}
           {children}
         </Container>
       </AppShell>

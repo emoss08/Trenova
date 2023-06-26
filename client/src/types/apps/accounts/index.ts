@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ApiResponse } from "@/types/server";
-
 export type UserProfile = {
   id: string;
   organization: string;
