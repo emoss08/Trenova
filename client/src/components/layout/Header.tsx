@@ -40,7 +40,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuildingColumns,
   faChevronDown,
-  faMagnifyingGlass,
   faTruckFast,
 } from "@fortawesome/pro-solid-svg-icons";
 import { Link } from "react-router-dom";

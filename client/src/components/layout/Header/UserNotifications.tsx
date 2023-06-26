@@ -76,7 +76,6 @@ export const UserNotifications: React.FC = () => {
   const queryClient = useQueryClient();
   const { classes } = useStyles();
 
-  console.log("is authenticated", isAuthenticated);
   useEffect(() => {
     if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
       // Connecting the websocket
@@ -127,7 +126,7 @@ export const UserNotifications: React.FC = () => {
           },
         }
       );
-    } else if (isAuthenticated) {
+    } else if (isAuthenticated && !userId) {
       webSocketManager.disconnect("notifications");
     }
 
@@ -163,6 +162,10 @@ export const UserNotifications: React.FC = () => {
     await queryClient.invalidateQueries(["userNotifications", userId]);
     headerStore.set("notificationsMenuOpen", false);
   };
+
+  if (!userId) {
+    return null;
+  }
 
   return (
     <>

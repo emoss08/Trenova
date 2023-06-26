@@ -34,16 +34,15 @@ import { useVerifyToken } from "./hooks/withTokenVerification";
 
 function App() {
   useVerifyToken();
-  const initialLoading = useAuthStore((state) => state.initialLoading);
-  // const initialLoading = true;
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mt-color-scheme",
     defaultValue: "light",
     getInitialValueInEffect: true,
   });
-
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+
+  const initialLoading = useAuthStore((state) => state.initialLoading);
 
   useHotkeys([["mod+J", () => toggleColorScheme()]]);
 

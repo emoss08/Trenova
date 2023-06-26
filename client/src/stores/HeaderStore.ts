@@ -17,7 +17,13 @@
 
 import { createGlobalStore } from "@/utils/zustand";
 
-export const headerStore = createGlobalStore({
+interface HeaderStoreType {
+  downloadMenuOpen: boolean;
+  themeSwitcherOpen: boolean;
+  headerMenuOpen: boolean;
+  notificationsMenuOpen: boolean;
+}
+export const headerStore = createGlobalStore<HeaderStoreType>({
   downloadMenuOpen: false,
   themeSwitcherOpen: false,
   headerMenuOpen: false,
