@@ -24,11 +24,7 @@ class AccountConfig(AppConfig):
     name = "accounts"
 
     def ready(self) -> None:
-        from accounts.signals import add_expiration_to_token
         from core import signals
-
-        # Token Expiration Date
-        post_save.connect(add_expiration_to_token, sender="accounts.Token")
 
         # JobTitle Cache Invalidations
         post_save.connect(
