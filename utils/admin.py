@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from collections.abc import Sequence
-from typing import Any, TypeVar, Generic
+from typing import Any, TypeVar
 
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
