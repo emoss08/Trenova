@@ -44,7 +44,7 @@ const isFunction = (fn: unknown): fn is Function => typeof fn === "function";
  * const store = createStore({ count: 0 });
  *
  * const Component = () => {
- *   const [count, setCount] = store.use('count');
+ *   const [count, setCount] = store.use("count");
  *   ...
  * };
  */
@@ -182,6 +182,7 @@ function deepClone<T>(obj: T): T {
   return result;
 }
 
+// Define a custom persisting middleware
 function getRegExpFlags(regExp: RegExp): string {
   if ((typeof regExp.source as any).flags === "string") {
     return (regExp.source as any).flags;

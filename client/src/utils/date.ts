@@ -25,16 +25,31 @@ import {
   differenceInDays,
 } from "date-fns";
 
+/**
+ * Formats the given date string into the format "yyyy/MM/dd HH:mm".
+ * @param date - The date string to format.
+ * @returns A string representing the date in "yyyy/MM/dd HH:mm" format.
+ */
 export function formatDate(date: string): string {
   const parsedDate = parseISO(date);
   return format(parsedDate, "yyyy/MM/dd HH:mm");
 }
 
+/**
+ * Converts the given date string into a human-readable format relative to the current time.
+ * @param date - The date string to convert.
+ * @returns A string representing the date in a human-readable format relative to the current time.
+ */
 export function formatDateToHumanReadable(date: string): string {
   const parsedDate = parseISO(date);
   return formatDistanceToNow(parsedDate, { addSuffix: true });
 }
 
+/**
+ * Converts a timestamp into a human-readable format indicating the time elapsed since the timestamp.
+ * @param timestamp - The timestamp to convert.
+ * @returns A string indicating the time elapsed since the timestamp in seconds, minutes, hours, or days as appropriate.
+ */
 export function formatTimestamp(timestamp: string) {
   const date = parseISO(timestamp);
   const now = new Date();

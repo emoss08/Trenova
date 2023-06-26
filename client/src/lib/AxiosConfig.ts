@@ -20,6 +20,11 @@ import { USER_ID_KEY } from "@/lib/utils";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
 
+/**
+ * Axios request interceptor.
+ * It sets the base URL and credentials of the request.
+ * It also logs the request details to the console.
+ */
 axios.interceptors.request.use(
   (req) => {
     req.baseURL = API_URL;
@@ -32,6 +37,11 @@ axios.interceptors.request.use(
   }
 );
 
+/**
+ * Axios' response interceptor.
+ * It handles 401 unauthorized errors by removing the user ID from session storage.
+ * Other errors are simply forwarded.
+ */
 axios.interceptors.response.use(
   (response) => {
     return response;
@@ -44,4 +54,7 @@ axios.interceptors.response.use(
   }
 );
 
+/**
+ * Exporting the configured Axios instance.
+ */
 export default axios;

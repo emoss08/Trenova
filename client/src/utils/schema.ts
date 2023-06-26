@@ -17,11 +17,21 @@
 
 import * as Yup from "yup";
 
+/**
+ * A Yup object schema for validating login data.
+ * @property username - A required string.
+ * @property password - A required string.
+ */
 export const LoginSchema = Yup.object().shape({
   username: Yup.string().required("Username is required."),
   password: Yup.string().required("Password is required."),
 });
 
+/**
+ * A Yup object schema for validating user profile data.
+ * @property profile - An object that includes properties:
+ *                     first_name, last_name, address_line_1, city, state, zip_code, phone_number.
+ */
 export const UserSchema = Yup.object().shape({
   profile: Yup.object().shape({
     first_name: Yup.string().required("First name is required"),
@@ -46,6 +56,11 @@ export const UserSchema = Yup.object().shape({
   }),
 });
 
+/**
+ * A Yup object schema for validating data related to exporting a model.
+ * @property file_format - A required string.
+ * @property columns - A required array of strings.
+ */
 export const ExportModelSchema = Yup.object().shape({
   file_format: Yup.string().required("File format is required"),
   columns: Yup.array().of(Yup.string()).required("Columns are required"),

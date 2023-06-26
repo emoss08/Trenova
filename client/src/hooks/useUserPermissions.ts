@@ -18,6 +18,15 @@
 import { getSessionItem } from "@/lib/utils";
 import { useAuthStore } from "@/stores/AuthStore";
 
+/**
+ * Custom hook that provides user's authentication and permission status.
+ *
+ * @returns An object with the following properties:
+ * - isAuthenticated: Whether the user is authenticated.
+ * - isAdmin: Whether the user is an administrator.
+ * - permissions: An array of the user's permissions.
+ * - userHasPermission: A function that checks whether the user has a specified permission.
+ */
 export function useUserPermissions() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isAdmin = getSessionItem("mt_is_admin") === "true";

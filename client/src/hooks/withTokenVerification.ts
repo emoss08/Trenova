@@ -18,20 +18,28 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
-import { getSessionItem, USER_ID_KEY } from "@/lib/utils";
+import { getUserId } from "@/lib/utils";
 
-export const useVerifyToken = () => {
+/**
+ * Custom hook to verify the user's token.
+ *
+ * On mount, it checks if the user ID is present in the session storage. If it is, it sends a request to
+ * verify the token. Depending on the result of the request, it updates the authentication status and
+ * clears the session storage if necessary. It also manages loading states during the verification process.
+ */
+export const useVerifyToken = (): void => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
   const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
-
   useEffect(() => {
-    const verifyToken = async () => {
-      const userId = getSessionItem(USER_ID_KEY);
+    const verifyToken = async (): Promise<void> => {
+      setInitialLoading(true);
+
+      const userId = getUserId();
 
       if (!userId) {
+        sessionStorage.clear();
         setIsAuthenticated(false);
-        setInitialLoading(false);
         return;
       }
 
@@ -44,10 +52,11 @@ export const useVerifyToken = () => {
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
-        setInitialLoading(false);
       }
     };
 
-    verifyToken();
+    verifyToken().then(() => {
+      setInitialLoading(false);
+    });
   }, [setIsAuthenticated, setLoading, setInitialLoading]);
 };
