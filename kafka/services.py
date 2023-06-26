@@ -24,7 +24,7 @@ import signal
 import time
 import types
 from pathlib import Path
-from typing import Any, Text
+from typing import Any
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
 from django.core.mail import send_mail
