@@ -15,20 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Text, Card, Flex } from "@mantine/core";
-import { UsersAdminTable } from "@/components/user-management/table/UserTable";
-import { usePageStyles } from "@/styles/PageStyles";
+import { MRT_RowSelectionState } from "mantine-react-table";
 
-const UserManagement: React.FC = () => {
-  const { classes } = usePageStyles();
-  return (
-    <Flex>
-      <Card className={classes.card}>
-        <UsersAdminTable />
-      </Card>
-    </Flex>
-  );
-};
-
-export default UserManagement;
+export interface TableStoreProps<T> {
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  viewModalOpen: boolean;
+  selectedRecord: T | null;
+  globalFilter: string;
+  drawerOpen: boolean;
+  exportModalOpen: boolean;
+  deleteModalOpen: boolean;
+  columnFilters: boolean;
+  rowSelection: MRT_RowSelectionState;
+}

@@ -27,10 +27,9 @@ import { userTableStore } from "@/stores/UserTableStore";
 
 export const DeleteUserModal: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
-  const [showDeleteUserModal, setShowDeleteUserModal] = userTableStore.use(
-    "deleteUserModalOpen"
-  );
-  const [selectedUser] = userTableStore.use("selectedUser");
+  const [showDeleteUserModal, setShowDeleteUserModal] =
+    userTableStore.use("deleteModalOpen");
+  const [selectedUser] = userTableStore.use("selectedRecord");
   const queryClient = useQueryClient();
 
   const handleDelete = async (user: User) => {

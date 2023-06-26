@@ -151,8 +151,8 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
               <Menu.Item
                 icon={<FontAwesomeIcon icon={faUser} />}
                 onClick={() => {
-                  userTableStore.set("selectedUser", row.original);
-                  userTableStore.set("viewUserModalOpen", true);
+                  userTableStore.set("selectedRecord", row.original);
+                  userTableStore.set("viewModalOpen", true);
                 }}
               >
                 View User Profile
@@ -164,8 +164,8 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
                 color="red"
                 icon={<FontAwesomeIcon icon={faUserMinus} />}
                 onClick={() => {
-                  userTableStore.set("selectedUser", row.original);
-                  userTableStore.set("deleteUserModalOpen", true);
+                  userTableStore.set("selectedRecord", row.original);
+                  userTableStore.set("deleteModalOpen", true);
                 }}
               >
                 Delete User Profile

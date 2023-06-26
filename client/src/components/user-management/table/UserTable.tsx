@@ -15,107 +15,29 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useMemo } from "react";
-import { MantineReactTable } from "mantine-react-table";
-import { useQuery } from "react-query";
-import { API_URL } from "@/utils/utils";
-import "@fortawesome/fontawesome-svg-core/styles.css";
-import { config } from "@fortawesome/fontawesome-svg-core";
+import React from "react";
 import { ExportUserModal } from "@/components/user-management/table/ExportUserModal";
-import { UserApiResponse } from "@/types/apps/accounts";
 import { CreateUserDrawer } from "@/components/user-management/table/CreateUserDrawer";
 import { UserTableColumns } from "@/components/user-management/table/UserTableColumns";
-import axios from "@/lib/AxiosConfig";
-import { montaTableIcons } from "@/components/ui/table/Icons";
 import { UserTableTopToolbar } from "./UserTableTopToolbar";
 import { ViewUserModal } from "./ViewUserModal";
-import { DeleteUserModal } from "@/components/user-management/table/DeleteUserModal";
 import { userTableStore } from "@/stores/UserTableStore";
-
-config.autoAddCss = false;
+import { MontaTable } from "@/components/MontaTable";
 
 export const UsersAdminTable = () => {
-  const [pagination] = userTableStore.use("pagination");
-  const [globalFilter, setGlobalFilter] = userTableStore.use("globalFilter");
-  const [rowSelection, setRowSelection] = userTableStore.use("rowSelection");
-
-  // Function to handle pagination
-  const { data, isError, isFetching, isLoading } = useQuery<UserApiResponse>(
-    [
-      "user-table-data",
-      pagination.pageIndex,
-      pagination.pageSize,
-      globalFilter,
-    ],
-    async () => {
-      const offset = pagination.pageIndex * pagination.pageSize;
-      const url = `${API_URL}/users/?limit=${
-        pagination.pageSize
-      }&offset=${offset}${globalFilter ? `&search=${globalFilter}` : ""}`;
-      const response = await axios.get(url);
-      return response.data;
-    },
-    {
-      refetchOnWindowFocus: false,
-      keepPreviousData: true,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    }
-  );
-
-  // Function to handle column filters
-  const columns = useMemo(() => UserTableColumns(), []);
-
   return (
-    <>
-      <MantineReactTable
-        columns={columns}
-        data={data?.results ?? []}
-        manualPagination
-        onPaginationChange={(newPagination) => {
-          userTableStore.set("pagination", newPagination);
-        }}
-        rowCount={data?.count ?? 0}
-        getRowId={(row) => row.id}
-        enableRowSelection
-        icons={montaTableIcons}
-        onRowSelectionChange={(row) => setRowSelection(row)}
-        state={{
-          isLoading,
-          pagination: pagination,
-          showAlertBanner: isError,
-          showSkeletons: isFetching,
-          rowSelection,
-        }}
-        initialState={{
-          showGlobalFilter: true,
-          density: "xs",
-        }}
-        positionGlobalFilter="left"
-        mantineSearchTextInputProps={{
-          placeholder: data?.count
-            ? `Search ${data.count} users...`
-            : "Search...",
-          sx: { minWidth: "300px" },
-          variant: "filled",
-        }}
-        enableGlobalFilterModes={false}
-        onGlobalFilterChange={(filter: string) => {
-          setGlobalFilter(filter);
-        }}
-        mantineFilterTextInputProps={{
-          sx: { borderBottom: "unset", marginTop: "8px" },
-          variant: "filled",
-        }}
-        mantineFilterSelectProps={{
-          sx: { borderBottom: "unset", marginTop: "8px" },
-          variant: "filled",
-        }}
-        renderTopToolbar={({ table }) => <UserTableTopToolbar table={table} />}
-      />
-      <ExportUserModal />
-      <CreateUserDrawer />
-      <DeleteUserModal />
-      <ViewUserModal />
-    </>
+    <MontaTable
+      store={userTableStore}
+      link="/users"
+      columns={UserTableColumns}
+      TableTopToolbar={UserTableTopToolbar}
+      TableExportModal={ExportUserModal}
+      TableCreateDrawer={CreateUserDrawer}
+      displayDeleteModal={true}
+      // TableDeleteModal={DeleteUserModal}
+      TableViewModal={ViewUserModal}
+      queryKey="users-table-data"
+      queryKey2="users"
+    />
   );
 };
