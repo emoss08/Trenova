@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 # Allowed models and fields for report generation
+
 ALLOWED_MODELS = {
     "User": {
         "app_label": "accounts",
@@ -94,6 +95,18 @@ ALLOWED_MODELS = {
             "organization__name",
             "name",
             "description",
+        ],
+    },
+    "DivisionCode": {
+        "app_label": "accounting",
+        "allowed_fields": [
+            "organization__name",
+            "is_active",
+            "code",
+            "description",
+            "cash_account__account_number",
+            "ap_account__account_number",
+            "expense_account__account_number",
         ],
     },
 }
