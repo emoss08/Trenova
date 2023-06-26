@@ -93,6 +93,8 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
+    search_fields = ("code", "description")
+
     filterset_fields = (
         "is_active",
         "cash_account",
