@@ -25,12 +25,16 @@ const LogoutPage = lazy(() => import("../pages/LogoutPage"));
 const UserManagementPage = lazy(
   () => import("../pages/admin/users/UserManagement")
 );
+const DivisionCodesPage = lazy(
+  () => import("../pages/accounting/DivisionCodes")
+);
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
   group: string;
+  subMenu?: string;
   path: string;
   excludeFromMenu?: boolean;
   permission?: string;
@@ -80,6 +84,16 @@ export const routes: RouteObjectWithPermission[] = [
     element: <UserSettingsPage />,
     excludeFromMenu: true,
   },
+  // Accounting Pages
+  {
+    title: "Division Codes",
+    subMenu: "master files",
+    group: "accounting",
+    path: "/accounting/division-codes",
+    element: <DivisionCodesPage />,
+    permission: "view_divisioncode",
+  },
+  // Error Page
   {
     title: "Error",
     group: "error",

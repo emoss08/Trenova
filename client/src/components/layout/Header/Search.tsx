@@ -65,7 +65,7 @@ export const SearchSpotlight: React.FC = () => {
       actionsWrapperComponent={ActionsWrapper}
       searchIcon={<FontAwesomeIcon icon={faMagnifyingGlass} />}
       searchPlaceholder="Search..."
-      shortcut="mod + shift + 1"
+      shortcut="mod + k"
       nothingFoundMessage="Nothing found..."
       transitionProps={{ duration: 300, transition: "slide-down" }}
     >

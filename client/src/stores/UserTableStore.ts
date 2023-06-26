@@ -17,34 +17,19 @@
 
 import { User } from "@/types/apps/accounts";
 import { createGlobalStore } from "@/utils/zustand";
-import { MRT_RowSelectionState } from "mantine-react-table";
+import { TableStoreProps } from "@/types/tables";
 
-interface UserTableStoreProps {
-  pagination: {
-    pageIndex: number;
-    pageSize: number;
-  };
-  viewUserModalOpen: boolean;
-  selectedUser: User | null;
-  globalFilter: string;
-  drawerOpen: boolean;
-  exportModalOpen: boolean;
-  deleteUserModalOpen: boolean;
-  columnFilters: boolean;
-  rowSelection: MRT_RowSelectionState;
-}
-
-export const userTableStore = createGlobalStore<UserTableStoreProps>({
+export const userTableStore = createGlobalStore<TableStoreProps<User>>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewUserModalOpen: false,
-  selectedUser: null,
+  viewModalOpen: false,
+  selectedRecord: null,
   globalFilter: "",
   drawerOpen: false,
   exportModalOpen: false,
-  deleteUserModalOpen: false,
+  deleteModalOpen: false,
   columnFilters: false,
   rowSelection: {},
 });

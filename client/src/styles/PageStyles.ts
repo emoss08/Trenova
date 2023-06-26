@@ -15,22 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { getSessionItem } from "@/lib/utils";
-import { useAuthStore } from "@/stores/AuthStore";
+import { createStyles } from "@mantine/core";
 
-export function useUserPermissions() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = getSessionItem("mt_is_admin") === "true";
-  const permissions = getSessionItem("mt_user_permissions") || [];
-
-  const userHasPermission = (permission: string) => {
-    return isAdmin || permissions.includes(permission);
-  };
-
-  return {
-    isAuthenticated,
-    isAdmin,
-    permissions,
-    userHasPermission,
-  };
-}
+export const usePageStyles = createStyles((theme) => ({
+  card: {
+    width: "100%",
+    maxWidth: "100%",
+    height: "auto",
+    "@media (max-width: 576px)": {
+      height: "auto",
+      maxHeight: "none",
+    },
+  },
+  text: {
+    color: theme.colorScheme === "dark" ? "white" : "black",
+  },
+  icon: {
+    marginRight: "5px",
+    marginTop: "5px",
+  },
+  div: {
+    display: "flex",
+    "&:hover": {
+      "& *": {
+        color: theme.colors.blue[6],
+      },
+    },
+  },
+  grid: {
+    display: "flex",
+  },
+}));
