@@ -106,7 +106,7 @@ class UserManager(BaseUserManager):
         return self.create_user(username, email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):
+class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):  # type: ignore
     """
     Stores basic user information.
     """
@@ -124,7 +124,6 @@ class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
-        null=True,
     )
     department = models.ForeignKey(
         "organization.Department",
