@@ -177,6 +177,5 @@ def test_user_report_post(api_client: APIClient, user: User) -> None:
             ),
         },
     )
-    print(response.data)
     assert response.status_code == 201
     assert response.data["user"] == user.id
