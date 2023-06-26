@@ -15,39 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { AppShell, Container, useMantineTheme } from "@mantine/core";
-import { HeaderMegaMenu } from "./Header";
-import { Breadcrumb } from "@/components/ui/BreadCrumbs";
+import { createGlobalStore } from "@/utils/zustand";
+import { RouteObjectWithPermission } from "@/routing/AppRoutes";
 
-interface LayoutProps {
-  children: React.ReactNode;
+interface BreadcrumbStoreType {
+  currentRoute: RouteObjectWithPermission;
+  loading: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const theme = useMantineTheme();
-
-  return (
-    <>
-      <AppShell
-        styles={{
-          main: {
-            background:
-              theme.colorScheme === "dark"
-                ? theme.colors.dark[8]
-                : theme.colors.gray[0],
-          },
-        }}
-        padding="md"
-        header={<HeaderMegaMenu />}
-      >
-        <Container size="xl">
-          <Breadcrumb />
-          {children}
-        </Container>
-      </AppShell>
-    </>
-  );
-};
-
-export default Layout;
+export const breadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
+  currentRoute: {
+    title: "",
+    group: "",
+    subMenu: "",
+    path: "",
+  },
+  loading: false,
+});
