@@ -14,6 +14,9 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
+export const API_URL = import.meta.env.VITE_API_URL as string;
+
 type WebSocketEventHandlers = {
   onOpen?: (event: Event) => void;
   onMessage?: (event: MessageEvent) => void;
@@ -21,9 +24,20 @@ type WebSocketEventHandlers = {
   onError?: (event: Event) => void;
 };
 
+/**
+ * Represents a WebSocket connection, providing lifecycle event handling.
+ */
 class WebSocketConnection {
+  /**
+   * The underlying WebSocket object.
+   */
   socket: WebSocket;
 
+  /**
+   * Creates a new WebSocketConnection instance.
+   * @param url - The URL to which the WebSocket should connect.
+   * @param eventHandlers - Event handlers for the WebSocket's lifecycle events.
+   */
   constructor(url: string, private eventHandlers: WebSocketEventHandlers = {}) {
     this.socket = new WebSocket(url);
 
@@ -33,30 +47,64 @@ class WebSocketConnection {
     this.socket.onerror = this.handleError.bind(this);
   }
 
+  /**
+   * Handles the WebSocket's open event.
+   * @param event - The open event.
+   */
   handleOpen(event: Event) {
     this.eventHandlers.onOpen && this.eventHandlers.onOpen(event);
   }
 
+  /**
+   * Handles the WebSocket's message event.
+   * @param event - The message event.
+   */
   handleMessage(event: MessageEvent) {
     this.eventHandlers.onMessage && this.eventHandlers.onMessage(event);
   }
 
+  /**
+   * Handles the WebSocket's close event.
+   * @param event - The close event.
+   */
   handleClose(event: CloseEvent) {
     this.eventHandlers.onClose && this.eventHandlers.onClose(event);
   }
 
+  /**
+   * Handles the WebSocket's error event.
+   * @param event - The error event.
+   */
   handleError(event: Event) {
     this.eventHandlers.onError && this.eventHandlers.onError(event);
   }
 
+  /**
+   * Closes the WebSocket connection.
+   */
   close() {
     this.socket.close();
   }
 }
 
+/**
+ * Manages WebSocket connections by providing functionality
+ * to connect, disconnect, send messages, and check the existence of connections.
+ */
 export class WebSocketManager {
+  /**
+   * A map to keep track of WebSocket connections.
+   * @private
+   */
   private connections = new Map<string, WebSocketConnection>();
 
+  /**
+   * Establishes a WebSocket connection with the specified ID.
+   * @param id - Unique identifier for the WebSocket connection.
+   * @param url - URL to which the WebSocket connection should be established.
+   * @param eventHandlers - Optional event handlers for the WebSocket connection.
+   * @throws Will throw an error if a connection with the same ID already exists.
+   */
   connect(id: string, url: string, eventHandlers: WebSocketEventHandlers = {}) {
     if (this.connections.has(id)) {
       throw new Error(`WebSocket connection with id "${id}" already exists`);
@@ -66,6 +114,11 @@ export class WebSocketManager {
     this.connections.set(id, connection);
   }
 
+  /**
+   * Closes a WebSocket connection with the specified ID.
+   * @param id - The ID of the WebSocket connection to close.
+   * @throws Will throw an error if no connection with the specified ID is found.
+   */
   disconnect(id: string) {
     const connection = this.connections.get(id);
     if (!connection) {
@@ -76,15 +129,63 @@ export class WebSocketManager {
     this.connections.delete(id);
   }
 
+  /**
+   * Closes all WebSocket connections managed by the instance.
+   */
   disconnectAll() {
     for (const id of this.connections.keys()) {
       this.disconnect(id);
     }
   }
+
+  /**
+   * Sends a message to the WebSocket connection with the specified ID.
+   * @param id - The ID of the WebSocket connection to which the message should be sent.
+   * @param data - The data to be sent.
+   * @throws Will throw an error if no connection with the specified ID is found.
+   */
+  sendMessage(
+    id: string,
+    data: string | ArrayBufferLike | Blob | ArrayBufferView
+  ) {
+    const connection = this.connections.get(id);
+    if (!connection) {
+      throw new Error(`WebSocket connection with id "${id}" not found`);
+    }
+
+    connection.socket.send(data);
+  }
+
+  /**
+   * Retrieves the WebSocketConnection object for the specified ID.
+   * @param id - The ID of the WebSocket connection to retrieve.
+   * @returns The WebSocketConnection object associated with the specified ID.
+   * @throws Will throw an error if no connection with the specified ID is found.
+   */
+  get(id: string) {
+    const connection = this.connections.get(id);
+    if (!connection) {
+      throw new Error(`WebSocket connection with id "${id}" not found`);
+    }
+
+    return connection;
+  }
+
+  /**
+   * Checks if a WebSocket connection with the specified ID exists.
+   * @param id - The ID of the WebSocket connection to check.
+   * @returns True if a connection with the specified ID exists, false otherwise.
+   */
+  has(id: string) {
+    return this.connections.has(id);
+  }
 }
 
+/**
+ * Transforms the first character of the provided string to upper case.
+ * @param str - The string to be transformed.
+ * @returns A new string with the first character in upper case and the rest of the string unchanged.
+ */
 export function upperFirst(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
-
-export const API_URL = import.meta.env.VITE_API_URL as string;

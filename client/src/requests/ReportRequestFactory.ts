@@ -17,6 +17,11 @@
 
 import axios from "@/lib/AxiosConfig";
 
+/**
+ * Fetches the columns for the specified model from the server.
+ * @param model_name - The name of the model to fetch columns for.
+ * @returns A promise that resolves to the columns of the model.
+ */
 export async function getColumns(model_name: string): Promise<any> {
   const response = await axios.get(`/get_columns/?model_name=${model_name}`);
   return response.data.results;

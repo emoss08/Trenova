@@ -19,10 +19,9 @@ import axios from "@/lib/AxiosConfig";
 import { User, UserNotification, UserReport } from "@/types/apps/accounts";
 
 /**
- * Return the user's details
- * @param id
- *
- * @returns {Promise<User>}
+ * Fetches the details of the user with the specified ID.
+ * @param id - The ID of the user to fetch details for.
+ * @returns A promise that resolves to the user's details.
  */
 export async function getUserDetails(id: string): Promise<User> {
   const response = await axios.get(`/users/${id}/`);
@@ -30,9 +29,8 @@ export async function getUserDetails(id: string): Promise<User> {
 }
 
 /**
- * Return the User Reports
- *
- * @returns {Promise<UserReport[]>}
+ * Fetches user reports from the server.
+ * @returns A promise that resolves to an array of user reports.
  */
 export async function getUserReports(): Promise<UserReport[]> {
   const response = await axios.get("/user_reports/");
@@ -40,9 +38,8 @@ export async function getUserReports(): Promise<UserReport[]> {
 }
 
 /**
- * Return the User Notifications
- *
- * @returns {Promise<UserNotification[]>}
+ * Fetches the current user's notifications from the server.
+ * @returns A promise that resolves to the user's notifications.
  */
 export async function getUserNotifications(): Promise<UserNotification> {
   const response = await axios.get("/user/notifications/?max=10");
