@@ -83,4 +83,8 @@ export class WebSocketManager {
   }
 }
 
+export function upperFirst(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export const API_URL = import.meta.env.VITE_API_URL as string;
