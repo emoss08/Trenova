@@ -19,19 +19,23 @@ import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
 import { DivisionCode } from "@/types/apps/accounting";
 
-export const divisionCodeTableStore = createGlobalStore<
-  TableStoreProps<DivisionCode>
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  drawerOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-});
+interface DivisionCodeTableStoreProps extends TableStoreProps<DivisionCode> {
+  createModalOpen: boolean;
+}
+
+export const divisionCodeTableStore =
+  createGlobalStore<DivisionCodeTableStoreProps>({
+    pagination: {
+      pageIndex: 0,
+      pageSize: 10,
+    },
+    viewModalOpen: false,
+    selectedRecord: null,
+    globalFilter: "",
+    drawerOpen: false,
+    exportModalOpen: false,
+    deleteModalOpen: false,
+    createModalOpen: false,
+    columnFilters: false,
+    rowSelection: {},
+  });

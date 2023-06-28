@@ -23,7 +23,7 @@ interface BreadcrumbStoreType {
   loading: boolean;
 }
 
-export const breadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
+export const useBreadcrumbStore = createGlobalStore<BreadcrumbStoreType>({
   currentRoute: {
     title: "",
     group: "",
