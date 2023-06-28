@@ -121,7 +121,7 @@ export const DCTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
           </Button>
           <Button
             color="blue"
-            onClick={() => divisionCodeTableStore.set("drawerOpen", true)}
+            onClick={() => divisionCodeTableStore.set("createModalOpen", true)}
             leftIcon={<FontAwesomeIcon icon={faUserPlus} />}
           >
             Add Division Code

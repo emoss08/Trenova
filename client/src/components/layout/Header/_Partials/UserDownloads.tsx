@@ -20,12 +20,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faDownload } from "@fortawesome/pro-duotone-svg-icons";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
 import React from "react";
-import { headerStore } from "@/stores/HeaderStore";
+import { useHeaderStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { Link } from "react-router-dom";
 
 export const UserDownloads: React.FC = () => {
-  const [downloadMenuOpen] = headerStore.use("downloadMenuOpen");
+  const [downloadMenuOpen] = useHeaderStore.use("downloadMenuOpen");
   const { classes } = useHeaderStyles();
 
   return (
@@ -35,7 +35,7 @@ export const UserDownloads: React.FC = () => {
         width={230}
         opened={downloadMenuOpen}
         onChange={(changeEvent) => {
-          headerStore.set("downloadMenuOpen", changeEvent);
+          useHeaderStore.set("downloadMenuOpen", changeEvent);
         }}
         withinPortal
         withArrow

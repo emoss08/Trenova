@@ -18,7 +18,7 @@ import React from "react";
 import { QueryKey, useQuery, useQueryClient } from "react-query";
 import { getUserNotifications } from "@/requests/UserRequestFactory";
 import { getUserId } from "@/lib/utils";
-import { headerStore } from "@/stores/HeaderStore";
+import { useHeaderStore } from "@/stores/HeaderStore";
 import { Badge, Group, Skeleton, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faEnvelopeOpen } from "@fortawesome/pro-duotone-svg-icons";
@@ -26,7 +26,7 @@ import { UserNotification, Notification } from "@/types/apps/accounts";
 import { formatTimestamp } from "@/utils/date";
 
 export const Notifications: React.FC = () => {
-  const [notificationsMenuOpen] = headerStore.use("notificationsMenuOpen");
+  const [notificationsMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
 
@@ -43,7 +43,7 @@ export const Notifications: React.FC = () => {
   });
 
   if (notificationsLoading) {
-    return <Skeleton width={200} height={250} />;
+    return <Skeleton width={300} height={250} />;
   }
 
   if (!notificationsData || notificationsData?.unread_list.length === 0) {

@@ -27,12 +27,12 @@ import { getUserId } from "@/lib/utils";
 import { Menu, Skeleton, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDownload } from "@fortawesome/pro-duotone-svg-icons";
-import { headerStore } from "@/stores/HeaderStore";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 export const UserReports: React.FC = () => {
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
-  const [downloadMenuOpen] = headerStore.use("downloadMenuOpen");
+  const [downloadMenuOpen] = useHeaderStore.use("downloadMenuOpen");
 
   // No stale time on this we want it to always be up-to-date
   const { data: userReportData, isLoading: isUserReportDataLoading } = useQuery(

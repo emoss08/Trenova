@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import {
   Container,
   Avatar,
@@ -43,7 +43,7 @@ import { Link } from "react-router-dom";
 import { getUserId } from "@/lib/utils";
 import { useQuery, useQueryClient } from "react-query";
 import { getUserDetails } from "@/requests/UserRequestFactory";
-import { headerStore } from "@/stores/HeaderStore";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -120,7 +120,7 @@ const useStyles = createStyles((theme) => ({
 
 export const HeaderUserMenu: React.FC = () => {
   const { classes, theme } = useStyles();
-  const [headerMenuOpen] = headerStore.use("headerMenuOpen");
+  const [headerMenuOpen] = useHeaderStore.use("headerMenuOpen");
   const queryClient = useQueryClient();
 
   // Get User data
@@ -152,7 +152,7 @@ export const HeaderUserMenu: React.FC = () => {
       <Group position="apart">
         <Burger
           opened={headerMenuOpen}
-          onClick={() => headerStore.set("headerMenuOpen", !headerMenuOpen)}
+          onClick={() => useHeaderStore.set("headerMenuOpen", !headerMenuOpen)}
           className={classes.burger}
           size="sm"
         />
@@ -161,8 +161,8 @@ export const HeaderUserMenu: React.FC = () => {
           width={260}
           position="bottom-end"
           transitionProps={{ transition: "pop-top-right" }}
-          onClose={() => headerStore.set("headerMenuOpen", false)}
-          onOpen={() => headerStore.set("headerMenuOpen", true)}
+          onClose={() => useHeaderStore.set("headerMenuOpen", false)}
+          onOpen={() => useHeaderStore.set("headerMenuOpen", true)}
           withinPortal
         >
           <Menu.Target>

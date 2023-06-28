@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect } from "react";
-import { headerStore } from "@/stores/HeaderStore";
+import { useHeaderStore } from "@/stores/HeaderStore";
 import {
   ActionIcon,
   Button,
@@ -41,7 +41,7 @@ import {
 import axios from "axios";
 import { notifications } from "@mantine/notifications";
 import { useAuthStore } from "@/stores/AuthStore";
-import { WebSocketManager } from "@/utils/utils";
+import { WebSocketManager } from "@/utils/websockets";
 
 const useStyles = createStyles((theme) => ({
   button: {
@@ -70,73 +70,74 @@ const useStyles = createStyles((theme) => ({
 const webSocketManager = new WebSocketManager();
 
 export const UserNotifications: React.FC = () => {
-  const [notificationsMenuOpen] = headerStore.use("notificationsMenuOpen");
+  const [notificationsMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
   const { classes } = useStyles();
 
-  useEffect(() => {
-    if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
-      // Connecting the websocket
-      webSocketManager.connect(
-        "notifications",
-        `${WEB_SOCKET_URL}/notifications/`,
-        {
-          onOpen: () => console.info("Connected to notifications websocket"),
-
-          onMessage: (event: MessageEvent) => {
-            const data = JSON.parse(event.data);
-            console.log("Message from notifications websocket", data);
-
-            queryClient
-              .invalidateQueries(["userNotifications", userId])
-              .then(() => {
-                notifications.show({
-                  title: "New notification",
-                  message: data.description,
-                  color: "blue",
-                  icon: <FontAwesomeIcon icon={faCheck} />,
-                });
-              });
-          },
-
-          onClose: (event: CloseEvent) => {
-            if (event.wasClean) {
-              console.info(
-                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
-              );
-            } else {
-              console.info(
-                "[close] Connection died. Reconnect will be attempted in 1 second."
-              );
-              setTimeout(
-                () =>
-                  webSocketManager.connect(
-                    "notifications",
-                    `${WEB_SOCKET_URL}/notifications/`
-                  ),
-                WEBSOCKET_RETRY_INTERVAL
-              );
-            }
-          },
-
-          onError: (error: Event) => {
-            console.log(`[error] ${error}`);
-          },
-        }
-      );
-    } else if (isAuthenticated && !userId) {
-      webSocketManager.disconnect("notifications");
-    }
-
-    // On component unmount, disconnect the websocket
-    return () => {
-      if (isAuthenticated) {
-        webSocketManager.disconnect("notifications");
-      }
-    };
-  }, [isAuthenticated, userId]); // add dependencies here if necessary
+  // console.log(ENABLE_WEBSOCKETS);
+  // useEffect(() => {
+  //   if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
+  //     // Connecting the websocket
+  //     webSocketManager.connect(
+  //       "notifications",
+  //       `${WEB_SOCKET_URL}/notifications/`,
+  //       {
+  //         onOpen: () => console.info("Connected to notifications websocket"),
+  //
+  //         onMessage: (event: MessageEvent) => {
+  //           const data = JSON.parse(event.data);
+  //           console.log("Message from notifications websocket", data);
+  //
+  //           queryClient
+  //             .invalidateQueries(["userNotifications", userId])
+  //             .then(() => {
+  //               notifications.show({
+  //                 title: "New notification",
+  //                 message: data.description,
+  //                 color: "blue",
+  //                 icon: <FontAwesomeIcon icon={faCheck} />,
+  //               });
+  //             });
+  //         },
+  //
+  //         onClose: (event: CloseEvent) => {
+  //           if (event.wasClean) {
+  //             console.info(
+  //               `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
+  //             );
+  //           } else {
+  //             console.info(
+  //               "[close] Connection died. Reconnect will be attempted in 1 second."
+  //             );
+  //             setTimeout(
+  //               () =>
+  //                 webSocketManager.connect(
+  //                   "notifications",
+  //                   `${WEB_SOCKET_URL}/notifications/`
+  //                 ),
+  //               WEBSOCKET_RETRY_INTERVAL
+  //             );
+  //           }
+  //         },
+  //
+  //         onError: (error: Event) => {
+  //           console.log(`[error] ${error}`);
+  //         },
+  //       }
+  //     );
+  //   } else if (isAuthenticated && !userId) {
+  //     webSocketManager.disconnect("notifications");
+  //   }
+  //
+  //   // On component unmount, disconnect the websocket
+  //   return () => {
+  //     if (isAuthenticated) {
+  //       webSocketManager.disconnect("notifications");
+  //     }
+  //   };
+  // }, [isAuthenticated, userId]); // add dependencies here if necessary
 
   const { data: notificationsData } = useQuery({
     queryKey: ["userNotifications", userId],
@@ -160,7 +161,7 @@ export const UserNotifications: React.FC = () => {
       icon: <FontAwesomeIcon icon={faCheck} />,
     });
     await queryClient.invalidateQueries(["userNotifications", userId]);
-    headerStore.set("notificationsMenuOpen", false);
+    useHeaderStore.set("notificationsMenuOpen", false);
   };
 
   if (!userId) {
@@ -177,7 +178,7 @@ export const UserNotifications: React.FC = () => {
         opened={notificationsMenuOpen}
         trapFocus
         onClose={() => {
-          headerStore.set("notificationsMenuOpen", false);
+          useHeaderStore.set("notificationsMenuOpen", false);
         }}
       >
         <Popover.Target>
@@ -186,7 +187,7 @@ export const UserNotifications: React.FC = () => {
               <ActionIcon
                 className={classes.hoverEffect}
                 onClick={() => {
-                  headerStore.set(
+                  useHeaderStore.set(
                     "notificationsMenuOpen",
                     !notificationsMenuOpen
                   );
@@ -199,7 +200,7 @@ export const UserNotifications: React.FC = () => {
             <ActionIcon
               className={classes.hoverEffect}
               onClick={() => {
-                headerStore.set(
+                useHeaderStore.set(
                   "notificationsMenuOpen",
                   !notificationsMenuOpen
                 );

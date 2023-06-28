@@ -32,7 +32,6 @@ import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { Department, Organization } from "@/types/organization";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
@@ -49,6 +48,8 @@ import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { StateSelect } from "@/components/ui/fields/StateSelect";
 import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
 import { userTableStore } from "@/stores/UserTableStore";
+import { Organization } from "@/types/apps/organization";
+import { Department } from "@/types/apps/organization";
 
 interface CreateUserFormValues {
   organization: string;
@@ -284,7 +285,6 @@ export const CreateUserDrawer: React.FC = () => {
                           "profile.organization",
                           form.values.organization
                         );
-                        console.info(form.values.organization);
                       }}
                       withAsterisk
                     />

@@ -20,12 +20,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDisplay, faMoon, faSun } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
-import { headerStore } from "@/stores/HeaderStore";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 export const ThemeSwitcher: React.FC = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { classes } = useHeaderStyles();
-  const [themeSwitcherOpen] = headerStore.use("themeSwitcherOpen");
+  const [themeSwitcherOpen] = useHeaderStore.use("themeSwitcherOpen");
   const getThemeIcon = () => {
     if (colorScheme === "light") {
       return <FontAwesomeIcon icon={faSun} />;
@@ -43,7 +43,7 @@ export const ThemeSwitcher: React.FC = () => {
         width={200}
         opened={themeSwitcherOpen}
         onChange={(changeEvent) => {
-          headerStore.set("themeSwitcherOpen", changeEvent);
+          useHeaderStore.set("themeSwitcherOpen", changeEvent);
         }}
         withinPortal
         withArrow
