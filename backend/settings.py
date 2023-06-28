@@ -307,7 +307,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    "EXCEPTION_HANDLER": "core.exceptions.django_error_handler",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
 }
 
