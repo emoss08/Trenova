@@ -83,19 +83,22 @@ const LoginPage: React.FC = () => {
       );
 
       if (response.status === 200) {
-        localStorage.setItem("mt_user_id", response.data.user_id as string);
-        localStorage.setItem(
+        sessionStorage.setItem("mt_user_id", response.data.user_id as string);
+        sessionStorage.setItem(
           "mt_organization_id",
           response.data.organization_id as string
         );
 
         const userInfo = await getUserDetails(response.data.user_id as string);
-        localStorage.setItem(
+        sessionStorage.setItem(
           "mt_user_permissions",
           JSON.stringify(userInfo.user_permissions)
         );
-        localStorage.setItem("mt_user_groups", JSON.stringify(userInfo.groups));
-        localStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
+        sessionStorage.setItem(
+          "mt_user_groups",
+          JSON.stringify(userInfo.groups)
+        );
+        sessionStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
         setIsAuthenticated(true);
       }
     } catch (error: any) {

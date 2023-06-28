@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Text, Card, Flex } from "@mantine/core";
+import { Card, Flex } from "@mantine/core";
 import { UsersAdminTable } from "@/components/user-management/table/UserTable";
 import { usePageStyles } from "@/styles/PageStyles";
 

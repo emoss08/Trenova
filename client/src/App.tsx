@@ -33,6 +33,7 @@ import { ProtectedRoutes } from "./routing/ProtectedRoutes";
 import { useVerifyToken } from "./hooks/withTokenVerification";
 
 function App() {
+  const { isVerifying } = useVerifyToken();
   useVerifyToken();
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mt-color-scheme",
@@ -59,7 +60,7 @@ function App() {
     },
   });
 
-  if (initialLoading) {
+  if (initialLoading || isVerifying) {
     return <LoadingScreen />;
   }
 

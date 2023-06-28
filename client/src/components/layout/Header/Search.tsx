@@ -35,7 +35,7 @@ export const SearchSpotlight: React.FC = () => {
     console.info("Navigating to", path);
     navigate(path);
   };
-  // TODO(WOLFRED): Add permission based actions
+
   // Converting the routes into actions
   const actions: RouteSpotlightAction[] = routes
     .filter((route) => {
@@ -56,6 +56,7 @@ export const SearchSpotlight: React.FC = () => {
       title: route.title,
       group: route.group,
       path: route.path,
+      description: route.description,
       onTrigger: () => onTrigger(route.path),
     }));
 
