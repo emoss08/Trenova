@@ -20,6 +20,7 @@ import React, { useEffect } from "react";
 import { Card, Flex, Text } from "@mantine/core";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
+import { clearUserSessionInfo } from "@/lib/utils";
 
 const LogoutPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
@@ -35,7 +36,7 @@ const LogoutPage: React.FC = () => {
         return;
       }
       axios.post("/logout/").then(() => {
-        sessionStorage.clear();
+        clearUserSessionInfo();
         setIsAuthenticated(false);
         navigate("/login");
       });
