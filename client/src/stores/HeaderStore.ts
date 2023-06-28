@@ -23,7 +23,7 @@ interface HeaderStoreType {
   headerMenuOpen: boolean;
   notificationsMenuOpen: boolean;
 }
-export const headerStore = createGlobalStore<HeaderStoreType>({
+export const useHeaderStore = createGlobalStore<HeaderStoreType>({
   downloadMenuOpen: false,
   themeSwitcherOpen: false,
   headerMenuOpen: false,
