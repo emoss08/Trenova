@@ -82,9 +82,9 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
             return
 
         self.scope["user"] = user_token[0]
-        self.room_group_name = sync_to_async(self.scope["user"].get_username)()
+        self.room_group_name = await sync_to_async(self.scope["user"].get_username)()
         await self.channel_layer.group_add(
-            await self.room_group_name, self.channel_name
+            self.room_group_name, self.channel_name
         )
         await self.accept()
 
