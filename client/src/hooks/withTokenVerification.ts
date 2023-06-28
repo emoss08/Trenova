@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
-import { clearUserSessionInfo, getUserId } from "@/lib/utils";
+import { getUserDetails } from "@/requests/UserRequestFactory";
 
 /**
  * Custom hook to verify the user's token.
@@ -27,34 +27,33 @@ import { clearUserSessionInfo, getUserId } from "@/lib/utils";
  * verify the token. Depending on the result of the request, it updates the authentication status and
  * clears the session storage if necessary. It also manages loading states during the verification process.
  */
-export const useVerifyToken = (): void => {
+export const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
   const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
-
-  // Create a new broadcast channel
-  const broadcast = new BroadcastChannel("sessionSync");
-
-  // When we receive a message on our broadcast channel, update session data
-  broadcast.onmessage = function (event) {
-    sessionStorage.setItem(event.data.key, JSON.stringify(event.data.data));
-  };
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     const verifyToken = async (): Promise<void> => {
-      setInitialLoading(true);
-
-      const userId = getUserId();
-
-      if (!userId) {
-        clearUserSessionInfo();
-        setIsAuthenticated(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        await axios.post("verify_token/");
+        const response = await axios.post("verify_token/");
+        sessionStorage.setItem("mt_user_id", response.data.user_id as string);
+        sessionStorage.setItem(
+          "mt_organization_id",
+          response.data.organization_id as string
+        );
+
+        const userInfo = await getUserDetails(response.data.user_id as string);
+        sessionStorage.setItem(
+          "mt_user_permissions",
+          JSON.stringify(userInfo.user_permissions)
+        );
+        sessionStorage.setItem(
+          "mt_user_groups",
+          JSON.stringify(userInfo.groups)
+        );
+        sessionStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
 
         setIsAuthenticated(true);
       } catch (error) {
@@ -66,7 +65,8 @@ export const useVerifyToken = (): void => {
     };
 
     verifyToken().then(() => {
-      setInitialLoading(false);
+      setIsVerifying(false);
     });
   }, [setIsAuthenticated, setLoading, setInitialLoading]);
+  return { isVerifying };
 };

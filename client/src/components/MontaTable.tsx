@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { API_URL } from "@/utils/utils";
 import React from "react";
 import { MantineReactTable, MRT_ColumnDef } from "mantine-react-table";
 import { useQuery } from "react-query";
@@ -23,6 +22,7 @@ import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { ApiResponse } from "@/types/server";
 import { DeleteRecordModal } from "@/components/DeleteRecordModal";
+import { API_URL } from "@/lib/utils";
 
 interface MontaTableProps<T extends Record<string, any>> {
   store: any;

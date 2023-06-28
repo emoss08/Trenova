@@ -26,6 +26,9 @@ export const WEBSOCKET_RETRY_INTERVAL = import.meta.env
   .VITE_WEBSOCKET_RETRY_INTERVAL;
 export const ENABLE_WEBSOCKETS = import.meta.env.VITE_ENABLE_WEBSOCKETS;
 
+// Api constants
+export const API_URL = import.meta.env.VITE_API_URL as string;
+
 /**
  * Retrieves the CSRF token from the user's cookies.
  * @returns The CSRF token, or undefined if it was not found.
@@ -48,20 +51,8 @@ export const getUserCSRFToken = (): string | undefined => {
  * @returns The item from session storage, parsed as JSON, or null if it was not found.
  */
 export const getSessionItem = (key: string): any => {
-  const item = localStorage.getItem(key);
+  const item = sessionStorage.getItem(key);
   return item ? JSON.parse(item) : null;
-};
-
-/**
- * Removes all user session info from localStorage.
- * @returns void
- */
-export const clearUserSessionInfo = (): void => {
-  localStorage.removeItem("mt_user_id");
-  localStorage.removeItem("mt_organization_id");
-  localStorage.removeItem("mt_user_permissions");
-  localStorage.removeItem("mt_user_groups");
-  localStorage.removeItem("mt_is_admin");
 };
 
 /**
@@ -69,7 +60,7 @@ export const clearUserSessionInfo = (): void => {
  * @returns The user's ID, or null if it was not found.
  */
 export const getUserId = (): string | null => {
-  const userId = localStorage.getItem(USER_ID_KEY);
+  const userId = sessionStorage.getItem(USER_ID_KEY);
   if (userId) {
     return userId;
   }
@@ -81,9 +72,26 @@ export const getUserId = (): string | null => {
  * @returns The organization's ID, or null if it was not found.
  */
 export const getUserOrganizationId = (): string | null => {
-  const userOrganization = localStorage.getItem(ORGANIZATION_ID_KEY);
+  const userOrganization = sessionStorage.getItem(ORGANIZATION_ID_KEY);
   if (userOrganization) {
     return userOrganization;
   }
   return null;
 };
+
+/**
+ * Transforms the first character of the provided string to upper case.
+ * @param str - The string to be transformed.
+ * @returns A new string with the first character in upper case and the rest of the string unchanged.
+ */
+export function upperFirst(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+export function clearAllCookies() {
+  const cookies = document.cookie.split(";");
+  cookies.forEach((cookie) => {
+    const name = cookie.split("=")[0].trim();
+    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  });
+}

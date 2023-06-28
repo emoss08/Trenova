@@ -36,6 +36,7 @@ export type RouteObjectWithPermission = RouteObject & {
   group: string;
   subMenu?: string;
   path: string;
+  description?: string;
   excludeFromMenu?: boolean;
   permission?: string;
 };
@@ -45,6 +46,7 @@ export const routes: RouteObjectWithPermission[] = [
     title: "Home",
     group: "main",
     path: "/",
+    description: "Get to the main page",
     element: <HomePage />,
   },
   // Authentication Pages
@@ -75,6 +77,7 @@ export const routes: RouteObjectWithPermission[] = [
     group: "admin",
     subMenu: "users",
     path: "/admin/users",
+    description: "Manage users and their permissions",
     element: <UserManagementPage />,
     permission: "admin.users.view",
   },
@@ -91,6 +94,7 @@ export const routes: RouteObjectWithPermission[] = [
     group: "accounting",
     subMenu: "configuration files",
     path: "/accounting/division-codes",
+    description: "Manage division codes",
     element: <DivisionCodesPage />,
     permission: "view_divisioncode",
   },

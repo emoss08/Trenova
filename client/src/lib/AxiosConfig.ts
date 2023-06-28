@@ -16,9 +16,7 @@
  */
 
 import axios from "axios";
-import { USER_ID_KEY } from "@/lib/utils";
-
-const API_URL = import.meta.env.VITE_API_URL as string;
+import { API_URL, USER_ID_KEY } from "@/lib/utils";
 
 /**
  * Axios request interceptor.

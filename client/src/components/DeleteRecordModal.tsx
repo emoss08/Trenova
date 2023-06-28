@@ -22,7 +22,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { notifications } from "@mantine/notifications";
 import { Box, Button, Modal, Text } from "@mantine/core";
-import { API_URL } from "@/utils/utils";
+import { API_URL } from "@/lib/utils";
 
 export interface DeleteRecordModalProps<T extends { id: string }> {
   link: string;
