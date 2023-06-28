@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from rest_framework import serializers
 
 from accounting import models
 from utils.serializers import GenericSerializer
@@ -74,6 +75,59 @@ class DivisionCodeSerializer(GenericSerializer):
     It also defines the fields that should be included in the serialized
     representation of the model.
     """
+
+    def validate(self, attrs):
+        self._validate_unique_code_organization(attrs)
+        self._validate_account_classification(
+            attrs,
+            "cash_account",
+            models.GeneralLedgerAccount.AccountClassificationChoices.CASH,
+            "cash",
+        )
+        self._validate_account_type(
+            attrs,
+            "expense_account",
+            models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE,
+            "expense",
+        )
+        self._validate_account_classification(
+            attrs,
+            "ap_account",
+            models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
+            "accounts payable",
+        )
+
+        return attrs
+
+    def _validate_unique_code_organization(self, attrs):
+        code = attrs.get("code")
+        division_codes = models.DivisionCode.objects.filter(
+            code=code, organization=self.get_organization
+        ).exclude(pk=self.instance.pk if self.instance else None)
+        if division_codes:
+            raise serializers.ValidationError(
+                {"code": "Division code already exists. Please try again."}
+            )
+
+    def _validate_account_classification(
+        self, attrs, account_key, expected_classification, account_name
+    ):
+        account = attrs.get(account_key)
+        if account and account.account_classification != expected_classification:
+            raise serializers.ValidationError(
+                {
+                    account_key: f"Entered account is not a {account_name} account. Please try again."
+                }
+            )
+
+    def _validate_account_type(self, attrs, account_key, expected_type, account_name):
+        account = attrs.get(account_key)
+        if account and account.account_type != expected_type:
+            raise serializers.ValidationError(
+                {
+                    account_key: f"Entered account is not an {account_name} account. Please try again."
+                }
+            )
 
     class Meta:
         """Metaclass for DivisionCodeSerializer
