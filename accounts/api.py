@@ -17,6 +17,7 @@
 from datetime import timedelta
 from typing import Any
 
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
 from django.middleware import csrf
@@ -283,9 +284,12 @@ class TokenVerifyView(views.APIView):
             )  # set expires to 1 day from now
             token_obj.save()
 
-            res = response.Response(
-                {"detail": "Token verified"}, status=status.HTTP_200_OK
-            )
+            data = {
+                "user_id": token_obj.user_id,
+                "organization_id": token_obj.user.organization_id,  # type: ignore
+            }
+
+            res = response.Response(data, status=status.HTTP_200_OK)
 
             # Set the token in the cookies again
             res.set_cookie(
@@ -320,11 +324,13 @@ class TokenProvisionView(ObtainAuthToken):
             token.delete()
             token = models.Token.objects.create(user=user)
 
-        user.online = True
-        user.last_login = timezone.now()
-        user.save()
+        if user.is_active:
+            print("Logging active user in ... User: ", user)
+            login(request, user)
+            user.online = True
+            user.last_login = timezone.now()
+            user.save()
 
-        res.set_cookie("csrftoken", csrf.get_token(request))
         res.set_cookie(
             key="auth_token",
             value=token.key,
@@ -337,7 +343,6 @@ class TokenProvisionView(ObtainAuthToken):
         csrf.get_token(request)
 
         res.data = {
-            "token": token.key,
             "user_id": user.id,
             "organization_id": user.organization_id,
         }
@@ -367,7 +372,13 @@ class UserLogoutView(views.APIView):
 
         user = request.user
 
-        user.online = False  # type: ignore
-        user.save()
+        if user.is_authenticated:
+            print("logging authenticated user out, User: ", user)
+            logout(request)
+            user.online = False  # type: ignore
+            user.save()
 
-        return response.Response(status=status.HTTP_204_NO_CONTENT)
+        res = response.Response(status=status.HTTP_200_OK)
+        res.delete_cookie("auth_token")
+
+        return res
