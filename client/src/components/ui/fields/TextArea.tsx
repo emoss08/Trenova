@@ -15,11 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ValidatedTextInputProps } from "@/types/fields";
-import { createStyles } from "@mantine/styles";
-import { Select, SelectItemProps, Text } from "@mantine/core";
+import React from "react";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import React, { forwardRef } from "react";
+import { createStyles } from "@mantine/styles";
+import { ValidatedTextInputProps } from "@/types/fields";
+import { Textarea } from "@mantine/core";
 
 const useStyles = createStyles((theme) => {
   return {
@@ -35,45 +35,24 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export interface ValidatedSelectInputProps<
-  TFormValues extends Record<string, unknown>
-> extends ValidatedTextInputProps<TFormValues> {
-  data: SelectItemProps[];
-  clearable?: boolean;
-}
-
-const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ label, value, ...others }: SelectItemProps, ref) => (
-    <div ref={ref} {...others}>
-      <Text size="sm">{label}</Text>
-    </div>
-  )
-);
-
-export const SelectInput = <TFormValues extends Record<string, unknown>>({
+export const ValidatedTextArea = <TFormValues extends Record<string, unknown>>({
   form,
-  data,
   name,
   ...rest
-}: ValidatedSelectInputProps<TFormValues>) => {
+}: ValidatedTextInputProps<TFormValues>) => {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
   return (
-    <Select
+    <Textarea
       {...rest}
       {...form.getInputProps(name as string)}
-      data={data}
       error={error}
-      maxDropdownHeight={200}
-      nothingFound={"Nothing found"}
-      itemComponent={SelectItem}
       classNames={{
         input: error ? classes.invalid : "",
       }}
-      filter={(value, item: any) =>
-        item.label.toLowerCase().includes(value.toLowerCase().trim())
-      }
+      autosize
+      minRows={2}
       rightSection={
         error && (
           <IconAlertTriangle
@@ -83,8 +62,6 @@ export const SelectInput = <TFormValues extends Record<string, unknown>>({
           />
         )
       }
-      searchable
-      clearable={rest.clearable ?? true}
     />
   );
 };

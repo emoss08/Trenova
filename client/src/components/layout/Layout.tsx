@@ -38,7 +38,8 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
         header={<HeaderMegaMenu />}
       >
         <Container size="xl">
-          {/*<Breadcrumb />*/}
+          <Breadcrumb />
+          {/*{shouldRenderBreadcrumbs && <Breadcrumb />}*/}
           {children}
         </Container>
       </AppShell>

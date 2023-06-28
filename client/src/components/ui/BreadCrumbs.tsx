@@ -18,28 +18,32 @@ import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { routes } from "@/routing/AppRoutes";
 import { Text, Flex, Skeleton } from "@mantine/core";
-import { upperFirst } from "@/utils/utils";
 import { pathToRegexp } from "path-to-regexp";
 import { usePageStyles } from "@/styles/PageStyles";
-import { breadcrumbStore } from "@/stores/BreadcrumbStore";
+import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
+import { upperFirst } from "@/lib/utils";
 
 export function Breadcrumb() {
   const location = useLocation();
-  const [currentRoute] = breadcrumbStore.use("currentRoute");
-  const [loading] = breadcrumbStore.use("loading");
+  const [currentRoute] = useBreadcrumbStore.use("currentRoute");
+  const [loading] = useBreadcrumbStore.use("loading");
   const { classes } = usePageStyles();
 
   useEffect(() => {
-    breadcrumbStore.set("loading", true);
+    useBreadcrumbStore.set("loading", true);
     const route = routes.find((route) => {
+      if (route.path === "*") {
+        return false;
+      }
+
       const re = pathToRegexp(route.path);
       return re.test(location.pathname);
     });
 
     if (route) {
-      breadcrumbStore.set("currentRoute", route);
+      useBreadcrumbStore.set("currentRoute", route);
     }
-    breadcrumbStore.set("loading", false);
+    useBreadcrumbStore.set("loading", false);
   }, [location.pathname]);
 
   useEffect(() => {

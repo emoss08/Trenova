@@ -56,8 +56,8 @@ const useStyles = createStyles((theme) => {
 export const ViewUserModal: React.FC = () => {
   const { classes } = useStyles();
   const [showViewUserModalOpen, setViewUserModalOpen] =
-    userTableStore.use("viewUserModalOpen");
-  const [user] = userTableStore.use("selectedUser");
+    userTableStore.use("viewModalOpen");
+  const [user] = userTableStore.use("selectedRecord");
 
   const queryClient = useQueryClient();
 

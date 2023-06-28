@@ -15,26 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { MontaTable } from "@/components/MontaTable";
-import { DCTableTopToolbar } from "@/components/division-codes/table/DCTableTopToolbar";
-import { ExportDCModal } from "@/components/division-codes/table/ExportDCModal";
-import { DCTableColumns } from "@/components/division-codes/table/DCTableColumns";
-import { CreateDCDrawer } from "@/components/division-codes/table/CreateDCDrawer";
+import axios from "@/lib/AxiosConfig";
+import { DivisionCode, GeneralLedgerAccount } from "@/types/apps/accounting";
 
-export const DivisionCodeTable = () => {
-  return (
-    <MontaTable
-      store={divisionCodeTableStore}
-      link="/division_codes"
-      columns={DCTableColumns}
-      TableTopToolbar={DCTableTopToolbar}
-      TableExportModal={ExportDCModal}
-      displayDeleteModal={true}
-      TableCreateDrawer={CreateDCDrawer}
-      queryKey="division-code-table-data"
-      queryKey2="division-codes"
-    />
-  );
-};
+/**
+ * Fetches division codes from the server.
+ * @returns A promise that resolves to an array of division codes.
+ */
+export async function getDivisionCodes(): Promise<DivisionCode[]> {
+  const response = await axios.get("/division-codes/");
+  return response.data.results;
+}
+
+/**
+ * Fetches general ledger accounts from the server.
+ * @returns A promise that resolves to an array of general ledger accounts.
+ */
+export async function getGLAccounts(): Promise<GeneralLedgerAccount[]> {
+  const response = await axios.get("/gl_accounts/");
+  return response.data.results;
+}
