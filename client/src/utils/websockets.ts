@@ -15,8 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export const API_URL = import.meta.env.VITE_API_URL as string;
-
 type WebSocketEventHandlers = {
   onOpen?: (event: Event) => void;
   onMessage?: (event: MessageEvent) => void;
@@ -179,13 +177,4 @@ export class WebSocketManager {
   has(id: string) {
     return this.connections.has(id);
   }
-}
-
-/**
- * Transforms the first character of the provided string to upper case.
- * @param str - The string to be transformed.
- * @returns A new string with the first character in upper case and the rest of the string unchanged.
- */
-export function upperFirst(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
