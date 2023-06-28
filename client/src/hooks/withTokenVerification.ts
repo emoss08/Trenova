@@ -18,7 +18,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/lib/AxiosConfig";
-import { getUserId } from "@/lib/utils";
+import { clearUserSessionInfo, getUserId } from "@/lib/utils";
 
 /**
  * Custom hook to verify the user's token.
@@ -31,6 +31,15 @@ export const useVerifyToken = (): void => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
   const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
+
+  // Create a new broadcast channel
+  const broadcast = new BroadcastChannel("sessionSync");
+
+  // When we receive a message on our broadcast channel, update session data
+  broadcast.onmessage = function (event) {
+    sessionStorage.setItem(event.data.key, JSON.stringify(event.data.data));
+  };
+
   useEffect(() => {
     const verifyToken = async (): Promise<void> => {
       setInitialLoading(true);
@@ -38,7 +47,7 @@ export const useVerifyToken = (): void => {
       const userId = getUserId();
 
       if (!userId) {
-        sessionStorage.clear();
+        clearUserSessionInfo();
         setIsAuthenticated(false);
         return;
       }
@@ -46,6 +55,7 @@ export const useVerifyToken = (): void => {
       try {
         setLoading(true);
         await axios.post("verify_token/");
+
         setIsAuthenticated(true);
       } catch (error) {
         sessionStorage.clear();

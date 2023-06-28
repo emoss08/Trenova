@@ -48,8 +48,20 @@ export const getUserCSRFToken = (): string | undefined => {
  * @returns The item from session storage, parsed as JSON, or null if it was not found.
  */
 export const getSessionItem = (key: string): any => {
-  const item = sessionStorage.getItem(key);
+  const item = localStorage.getItem(key);
   return item ? JSON.parse(item) : null;
+};
+
+/**
+ * Removes all user session info from localStorage.
+ * @returns void
+ */
+export const clearUserSessionInfo = (): void => {
+  localStorage.removeItem("mt_user_id");
+  localStorage.removeItem("mt_organization_id");
+  localStorage.removeItem("mt_user_permissions");
+  localStorage.removeItem("mt_user_groups");
+  localStorage.removeItem("mt_is_admin");
 };
 
 /**
@@ -57,7 +69,7 @@ export const getSessionItem = (key: string): any => {
  * @returns The user's ID, or null if it was not found.
  */
 export const getUserId = (): string | null => {
-  const userId = sessionStorage.getItem(USER_ID_KEY);
+  const userId = localStorage.getItem(USER_ID_KEY);
   if (userId) {
     return userId;
   }
@@ -69,7 +81,7 @@ export const getUserId = (): string | null => {
  * @returns The organization's ID, or null if it was not found.
  */
 export const getUserOrganizationId = (): string | null => {
-  const userOrganization = sessionStorage.getItem(ORGANIZATION_ID_KEY);
+  const userOrganization = localStorage.getItem(ORGANIZATION_ID_KEY);
   if (userOrganization) {
     return userOrganization;
   }
