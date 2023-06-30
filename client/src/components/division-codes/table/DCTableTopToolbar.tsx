@@ -21,6 +21,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFileExport,
   faFilters,
+  faPlus,
   faUserPlus,
 } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
@@ -122,7 +123,7 @@ export const DCTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
           <Button
             color="blue"
             onClick={() => divisionCodeTableStore.set("createModalOpen", true)}
-            leftIcon={<FontAwesomeIcon icon={faUserPlus} />}
+            leftIcon={<FontAwesomeIcon icon={faPlus} />}
           >
             Add Division Code
           </Button>

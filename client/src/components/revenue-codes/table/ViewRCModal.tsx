@@ -15,23 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { revenueCodeTableStore } from "@/stores/AccountingStores";
+import { useQuery, useQueryClient } from "react-query";
+import {
+  getGLAccounts,
+  getRevenueCodeDetail,
+} from "@/requests/AccountingRequestFactory";
+import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { Modal, Skeleton, Stack } from "@mantine/core";
 import React from "react";
-import { useQuery, useQueryClient } from "react-query";
-import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { CreateDCModalForm } from "@/components/division-codes/table/_Partials/CreateDCModalForm";
+import { ViewRCModalForm } from "./_Partials/ViewRCModalForm";
 
-export const CreateDCModal: React.FC = () => {
-  const [showCreateModal, setShowCreateModal] =
-    divisionCodeTableStore.use("createModalOpen");
+export const ViewRCModal: React.FC = () => {
+  const [showViewModal, setShowViewModal] =
+    revenueCodeTableStore.use("viewModalOpen");
+  const [revenueCode] = revenueCodeTableStore.use("selectedRecord");
   const queryClient = useQueryClient();
 
   const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
-    enabled: showCreateModal,
+    enabled: showViewModal,
     initialData: () => {
       return queryClient.getQueryData("gl-account");
     },
@@ -44,26 +48,48 @@ export const CreateDCModal: React.FC = () => {
       label: glAccount.account_number,
     })) || [];
 
-  if (!showCreateModal) return null;
+  const { data: revenueCodeData, isLoading: isRevenueCodeDataLoading } =
+    useQuery({
+      queryKey: ["revenueCode", revenueCode?.id],
+      queryFn: () => {
+        if (!revenueCode) {
+          return Promise.resolve(null);
+        }
+        return getRevenueCodeDetail(revenueCode.id);
+      },
+      enabled: showViewModal,
+      initialData: () => {
+        return queryClient.getQueryData(["revenueCode", revenueCode?.id]);
+      },
+      staleTime: Infinity, // Never refetch
+    });
+
+  if (!showViewModal) return null;
+
+  const isDataLoading = isRevenueCodeDataLoading || isGLAccountDataLoading;
 
   return (
-    <Modal.Root
-      opened={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
-    >
+    <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Create Division Code</Modal.Title>
+          <Modal.Title>View Revenue Code</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isGLAccountDataLoading ? (
+          {isDataLoading ? (
             <Stack>
               <Skeleton height={400} />
             </Stack>
           ) : (
-            <CreateDCModalForm selectGlAccountData={selectGlAccountData} />
+            <>
+              {revenueCodeData && (
+                <ViewRCModalForm
+                  revenueCode={revenueCodeData}
+                  selectGlAccountData={selectGlAccountData}
+                />
+              )}
+            </>
           )}
         </Modal.Body>
       </Modal.Content>

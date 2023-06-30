@@ -18,16 +18,10 @@
 import React from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { DivisionCode } from "@/types/apps/accounting";
-import { Badge, Button, Menu } from "@mantine/core";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
-import {
-  faUser,
-  faUserGear,
-  faUserMinus,
-} from "@fortawesome/pro-duotone-svg-icons";
+import { Badge } from "@mantine/core";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { SelectItem } from "@/components/ui/fields/SelectInput";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
   return [
@@ -66,51 +60,11 @@ export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
       id: "actions",
       header: "Actions",
       Cell: ({ row }) => (
-        <>
-          <Menu width={200} shadow="md" withArrow offset={5} position="bottom">
-            <Menu.Target>
-              <Button
-                variant="light"
-                color="gray"
-                size="xs"
-                rightIcon={<FontAwesomeIcon icon={faChevronDown} size="sm" />}
-              >
-                Actions
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>Division Actions</Menu.Label>
-              <Menu.Item
-                icon={<FontAwesomeIcon icon={faUser} />}
-                onClick={() => {
-                  divisionCodeTableStore.set("selectedRecord", row.original);
-                  divisionCodeTableStore.set("viewModalOpen", true);
-                }}
-              >
-                View Division Code
-              </Menu.Item>
-              <Menu.Item
-                icon={<FontAwesomeIcon icon={faUserGear} />}
-                onClick={() => {
-                  divisionCodeTableStore.set("selectedRecord", row.original);
-                  divisionCodeTableStore.set("editModalOpen", true);
-                }}
-              >
-                Edit Division Code
-              </Menu.Item>
-              <Menu.Item
-                color="red"
-                icon={<FontAwesomeIcon icon={faUserMinus} />}
-                onClick={() => {
-                  divisionCodeTableStore.set("selectedRecord", row.original);
-                  divisionCodeTableStore.set("deleteModalOpen", true);
-                }}
-              >
-                Delete Division Code
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </>
+        <MontaTableActionMenu
+          store={divisionCodeTableStore}
+          name="Division Code"
+          data={row.original}
+        />
       ),
     },
   ];

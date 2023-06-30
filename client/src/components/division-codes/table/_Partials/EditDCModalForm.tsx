@@ -148,8 +148,6 @@ export const EditDCModalForm: React.FC<Props> = ({
     expense_account: Yup.string().notRequired(),
   });
 
-  console.log("Division Code in EditDCModalForm: ", divisionCode);
-
   const form = useForm<EditDivisionCodeFormValues>({
     validate: yupResolver(editDivisionCodeSchema),
     initialValues: {

@@ -88,6 +88,11 @@ export function upperFirst(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/**
+ * Clears all cookies from the browser.
+ * @returns void
+ * @see https://stackoverflow.com/a/179514
+ */
 export function clearAllCookies() {
   const cookies = document.cookie.split(";");
   cookies.forEach((cookie) => {
@@ -100,3 +105,13 @@ export const statusChoices = [
   { value: "A", label: "Active" },
   { value: "I", label: "Inactive" },
 ];
+
+/**
+ * Truncates the provided text to the specified limit.
+ * @param text
+ * @param limit
+ * @returns The truncated text.
+ */
+export function truncateText(text: string, limit: number): string {
+  return text.length > limit ? text.substring(0, limit) + "..." : text;
+}

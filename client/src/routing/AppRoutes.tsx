@@ -28,6 +28,7 @@ const UserManagementPage = lazy(
 const DivisionCodesPage = lazy(
   () => import("../pages/accounting/DivisionCodes")
 );
+const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
 
@@ -97,6 +98,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage division codes",
     element: <DivisionCodesPage />,
     permission: "view_divisioncode",
+  },
+  {
+    title: "Revenue Codes",
+    group: "accounting",
+    subMenu: "configuration files",
+    path: "/accounting/revenue-codes",
+    description: "Manage revenue codes",
+    element: <RevenueCodesPage />,
+    permission: "view_revenuecode",
   },
   // Error Page
   {

@@ -30,7 +30,7 @@ export type DivisionCode = {
 
 export type GeneralLedgerAccount = {
   id: string;
-  organization_id: string;
+  organization: string;
   is_active: boolean;
   account_number: string;
   description: string;
@@ -38,4 +38,13 @@ export type GeneralLedgerAccount = {
   cash_flow_type: string;
   account_sub_type: string;
   account_classification: string;
+};
+
+export type RevenueCode = {
+  id: string;
+  organization: string;
+  code: string;
+  description: string;
+  expense_account: string;
+  revenue_account: string;
 };

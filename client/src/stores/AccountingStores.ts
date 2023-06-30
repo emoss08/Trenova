@@ -17,7 +17,7 @@
 
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
-import { DivisionCode } from "@/types/apps/accounting";
+import { DivisionCode, RevenueCode } from "@/types/apps/accounting";
 
 interface DivisionCodeTableStoreProps extends TableStoreProps<DivisionCode> {
   createModalOpen: boolean;
@@ -25,6 +25,29 @@ interface DivisionCodeTableStoreProps extends TableStoreProps<DivisionCode> {
 
 export const divisionCodeTableStore =
   createGlobalStore<DivisionCodeTableStoreProps>({
+    pagination: {
+      pageIndex: 0,
+      pageSize: 10,
+    },
+    viewModalOpen: false,
+    editModalOpen: false,
+    selectedRecord: null,
+    globalFilter: "",
+    drawerOpen: false,
+    exportModalOpen: false,
+    deleteModalOpen: false,
+    createModalOpen: false,
+    columnFilters: false,
+    rowSelection: {},
+    errorCount: 0,
+  });
+
+interface RevenueCodeTableStoreProps extends TableStoreProps<RevenueCode> {
+  createModalOpen: boolean;
+}
+
+export const revenueCodeTableStore =
+  createGlobalStore<RevenueCodeTableStoreProps>({
     pagination: {
       pageIndex: 0,
       pageSize: 10,
