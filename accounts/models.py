@@ -124,6 +124,7 @@ class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):  # type: igno
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
+        null=True,
     )
     department = models.ForeignKey(
         "organization.Department",
