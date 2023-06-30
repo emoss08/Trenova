@@ -21,6 +21,11 @@ import { Select, SelectItemProps, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import React, { forwardRef } from "react";
 
+export type SelectItem = {
+  value: string;
+  label: string;
+};
+
 const useStyles = createStyles((theme) => {
   return {
     invalid: {
@@ -35,10 +40,9 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export interface ValidatedSelectInputProps<
-  TFormValues extends Record<string, unknown>
-> extends ValidatedTextInputProps<TFormValues> {
-  data: SelectItemProps[];
+export interface ValidatedSelectInputProps<TFormValues extends object>
+  extends ValidatedTextInputProps<TFormValues> {
+  data: SelectItem[];
   clearable?: boolean;
 }
 
@@ -50,10 +54,12 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
   )
 );
 
-export const SelectInput = <TFormValues extends Record<string, unknown>>({
+export const SelectInput = <TFormValues extends object>({
   form,
   data,
   name,
+  value,
+  onContextMenu,
   ...rest
 }: ValidatedSelectInputProps<TFormValues>) => {
   const { classes } = useStyles();
@@ -85,6 +91,7 @@ export const SelectInput = <TFormValues extends Record<string, unknown>>({
       }
       searchable
       clearable={rest.clearable ?? true}
+      onContextMenu={onContextMenu}
     />
   );
 };

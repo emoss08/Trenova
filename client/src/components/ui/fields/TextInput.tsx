@@ -35,11 +35,11 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedTextInput = <
-  TFormValues extends Record<string, unknown>
->({
+export const ValidatedTextInput = <TFormValues extends object>({
   form,
   name,
+  className,
+  onContextMenu,
   ...rest
 }: ValidatedTextInputProps<TFormValues>) => {
   const { classes } = useStyles();
@@ -53,6 +53,7 @@ export const ValidatedTextInput = <
       classNames={{
         input: error ? classes.invalid : "",
       }}
+      className={className}
       rightSection={
         error && (
           <IconAlertTriangle
@@ -62,6 +63,7 @@ export const ValidatedTextInput = <
           />
         )
       }
+      onContextMenu={onContextMenu}
     />
   );
 };
