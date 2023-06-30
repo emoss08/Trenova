@@ -101,12 +101,22 @@ ALLOWED_MODELS = {
         "app_label": "accounting",
         "allowed_fields": [
             "organization__name",
-            "is_active",
+            "status",
             "code",
             "description",
             "cash_account__account_number",
             "ap_account__account_number",
             "expense_account__account_number",
+        ],
+    },
+    "RevenueCode": {
+        "app_label": "accounting",
+        "allowed_fields": [
+            "organization__name",
+            "code",
+            "description",
+            "expense_account__account_number",
+            "revenue_account__account_number",
         ],
     },
 }
