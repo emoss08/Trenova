@@ -30,7 +30,7 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.GeneralLedgerAccountSerializer
     queryset = models.GeneralLedgerAccount.objects.all()
     filterset_fields = (
-        "is_active",
+        "status",
         "account_number",
         "account_type",
         "cash_flow_type",
@@ -50,7 +50,7 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
             "account_type",
             "account_sub_type",
             "account_classification",
-            "is_active",
+            "status",
         )
         return queryset
 
@@ -96,7 +96,7 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
     search_fields = ("code", "description")
 
     filterset_fields = (
-        "is_active",
+        "status",
         "cash_account",
         "ap_account",
         "expense_account",
@@ -113,7 +113,7 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
-            "is_active",
+            "status",
             "code",
             "description",
             "organization_id",

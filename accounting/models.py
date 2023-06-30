@@ -25,7 +25,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 class GeneralLedgerAccount(GenericModel):
@@ -93,10 +93,11 @@ class GeneralLedgerAccount(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Active"),
-        default=True,
-        help_text=_("Designates whether this account is active."),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the general ledger account."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     account_number = models.CharField(
         _("Account Number"),
@@ -356,10 +357,11 @@ class DivisionCode(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Active"),
-        default=True,
-        help_text=_("Whether the division code is active."),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the general ledger account."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     code = models.CharField(
         _("Code"),
