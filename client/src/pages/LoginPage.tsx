@@ -28,7 +28,6 @@ import {
   Button,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
-import { LoginFormValues } from "@/types/login";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
@@ -40,6 +39,11 @@ import axios from "@/lib/AxiosConfig";
 import { ValidatedPasswordInput } from "@/components/ui/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { getUserCSRFToken } from "@/lib/utils";
+
+interface LoginFormValues {
+  username: string;
+  password: string;
+}
 
 const LoginPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
