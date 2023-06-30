@@ -325,7 +325,6 @@ class TokenProvisionView(ObtainAuthToken):
             token = models.Token.objects.create(user=user)
 
         if user.is_active:
-            print("Logging active user in ... User: ", user)
             login(request, user)
             user.online = True
             user.last_login = timezone.now()
@@ -373,7 +372,6 @@ class UserLogoutView(views.APIView):
         user = request.user
 
         if user.is_authenticated:
-            print("logging authenticated user out, User: ", user)
             logout(request)
             user.online = False  # type: ignore
             user.save()
