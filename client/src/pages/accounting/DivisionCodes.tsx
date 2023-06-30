@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Card, Flex, Text } from "@mantine/core";
+import { Card, Flex } from "@mantine/core";
 import React from "react";
 import { usePageStyles } from "@/styles/PageStyles";
-import { DivisionCodeTable } from "@/components/division-codes/table/DivisonCodeTable";
+import { DivisionCodeTable } from "@/components/division-codes/table/DivisionCodeTable";
 
 const DivisionCodes: React.FC = () => {
   const { classes } = usePageStyles();
