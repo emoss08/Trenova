@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { JobTitle } from "@/types/apps/accounts";
+import { GroupType, JobTitle } from "@/types/apps/accounts";
 import { Department, Organization } from "@/types/apps/organization";
 
 /**
@@ -76,4 +76,9 @@ export async function getJobTitles(): Promise<JobTitle[]> {
 export async function getJobTitleDetails(id: string): Promise<JobTitle> {
   const response = await axios.get(`/job_titles/${id}/`);
   return response.data;
+}
+
+export async function getGroups(): Promise<GroupType[]> {
+  const response = await axios.get("/groups/");
+  return response.data.results;
 }
