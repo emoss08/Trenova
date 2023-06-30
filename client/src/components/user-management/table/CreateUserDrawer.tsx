@@ -16,6 +16,7 @@
  */
 
 import {
+  Badge,
   Box,
   Button,
   createStyles,
@@ -23,12 +24,16 @@ import {
   Drawer,
   Group,
   rem,
+  ScrollArea,
   SimpleGrid,
   Skeleton,
   Stack,
+  Tabs,
   Text,
+  TransferList,
+  TransferListData,
 } from "@mantine/core";
-import React from "react";
+import React, { useState } from "react";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
@@ -50,6 +55,10 @@ import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteFi
 import { userTableStore } from "@/stores/UserTableStore";
 import { Organization } from "@/types/apps/organization";
 import { Department } from "@/types/apps/organization";
+import { faUser, faUserShield } from "@fortawesome/pro-duotone-svg-icons";
+import { useContextMenu } from "mantine-contextmenu";
+import { IconCopy, IconNote } from "@tabler/icons-react";
+import { useClipboard } from "@mantine/hooks";
 
 interface CreateUserFormValues {
   organization: string;
@@ -100,27 +109,70 @@ const useStyles = createStyles((theme) => {
   };
 });
 
+const initialValues: TransferListData = [
+  [
+    { value: "react", label: "React" },
+    { value: "ng", label: "Angular" },
+    { value: "next", label: "Next.js" },
+    { value: "blitz", label: "Blitz.js" },
+    { value: "gatsby", label: "Gatsby.js" },
+    { value: "vue", label: "Vue" },
+    { value: "jq", label: "jQuery" },
+  ],
+  [],
+];
+
 export const CreateUserDrawer: React.FC = () => {
   const { classes } = useStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const [checked, setChecked] = React.useState(false);
   const [showCreateUserDrawer, setShowCreateUserDrawer] =
     userTableStore.use("drawerOpen");
+  const [errorCount, setErrorCount] = userTableStore.use("errorCount");
   const queryClient = useQueryClient();
+  const showContextMenu = useContextMenu();
+  const clipboard = useClipboard({ timeout: 500 });
+  const [groupListData, setGroupListData] =
+    useState<TransferListData>(initialValues);
+
+  // const ItemComponent: TransferListItemComponent = ({
+  //   data,
+  //   selected,
+  // }: TransferListItemComponentProps) => (
+  //   <Group noWrap>
+  //     <div style={{ flex: 1 }}>
+  //       <Text size="sm" weight={500}>
+  //         {data.label}
+  //       </Text>
+  //       <Text size="xs" color="dimmed" weight={400}>
+  //         {data.description}
+  //       </Text>
+  //     </div>
+  //     <Checkbox
+  //       checked={selected}
+  //       onChange={() => {}}
+  //       tabIndex={-1}
+  //       sx={{ pointerEvents: "none" }}
+  //     />
+  //   </Group>
+  // );
 
   const mutation = useMutation(
     (values: CreateUserFormValues) => axios.post(`/users/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["user-table-data", "users"]).then(() => {
-          notifications.show({
-            title: "Success",
-            message: "User created successfully",
-            color: "green",
-            withCloseButton: true,
-            icon: <FontAwesomeIcon icon={faCheck} />,
+        queryClient
+          .invalidateQueries(["users-table-data", "users"])
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "User created successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+            setErrorCount(0);
           });
-        });
       },
       onError: (error: any) => {
         const { data } = error.response;
@@ -195,7 +247,11 @@ export const CreateUserDrawer: React.FC = () => {
     mutation.mutate(values);
   };
 
-  const { data: organizationsData, isLoading: isOrganizationsLoading } =
+  if (form.errors && Object.keys(form.errors).length > 0) {
+    setErrorCount(Object.keys(form.errors).length);
+  }
+
+  const { data: organizationsData, isLoading: isOrganizationDataLoading } =
     useQuery({
       queryKey: ["organizations"],
       queryFn: () => getOrganizations(),
@@ -206,46 +262,84 @@ export const CreateUserDrawer: React.FC = () => {
       staleTime: Infinity,
     });
 
-  const { data: departmentsData, isLoading: isDepartmentLoading } = useQuery({
-    queryKey: ["departments"],
-    queryFn: () => getDepartments(),
-    enabled: showCreateUserDrawer,
-    initialData: () => {
-      return queryClient.getQueryData("departments");
-    },
-    staleTime: Infinity,
-  });
+  const { data: departmentsData, isLoading: isDepartmentDataLoading } =
+    useQuery({
+      queryKey: ["departments"],
+      queryFn: () => getDepartments(),
+      enabled: showCreateUserDrawer,
+      initialData: () => {
+        return queryClient.getQueryData("departments");
+      },
+      staleTime: Infinity,
+    });
 
-  const { data: jobTitleData, isLoading: isJobTitleLoading } = useQuery({
-    queryKey: ["job_titles"],
+  const { data: jobTitleData, isLoading: isJobTitleDataLoading } = useQuery({
+    queryKey: ["job-titles"],
     queryFn: () => getJobTitles(),
     enabled: showCreateUserDrawer,
     initialData: () => {
-      return queryClient.getQueryData("job_titles");
+      return queryClient.getQueryData("job-titles");
     },
     staleTime: Infinity,
   });
 
   const isLoading =
-    isDepartmentLoading || isJobTitleLoading || isOrganizationsLoading;
+    isDepartmentDataLoading ||
+    isJobTitleDataLoading ||
+    isOrganizationDataLoading;
 
+  // Department Data mapping
   const selectOrganizationData =
     organizationsData?.map((organization: Organization) => ({
       value: organization.id,
       label: organization.name,
     })) || [];
 
+  const organizationLabel = selectOrganizationData.find(
+    (item) => item.value === form.values.organization
+  )?.label;
+
+  // Department Data mapping
   const selectDepartmentData =
     departmentsData?.map((department: Department) => ({
       value: department.id,
       label: department.name,
     })) || [];
 
+  const departmentLabel = selectDepartmentData.find(
+    (item) => item.value === form.values.department
+  )?.label;
+
+  // Job Title Data mapping
   const selectJobTitleData =
     jobTitleData?.map((job_title: JobTitle) => ({
       value: job_title.id,
       label: job_title.name,
     })) || [];
+
+  const jobTitleLabel = selectJobTitleData.find(
+    (item) => item.value === form.values.profile.job_title
+  )?.label;
+
+  // useEffect(() => {
+  //   if (!isGroupDataLoading && groupData) {
+  //     // Group Data mapping
+  //     const selectGroupData = groupData.map(
+  //       (group: GroupType) =>
+  //         ({
+  //           value: group.id,
+  //           label: upperFirst(group.name),
+  //         } as TransferListItem)
+  //     );
+  //     setGroupListData([selectGroupData, []]);
+  //   }
+  // }, [groupData, isGroupDataLoading]);
+
+  const onClose = () => {
+    form.reset();
+    setShowCreateUserDrawer(false);
+    setErrorCount(0);
+  };
 
   if (!showCreateUserDrawer) return null;
 
@@ -253,8 +347,8 @@ export const CreateUserDrawer: React.FC = () => {
     <>
       <Drawer
         opened={showCreateUserDrawer}
-        onClose={() => setShowCreateUserDrawer(false)}
-        title="Create User"
+        onClose={onClose}
+        title="Add New User"
         size="lg"
       >
         {isLoading ? (
@@ -264,189 +358,331 @@ export const CreateUserDrawer: React.FC = () => {
           </Stack>
         ) : (
           <>
-            <Divider variant="dashed" />
-            <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-              <Box className={classes.div}>
-                <Box mb={20}>
-                  <SimpleGrid
-                    cols={2}
-                    breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+            <Tabs defaultValue="user-info">
+              <Tabs.List>
+                <Tabs.Tab
+                  value="user-info"
+                  icon={<FontAwesomeIcon icon={faUser} size="sm" />}
+                  color={errorCount > 0 ? "red" : "black"}
+                  rightSection={
+                    errorCount > 0 && (
+                      <Badge
+                        w={16}
+                        h={16}
+                        sx={{ pointerEvents: "none" }}
+                        variant="filled"
+                        size="xs"
+                        color="red"
+                        p={0}
+                      >
+                        {errorCount}
+                      </Badge>
+                    )
+                  }
+                >
+                  User Information
+                </Tabs.Tab>
+                <Tabs.Tab
+                  icon={<FontAwesomeIcon icon={faUserShield} size="sm" />}
+                  value="permissions"
+                >
+                  Permissions
+                </Tabs.Tab>
+              </Tabs.List>
+              <form
+                onSubmit={form.onSubmit((values) => {
+                  submitForm(values as CreateUserFormValues);
+                })}
+              >
+                <Tabs.Panel value="user-info" pt="xs">
+                  <ScrollArea h={790} scrollbarSize={5} offsetScrollbars>
+                    <Box className={classes.div} mr={5}>
+                      {/* TODO(WOLFRED: Break form into different component) */}
+                      <Box mb={20}>
+                        <SimpleGrid
+                          cols={2}
+                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                        >
+                          <SelectInput
+                            form={form}
+                            data={selectOrganizationData}
+                            className={classes.fields}
+                            name="organization"
+                            label="Organization"
+                            placeholder="Organization"
+                            variant="filled"
+                            onMouseLeave={() => {
+                              form.setFieldValue(
+                                "profile.organization",
+                                form.values.organization
+                              );
+                            }}
+                            withAsterisk
+                            onContextMenu={
+                              form.values.organization
+                                ? showContextMenu([
+                                    {
+                                      key: "copy",
+                                      icon: <IconCopy size={16} />,
+                                      title: "Copy to clipboard",
+                                      onClick: () => {
+                                        clipboard.copy(organizationLabel);
+                                      },
+                                    },
+                                    {
+                                      key: "view-organization",
+                                      icon: <IconNote size={16} />,
+                                      title: `View Organization: ${organizationLabel}`,
+                                      onClick: () =>
+                                        console.log(
+                                          "ID ",
+                                          form.values.organization
+                                        ),
+                                    },
+                                  ])
+                                : undefined
+                            }
+                          />
+                          <ValidatedTextInput
+                            form={form}
+                            className={classes.fields}
+                            name="username"
+                            label="Username"
+                            placeholder="Username"
+                            variant="filled"
+                            withAsterisk
+                          />
+                        </SimpleGrid>
+                        <SimpleGrid
+                          cols={2}
+                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                          my={5}
+                        >
+                          <ValidatedTextInput
+                            form={form}
+                            className={classes.fields}
+                            name="email"
+                            label="Email"
+                            placeholder="Email"
+                            variant="filled"
+                            withAsterisk
+                          />
+                          <SelectInput
+                            form={form}
+                            data={selectDepartmentData}
+                            className={classes.fields}
+                            name="department"
+                            label="Department"
+                            placeholder="Department"
+                            variant="filled"
+                            onContextMenu={
+                              form.values.department
+                                ? showContextMenu([
+                                    {
+                                      key: "copy",
+                                      icon: <IconCopy size={16} />,
+                                      title: "Copy to clipboard",
+                                      onClick: () => {
+                                        clipboard.copy(form.values.department);
+                                      },
+                                    },
+                                    {
+                                      key: "view-department",
+                                      icon: <IconNote size={16} />,
+                                      title: `View Department: ${departmentLabel}`,
+                                      onClick: () =>
+                                        console.log(
+                                          "ID ",
+                                          form.values.organization
+                                        ),
+                                    },
+                                  ])
+                                : undefined
+                            }
+                          />
+                        </SimpleGrid>
+                        <SwitchInput
+                          form={form}
+                          size="md"
+                          onChange={(event: any) =>
+                            setChecked(event.currentTarget.checked)
+                          }
+                          checked={checked}
+                          name="is_staff"
+                          label="Is User Super Admin?"
+                          description="Enabling this will give the user super admin privileges."
+                        />
+                      </Box>
+                      <Text fz="md">Profile Details</Text>
+                      <Divider m={3} variant="dashed" />
+                      <Box>
+                        <SimpleGrid
+                          cols={2}
+                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                        >
+                          <ValidatedTextInput
+                            form={form}
+                            className={classes.fields}
+                            name="profile.first_name"
+                            label="First Name"
+                            placeholder="First Name"
+                            variant="filled"
+                            withAsterisk
+                          />
+                          <ValidatedTextInput
+                            form={form}
+                            className={classes.fields}
+                            name="profile.last_name"
+                            label="Last Name"
+                            placeholder="Last Name"
+                            variant="filled"
+                            withAsterisk
+                          />
+                        </SimpleGrid>
+                        <SelectInput
+                          form={form}
+                          data={selectJobTitleData}
+                          className={classes.fields}
+                          name="profile.job_title"
+                          label="Job Title"
+                          placeholder="Job Title"
+                          variant="filled"
+                          withAsterisk
+                          onContextMenu={
+                            form.values.profile.job_title
+                              ? showContextMenu([
+                                  {
+                                    key: "copy",
+                                    icon: <IconCopy size={16} />,
+                                    title: "Copy to clipboard",
+                                    onClick: () => {
+                                      clipboard.copy(jobTitleLabel);
+                                    },
+                                  },
+                                  {
+                                    key: "view-job-title",
+                                    icon: <IconNote size={16} />,
+                                    title: `View Job Title: ${jobTitleLabel}`,
+                                    onClick: () =>
+                                      console.log(
+                                        "ID ",
+                                        form.values.profile.job_title
+                                      ),
+                                  },
+                                ])
+                              : undefined
+                          }
+                        />
+                        <SimpleGrid
+                          cols={2}
+                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                        >
+                          <ValidatedTextInput
+                            form={form}
+                            className={classes.fields}
+                            name="profile.address_line_1"
+                            label="Address Line 1"
+                            placeholder="Address Line 1"
+                            variant="filled"
+                            withAsterisk
+                          />
+                          <ValidatedTextInput
+                            form={form}
+                            className={classes.fields}
+                            name="profile.address_line_2"
+                            label="Address Line 2"
+                            placeholder="Address Line 2"
+                            variant="filled"
+                          />
+                        </SimpleGrid>
+                        <SimpleGrid
+                          cols={2}
+                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                        >
+                          <CityAutoCompleteField
+                            form={form}
+                            stateSelection={form.values.profile.state}
+                            className={classes.fields}
+                            name="profile.city"
+                            label="City"
+                            placeholder="City"
+                            variant="filled"
+                            withAsterisk
+                          />
+                          <StateSelect
+                            label="State"
+                            className={classes.fields}
+                            placeholder="State"
+                            variant="filled"
+                            searchable={true}
+                            form={form}
+                            name="profile.state"
+                            withAsterisk
+                          />
+                        </SimpleGrid>
+                        <ValidatedTextInput
+                          form={form}
+                          className={classes.fields}
+                          name="profile.zip_code"
+                          label="Zip Code"
+                          placeholder="Zip Code"
+                          variant="filled"
+                          withAsterisk
+                        />
+                        <ValidatedTextInput
+                          form={form}
+                          className={classes.fields}
+                          name="profile.phone_number"
+                          label="Phone Number"
+                          placeholder="Phone Number"
+                          variant="filled"
+                        />
+                      </Box>
+                    </Box>
+                  </ScrollArea>
+                </Tabs.Panel>
+                <Tabs.Panel value="permissions" pt="xs">
+                  <ScrollArea h={790} scrollbarSize={5} offsetScrollbars>
+                    {isLoading ? (
+                      <Skeleton height={790} />
+                    ) : (
+                      <TransferList
+                        value={groupListData}
+                        onChange={setGroupListData}
+                        searchPlaceholder="Search..."
+                        nothingFound="Nothing here"
+                        listHeight={300}
+                        titles={["Available groups", "Chosen groups"]}
+                        breakpoint="sm"
+                      />
+                    )}
+                    <Divider my={10} variant="solid" />
+                    <TransferList
+                      value={groupListData}
+                      onChange={setGroupListData}
+                      searchPlaceholder="Search..."
+                      nothingFound="Nothing here"
+                      listHeight={300}
+                      titles={[
+                        "Available user permissions",
+                        "Chosen user permissions",
+                      ]}
+                      breakpoint="sm"
+                    />
+                  </ScrollArea>
+                </Tabs.Panel>
+                <Group position="right" mt="md">
+                  <Button
+                    color="white"
+                    type="submit"
+                    className={classes.control}
+                    loading={loading}
                   >
-                    <SelectInput
-                      form={form}
-                      data={selectOrganizationData}
-                      className={classes.fields}
-                      name="organization"
-                      label="Organization"
-                      placeholder="Organization"
-                      variant="filled"
-                      onMouseLeave={() => {
-                        form.setFieldValue(
-                          "profile.organization",
-                          form.values.organization
-                        );
-                      }}
-                      withAsterisk
-                    />
-                    <ValidatedTextInput
-                      form={form}
-                      className={classes.fields}
-                      name="username"
-                      label="Username"
-                      placeholder="Username"
-                      variant="filled"
-                      withAsterisk
-                    />
-                  </SimpleGrid>
-                  <SimpleGrid
-                    cols={2}
-                    breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                    my={5}
-                  >
-                    <ValidatedTextInput
-                      form={form}
-                      className={classes.fields}
-                      name="email"
-                      label="Email"
-                      placeholder="Email"
-                      variant="filled"
-                      withAsterisk
-                    />
-                    <SelectInput
-                      form={form}
-                      data={selectDepartmentData}
-                      className={classes.fields}
-                      name="department"
-                      label="Department"
-                      placeholder="Department"
-                      variant="filled"
-                    />
-                  </SimpleGrid>
-                  <SwitchInput
-                    form={form}
-                    size="md"
-                    onChange={(event: any) =>
-                      setChecked(event.currentTarget.checked)
-                    }
-                    checked={checked}
-                    name="is_staff"
-                    label="Is User Super Admin?"
-                    description="Enabling this will give the user super admin privileges."
-                  />
-                </Box>
-                <Text fz="md">Profile Details</Text>
-                <Divider m={3} variant="dashed" />
-                <Box>
-                  <SimpleGrid
-                    cols={2}
-                    breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                  >
-                    <ValidatedTextInput
-                      form={form}
-                      className={classes.fields}
-                      name="profile.first_name"
-                      label="First Name"
-                      placeholder="First Name"
-                      variant="filled"
-                      withAsterisk
-                    />
-                    <ValidatedTextInput
-                      form={form}
-                      className={classes.fields}
-                      name="profile.last_name"
-                      label="Last Name"
-                      placeholder="Last Name"
-                      variant="filled"
-                      withAsterisk
-                    />
-                  </SimpleGrid>
-                  <SelectInput
-                    form={form}
-                    data={selectJobTitleData}
-                    className={classes.fields}
-                    name="profile.job_title"
-                    label="Job Title"
-                    placeholder="Job Title"
-                    variant="filled"
-                    withAsterisk
-                  />
-                  <SimpleGrid
-                    cols={2}
-                    breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                  >
-                    <ValidatedTextInput
-                      form={form}
-                      className={classes.fields}
-                      name="profile.address_line_1"
-                      label="Address Line 1"
-                      placeholder="Address Line 1"
-                      variant="filled"
-                      withAsterisk
-                    />
-                    <ValidatedTextInput
-                      form={form}
-                      className={classes.fields}
-                      name="profile.address_line_2"
-                      label="Address Line 2"
-                      placeholder="Address Line 2"
-                      variant="filled"
-                    />
-                  </SimpleGrid>
-                  <SimpleGrid
-                    cols={2}
-                    breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                  >
-                    <CityAutoCompleteField
-                      form={form}
-                      stateSelection={form.values.profile.state}
-                      className={classes.fields}
-                      name="profile.city"
-                      label="City"
-                      placeholder="City"
-                      variant="filled"
-                      withAsterisk
-                    />
-                    <StateSelect
-                      label="State"
-                      className={classes.fields}
-                      placeholder="State"
-                      variant="filled"
-                      searchable={true}
-                      form={form}
-                      name="profile.state"
-                      withAsterisk
-                    />
-                  </SimpleGrid>
-                  <ValidatedTextInput
-                    form={form}
-                    className={classes.fields}
-                    name="profile.zip_code"
-                    label="Zip Code"
-                    placeholder="Zip Code"
-                    variant="filled"
-                    withAsterisk
-                  />
-                  <ValidatedTextInput
-                    form={form}
-                    className={classes.fields}
-                    name="profile.phone_number"
-                    label="Phone Number"
-                    placeholder="Phone Number"
-                    variant="filled"
-                  />
-                  <Group position="right" mt="md">
-                    <Button
-                      color="white"
-                      type="submit"
-                      className={classes.control}
-                      loading={loading}
-                    >
-                      Submit
-                    </Button>
-                  </Group>
-                </Box>
-              </Box>
-            </form>
+                    Submit
+                  </Button>
+                </Group>
+              </form>
+            </Tabs>
           </>
         )}
       </Drawer>
