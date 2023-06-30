@@ -30,6 +30,7 @@ export const divisionCodeTableStore =
       pageSize: 10,
     },
     viewModalOpen: false,
+    editModalOpen: false,
     selectedRecord: null,
     globalFilter: "",
     drawerOpen: false,
@@ -38,4 +39,5 @@ export const divisionCodeTableStore =
     createModalOpen: false,
     columnFilters: false,
     rowSelection: {},
+    errorCount: 0,
   });
