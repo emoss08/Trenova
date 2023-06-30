@@ -35,7 +35,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedTextArea = <TFormValues extends Record<string, unknown>>({
+export const ValidatedTextArea = <TFormValues extends object>({
   form,
   name,
   ...rest

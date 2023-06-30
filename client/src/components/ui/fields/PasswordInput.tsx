@@ -38,7 +38,9 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedPasswordInput = <TFormValues extends object>({
+export const ValidatedPasswordInput = <
+  TFormValues extends Record<string, unknown>
+>({
   form,
   name,
   ...rest
