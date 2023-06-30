@@ -147,6 +147,7 @@ export const UserNotifications: React.FC = () => {
       }
       return getUserNotifications();
     },
+    enabled: notificationsMenuOpen,
     initialData: () => {
       return queryClient.getQueryData(["userNotifications", userId]);
     },
