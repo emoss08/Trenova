@@ -31,6 +31,7 @@ import { useAuthStore } from "./stores/AuthStore";
 import LoadingScreen from "./components/LoadingScreen";
 import { ProtectedRoutes } from "./routing/ProtectedRoutes";
 import { useVerifyToken } from "./hooks/withTokenVerification";
+import { ContextMenuProvider } from "mantine-contextmenu";
 
 function App() {
   const { isVerifying } = useVerifyToken();
@@ -78,15 +79,17 @@ function App() {
           withNormalizeCSS
           withCSSVariables
         >
-          <Notifications limit={3} position="top-right" zIndex={2077} />
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <Suspense fallback={<LoadingScreen />}>
-                <ProtectedRoutes />
-              </Suspense>
-            </BrowserRouter>
-            <ReactQueryDevtools initialIsOpen={false} />
-          </QueryClientProvider>
+          <ContextMenuProvider>
+            <Notifications limit={3} position="top-right" zIndex={2077} />
+            <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                <Suspense fallback={<LoadingScreen />}>
+                  <ProtectedRoutes />
+                </Suspense>
+              </BrowserRouter>
+              <ReactQueryDevtools initialIsOpen={false} />
+            </QueryClientProvider>
+          </ContextMenuProvider>
         </MantineProvider>
       </ColorSchemeProvider>
     </>
