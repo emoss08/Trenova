@@ -25,6 +25,7 @@ export const userTableStore = createGlobalStore<TableStoreProps<User>>({
     pageSize: 10,
   },
   viewModalOpen: false,
+  editModalOpen: false,
   selectedRecord: null,
   globalFilter: "",
   drawerOpen: false,
@@ -32,4 +33,5 @@ export const userTableStore = createGlobalStore<TableStoreProps<User>>({
   deleteModalOpen: false,
   columnFilters: false,
   rowSelection: {},
+  errorCount: 0,
 });
