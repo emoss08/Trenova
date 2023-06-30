@@ -110,3 +110,9 @@ export type UserNotification = {
   unread_count: number;
   unread_list: Notification[];
 };
+
+export type GroupType = {
+  id: string;
+  name: string;
+  codename: string;
+};

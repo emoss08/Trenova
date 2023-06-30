@@ -15,10 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TextInputProps } from "@mantine/core";
+import { UseFormReturnType } from "@mantine/form";
+import { Variants } from "@mantine/core";
+import React from "react";
 
-export interface ValidatedTextInputProps<TFormValues extends object>
-  extends TextInputProps {
-  form: any;
-  name: keyof TFormValues & string;
+// Define a helper type to get nested keys
+// type NestedKeys<T> = {
+//   [K in keyof T]: T[K] extends object ? `${K}.${NestedKeys<T[K]>}` | `${K}` : K;
+// }[keyof T];
+
+export interface ValidatedTextInputProps<TFormValues extends object> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: string;
+  className?: string;
+  label?: string;
+  placeholder?: string;
+  variant: Variants<"unstyled" | "default" | "filled">;
+  onMouseLeave?: () => void;
+  withAsterisk?: boolean;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  type?: string;
 }

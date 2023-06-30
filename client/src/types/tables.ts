@@ -23,6 +23,7 @@ export interface TableStoreProps<T> {
     pageSize: number;
   };
   viewModalOpen: boolean;
+  editModalOpen: boolean;
   selectedRecord: T | null;
   globalFilter: string;
   drawerOpen: boolean;
@@ -30,4 +31,5 @@ export interface TableStoreProps<T> {
   deleteModalOpen: boolean;
   columnFilters: boolean;
   rowSelection: MRT_RowSelectionState;
+  errorCount: number;
 }

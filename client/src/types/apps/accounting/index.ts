@@ -17,15 +17,15 @@
 
 export type DivisionCode = {
   id: string;
-  organization_id: string;
+  organization: string;
   created: string;
   modified: string;
-  is_active: boolean;
+  status: string;
   code: string;
   description: string;
-  ap_account_id: string;
-  cash_account_id: string;
-  expense_account_id: string;
+  ap_account: string;
+  cash_account: string;
+  expense_account: string;
 };
 
 export type GeneralLedgerAccount = {
