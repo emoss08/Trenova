@@ -99,6 +99,16 @@ class DepotViewSet(viewsets.ModelViewSet):
     queryset = models.Depot.objects.all()
 
     def get_queryset(self) -> QuerySet[models.Depot]:
+        """The get_queryset function is used to filter the queryset of all depots
+        to only those that belong to the organization associated with the user making
+        the request. This function also selects related details and limits what fields are returned.
+
+        Args:
+            self: Access the attributes and methods of the class in python
+
+        Returns:
+            Queryset[models.Depot]: A queryset of depot objects
+        """
         queryset: QuerySet[models.Depot] = (
             self.queryset.filter(
                 organization_id=self.request.user.organization_id  # type: ignore
@@ -135,6 +145,17 @@ class DepartmentViewSet(viewsets.ModelViewSet):
     queryset = models.Department.objects.all()
 
     def get_queryset(self) -> QuerySet[models.Department]:
+        """The get_queryset function is used to filter the queryset of departments
+        to only those that belong to the organization of the user making this request.
+        This is done by using a filter on organization_id, which will be set in our
+        serializer's create function.
+
+        Args:
+            self: Access the attributes of the class
+
+        Returns:
+            QuerySet[models.Department]: A queryset
+        """
         queryset: QuerySet[models.Department] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -156,6 +177,17 @@ class EmailProfileViewSet(viewsets.ModelViewSet):
     queryset = models.EmailProfile.objects.all()
 
     def get_queryset(self) -> QuerySet[models.EmailProfile]:
+        """
+        The get_queryset function is used to filter the queryset by organization_id.
+        This is done so that users can only see email profiles for their own organization.
+        The .only() function limits the fields returned in each object of the queryset, which helps with performance.
+
+        Args:
+            self: Refer to the class itself
+
+        Returns:
+            QuerySet[models.EmailProfile]: A queryset of emailprofile objects
+        """
         queryset: QuerySet[models.EmailProfile] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -183,6 +215,17 @@ class EmailControlViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "put", "patch", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.EmailControl]:
+        """The get_queryset function is used to filter the queryset by organization_id.
+        This is done because we want to only return email controls that belong to
+         the user's organization.
+
+
+        Args:
+            self: Access the class attributes and methods
+
+        Returns:
+            QuerySet[models.EmailControl]: A queryset of emailcontrol objects
+        """
         queryset: QuerySet[models.EmailControl] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only("id", "organization_id", "billing_email_profile_id")
@@ -209,6 +252,17 @@ class TaxRateViewSet(viewsets.ModelViewSet):
     queryset = models.TaxRate.objects.all()
 
     def get_queryset(self) -> QuerySet[models.TaxRate]:
+        """
+        The get_queryset function is used to filter the queryset by organization_id.
+        This is done so that users can only see tax rates for their own organization.
+        The .only() function limits the fields returned in each object, which helps with performance.
+
+        Args:
+            self: Access the attributes and methods of the class
+
+        Returns:
+            A queryset[models.TaxRate]: A queryset of tax rate objects
+        """
         queryset: QuerySet[models.TaxRate] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -228,6 +282,17 @@ class TableChangeAlertViewSet(viewsets.ModelViewSet):
     queryset = models.TableChangeAlert.objects.all()
 
     def get_queryset(self) -> QuerySet[models.TableChangeAlert]:
+        """The get_queryset function is used to filter the queryset based on the request.user's
+         organization_id.This is done so that a user can only see alerts for
+        their own organization, and not other organizations.
+
+        Args:
+            self: Refer to the class itself
+
+        Returns:
+            A queryset[models.TableChangeAlert]: A queryset of table change alert objects
+        """
+
         queryset: QuerySet[models.TableChangeAlert] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -311,8 +376,7 @@ class TableChangeAlertViewSet(viewsets.ModelViewSet):
 )
 @api_view(["GET"])
 def health_check(request: Request) -> Response:
-    """
-    Health check endpoint that returns the health status of various components of the system.
+    """Health check endpoint that returns the health status of various components of the system.
 
     Returns:
         Response: A dictionary that contains the health status of the cache backend, storage backend, redis, disk usage,
@@ -360,8 +424,7 @@ def health_check(request: Request) -> Response:
 )
 @api_view(["GET"])
 def active_triggers(request: Request) -> Response:
-    """
-    View that retrieves a list of active triggers in the PostgreSQL database.
+    """View that retrieves a list of active triggers in the PostgreSQL database.
 
     Returns a response containing a list of dictionaries, where each dictionary
     represents a trigger and its metadata. The following fields are included in
@@ -404,8 +467,7 @@ def active_triggers(request: Request) -> Response:
 
 @api_view(["GET"])
 def active_sessions(request: Request) -> Response:
-    """
-    View that retrieves a list of active sessions in the PostgreSQL database.
+    """View that retrieves a list of active sessions in the PostgreSQL database.
 
     Args:
         request (Request): The request object.
@@ -419,8 +481,7 @@ def active_sessions(request: Request) -> Response:
 
 @api_view(["GET"])
 def active_threads(request: Request) -> Response:
-    """
-    View that retrieves a list of active threads in the PostgreSQL database.
+    """View that retrieves a list of active threads in the PostgreSQL database.
 
     Args:
         request (Request): The request object.
@@ -556,6 +617,19 @@ class NotificationTypeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self) -> QuerySet[models.NotificationType]:
+        """The get_queryset function is used to filter the queryset of NotificationType objects
+        to only those that belong to the organization of the user making this request.
+        This is done by using a QuerySet method called 'filter' which takes in a keyword argument,
+        in this case 'organization_id', and returns all NotificationType objects where that field matches.
+        The value for organization_id comes from self.request, which contains information about the
+        current request being made.
+
+        Args:
+            self: Access the class attributes and methods
+
+        Returns:
+            QuerySet[models.NotificationType]: A queryset of notificationtype objects
+        """
         queryset: QuerySet[models.NotificationType] = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -577,6 +651,19 @@ class NotificationSettingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self) -> QuerySet[models.NotificationSetting]:
+        """The get_queryset function is used to filter the queryset of NotificationSettings
+        to only those that belong to the organization of the user making this request.
+        This is done by filtering on organization_id, which is a foreign key field in
+        the NotificationSetting model. The only() function limits what fields are returned
+        in order to reduce network traffic.
+
+        Args:
+            self: Refer to the class itself
+
+        Returns:
+            QuerySet[models.NotificationSetting]: A queryset of notificationsetting objects
+        """
+
         queryset: QuerySet[
             models.NotificationSetting
         ] = models.NotificationSetting.objects.filter(

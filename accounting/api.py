@@ -39,6 +39,17 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
+        """
+        The get_queryset function is used to filter the queryset by organization_id.
+        This is done so that a user can only see their own GeneralLedgerAccounts and not those of other organizations.
+        The .only() function limits the fields returned in the response to just those specified.
+
+        Args:
+            self: Refer to the object itself
+
+        Returns:
+            A queryset of generalledgeraccount objects
+        """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -62,16 +73,23 @@ class RevenueCodeViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.RevenueCodeSerializer
     queryset = models.RevenueCode.objects.all()
+    search_fields = ("code",)
     filterset_fields = (
         "expense_account",
         "revenue_account",
     )
 
     def get_queryset(self) -> QuerySet[models.RevenueCode]:
-        """Filter the queryset to only include the current user's organization
+        """The get_queryset function is used to filter the queryset by organization_id.
+        This is done so that a user can only see revenue codes for their own organization.
+        The only function returns a list of fields that are needed in the serializer,
+        and not all fields from the model.
+
+        Args:
+            self: Access the attributes and methods of the class in python
 
         Returns:
-            QuerySet[models.RevenueCode]: Filtered queryset
+            A queryset of revenuecode objects
         """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
@@ -93,7 +111,7 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
-    search_fields = ("code", "description")
+    search_fields = ("code", "status")
 
     filterset_fields = (
         "status",
