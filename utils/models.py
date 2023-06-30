@@ -83,6 +83,12 @@ class StopChoices(models.TextChoices):
     DROP_OFF = "DO", _("Drop Off")
 
 
+@final
+class PrimaryStatusChoices(models.TextChoices):
+    ACTIVE = "A", _("Active")
+    INACTIVE = "I", _("Inactive")
+
+
 class GenericModel(TimeStampedModel):
     """
     Generic Model Fields
