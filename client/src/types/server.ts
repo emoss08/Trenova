@@ -21,3 +21,14 @@ export interface ApiResponse<T> extends Record<string, any> {
   previous?: string;
   results: T[];
 }
+
+export interface APIError {
+  code: string;
+  detail: string;
+  attr: string;
+}
+
+export interface APiErrorResponse {
+  type: string;
+  response: APIError[];
+}
