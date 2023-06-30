@@ -162,8 +162,19 @@ DATABASES = {
         "PORT": env("DB_PORT"),
         "ATOMIC_REQUESTS": True,
         "CONN_HEALTH_CHECK": True,
-    }
+    },
+    "replica1": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_REPLICA_NAME"),
+        "USER": env("DB_REPLICA_USER"),
+        "PASSWORD": env("DB_REPLICA_PASSWORD"),
+        "HOST": env("DB_REPLICA_HOST"),
+        "PORT": env("DB_REPLICA_PORT"),
+        "ATOMIC_REQUESTS": True,
+        "CONN_HEALTH_CHECK": True,
+    },
 }
+DATABASE_ROUTERS = ["core.database.PrimaryReplicaRouter"]
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
