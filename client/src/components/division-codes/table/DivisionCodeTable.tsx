@@ -21,7 +21,9 @@ import { MontaTable } from "@/components/MontaTable";
 import { DCTableTopToolbar } from "@/components/division-codes/table/DCTableTopToolbar";
 import { ExportDCModal } from "@/components/division-codes/table/ExportDCModal";
 import { DCTableColumns } from "@/components/division-codes/table/DCTableColumns";
-import { CreateDCDrawer } from "@/components/division-codes/table/CreateDCDrawer";
+import { CreateDCModal } from "@/components/division-codes/table/CreateDCModal";
+import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
+import { ViewDCModal } from "@/components/division-codes/table/ViewDCModal";
 
 export const DivisionCodeTable = () => {
   return (
@@ -30,11 +32,13 @@ export const DivisionCodeTable = () => {
       link="/division_codes"
       columns={DCTableColumns}
       TableTopToolbar={DCTableTopToolbar}
+      TableEditModal={EditDCModal}
       TableExportModal={ExportDCModal}
+      TableViewModal={ViewDCModal}
       displayDeleteModal={true}
-      TableCreateDrawer={CreateDCDrawer}
+      TableCreateDrawer={CreateDCModal}
       queryKey="division-code-table-data"
-      queryKey2="division-codes"
+      queryKey2="divisionCodes"
     />
   );
 };

@@ -27,29 +27,30 @@ import {
   faUserMinus,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
+import { SelectItem } from "@/components/ui/fields/SelectInput";
 
 export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
   return [
     {
       id: "status",
-      accessorFn: (originalRow) => (originalRow.is_active ? "true" : "false"),
+      accessorKey: "status",
       header: "Status",
       filterFn: "equals",
       Cell: ({ cell }) => (
         <Badge
-          color={cell.getValue() === "true" ? "green" : "red"}
+          color={cell.getValue() === "A" ? "green" : "red"}
           variant="filled"
           radius="xs"
         >
-          {cell.getValue() === "true" ? "Active" : "Inactive"}
+          {cell.getValue() === "A" ? "Active" : "Inactive"}
         </Badge>
       ),
       mantineFilterSelectProps: {
         data: [
           { value: "", label: "All" },
-          { value: "true", label: "Active" },
-          { value: "false", label: "Inactive" },
-        ] as any,
+          { value: "A", label: "Active" },
+          { value: "I", label: "Inactive" },
+        ] as SelectItem[],
       },
       filterVariant: "select",
     },
@@ -88,7 +89,13 @@ export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
               >
                 View Division Code
               </Menu.Item>
-              <Menu.Item icon={<FontAwesomeIcon icon={faUserGear} />}>
+              <Menu.Item
+                icon={<FontAwesomeIcon icon={faUserGear} />}
+                onClick={() => {
+                  divisionCodeTableStore.set("selectedRecord", row.original);
+                  divisionCodeTableStore.set("editModalOpen", true);
+                }}
+              >
                 Edit Division Code
               </Menu.Item>
               <Menu.Item

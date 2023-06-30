@@ -23,8 +23,18 @@ import { DivisionCode, GeneralLedgerAccount } from "@/types/apps/accounting";
  * @returns A promise that resolves to an array of division codes.
  */
 export async function getDivisionCodes(): Promise<DivisionCode[]> {
-  const response = await axios.get("/division-codes/");
+  const response = await axios.get("/division_codes/");
   return response.data.results;
+}
+
+/**
+ * Fetches the details of the division code with the specified ID.
+ * @param id - The ID of the division code to fetch details for.
+ * @returns A promise that resolves to the division code's details.
+ */
+export async function getDivisionCodeDetail(id: string): Promise<DivisionCode> {
+  const response = await axios.get(`/division_codes/${id}/`);
+  return response.data;
 }
 
 /**
