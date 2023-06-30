@@ -16,7 +16,11 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { DivisionCode, GeneralLedgerAccount } from "@/types/apps/accounting";
+import {
+  DivisionCode,
+  GeneralLedgerAccount,
+  RevenueCode,
+} from "@/types/apps/accounting";
 
 /**
  * Fetches division codes from the server.
@@ -44,4 +48,18 @@ export async function getDivisionCodeDetail(id: string): Promise<DivisionCode> {
 export async function getGLAccounts(): Promise<GeneralLedgerAccount[]> {
   const response = await axios.get("/gl_accounts/");
   return response.data.results;
+}
+
+/**
+ * Fetches revenue codes from the server.
+ * @param id - The ID of the general ledger account to fetch details for.
+ */
+export async function getRevenueCodes(): Promise<RevenueCode[]> {
+  const response = await axios.get("/revenue_codes/");
+  return response.data.results;
+}
+
+export async function getRevenueCodeDetail(id: string): Promise<RevenueCode> {
+  const response = await axios.get(`/revenue_codes/${id}/`);
+  return response.data;
 }

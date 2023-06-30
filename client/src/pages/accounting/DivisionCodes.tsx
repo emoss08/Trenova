@@ -24,13 +24,11 @@ const DivisionCodes: React.FC = () => {
   const { classes } = usePageStyles();
 
   return (
-    <>
-      <Flex>
-        <Card className={classes.card}>
-          <DivisionCodeTable />
-        </Card>
-      </Flex>
-    </>
+    <Flex>
+      <Card className={classes.card}>
+        <DivisionCodeTable />
+      </Card>
+    </Flex>
   );
 };
 

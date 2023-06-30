@@ -27,7 +27,7 @@ axios.interceptors.request.use(
   (req) => {
     req.baseURL = API_URL;
     req.withCredentials = true;
-    console.info(`Making request to ${req.baseURL}${req.url}`);
+    console.info(`Making request to ${req.url}`);
     return req;
   },
   (error: any) => {
