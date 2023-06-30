@@ -212,7 +212,6 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                   className={classes.fields}
                   name="profile.city"
                   label="City"
-                  value={form.values.profile.city}
                   placeholder="City"
                   variant="filled"
                   withAsterisk
