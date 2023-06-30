@@ -33,6 +33,7 @@ interface MontaTableProps<T extends Record<string, any>> {
   TableExportModal?: React.ComponentType;
   TableCreateDrawer?: React.ComponentType;
   TableDeleteModal?: React.ComponentType;
+  TableEditModal?: React.ComponentType;
   TableViewModal?: React.ComponentType;
   queryKey: string;
   queryKey2?: string;
@@ -45,6 +46,7 @@ export const MontaTable = <T extends Record<string, any>>({
   TableTopToolbar,
   TableExportModal,
   TableCreateDrawer,
+  TableEditModal,
   TableDeleteModal,
   TableViewModal,
   queryKey,
@@ -129,6 +131,7 @@ export const MontaTable = <T extends Record<string, any>>({
           store={store}
         />
       )}
+      {TableEditModal && <TableEditModal />}
       {TableDeleteModal && <TableDeleteModal />}
       {TableViewModal && <TableViewModal />}
     </>
