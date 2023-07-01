@@ -36,10 +36,7 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
 import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
-import {
-  divisionCodeTableStore,
-  revenueCodeTableStore,
-} from "@/stores/AccountingStores";
+import { revenueCodeTableStore } from "@/stores/AccountingStores";
 
 type Props = {
   revenueCode: RevenueCode;
@@ -96,9 +93,12 @@ export const EditRCModalForm: React.FC<Props> = ({
       axios.put(`/revenue_codes/${revenueCode.id}/`, values),
     {
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["revenue-code-table-data"],
+        });
         queryClient
           .invalidateQueries({
-            queryKey: ["revenue-code-table-data"],
+            queryKey: ["revenueCode", revenueCode?.id],
           })
           .then(() => {
             notifications.show({
