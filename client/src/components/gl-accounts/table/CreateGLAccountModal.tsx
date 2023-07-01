@@ -15,36 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type DivisionCode = {
-  id: string;
-  organization: string;
-  created: string;
-  modified: string;
-  status: string;
-  code: string;
-  description: string;
-  ap_account: string;
-  cash_account: string;
-  expense_account: string;
-};
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
+import { generalLedgerTableStore } from "@/stores/AccountingStores";
+import { CreateGLAccountModalForm } from "./_Partials/CreateGLAccountModalForm";
 
-export type GeneralLedgerAccount = {
-  id: string;
-  organization: string;
-  status: string;
-  account_number: string;
-  description: string;
-  account_type: string;
-  cash_flow_type?: string;
-  account_sub_type?: string;
-  account_classification?: string;
-};
+export const CreateGLAccountModal: React.FC = () => {
+  const [showCreateModal, setShowCreateModal] =
+    generalLedgerTableStore.use("createModalOpen");
 
-export type RevenueCode = {
-  id: string;
-  organization: string;
-  code: string;
-  description: string;
-  expense_account: string;
-  revenue_account: string;
+  if (!showCreateModal) return null;
+
+  return (
+    <Modal.Root
+      opened={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Create GL Account</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Suspense fallback={<Skeleton height={400} />}>
+            <CreateGLAccountModalForm />
+          </Suspense>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
+  );
 };

@@ -17,50 +17,65 @@
 
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
-import { DivisionCode, RevenueCode } from "@/types/apps/accounting";
+import {
+  DivisionCode,
+  GeneralLedgerAccount,
+  RevenueCode,
+} from "@/types/apps/accounting";
 
-interface DivisionCodeTableStoreProps extends TableStoreProps<DivisionCode> {
-  createModalOpen: boolean;
-}
+export const divisionCodeTableStore = createGlobalStore<
+  Omit<TableStoreProps<DivisionCode>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
 
-export const divisionCodeTableStore =
-  createGlobalStore<DivisionCodeTableStoreProps>({
-    pagination: {
-      pageIndex: 0,
-      pageSize: 10,
-    },
-    viewModalOpen: false,
-    editModalOpen: false,
-    selectedRecord: null,
-    globalFilter: "",
-    drawerOpen: false,
-    exportModalOpen: false,
-    deleteModalOpen: false,
-    createModalOpen: false,
-    columnFilters: false,
-    rowSelection: {},
-    errorCount: 0,
-  });
+export const revenueCodeTableStore = createGlobalStore<
+  Omit<TableStoreProps<RevenueCode>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
 
-interface RevenueCodeTableStoreProps extends TableStoreProps<RevenueCode> {
-  createModalOpen: boolean;
-}
-
-export const revenueCodeTableStore =
-  createGlobalStore<RevenueCodeTableStoreProps>({
-    pagination: {
-      pageIndex: 0,
-      pageSize: 10,
-    },
-    viewModalOpen: false,
-    editModalOpen: false,
-    selectedRecord: null,
-    globalFilter: "",
-    drawerOpen: false,
-    exportModalOpen: false,
-    deleteModalOpen: false,
-    createModalOpen: false,
-    columnFilters: false,
-    rowSelection: {},
-    errorCount: 0,
-  });
+export const generalLedgerTableStore = createGlobalStore<
+  Omit<TableStoreProps<GeneralLedgerAccount>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
