@@ -119,4 +119,17 @@ ALLOWED_MODELS = {
             "revenue_account__account_number",
         ],
     },
+    "GeneralLedgerAccount": {
+        "app_label": "accounting",
+        "allowed_fields": [
+            "organization__name",
+            "status",
+            "account_number",
+            "description",
+            "account_type",
+            "cash_flow_type",
+            "account_sub_type",
+            "account_classification",
+        ],
+    },
 }
