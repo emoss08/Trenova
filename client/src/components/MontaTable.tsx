@@ -88,6 +88,9 @@ export const MontaTable = <T extends Record<string, any>>({
         enableRowSelection
         icons={montaTableIcons}
         onRowSelectionChange={(row) => setRowSelection(row)}
+        mantineTableContainerProps={{
+          sx: { overflow: "visible" },
+        }}
         state={{
           isLoading,
           pagination: pagination,
