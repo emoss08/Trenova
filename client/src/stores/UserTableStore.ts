@@ -19,7 +19,9 @@ import { User } from "@/types/apps/accounts";
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
 
-export const userTableStore = createGlobalStore<TableStoreProps<User>>({
+export const userTableStore = createGlobalStore<
+  Omit<TableStoreProps<User>, "createModalOpen">
+>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
