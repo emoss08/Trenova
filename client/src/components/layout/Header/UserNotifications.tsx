@@ -42,6 +42,14 @@ import axios from "axios";
 import { notifications } from "@mantine/notifications";
 import { useAuthStore } from "@/stores/AuthStore";
 import { WebSocketManager } from "@/utils/websockets";
+import { Howl, Howler } from "howler";
+
+const sound = new Howl({
+  src: [
+    "../../../../public/audio/notification.webm",
+    "../../../../public/audio/notification.mp3",
+  ],
+});
 
 const useStyles = createStyles((theme) => ({
   button: {
@@ -76,68 +84,69 @@ export const UserNotifications: React.FC = () => {
   const queryClient = useQueryClient();
   const { classes } = useStyles();
 
-  // console.log(ENABLE_WEBSOCKETS);
-  // useEffect(() => {
-  //   if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
-  //     // Connecting the websocket
-  //     webSocketManager.connect(
-  //       "notifications",
-  //       `${WEB_SOCKET_URL}/notifications/`,
-  //       {
-  //         onOpen: () => console.info("Connected to notifications websocket"),
-  //
-  //         onMessage: (event: MessageEvent) => {
-  //           const data = JSON.parse(event.data);
-  //           console.log("Message from notifications websocket", data);
-  //
-  //           queryClient
-  //             .invalidateQueries(["userNotifications", userId])
-  //             .then(() => {
-  //               notifications.show({
-  //                 title: "New notification",
-  //                 message: data.description,
-  //                 color: "blue",
-  //                 icon: <FontAwesomeIcon icon={faCheck} />,
-  //               });
-  //             });
-  //         },
-  //
-  //         onClose: (event: CloseEvent) => {
-  //           if (event.wasClean) {
-  //             console.info(
-  //               `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
-  //             );
-  //           } else {
-  //             console.info(
-  //               "[close] Connection died. Reconnect will be attempted in 1 second."
-  //             );
-  //             setTimeout(
-  //               () =>
-  //                 webSocketManager.connect(
-  //                   "notifications",
-  //                   `${WEB_SOCKET_URL}/notifications/`
-  //                 ),
-  //               WEBSOCKET_RETRY_INTERVAL
-  //             );
-  //           }
-  //         },
-  //
-  //         onError: (error: Event) => {
-  //           console.log(`[error] ${error}`);
-  //         },
-  //       }
-  //     );
-  //   } else if (isAuthenticated && !userId) {
-  //     webSocketManager.disconnect("notifications");
-  //   }
-  //
-  //   // On component unmount, disconnect the websocket
-  //   return () => {
-  //     if (isAuthenticated) {
-  //       webSocketManager.disconnect("notifications");
-  //     }
-  //   };
-  // }, [isAuthenticated, userId]); // add dependencies here if necessary
+  useEffect(() => {
+    if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
+      // Connecting the websocket
+      webSocketManager.connect(
+        "notifications",
+        `${WEB_SOCKET_URL}/notifications/`,
+        {
+          onOpen: () => console.info("Connected to notifications websocket"),
+
+          onMessage: (event: MessageEvent) => {
+            const data = JSON.parse(event.data);
+            console.log("Message from notifications websocket", data);
+
+            queryClient
+              .invalidateQueries(["userNotifications", userId])
+              .then(() => {
+                notifications.show({
+                  title: "New notification",
+                  message: data.description,
+                  color: "blue",
+                  icon: <FontAwesomeIcon icon={faCheck} />,
+                });
+                sound.play();
+                Howler.volume(0.5);
+              });
+          },
+
+          onClose: (event: CloseEvent) => {
+            if (event.wasClean) {
+              console.info(
+                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
+              );
+            } else {
+              console.info(
+                "[close] Connection died. Reconnect will be attempted in 1 second."
+              );
+              setTimeout(
+                () =>
+                  webSocketManager.connect(
+                    "notifications",
+                    `${WEB_SOCKET_URL}/notifications/`
+                  ),
+                WEBSOCKET_RETRY_INTERVAL
+              );
+            }
+          },
+
+          onError: (error: Event) => {
+            console.log(`[error] ${error}`);
+          },
+        }
+      );
+    } else if (isAuthenticated && !userId) {
+      webSocketManager.disconnect("notifications");
+    }
+
+    // On component unmount, disconnect the websocket
+    return () => {
+      if (isAuthenticated) {
+        webSocketManager.disconnect("notifications");
+      }
+    };
+  }, [isAuthenticated, userId]); // add dependencies here if necessary
 
   const { data: notificationsData } = useQuery({
     queryKey: ["userNotifications", userId],

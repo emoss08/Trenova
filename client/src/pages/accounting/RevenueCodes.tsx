@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import { Card, Flex } from "@mantine/core";
-
 import { usePageStyles } from "@/styles/PageStyles";
 import { RevenueCodeTable } from "@/components/revenue-codes/table/RevenueCodeTable";
 

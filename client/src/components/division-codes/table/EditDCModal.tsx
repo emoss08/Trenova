@@ -50,7 +50,7 @@ export const EditDCModal: React.FC = () => {
 
   const { data: divisionCodeData, isLoading: isDivisionCodeDataLoading } =
     useQuery({
-      queryKey: ["division-code", divisionCode?.id],
+      queryKey: ["divisionCode", divisionCode?.id],
       queryFn: () => {
         if (!divisionCode) {
           return Promise.resolve(null);
@@ -59,7 +59,7 @@ export const EditDCModal: React.FC = () => {
       },
       enabled: showEditModal,
       initialData: () => {
-        return queryClient.getQueryData(["division-code", divisionCode?.id]);
+        return queryClient.getQueryData(["divisionCode", divisionCode?.id]);
       },
       staleTime: Infinity, // Never refetch
     });

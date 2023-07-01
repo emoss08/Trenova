@@ -96,9 +96,12 @@ export const EditDCModalForm: React.FC<Props> = ({
       axios.put(`/division_codes/${divisionCode.id}/`, values),
     {
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["division-code-table-data"],
+        });
         queryClient
           .invalidateQueries({
-            queryKey: ["division-code-table-data"],
+            queryKey: ["divisionCode", divisionCode?.id],
           })
           .then(() => {
             notifications.show({
