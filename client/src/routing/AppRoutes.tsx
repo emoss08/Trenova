@@ -29,6 +29,7 @@ const DivisionCodesPage = lazy(
   () => import("../pages/accounting/DivisionCodes")
 );
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
+const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
 
@@ -107,6 +108,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage revenue codes",
     element: <RevenueCodesPage />,
     permission: "view_revenuecode",
+  },
+  {
+    title: "General Ledger Accounts",
+    group: "accounting",
+    subMenu: "configuration files",
+    path: "/accounting/gl-accounts",
+    description: "Manage general ledger accounts",
+    element: <GLAccountsPage />,
+    permission: "view_generalledgeraccount",
   },
   // Error Page
   {

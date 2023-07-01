@@ -15,36 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type DivisionCode = {
-  id: string;
-  organization: string;
-  created: string;
-  modified: string;
-  status: string;
-  code: string;
-  description: string;
-  ap_account: string;
-  cash_account: string;
-  expense_account: string;
+import { Card, Flex } from "@mantine/core";
+import React from "react";
+import { usePageStyles } from "@/styles/PageStyles";
+import { GLAccountTable } from "@/components/gl-accounts/table/GLAccountTable";
+
+const GLAccounts: React.FC = () => {
+  const { classes } = usePageStyles();
+
+  return (
+    <Flex>
+      <Card className={classes.card}>
+        <GLAccountTable />
+      </Card>
+    </Flex>
+  );
 };
 
-export type GeneralLedgerAccount = {
-  id: string;
-  organization: string;
-  status: string;
-  account_number: string;
-  description: string;
-  account_type: string;
-  cash_flow_type?: string;
-  account_sub_type?: string;
-  account_classification?: string;
-};
-
-export type RevenueCode = {
-  id: string;
-  organization: string;
-  code: string;
-  description: string;
-  expense_account: string;
-  revenue_account: string;
-};
+export default GLAccounts;

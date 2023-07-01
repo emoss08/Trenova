@@ -32,4 +32,5 @@ export interface TableStoreProps<T> {
   columnFilters: boolean;
   rowSelection: MRT_RowSelectionState;
   errorCount: number;
+  createModalOpen: boolean;
 }
