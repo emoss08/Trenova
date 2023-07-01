@@ -29,6 +29,14 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.GeneralLedgerAccountSerializer
     queryset = models.GeneralLedgerAccount.objects.all()
+    search_fields = (
+        "account_number",
+        "status",
+        "account_type",
+        "cash_flow_type",
+        "account_sub_type",
+        "account_classification",
+    )
     filterset_fields = (
         "status",
         "account_number",
@@ -39,8 +47,7 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
-        """
-        The get_queryset function is used to filter the queryset by organization_id.
+        """The get_queryset function is used to filter the queryset by organization_id.
         This is done so that a user can only see their own GeneralLedgerAccounts and not those of other organizations.
         The .only() function limits the fields returned in the response to just those specified.
 
@@ -48,7 +55,7 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
             self: Refer to the object itself
 
         Returns:
-            A queryset of generalledgeraccount objects
+            QuerySet[models.GeneralLedgerAccount]: A queryset of generalledgeraccount objects
         """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
@@ -121,12 +128,18 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
     )
 
     def get_queryset(self) -> QuerySet[models.DivisionCode]:
-        """Filter the queryset to only include the current user's organization
+        """
+        The get_queryset function is used to filter the queryset based on the user's organization.
+        This is done by adding a filter to the queryset that only returns DivisionCodes with an
+        organization_id equal to that of the current user. This ensures that users can only see
+        DivisionCodes belonging to their own organization.
+
+        Args:
+            self: Refer to the current instance of a class
 
         Returns:
-            QuerySet[models.DivisionCode]: Filtered queryset
+            QuerySet[models.DivisionCode]: A queryset of divisioncode objects
         """
-
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
