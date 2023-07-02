@@ -61,7 +61,8 @@ ALLOWED_MODELS = {
     "JobTitle": {
         "app_label": "accounts",
         "allowed_fields": [
-            "is_active",
+            "organization__name",
+            "status",
             "name",
             "description",
             "job_function",
