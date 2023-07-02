@@ -128,8 +128,8 @@ export const TableExportModal: React.FC<Props> = ({
           <Modal.Body>
             {isColumnsLoading ? (
               <Stack>
-                <Skeleton height={30} />
-                <Skeleton height={30} />
+                <Skeleton height={150} />
+                <Skeleton height={150} />
               </Stack>
             ) : (
               <>
