@@ -124,7 +124,6 @@ class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):  # type: igno
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
-        null=True,
     )
     department = models.ForeignKey(
         "organization.Department",
@@ -350,7 +349,7 @@ class UserProfile(GenericModel):
             ValidationError: Validation error for the UserProfile Model
         """
 
-        if self.job_title.is_active is False:
+        if self.job_title.status == PrimaryStatusChoices.INACTIVE:
             raise ValidationError(
                 {
                     "title": _(

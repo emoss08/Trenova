@@ -22,7 +22,15 @@ from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
 from django.middleware import csrf
 from django.utils import timezone
-from rest_framework import generics, permissions, response, status, views, viewsets
+from rest_framework import (
+    generics,
+    permissions,
+    response,
+    status,
+    views,
+    viewsets,
+    decorators,
+)
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
 
@@ -77,12 +85,17 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, ViewAllUsersPermission]
 
     def get_queryset(self) -> QuerySet[models.User]:
-        """Filter the queryset to only include the current user
+        """The get_queryset function is used to filter the queryset of users by organization.
+        This function is called in the get_queryset method of UserViewSet, which is a subclass
+        of ModelViewSet. The get_queryset method of ModelViewSet returns a QuerySet object that
+        is filtered by organization and only includes certain fields from the User model.
+
+        Args:
+            self: Refer to the class itself
 
         Returns:
-            QuerySet[models.User]: Filtered queryset
+            A queryset of user objects that are filtered by the organization_id
         """
-
         queryset: QuerySet[models.User] = (
             self.queryset.filter(
                 organization_id=self.request.user.organization_id  # type: ignore
@@ -141,17 +154,19 @@ class UpdatePasswordView(generics.UpdateAPIView):
     serializer_class = serializers.ChangePasswordSerializer
 
     def update(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
-        """Handle update requests
+        """The update function is used to update the password of a user. The function takes in
+        the request and returns a response. The serializer is then called on the data from the
+        request, which validates it and saves it.
 
         Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+            self: Represent the instance of the class
+            request: Request: Get the request data from the user
+            *args: Any: Pass in a variable number of arguments
+            **kwargs: Any: Pass in the keyword arguments
 
         Returns:
-            Response: Response of the updated user
+            A response object with a status of 200 and the message &quot;password updated successfully&quot;
         """
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -171,17 +186,19 @@ class ResetPasswordView(views.APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
-        """Handle update requests
+        """The post function is used to reset the password of a user.
+        The function takes in the email address of the user and sends an email with a new password.
+        The new password is generated using random characters from string.ascii_letters, digits and punctuation.
 
         Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+            self: Represent the instance of the class
+            request(Request): Get the request object
+            *args(Any): Pass a non-keyworded, variable-length argument list to the function
+            **kwargs(Any): Pass in keyword arguments
 
         Returns:
-            Response: Response of the updated user
+            response.Response: A response object with a success message or an error message
         """
-
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -204,17 +221,19 @@ class UpdateEmailView(views.APIView):
     serializer_class = serializers.UpdateEmailSerializer
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
-        """Handle update requests
+        """The post function is used to change the email of a user.
+        The function takes in a request and returns either an error message or
+        a success message depending on whether the serializer was valid or not.
 
         Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+            self: Represent the instance of the class
+            request(Request): Get the request object
+            *args(Any): Catch any additional arguments that are passed to the function
+            **kwargs(Any): Pass in the user id to the serializer
 
         Returns:
-            Response: Response of the updated user
+            A response object
         """
-
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
@@ -239,9 +258,31 @@ class JobTitleViewSet(viewsets.ModelViewSet):
     search_fields = ("name", "status")
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
-        queryset = self.queryset.filter(
+        """The get_queryset function is used to filter the queryset of JobTitles by organization_id.
+        It also allows for a query parameter, expand_users, which will prefetch related users if set to 'true'.
+        This is useful when you want to get all job titles and their associated users in one request.
+
+        Args:
+            self: Represent the instance of the class
+
+        Returns:
+            QuerySet[models.JobTitle]: Filtered queryset of JobTitles
+        """
+        expand_users = self.request.query_params.get("expand_users", "false")
+
+        queryset = models.JobTitle.objects.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only("id", "organization_id", "status", "description", "name", "job_function")
+
+        # Prefetch related users if `expand_users` query param is 'true' or 'True'
+        if expand_users.lower() == "true":
+            queryset = queryset.prefetch_related(
+                Prefetch(
+                    "profile__user",
+                    queryset=models.User.objects.only("username"),
+                )
+            )
+
         return queryset
 
 
@@ -254,18 +295,26 @@ class TokenVerifyView(views.APIView):
     http_method_names = ["post"]
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
-        """Handle Post requests
+        """The post function is used to refresh the token.
 
         Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+            self: Represent the instance of the object itself
+            request(Request): Get the request object
+            *args(Any): Pass in a list of arguments
+            **kwargs(Any): Pass in any additional arguments to the function
 
         Returns:
-            Response: Response of token and user id
-        """
+            A response object, which is a dictionary with the following keys:
 
+        """
         token = request.COOKIES.get("auth_token")
+
+        if request.user.is_anonymous:
+            return response.Response(
+                {"message": "User is not authenticated"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         token_expire_days = request.user.organization.token_expiration_days  # type: ignore
 
         if not token:
@@ -309,6 +358,19 @@ class TokenProvisionView(ObtainAuthToken):
     serializer_class = serializers.TokenProvisionSerializer
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
+        """The post function is used to log in a user.
+        It takes the username and password from the request body, validates them, and returns an auth token if successful.
+        If unsuccessful it will return a 400 error code with an error message explaining why.
+
+        Args:
+            self: Represent the instance of the object itself
+            request(Request): Get the request from the client
+            *args(Any): Pass a variable number of arguments to the function
+            **kwargs(Any): Pass in the keyword arguments
+
+        Returns:
+            response.Response: A response object with the status code 200
+        """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
@@ -353,17 +415,18 @@ class UserLogoutView(views.APIView):
     http_method_names = ["post"]
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
-        """Handle Post requests
+        """The post function logs out the user and deletes their auth_token cookie.
 
         Args:
-            request (Request): Request object
-            *args (Any): Arguments
-            **kwargs (Any): Keyword Arguments
+            self: Represent the instance of the class
+            request(Request): Get the user object from the request
+            *args(Any): Pass in a tuple of arguments to the function
+            **kwargs(Any): Pass in any keyword arguments that you may want to use
 
         Returns:
-            Response: Response of token and user id
-        """
+            A response object with the status code 200
 
+        """
         user = request.user
 
         if user.is_authenticated:
