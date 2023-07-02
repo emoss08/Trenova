@@ -17,10 +17,10 @@
 from typing import Any
 
 from django.core.exceptions import ValidationError
-from rest_framework.response import Response
 from drf_standardized_errors.handler import (
     exception_handler as drf_standardized_exception_handler,
 )
+from rest_framework.response import Response
 
 
 def django_error_handler(exc: Any, context: Any) -> Response | None:

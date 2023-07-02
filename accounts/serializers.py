@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import json
 from typing import Any
 
 from django.contrib.auth import authenticate, password_validation

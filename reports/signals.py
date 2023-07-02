@@ -16,11 +16,14 @@
 # --------------------------------------------------------------------------------------------------
 
 import contextlib
+import logging
 from typing import Any
 
 from django_celery_beat.models import PeriodicTask
 
 from reports import models, services
+
+logger = logging.getLogger(__name__)
 
 
 def update_scheduled_task(
@@ -56,8 +59,9 @@ def delete_scheduled_report_periodic_task(
         None: This function does not return anything.
     """
     with contextlib.suppress(PeriodicTask.DoesNotExist):
-        print(
-            f"Deleting scheduled task for scheduled report {instance.user_id}-{instance.pk}"
+        logger.log(
+            level=logging.INFO,
+            msg=f"Deleting scheduled task for scheduled report {instance.user_id}-{instance.pk}",
         )
         periodic_task = PeriodicTask.objects.get(
             name=f"Send scheduled report {instance.user_id}-{instance.pk}"
