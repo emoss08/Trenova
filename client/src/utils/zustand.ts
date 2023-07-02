@@ -58,10 +58,12 @@ export const createGlobalStore = <State extends object>(
     key: T,
     value: SetStateAction<State[T]>
   ) => {
-    if (isFunction(value)) {
+    if (typeof value === "function") {
       store.setState(
         (prevValue) =>
-          ({ [key]: value(prevValue[key]) } as unknown as Partial<State>)
+          ({
+            [key]: (value as Function)(prevValue[key]),
+          } as unknown as Partial<State>)
       );
     } else {
       store.setState({ [key]: value } as unknown as Partial<State>);
