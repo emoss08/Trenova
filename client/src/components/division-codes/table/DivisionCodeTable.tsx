@@ -18,8 +18,6 @@
 import React from "react";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/MontaTable";
-import { DCTableTopToolbar } from "@/components/division-codes/table/DCTableTopToolbar";
-import { ExportDCModal } from "@/components/division-codes/table/ExportDCModal";
 import { DCTableColumns } from "@/components/division-codes/table/DCTableColumns";
 import { CreateDCModal } from "@/components/division-codes/table/CreateDCModal";
 import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
@@ -31,14 +29,13 @@ export const DivisionCodeTable = () => {
       store={divisionCodeTableStore}
       link="/division_codes"
       columns={DCTableColumns}
-      TableTopToolbar={DCTableTopToolbar}
       TableEditModal={EditDCModal}
-      TableExportModal={ExportDCModal}
       TableViewModal={ViewDCModal}
       displayDeleteModal={true}
       TableCreateDrawer={CreateDCModal}
-      queryKey="division-code-table-data"
-      queryKey2="divisionCodes"
+      tableQueryKey="division-code-table-data"
+      exportModelName="DivisionCode"
+      name="Division Code"
     />
   );
 };

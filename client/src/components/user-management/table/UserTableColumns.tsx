@@ -28,6 +28,7 @@ import { MRT_ColumnDef } from "mantine-react-table";
 import { User } from "@/types/apps/accounts";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { userTableStore } from "@/stores/UserTableStore";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
   return [
@@ -134,45 +135,11 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
       id: "actions",
       header: "Actions",
       Cell: ({ row }) => (
-        <>
-          <Menu width={200} shadow="md" withArrow offset={5} position="bottom">
-            <Menu.Target>
-              <Button
-                variant="light"
-                color="gray"
-                size="xs"
-                rightIcon={<FontAwesomeIcon icon={faChevronDown} size="sm" />}
-              >
-                Actions
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>User Actions</Menu.Label>
-              <Menu.Item
-                icon={<FontAwesomeIcon icon={faUser} />}
-                onClick={() => {
-                  userTableStore.set("selectedRecord", row.original);
-                  userTableStore.set("viewModalOpen", true);
-                }}
-              >
-                View User Profile
-              </Menu.Item>
-              <Menu.Item icon={<FontAwesomeIcon icon={faUserGear} />}>
-                Edit User Profile
-              </Menu.Item>
-              <Menu.Item
-                color="red"
-                icon={<FontAwesomeIcon icon={faUserMinus} />}
-                onClick={() => {
-                  userTableStore.set("selectedRecord", row.original);
-                  userTableStore.set("deleteModalOpen", true);
-                }}
-              >
-                Delete User Profile
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </>
+        <MontaTableActionMenu
+          store={userTableStore}
+          name="User Profile"
+          data={row.original}
+        />
       ),
     },
   ];

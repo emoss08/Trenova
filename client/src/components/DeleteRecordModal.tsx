@@ -27,7 +27,6 @@ import { API_URL } from "@/lib/utils";
 export interface DeleteRecordModalProps<T extends { id: string }> {
   link: string;
   queryKey: string;
-  queryKey2?: string;
   store: any;
 }
 

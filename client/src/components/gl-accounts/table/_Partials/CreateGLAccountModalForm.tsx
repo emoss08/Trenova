@@ -187,9 +187,6 @@ export const CreateGLAccountModalForm: React.FC = () => {
                 label="Status"
                 placeholder="Status"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("status", form.values.status);
-                }}
                 withAsterisk
               />
               <ValidatedTextInput
@@ -220,9 +217,6 @@ export const CreateGLAccountModalForm: React.FC = () => {
                 label="Account Type"
                 placeholder="AP Account"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("account_type", form.values.account_type);
-                }}
                 withAsterisk
                 clearable
               />
@@ -234,12 +228,6 @@ export const CreateGLAccountModalForm: React.FC = () => {
                 label="Cash Flow Type"
                 placeholder="Cash Flow Type"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "cash_flow_type",
-                    form.values.cash_flow_type
-                  );
-                }}
                 clearable
               />
             </SimpleGrid>
@@ -252,12 +240,6 @@ export const CreateGLAccountModalForm: React.FC = () => {
                 label="Account Sub Type"
                 placeholder="Account Sub Type"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "account_sub_type",
-                    form.values.account_sub_type
-                  );
-                }}
                 clearable
               />
               <SelectInput
@@ -268,12 +250,6 @@ export const CreateGLAccountModalForm: React.FC = () => {
                 label="Account Classification"
                 placeholder="Account Classification"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "account_classification",
-                    form.values.account_classification
-                  );
-                }}
                 clearable
               />
             </SimpleGrid>

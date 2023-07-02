@@ -185,12 +185,6 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
                 label="Expense Account"
                 placeholder="Expense Account"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "expense_account",
-                    form.values.expense_account
-                  );
-                }}
                 clearable
               />
               <SelectInput
@@ -201,12 +195,6 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
                 label="Revenue Account"
                 placeholder="Revenue Account"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "cash_account",
-                    form.values.revenue_account
-                  );
-                }}
                 clearable
               />
             </SimpleGrid>

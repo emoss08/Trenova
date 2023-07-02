@@ -36,16 +36,24 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery } from "react-query";
 import { getColumns } from "@/requests/ReportRequestFactory";
 import axios from "@/lib/AxiosConfig";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
 
-export const ExportRCModal: React.FC = ({}) => {
+interface Props {
+  store: any;
+  modelName: string;
+  name: string;
+}
+
+export const TableExportModal: React.FC<Props> = ({
+  store,
+  modelName,
+  name,
+}) => {
   const [loading, setLoading] = React.useState<boolean>(false);
-  const [showExportModal, setShowExportModal] =
-    revenueCodeTableStore.use("exportModalOpen");
+  const [showExportModal, setShowExportModal] = store.use("exportModalOpen");
 
   const { data: columnsData, isLoading: isColumnsLoading } = useQuery({
-    queryKey: ["revenue-code-columns"],
-    queryFn: () => getColumns("RevenueCode"),
+    queryKey: [`${modelName}-Columns`],
+    queryFn: () => getColumns(modelName as string),
     enabled: showExportModal,
     staleTime: Infinity,
   });
@@ -68,7 +76,7 @@ export const ExportRCModal: React.FC = ({}) => {
 
     try {
       const response = await axios.post("generate_report/", {
-        model_name: "RevenueCode",
+        model_name: modelName as string,
         file_format: values.file_format,
         columns: values.columns,
       });
@@ -114,7 +122,7 @@ export const ExportRCModal: React.FC = ({}) => {
         <Modal.Overlay />
         <Modal.Content>
           <Modal.Header>
-            <Modal.Title>Export Revenue Codes</Modal.Title>
+            <Modal.Title>Export {name}</Modal.Title>
             <Modal.CloseButton />
           </Modal.Header>
           <Modal.Body>
@@ -142,8 +150,8 @@ export const ExportRCModal: React.FC = ({}) => {
                     />
                     <Text size="xs" color="dimmed" mt={5}>
                       Fields with underscores are related fields. For example,
-                      'profiles__state' is the state field of the profile of the
-                      user.
+                      'organization__name' is the 'name' field of the
+                      organization of the record.
                     </Text>
                   </Box>
                   <Box>

@@ -127,7 +127,7 @@ export const CreateUserDrawer: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [checked, setChecked] = React.useState(false);
   const [showCreateUserDrawer, setShowCreateUserDrawer] =
-    userTableStore.use("drawerOpen");
+    userTableStore.use("createModalOpen");
   const [errorCount, setErrorCount] = userTableStore.use("errorCount");
   const queryClient = useQueryClient();
   const showContextMenu = useContextMenu();
