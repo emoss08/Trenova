@@ -38,7 +38,7 @@ from guardian.mixins import GuardianUserMixin
 from localflavor.us.models import USStateField, USZipCodeField
 
 from accounts import services
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 class UserManager(BaseUserManager):
@@ -417,7 +417,7 @@ class JobTitle(GenericModel):
 
     Attributes:
         id (UUIDField): The primary key of the model
-        is_active (BooleanField): Whether the job title is active or not
+        status (ChoiceField): The status of the job title
         name (CharField): The name of the job title
         description (TextField): The description of the job title
         job_function (CharField): The job function of the job title
@@ -459,10 +459,11 @@ class JobTitle(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("If the job title is active"),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the job title."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     name = models.CharField(
         _("Name"),
@@ -595,3 +596,4 @@ class Token(models.Model):
 # Audit Log Registration
 auditlog.register(User, exclude_fields=["online", "password"])
 auditlog.register(UserProfile, exclude_fields=["user"])
+auditlog.register(JobTitle, exclude_fields=["organization"])

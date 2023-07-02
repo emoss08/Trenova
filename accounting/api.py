@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-
 from django.db.models import QuerySet
 from rest_framework import viewsets
 

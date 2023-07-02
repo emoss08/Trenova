@@ -345,4 +345,4 @@ class JobTitleAdmin(GenericAdmin[models.JobTitle]):
     """
 
     search_fields = ("name",)
-    list_display = ("name", "is_active", "description")
+    list_display = ("name", "status", "description")
