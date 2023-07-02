@@ -35,6 +35,7 @@ export const useVerifyToken = () => {
 
   useEffect(() => {
     const verifyToken = async (): Promise<void> => {
+      setInitialLoading(true);
       try {
         setLoading(true);
         const response = await axios.post("verify_token/");
@@ -66,6 +67,7 @@ export const useVerifyToken = () => {
 
     verifyToken().then(() => {
       setIsVerifying(false);
+      setInitialLoading(false);
     });
   }, [setIsAuthenticated, setLoading, setInitialLoading]);
   return { isVerifying };
