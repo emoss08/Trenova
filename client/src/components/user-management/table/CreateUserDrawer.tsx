@@ -395,251 +395,249 @@ export const CreateUserDrawer: React.FC = () => {
                 })}
               >
                 <Tabs.Panel value="user-info" pt="xs">
-                  <ScrollArea h={790} scrollbarSize={5} offsetScrollbars>
-                    <Box className={classes.div} mr={5}>
-                      {/* TODO(WOLFRED: Break form into different component) */}
-                      <Box mb={20}>
-                        <SimpleGrid
-                          cols={2}
-                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                        >
-                          <SelectInput
-                            form={form}
-                            data={selectOrganizationData}
-                            className={classes.fields}
-                            name="organization"
-                            label="Organization"
-                            placeholder="Organization"
-                            variant="filled"
-                            onMouseLeave={() => {
-                              form.setFieldValue(
-                                "profile.organization",
-                                form.values.organization
-                              );
-                            }}
-                            withAsterisk
-                            onContextMenu={
-                              form.values.organization
-                                ? showContextMenu([
-                                    {
-                                      key: "copy",
-                                      icon: <IconCopy size={16} />,
-                                      title: "Copy to clipboard",
-                                      onClick: () => {
-                                        clipboard.copy(organizationLabel);
-                                      },
-                                    },
-                                    {
-                                      key: "view-organization",
-                                      icon: <IconNote size={16} />,
-                                      title: `View Organization: ${organizationLabel}`,
-                                      onClick: () =>
-                                        console.log(
-                                          "ID ",
-                                          form.values.organization
-                                        ),
-                                    },
-                                  ])
-                                : undefined
-                            }
-                          />
-                          <ValidatedTextInput
-                            form={form}
-                            className={classes.fields}
-                            name="username"
-                            label="Username"
-                            placeholder="Username"
-                            variant="filled"
-                            withAsterisk
-                          />
-                        </SimpleGrid>
-                        <SimpleGrid
-                          cols={2}
-                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                          my={5}
-                        >
-                          <ValidatedTextInput
-                            form={form}
-                            className={classes.fields}
-                            name="email"
-                            label="Email"
-                            placeholder="Email"
-                            variant="filled"
-                            withAsterisk
-                          />
-                          <SelectInput
-                            form={form}
-                            data={selectDepartmentData}
-                            className={classes.fields}
-                            name="department"
-                            label="Department"
-                            placeholder="Department"
-                            variant="filled"
-                            onContextMenu={
-                              form.values.department
-                                ? showContextMenu([
-                                    {
-                                      key: "copy",
-                                      icon: <IconCopy size={16} />,
-                                      title: "Copy to clipboard",
-                                      onClick: () => {
-                                        clipboard.copy(form.values.department);
-                                      },
-                                    },
-                                    {
-                                      key: "view-department",
-                                      icon: <IconNote size={16} />,
-                                      title: `View Department: ${departmentLabel}`,
-                                      onClick: () =>
-                                        console.log(
-                                          "ID ",
-                                          form.values.organization
-                                        ),
-                                    },
-                                  ])
-                                : undefined
-                            }
-                          />
-                        </SimpleGrid>
-                        <SwitchInput
-                          form={form}
-                          size="md"
-                          onChange={(event: any) =>
-                            setChecked(event.currentTarget.checked)
-                          }
-                          checked={checked}
-                          name="is_staff"
-                          label="Is User Super Admin?"
-                          description="Enabling this will give the user super admin privileges."
-                        />
-                      </Box>
-                      <Text fz="md">Profile Details</Text>
-                      <Divider m={3} variant="dashed" />
-                      <Box>
-                        <SimpleGrid
-                          cols={2}
-                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                        >
-                          <ValidatedTextInput
-                            form={form}
-                            className={classes.fields}
-                            name="profile.first_name"
-                            label="First Name"
-                            placeholder="First Name"
-                            variant="filled"
-                            withAsterisk
-                          />
-                          <ValidatedTextInput
-                            form={form}
-                            className={classes.fields}
-                            name="profile.last_name"
-                            label="Last Name"
-                            placeholder="Last Name"
-                            variant="filled"
-                            withAsterisk
-                          />
-                        </SimpleGrid>
+                  <Box className={classes.div} mr={5}>
+                    {/* TODO(WOLFRED: Break form into different component) */}
+                    <Box mb={20}>
+                      <SimpleGrid
+                        cols={2}
+                        breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                      >
                         <SelectInput
                           form={form}
-                          data={selectJobTitleData}
+                          data={selectOrganizationData}
                           className={classes.fields}
-                          name="profile.job_title"
-                          label="Job Title"
-                          placeholder="Job Title"
+                          name="organization"
+                          label="Organization"
+                          placeholder="Organization"
                           variant="filled"
+                          onMouseLeave={() => {
+                            form.setFieldValue(
+                              "profile.organization",
+                              form.values.organization
+                            );
+                          }}
                           withAsterisk
                           onContextMenu={
-                            form.values.profile.job_title
+                            form.values.organization
                               ? showContextMenu([
                                   {
                                     key: "copy",
                                     icon: <IconCopy size={16} />,
                                     title: "Copy to clipboard",
                                     onClick: () => {
-                                      clipboard.copy(jobTitleLabel);
+                                      clipboard.copy(organizationLabel);
                                     },
                                   },
                                   {
-                                    key: "view-job-title",
+                                    key: "view-organization",
                                     icon: <IconNote size={16} />,
-                                    title: `View Job Title: ${jobTitleLabel}`,
+                                    title: `View Organization: ${organizationLabel}`,
                                     onClick: () =>
                                       console.log(
                                         "ID ",
-                                        form.values.profile.job_title
+                                        form.values.organization
                                       ),
                                   },
                                 ])
                               : undefined
                           }
                         />
-                        <SimpleGrid
-                          cols={2}
-                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                        >
-                          <ValidatedTextInput
-                            form={form}
-                            className={classes.fields}
-                            name="profile.address_line_1"
-                            label="Address Line 1"
-                            placeholder="Address Line 1"
-                            variant="filled"
-                            withAsterisk
-                          />
-                          <ValidatedTextInput
-                            form={form}
-                            className={classes.fields}
-                            name="profile.address_line_2"
-                            label="Address Line 2"
-                            placeholder="Address Line 2"
-                            variant="filled"
-                          />
-                        </SimpleGrid>
-                        <SimpleGrid
-                          cols={2}
-                          breakpoints={[{ maxWidth: "sm", cols: 1 }]}
-                        >
-                          <CityAutoCompleteField
-                            form={form}
-                            stateSelection={form.values.profile.state}
-                            className={classes.fields}
-                            name="profile.city"
-                            label="City"
-                            placeholder="City"
-                            variant="filled"
-                            withAsterisk
-                          />
-                          <StateSelect
-                            label="State"
-                            className={classes.fields}
-                            placeholder="State"
-                            variant="filled"
-                            searchable={true}
-                            form={form}
-                            name="profile.state"
-                            withAsterisk
-                          />
-                        </SimpleGrid>
                         <ValidatedTextInput
                           form={form}
                           className={classes.fields}
-                          name="profile.zip_code"
-                          label="Zip Code"
-                          placeholder="Zip Code"
+                          name="username"
+                          label="Username"
+                          placeholder="Username"
+                          variant="filled"
+                          withAsterisk
+                        />
+                      </SimpleGrid>
+                      <SimpleGrid
+                        cols={2}
+                        breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                        my={5}
+                      >
+                        <ValidatedTextInput
+                          form={form}
+                          className={classes.fields}
+                          name="email"
+                          label="Email"
+                          placeholder="Email"
+                          variant="filled"
+                          withAsterisk
+                        />
+                        <SelectInput
+                          form={form}
+                          data={selectDepartmentData}
+                          className={classes.fields}
+                          name="department"
+                          label="Department"
+                          placeholder="Department"
+                          variant="filled"
+                          onContextMenu={
+                            form.values.department
+                              ? showContextMenu([
+                                  {
+                                    key: "copy",
+                                    icon: <IconCopy size={16} />,
+                                    title: "Copy to clipboard",
+                                    onClick: () => {
+                                      clipboard.copy(form.values.department);
+                                    },
+                                  },
+                                  {
+                                    key: "view-department",
+                                    icon: <IconNote size={16} />,
+                                    title: `View Department: ${departmentLabel}`,
+                                    onClick: () =>
+                                      console.log(
+                                        "ID ",
+                                        form.values.organization
+                                      ),
+                                  },
+                                ])
+                              : undefined
+                          }
+                        />
+                      </SimpleGrid>
+                      <SwitchInput
+                        form={form}
+                        size="md"
+                        onChange={(event: any) =>
+                          setChecked(event.currentTarget.checked)
+                        }
+                        checked={checked}
+                        name="is_staff"
+                        label="Is User Super Admin?"
+                        description="Enabling this will give the user super admin privileges."
+                      />
+                    </Box>
+                    <Text fz="md">Profile Details</Text>
+                    <Divider m={3} variant="dashed" />
+                    <Box>
+                      <SimpleGrid
+                        cols={2}
+                        breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                      >
+                        <ValidatedTextInput
+                          form={form}
+                          className={classes.fields}
+                          name="profile.first_name"
+                          label="First Name"
+                          placeholder="First Name"
                           variant="filled"
                           withAsterisk
                         />
                         <ValidatedTextInput
                           form={form}
                           className={classes.fields}
-                          name="profile.phone_number"
-                          label="Phone Number"
-                          placeholder="Phone Number"
+                          name="profile.last_name"
+                          label="Last Name"
+                          placeholder="Last Name"
+                          variant="filled"
+                          withAsterisk
+                        />
+                      </SimpleGrid>
+                      <SelectInput
+                        form={form}
+                        data={selectJobTitleData}
+                        className={classes.fields}
+                        name="profile.job_title"
+                        label="Job Title"
+                        placeholder="Job Title"
+                        variant="filled"
+                        withAsterisk
+                        onContextMenu={
+                          form.values.profile.job_title
+                            ? showContextMenu([
+                                {
+                                  key: "copy",
+                                  icon: <IconCopy size={16} />,
+                                  title: "Copy to clipboard",
+                                  onClick: () => {
+                                    clipboard.copy(jobTitleLabel);
+                                  },
+                                },
+                                {
+                                  key: "view-job-title",
+                                  icon: <IconNote size={16} />,
+                                  title: `View Job Title: ${jobTitleLabel}`,
+                                  onClick: () =>
+                                    console.log(
+                                      "ID ",
+                                      form.values.profile.job_title
+                                    ),
+                                },
+                              ])
+                            : undefined
+                        }
+                      />
+                      <SimpleGrid
+                        cols={2}
+                        breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                      >
+                        <ValidatedTextInput
+                          form={form}
+                          className={classes.fields}
+                          name="profile.address_line_1"
+                          label="Address Line 1"
+                          placeholder="Address Line 1"
+                          variant="filled"
+                          withAsterisk
+                        />
+                        <ValidatedTextInput
+                          form={form}
+                          className={classes.fields}
+                          name="profile.address_line_2"
+                          label="Address Line 2"
+                          placeholder="Address Line 2"
                           variant="filled"
                         />
-                      </Box>
+                      </SimpleGrid>
+                      <SimpleGrid
+                        cols={2}
+                        breakpoints={[{ maxWidth: "sm", cols: 1 }]}
+                      >
+                        <CityAutoCompleteField
+                          form={form}
+                          stateSelection={form.values.profile.state}
+                          className={classes.fields}
+                          name="profile.city"
+                          label="City"
+                          placeholder="City"
+                          variant="filled"
+                          withAsterisk
+                        />
+                        <StateSelect
+                          label="State"
+                          className={classes.fields}
+                          placeholder="State"
+                          variant="filled"
+                          searchable={true}
+                          form={form}
+                          name="profile.state"
+                          withAsterisk
+                        />
+                      </SimpleGrid>
+                      <ValidatedTextInput
+                        form={form}
+                        className={classes.fields}
+                        name="profile.zip_code"
+                        label="Zip Code"
+                        placeholder="Zip Code"
+                        variant="filled"
+                        withAsterisk
+                      />
+                      <ValidatedTextInput
+                        form={form}
+                        className={classes.fields}
+                        name="profile.phone_number"
+                        label="Phone Number"
+                        placeholder="Phone Number"
+                        variant="filled"
+                      />
                     </Box>
-                  </ScrollArea>
+                  </Box>
                 </Tabs.Panel>
                 <Tabs.Panel value="permissions" pt="xs">
                   <ScrollArea h={790} scrollbarSize={5} offsetScrollbars>
