@@ -39,7 +39,11 @@ ENV_DIR = Path(__file__).parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
 
 # Logging Configuration
-logger = logging.getLogger("kafka")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("kafka_listener.log"), logging.StreamHandler()],
+)
 
 
 class KafkaListener:
@@ -90,7 +94,7 @@ class KafkaListener:
             None: This function does not return anything.
         """
 
-        print("Signal received, shutting down...")
+        logging.info("Received termination signal. Stopping listener...")
         cls.running = False
 
     @classmethod
@@ -118,9 +122,9 @@ class KafkaListener:
                 return consumer, Consumer(config)
             except KafkaError as e:
                 if e.args[0].code() != KafkaError._ALL_BROKERS_DOWN:
-                    print("Unable to handle error. Raising...")
+                    logging.error(f"KafkaError: {e}")
                     raise
-                print("All brokers are down. Retrying connection...")
+                logging.info("All brokers are down. Retrying connection...")
                 time.sleep(5)
         return None
 
@@ -156,7 +160,7 @@ class KafkaListener:
             if message is None:
                 continue
             elif message.error():
-                print(f"Consumer error: {message.error()}")
+                logging.error(f"Consumer error: {message.error()}")
                 continue
             valid_messages.append(message)
         return valid_messages
@@ -177,7 +181,7 @@ class KafkaListener:
         try:
             data = json.loads(message_value)
         except json.JSONDecodeError:
-            print("Error decoding message value as JSON.")
+            logging.error("Error decoding message value as JSON.")
             return None
         return data.get("payload", {})
 
@@ -197,7 +201,7 @@ class KafkaListener:
         if message is None:
             return None
         elif message.error():
-            print(f"Consumer error: {message.error()}")
+            logging.error(f"Consumer error: {message.error()}")
             return None
         return message
 
@@ -227,15 +231,13 @@ class KafkaListener:
             table_change.get_topic_display() for table_change in table_changes
         }
         if added_alerts := new_table_changes.difference(old_table_changes):
-            print(
-                f"New alerts added: {', '.join(added_alerts)}",
-            )
+            logging.info(f"New alerts added: {', '.join(added_alerts)}")
         data_consumer.unsubscribe()
         if table_changes:
             data_consumer.subscribe(
                 [table_change.get_topic_display() for table_change in table_changes]
             )
-            print(
+            logging.info(
                 f"Subscribed to topics: {', '.join([table_change.get_topic_display() for table_change in table_changes])}"
             )
 
@@ -302,8 +304,9 @@ class KafkaListener:
             associated_table_change.custom_subject
             or f"Table Change Alert: {data_message.topic()}"
         )
-
-        print(f"Sending email to {recipient_list} with subject {subject}")
+        logging.info(
+            f"Sending email to {recipient_list} with subject {subject} for message {data_message}"
+        )
         send_mail(
             subject=subject,
             message=KafkaListener._format_message(field_value_dict=field_value_dict),
@@ -326,23 +329,22 @@ class KafkaListener:
         consumers = cls._connect()
 
         if consumers is None:
-            print("Failed to connect, exiting...")
+            logging.error("Failed to connect, exiting...")
             return
 
         data_consumer, alert_update_consumer = consumers
 
         table_changes = cls._get_topic_list()
         if not table_changes:
-            print(cls.NO_ALERTS_MSG)
+            logging.info(cls.NO_ALERTS_MSG)
             return
 
         alert_update_consumer.subscribe([cls.ALERT_UPDATE_TOPIC])
-        print(f"Subscribed to alert update topic: {cls.ALERT_UPDATE_TOPIC}")
-
+        logging.info(f"Subscribed to alert update topic: {cls.ALERT_UPDATE_TOPIC}")
         data_consumer.subscribe(
             [table_change.get_topic_display() for table_change in table_changes]
         )
-        print(
+        logging.info(
             f"Subscribed to topics: {[table_change.get_topic_display() for table_change in table_changes]}"
         )
 
@@ -357,7 +359,9 @@ class KafkaListener:
                         )
 
                         if alert_message is not None:
-                            print(f"Received alert update: {alert_message.value()}")
+                            logging.info(
+                                f"Received alert update: {alert_message.value()}"
+                            )
                             cls._update_subscriptions(
                                 data_consumer=data_consumer, table_changes=table_changes
                             )
@@ -374,7 +378,7 @@ class KafkaListener:
                                 and not data_message.error()
                                 and data_message.value() is not None
                             ):
-                                print(
+                                logging.info(
                                     f"Received data: {data_message.value().decode('utf-8')} from topic: {data_message.topic()}"
                                 )
 
@@ -389,8 +393,8 @@ class KafkaListener:
                                 )
 
                                 if associated_table_change and data_message:
-                                    print(
-                                        f"Table Change Alert found. {associated_table_change.name}",
+                                    logging.info(
+                                        f"Table Change Alert found. {associated_table_change.name}"
                                     )
                                     future = executor.submit(
                                         cls._process_message,
@@ -413,7 +417,9 @@ class KafkaListener:
                         try:
                             future.result()
                         except Exception as e:
-                            print(f"Error processing message: {e}")
+                            logging.info(
+                                f"Error processing message: {e}", exc_info=True
+                            )
 
                     data_consumer.commit(asynchronous=True)
                     futures = {f for f in futures if not f.done()}
@@ -421,10 +427,12 @@ class KafkaListener:
             except KafkaException as e:
                 if e.args[0].code() != KafkaError._ALL_BROKERS_DOWN:
                     raise e
-                print("Lost connection to the broker. Attempting to reconnect...")
+                logging.error(
+                    "All brokers are down. Attempting to reconnect...", exc_info=True
+                )
                 data_consumer, alert_update_consumer = cls._connect()
 
             finally:
                 alert_update_consumer.close()
                 data_consumer.close()
-                print("Consumers closed.")
+                logging.info("Consumers closed.")

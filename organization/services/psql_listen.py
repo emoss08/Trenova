@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 import os
 import select
 from pathlib import Path
@@ -24,6 +25,10 @@ from environ import environ
 
 from organization.selectors import get_active_table_alerts
 
+# Logging Configuration
+logger = logging.getLogger(__name__)
+
+# Environment Configuration
 env = environ.Env()
 ENV_DIR = Path(__file__).parent.parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
@@ -71,7 +76,9 @@ class PSQLListener:
 
             # Create the function if it doesn't exist
             if not function_exists:
-                print(f"Function {trigger_function_name} does not exist. Creating...")
+                logger.info(
+                    f"Function {trigger_function_name} does not exist. Creating..."
+                )
                 cur.execute(
                     f"""
                     CREATE OR REPLACE FUNCTION {trigger_function_name}() RETURNS TRIGGER AS $$
@@ -82,7 +89,7 @@ class PSQLListener:
                     $$ LANGUAGE plpgsql;
                 """
                 )
-                print(f"Function {trigger_function_name} created.")
+                logger.info(f"Function {trigger_function_name} created.")
 
             # Check if the trigger exists
             cur.execute(
@@ -97,7 +104,7 @@ class PSQLListener:
 
             # Create the trigger if it doesn't exist
             if not trigger_exists:
-                print(f"Trigger {trigger_name} does not exist. Creating...")
+                logger.info(f"Trigger {trigger_name} does not exist. Creating...")
                 cur.execute(
                     f"""
                     CREATE TRIGGER {trigger_name}
@@ -105,7 +112,7 @@ class PSQLListener:
                     FOR EACH ROW EXECUTE PROCEDURE {trigger_function_name}();
                 """
                 )
-                print(f"Trigger {trigger_name} created.")
+                logger.info(f"Trigger {trigger_name} created.")
 
     @classmethod
     def connect(cls) -> psycopg2.extensions.connection:
@@ -145,17 +152,17 @@ class PSQLListener:
         table_change_alert_channel = "table_change_alert_updated"
 
         if not table_changes:
-            print("No active table change alerts.")
+            logger.warning("No active table change alerts.")
             conn.close()
             return
 
         with conn.cursor() as cur:
             for change in table_changes:
                 cur.execute("LISTEN %s;", (change.listener_name,))
-                print(f"Listening to channel: {change.listener_name}")
+                logger.info(f"Listening to channel: {change.listener_name}")
 
             cur.execute("LISTEN %s;", (table_change_alert_channel,))
-            print(f"Listening to channel: {table_change_alert_channel}")
+            logger.info(f"Listening to channel: {table_change_alert_channel}")
 
             while True:
                 rlist, _, _ = select.select([conn.fileno()], [], [], 5)
@@ -163,17 +170,21 @@ class PSQLListener:
                     conn.poll()
                     while conn.notifies:
                         notify = conn.notifies.pop(0)
-                        print(
+                        logger.info(
                             f"Got NOTIFY: {notify.pid}, {notify.channel}, {notify.payload}"
                         )
 
                         if notify.channel == table_change_alert_channel:
                             cur.execute("UNLISTEN *;")
-                            print("Restarting listener due to new TableChangeAlert...")
+                            logger.info(
+                                "Restarting listener due to new TableChangeAlert..."
+                            )
                             for change in table_changes:
                                 cur.execute("LISTEN %s;", (change.listener_name,))
-                                print(f"Listening to channel: {change.listener_name}")
+                                logger.info(
+                                    f"Listening to channel: {change.listener_name}"
+                                )
 
                             cur.execute("LISTEN %s;", (table_change_alert_channel,))
                 else:
-                    print("Timeout reached, no notifications received.")
+                    logger.info("Timeout reached, no notifications received.")

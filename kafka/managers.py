@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import socket
 from pathlib import Path
@@ -24,7 +25,8 @@ from typing import Any, TypeAlias
 
 from confluent_kafka import KafkaException, admin
 from environ import environ
-from rich import print as rprint
+
+logger = logging.getLogger(__name__)
 
 env = environ.Env()
 ENV_DIR = Path(__file__).parent.parent
@@ -103,7 +105,7 @@ class KafkaManager:
             sock.close()
             return True
         except OSError as err:
-            rprint(f"[red]Kafka is not available: {err}[/]")
+            logger.error(f"Kafka is not available: {err}")
             return False
 
     @property
@@ -139,7 +141,7 @@ class KafkaManager:
                 if not topic.startswith("__") and topic not in exclude_topics
             ]
         except KafkaException as ke:
-            rprint(f"[red]Failed to fetch topics from Kafka: {ke}[/]")
+            logger.error(f"Failed to fetch topics from Kafka: {ke}")
             return []
 
     def create_topic(

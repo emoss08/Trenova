@@ -15,13 +15,27 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import logging
 from typing import Any
 
 from cacheops import invalidate_obj
 from django.db import models
 
+logger = logging.getLogger(__name__)
+
 
 def invalidate_cache(
     sender: type[models.Model], instance: type[models.Model], **kwargs: Any
 ) -> None:
+    """The invalidate_cache function is a signal receiver that invalidates the cache for an object.
+
+    Args:
+        sender: type[models.Model]: Specify the type of object that will be sent to this function
+        instance: type[models.Model]: Specify the type of object that is passed to the function
+        **kwargs: Any: Catch any extra parameters that are passed to the function
+
+    Returns:
+        None: This function does not return anything.
+    """
+    logger.debug(f"Invalidating cache for {instance}")
     invalidate_obj(instance)
