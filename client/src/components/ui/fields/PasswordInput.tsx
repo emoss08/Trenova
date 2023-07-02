@@ -19,7 +19,8 @@ import React from "react";
 import { PasswordInput, rem } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { createStyles } from "@mantine/styles";
-import { ValidatedTextInputProps } from "@/types/fields";
+import { PasswordInputProps } from "@mantine/core/lib/PasswordInput/PasswordInput";
+import { UseFormReturnType } from "@mantine/form";
 
 const useStyles = createStyles((theme) => {
   return {
@@ -38,13 +39,16 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ValidatedPasswordInput = <
-  TFormValues extends Record<string, unknown>
->({
+interface ValidatedPasswordInputProps<TFormValues>
+  extends Omit<PasswordInputProps, "form"> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+}
+
+export const ValidatedPasswordInput = <TFormValues extends object>({
   form,
   name,
   ...rest
-}: ValidatedTextInputProps<TFormValues>) => {
+}: ValidatedPasswordInputProps<TFormValues>) => {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 

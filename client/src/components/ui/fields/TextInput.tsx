@@ -18,8 +18,9 @@
 import React from "react";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { createStyles } from "@mantine/styles";
-import { ValidatedTextInputProps } from "@/types/fields";
 import { TextInput } from "@mantine/core";
+import { TextInputProps } from "@mantine/core/lib/TextInput/TextInput";
+import { UseFormReturnType } from "@mantine/form";
 
 const useStyles = createStyles((theme) => {
   return {
@@ -35,11 +36,14 @@ const useStyles = createStyles((theme) => {
   };
 });
 
+interface ValidatedTextInputProps<TFormValues>
+  extends Omit<TextInputProps, "form"> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+}
+
 export const ValidatedTextInput = <TFormValues extends object>({
   form,
   name,
-  className,
-  onContextMenu,
   ...rest
 }: ValidatedTextInputProps<TFormValues>) => {
   const { classes } = useStyles();
@@ -53,7 +57,6 @@ export const ValidatedTextInput = <TFormValues extends object>({
       classNames={{
         input: error ? classes.invalid : "",
       }}
-      className={className}
       rightSection={
         error && (
           <IconAlertTriangle
@@ -63,7 +66,6 @@ export const ValidatedTextInput = <TFormValues extends object>({
           />
         )
       }
-      onContextMenu={onContextMenu}
     />
   );
 };
