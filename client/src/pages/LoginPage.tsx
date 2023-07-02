@@ -53,12 +53,11 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);
 
   const form = useForm<LoginFormValues>({
+    validate: yupResolver(LoginSchema),
     initialValues: {
       username: "",
       password: "",
     },
-
-    validate: yupResolver(LoginSchema),
   });
   const csrfToken = getUserCSRFToken();
 
@@ -143,7 +142,7 @@ const LoginPage: React.FC = () => {
         <Paper withBorder shadow="md" p={30} mt={30} radius="md">
           <form
             onSubmit={form.onSubmit((values: LoginFormValues) => {
-              login(values).then(() => {});
+              login(values);
             })}
           >
             <ValidatedTextInput
@@ -152,6 +151,7 @@ const LoginPage: React.FC = () => {
               label="Username"
               placeholder="Your Username"
               withAsterisk
+              variant="filled"
               icon={<FontAwesomeIcon icon={faUser} />}
             />
             <ValidatedPasswordInput
@@ -161,6 +161,7 @@ const LoginPage: React.FC = () => {
               placeholder="Your password"
               mt="md"
               withAsterisk
+              variant="filled"
               icon={<FontAwesomeIcon icon={faLockKeyhole} />}
             />
             <Group position="apart" mt="lg">

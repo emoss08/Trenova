@@ -235,18 +235,13 @@ class JobTitleViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.JobTitleSerializer
     queryset = models.JobTitle.objects.all()
-    filterset_fields = ["is_active", "name"]
+    filterset_fields = ["status", "name"]
+    search_fields = ("name", "status")
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "is_active",
-            "description",
-            "name",
-            "organization_id",
-        )
+        ).only("id", "organization_id", "status", "description", "name", "job_function")
         return queryset
 
 

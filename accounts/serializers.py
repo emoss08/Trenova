@@ -64,15 +64,7 @@ class JobTitleSerializer(GenericSerializer):
     This serializer converts the JobTitle model into a format that
     can be easily converted to and from JSON, and allows for easy validation
     of the data.
-
-    Attributes:
-        is_active (serializers.BooleanField): A boolean field representing the
     """
-
-    organization = serializers.PrimaryKeyRelatedField(
-        queryset=Organization.objects.all()
-    )
-    is_active = serializers.BooleanField(required=False, default=True)
 
     class Meta:
         """
@@ -87,7 +79,7 @@ class JobTitleSerializer(GenericSerializer):
         """
 
         model = models.JobTitle
-        fields = ["id", "organization", "name", "description", "is_active"]
+        fields = ["id", "organization", "name", "description", "status", "job_function"]
 
 
 class JobTitleListingField(serializers.RelatedField):
