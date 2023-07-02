@@ -146,6 +146,12 @@ def create_billing_exception(
 def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
     """Create a new BillingHistory instance for an order.
 
+    This function creates a new BillingHistory instance for the passed Order instance. First, it retrieves the corresponding
+    Movement instance for the passed order and gets the primary worker if it exists. Next, it creates a new BillingHistory
+    instance with the necessary fields using the BillingHistory model. If there is an error creating the BillingHistory
+    instance, the function creates a billing exception with the error message and the order information using the
+    create_billing_exception function.
+
     Args:
         invoice (models.BillingQueue): An instance of the Order model.
         user (User): An instance of the User model who is creating the billing history.
@@ -155,12 +161,6 @@ def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
 
     Raises:
         BillingException: If there is an error creating the BillingHistory instance.
-
-    This function creates a new BillingHistory instance for the passed Order instance. First, it retrieves the corresponding
-    Movement instance for the passed order and gets the primary worker if it exists. Next, it creates a new BillingHistory
-    instance with the necessary fields using the BillingHistory model. If there is an error creating the BillingHistory
-    instance, the function creates a billing exception with the error message and the order information using the
-    create_billing_exception function.
     """
 
     order_movement = Movement.objects.filter(order=invoice.order).first()
@@ -188,18 +188,18 @@ def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
 def send_billing_email(*, order: Order, user: User) -> None:
     """Email the customer with a new invoice attached.
 
+    This function sends an email to the payable contact of the customer with the new invoice attached. First, the function
+    retrieves the payable customer contact for the corresponding customer and organization by filtering the CustomerContact
+    model. Next, it retrieves the billing email profile from the organization's EmailControl model to use as the sender email
+    address, or if it is not set, it uses the email address of the user who is sending the email. The function then sends an
+    email to the customer with the attached invoice using the send_mail function.
+
     Args:
         order: An instance of the Order model.
         user: An instance of the User model who is sending the email.
 
     Returns:
         None: This function does not return anything.
-
-    This function sends an email to the payable contact of the customer with the new invoice attached. First, the function
-    retrieves the payable customer contact for the corresponding customer and organization by filtering the CustomerContact
-    model. Next, it retrieves the billing email profile from the organization's EmailControl model to use as the sender email
-    address, or if it is not set, it uses the email address of the user who is sending the email. The function then sends an
-    email to the customer with the attached invoice using the send_mail function.
     """
 
     customer_contact = CustomerContact.objects.filter(
@@ -222,18 +222,18 @@ def send_billing_email(*, order: Order, user: User) -> None:
 def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
     """Set the billing requirements for a given customer.
 
+    This function sets the billing requirements for the passed Customer instance by retrieving the corresponding
+    billing profile. First, the function checks if the customer has a billing profile with a rule profile. If the
+    profile does not exist, it returns False. If the profile exists, the function retrieves the document classes from
+    the rule profile and creates a list of the document names. The function then returns the list of billing requirements
+    for the customer or False if the profile does not exist.
+
     Args:
         customer (Customer): A Customer instance.
 
     Returns:
         bool | List[str]: A list of the billing requirements for the customer or False if the customer does not have a
         billing profile.
-
-    This function sets the billing requirements for the passed Customer instance by retrieving the corresponding
-    billing profile. First, the function checks if the customer has a billing profile with a rule profile. If the
-    profile does not exist, it returns False. If the profile exists, the function retrieves the document classes from
-    the rule profile and creates a list of the document names. The function then returns the list of billing requirements
-    for the customer or False if the profile does not exist.
     """
 
     customer_billing_requirements = []
@@ -260,19 +260,19 @@ def check_billing_requirements(
 ) -> bool:
     """Check if a BillingQueue instance satisfies the billing requirements of its customer.
 
-    Args:
-        invoice (models.BillingQueue): A BillingQueue instance.
-        user (User): A User instance.
-
-    Returns:
-        bool: True if the BillingQueue instance satisfies the billing requirements of its customer, False otherwise.
-
     This function checks if the passed BillingQueue instance meets the billing requirements of its corresponding
     customer. First, it sets the billing requirements for the customer using the set_billing_requirements function and
     checks if they exist. If they do not exist, the function creates a billing exception and returns False. Next, the
     function sets the document ids for the corresponding order by calling set_order_documents and checks if the document
     ids match the billing requirements of the customer. If they do not match, the function creates a billing exception
     and returns False. If the document ids match the billing requirements, the function returns True.
+
+    Args:
+        invoice (models.BillingQueue): A BillingQueue instance.
+        user (User): A User instance.
+
+    Returns:
+        bool: True if the BillingQueue instance satisfies the billing requirements of its customer, False otherwise.
     """
 
     customer_billing_requirements = set_billing_requirements(customer=invoice.customer)
