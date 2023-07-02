@@ -15,44 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobTitle, User } from "@/types/apps/accounts";
-import { createGlobalStore } from "@/utils/zustand";
-import { TableStoreProps } from "@/types/tables";
+import React from "react";
+import { MontaTable } from "@/components/MontaTable";
+import { JobTitleTableColumns } from "@/components/job-title/table/JobTitleTableColumns";
+import { jobTitleTableStore } from "@/stores/UserTableStore";
+import { EditJobTitleModal } from "@/components/job-title/table/EditJobTitleModal";
+import { ViewJobTitleModal } from "@/components/job-title/table/ViewJobTitleModal";
+import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
 
-export const userTableStore = createGlobalStore<
-  Omit<TableStoreProps<User>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
-
-export const jobTitleTableStore = createGlobalStore<
-  Omit<TableStoreProps<JobTitle>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+export const JobTitleTable = () => {
+  return (
+    <MontaTable
+      store={jobTitleTableStore}
+      link="/job_titles"
+      columns={JobTitleTableColumns}
+      TableEditModal={EditJobTitleModal}
+      TableViewModal={ViewJobTitleModal}
+      displayDeleteModal={true}
+      TableCreateDrawer={CreateJobTitleModal}
+      tableQueryKey="job-title-table-data"
+      exportModelName="JobTitle"
+      name="Job Title"
+    />
+  );
+};

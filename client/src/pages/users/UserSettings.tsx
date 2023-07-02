@@ -49,16 +49,19 @@ const UserSettings: React.FC = () => {
   });
 
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery({
-    queryKey: ["job_title", userId],
+    queryKey: ["jobTitle", userDetails?.profile?.job_title],
     queryFn: () => {
       if (!userDetails || !userDetails.profile) {
         return Promise.resolve(null);
       }
-      return getJobTitleDetails(userDetails.profile.job_title);
+      return getJobTitleDetails(userDetails?.profile?.job_title);
     },
     enabled: !!userDetails,
     initialData: () => {
-      return queryClient.getQueryData(["job_title", userId]);
+      return queryClient.getQueryData([
+        "jobTitle",
+        userDetails?.profile?.job_title,
+      ]);
     },
   });
 

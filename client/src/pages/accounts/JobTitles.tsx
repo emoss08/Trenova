@@ -15,44 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobTitle, User } from "@/types/apps/accounts";
-import { createGlobalStore } from "@/utils/zustand";
-import { TableStoreProps } from "@/types/tables";
+import React from "react";
+import { Card, Flex } from "@mantine/core";
+import { usePageStyles } from "@/styles/PageStyles";
+import { JobTitleTable } from "@/components/job-title/table/JobTitleTable";
 
-export const userTableStore = createGlobalStore<
-  Omit<TableStoreProps<User>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+const JobTitles: React.FC = () => {
+  const { classes } = usePageStyles();
 
-export const jobTitleTableStore = createGlobalStore<
-  Omit<TableStoreProps<JobTitle>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+  return (
+    <Flex>
+      <Card className={classes.card}>
+        <JobTitleTable />
+      </Card>
+    </Flex>
+  );
+};
+
+export default JobTitles;

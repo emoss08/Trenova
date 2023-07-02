@@ -15,44 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobTitle, User } from "@/types/apps/accounts";
-import { createGlobalStore } from "@/utils/zustand";
-import { TableStoreProps } from "@/types/tables";
-
-export const userTableStore = createGlobalStore<
-  Omit<TableStoreProps<User>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
-
-export const jobTitleTableStore = createGlobalStore<
-  Omit<TableStoreProps<JobTitle>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+export const jobFunctionChoices = [
+  { value: "MANAGER", label: "Manager" },
+  { value: "MANAGEMENT_TRAINEE", label: "Management Trainee" },
+  { value: "SUPERVISOR", label: "Supervisor" },
+  { value: "DISPATCHER", label: "Dispatcher" },
+  { value: "BILLING", label: "Billing" },
+  { value: "FINANCE", label: "Finance" },
+  { value: "SAFETY", label: "Safety" },
+  { value: "SYS_ADMIN", label: "System Administrator" },
+  { value: "TEST", label: "Test Job Function" },
+];
