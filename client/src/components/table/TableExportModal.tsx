@@ -122,7 +122,7 @@ export const TableExportModal: React.FC<Props> = ({
         <Modal.Overlay />
         <Modal.Content>
           <Modal.Header>
-            <Modal.Title>Export {name}</Modal.Title>
+            <Modal.Title>Export {name}s</Modal.Title>
             <Modal.CloseButton />
           </Modal.Header>
           <Modal.Body>
