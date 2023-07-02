@@ -24,28 +24,22 @@ import {
   faPlus,
 } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
 
 interface TopToolbarProps {
   table: any;
+  store: any;
+  name: string;
 }
 
-export const RCTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
-  const [showColumnFilters, setShowColumnFilters] =
-    revenueCodeTableStore.use("columnFilters");
-  // const rowSelection = table.getState().rowSelection;
-  //
-  // const selectedRowCount = Object.keys(rowSelection).filter(
-  //   (key) => rowSelection[key]
-  // ).length;
+export const TableTopToolbar: React.FC<TopToolbarProps> = ({
+  table,
+  store,
+  name,
+}) => {
+  const [showColumnFilters, setShowColumnFilters] = store.use("columnFilters");
 
   return (
     <>
-      {/*{selectedRowCount > 0 && (*/}
-      {/*  <Text>*/}
-      {/*    {selectedRowCount} user{selectedRowCount > 1 && "s"} selected*/}
-      {/*  </Text>*/}
-      {/*)}*/}
       <Flex
         sx={() => ({
           borderRadius: "4px",
@@ -68,7 +62,6 @@ export const RCTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
         >
           <MRT_GlobalFilterTextInput table={table} />
         </Box>
-
         <Flex
           gap="xs"
           align="center"
@@ -111,20 +104,19 @@ export const RCTableTopToolbar: React.FC<TopToolbarProps> = ({ table }) => {
               />
             </Popover.Dropdown>
           </Popover>
-
           <Button
             color="blue"
             leftIcon={<FontAwesomeIcon icon={faFileExport} />}
-            onClick={() => revenueCodeTableStore.set("exportModalOpen", true)}
+            onClick={() => store.set("exportModalOpen", true)}
           >
             Export
           </Button>
           <Button
             color="blue"
-            onClick={() => revenueCodeTableStore.set("createModalOpen", true)}
+            onClick={() => store.set("createModalOpen", true)}
             leftIcon={<FontAwesomeIcon icon={faPlus} />}
           >
-            Add Revenue Code
+            Add {name}
           </Button>
         </Flex>
       </Flex>

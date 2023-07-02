@@ -85,7 +85,7 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
 
   const mutation = useMutation(
     (values: CreateDivisionCodeFormValues) =>
-      axios.post(`/division_codes/`, values),
+      axios.post("/division_codes/", values),
     {
       onSuccess: () => {
         queryClient
@@ -188,9 +188,6 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
                 label="AP Account"
                 placeholder="AP Account"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("ap_account", form.values.ap_account);
-                }}
                 clearable
               />
               <SelectInput
@@ -201,9 +198,6 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
                 label="Cash Account"
                 placeholder="Cash Account"
                 variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("cash_account", form.values.cash_account);
-                }}
                 clearable
               />
             </SimpleGrid>

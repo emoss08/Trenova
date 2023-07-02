@@ -16,10 +16,8 @@
  */
 
 import React from "react";
-import { ExportUserModal } from "@/components/user-management/table/ExportUserModal";
 import { CreateUserDrawer } from "@/components/user-management/table/CreateUserDrawer";
 import { UserTableColumns } from "@/components/user-management/table/UserTableColumns";
-import { UserTableTopToolbar } from "./UserTableTopToolbar";
 import { ViewUserModal } from "./ViewUserModal";
 import { userTableStore } from "@/stores/UserTableStore";
 import { MontaTable } from "@/components/MontaTable";
@@ -30,14 +28,12 @@ export const UsersAdminTable = () => {
       store={userTableStore}
       link="/users"
       columns={UserTableColumns}
-      TableTopToolbar={UserTableTopToolbar}
-      TableExportModal={ExportUserModal}
       TableCreateDrawer={CreateUserDrawer}
       displayDeleteModal={true}
-      // TableDeleteModal={DeleteUserModal}
       TableViewModal={ViewUserModal}
-      queryKey="users-table-data"
-      queryKey2="users"
+      tableQueryKey="users-table-data"
+      name="User"
+      exportModelName="User"
     />
   );
 };

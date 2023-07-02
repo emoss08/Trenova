@@ -23,42 +23,42 @@ import { montaTableIcons } from "@/components/ui/table/Icons";
 import { ApiResponse } from "@/types/server";
 import { DeleteRecordModal } from "@/components/DeleteRecordModal";
 import { API_URL } from "@/lib/utils";
+import { TableTopToolbar } from "@/components/table/TableTopToolbar";
+import { TableExportModal } from "./table/TableExportModal";
 
 interface MontaTableProps<T extends Record<string, any>> {
   store: any;
   link: string;
   columns: () => MRT_ColumnDef<T>[];
-  TableTopToolbar: React.ComponentType<{ table: any }>;
   displayDeleteModal?: boolean;
-  TableExportModal?: React.ComponentType;
   TableCreateDrawer?: React.ComponentType;
   TableDeleteModal?: React.ComponentType;
   TableEditModal?: React.ComponentType;
   TableViewModal?: React.ComponentType;
-  queryKey: string;
-  queryKey2?: string;
+  exportModelName: string;
+  name: string;
+  tableQueryKey: string;
 }
 
 export const MontaTable = <T extends Record<string, any>>({
   store,
   link,
   columns,
-  TableTopToolbar,
-  TableExportModal,
   TableCreateDrawer,
   TableEditModal,
   TableDeleteModal,
   TableViewModal,
-  queryKey,
+  tableQueryKey,
+  exportModelName,
   displayDeleteModal,
-  queryKey2,
+  name,
 }: MontaTableProps<T>) => {
   const [pagination] = store.use("pagination");
   const [globalFilter, setGlobalFilter] = store.use("globalFilter");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
 
   const { data, isError, isFetching, isLoading } = useQuery<ApiResponse<T>>(
-    [queryKey, pagination.pageIndex, pagination.pageSize, globalFilter],
+    [tableQueryKey, pagination.pageIndex, pagination.pageSize, globalFilter],
     async () => {
       const offset = pagination.pageIndex * pagination.pageSize;
       const fullUrl = `${API_URL}${link}?limit=${
@@ -122,17 +122,14 @@ export const MontaTable = <T extends Record<string, any>>({
           sx: { borderBottom: "unset", marginTop: "8px" },
           variant: "filled",
         }}
-        renderTopToolbar={({ table }) => <TableTopToolbar table={table} />}
+        renderTopToolbar={({ table }) => (
+          <TableTopToolbar table={table} store={store} name={name} />
+        )}
       />
-      {TableExportModal && <TableExportModal />}
+      <TableExportModal store={store} name={name} modelName={exportModelName} />
       {TableCreateDrawer && <TableCreateDrawer />}
       {displayDeleteModal && !TableDeleteModal && (
-        <DeleteRecordModal
-          link={link}
-          queryKey={queryKey}
-          queryKey2={queryKey2}
-          store={store}
-        />
+        <DeleteRecordModal link={link} queryKey={tableQueryKey} store={store} />
       )}
       {TableEditModal && <TableEditModal />}
       {TableDeleteModal && <TableDeleteModal />}

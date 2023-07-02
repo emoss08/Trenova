@@ -19,11 +19,9 @@ import React from "react";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/MontaTable";
 import { GLAccountTableColumns } from "@/components/gl-accounts/table/GLAccountTableColumns";
-import { GLAccountTableTopToolbar } from "@/components/gl-accounts/table/GLAccountTableTopToolbar";
 import { EditGLAccountModal } from "@/components/gl-accounts/table/EditGLAccountModal";
-import { ExportGLAccountModal } from "@/components/gl-accounts/table/ExportGLAccountModal";
 import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
-import { CreateGLAccountModal } from "./CreateGLAccountModal";
+import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
 
 export const GLAccountTable = () => {
   return (
@@ -31,14 +29,13 @@ export const GLAccountTable = () => {
       store={generalLedgerTableStore}
       link="/gl_accounts"
       columns={GLAccountTableColumns}
-      TableTopToolbar={GLAccountTableTopToolbar}
       TableEditModal={EditGLAccountModal}
-      TableExportModal={ExportGLAccountModal}
       TableViewModal={ViewGLAccountModal}
       displayDeleteModal={true}
       TableCreateDrawer={CreateGLAccountModal}
-      queryKey="gl-account-table-data"
-      queryKey2="glAccounts"
+      tableQueryKey="gl-account-table-data"
+      exportModelName="GeneralLedgerAccount"
+      name="GL Account"
     />
   );
 };

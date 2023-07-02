@@ -19,11 +19,9 @@ import React from "react";
 import { MontaTable } from "@/components/MontaTable";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { RCTableColumns } from "@/components/revenue-codes/table/RCTableColumns";
-import { RCTableTopToolbar } from "@/components/revenue-codes/table/RCTableTopToolbar";
 import { ViewRCModal } from "@/components/revenue-codes/table/ViewRCModal";
 import { EditRCModal } from "@/components/revenue-codes/table/EditRCModal";
 import { CreateRCModal } from "./CreateRCModal";
-import { ExportRCModal } from "@/components/revenue-codes/table/ExportRCModal";
 
 export const RevenueCodeTable = () => {
   return (
@@ -31,14 +29,13 @@ export const RevenueCodeTable = () => {
       store={revenueCodeTableStore}
       link="/revenue_codes"
       columns={RCTableColumns}
-      TableTopToolbar={RCTableTopToolbar}
+      name="Revenue Code"
       TableEditModal={EditRCModal}
-      TableExportModal={ExportRCModal}
       TableViewModal={ViewRCModal}
       displayDeleteModal={true}
       TableCreateDrawer={CreateRCModal}
-      queryKey="revenue-code-table-data"
-      queryKey2="revenueCodes"
+      exportModelName="RevenueCode"
+      tableQueryKey="revenue-code-table-data"
     />
   );
 };
