@@ -162,6 +162,18 @@ class WorkerSerializer(GenericSerializer):
         return worker
 
     def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
+        """The update function is a bit more complicated. It first extracts the profile, comments and
+        contacts data from the validated_data dictionary. Then it enters an atomic transaction block
+        to ensure that all of these operations are performed in one database transaction.
+
+        Args:
+            self: Refer to the instance of the class
+            instance(models.Worker): Pass in the instance of the model that is being updated
+            validated_data(Any): Pass the validated data to the update function
+
+        Returns:
+            The instance of the worker that was updated
+        """
         profile_data = validated_data.pop("profile", {})
         comments_data = validated_data.pop("comments", [])
         contacts_data = validated_data.pop("contacts", [])

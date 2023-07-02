@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import Any
 
 from rest_framework import serializers
 
@@ -76,7 +77,21 @@ class DivisionCodeSerializer(GenericSerializer):
     representation of the model.
     """
 
-    def validate(self, attrs):
+    def validate(self, attrs: Any) -> Any:
+        """The validate function is called by the serializer's .is_valid() method. It runs field-level
+        validations on the data, and then it calls a series of custom validation functions that are defined
+        in this class. The custom validation functions are prefixed with an underscore to indicate that
+        they're private methods (i.e., not intended for use outside of this class). Each one takes two
+        arguments: attrs, which is a dictionary containing all of the data; and key, which is a string
+        indicating what field we're validating.
+
+        Args:
+            self: Access the attributes of the class
+            attrs: Pass in the validated data
+
+        Returns:
+            The validated data
+        """
         self._validate_unique_code_organization(attrs)
         self._validate_account_classification(
             attrs,
@@ -99,19 +114,56 @@ class DivisionCodeSerializer(GenericSerializer):
 
         return attrs
 
-    def _validate_unique_code_organization(self, attrs):
+    def _validate_unique_code_organization(self, attrs: Any) -> None:
+        """The _validate_unique_code_organization function is a helper function that validates the uniqueness of the code field.
+        It checks to see if there are any other division codes with the same code and organization as this one, excluding itself if it exists.
+        If there are, then it raises a serializers.ValidationError.
+
+        Args:
+            self: Access the instance of the class
+            attrs (Any): Get the code from the request
+
+        Returns:
+            None: This function does not return anything.
+        """
         code = attrs.get("code")
         division_codes = models.DivisionCode.objects.filter(
             code=code, organization=self.get_organization
-        ).exclude(pk=self.instance.pk if self.instance else None)
+        ).exclude(
+            pk=self.instance.id if self.instance else None
+        )  # type: ignore
         if division_codes:
             raise serializers.ValidationError(
                 {"code": "Division code already exists. Please try again."}
             )
 
     def _validate_account_classification(
-        self, attrs, account_key, expected_classification, account_name
-    ):
+        self,
+        attrs: Any,
+        account_key: str,
+        expected_classification: str,
+        account_name: str,
+    ) -> None:
+        """The _validate_account_classification function is a helper function that validates the account classification of an
+        account. It takes in four arguments: attrs, account_key, expected_classification and account_name. The attrs argument
+        is the attributes dictionary passed to the serializer's create method (or update method). The account key argument is
+        the name of the field on which we want to perform validation. The expected classification argument is a string that
+        represents what type of classification we expect for this particular field (e.g., 'asset', 'liability', etc.). Finally,
+        the last parameter represents what type of
+
+        Args:
+            self: Make the function a method of the class
+            attrs (Any): Pass in the attributes of the serializer
+            account_key(str): Specify the name of the account field in attrs
+            expected_classification(str): Determine the account_classification of the account
+            account_name(str): Specify the name of the account that is being validated
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            serializers.ValidationError: If the account classification of the account does not match the expected classification,
+        """
         account = attrs.get(account_key)
         if account and account.account_classification != expected_classification:
             raise serializers.ValidationError(
@@ -120,7 +172,28 @@ class DivisionCodeSerializer(GenericSerializer):
                 }
             )
 
-    def _validate_account_type(self, attrs, account_key, expected_type, account_name):
+    def _validate_account_type(
+        self, attrs: Any, account_key: str, expected_type: str, account_name: str
+    ) -> None:
+        """The _validate_account_type function is a helper function that validates the account type of an account.
+        It takes in four arguments: self, attrs, account_key and expected_type. The first argument is the serializer instance itself.
+        The second argument is a dictionary containing all of the attributes to be validated (attrs). The third argument
+        is a string representing which attribute we want to validate (account_key). And finally, the fourth argument
+        is another string representing what type of account we expect this attribute to be (expected_type).
+
+        Args:
+            self: Refer to the object itself
+            attrs (Any): Pass the attributes of the serializer to this function
+            account_key (str): Get the account from attrs
+            expected_type (str): Specify the type of account that is expected
+            account_name (str): Specify the account type in the error message
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            serializers.ValidationError: If the account type is not the expected type, then raise a ValidationError.
+        """
         account = attrs.get(account_key)
         if account and account.account_type != expected_type:
             raise serializers.ValidationError(
