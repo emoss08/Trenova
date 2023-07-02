@@ -15,44 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobTitle, User } from "@/types/apps/accounts";
-import { createGlobalStore } from "@/utils/zustand";
-import { TableStoreProps } from "@/types/tables";
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
+import { jobTitleTableStore } from "@/stores/UserTableStore";
+import { CreateJobTitleModalForm } from "@/components/job-title/table/_Partials/CreateJobTitleModalForm";
 
-export const userTableStore = createGlobalStore<
-  Omit<TableStoreProps<User>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+export const CreateJobTitleModal: React.FC = () => {
+  const [showCreateModal, setShowCreateModal] =
+    jobTitleTableStore.use("createModalOpen");
 
-export const jobTitleTableStore = createGlobalStore<
-  Omit<TableStoreProps<JobTitle>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  createModalOpen: false,
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+  if (!showCreateModal) return null;
+
+  return (
+    <Modal.Root
+      opened={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Create Job Title</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Suspense fallback={<Skeleton height={400} />}>
+            <CreateJobTitleModalForm />
+          </Suspense>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
+  );
+};

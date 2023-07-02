@@ -32,6 +32,7 @@ const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
+const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -117,6 +118,16 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage general ledger accounts",
     element: <GLAccountsPage />,
     permission: "view_generalledgeraccount",
+  },
+  // Accounts Pages
+  {
+    title: "Job Titles",
+    group: "accounts",
+    subMenu: "configuration files",
+    path: "/accounts/job-titles",
+    description: "Manage job titles",
+    element: <JobTitlePage />,
+    permission: "view_jobtitle",
   },
   // Error Page
   {

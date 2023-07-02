@@ -68,10 +68,11 @@ export interface UserFormValues {
 
 export type JobTitle = {
   id: string;
+  organization: string;
   name: string;
   description: string;
-  is_active: boolean;
-  organization: string;
+  status: string;
+  job_function: string;
 };
 
 export type UserReport = {
