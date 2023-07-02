@@ -15,11 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ValidatedTextInputProps } from "@/types/fields";
 import { createStyles } from "@mantine/styles";
 import { Select, SelectItemProps, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import React, { forwardRef } from "react";
+import { SelectProps } from "@mantine/core/lib/Select/Select";
+import { UseFormReturnType } from "@mantine/form";
 
 export type SelectItem = {
   value: string;
@@ -40,10 +41,9 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export interface ValidatedSelectInputProps<TFormValues extends object>
-  extends ValidatedTextInputProps<TFormValues> {
-  data: SelectItem[];
-  clearable?: boolean;
+interface ValidatedSelectInputProps<TFormValues extends object>
+  extends Omit<SelectProps, "form"> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
@@ -58,8 +58,6 @@ export const SelectInput = <TFormValues extends object>({
   form,
   data,
   name,
-  value,
-  onContextMenu,
   ...rest
 }: ValidatedSelectInputProps<TFormValues>) => {
   const { classes } = useStyles();
@@ -90,8 +88,6 @@ export const SelectInput = <TFormValues extends object>({
         )
       }
       searchable
-      clearable={rest.clearable ?? true}
-      onContextMenu={onContextMenu}
     />
   );
 };

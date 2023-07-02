@@ -17,6 +17,7 @@
 import React, { forwardRef } from "react";
 import { Text, Select, SelectProps, createStyles } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
+import { UseFormReturnType } from "@mantine/form";
 
 interface StateProp {
   label: string;
@@ -90,9 +91,9 @@ const useStyles = createStyles((theme) => {
 });
 
 interface StateSelectProps<TFormValues extends object>
-  extends Omit<SelectProps, "data"> {
-  form: any;
-  name: keyof TFormValues & string; // enforce 'name' to be a string type
+  extends Omit<SelectProps, "data" | "form"> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: string;
   searchable: boolean;
 }
 

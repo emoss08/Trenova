@@ -16,11 +16,11 @@
  */
 
 import { Switch, SwitchProps } from "@mantine/core";
+import { UseFormReturnType } from "@mantine/form";
 
-interface ValidatedSwitchInputProps<TFormValues extends Record<string, unknown>>
-  extends SwitchProps {
-  form: any;
-  name: keyof TFormValues & string;
+interface ValidatedSwitchInputProps<TFormValues>
+  extends Omit<SwitchProps, "form"> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
 export const SwitchInput = <TFormValues extends Record<string, unknown>>(

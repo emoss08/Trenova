@@ -16,13 +16,14 @@
  */
 import React, { useRef, useState } from "react";
 import { createStyles } from "@mantine/styles";
-import { ValidatedTextInputProps } from "@/types/fields";
 import { Autocomplete, Loader } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { stateData } from "./StateSelect";
+import { AutocompleteProps } from "@mantine/core/lib/Autocomplete/Autocomplete";
 
-interface CityAutoCompleteField<TFormValues extends object>
-  extends ValidatedTextInputProps<TFormValues> {
+interface CityAutoCompleteFieldProps<TFormValues extends object>
+  extends Omit<AutocompleteProps, "data"> {
+  form: any;
   stateSelection: string;
 }
 
@@ -45,7 +46,7 @@ export const CityAutoCompleteField = <TFormValues extends object>({
   stateSelection,
   name,
   ...rest
-}: CityAutoCompleteField<TFormValues>) => {
+}: CityAutoCompleteFieldProps<TFormValues>) => {
   const { classes } = useStyles();
   const error = form.errors[name as string];
   const timeoutRef = useRef<number>(-1);
@@ -73,7 +74,7 @@ export const CityAutoCompleteField = <TFormValues extends object>({
     return await response.json();
   };
 
-  const handleChange = (val: string) => {
+  const handleChange = (val: any) => {
     window.clearTimeout(timeoutRef.current);
     form.setFieldValue(name as string, val);
     setData([]);
