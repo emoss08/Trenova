@@ -177,6 +177,9 @@ class Organization(TimeStampedModel):
         verbose_name_plural = _("Organizations")
         ordering = ["name"]
         db_table = "organization"
+        permissions = [
+            ("admin.can_view_all_controls", "Can View All Control Files"),
+        ]
 
     def __str__(self) -> str:
         """String representation of the organization.
