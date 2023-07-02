@@ -36,6 +36,7 @@ import { ContextMenuProvider } from "mantine-contextmenu";
 function App() {
   const { isVerifying } = useVerifyToken();
   useVerifyToken();
+
   const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
     key: "mt-color-scheme",
     defaultValue: "light",
@@ -53,6 +54,10 @@ function App() {
       colorScheme === "dark" ? "dark-theme" : "light-theme";
   }, [colorScheme]);
 
+  if (isVerifying || initialLoading) {
+    return <LoadingScreen />;
+  }
+
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -60,10 +65,6 @@ function App() {
       },
     },
   });
-
-  if (initialLoading || isVerifying) {
-    return <LoadingScreen />;
-  }
 
   return (
     <>
