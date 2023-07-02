@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+import json
 from typing import Any
 
 from django.contrib.auth import authenticate, password_validation
@@ -56,30 +56,6 @@ class GroupSerializer(serializers.ModelSerializer):
 
         model = Group
         fields = ["id", "name", "permissions"]
-
-
-class JobTitleSerializer(GenericSerializer):
-    """Serializer for the JobTitle model.
-
-    This serializer converts the JobTitle model into a format that
-    can be easily converted to and from JSON, and allows for easy validation
-    of the data.
-    """
-
-    class Meta:
-        """
-        Metaclass for GeneralLedgerAccountSerializer
-
-        Attributes:
-            model (models.JobTitle): The model that the serializer
-            is for.
-
-            fields (list[str]): The fields that should be included
-            in the serialized representation of the model.
-        """
-
-        model = models.JobTitle
-        fields = ["id", "organization", "name", "description", "status", "job_function"]
 
 
 class JobTitleListingField(serializers.RelatedField):
@@ -220,9 +196,6 @@ class UserProfileSerializer(GenericSerializer):
             "id",
             "user",
         )
-
-
-test = UserProfileSerializer()
 
 
 @extend_schema_serializer(
@@ -401,6 +374,77 @@ class UserSerializer(GenericSerializer):
         return instance
 
 
+class JobTitleSerializer(GenericSerializer):
+    """Serializer for the JobTitle model.
+
+    This serializer converts the JobTitle model into a format that
+    can be easily converted to and from JSON, and allows for easy validation
+    of the data.
+    """
+
+    users = serializers.SerializerMethodField()
+
+    class Meta:
+        """
+        Metaclass for GeneralLedgerAccountSerializer
+
+        Attributes:
+            model (models.JobTitle): The model that the serializer
+            is for.
+
+            fields (list[str]): The fields that should be included
+            in the serialized representation of the model.
+        """
+
+        model = models.JobTitle
+        fields = [
+            "id",
+            "organization_id",
+            "status",
+            "description",
+            "name",
+            "job_function",
+            "users",
+        ]
+
+    def get_users(self, obj: models.JobTitle) -> list[str]:
+        """The get_users function is a custom function that returns the list of users associated with a job title.
+        It is called by the JobTitleSerializer class, which uses it to populate the 'users' field in its serialized output.
+        The get_users function takes one argument: an instance of models.JobTitle (i.e., obj). It then returns a list containing
+        the usernames of all users whose profiles are associated with this job title.
+
+        Args:
+            self: Access the context of the request
+            obj (models.JobTitle): Specify the type of object that will be passed to this function
+
+        Returns:
+            list[str]: A list of usernames for the users that have a profile with the specified job title
+        """
+        expand_users = self.context["request"].query_params.get("expand_users", "false")
+        if expand_users.lower() != "true":
+            return []
+        return [profile.user.username for profile in obj.profile.all()]
+
+    def to_representation(self, instance: models.JobTitle) -> dict[str, Any]:
+        """The to_representation function is used to convert the model instance into a dictionary of primitive datatypes.
+        The default implementation will return the model's __dict__, but you can override this function to customize how
+        the serializer should represent your object. For example, if you wanted to include a calculated field in your
+        representation, or remove some fields from being output.
+
+        Args:
+            self: Refer to the serializer instance
+            instance (models.JobTitle): Pass in the instance of the model that is being serialized
+
+        Returns:
+            dict[str, Any]: A dictionary of the serialized data for the model instance
+        """
+        ret = super().to_representation(instance)
+        expand_users = self.context["request"].query_params.get("expand_users", "false")
+        if expand_users.lower() != "true":
+            ret.pop("users", None)
+        return ret
+
+
 @extend_schema_serializer(
     examples=[
         OpenApiExample(
@@ -422,15 +466,16 @@ class ChangePasswordSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(required=True)
 
     def validate_old_password(self, value: str) -> str:
-        """Validate the new password
+        """The validate_old_password function is a custom validator that checks if the old password provided by the user matches
+        the one stored in our database. If it does not, then we raise a ValidationError with an appropriate error message.
 
         Args:
-            value (str): New password
+            self: Access the current instance of the serializer
+            value: str: Get the old password from the request
 
         Returns:
-            str: Validated new password
+            The value of the old password
         """
-
         user = self.context["request"].user
         if not user.check_password(value):
             raise serializers.ValidationError(
@@ -439,15 +484,18 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs: Any) -> Any:
-        """Validate the new password
+        """The validate function is used to validate the data that was passed in. In this case, we are
+        checking if the new_password and confirm_password fields match. If they don't, then we raise a
+        ValidationError with an appropriate message. We also use Django's built-in password validation
+        function to check if the password meets our requirements.
 
         Args:
-            attrs (Any): Data to validate
+            self: Access the serializer class
+            attrs (Any): Pass in the data that is being validated
 
         Returns:
-            dict[str, Any]: Validated data
+            A dictionary of validated data
         """
-
         if attrs["new_password"] != attrs["confirm_password"]:
             raise serializers.ValidationError(
                 "Passwords do not match. Please try again."
