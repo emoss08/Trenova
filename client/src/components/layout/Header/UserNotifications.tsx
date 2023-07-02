@@ -44,11 +44,11 @@ import { useAuthStore } from "@/stores/AuthStore";
 import { WebSocketManager } from "@/utils/websockets";
 import { Howl, Howler } from "howler";
 
+import NotificationSound from "@/assets/audio/notification.webm";
+import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
+
 const sound = new Howl({
-  src: [
-    "../../../../public/audio/notification.webm",
-    "../../../../public/audio/notification.mp3",
-  ],
+  src: [NotificationSound, NotificationSoundMp3],
 });
 
 const useStyles = createStyles((theme) => ({
