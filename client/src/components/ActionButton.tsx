@@ -15,15 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ActionIcon, createStyles } from "@mantine/core";
+import { ActionIcon, createStyles, Tooltip } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
-import React from "react";
-
-interface ActionButtonProps {
-  icon: IconProp;
-  onClick?: () => void;
-}
+import React, { useRef } from "react";
+import { ActionIconProps } from "@mantine/core/lib/ActionIcon/ActionIcon";
 
 const useStyles = createStyles((theme) => ({
   hoverEffect: {
@@ -42,11 +38,17 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
+interface ActionButtonProps extends ActionIconProps {
+  icon: IconProp;
+  onClick?: () => void;
+}
+
 const ActionButton: React.FC<ActionButtonProps> = ({ icon, onClick }) => {
   const { classes } = useStyles();
+  const ref = useRef<HTMLButtonElement>(null);
 
   return (
-    <ActionIcon className={classes.hoverEffect} onClick={onClick}>
+    <ActionIcon className={classes.hoverEffect} ref={ref} onClick={onClick}>
       <FontAwesomeIcon icon={icon} />
     </ActionIcon>
   );
