@@ -15,10 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ActionIcon, Menu, useMantineColorScheme } from "@mantine/core";
+import {
+  ActionIcon,
+  Menu,
+  Tooltip,
+  useMantineColorScheme,
+} from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDisplay, faMoon, faSun } from "@fortawesome/pro-duotone-svg-icons";
-import React from "react";
+import React, { useRef } from "react";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { useHeaderStore } from "@/stores/HeaderStore";
 
@@ -26,6 +31,8 @@ export const ThemeSwitcher: React.FC = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { classes } = useHeaderStyles();
   const [themeSwitcherOpen] = useHeaderStore.use("themeSwitcherOpen");
+  const ref = useRef<HTMLButtonElement>(null);
+
   const getThemeIcon = () => {
     if (colorScheme === "light") {
       return <FontAwesomeIcon icon={faSun} />;
@@ -50,9 +57,11 @@ export const ThemeSwitcher: React.FC = () => {
         arrowSize={5}
       >
         <Menu.Target>
-          <ActionIcon className={classes.hoverEffect}>
-            {getThemeIcon()}
-          </ActionIcon>
+          <Tooltip label="Theme: Ctrl + J" withArrow>
+            <ActionIcon ref={ref} className={classes.hoverEffect}>
+              {getThemeIcon()}
+            </ActionIcon>
+          </Tooltip>
         </Menu.Target>
 
         <Menu.Dropdown>
