@@ -133,4 +133,12 @@ ALLOWED_MODELS = {
             "account_classification",
         ],
     },
+    "ChargeType": {
+        "app_label": "billing",
+        "allowed_fields": [
+            "organization__name",
+            "name",
+            "description",
+        ],
+    },
 }
