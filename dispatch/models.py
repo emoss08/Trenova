@@ -34,15 +34,12 @@ User = settings.AUTH_USER_MODEL
 
 
 class DispatchControl(GenericModel):
-    """
-    Class: DispatchControl
-
-    Stores dispatch control information for a related :model:organization.Organization.
-
+    """Stores dispatch control information for a related :model:organization.Organization.
+            
     The DispatchControl model stores dispatch control information for a related organization. It is used to store
-        information such as the record
-    service incident control, grace period, deadhead target, driver assign, trailer continuity, distance method,
-        duplicate trailer check, regulatory check, prevention of orders on hold, and the generation of routes.
+        information such as the record service incident control, grace period, deadhead target,
+        driver assign, trailer continuity, distance method, duplicate trailer check, regulatory check,
+        prevention of orders on hold, and the generation of routes.
 
     Attributes:
         id (UUIDField): Primary key and default value is a randomly generated UUID. Editable and unique.

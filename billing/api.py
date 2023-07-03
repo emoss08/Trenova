@@ -51,8 +51,18 @@ class BillingControlViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAdminUser]
     serializer_class = serializers.BillingControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
+    filterset_fields = ("organization_id",)
 
     def get_queryset(self) -> QuerySet[models.BillingControl]:
+        """The get_queryset function is used to filter the queryset based on the request.
+        In this case, we are filtering by `organization_id` so that each user can only see their own billing controls.
+
+        Args:
+            self: Refer to the class itself, and is used in this case to access the queryset attribute
+
+        Returns:
+            QuerySet[models.BillingControl]: A queryset of the `billingcontrol` model
+        """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -94,6 +104,18 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.BillingQueue]:
+        """The get_queryset function is used to filter the queryset based on the request.
+        The function returns a QuerySet of `BillingQueue` objects that are filtered by `organization_id`,
+        which is equal to the user's `organization_id`. The only() method limits which fields are returned in
+        the response.
+
+        Args:
+            self: Represent the instance of the class
+
+        Returns:
+            QuerySet[models.BillingQueue]: A queryset that is filtered by the `organization_id`
+        """
+
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -154,6 +176,16 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.BillingHistory]:
+        """The get_queryset function is used to filter the queryset based on the request.
+        The function takes in a self parameter, which is an instance of the class that inherits from viewset.ModelViewSet.
+        In this case, it's BillingHistoryViewSet. The ``get_queryset`` function returns a QuerySet object.
+
+        Args:
+            self: Refer to the class itself
+
+        Returns:
+            QuerySet[models.BillingHistory]: A queryset that is filtered by the `organization_id`
+        """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
