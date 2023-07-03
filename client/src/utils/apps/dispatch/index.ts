@@ -15,51 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type Organization = {
-  id: string;
-  name: string;
-  scac_code: string;
-  dot_number: number;
-  address_line_1?: string;
-  address_line_2?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone_number?: string;
-  website?: string;
-  org_type: string;
-  timezone: string;
-  language: string;
-  currency: string;
-  date_format: string;
-  time_format: string;
-  logo: string;
-  token_expiration_days: number;
-};
-
-export type EmailProfile = {
-  id: string;
-  name: string;
-  organization: string;
-  email: string;
-  protocol: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-};
-
-export type Department = {
-  id: string;
-  name: string;
-  organization: string;
-  description: string;
-  depot: string;
-};
-
-export type EmailControl = {
-  id: string;
-  organization: string;
-  billing_email_profile: string;
-  rate_expiration_email_profile: string;
-};
+export const serviceIncidentControlChoices = [
+  { value: "Never", label: "Never" },
+  { value: "Pickup", label: "Pickup" },
+  { value: "Delivery", label: "Delivery" },
+  { value: "Pickup and Delivery", label: "Pickup and Delivery" },
+  { value: "All except shipper", label: "All except shipper" },
+];

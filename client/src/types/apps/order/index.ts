@@ -14,6 +14,21 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+export type OrderControl = {
+  id: string;
+  organization: string;
+  auto_rate_orders: boolean;
+  calculate_distance: boolean;
+  enforce_rev_code: boolean;
+  enforce_voided_comm: boolean;
+  generate_routes: boolean;
+  enforce_commodity: boolean;
+  auto_sequence_stops: boolean;
+  auto_order_total: boolean;
+  enforce_origin_destination: boolean;
+  check_for_duplicate_bol: boolean;
+  remove_orders: boolean;
+};
 
 export type Order = {
   mileage: number;

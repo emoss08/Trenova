@@ -33,6 +33,9 @@ const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
+const ControlFilesPage = lazy(
+  () => import("../pages/admin/control-files/ControlFiles")
+);
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -74,7 +77,7 @@ export const routes: RouteObjectWithPermission[] = [
     element: <ResetPasswordPage />,
     excludeFromMenu: true,
   },
-  // User Management
+  // Admin Pages
   {
     title: "User Management",
     group: "admin",
@@ -84,6 +87,16 @@ export const routes: RouteObjectWithPermission[] = [
     element: <UserManagementPage />,
     permission: "admin.users.view",
   },
+  {
+    title: "Control Files",
+    group: "admin",
+    subMenu: "control files",
+    path: "/admin/control-files",
+    description: "Manage organization control files",
+    element: <ControlFilesPage />,
+    permission: "admin.can_view_all_controls",
+  },
+  // User Pages
   {
     title: "User Settings",
     group: "user",
