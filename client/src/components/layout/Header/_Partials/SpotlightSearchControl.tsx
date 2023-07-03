@@ -15,11 +15,42 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import ActionButton from "@/components/ActionButton";
+import React, { useRef } from "react";
 import { faMagnifyingGlass } from "@fortawesome/pro-solid-svg-icons";
 import { spotlight } from "@mantine/spotlight";
+import { ActionIcon, createStyles, Tooltip } from "@mantine/core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export const SearchControl: React.FC = () => {
-  return <ActionButton icon={faMagnifyingGlass} onClick={spotlight.open} />;
+const useStyles = createStyles((theme) => ({
+  hoverEffect: {
+    svg: {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[5]
+          : theme.colors.gray[9],
+    },
+    "&:hover svg": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[0]
+          : theme.colors.gray[7],
+    },
+  },
+}));
+
+export const SearchControl = () => {
+  const { classes } = useStyles();
+  const ref = useRef<HTMLButtonElement>(null);
+
+  return (
+    <Tooltip label="Search: Ctrl + K" withArrow>
+      <ActionIcon
+        className={classes.hoverEffect}
+        ref={ref}
+        onClick={() => spotlight.open()}
+      >
+        <FontAwesomeIcon icon={faMagnifyingGlass} />
+      </ActionIcon>
+    </Tooltip>
+  );
 };
