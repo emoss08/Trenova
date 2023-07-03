@@ -68,6 +68,7 @@ export const SearchSpotlight: React.FC = () => {
       searchPlaceholder="Search..."
       shortcut="mod + k"
       nothingFoundMessage="Nothing found..."
+      limit={10}
       transitionProps={{ duration: 300, transition: "slide-down" }}
     >
       <SearchControl />
