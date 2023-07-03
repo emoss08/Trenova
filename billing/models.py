@@ -1189,25 +1189,6 @@ class BillingException(GenericModel):
     be overridden in the subclasses.
     """
 
-    @final
-    class BillingExceptionChoices(models.TextChoices):
-        """
-        A class representing the possible billing exception choices.
-
-        This class inherits from the `models.TextChoices` class and defines five constants:
-        - PAPERWORK: representing a billing exception related to paperwork
-        - CHARGE: representing a billing exception resulting in a charge
-        - CREDIT: representing a billing exception resulting in a credit
-        - DEBIT: representing a billing exception resulting in a debit
-        - OTHER: representing any other type of billing exception
-        """
-
-        PAPERWORK = "PAPERWORK", _("Paperwork")
-        CHARGE = "CHARGE", _("Charge")
-        CREDIT = "CREDIT", _("Credit")
-        DEBIT = "DEBIT", _("Debit")
-        OTHER = "OTHER", _("OTHER")
-
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,

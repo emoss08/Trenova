@@ -121,7 +121,7 @@ class OrderControl(GenericModel):
     enforce_rev_code = models.BooleanField(
         _("Enforce Rev Code"),
         default=False,
-        help_text=_("Enforce rev code code being entered when entering an order."),
+        help_text=_("Enforce rev code code when entering an order."),
     )
     enforce_voided_comm = models.BooleanField(
         _("Enforce Voided Comm"),
