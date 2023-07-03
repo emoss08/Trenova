@@ -148,6 +148,11 @@ export async function getEmailControl(): Promise<EmailControl[]> {
   return response.data.results;
 }
 
+/**
+ * Fetches route control from the server.
+ * @returns A promise that resolves to an array of route control.
+ * @note This should only return one result.
+ */
 export async function getRouteControl(): Promise<RouteControl[]> {
   const response = await axios.get("/route_control/");
   return response.data.results;
