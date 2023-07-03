@@ -35,7 +35,7 @@ User = settings.AUTH_USER_MODEL
 
 class DispatchControl(GenericModel):
     """Stores dispatch control information for a related :model:organization.Organization.
-            
+
     The DispatchControl model stores dispatch control information for a related organization. It is used to store
         information such as the record service incident control, grace period, deadhead target,
         driver assign, trailer continuity, distance method, duplicate trailer check, regulatory check,
