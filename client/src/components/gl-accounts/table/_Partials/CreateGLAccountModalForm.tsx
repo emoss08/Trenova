@@ -23,7 +23,6 @@ import {
   Group,
   rem,
   SimpleGrid,
-  Text,
 } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
