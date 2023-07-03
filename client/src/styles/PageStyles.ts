@@ -45,4 +45,7 @@ export const usePageStyles = createStyles((theme) => ({
   grid: {
     display: "flex",
   },
+  cardBody: {
+    overflow: "visible",
+  },
 }));
