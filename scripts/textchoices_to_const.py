@@ -14,9 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-import os
 import ast
+import os
 from collections.abc import Generator
 from typing import Any
 
@@ -81,7 +80,7 @@ def find_and_convert_choices(directory: str) -> None:
                                         f'  {{ value: "{value}", label: "{label}" }},'
                                     )
                         ts_string = (
-                            f"export const {class_node.name} = [\n"
+                            f"export const {class_node.name[0].lower() + class_node.name[1:]} = [\n"
                             + "\n".join(ts_conversion)
                             + "\n];"
                         )
@@ -89,4 +88,4 @@ def find_and_convert_choices(directory: str) -> None:
             f.close()
 
 
-find_and_convert_choices("accounts")
+find_and_convert_choices("../route")
