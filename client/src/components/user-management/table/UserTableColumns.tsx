@@ -16,17 +16,10 @@
  */
 
 import React from "react";
-import { Avatar, Badge, Box, Button, Menu, Text, Tooltip } from "@mantine/core";
+import { Avatar, Badge, Box, Text, Tooltip } from "@mantine/core";
 import { formatDate, formatDateToHumanReadable } from "@/utils/date";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUser,
-  faUserGear,
-  faUserMinus,
-} from "@fortawesome/pro-duotone-svg-icons";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { User } from "@/types/apps/accounts";
-import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { userTableStore } from "@/stores/UserTableStore";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
@@ -123,10 +116,11 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
           return <Text>Never</Text>;
         }
         const tooltipDate = formatDate(row.original.last_login);
+        const ref = React.useRef<HTMLDivElement>(null);
 
         return (
           <Tooltip withArrow position="left" label={tooltipDate}>
-            <Text>{renderedCellValue}</Text>
+            <Text ref={ref}>{renderedCellValue}</Text>
           </Tooltip>
         );
       },
