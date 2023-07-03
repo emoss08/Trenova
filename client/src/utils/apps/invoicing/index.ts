@@ -15,51 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type Organization = {
-  id: string;
-  name: string;
-  scac_code: string;
-  dot_number: number;
-  address_line_1?: string;
-  address_line_2?: string;
-  city?: string;
-  state?: string;
-  zip_code?: string;
-  phone_number?: string;
-  website?: string;
-  org_type: string;
-  timezone: string;
-  language: string;
-  currency: string;
-  date_format: string;
-  time_format: string;
-  logo: string;
-  token_expiration_days: number;
-};
-
-export type EmailProfile = {
-  id: string;
-  name: string;
-  organization: string;
-  email: string;
-  protocol: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-};
-
-export type Department = {
-  id: string;
-  name: string;
-  organization: string;
-  description: string;
-  depot: string;
-};
-
-export type EmailControl = {
-  id: string;
-  organization: string;
-  billing_email_profile: string;
-  rate_expiration_email_profile: string;
-};
+export const dateFormatChoices = [
+  { value: "%m/%d/%Y", label: "MM/DD/YYYY" },
+  { value: "%d/%m/%Y", label: "DD/MM/YYYY" },
+  { value: "%Y/%d/%m", label: "YYYY/DD/MM" },
+  { value: "%Y/%m/%d", label: "YYYY/MM/DD" },
+];

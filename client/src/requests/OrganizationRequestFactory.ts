@@ -16,8 +16,18 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { GroupType, JobTitle } from "@/types/apps/accounts";
-import { Department, Organization } from "@/types/apps/organization";
+import { JobTitle } from "@/types/apps/accounts";
+import {
+  Department,
+  EmailControl,
+  EmailProfile,
+  Organization,
+} from "@/types/apps/organization";
+import { BillingControl } from "@/types/apps/billing";
+import { DispatchControl } from "@/types/apps/dispatch";
+import { InvoiceControl } from "@/types/apps/invoicing";
+import { OrderControl } from "@/types/apps/order";
+import { RouteControl } from "@/types/apps/route";
 
 /**
  * Fetches organizations from the server.
@@ -78,7 +88,67 @@ export async function getJobTitleDetails(id: string): Promise<JobTitle> {
   return response.data;
 }
 
-export async function getGroups(): Promise<GroupType[]> {
-  const response = await axios.get("/groups/");
+/**
+ * Fetches billing control from the server.
+ * @returns A promise that resolves to an array of billing control.
+ * @note This should only return one result.
+ */
+export async function getBillingControl(): Promise<BillingControl[]> {
+  const response = await axios.get("/billing_control/");
+  return response.data.results;
+}
+
+/**
+ * Fetches dispatch control from the server.
+ * @returns A promise that resolves to an array of dispatch control.
+ * @note This should only return one result.
+ */
+export async function getDispatchControl(): Promise<DispatchControl[]> {
+  const response = await axios.get("/dispatch_control/");
+  return response.data.results;
+}
+
+/**
+ * Fetches invoice control from the server.
+ * @returns A promise that resolves to an array of invoice control.
+ * @note This should only return one result.
+ */
+export async function getInvoiceControl(): Promise<InvoiceControl[]> {
+  const response = await axios.get("/invoice_control/");
+  return response.data.results;
+}
+
+/**
+ * Fetches order control from the server.
+ * @returns A promise that resolves to an array of order control.
+ * @note This should only return one result.
+ */
+export async function getOrderControl(): Promise<OrderControl[]> {
+  const response = await axios.get("/order_control/");
+  return response.data.results;
+}
+
+/**
+ * Fetches email profiles from the server.
+ * @returns A promise that resolves to an array of email profiles.
+ * @note This should only return one result.
+ */
+export async function getEmailProfiles(): Promise<EmailProfile[]> {
+  const response = await axios.get("/email_profiles/");
+  return response.data.results;
+}
+
+/**
+ * Fetches email control from the server.
+ * @returns A promise that resolves to an array of email control.
+ * @note This should only return one result.
+ */
+export async function getEmailControl(): Promise<EmailControl[]> {
+  const response = await axios.get("/email_control/");
+  return response.data.results;
+}
+
+export async function getRouteControl(): Promise<RouteControl[]> {
+  const response = await axios.get("/route_control/");
   return response.data.results;
 }
