@@ -15,20 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type BillingControl = {
-  id: string;
-  organization: string;
-  remove_billing_history: boolean;
-  auto_bill_orders: boolean;
-  auto_mark_ready_to_bill: boolean;
-  validate_customer_rates: boolean;
-  auto_bill_criteria: string;
-  order_transfer_criteria: string;
-  enforce_customer_billing: boolean;
-};
+import React from "react";
+import { MontaTable } from "@/components/MontaTable";
+import { chargeTypeTableStore } from "@/stores/BillingStores";
+import { CreateChargeTypeModal } from "@/components/charge-types/table/CreateChargeTypeModal";
+import { EditChargeTypeModal } from "@/components/charge-types/table/EditChargeTypeModal";
+import { ChargeTypeTableColumns } from "@/components/charge-types/table/ChargeTypeTableColumns";
+import { ViewChargeTypeModal } from "@/components/charge-types/table/ViewChargeTypeModal";
 
-export type ChargeType = {
-  id: string;
-  name: string;
-  description: string;
+export const ChargeTypeTable = () => {
+  return (
+    <MontaTable
+      store={chargeTypeTableStore}
+      link="/charge_types"
+      columns={ChargeTypeTableColumns}
+      TableEditModal={EditChargeTypeModal}
+      TableViewModal={ViewChargeTypeModal}
+      displayDeleteModal={true}
+      TableCreateDrawer={CreateChargeTypeModal}
+      tableQueryKey="charge-type-table-data"
+      exportModelName="ChargeType"
+      name="Charge Type"
+    />
+  );
 };
