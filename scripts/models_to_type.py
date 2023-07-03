@@ -14,11 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-"""
-Converts Django models to TypeScript types.
-"""
-
 import ast
 import argparse
 import os
@@ -82,16 +77,18 @@ class ModelVisitor(ast.NodeVisitor):
         Returns: this function does not return anything.
         """
         fields = []
+
         for stmt in node.body:
             if isinstance(stmt, ast.Assign):
                 for target in stmt.targets:
                     if isinstance(target, ast.Name):
                         field_name = target.id
 
-                        if isinstance(stmt.value, ast.Call) and isinstance(
-                            stmt.value.func, ast.Attribute
-                        ):
-                            field_type = stmt.value.func.attr
+                        if isinstance(stmt.value, ast.Call):
+                            if isinstance(stmt.value.func, ast.Attribute):
+                                field_type = stmt.value.func.attr
+                            elif isinstance(stmt.value.func, ast.Name):
+                                field_type = stmt.value.func.id
 
                             if ts_type := TYPE_MAP.get(field_type):
                                 fields.append((field_name, ts_type))
@@ -147,7 +144,7 @@ def main(ignore_dirs: list[str]) -> None:
     with Progress() as progress:
         task = progress.add_task("[cyan]Starting...", total=100)
 
-        for root, dirs, files in os.walk("."):
+        for root, dirs, files in os.walk(".."):
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
 
             for name in files:
