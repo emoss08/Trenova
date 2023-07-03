@@ -15,20 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type BillingControl = {
-  id: string;
-  organization: string;
-  remove_billing_history: boolean;
-  auto_bill_orders: boolean;
-  auto_mark_ready_to_bill: boolean;
-  validate_customer_rates: boolean;
-  auto_bill_criteria: string;
-  order_transfer_criteria: string;
-  enforce_customer_billing: boolean;
-};
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
+import { chargeTypeTableStore } from "@/stores/BillingStores";
+import { CreateChargeTypeModalForm } from "@/components/charge-types/table/_partials/CreateChargeTypeModalForm";
 
-export type ChargeType = {
-  id: string;
-  name: string;
-  description: string;
+export const CreateChargeTypeModal: React.FC = () => {
+  const [showCreateModal, setShowCreateModal] =
+    chargeTypeTableStore.use("createModalOpen");
+
+  if (!showCreateModal) return null;
+
+  return (
+    <Modal.Root
+      opened={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Create Charge Type</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Suspense fallback={<Skeleton height={400} />}>
+            <CreateChargeTypeModalForm />
+          </Suspense>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
+  );
 };

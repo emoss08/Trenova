@@ -15,20 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type BillingControl = {
-  id: string;
-  organization: string;
-  remove_billing_history: boolean;
-  auto_bill_orders: boolean;
-  auto_mark_ready_to_bill: boolean;
-  validate_customer_rates: boolean;
-  auto_bill_criteria: string;
-  order_transfer_criteria: string;
-  enforce_customer_billing: boolean;
-};
+import axios from "@/lib/AxiosConfig";
+import { ChargeType } from "@/types/apps/billing";
 
-export type ChargeType = {
-  id: string;
-  name: string;
-  description: string;
-};
+export async function getChargeTypeDetails(id: string): Promise<ChargeType> {
+  const response = await axios.get(`/charge_types/${id}/`);
+  return response.data;
+}

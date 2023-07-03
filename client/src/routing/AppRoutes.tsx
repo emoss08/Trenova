@@ -36,6 +36,7 @@ const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ControlFilesPage = lazy(
   () => import("../pages/admin/control-files/ControlFiles")
 );
+const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -141,6 +142,16 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Manage job titles",
     element: <JobTitlePage />,
     permission: "view_jobtitle",
+  },
+  // Billing Pages
+  {
+    title: "Charge Types",
+    group: "billing",
+    subMenu: "configuration files",
+    path: "/accounts/charge-types",
+    description: "Manage charge types",
+    element: <ChargeTypePage />,
+    permission: "view_chargetype",
   },
   // Error Page
   {
