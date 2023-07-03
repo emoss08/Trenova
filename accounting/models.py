@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from auditlog.registry import auditlog
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -433,3 +434,9 @@ class DivisionCode(GenericModel):
             str: DivisionCode absolute url
         """
         return reverse("division-codes-detail", kwargs={"pk": self.pk})
+
+
+# Audit Log Registration
+auditlog.register(GeneralLedgerAccount, exclude_fields=["organization"])
+auditlog.register(RevenueCode, exclude_fields=["organization"])
+auditlog.register(DivisionCode, exclude_fields=["organization"])
