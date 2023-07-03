@@ -115,9 +115,9 @@ class RouteControl(GenericModel):
         Google Route Avoidance Choices
         """
 
-        TOLLS = "tolls", "Tolls"
-        HIGHWAYS = "highways", "Highways"
-        FERRIES = "ferries", "Ferries"
+        TOLLS = "tolls", _("Tolls")
+        HIGHWAYS = "highways", _("Highways")
+        FERRIES = "ferries", _("Ferries")
 
     @final
     class RouteModelChoices(models.TextChoices):
@@ -125,9 +125,9 @@ class RouteControl(GenericModel):
         Google Route Model Choices
         """
 
-        BEST_GUESS = "best_guess", "Best Guess"
-        OPTIMISTIC = "optimistic", "Optimistic"
-        PESSIMISTIC = "pessimistic", "Pessimistic"
+        BEST_GUESS = "best_guess", _("Best Guess")
+        OPTIMISTIC = "optimistic", _("Optimistic")
+        PESSIMISTIC = "pessimistic", _("Pessimistic")
 
     @final
     class RouteDistanceUnitChoices(models.TextChoices):
@@ -135,8 +135,8 @@ class RouteControl(GenericModel):
         Google Route Distance Unit Choices
         """
 
-        METRIC = "metric", "Metric"
-        IMPERIAL = "imperial", "Imperial"
+        METRIC = "metric", _("Metric")
+        IMPERIAL = "imperial", _("Imperial")
 
     @final
     class DistanceMethodChoices(models.TextChoices):
