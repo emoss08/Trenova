@@ -169,7 +169,6 @@ class BillingControl(GenericModel):
         choices=AutoBillingCriteriaChoices.choices,
         default=AutoBillingCriteriaChoices.MARKED_READY_TO_BILL,
         help_text=_("Define a criteria on when auto billing is to occur."),
-        blank=True,
     )
     order_transfer_criteria = ChoiceField(
         _("Order Transfer Criteria"),
@@ -360,6 +359,7 @@ class AccessorialCharge(GenericModel):  # type: ignore
         _("Method"),
         choices=FuelMethodChoices.choices,
         default=FuelMethodChoices.DISTANCE,
+        help_text=_("Method for calculating the other charge."),
     )
 
     class Meta:
@@ -392,7 +392,7 @@ class AccessorialCharge(GenericModel):  # type: ignore
         Returns:
             str: Other Charge absolute URL
         """
-        return reverse("other_charge_detail", kwargs={"pk": self.pk})
+        return reverse("accessorial-charges-detail", kwargs={"pk": self.pk})
 
 
 class DocumentClassification(GenericModel):
