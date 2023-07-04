@@ -15,31 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { MRT_ColumnDef } from "mantine-react-table";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
-import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { ChargeType } from "@/types/apps/billing";
+import { createStyles, rem } from "@mantine/core";
 
-export const ChargeTypeTableColumns = (): MRT_ColumnDef<ChargeType>[] => {
-  return [
-    {
-      accessorKey: "name", //access nested data with dot notation
-      header: "Name",
+export const useFormStyles = createStyles((theme) => {
+  const BREAKPOINT = theme.fn.smallerThan("sm");
+
+  return {
+    fields: {
+      marginTop: rem(10),
     },
-    {
-      accessorKey: "description",
-      header: "Description",
+    control: {
+      [BREAKPOINT]: {
+        flex: 1,
+      },
     },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={chargeTypeTableStore}
-          data={row.original}
-        />
-      ),
+    text: {
+      color: theme.colorScheme === "dark" ? "white" : "black",
     },
-  ];
-};
+    invalid: {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.fn.rgba(theme.colors.red[8], 0.15)
+          : theme.colors.red[0],
+    },
+    invalidIcon: {
+      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+    },
+    div: {
+      marginBottom: rem(10),
+    },
+  };
+});

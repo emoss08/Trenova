@@ -39,39 +39,10 @@ import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { jobFunctionChoices } from "@/utils/apps/accounts";
 import { JobTitleFormValues } from "@/types/apps/accounts";
 import { jobTitleSchema } from "@/utils/apps/accounts/schema";
-
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
+import { useFormStyles } from "@/styles/FormStyles";
 
 export const CreateJobTitleModalForm: React.FC = () => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 

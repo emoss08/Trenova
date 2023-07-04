@@ -17,14 +17,7 @@
 
 import { DivisionCode, DivisionCodeFormValues } from "@/types/apps/accounting";
 import React from "react";
-import {
-  Box,
-  Button,
-  createStyles,
-  Group,
-  rem,
-  SimpleGrid,
-} from "@mantine/core";
+import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
@@ -39,47 +32,18 @@ import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { ChoiceProps } from "@/types";
 import { divisionCodeSchema } from "@/utils/apps/accounting/schema";
+import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   divisionCode: DivisionCode;
   selectGlAccountData: ChoiceProps[];
 };
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
-
 export const EditDCModalForm: React.FC<Props> = ({
   divisionCode,
   selectGlAccountData,
 }) => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 

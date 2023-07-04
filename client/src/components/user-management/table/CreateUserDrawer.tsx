@@ -59,36 +59,7 @@ import { faUser, faUserShield } from "@fortawesome/pro-duotone-svg-icons";
 import { useContextMenu } from "mantine-contextmenu";
 import { IconCopy, IconNote } from "@tabler/icons-react";
 import { useClipboard } from "@mantine/hooks";
-
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
+import { useFormStyles } from "@/styles/FormStyles";
 
 const initialValues: TransferListData = [
   [
@@ -104,7 +75,7 @@ const initialValues: TransferListData = [
 ];
 
 export const CreateUserDrawer: React.FC = () => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const [checked, setChecked] = React.useState(false);
   const [showCreateUserDrawer, setShowCreateUserDrawer] =

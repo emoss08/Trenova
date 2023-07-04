@@ -37,14 +37,8 @@ export type DivisionCode = {
   expense_account: string | null;
 };
 
-export interface DivisionCodeFormValues {
-  status: StatusChoiceProps;
-  code: string;
-  description: string;
-  ap_account?: string | null;
-  cash_account?: string | null;
-  expense_account?: string | null;
-}
+export interface DivisionCodeFormValues
+  extends Omit<DivisionCode, "id" | "organization" | "created" | "modified"> {}
 
 /** Types for General Ledger Accounts */
 export type GeneralLedgerAccount = {
@@ -53,21 +47,14 @@ export type GeneralLedgerAccount = {
   status: string;
   account_number: string;
   description: string;
-  account_type: AccountTypeChoiceProps;
-  cash_flow_type?: CashFlowTypeChoiceProps | null;
-  account_sub_type?: AccountSubTypeChoiceProps | null;
-  account_classification?: AccountClassificationChoiceProps | null;
+  account_type: AccountTypeChoiceProps | "";
+  cash_flow_type?: CashFlowTypeChoiceProps | "" | null;
+  account_sub_type?: AccountSubTypeChoiceProps | "" | null;
+  account_classification?: AccountClassificationChoiceProps | "" | null;
 };
 
-export interface GLAccountFormValues {
-  status: string;
-  account_number: string;
-  description: string;
-  account_type: AccountTypeChoiceProps;
-  cash_flow_type?: CashFlowTypeChoiceProps | null;
-  account_sub_type?: AccountSubTypeChoiceProps | null;
-  account_classification?: AccountClassificationChoiceProps | null;
-}
+export interface GLAccountFormValues
+  extends Omit<GeneralLedgerAccount, "id" | "organization"> {}
 
 /** Types for Revenue Codes */
 export type RevenueCode = {

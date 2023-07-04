@@ -15,14 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  Box,
-  Button,
-  createStyles,
-  Group,
-  rem,
-  SimpleGrid,
-} from "@mantine/core";
+import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
@@ -41,43 +34,14 @@ import { serviceIncidentControlChoices } from "@/utils/apps/dispatch";
 import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { dispatchControlSchema } from "@/utils/apps/dispatch/schema";
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface Props {
   dispatchControl: DispatchControl;
 }
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(20),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
-
 export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 

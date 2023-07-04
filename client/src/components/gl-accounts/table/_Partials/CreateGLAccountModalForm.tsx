@@ -16,14 +16,7 @@
  */
 
 import React from "react";
-import {
-  Box,
-  Button,
-  createStyles,
-  Group,
-  rem,
-  SimpleGrid,
-} from "@mantine/core";
+import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
@@ -34,7 +27,6 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import {
@@ -43,54 +35,17 @@ import {
   accountTypeChoices,
   cashFlowTypeChoices,
 } from "@/utils/apps/accounting";
-
-interface CreateGLAccountFormValues {
-  status: string;
-  account_number: string;
-  description: string;
-  account_type: string;
-  cash_flow_type?: string;
-  account_sub_type?: string;
-  account_classification?: string;
-}
-
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
+import { useFormStyles } from "@/styles/FormStyles";
+import { GLAccountFormValues } from "@/types/apps/accounting";
+import { glAccountSchema } from "@/utils/apps/accounting/schema";
 
 export const CreateGLAccountModalForm: React.FC = () => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: CreateGLAccountFormValues) => axios.post("/gl_accounts/", values),
+    (values: GLAccountFormValues) => axios.post("/gl_accounts/", values),
     {
       onSuccess: () => {
         queryClient
@@ -132,30 +87,8 @@ export const CreateGLAccountModalForm: React.FC = () => {
     }
   );
 
-  const createGLAccountSchema = Yup.object().shape({
-    status: Yup.string().required("Status is required"),
-    account_number: Yup.string()
-      .required("Code is required")
-      .test(
-        "account_number_format",
-        "Account number must be in the format 0000-0000-0000-0000",
-        (value) => {
-          if (!value) return false;
-          const regex = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/;
-          return regex.test(value);
-        }
-      ),
-    description: Yup.string()
-      .max(100, "Description cannot be longer than 100 characters")
-      .required("Description is required"),
-    account_type: Yup.string().required("Account type is required"),
-    cash_flow_type: Yup.string().notRequired(),
-    account_sub_type: Yup.string().notRequired(),
-    account_classification: Yup.string().notRequired(),
-  });
-
-  const form = useForm<CreateGLAccountFormValues>({
-    validate: yupResolver(createGLAccountSchema),
+  const form = useForm<GLAccountFormValues>({
+    validate: yupResolver(glAccountSchema),
     initialValues: {
       status: statusChoices[0].value,
       account_number: "0000-0000-0000-0000",
@@ -167,7 +100,7 @@ export const CreateGLAccountModalForm: React.FC = () => {
     },
   });
 
-  const submitForm = (values: CreateGLAccountFormValues) => {
+  const submitForm = (values: GLAccountFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
