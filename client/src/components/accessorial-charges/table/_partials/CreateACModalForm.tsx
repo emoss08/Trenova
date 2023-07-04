@@ -38,10 +38,7 @@ import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { AccessorialChargeFormValues } from "@/types/apps/billing";
-import {
-  accessorialChargeSchema,
-  createACSchema,
-} from "@/types/apps/billing/schema";
+import { accessorialChargeSchema } from "@/utils/apps/billing/schema";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -129,7 +126,7 @@ export const CreateACModalForm: React.FC = () => {
       description: "",
       is_detention: false,
       charge_amount: 0,
-      method: "",
+      method: "D",
     },
   });
 
