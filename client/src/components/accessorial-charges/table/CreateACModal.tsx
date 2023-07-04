@@ -15,22 +15,35 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/AxiosConfig";
-import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
+import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { CreateACModalForm } from "./_partials/CreateACModalForm";
 
-export async function getChargeTypeDetails(id: string): Promise<ChargeType> {
-  const response = await axios.get(`/charge_types/${id}/`);
-  return response.data;
-}
+export const CreateACModal: React.FC = () => {
+  const [showCreateModal, setShowCreateModal] =
+    accessorialChargeTableStore.use("createModalOpen");
 
-export async function getAccessorialCharges(): Promise<AccessorialCharge[]> {
-  const response = await axios.get("/accessorial_charges/");
-  return response.data.results;
-}
+  if (!showCreateModal) return null;
 
-export async function getAccessorialChargeDetails(
-  id: string
-): Promise<AccessorialCharge> {
-  const response = await axios.get(`/accessorial_charges/${id}/`);
-  return response.data;
-}
+  return (
+    <Modal.Root
+      opened={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      size="30%"
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Create Accessorial Charge</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Suspense fallback={<Skeleton height={400} />}>
+            <CreateACModalForm />
+          </Suspense>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
+  );
+};

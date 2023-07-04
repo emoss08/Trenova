@@ -15,36 +15,69 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { StatusChoiceProps } from "@/types";
+import {
+  AccountClassificationChoiceProps,
+  AccountSubTypeChoiceProps,
+  AccountTypeChoiceProps,
+  CashFlowTypeChoiceProps,
+} from "@/utils/apps/accounting";
+
+/** Types for Division Codes */
 export type DivisionCode = {
   id: string;
   organization: string;
   created: string;
   modified: string;
-  status: string;
+  status: StatusChoiceProps;
   code: string;
   description: string;
-  ap_account: string;
-  cash_account: string;
-  expense_account: string;
+  ap_account?: string | null;
+  cash_account?: string | null;
+  expense_account: string | null;
 };
 
+export interface DivisionCodeFormValues {
+  status: StatusChoiceProps;
+  code: string;
+  description: string;
+  ap_account?: string | null;
+  cash_account?: string | null;
+  expense_account?: string | null;
+}
+
+/** Types for General Ledger Accounts */
 export type GeneralLedgerAccount = {
   id: string;
   organization: string;
   status: string;
   account_number: string;
   description: string;
-  account_type: string;
-  cash_flow_type?: string;
-  account_sub_type?: string;
-  account_classification?: string;
+  account_type: AccountTypeChoiceProps;
+  cash_flow_type?: CashFlowTypeChoiceProps | null;
+  account_sub_type?: AccountSubTypeChoiceProps | null;
+  account_classification?: AccountClassificationChoiceProps | null;
 };
 
+export interface GLAccountFormValues {
+  status: string;
+  account_number: string;
+  description: string;
+  account_type: AccountTypeChoiceProps;
+  cash_flow_type?: CashFlowTypeChoiceProps | null;
+  account_sub_type?: AccountSubTypeChoiceProps | null;
+  account_classification?: AccountClassificationChoiceProps | null;
+}
+
+/** Types for Revenue Codes */
 export type RevenueCode = {
   id: string;
   organization: string;
   code: string;
   description: string;
-  expense_account: string;
-  revenue_account: string;
+  expense_account?: string | null;
+  revenue_account?: string | null;
 };
+
+export interface RevenueCodeFormValues
+  extends Omit<RevenueCode, "id" | "organization"> {}

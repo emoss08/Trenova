@@ -15,18 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { DateFormatChoiceProps } from "@/utils/apps/invoicing";
+
 export type InvoiceControl = {
   id: string;
   organization: string;
   invoice_number_prefix: string;
   credit_memo_number_prefix: string;
   invoice_due_after_days: number;
-  invoice_terms: string;
-  invoice_footer: string;
-  invoice_logo: any;
+  invoice_terms?: string | null;
+  invoice_footer?: string | null;
+  invoice_logo?: any | null;
   invoice_logo_width: number;
   show_invoice_due_date: boolean;
-  invoice_date_format: string;
+  invoice_date_format: DateFormatChoiceProps;
   show_amount_due: boolean;
   attach_pdf: boolean;
 };
+
+export interface InvoiceControlFormValues {
+  invoice_number_prefix: string;
+  credit_memo_number_prefix: string;
+  invoice_due_after_days: number;
+  invoice_terms?: string | null;
+  invoice_footer?: string | null;
+  invoice_logo?: any | null;
+  invoice_logo_width: number;
+  show_invoice_due_date: boolean;
+  invoice_date_format: DateFormatChoiceProps;
+  show_amount_due: boolean;
+  attach_pdf: boolean;
+}

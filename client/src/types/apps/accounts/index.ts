@@ -15,6 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { JobFunctionChoiceProps } from "@/utils/apps/accounts";
+import { StatusChoiceProps } from "@/types";
+
 export type UserProfile = {
   id: string;
   organization: string;
@@ -50,10 +53,12 @@ export type User = {
 };
 
 export interface UserFormValues {
-  id: string;
+  organization: string;
   username: string;
+  department?: string;
   email: string;
   profile: {
+    job_title: string;
     organization: string;
     first_name: string;
     last_name: string;
@@ -70,10 +75,13 @@ export type JobTitle = {
   id: string;
   organization: string;
   name: string;
-  description: string;
-  status: string;
-  job_function: string;
+  description?: string | null;
+  status: StatusChoiceProps;
+  job_function: JobFunctionChoiceProps | "";
 };
+
+export interface JobTitleFormValues
+  extends Omit<JobTitle, "id" | "organization"> {}
 
 export type UserReport = {
   id: string;

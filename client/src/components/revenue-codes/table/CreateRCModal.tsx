@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton, Stack } from "@mantine/core";
-import React from "react";
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
@@ -28,7 +28,7 @@ export const CreateRCModal: React.FC = () => {
     revenueCodeTableStore.use("createModalOpen");
   const queryClient = useQueryClient();
 
-  const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({
+  const { data: glAccountData } = useQuery({
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showCreateModal,
@@ -58,13 +58,9 @@ export const CreateRCModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isGLAccountDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
+          <Suspense fallback={<Skeleton height={400} />}>
             <CreateRCModalForm selectGlAccountData={selectGlAccountData} />
-          )}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

@@ -15,7 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
+import {
+  GeneralLedgerAccount,
+  GLAccountFormValues,
+} from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -35,7 +38,6 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import {
@@ -44,20 +46,11 @@ import {
   accountTypeChoices,
   cashFlowTypeChoices,
 } from "@/utils/apps/accounting";
+import { glAccountSchema } from "@/utils/apps/accounting/schema";
 
 type Props = {
   glAccount: GeneralLedgerAccount;
 };
-
-interface EditGLAccountFormValues {
-  status: string;
-  account_number: string;
-  description: string;
-  account_type: string;
-  cash_flow_type?: string;
-  account_sub_type?: string;
-  account_classification?: string;
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -95,7 +88,7 @@ export const EditGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: EditGLAccountFormValues) =>
+    (values: GLAccountFormValues) =>
       axios.put(`/gl_accounts/${glAccount.id}/`, values),
     {
       onSuccess: () => {
@@ -141,42 +134,20 @@ export const EditGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
     }
   );
 
-  const editGLAccountSchema = Yup.object().shape({
-    status: Yup.string().required("Status is required"),
-    account_number: Yup.string()
-      .required("Code is required")
-      .test(
-        "account_number_format",
-        "Account number must be in the format 0000-0000-0000-0000",
-        (value) => {
-          if (!value) return false;
-          const regex = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/;
-          return regex.test(value);
-        }
-      ),
-    description: Yup.string()
-      .max(100, "Description cannot be longer than 100 characters")
-      .required("Description is required"),
-    account_type: Yup.string().required("Account type is required"),
-    cash_flow_type: Yup.string().notRequired(),
-    account_sub_type: Yup.string().notRequired(),
-    account_classification: Yup.string().notRequired(),
-  });
-
-  const form = useForm<EditGLAccountFormValues>({
-    validate: yupResolver(editGLAccountSchema),
+  const form = useForm<GLAccountFormValues>({
+    validate: yupResolver(glAccountSchema),
     initialValues: {
       status: glAccount.status,
       account_number: glAccount.account_number,
       description: glAccount.description,
       account_type: glAccount.account_type,
-      cash_flow_type: glAccount?.cash_flow_type || "",
-      account_sub_type: glAccount?.account_sub_type || "",
-      account_classification: glAccount?.account_classification || "",
+      cash_flow_type: glAccount?.cash_flow_type,
+      account_sub_type: glAccount?.account_sub_type,
+      account_classification: glAccount?.account_classification,
     },
   });
 
-  const submitForm = (values: EditGLAccountFormValues) => {
+  const submitForm = (values: GLAccountFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

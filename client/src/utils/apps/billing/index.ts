@@ -15,13 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export const fuelMethodChoices = [
+import { ChoiceProps } from "@/types";
+
+/** Type for fuel method choices */
+export type fuelMethodChoicesProps = "D" | "F" | "P";
+
+export const fuelMethodChoices: ChoiceProps[] = [
   { value: "D", label: "Distance" },
   { value: "F", label: "Flat" },
   { value: "P", label: "Percentage" },
 ];
 
-export const autoBillingCriteriaChoices = [
+/** Type for Auto Billing Criteria Choices */
+export type AutoBillingCriteriaChoicesProps =
+  | "ORDER_DELIVERY"
+  | "TRANSFERRED_TO_BILL"
+  | "MARKED_READY";
+
+export const autoBillingCriteriaChoices: ChoiceProps[] = [
   { value: "ORDER_DELIVERY", label: "Auto Bill when order is delivered" },
   {
     value: "TRANSFERRED_TO_BILL",
@@ -32,19 +43,44 @@ export const autoBillingCriteriaChoices = [
     label: "Auto Bill when order is marked ready to bill in Billing Queue",
   },
 ];
-export const orderTransferCriteriaChoices = [
+
+/** Type for order transfer criteria */
+export type OrderTransferCriteriaChoicesProps =
+  | "READY_AND_COMPLETED"
+  | "COMPLETED"
+  | "READY_TO_BILL";
+
+export const orderTransferCriteriaChoices: ChoiceProps[] = [
   { value: "READY_AND_COMPLETED", label: "Ready to bill & Completed" },
   { value: "COMPLETED", label: "Completed" },
   { value: "READY_TO_BILL", label: "Ready to bill" },
 ];
-export const billTypeChoices = [
+
+/** Type for Bill Type choices */
+export type billTypeChoicesProps =
+  | "INVOICE"
+  | "CREDIT"
+  | "DEBIT"
+  | "PREPAID"
+  | "OTHER";
+
+export const billTypeChoices: ChoiceProps[] = [
   { value: "INVOICE", label: "Invoice" },
   { value: "CREDIT", label: "Credit" },
   { value: "DEBIT", label: "Debit" },
   { value: "PREPAID", label: "Prepaid" },
   { value: "OTHER", label: "Other" },
 ];
-export const billingExceptionChoices = [
+
+/** Type for Billing Exception choices */
+export type billingExceptionChoicesProps =
+  | "PAPERWORK"
+  | "CHARGE"
+  | "CREDIT"
+  | "DEBIT"
+  | "OTHER";
+
+export const billingExceptionChoices: ChoiceProps[] = [
   { value: "PAPERWORK", label: "Paperwork" },
   { value: "CHARGE", label: "Charge" },
   { value: "CREDIT", label: "Credit" },

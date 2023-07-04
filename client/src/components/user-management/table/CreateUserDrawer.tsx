@@ -42,7 +42,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import * as Yup from "yup";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
-import { JobTitle } from "@/types/apps/accounts";
+import { JobTitle, UserFormValues } from "@/types/apps/accounts";
 import axios from "@/lib/AxiosConfig";
 import {
   getDepartments,
@@ -59,25 +59,6 @@ import { faUser, faUserShield } from "@fortawesome/pro-duotone-svg-icons";
 import { useContextMenu } from "mantine-contextmenu";
 import { IconCopy, IconNote } from "@tabler/icons-react";
 import { useClipboard } from "@mantine/hooks";
-
-interface CreateUserFormValues {
-  organization: string;
-  username: string;
-  department?: string;
-  email: string;
-  profile: {
-    job_title: string;
-    organization: string;
-    first_name: string;
-    last_name: string;
-    address_line_1: string;
-    address_line_2?: string;
-    city: string;
-    state: string;
-    zip_code: string;
-    phone_number?: string;
-  };
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -135,30 +116,8 @@ export const CreateUserDrawer: React.FC = () => {
   const [groupListData, setGroupListData] =
     useState<TransferListData>(initialValues);
 
-  // const ItemComponent: TransferListItemComponent = ({
-  //   data,
-  //   selected,
-  // }: TransferListItemComponentProps) => (
-  //   <Group noWrap>
-  //     <div style={{ flex: 1 }}>
-  //       <Text size="sm" weight={500}>
-  //         {data.label}
-  //       </Text>
-  //       <Text size="xs" color="dimmed" weight={400}>
-  //         {data.description}
-  //       </Text>
-  //     </div>
-  //     <Checkbox
-  //       checked={selected}
-  //       onChange={() => {}}
-  //       tabIndex={-1}
-  //       sx={{ pointerEvents: "none" }}
-  //     />
-  //   </Group>
-  // );
-
   const mutation = useMutation(
-    (values: CreateUserFormValues) => axios.post(`/users/`, values),
+    (values: UserFormValues) => axios.post(`/users/`, values),
     {
       onSuccess: () => {
         queryClient
@@ -220,7 +179,7 @@ export const CreateUserDrawer: React.FC = () => {
     }),
   });
 
-  const form = useForm<CreateUserFormValues>({
+  const form = useForm<UserFormValues>({
     validate: yupResolver(CreateUserSchema),
     initialValues: {
       organization: "",
@@ -242,7 +201,7 @@ export const CreateUserDrawer: React.FC = () => {
     },
   });
 
-  const submitForm = (values: CreateUserFormValues) => {
+  const submitForm = (values: UserFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -321,20 +280,6 @@ export const CreateUserDrawer: React.FC = () => {
     (item) => item.value === form.values.profile.job_title
   )?.label;
 
-  // useEffect(() => {
-  //   if (!isGroupDataLoading && groupData) {
-  //     // Group Data mapping
-  //     const selectGroupData = groupData.map(
-  //       (group: GroupType) =>
-  //         ({
-  //           value: group.id,
-  //           label: upperFirst(group.name),
-  //         } as TransferListItem)
-  //     );
-  //     setGroupListData([selectGroupData, []]);
-  //   }
-  // }, [groupData, isGroupDataLoading]);
-
   const onClose = () => {
     form.reset();
     setShowCreateUserDrawer(false);
@@ -391,7 +336,7 @@ export const CreateUserDrawer: React.FC = () => {
               </Tabs.List>
               <form
                 onSubmit={form.onSubmit((values) => {
-                  submitForm(values as CreateUserFormValues);
+                  submitForm(values);
                 })}
               >
                 <Tabs.Panel value="user-info" pt="xs">

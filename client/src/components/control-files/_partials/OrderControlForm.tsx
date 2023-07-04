@@ -25,7 +25,6 @@ import {
 } from "@mantine/core";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import * as Yup from "yup";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
@@ -33,21 +32,8 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { OrderControl } from "@/types/apps/order";
-
-interface OrderControlFormValues {
-  auto_rate_orders: boolean;
-  calculate_distance: boolean;
-  enforce_rev_code: boolean;
-  enforce_voided_comm: boolean;
-  generate_routes: boolean;
-  enforce_commodity: boolean;
-  auto_sequence_stops: boolean;
-  auto_order_total: boolean;
-  enforce_origin_destination: boolean;
-  check_for_duplicate_bol: boolean;
-  remove_orders: boolean;
-}
+import { OrderControl, OrderControlFormValues } from "@/types/apps/order";
+import { orderControlSchema } from "@/utils/apps/order/schema";
 
 interface Props {
   orderControl: OrderControl;
@@ -130,30 +116,6 @@ export const OrderControlForm: React.FC<Props> = ({ orderControl }) => {
       },
     }
   );
-
-  const orderControlSchema = Yup.object().shape({
-    auto_rate_orders: Yup.boolean().required("Auto Rate Orders is required"),
-    calculate_distance: Yup.boolean().required(
-      "Calculate Distance is required"
-    ),
-    enforce_rev_code: Yup.boolean().required("Enforce Rev Code is required"),
-    enforce_voided_comm: Yup.boolean().required(
-      "Enforce Voided Comm is required"
-    ),
-    generate_routes: Yup.boolean().required("Generate Routes is required"),
-    enforce_commodity: Yup.boolean().required("Enforce Commodity is required"),
-    auto_sequence_stops: Yup.boolean().required(
-      "Auto Sequence Stops is required"
-    ),
-    auto_order_total: Yup.boolean().required("Auto Order Total is required"),
-    enforce_origin_destination: Yup.boolean().required(
-      "Enforce Origin Destination is required"
-    ),
-    check_for_duplicate_bol: Yup.boolean().required(
-      "Check for Duplicate BOL is required"
-    ),
-    remove_orders: Yup.boolean().required("Remove Orders is required"),
-  });
 
   const form = useForm<OrderControlFormValues>({
     validate: yupResolver(orderControlSchema),

@@ -16,14 +16,7 @@
  */
 
 import React from "react";
-import {
-  Box,
-  Button,
-  createStyles,
-  Group,
-  rem,
-  SimpleGrid,
-} from "@mantine/core";
+import { Box, Button, createStyles, Group, rem } from "@mantine/core";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { useMutation, useQueryClient } from "react-query";
@@ -32,14 +25,10 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
-
-interface CreateChargeTypeFormValues {
-  name: string;
-  description: string;
-}
+import { ChargeTypeFormValues } from "@/types/apps/billing";
+import { chargeTypeSchema } from "@/utils/apps/billing/schema";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -77,8 +66,7 @@ export const CreateChargeTypeModalForm: React.FC = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: CreateChargeTypeFormValues) =>
-      axios.post("/charge_types/", values),
+    (values: ChargeTypeFormValues) => axios.post("/charge_types/", values),
     {
       onSuccess: () => {
         queryClient
@@ -120,20 +108,15 @@ export const CreateChargeTypeModalForm: React.FC = () => {
     }
   );
 
-  const createJobTitleSchema = Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().notRequired(),
-  });
-
-  const form = useForm<CreateChargeTypeFormValues>({
-    validate: yupResolver(createJobTitleSchema),
+  const form = useForm<ChargeTypeFormValues>({
+    validate: yupResolver(chargeTypeSchema),
     initialValues: {
       name: "",
       description: "",
     },
   });
 
-  const submitForm = (values: CreateChargeTypeFormValues) => {
+  const submitForm = (values: ChargeTypeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

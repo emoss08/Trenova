@@ -17,10 +17,29 @@
 
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
-import { ChargeType } from "@/types/apps/billing";
+import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
 
 export const chargeTypeTableStore = createGlobalStore<
   Omit<TableStoreProps<ChargeType>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  createModalOpen: false,
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
+
+export const accessorialChargeTableStore = createGlobalStore<
+  Omit<TableStoreProps<AccessorialCharge>, "drawerOpen">
 >({
   pagination: {
     pageIndex: 0,

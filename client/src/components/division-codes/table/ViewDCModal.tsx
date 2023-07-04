@@ -23,7 +23,7 @@ import {
 } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { Modal, Skeleton, Stack } from "@mantine/core";
-import React from "react";
+import React, { Suspense } from "react";
 import { ViewDCModalForm } from "@/components/division-codes/table/_Partials/ViewDCModalForm";
 
 export const ViewDCModal: React.FC = () => {
@@ -48,25 +48,7 @@ export const ViewDCModal: React.FC = () => {
       label: glAccount.account_number,
     })) || [];
 
-  const { data: divisionCodeData, isLoading: isDivisionCodeDataLoading } =
-    useQuery({
-      queryKey: ["division-code", divisionCode?.id],
-      queryFn: () => {
-        if (!divisionCode) {
-          return Promise.resolve(null);
-        }
-        return getDivisionCodeDetail(divisionCode.id);
-      },
-      enabled: showViewModal,
-      initialData: () => {
-        return queryClient.getQueryData(["division-code", divisionCode?.id]);
-      },
-      staleTime: Infinity, // Never refetch
-    });
-
   if (!showViewModal) return null;
-
-  const isDataLoading = isDivisionCodeDataLoading || isGLAccountDataLoading;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -77,20 +59,14 @@ export const ViewDCModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            <>
-              {divisionCodeData && (
-                <ViewDCModalForm
-                  divisionCode={divisionCodeData}
-                  selectGlAccountData={selectGlAccountData}
-                />
-              )}
-            </>
-          )}
+          <Suspense fallback={<Skeleton height={200} />}>
+            {divisionCode && (
+              <ViewDCModalForm
+                divisionCode={divisionCode}
+                selectGlAccountData={selectGlAccountData}
+              />
+            )}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

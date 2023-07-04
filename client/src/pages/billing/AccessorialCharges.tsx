@@ -15,22 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/AxiosConfig";
-import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import React from "react";
+import { Card, Flex } from "@mantine/core";
+import { usePageStyles } from "@/styles/PageStyles";
+import { ACChargeTable } from "@/components/accessorial-charges/table/ACChargeTable";
 
-export async function getChargeTypeDetails(id: string): Promise<ChargeType> {
-  const response = await axios.get(`/charge_types/${id}/`);
-  return response.data;
-}
+const AccessorialCharges: React.FC = () => {
+  const { classes } = usePageStyles();
 
-export async function getAccessorialCharges(): Promise<AccessorialCharge[]> {
-  const response = await axios.get("/accessorial_charges/");
-  return response.data.results;
-}
+  return (
+    <Flex>
+      <Card className={classes.card} withBorder>
+        <ACChargeTable />
+      </Card>
+    </Flex>
+  );
+};
 
-export async function getAccessorialChargeDetails(
-  id: string
-): Promise<AccessorialCharge> {
-  const response = await axios.get(`/accessorial_charges/${id}/`);
-  return response.data;
-}
+export default AccessorialCharges;

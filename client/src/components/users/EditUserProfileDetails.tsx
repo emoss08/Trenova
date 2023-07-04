@@ -36,11 +36,28 @@ import { ValidatedTextInput } from "../ui/fields/TextInput";
 import { StateSelect } from "../ui/fields/StateSelect";
 import { CityAutoCompleteField } from "../ui/fields/CityAutoCompleteField";
 import { UserSchema } from "@/utils/schema";
-import { User, UserFormValues } from "@/types/apps/accounts";
+import { User } from "@/types/apps/accounts";
 
 type Props = {
   user: User;
 };
+
+interface UserDetailFormValues {
+  id: string;
+  username: string;
+  email: string;
+  profile: {
+    organization: string;
+    first_name: string;
+    last_name: string;
+    address_line_1: string;
+    address_line_2: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    phone_number: string;
+  };
+}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -102,7 +119,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: UserFormValues) => axios.put(`/users/${values.id}/`, values),
+    (values: UserDetailFormValues) => axios.put(`/users/${values.id}/`, values),
     {
       onSuccess: () => {
         queryClient.invalidateQueries("user").then(() => {
@@ -129,12 +146,12 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
     }
   );
 
-  const submitForm = (values: UserFormValues) => {
+  const submitForm = (values: UserDetailFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
 
-  const form = useForm<UserFormValues>({
+  const form = useForm<UserDetailFormValues>({
     validate: yupResolver(UserSchema),
     initialValues: {
       id: user.id,

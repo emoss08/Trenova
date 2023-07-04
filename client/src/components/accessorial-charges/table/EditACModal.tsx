@@ -15,30 +15,39 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import { Modal, Skeleton, Stack } from "@mantine/core";
 import React, { Suspense } from "react";
-import { generalLedgerTableStore } from "@/stores/AccountingStores";
-import { EditGLAccountModalForm } from "@/components/gl-accounts/table/_Partials/EditGLAccountModalForm";
+import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { AccessorialCharge } from "@/types/apps/billing";
+import { EditACModalForm } from "@/components/accessorial-charges/table/_partials/EditACModalForm";
 
-export const EditGLAccountModal: React.FC = () => {
+export const EditACModal: React.FC = () => {
   const [showEditModal, setShowEditModal] =
-    generalLedgerTableStore.use("editModalOpen");
-  const [glAccount] = generalLedgerTableStore.use("selectedRecord");
+    accessorialChargeTableStore.use("editModalOpen");
+  const [accessorialCharge] = accessorialChargeTableStore.use("selectedRecord");
 
   if (!showEditModal) return null;
 
   return (
-    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
+    <Modal.Root
+      opened={showEditModal}
+      onClose={() => setShowEditModal(false)}
+      // size={500}
+    >
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Edit GL Account</Modal.Title>
+          <Modal.Title>Edit Accessorial Charge</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            {glAccount && <EditGLAccountModalForm glAccount={glAccount} />}
-          </Suspense>
+          <>
+            <Suspense fallback={<Skeleton height={200} />}>
+              <EditACModalForm
+                accessorialCharge={accessorialCharge as AccessorialCharge}
+              />
+            </Suspense>
+          </>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

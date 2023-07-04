@@ -57,9 +57,15 @@ export type Department = {
   depot: string;
 };
 
+/** Types for EmailControl */
 export type EmailControl = {
   id: string;
   organization: string;
-  billing_email_profile: string;
-  rate_expiration_email_profile: string;
+  billing_email_profile?: string | null;
+  rate_expiration_email_profile?: string | null;
 };
+
+export interface EmailControlFormValues {
+  billing_email_profile?: string | null;
+  rate_expiration_email_profile?: string | null;
+}

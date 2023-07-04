@@ -16,53 +16,64 @@
  */
 
 import React from "react";
+import { Badge, Text } from "@mantine/core";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { DivisionCode } from "@/types/apps/accounting";
-import { Badge } from "@mantine/core";
-import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
-import { ChoiceProps } from "@/types";
+import { AccessorialCharge } from "@/types/apps/billing";
+import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { truncateText } from "@/lib/utils";
 
-export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
+export const ACTableColumns = (): MRT_ColumnDef<AccessorialCharge>[] => {
   return [
     {
-      id: "status",
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: "code",
+      header: "Code",
+    },
+    {
+      id: "description",
+      accessorKey: "description",
+      header: "Description",
+      Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
+    },
+    {
+      id: "is_detention",
+      accessorFn: (originalRow) =>
+        originalRow.is_detention ? "true" : "false",
+      header: "Is Detention",
       filterFn: "equals",
       Cell: ({ cell }) => (
         <Badge
-          color={cell.getValue() === "A" ? "green" : "red"}
+          color={cell.getValue() === "true" ? "green" : "red"}
           variant="filled"
           radius="xs"
         >
-          {cell.getValue() === "A" ? "Active" : "Inactive"}
+          {cell.getValue() === "true" ? "Yes" : "No"}
         </Badge>
       ),
       mantineFilterSelectProps: {
         data: [
           { value: "", label: "All" },
-          { value: "A", label: "Active" },
-          { value: "I", label: "Inactive" },
-        ] as ChoiceProps[],
+          { value: "true", label: "Active" },
+          { value: "false", label: "Inactive" },
+        ] as any,
       },
       filterVariant: "select",
     },
     {
-      accessorKey: "code", //access nested data with dot notation
-      header: "Code",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
+      accessorFn: (row) => `${row.charge_amount} ${row.charge_amount_currency}`,
+      id: "charge_amount",
+      header: "Charge Amount",
+      filterVariant: "text",
+      sortingFn: "text",
+      Cell: ({ renderedCellValue }) => <Text>{renderedCellValue}</Text>,
     },
     {
       id: "actions",
       header: "Actions",
       Cell: ({ row }) => (
         <MontaTableActionMenu
-          store={divisionCodeTableStore}
-          name="Division Code"
+          store={accessorialChargeTableStore}
+          name="Accessorial Charge"
           data={row.original}
         />
       ),

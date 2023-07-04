@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DivisionCode } from "@/types/apps/accounting";
+import { DivisionCode, DivisionCodeFormValues } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -25,7 +25,7 @@ import {
   rem,
   SimpleGrid,
 } from "@mantine/core";
-import { SelectInput, SelectItem } from "@/components/ui/fields/SelectInput";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
@@ -35,23 +35,15 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
+import { ChoiceProps } from "@/types";
+import { divisionCodeSchema } from "@/utils/apps/accounting/schema";
 
 type Props = {
   divisionCode: DivisionCode;
-  selectGlAccountData: SelectItem[];
+  selectGlAccountData: ChoiceProps[];
 };
-
-interface EditDivisionCodeFormValues {
-  status: string;
-  code: string;
-  description: string;
-  ap_account: string;
-  cash_account: string;
-  expense_account: string;
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -92,7 +84,7 @@ export const EditDCModalForm: React.FC<Props> = ({
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: EditDivisionCodeFormValues) =>
+    (values: DivisionCodeFormValues) =>
       axios.put(`/division_codes/${divisionCode.id}/`, values),
     {
       onSuccess: () => {
@@ -138,32 +130,19 @@ export const EditDCModalForm: React.FC<Props> = ({
     }
   );
 
-  const editDivisionCodeSchema = Yup.object().shape({
-    status: Yup.string().required("Status is required"),
-    code: Yup.string()
-      .max(4, "Code cannot be longer than 4 characters")
-      .required("Code is required"),
-    description: Yup.string()
-      .max(100, "Description cannot be longer than 100 characters")
-      .required("Description is required"),
-    ap_account: Yup.string().notRequired(),
-    cash_account: Yup.string().notRequired(),
-    expense_account: Yup.string().notRequired(),
-  });
-
-  const form = useForm<EditDivisionCodeFormValues>({
-    validate: yupResolver(editDivisionCodeSchema),
+  const form = useForm<DivisionCodeFormValues>({
+    validate: yupResolver(divisionCodeSchema),
     initialValues: {
       status: divisionCode.status,
       code: divisionCode.code,
       description: divisionCode.description,
-      ap_account: divisionCode.ap_account,
-      cash_account: divisionCode.cash_account,
-      expense_account: divisionCode.expense_account,
+      ap_account: divisionCode.ap_account || "",
+      cash_account: divisionCode.cash_account || "",
+      expense_account: divisionCode.expense_account || "",
     },
   });
 
-  const submitForm = (values: EditDivisionCodeFormValues) => {
+  const submitForm = (values: DivisionCodeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

@@ -16,32 +16,14 @@
  */
 
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
-import { useQuery, useQueryClient } from "react-query";
-import { getGLAccountDetail } from "@/requests/AccountingRequestFactory";
-import { Modal, Skeleton, Stack } from "@mantine/core";
-import React from "react";
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
 import { ViewGLAccountModalForm } from "./_Partials/ViewGLAccountModalForm";
 
 export const ViewGLAccountModal: React.FC = () => {
   const [showViewModal, setShowViewModal] =
     generalLedgerTableStore.use("viewModalOpen");
   const [glAccount] = generalLedgerTableStore.use("selectedRecord");
-  const queryClient = useQueryClient();
-
-  const { data: glAccountData, isLoading: isGlAccountDataLoading } = useQuery({
-    queryKey: ["glAccount", glAccount?.id],
-    queryFn: () => {
-      if (!glAccount) {
-        return Promise.resolve(null);
-      }
-      return getGLAccountDetail(glAccount.id);
-    },
-    enabled: showViewModal,
-    initialData: () => {
-      return queryClient.getQueryData(["glAccount", glAccount?.id]);
-    },
-    staleTime: Infinity, // Never refetch
-  });
 
   if (!showViewModal) return null;
 
@@ -54,17 +36,9 @@ export const ViewGLAccountModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isGlAccountDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            <>
-              {glAccountData && (
-                <ViewGLAccountModalForm glAccount={glAccountData} />
-              )}
-            </>
-          )}
+          <Suspense fallback={<Skeleton height={400} />}>
+            {glAccount && <ViewGLAccountModalForm glAccount={glAccount} />}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

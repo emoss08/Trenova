@@ -26,7 +26,6 @@ import {
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import * as Yup from "yup";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
@@ -34,23 +33,14 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { DispatchControl } from "@/types/apps/dispatch";
+import {
+  DispatchControl,
+  DispatchControlFormValues,
+} from "@/types/apps/dispatch";
 import { serviceIncidentControlChoices } from "@/utils/apps/dispatch";
 import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-
-interface DispatchControlFormValues {
-  record_service_incident: string;
-  grace_period: number;
-  deadhead_target: string;
-  driver_assign: boolean;
-  trailer_continuity: boolean;
-  dupe_trailer_check: boolean;
-  regulatory_check: boolean;
-  prev_orders_on_hold: boolean;
-  driver_time_away_restriction: boolean;
-  tractor_worker_fleet_constraint: boolean;
-}
+import { dispatchControlSchema } from "@/utils/apps/dispatch/schema";
 
 interface Props {
   dispatchControl: DispatchControl;
@@ -133,31 +123,6 @@ export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
       },
     }
   );
-
-  const dispatchControlSchema = Yup.object().shape({
-    record_service_incident: Yup.string().required(
-      "Record Service Incident is required"
-    ),
-    grace_period: Yup.number().required("Grace Period is required"),
-    deadhead_target: Yup.number().required("Deadhead Target is required"),
-    driver_assign: Yup.boolean().required("Driver Assign is required"),
-    trailer_continuity: Yup.boolean().required(
-      "Trailer Continuity is required"
-    ),
-    dupe_trailer_check: Yup.boolean().required(
-      "Dupe Trailer Check is required"
-    ),
-    regulatory_check: Yup.boolean().required("Regulatory Check is required"),
-    prev_orders_on_hold: Yup.boolean().required(
-      "Previous Orders on Hold is required"
-    ),
-    driver_time_away_restriction: Yup.boolean().required(
-      "Driver Time Away Restriction is required"
-    ),
-    tractor_worker_fleet_constraint: Yup.boolean().required(
-      "Tractor Worker Fleet Constraint is required"
-    ),
-  });
 
   const form = useForm<DispatchControlFormValues>({
     validate: yupResolver(dispatchControlSchema),

@@ -34,17 +34,11 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { jobFunctionChoices } from "@/utils/apps/accounts";
-
-interface CreateJobTitleFormValues {
-  name: string;
-  description: string;
-  status: string;
-  job_function: string;
-}
+import { JobTitleFormValues } from "@/types/apps/accounts";
+import { jobTitleSchema } from "@/utils/apps/accounts/schema";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -82,7 +76,7 @@ export const CreateJobTitleModalForm: React.FC = () => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: CreateJobTitleFormValues) => axios.post("/job_titles/", values),
+    (values: JobTitleFormValues) => axios.post("/job_titles/", values),
     {
       onSuccess: () => {
         queryClient
@@ -124,24 +118,17 @@ export const CreateJobTitleModalForm: React.FC = () => {
     }
   );
 
-  const createJobTitleSchema = Yup.object().shape({
-    status: Yup.string().required("Status is required"),
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().notRequired(),
-    job_function: Yup.string().required("Job Function is required"),
-  });
-
-  const form = useForm<CreateJobTitleFormValues>({
-    validate: yupResolver(createJobTitleSchema),
+  const form = useForm<JobTitleFormValues>({
+    validate: yupResolver(jobTitleSchema),
     initialValues: {
-      status: statusChoices[0].value,
+      status: "A",
       name: "",
       description: "",
       job_function: "",
     },
   });
 
-  const submitForm = (values: CreateJobTitleFormValues) => {
+  const submitForm = (values: JobTitleFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

@@ -23,7 +23,7 @@ import {
   rem,
   SimpleGrid,
 } from "@mantine/core";
-import { SelectInput, SelectItem } from "@/components/ui/fields/SelectInput";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
@@ -33,17 +33,16 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { serviceIncidentControlChoices } from "@/utils/apps/dispatch";
-import { EmailControl } from "@/types/apps/organization";
-
-interface EmailControlFormValues {
-  billing_email_profile: string;
-  rate_expiration_email_profile: string;
-}
+import {
+  EmailControl,
+  EmailControlFormValues,
+} from "@/types/apps/organization";
+import { ChoiceProps } from "@/types";
+import { emailControlSchema } from "@/utils/apps/organization/schema";
 
 interface Props {
   emailControl: EmailControl;
-  selectEmailProfileData: SelectItem[];
+  selectEmailProfileData: ChoiceProps[];
 }
 
 const useStyles = createStyles((theme) => {
@@ -127,16 +126,12 @@ export const EmailControlForm: React.FC<Props> = ({
     }
   );
 
-  const dispatchControlSchema = Yup.object().shape({
-    billing_email_profile: Yup.string().notRequired(),
-    rate_expiration_email_profile: Yup.string().notRequired(),
-  });
-
   const form = useForm<EmailControlFormValues>({
-    validate: yupResolver(dispatchControlSchema),
+    validate: yupResolver(emailControlSchema),
     initialValues: {
-      billing_email_profile: emailControl.billing_email_profile,
-      rate_expiration_email_profile: emailControl.rate_expiration_email_profile,
+      billing_email_profile: emailControl.billing_email_profile || "",
+      rate_expiration_email_profile:
+        emailControl.rate_expiration_email_profile || "",
     },
   });
 

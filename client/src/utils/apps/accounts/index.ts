@@ -15,6 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
+/** Types for Job Function Choices */
+export type JobFunctionChoiceProps =
+  | "MANAGER"
+  | "MANAGEMENT_TRAINEE"
+  | "SUPERVISOR"
+  | "DISPATCHER"
+  | "BILLING"
+  | "FINANCE"
+  | "SAFETY"
+  | "SYS_ADMIN"
+  | "TEST";
+
 export const jobFunctionChoices = [
   { value: "MANAGER", label: "Manager" },
   { value: "MANAGEMENT_TRAINEE", label: "Management Trainee" },
