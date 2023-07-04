@@ -347,6 +347,12 @@ class AccessorialCharge(GenericModel):  # type: ignore
         _("Is Detention"),
         default=False,
     )
+    method = ChoiceField(
+        _("Method"),
+        choices=FuelMethodChoices.choices,
+        default=FuelMethodChoices.DISTANCE,
+        help_text=_("Method for calculating the other charge."),
+    )
     charge_amount = MoneyField(
         _("Additional Charge Amount"),
         max_digits=19,
@@ -354,12 +360,6 @@ class AccessorialCharge(GenericModel):  # type: ignore
         default=0,
         help_text=_("Additional Charge Amount"),
         default_currency="USD",
-    )
-    method = ChoiceField(
-        _("Method"),
-        choices=FuelMethodChoices.choices,
-        default=FuelMethodChoices.DISTANCE,
-        help_text=_("Method for calculating the other charge."),
     )
 
     class Meta:

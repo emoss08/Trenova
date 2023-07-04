@@ -14,7 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import Any
 
+from rest_framework import serializers
 
 from billing import models
 from utils.serializers import GenericSerializer
@@ -70,8 +72,6 @@ class BillingQueueSerializer(GenericSerializer):
 
         Attributes:
             model (models.BillingQueue): The model that the serializer is for.
-            extra_fields (tuple): A tuple of extra fields that should be included
-            in the serialized representation of the model.
         """
 
         model = models.BillingQueue
@@ -122,6 +122,13 @@ class AccessorialChargeSerializer(GenericSerializer):
     (code, is_detention, charge_amount, and method) to create the serialized
     representation of the `AccessorialCharge` model.
     """
+
+    def validate(self, attrs: dict[str, Any]) -> Any:
+        if attrs.get("charge_amount") == 0:
+            raise serializers.ValidationError(
+                {"charge_amount": "Charge amount must be greater than zero."}
+            )
+        return attrs
 
     class Meta:
         """k
