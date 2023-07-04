@@ -288,7 +288,7 @@ class RevenueCode(GenericModel):  # type: ignore
             != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
         ):
             errors["expense_account"] = _(
-                "Entered account is not an expense account. Please try again."
+                f"Entered account is a {self.expense_account.account_type} account, not a expense account. Please try again."
             )
 
         if (
@@ -297,7 +297,7 @@ class RevenueCode(GenericModel):  # type: ignore
             != GeneralLedgerAccount.AccountTypeChoices.REVENUE
         ):
             errors["revenue_account"] = _(
-                "Entered account is not a revenue account. Please try again."
+                f"Entered account is a {self.revenue_account.account_type} account, not a revenue account. Please try again."
             )
 
         if errors:
@@ -426,6 +426,52 @@ class DivisionCode(GenericModel):
             str: DivisionCode string representation
         """
         return textwrap.wrap(self.code, 4)[0]
+
+    def clean(self) -> None:
+        """DivisionCode model validation method
+
+        Returns:
+            None: This function does not return anything.
+
+        Raises:
+            ValidationError: If the cash account is not a cash account.
+            ValidationError: If the expense account is not an expense account.
+            ValidationError: If the ap account is not an accounts payable account.
+        """
+
+        errors = {}
+
+        super().clean()
+
+        if (
+            self.cash_account
+            and self.cash_account.account_classification
+            != GeneralLedgerAccount.AccountClassificationChoices.CASH
+        ):
+            errors["cash_account"] = _(
+                "Entered account is not an cash account. Please try again."
+            )
+
+        if (
+            self.expense_account
+            and self.expense_account.account_type
+            != GeneralLedgerAccount.AccountTypeChoices.EXPENSE
+        ):
+            errors["expense_account"] = _(
+                "Entered account is not an expense account. Please try again."
+            )
+
+        if (
+            self.ap_account
+            and self.ap_account.account_classification
+            != GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE
+        ):
+            errors["ap_account"] = _(
+                "Entered account is not an accounts payable account. Please try again."
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
     def get_absolute_url(self) -> str:
         """DivisionCode absolute url
