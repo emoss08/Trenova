@@ -43,43 +43,14 @@ import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { dateFormatChoices } from "@/utils/apps/invoicing";
 import { ValidatedFileInput } from "@/components/ui/fields/FileInput";
 import { invoiceControlSchema } from "@/utils/apps/invoicing/schema";
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface Props {
   invoiceControl: InvoiceControl;
 }
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(20),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
-
 export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 

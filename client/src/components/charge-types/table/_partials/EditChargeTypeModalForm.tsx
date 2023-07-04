@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Box, Button, createStyles, Group, rem } from "@mantine/core";
+import { Box, Button, Group } from "@mantine/core";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { useMutation, useQueryClient } from "react-query";
@@ -29,43 +29,14 @@ import { useForm, yupResolver } from "@mantine/form";
 import { ChargeType, ChargeTypeFormValues } from "@/types/apps/billing";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { chargeTypeSchema } from "@/utils/apps/billing/schema";
+import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   chargeType: ChargeType;
 };
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
-
 export const EditChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 

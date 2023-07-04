@@ -19,8 +19,6 @@ import { RevenueCode } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
-  createStyles,
-  rem,
   SimpleGrid,
   Select,
   TextInput,
@@ -30,47 +28,18 @@ import {
 } from "@mantine/core";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { ChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   revenueCode: RevenueCode;
   selectGlAccountData: ChoiceProps[];
 };
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
-
 export const ViewRCModalForm: React.FC<Props> = ({
   revenueCode,
   selectGlAccountData,
 }) => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
 
   return (
     <>

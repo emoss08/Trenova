@@ -18,8 +18,6 @@
 import React from "react";
 import {
   Box,
-  createStyles,
-  rem,
   SimpleGrid,
   Select,
   TextInput,
@@ -31,43 +29,14 @@ import { statusChoices } from "@/lib/utils";
 import { JobTitle } from "@/types/apps/accounts";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { jobFunctionChoices } from "@/utils/apps/accounts";
+import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   jobTitle: JobTitle;
 };
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-    div: {
-      marginBottom: rem(10),
-    },
-  };
-});
-
 export const ViewJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
 
   return (
     <>
@@ -91,7 +60,7 @@ export const ViewJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
             />
           </SimpleGrid>
           <Textarea
-            value={jobTitle.description}
+            value={jobTitle.description || ""}
             className={classes.fields}
             label="Description"
             disabled
