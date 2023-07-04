@@ -77,7 +77,7 @@ INSTALLED_APPS = [
     "phonenumber_field",
     "django_celery_results",
     "django_celery_beat",
-    # "silk",
+    "silk",
     "encrypted_model_fields",
     "nested_inline",
     "drf_spectacular",
@@ -111,7 +111,7 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
-    # "silk.middleware.SilkyMiddleware",
+    "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -280,6 +280,8 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -318,8 +320,12 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "EXCEPTION_HANDLER": "core.exceptions.django_error_handler",
+    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+}
+
+DRF_STANDARDIZED_ERRORS = {
+    "EXCEPTION_HANDLER_CLASS": "core.exceptions.CustomExceptionHandler"
 }
 
 # Celery Configurations
@@ -353,6 +359,26 @@ CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
 CACHEOPS_DEFAULTS = {
     "timeout": 60 * 60,
 }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}
 
 CACHEOPS = {
     "order.ordercontrol": {"ops": "all"},
@@ -361,11 +387,12 @@ CACHEOPS = {
     "billing.billingcontrol": {"ops": "all"},
     "dispatch.dispatchcontrol": {"ops": "all"},
     "organization.emailcontrol": {"ops": "all"},
-    # "organization.organization": {"ops": "all"},
-    # "organization.department": {"ops": "all"},
+    "organization.organization": {"ops": "all"},
+    "organization.department": {"ops": "all"},
     # "accounts.user": {"ops": "all"},
     # "accounts.userprofile": {"ops": "all"},
-    # "accounts.jobtitle": {"ops": "all"},
+    "accounts.jobtitle": {"ops": "all"},
+    "accounting.generalledgeraccount": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
