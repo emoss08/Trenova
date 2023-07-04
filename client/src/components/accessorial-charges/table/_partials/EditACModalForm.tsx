@@ -33,24 +33,19 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
-import { AccessorialCharge } from "@/types/apps/billing";
+import {
+  AccessorialCharge,
+  AccessorialChargeFormValues,
+} from "@/types/apps/billing";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { accessorialChargeSchema } from "@/utils/apps/billing/schema";
 
 type Props = {
   accessorialCharge: AccessorialCharge;
 };
-
-interface EditACFormValues {
-  code: string;
-  description?: string;
-  is_detention: boolean;
-  charge_amount: number;
-  method: string;
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -88,7 +83,7 @@ export const EditACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: EditACFormValues) =>
+    (values: AccessorialChargeFormValues) =>
       axios.put(`/accessorial_charges/${accessorialCharge.id}/`, values),
     {
       onSuccess: () => {
@@ -134,15 +129,8 @@ export const EditACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
     }
   );
 
-  const editACSchema = Yup.object().shape({
-    code: Yup.string().required("Code is required."),
-    is_detention: Yup.boolean().required("Detention is required."),
-    charge_amount: Yup.number().required("Charge amount is required."),
-    method: Yup.string().required("Method is required."),
-  });
-
-  const form = useForm<EditACFormValues>({
-    validate: yupResolver(editACSchema),
+  const form = useForm<AccessorialChargeFormValues>({
+    validate: yupResolver(accessorialChargeSchema),
     initialValues: {
       code: accessorialCharge.code,
       description: accessorialCharge.description || "",
@@ -152,7 +140,7 @@ export const EditACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
     },
   });
 
-  const submitForm = (values: EditACFormValues) => {
+  const submitForm = (values: AccessorialChargeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

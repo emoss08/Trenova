@@ -141,4 +141,16 @@ ALLOWED_MODELS = {
             "description",
         ],
     },
+    "AccessorialCharge": {
+        "app_label": "billing",
+        "allowed_fields": [
+            "organization__name",
+            "code",
+            "description",
+            "is_detention",
+            "charge_amount",
+            "charge_amount_currency",
+            "method",
+        ],
+    },
 }

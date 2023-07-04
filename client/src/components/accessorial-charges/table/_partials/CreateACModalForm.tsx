@@ -179,6 +179,7 @@ export const CreateACModalForm: React.FC = () => {
                 description="Method for calculating the other charge."
                 placeholder="Fuel Method"
                 variant="filled"
+                withAsterisk
               />
               <SwitchInput
                 form={form}

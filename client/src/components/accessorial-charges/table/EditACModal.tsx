@@ -15,10 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton, Stack } from "@mantine/core";
+import { Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
-import { AccessorialCharge } from "@/types/apps/billing";
 import { EditACModalForm } from "@/components/accessorial-charges/table/_partials/EditACModalForm";
 
 export const EditACModal: React.FC = () => {
@@ -29,11 +28,7 @@ export const EditACModal: React.FC = () => {
   if (!showEditModal) return null;
 
   return (
-    <Modal.Root
-      opened={showEditModal}
-      onClose={() => setShowEditModal(false)}
-      // size={500}
-    >
+    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
@@ -43,9 +38,9 @@ export const EditACModal: React.FC = () => {
         <Modal.Body>
           <>
             <Suspense fallback={<Skeleton height={200} />}>
-              <EditACModalForm
-                accessorialCharge={accessorialCharge as AccessorialCharge}
-              />
+              {accessorialCharge && (
+                <EditACModalForm accessorialCharge={accessorialCharge} />
+              )}
             </Suspense>
           </>
         </Modal.Body>

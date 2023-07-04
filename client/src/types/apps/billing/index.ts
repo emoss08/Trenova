@@ -59,17 +59,12 @@ export interface ChargeTypeFormValues
 export type AccessorialCharge = {
   id: string;
   code: string;
-  description: string;
+  description?: string | null;
   is_detention: boolean;
   charge_amount: number;
   charge_amount_currency: string;
-  method: string;
+  method: fuelMethodChoicesProps;
 };
 
-export interface AccessorialChargeFormValues {
-  code: string;
-  description: string;
-  is_detention: boolean;
-  charge_amount: number;
-  method: fuelMethodChoicesProps;
-}
+export interface AccessorialChargeFormValues
+  extends Omit<AccessorialCharge, "id" | "charge_amount_currency"> {}

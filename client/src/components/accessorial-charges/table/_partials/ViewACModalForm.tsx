@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -25,86 +24,75 @@ import {
   Textarea,
   Button,
   Group,
+  Switch,
 } from "@mantine/core";
-import { statusChoices } from "@/lib/utils";
-import {
-  accountClassificationChoices,
-  accountSubTypeChoices,
-  accountTypeChoices,
-  cashFlowTypeChoices,
-} from "@/utils/apps/accounting";
-import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { useFormStyles } from "@/styles/FormStyles";
+import { AccessorialCharge } from "@/types/apps/billing";
+import { fuelMethodChoices } from "@/utils/apps/billing";
+import { accessorialChargeTableStore } from "@/stores/BillingStores";
 
 type Props = {
-  glAccount: GeneralLedgerAccount;
+  accessorialCharge: AccessorialCharge;
 };
 
-export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
+export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
   const { classes } = useFormStyles();
 
   return (
     <>
       <Box className={classes.div}>
         <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={statusChoices}
-              className={classes.fields}
-              disabled
-              value={glAccount.status}
-              label="Status"
-              variant="filled"
-            />
-            <TextInput
-              value={glAccount.account_number}
-              disabled
-              className={classes.fields}
-              label="Account Number"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Textarea
-            value={glAccount.description}
+          <TextInput
             className={classes.fields}
-            label="Description"
-            disabled
+            name="code"
+            label="Code"
+            description="Code for the accessorial charge."
+            placeholder="Code"
             variant="filled"
+            disabled
+            value={accessorialCharge.code}
+          />
+          <Textarea
+            className={classes.fields}
+            name="description"
+            label="Description"
+            description="Description of the accessorial charge."
+            placeholder="Description"
+            variant="filled"
+            disabled
+            value={accessorialCharge.description || ""}
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={accountTypeChoices}
-              value={glAccount.account_type}
-              disabled
-              label="Account Type"
+            <TextInput
               className={classes.fields}
+              name="charge_amount"
+              label="Charge Amount"
+              placeholder="Charge Amount"
+              description="Charge amount for the accessorial charge."
               variant="filled"
+              disabled
+              value={accessorialCharge.charge_amount}
             />
             <Select
-              data={cashFlowTypeChoices}
-              value={glAccount.cash_flow_type}
-              disabled
-              label="Cash Flow Type"
+              data={fuelMethodChoices}
               className={classes.fields}
+              name="method"
+              label="Fuel Method"
+              description="Method for calculating the other charge."
+              placeholder="Fuel Method"
               variant="filled"
+              disabled
+              value={accessorialCharge.method}
             />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={accountSubTypeChoices}
-              value={glAccount.account_sub_type}
-              disabled
-              label="Account Sub Type"
+            <Switch
               className={classes.fields}
+              name="is_detention"
+              label="Detention"
+              description="Is detention charge?"
+              placeholder="Detention"
               variant="filled"
-            />
-            <Select
-              data={accountClassificationChoices}
-              value={glAccount.account_classification}
               disabled
-              label="Account Classification"
-              className={classes.fields}
-              variant="filled"
+              checked={accessorialCharge.is_detention}
             />
           </SimpleGrid>
           <Group position="right" mt="md">
@@ -112,13 +100,16 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
               color="white"
               type="submit"
               onClick={() => {
-                generalLedgerTableStore.set("selectedRecord", glAccount);
-                generalLedgerTableStore.set("viewModalOpen", false);
-                generalLedgerTableStore.set("editModalOpen", true);
+                accessorialChargeTableStore.set(
+                  "selectedRecord",
+                  accessorialCharge
+                );
+                accessorialChargeTableStore.set("viewModalOpen", false);
+                accessorialChargeTableStore.set("editModalOpen", true);
               }}
               className={classes.control}
             >
-              Edit GL Account
+              Edit Accessorial Charge
             </Button>
           </Group>
         </Box>
