@@ -167,12 +167,6 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
               label="Expense Account"
               placeholder="Expense Account"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue(
-                  "expense_account",
-                  form.values.expense_account
-                );
-              }}
               clearable
             />
             <Group position="right" mt="md">

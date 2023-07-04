@@ -150,9 +150,6 @@ export const EditJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
               label="Job Function"
               placeholder="Job Function"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("job_function", form.values.job_function);
-              }}
               clearable
               withAsterisk
             />
