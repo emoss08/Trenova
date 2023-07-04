@@ -60,7 +60,7 @@ class RevenueCodeSerializer(GenericSerializer):
 
     def _validate_account(
         self, attrs: dict, account_key: str, expected_type: str, account_name: str
-    ):
+    ) -> Any:
         """Helper function to validate the account type of revenue code.
 
         Args:
@@ -81,7 +81,7 @@ class RevenueCodeSerializer(GenericSerializer):
                 }
             )
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict) -> Any:
         """RevenueCode model validation
 
         Args:
@@ -124,7 +124,7 @@ class DivisionCodeSerializer(GenericSerializer):
     representation of the model.
     """
 
-    def validate(self, attrs: Any) -> Any:
+    def validate(self, attrs: dict) -> Any:
         """The validate function is called by the serializer's .is_valid() method. It runs field-level
         validations on the data, and then it calls a series of custom validation functions that are defined
         in this class. The custom validation functions are prefixed with an underscore to indicate that
@@ -161,7 +161,7 @@ class DivisionCodeSerializer(GenericSerializer):
 
         return attrs
 
-    def _validate_unique_code_organization(self, attrs: Any) -> None:
+    def _validate_unique_code_organization(self, attrs: dict) -> None:
         """The _validate_unique_code_organization function is a helper function that validates the uniqueness of the code field.
         It checks to see if there are any other division codes with the same code and organization as this one, excluding itself if it exists.
         If there are, then it raises a serializers.ValidationError.
@@ -186,7 +186,7 @@ class DivisionCodeSerializer(GenericSerializer):
 
     def _validate_account_classification(
         self,
-        attrs: Any,
+        attrs: dict,
         account_key: str,
         expected_classification: str,
         account_name: str,
@@ -220,7 +220,7 @@ class DivisionCodeSerializer(GenericSerializer):
             )
 
     def _validate_account_type(
-        self, attrs: Any, account_key: str, expected_type: str, account_name: str
+        self, attrs: dict, account_key: str, expected_type: str, account_name: str
     ) -> None:
         """The _validate_account_type function is a helper function that validates the account type of an account.
         It takes in four arguments: self, attrs, account_key and expected_type. The first argument is the serializer instance itself.
