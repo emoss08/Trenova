@@ -58,6 +58,53 @@ class RevenueCodeSerializer(GenericSerializer):
         functionality for the serializer.
     """
 
+    def _validate_account(
+        self, attrs: dict, account_key: str, expected_type: str, account_name: str
+    ):
+        """Helper function to validate the account type of revenue code.
+
+        Args:
+            self: Access the instance of the class
+            attrs (dict): Get the account from the request
+            account_key (str): The key of the account in the attrs dictionary
+            expected_type (str): The expected account type
+            account_name (str): The name of the account type
+
+        Returns:
+            None: This function does not return anything. It raises a ValidationError if account type is not as expected.
+        """
+        account = attrs.get(account_key)
+        if account and account.account_type != expected_type:
+            raise serializers.ValidationError(
+                {
+                    account_key: f"Entered account is a {account.account_type} account, not a {account_name} account. Please try again."
+                }
+            )
+
+    def validate(self, attrs):
+        """RevenueCode model validation
+
+        Args:
+            attrs (dict): data from the request
+
+        Returns:
+            attrs (dict): validated data
+        """
+        self._validate_account(
+            attrs,
+            "expense_account",
+            models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE,
+            "expense",
+        )
+        self._validate_account(
+            attrs,
+            "revenue_account",
+            models.GeneralLedgerAccount.AccountTypeChoices.REVENUE,
+            "revenue",
+        )
+
+        return attrs
+
     class Meta:
         """Metaclass for RevenueCodeSerializer
 
@@ -82,7 +129,7 @@ class DivisionCodeSerializer(GenericSerializer):
         validations on the data, and then it calls a series of custom validation functions that are defined
         in this class. The custom validation functions are prefixed with an underscore to indicate that
         they're private methods (i.e., not intended for use outside of this class). Each one takes two
-        arguments: attrs, which is a dictionary containing all of the data; and key, which is a string
+        arguments: attrs, which is a dictionary containing all the data; and key, which is a string
         indicating what field we're validating.
 
         Args:
