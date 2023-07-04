@@ -73,7 +73,6 @@ export const ACTableColumns = (): MRT_ColumnDef<AccessorialCharge>[] => {
       Cell: ({ row }) => (
         <MontaTableActionMenu
           store={accessorialChargeTableStore}
-          name="Accessorial Charge"
           data={row.original}
         />
       ),
