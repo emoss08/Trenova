@@ -31,9 +31,11 @@ import {
 export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> =
   Yup.object().shape({
     code: Yup.string().required("Code is required"),
-    description: Yup.string().required("Description is required"),
+    description: Yup.string().notRequired(),
     is_detention: Yup.boolean().required("Detention is required"),
-    charge_amount: Yup.number().required("Charge amount is required"),
+    charge_amount: Yup.number()
+      .min(1, "Charge Amount must be greater than zero.")
+      .required("Charge amount is required"),
     method: Yup.string<fuelMethodChoicesProps>().required("Method is required"),
   });
 

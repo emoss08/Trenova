@@ -15,27 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { MontaTable } from "@/components/MontaTable";
-import { ACTableColumns } from "@/components/accessorial-charges/table/ACTableColumns";
-import { CreateACModal } from "@/components/accessorial-charges/table/CreateACModal";
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
+import { ViewACModalForm } from "@/components/accessorial-charges/table/_partials/ViewACModalForm";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
-import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
-import { ViewACModal } from "@/components/accessorial-charges/table/_partials/ViewACModal";
 
-export const ACChargeTable = () => {
+export const ViewACModal: React.FC = () => {
+  const [showViewModal, setShowViewModal] =
+    accessorialChargeTableStore.use("viewModalOpen");
+  const [accessorialCharge] = accessorialChargeTableStore.use("selectedRecord");
+
+  if (!showViewModal) return null;
+
   return (
-    <MontaTable
-      store={accessorialChargeTableStore}
-      link="/accessorial_charges"
-      columns={ACTableColumns}
-      TableEditModal={EditACModal}
-      TableViewModal={ViewACModal}
-      displayDeleteModal={true}
-      TableCreateDrawer={CreateACModal}
-      tableQueryKey="accessorial-charges-table-data"
-      exportModelName="AccessorialCharge"
-      name="Accessorial Charge"
-    />
+    <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>View Gl Account</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Suspense fallback={<Skeleton height={400} />}>
+            {accessorialCharge && (
+              <ViewACModalForm accessorialCharge={accessorialCharge} />
+            )}
+          </Suspense>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
   );
 };
