@@ -34,18 +34,12 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
-import { RouteControl } from "@/types/apps/route";
+import { RouteControl, RouteControlFormValues } from "@/types/apps/route";
 import {
   distanceMethodChoices,
   routeDistanceUnitChoices,
 } from "@/utils/apps/route";
-
-interface RouteControlFormValues {
-  distance_method: string;
-  mileage_unit: string;
-  generate_routes: boolean;
-}
+import { routeControlSchema } from "@/utils/apps/route/schema";
 
 interface Props {
   routeControl: RouteControl;
@@ -129,12 +123,6 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
       },
     }
   );
-
-  const routeControlSchema = Yup.object().shape({
-    distance_method: Yup.string().required("Distance method is required"),
-    mileage_unit: Yup.string().required("Mileage unit is required"),
-    generate_routes: Yup.boolean().required("Generate routes is required"),
-  });
 
   const form = useForm<RouteControlFormValues>({
     validate: yupResolver(routeControlSchema),

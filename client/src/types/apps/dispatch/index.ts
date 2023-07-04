@@ -15,14 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { NonNegativeNumber } from "@/types";
-
 export type DispatchControl = {
   id: string;
   organization: string;
   record_service_incident: string;
-  grace_period: NonNegativeNumber;
-  deadhead_target: string;
+  grace_period: number;
+  deadhead_target: number;
   driver_assign: boolean;
   trailer_continuity: boolean;
   dupe_trailer_check: boolean;
@@ -31,3 +29,16 @@ export type DispatchControl = {
   driver_time_away_restriction: boolean;
   tractor_worker_fleet_constraint: boolean;
 };
+
+export interface DispatchControlFormValues {
+  record_service_incident: string;
+  grace_period: number;
+  deadhead_target: number;
+  driver_assign: boolean;
+  trailer_continuity: boolean;
+  dupe_trailer_check: boolean;
+  regulatory_check: boolean;
+  prev_orders_on_hold: boolean;
+  driver_time_away_restriction: boolean;
+  tractor_worker_fleet_constraint: boolean;
+}

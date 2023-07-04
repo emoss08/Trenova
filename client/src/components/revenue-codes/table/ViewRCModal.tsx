@@ -15,15 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React, { Suspense } from "react";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { useQuery, useQueryClient } from "react-query";
-import {
-  getGLAccounts,
-  getRevenueCodeDetail,
-} from "@/requests/AccountingRequestFactory";
+import { getGLAccounts } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { Modal, Skeleton, Stack } from "@mantine/core";
-import React from "react";
 import { ViewRCModalForm } from "./_Partials/ViewRCModalForm";
 
 export const ViewRCModal: React.FC = () => {
@@ -32,7 +29,7 @@ export const ViewRCModal: React.FC = () => {
   const [revenueCode] = revenueCodeTableStore.use("selectedRecord");
   const queryClient = useQueryClient();
 
-  const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({
+  const { data: glAccountData } = useQuery({
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showViewModal,
@@ -48,25 +45,7 @@ export const ViewRCModal: React.FC = () => {
       label: glAccount.account_number,
     })) || [];
 
-  const { data: revenueCodeData, isLoading: isRevenueCodeDataLoading } =
-    useQuery({
-      queryKey: ["revenueCode", revenueCode?.id],
-      queryFn: () => {
-        if (!revenueCode) {
-          return Promise.resolve(null);
-        }
-        return getRevenueCodeDetail(revenueCode.id);
-      },
-      enabled: showViewModal,
-      initialData: () => {
-        return queryClient.getQueryData(["revenueCode", revenueCode?.id]);
-      },
-      staleTime: Infinity, // Never refetch
-    });
-
   if (!showViewModal) return null;
-
-  const isDataLoading = isRevenueCodeDataLoading || isGLAccountDataLoading;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -77,20 +56,14 @@ export const ViewRCModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            <>
-              {revenueCodeData && (
-                <ViewRCModalForm
-                  revenueCode={revenueCodeData}
-                  selectGlAccountData={selectGlAccountData}
-                />
-              )}
-            </>
-          )}
+          <Suspense fallback={<Skeleton height={400} />}>
+            {revenueCode && (
+              <ViewRCModalForm
+                revenueCode={revenueCode}
+                selectGlAccountData={selectGlAccountData}
+              />
+            )}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

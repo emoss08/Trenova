@@ -15,6 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import {
+  AutoBillingCriteriaChoicesProps,
+  fuelMethodChoicesProps,
+  OrderTransferCriteriaChoicesProps,
+} from "@/utils/apps/billing";
+
+/** Types for Division Codes */
 export type BillingControl = {
   id: string;
   organization: string;
@@ -22,13 +29,47 @@ export type BillingControl = {
   auto_bill_orders: boolean;
   auto_mark_ready_to_bill: boolean;
   validate_customer_rates: boolean;
-  auto_bill_criteria: string;
-  order_transfer_criteria: string;
+  auto_bill_criteria: AutoBillingCriteriaChoicesProps;
+  order_transfer_criteria: OrderTransferCriteriaChoicesProps;
   enforce_customer_billing: boolean;
 };
 
+export interface BillingControlFormValues {
+  remove_billing_history: boolean;
+  auto_bill_orders: boolean;
+  auto_mark_ready_to_bill: boolean;
+  validate_customer_rates: boolean;
+  auto_bill_criteria: AutoBillingCriteriaChoicesProps;
+  order_transfer_criteria: OrderTransferCriteriaChoicesProps;
+  enforce_customer_billing: boolean;
+}
+
+/** Types for Division Codes */
 export type ChargeType = {
   id: string;
+  organization: string;
   name: string;
-  description: string;
+  description?: string | null;
 };
+
+export interface ChargeTypeFormValues
+  extends Omit<ChargeType, "id" | "organization"> {}
+
+/** Types for Accessorial Charge */
+export type AccessorialCharge = {
+  id: string;
+  code: string;
+  description: string;
+  is_detention: boolean;
+  charge_amount: number;
+  charge_amount_currency: string;
+  method: string;
+};
+
+export interface AccessorialChargeFormValues {
+  code: string;
+  description: string;
+  is_detention: boolean;
+  charge_amount: number;
+  method: fuelMethodChoicesProps;
+}

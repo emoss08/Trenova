@@ -25,7 +25,7 @@ import {
 } from "@mantine/core";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput, SelectItem } from "@/components/ui/fields/SelectInput";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
@@ -35,14 +35,10 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-
-interface CreateDivisionCodeFormValues {
-  code: string;
-  description: string;
-  ap_account: string;
-  cash_account: string;
-  expense_account: string;
-}
+import { ChoiceProps } from "@/types";
+import { DivisionCodeFormValues } from "@/types/apps/accounting";
+import { divisionCodeSchema } from "@/utils/apps/accounting/schema";
+import { statusChoices } from "@/lib/utils";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -75,7 +71,7 @@ const useStyles = createStyles((theme) => {
 });
 
 type Props = {
-  selectGlAccountData: SelectItem[];
+  selectGlAccountData: ChoiceProps[];
 };
 
 export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
@@ -84,8 +80,7 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: CreateDivisionCodeFormValues) =>
-      axios.post("/division_codes/", values),
+    (values: DivisionCodeFormValues) => axios.post("/division_codes/", values),
     {
       onSuccess: () => {
         queryClient
@@ -128,21 +123,10 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
     }
   );
 
-  const CreateDivisionCodeSchema = Yup.object().shape({
-    code: Yup.string()
-      .max(4, "Code cannot be longer than 4 characters")
-      .required("Code is required"),
-    description: Yup.string()
-      .max(100, "Description cannot be longer than 100 characters")
-      .required("Description is required"),
-    ap_account: Yup.string().notRequired(),
-    cash_account: Yup.string().notRequired(),
-    expense_account: Yup.string().notRequired(),
-  });
-
-  const form = useForm<CreateDivisionCodeFormValues>({
-    validate: yupResolver(CreateDivisionCodeSchema),
+  const form = useForm<DivisionCodeFormValues>({
+    validate: yupResolver(divisionCodeSchema),
     initialValues: {
+      status: "A",
       code: "",
       description: "",
       ap_account: "",
@@ -151,7 +135,7 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
     },
   });
 
-  const submitForm = (values: CreateDivisionCodeFormValues) => {
+  const submitForm = (values: DivisionCodeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -161,15 +145,26 @@ export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
       <form onSubmit={form.onSubmit((values) => submitForm(values))}>
         <Box className={classes.div}>
           <Box>
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="code"
-              label="Code"
-              placeholder="Code"
-              variant="filled"
-              withAsterisk
-            />
+            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+              <SelectInput
+                form={form}
+                data={statusChoices}
+                className={classes.fields}
+                name="status"
+                label="Status"
+                placeholder="Status"
+                variant="filled"
+              />
+              <ValidatedTextInput
+                form={form}
+                className={classes.fields}
+                name="code"
+                label="Code"
+                placeholder="Code"
+                variant="filled"
+                withAsterisk
+              />
+            </SimpleGrid>
             <ValidatedTextArea
               form={form}
               className={classes.fields}

@@ -25,7 +25,6 @@ import {
   SimpleGrid,
 } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { useMutation, useQueryClient } from "react-query";
@@ -35,14 +34,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
 import { useForm, yupResolver } from "@mantine/form";
-import { JobTitle, JobTitleFormValues } from "@/types/apps/accounts";
-import { jobTitleTableStore } from "@/stores/UserTableStore";
-import { jobFunctionChoices } from "@/utils/apps/accounts";
-import { jobTitleSchema } from "@/utils/apps/accounts/schema";
-
-type Props = {
-  jobTitle: JobTitle;
-};
+import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { fuelMethodChoices } from "@/utils/apps/billing";
+import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { AccessorialChargeFormValues } from "@/types/apps/billing";
+import {
+  accessorialChargeSchema,
+  createACSchema,
+} from "@/types/apps/billing/schema";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -74,32 +73,29 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const EditJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
+export const CreateACModalForm: React.FC = () => {
   const { classes } = useStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: JobTitleFormValues) =>
-      axios.put(`/job_titles/${jobTitle.id}/`, values),
+    (values: AccessorialChargeFormValues) =>
+      axios.post("/accessorial_charges/", values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["job-title-table-data"],
-        });
         queryClient
           .invalidateQueries({
-            queryKey: ["jobTitle", jobTitle.id],
+            queryKey: ["accessorial-charges-table-data"],
           })
           .then(() => {
             notifications.show({
               title: "Success",
-              message: "Job Title updated successfully",
+              message: "Accessorial Charge created successfully",
               color: "green",
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
             });
-            jobTitleTableStore.set("editModalOpen", false);
+            accessorialChargeTableStore.set("createModalOpen", false);
           });
       },
       onError: (error: any) => {
@@ -126,19 +122,18 @@ export const EditJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
     }
   );
 
-  const form = useForm<JobTitleFormValues>({
-    validate: yupResolver(jobTitleSchema),
+  const form = useForm<AccessorialChargeFormValues>({
+    validate: yupResolver(accessorialChargeSchema),
     initialValues: {
-      status: jobTitle.status,
-      name: jobTitle.name,
-      description: jobTitle.description || "",
-      job_function: jobTitle.job_function,
+      code: "",
+      description: "",
+      is_detention: false,
+      charge_amount: 0,
+      method: "",
     },
   });
 
-  console.info(jobTitle);
-
-  const submitForm = (values: JobTitleFormValues) => {
+  const submitForm = (values: AccessorialChargeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -148,52 +143,56 @@ export const EditJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
       <form onSubmit={form.onSubmit((values) => submitForm(values))}>
         <Box className={classes.div}>
           <Box>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                form={form}
-                data={statusChoices}
-                className={classes.fields}
-                name="status"
-                label="Status"
-                placeholder="Status"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("status", form.values.status);
-                }}
-                withAsterisk
-              />
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="name"
-                label="Name"
-                placeholder="Name"
-                variant="filled"
-                withAsterisk
-              />
-            </SimpleGrid>
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="code"
+              label="Code"
+              description="Code for the accessorial charge."
+              placeholder="Code"
+              variant="filled"
+              withAsterisk
+            />
             <ValidatedTextArea
               form={form}
               className={classes.fields}
               name="description"
               label="Description"
+              description="Description of the accessorial charge."
               placeholder="Description"
               variant="filled"
             />
-            <SelectInput
-              form={form}
-              data={jobFunctionChoices}
-              className={classes.fields}
-              name="job_function"
-              label="Job Function"
-              placeholder="Job Function"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("job_function", form.values.job_function);
-              }}
-              clearable
-              withAsterisk
-            />
+            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+              <ValidatedTextInput
+                form={form}
+                className={classes.fields}
+                name="charge_amount"
+                label="Charge Amount"
+                placeholder="Charge Amount"
+                description="Charge amount for the accessorial charge."
+                variant="filled"
+                withAsterisk
+              />
+              <SelectInput
+                form={form}
+                data={fuelMethodChoices}
+                className={classes.fields}
+                name="method"
+                label="Fuel Method"
+                description="Method for calculating the other charge."
+                placeholder="Fuel Method"
+                variant="filled"
+              />
+              <SwitchInput
+                form={form}
+                className={classes.fields}
+                name="is_detention"
+                label="Detention"
+                description="Is detention charge?"
+                placeholder="Detention"
+                variant="filled"
+              />
+            </SimpleGrid>
             <Group position="right" mt="md">
               <Button
                 color="white"

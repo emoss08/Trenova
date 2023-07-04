@@ -15,11 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import {
+  DistanceMethodChoiceProps,
+  RouteModelChoiceProps,
+} from "@/utils/apps/route";
+
 export type RouteControl = {
   id: string;
   organization: string;
-  distance_method: string;
-  mileage_unit: string;
+  distance_method: DistanceMethodChoiceProps;
+  mileage_unit: RouteModelChoiceProps;
   generate_routes: boolean;
 };
 
+export interface RouteControlFormValues {
+  distance_method: DistanceMethodChoiceProps;
+  mileage_unit: RouteModelChoiceProps;
+  generate_routes: boolean;
+}

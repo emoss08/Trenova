@@ -26,7 +26,6 @@ import {
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import * as Yup from "yup";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
@@ -34,44 +33,21 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { serviceIncidentControlChoices } from "@/utils/apps/dispatch";
 import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { InvoiceControl } from "@/types/apps/invoicing";
+import {
+  InvoiceControl,
+  InvoiceControlFormValues,
+} from "@/types/apps/invoicing";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { dateFormatChoices } from "@/utils/apps/invoicing";
 import { ValidatedFileInput } from "@/components/ui/fields/FileInput";
-
-interface InvoiceControlFormValues {
-  invoice_number_prefix: string;
-  credit_memo_number_prefix: string;
-  invoice_due_after_days: number;
-  invoice_terms: string;
-  invoice_footer: string;
-  invoice_logo: any;
-  invoice_logo_width: number;
-  show_invoice_due_date: boolean;
-  invoice_date_format: string;
-  show_amount_due: boolean;
-  attach_pdf: boolean;
-}
+import { invoiceControlSchema } from "@/utils/apps/invoicing/schema";
 
 interface Props {
   invoiceControl: InvoiceControl;
 }
 
-const MAX_FILE_SIZE = 1024000; // 1MB
-
-const validFileExtensions: any = {
-  image: ["jpg", "gif", "png", "jpeg", "svg", "webp"],
-};
-
-function isValidFileType(fileName: any, fileType: any) {
-  return (
-    fileName &&
-    validFileExtensions[fileType].indexOf(fileName.split(".").pop()) > -1
-  );
-}
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
 
@@ -154,44 +130,15 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
     }
   );
 
-  const invoiceControlSchema = Yup.object().shape({
-    invoice_number_prefix: Yup.string().required(
-      "Invoice Number Prefix is required"
-    ),
-    credit_memo_number_prefix: Yup.string().required(
-      "Credit Memo Number Prefix is required"
-    ),
-    invoice_due_after_days: Yup.number().required(
-      "Invoice Due After Days is required"
-    ),
-    invoice_terms: Yup.string().notRequired(),
-    invoice_footer: Yup.string().notRequired(),
-    invoice_logo: Yup.mixed()
-      .test("is-valid-type", "Not a valid image type", (value: any) => {
-        if (!value) return true;
-        return isValidFileType(value && value.name.toLowerCase(), "image");
-      })
-      .test("is-valid-size", "Max allowed size is 100KB", (value: any) => {
-        if (!value) return true;
-        return value && value.size <= MAX_FILE_SIZE;
-      })
-      .notRequired(), // File Upload field
-    invoice_logo_width: Yup.number().required("Required"),
-    show_invoice_due_date: Yup.boolean().required("Required"),
-    invoice_date_format: Yup.string().required("Required"),
-    show_amount_due: Yup.boolean().required("Required"),
-    attach_pdf: Yup.boolean().required("Required"),
-  });
-
   const form = useForm<InvoiceControlFormValues>({
     validate: yupResolver(invoiceControlSchema),
     initialValues: {
       invoice_number_prefix: invoiceControl.invoice_number_prefix,
       credit_memo_number_prefix: invoiceControl.credit_memo_number_prefix,
       invoice_due_after_days: invoiceControl.invoice_due_after_days,
-      invoice_terms: invoiceControl.invoice_terms,
-      invoice_footer: invoiceControl.invoice_footer,
-      invoice_logo: invoiceControl.invoice_logo,
+      invoice_terms: invoiceControl.invoice_terms || "",
+      invoice_footer: invoiceControl.invoice_footer || "",
+      invoice_logo: invoiceControl.invoice_logo || "",
       invoice_logo_width: invoiceControl.invoice_logo_width,
       show_invoice_due_date: invoiceControl.show_invoice_due_date,
       invoice_date_format: invoiceControl.invoice_date_format,

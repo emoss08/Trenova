@@ -25,19 +25,14 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
-import { ChargeType } from "@/types/apps/billing";
+import { ChargeType, ChargeTypeFormValues } from "@/types/apps/billing";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
+import { chargeTypeSchema } from "@/utils/apps/billing/schema";
 
 type Props = {
   chargeType: ChargeType;
 };
-
-interface EditChargeTypeFormValues {
-  name: string;
-  description: string;
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -75,7 +70,7 @@ export const EditChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: EditChargeTypeFormValues) =>
+    (values: ChargeTypeFormValues) =>
       axios.put(`/charge_types/${chargeType.id}/`, values),
     {
       onSuccess: () => {
@@ -121,20 +116,15 @@ export const EditChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
     }
   );
 
-  const editChargeTypeSchema = Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().notRequired(),
-  });
-
-  const form = useForm<EditChargeTypeFormValues>({
-    validate: yupResolver(editChargeTypeSchema),
+  const form = useForm<ChargeTypeFormValues>({
+    validate: yupResolver(chargeTypeSchema),
     initialValues: {
       name: chargeType.name,
-      description: chargeType.description || "",
+      description: chargeType.description,
     },
   });
 
-  const submitForm = (values: EditChargeTypeFormValues) => {
+  const submitForm = (values: ChargeTypeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

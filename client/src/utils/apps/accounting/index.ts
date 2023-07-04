@@ -15,6 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
+/** Type for Account Type Choices */
+export type AccountTypeChoiceProps =
+  | "ASSET"
+  | "LIABILITY"
+  | "EQUITY"
+  | "REVENUE"
+  | "EXPENSE";
+
 export const accountTypeChoices = [
   { value: "ASSET", label: "Asset" },
   { value: "LIABILITY", label: "Liability" },
@@ -23,11 +31,28 @@ export const accountTypeChoices = [
   { value: "EXPENSE", label: "Expense" },
 ];
 
+/** Type for Cash Flow Type Choices */
+export type CashFlowTypeChoiceProps = "OPERATING" | "INVESTING" | "FINANCING";
+
 export const cashFlowTypeChoices = [
   { value: "OPERATING", label: "Operating" },
   { value: "INVESTING", label: "Investing" },
   { value: "FINANCING", label: "Financing" },
 ];
+
+/** Type for Account Sub Type Choices */
+export type AccountSubTypeChoiceProps =
+  | "CURRENT_ASSET"
+  | "FIXED_ASSET"
+  | "OTHER_ASSET"
+  | "CURRENT_LIABILITY"
+  | "LONG_TERM_LIABILITY"
+  | "EQUITY"
+  | "REVENUE"
+  | "COST_OF_GOODS_SOLD"
+  | "EXPENSE"
+  | "OTHER_INCOME"
+  | "OTHER_EXPENSE";
 
 export const accountSubTypeChoices = [
   { value: "CURRENT_ASSET", label: "Current Asset" },
@@ -42,6 +67,16 @@ export const accountSubTypeChoices = [
   { value: "OTHER_INCOME", label: "Other Income" },
   { value: "OTHER_EXPENSE", label: "Other Expense" },
 ];
+
+/** Type for Account Classification Choices */
+export type AccountClassificationChoiceProps =
+  | "BANK"
+  | "CASH"
+  | "ACCOUNTS_RECEIVABLE"
+  | "ACCOUNTS_PAYABLE"
+  | "INVENTORY"
+  | "OTHER_CURRENT_ASSET"
+  | "FIXED_ASSET";
 
 export const accountClassificationChoices = [
   { value: "BANK", label: "Bank" },

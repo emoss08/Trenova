@@ -15,22 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/AxiosConfig";
-import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
+import { JobTitleFormValues } from "@/types/apps/accounts";
+import { StatusChoiceProps } from "@/types";
+import { JobFunctionChoiceProps } from "@/utils/apps/accounts/index";
 
-export async function getChargeTypeDetails(id: string): Promise<ChargeType> {
-  const response = await axios.get(`/charge_types/${id}/`);
-  return response.data;
-}
-
-export async function getAccessorialCharges(): Promise<AccessorialCharge[]> {
-  const response = await axios.get("/accessorial_charges/");
-  return response.data.results;
-}
-
-export async function getAccessorialChargeDetails(
-  id: string
-): Promise<AccessorialCharge> {
-  const response = await axios.get(`/accessorial_charges/${id}/`);
-  return response.data;
-}
+export const jobTitleSchema: ObjectSchema<JobTitleFormValues> =
+  Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    name: Yup.string().required("Name is required"),
+    description: Yup.string().notRequired(),
+    job_function: Yup.string<JobFunctionChoiceProps>().required(
+      "Job Function is required"
+    ),
+  });

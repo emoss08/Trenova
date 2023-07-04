@@ -15,6 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
+/** Type for Date Format Choices */
+export type DateFormatChoiceProps =
+  | "%m/%d/%Y"
+  | "%d/%m/%Y"
+  | "%Y/%d/%m"
+  | "%Y/%m/%d"
+  | "FUCK";
+
 export const dateFormatChoices = [
   { value: "%m/%d/%Y", label: "MM/DD/YYYY" },
   { value: "%d/%m/%Y", label: "DD/MM/YYYY" },

@@ -15,22 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/AxiosConfig";
-import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import React from "react";
+import { MontaTable } from "@/components/MontaTable";
+import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
+import { ACTableColumns } from "@/components/accessorial-charges/table/ACTableColumns";
+import { CreateACModal } from "@/components/accessorial-charges/table/CreateACModal";
+import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
 
-export async function getChargeTypeDetails(id: string): Promise<ChargeType> {
-  const response = await axios.get(`/charge_types/${id}/`);
-  return response.data;
-}
-
-export async function getAccessorialCharges(): Promise<AccessorialCharge[]> {
-  const response = await axios.get("/accessorial_charges/");
-  return response.data.results;
-}
-
-export async function getAccessorialChargeDetails(
-  id: string
-): Promise<AccessorialCharge> {
-  const response = await axios.get(`/accessorial_charges/${id}/`);
-  return response.data;
-}
+export const ACChargeTable = () => {
+  return (
+    <MontaTable
+      store={accessorialChargeTableStore}
+      link="/accessorial_charges"
+      columns={ACTableColumns}
+      TableEditModal={EditACModal}
+      TableViewModal={ViewGLAccountModal}
+      displayDeleteModal={true}
+      TableCreateDrawer={CreateACModal}
+      tableQueryKey="accessorial-charges-table-data"
+      exportModelName="AccessorialCharge"
+      name="Accessorial Charge"
+    />
+  );
+};

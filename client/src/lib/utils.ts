@@ -16,6 +16,8 @@
  */
 
 // User info constants
+import { ChoiceProps } from "@/types";
+
 export const USER_ID_KEY = import.meta.env.VITE_USER_ID_KEY;
 export const ORGANIZATION_ID_KEY = import.meta.env.VITE_ORGANIZATION_ID_KEY;
 
@@ -101,7 +103,7 @@ export function clearAllCookies() {
   });
 }
 
-export const statusChoices = [
+export const statusChoices: ChoiceProps[] = [
   { value: "A", label: "Active" },
   { value: "I", label: "Inactive" },
 ];

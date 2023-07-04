@@ -77,7 +77,7 @@ export const ViewChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
             variant="filled"
           />
           <Textarea
-            value={chargeType.description}
+            value={chargeType.description || ""}
             className={classes.fields}
             label="Description"
             disabled

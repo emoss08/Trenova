@@ -28,12 +28,12 @@ import {
   Button,
   Group,
 } from "@mantine/core";
-import { SelectItem } from "@/components/ui/fields/SelectInput";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
+import { ChoiceProps } from "@/types";
 
 type Props = {
   revenueCode: RevenueCode;
-  selectGlAccountData: SelectItem[];
+  selectGlAccountData: ChoiceProps[];
 };
 
 const useStyles = createStyles((theme) => {
@@ -74,7 +74,6 @@ export const ViewRCModalForm: React.FC<Props> = ({
 
   return (
     <>
-      {/*<Divider variant="dashed" />*/}
       <Box className={classes.div}>
         <Box>
           <TextInput
@@ -94,7 +93,7 @@ export const ViewRCModalForm: React.FC<Props> = ({
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <Select
               data={selectGlAccountData}
-              value={revenueCode.expense_account}
+              value={revenueCode.expense_account || ""}
               disabled
               label="AP Account"
               className={classes.fields}
@@ -102,7 +101,7 @@ export const ViewRCModalForm: React.FC<Props> = ({
             />
             <Select
               data={selectGlAccountData}
-              value={revenueCode.revenue_account}
+              value={revenueCode.revenue_account || ""}
               disabled
               label="Cash Account"
               className={classes.fields}

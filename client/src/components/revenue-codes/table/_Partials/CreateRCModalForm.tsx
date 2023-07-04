@@ -25,23 +25,18 @@ import {
 } from "@mantine/core";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput, SelectItem } from "@/components/ui/fields/SelectInput";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-
-interface CreateRevenueCodeFormValues {
-  code: string;
-  description: string;
-  expense_account: string;
-  revenue_account: string;
-}
+import { ChoiceProps } from "@/types";
+import { RevenueCodeFormValues } from "@/types/apps/accounting";
+import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -74,7 +69,7 @@ const useStyles = createStyles((theme) => {
 });
 
 type Props = {
-  selectGlAccountData: SelectItem[];
+  selectGlAccountData: ChoiceProps[];
 };
 
 export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
@@ -83,8 +78,7 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: CreateRevenueCodeFormValues) =>
-      axios.post(`/revenue_codes/`, values),
+    (values: RevenueCodeFormValues) => axios.post(`/revenue_codes/`, values),
     {
       onSuccess: () => {
         queryClient
@@ -127,19 +121,8 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
     }
   );
 
-  const createRevenueCodeSchema = Yup.object().shape({
-    code: Yup.string()
-      .max(4, "Code cannot be longer than 4 characters")
-      .required("Code is required"),
-    description: Yup.string()
-      .max(100, "Description cannot be longer than 100 characters")
-      .required("Description is required"),
-    expense_account: Yup.string().notRequired(),
-    revenue_account: Yup.string().notRequired(),
-  });
-
-  const form = useForm<CreateRevenueCodeFormValues>({
-    validate: yupResolver(createRevenueCodeSchema),
+  const form = useForm<RevenueCodeFormValues>({
+    validate: yupResolver(revenueCodeSchema),
     initialValues: {
       code: "",
       description: "",
@@ -148,7 +131,7 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
     },
   });
 
-  const submitForm = (values: CreateRevenueCodeFormValues) => {
+  const submitForm = (values: RevenueCodeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

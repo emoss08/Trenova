@@ -26,12 +26,12 @@ import {
   TextInput,
   Textarea,
 } from "@mantine/core";
-import { SelectItem } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
+import { ChoiceProps } from "@/types";
 
 type Props = {
   divisionCode: DivisionCode;
-  selectGlAccountData: SelectItem[];
+  selectGlAccountData: ChoiceProps[];
 };
 
 const useStyles = createStyles((theme) => {
@@ -101,7 +101,7 @@ export const ViewDCModalForm: React.FC<Props> = ({
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <Select
               data={selectGlAccountData}
-              value={divisionCode.ap_account}
+              value={divisionCode.ap_account || ""}
               disabled
               label="AP Account"
               className={classes.fields}
@@ -109,7 +109,7 @@ export const ViewDCModalForm: React.FC<Props> = ({
             />
             <Select
               data={selectGlAccountData}
-              value={divisionCode.cash_account}
+              value={divisionCode.cash_account || ""}
               disabled
               label="Cash Account"
               className={classes.fields}
@@ -118,7 +118,7 @@ export const ViewDCModalForm: React.FC<Props> = ({
           </SimpleGrid>
           <Select
             data={selectGlAccountData}
-            value={divisionCode.expense_account}
+            value={divisionCode.expense_account || ""}
             disabled
             label="Expense Account"
             className={classes.fields}

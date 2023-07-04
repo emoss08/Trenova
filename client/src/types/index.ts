@@ -17,3 +17,10 @@
 
 export type NonNegativeNumber = number;
 export type Decimal = number;
+
+export interface ChoiceProps {
+  value: string;
+  label: string;
+}
+
+export type StatusChoiceProps = "A" | "I";

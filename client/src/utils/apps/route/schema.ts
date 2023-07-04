@@ -15,22 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/lib/AxiosConfig";
-import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import * as Yup from "yup";
+import { ObjectSchema } from "yup";
+import { RouteControlFormValues } from "@/types/apps/route";
+import {
+  DistanceMethodChoiceProps,
+  RouteModelChoiceProps,
+} from "@/utils/apps/route/index";
 
-export async function getChargeTypeDetails(id: string): Promise<ChargeType> {
-  const response = await axios.get(`/charge_types/${id}/`);
-  return response.data;
-}
-
-export async function getAccessorialCharges(): Promise<AccessorialCharge[]> {
-  const response = await axios.get("/accessorial_charges/");
-  return response.data.results;
-}
-
-export async function getAccessorialChargeDetails(
-  id: string
-): Promise<AccessorialCharge> {
-  const response = await axios.get(`/accessorial_charges/${id}/`);
-  return response.data;
-}
+export const routeControlSchema: ObjectSchema<RouteControlFormValues> =
+  Yup.object().shape({
+    distance_method: Yup.string<DistanceMethodChoiceProps>().required(
+      "Distance method is required"
+    ),
+    mileage_unit: Yup.string<RouteModelChoiceProps>().required(
+      "Mileage unit is required"
+    ),
+    generate_routes: Yup.boolean().required("Generate routes is required"),
+  });

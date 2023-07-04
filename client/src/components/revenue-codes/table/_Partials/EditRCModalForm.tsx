@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { RevenueCode } from "@/types/apps/accounting";
+import { RevenueCode, RevenueCodeFormValues } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -25,7 +25,7 @@ import {
   rem,
   SimpleGrid,
 } from "@mantine/core";
-import { SelectInput, SelectItem } from "@/components/ui/fields/SelectInput";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { useMutation, useQueryClient } from "react-query";
@@ -34,21 +34,15 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
+import { ChoiceProps } from "@/types";
+import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
 
 type Props = {
   revenueCode: RevenueCode;
-  selectGlAccountData: SelectItem[];
+  selectGlAccountData: ChoiceProps[];
 };
-
-interface EditRevenueCodeFormValues {
-  code: string;
-  description: string;
-  expense_account: string;
-  revenue_account: string;
-}
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -89,7 +83,7 @@ export const EditRCModalForm: React.FC<Props> = ({
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: EditRevenueCodeFormValues) =>
+    (values: RevenueCodeFormValues) =>
       axios.put(`/revenue_codes/${revenueCode.id}/`, values),
     {
       onSuccess: () => {
@@ -135,28 +129,17 @@ export const EditRCModalForm: React.FC<Props> = ({
     }
   );
 
-  const editRevenueCodeSchema = Yup.object().shape({
-    code: Yup.string()
-      .max(4, "Code cannot be longer than 4 characters")
-      .required("Code is required"),
-    description: Yup.string()
-      .max(100, "Description cannot be longer than 100 characters")
-      .required("Description is required"),
-    expense_account: Yup.string().notRequired(),
-    revenue_account: Yup.string().notRequired(),
-  });
-
-  const form = useForm<EditRevenueCodeFormValues>({
-    validate: yupResolver(editRevenueCodeSchema),
+  const form = useForm<RevenueCodeFormValues>({
+    validate: yupResolver(revenueCodeSchema),
     initialValues: {
       code: revenueCode.code,
       description: revenueCode.description,
-      expense_account: revenueCode.expense_account,
-      revenue_account: revenueCode.expense_account,
+      expense_account: revenueCode.expense_account || "",
+      revenue_account: revenueCode.revenue_account || "",
     },
   });
 
-  const submitForm = (values: EditRevenueCodeFormValues) => {
+  const submitForm = (values: RevenueCodeFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

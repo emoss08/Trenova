@@ -37,6 +37,9 @@ const ControlFilesPage = lazy(
   () => import("../pages/admin/control-files/ControlFiles")
 );
 const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
+const AccessorialChargePage = lazy(
+  () => import("../pages/billing/AccessorialCharges")
+);
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -148,10 +151,19 @@ export const routes: RouteObjectWithPermission[] = [
     title: "Charge Types",
     group: "billing",
     subMenu: "configuration files",
-    path: "/accounts/charge-types",
+    path: "/billing/charge-types",
     description: "Manage charge types",
     element: <ChargeTypePage />,
     permission: "view_chargetype",
+  },
+  {
+    title: "Accessorial Charges",
+    group: "billing",
+    subMenu: "configuration files",
+    path: "/billing/accessorial-charges",
+    description: "Manage accessorial charges",
+    element: <AccessorialChargePage />,
+    permission: "view_accessorialcharge",
   },
   // Error Page
   {

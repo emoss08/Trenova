@@ -20,15 +20,24 @@ export const routeAvoidanceChoices = [
   { value: "highways", label: "Highways" },
   { value: "ferries", label: "Ferries" },
 ];
+
 export const routeModelChoices = [
   { value: "best_guess", label: "Best Guess" },
   { value: "optimistic", label: "Optimistic" },
   { value: "pessimistic", label: "Pessimistic" },
 ];
+
+/** Type for Route Model Choices */
+export type RouteModelChoiceProps = "best_guess" | "optimistic" | "pessimistic";
+
 export const routeDistanceUnitChoices = [
   { value: "metric", label: "Metric" },
   { value: "imperial", label: "Imperial" },
 ];
+
+/** Type for Distance Method Choices */
+export type DistanceMethodChoiceProps = "Google" | "Monta";
+
 export const distanceMethodChoices = [
   { value: "Google", label: "Google" },
   { value: "Monta", label: "Monta" },

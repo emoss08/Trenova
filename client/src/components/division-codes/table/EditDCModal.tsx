@@ -16,14 +16,11 @@
  */
 
 import { Modal, Skeleton, Stack } from "@mantine/core";
-import React from "react";
+import React, { Suspense } from "react";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { EditDCModalForm } from "@/components/division-codes/table/_Partials/EditDCModalForm";
 import { useQuery, useQueryClient } from "react-query";
-import {
-  getDivisionCodeDetail,
-  getGLAccounts,
-} from "@/requests/AccountingRequestFactory";
+import { getGLAccounts } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
 
 export const EditDCModal: React.FC = () => {
@@ -32,7 +29,7 @@ export const EditDCModal: React.FC = () => {
   const [divisionCode] = divisionCodeTableStore.use("selectedRecord");
   const queryClient = useQueryClient();
 
-  const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({
+  const { data: glAccountData } = useQuery({
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showEditModal,
@@ -48,25 +45,7 @@ export const EditDCModal: React.FC = () => {
       label: glAccount.account_number,
     })) || [];
 
-  const { data: divisionCodeData, isLoading: isDivisionCodeDataLoading } =
-    useQuery({
-      queryKey: ["divisionCode", divisionCode?.id],
-      queryFn: () => {
-        if (!divisionCode) {
-          return Promise.resolve(null);
-        }
-        return getDivisionCodeDetail(divisionCode.id);
-      },
-      enabled: showEditModal,
-      initialData: () => {
-        return queryClient.getQueryData(["divisionCode", divisionCode?.id]);
-      },
-      staleTime: Infinity, // Never refetch
-    });
-
   if (!showEditModal) return null;
-
-  const isDataLoading = isDivisionCodeDataLoading || isGLAccountDataLoading;
 
   return (
     <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
@@ -77,20 +56,14 @@ export const EditDCModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            <>
-              {divisionCodeData && (
-                <EditDCModalForm
-                  divisionCode={divisionCodeData}
-                  selectGlAccountData={selectGlAccountData}
-                />
-              )}
-            </>
-          )}
+          <Suspense fallback={<Skeleton height={400} />}>
+            {divisionCode && (
+              <EditDCModalForm
+                divisionCode={divisionCode}
+                selectGlAccountData={selectGlAccountData}
+              />
+            )}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

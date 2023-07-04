@@ -22,11 +22,6 @@ import React, { forwardRef } from "react";
 import { SelectProps } from "@mantine/core/lib/Select/Select";
 import { UseFormReturnType } from "@mantine/form";
 
-export type SelectItem = {
-  value: string;
-  label: string;
-};
-
 const useStyles = createStyles((theme) => {
   return {
     invalid: {

@@ -25,9 +25,8 @@ import {
 } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
-import { BillingControl } from "@/types/apps/billing";
+import { BillingControl, BillingControlFormValues } from "@/types/apps/billing";
 import { useForm, yupResolver } from "@mantine/form";
-import * as Yup from "yup";
 import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import {
   autoBillingCriteriaChoices,
@@ -39,16 +38,7 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-
-interface BillingControlFormValues {
-  remove_billing_history: boolean;
-  auto_bill_orders: boolean;
-  auto_mark_ready_to_bill: boolean;
-  validate_customer_rates: boolean;
-  auto_bill_criteria?: string;
-  order_transfer_criteria?: string;
-  enforce_customer_billing?: boolean;
-}
+import { billingControlSchema } from "@/utils/apps/billing/schema";
 
 interface Props {
   billingControl: BillingControl;
@@ -132,16 +122,6 @@ export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
     }
   );
 
-  const billingControlSchema = Yup.object().shape({
-    remove_billing_history: Yup.boolean(),
-    auto_bill_orders: Yup.boolean(),
-    auto_mark_ready_to_bill: Yup.boolean(),
-    validate_customer_rates: Yup.boolean(),
-    auto_bill_criteria: Yup.string(),
-    order_transfer_criteria: Yup.string(),
-    enforce_customer_billing: Yup.boolean(),
-  });
-
   const form = useForm<BillingControlFormValues>({
     validate: yupResolver(billingControlSchema),
     initialValues: {
@@ -202,6 +182,7 @@ export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
               placeholder="Auto Bill Criteria"
               description="Define a criteria on when auto billing is to occur."
               variant="filled"
+              clearable
             />
             <SelectInput
               form={form}

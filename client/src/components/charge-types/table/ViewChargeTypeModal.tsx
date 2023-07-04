@@ -15,34 +15,15 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "react-query";
-import { Modal, Skeleton, Stack } from "@mantine/core";
-import React from "react";
+import { Modal, Skeleton } from "@mantine/core";
+import React, { Suspense } from "react";
 import { ViewChargeTypeModalForm } from "@/components/charge-types/table/_partials/ViewChargeTypeModalForm";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { getChargeTypeDetails } from "@/requests/BillingRequestFactory";
 
 export const ViewChargeTypeModal: React.FC = () => {
   const [showViewModal, setShowViewModal] =
     chargeTypeTableStore.use("viewModalOpen");
   const [chargeType] = chargeTypeTableStore.use("selectedRecord");
-  const queryClient = useQueryClient();
-
-  const { data: chargeTypeData, isLoading: isChargeTypeDataLoading } = useQuery(
-    {
-      queryKey: ["chargeType", chargeType?.id],
-      queryFn: () => {
-        if (!chargeType) {
-          return Promise.resolve(null);
-        }
-        return getChargeTypeDetails(chargeType.id);
-      },
-      enabled: showViewModal,
-      initialData: () => {
-        return queryClient.getQueryData(["chargeType", chargeType?.id]);
-      },
-    }
-  );
 
   if (!showViewModal) return null;
 
@@ -55,17 +36,9 @@ export const ViewChargeTypeModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isChargeTypeDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            <>
-              {chargeTypeData && (
-                <ViewChargeTypeModalForm chargeType={chargeTypeData} />
-              )}
-            </>
-          )}
+          <Suspense fallback={<Skeleton />}>
+            {chargeType && <ViewChargeTypeModalForm chargeType={chargeType} />}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
