@@ -18,26 +18,28 @@
 import { Button, Menu } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
-import {
-  faUser,
-  faUserGear,
-  faUserMinus,
-} from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
 
 interface ActionMenuProps<T> {
   store: any;
-  name: string;
   data: T | null;
 }
 
 export const MontaTableActionMenu = <T extends Record<string, any>>({
   store,
-  name,
   data,
 }: ActionMenuProps<T>) => {
   return (
-    <Menu width={200} shadow="md" withArrow offset={5} position="bottom">
+    <Menu
+      width="10%"
+      shadow="md"
+      withArrow
+      offset={5}
+      transitionProps={{
+        transition: "pop",
+        duration: 150,
+      }}
+    >
       <Menu.Target>
         <Button
           variant="light"
@@ -49,34 +51,30 @@ export const MontaTableActionMenu = <T extends Record<string, any>>({
         </Button>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Label>{name} Actions</Menu.Label>
         <Menu.Item
-          icon={<FontAwesomeIcon icon={faUser} />}
           onClick={() => {
             store.set("selectedRecord", data);
             store.set("viewModalOpen", true);
           }}
         >
-          View {name}
+          View
         </Menu.Item>
         <Menu.Item
-          icon={<FontAwesomeIcon icon={faUserGear} />}
           onClick={() => {
             store.set("selectedRecord", data);
             store.set("editModalOpen", true);
           }}
         >
-          Edit {name}
+          Edit
         </Menu.Item>
         <Menu.Item
           color="red"
-          icon={<FontAwesomeIcon icon={faUserMinus} />}
           onClick={() => {
             store.set("selectedRecord", data);
             store.set("deleteModalOpen", true);
           }}
         >
-          Delete {name}
+          Delete
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>
