@@ -83,9 +83,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
 
         self.scope["user"] = user_token[0]
         self.room_group_name = await sync_to_async(self.scope["user"].get_username)()
-        await self.channel_layer.group_add(
-            self.room_group_name, self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code: int) -> None:

@@ -33,6 +33,7 @@ geopy==2.3.0
 googlemaps==4.10.0
 hiredis==2.2.3
 openpyxl==3.1.2
+pandas==2.0.3
 phonenumbers==8.13.15
 Pillow==10.0.0
 psutil==5.9.5
@@ -41,10 +42,9 @@ psycopg2cffi==2.9.0
 pypdf==3.11.1
 pytz==2023.3
 redis==4.6.0
+reportlab==4.0.4
 requests==2.31.0
 rich==13.4.2
 weasyprint==59.0
 whitenoise==6.5.0
 xhtml2pdf==0.2.11
-pandas==2.0.3
-reportlab==4.0.4
