@@ -3,7 +3,7 @@ django-debug-toolbar==4.1.0
 djangorestframework-stubs[compatible-mypy]==3.14.2
 factory_boy==3.2.1
 isort==5.12.0
-pydantic==2.0
+pydantic==2.0.2
 pytest==7.4.0
 pytest-cov==4.1.0
 pytest-django==4.5.2
@@ -11,4 +11,4 @@ pytest-html==3.2.0
 pytest-sugar==0.9.7
 pyupgrade==3.8.0
 tox==4.6.3
-types-redis==4.6.0.1
+types-redis==4.6.0.2
