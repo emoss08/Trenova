@@ -44,7 +44,7 @@ class BillingQueueAdmin(GenericAdmin[BillingQueue]):
         "invoice_number",
         "bill_type",
     )
-    search_fields = ("invoice_number", "order", "bol_number")
+    search_fields = ("invoice_number", "bol_number")
 
 
 @admin.register(BillingHistory)
