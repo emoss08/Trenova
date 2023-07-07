@@ -379,11 +379,16 @@ urlpatterns = [
         reports_api.get_user_notifications,
         name="user-notifications",
     ),
+    path(
+        "api/billing/orders_ready",
+        billing_api.get_orders_ready,
+        name="get-orders-ready",
+    ),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-# urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
+urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
 
 admin.site.site_header = "Monta TMS Administration"
 admin.site.site_title = "Monta TMS Administration"
