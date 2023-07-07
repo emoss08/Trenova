@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
+from typing import Any
 
 from rest_framework import serializers
 
@@ -86,7 +87,7 @@ class UserReportSerializer(GenericSerializer):
             "modified",
         )
 
-    def to_representation(self, instance: models.UserReport) -> dict:
+    def to_representation(self, instance: models.UserReport) -> dict[str, Any]:
         """Transforms the instance's data into a dictionary.
 
         This method retrieves the data from an instance of `UserReport`, and then
