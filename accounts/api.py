@@ -307,7 +307,7 @@ class TokenVerifyView(views.APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        token_expire_days = request.user.organization.token_expiration_days  # type: ignore
+        token_expire_days = request.user.organization.token_expiration_days
 
         if not token:
             raise InvalidTokenException("No token provided")
@@ -322,7 +322,7 @@ class TokenVerifyView(views.APIView):
 
             data = {
                 "user_id": token_obj.user_id,
-                "organization_id": token_obj.user.organization_id,  # type: ignore
+                "organization_id": token_obj.user.organization_id,
             }
 
             res = response.Response(data, status=status.HTTP_200_OK)
@@ -423,7 +423,7 @@ class UserLogoutView(views.APIView):
 
         if user.is_authenticated:
             logout(request)
-            user.online = False  # type: ignore
+            user.online = False
             user.save()
 
         res = response.Response(status=status.HTTP_200_OK)
