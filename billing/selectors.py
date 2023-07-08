@@ -18,12 +18,10 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from channels.db import database_sync_to_async
 from django.db.models import Q, QuerySet
 from notifications.signals import notify
 
 from billing import models
-from order.serializers import OrderSerializer
 from utils.models import StatusChoices
 
 if TYPE_CHECKING:

@@ -48,3 +48,4 @@ whitenoise==6.5.0
 xhtml2pdf==0.2.11
 pandas==2.0.3
 reportlab==4.0.4
+ django-tenants==3.5.0
