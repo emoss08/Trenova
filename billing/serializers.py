@@ -14,14 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import decimal
 from typing import Any
 
 from djmoney.contrib.django_rest_framework import MoneyField
 from rest_framework import serializers
 
 from billing import models
-from customer.models import CustomerBillingProfile
 from order.models import Order
 from utils.serializers import GenericSerializer
 
