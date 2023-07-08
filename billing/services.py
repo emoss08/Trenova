@@ -14,9 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import json
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import redis
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
@@ -26,6 +28,7 @@ from django.utils import timezone
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from order.models import Order
+from utils.services.pdf import UUIDEncoder
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID
@@ -193,7 +196,7 @@ def bill_orders(
     *,
     user_id: "ModelUUID",
     invoices: QuerySet[models.BillingQueue] | models.BillingQueue,
-) -> None:
+) -> tuple[list[str], list[str]] | None:
     """
     Bills the specified orders. If the organization enforces customer billing requirements,
     checks these requirements before billing the order. If requirements are not met, a
@@ -220,6 +223,8 @@ def bill_orders(
         might be affected by these operations and how they are implemented.
     """
     user = get_object_or_404(User, id=user_id)
+    billed_invoices = []
+    order_missing_info = []
 
     # If invoices is a BillingQueue object, convert it to a list
     if isinstance(invoices, models.BillingQueue):
@@ -232,20 +237,27 @@ def bill_orders(
 
     # Loop through the invoices and bill them
     for invoice in invoices:
-        # If the organization enforces customer billing requirements, check them
-        if organization_enforces_billing and not utils.check_billing_requirements(
-            user=user, invoice=invoice
-        ):
-            # If the customer billing requirements are not met, create a BillingException
-            utils.create_billing_exception(
-                user=user,
-                exception_type="PAPERWORK",
-                invoice=invoice,
-                exception_message="Billing requirement not met",
+        if organization_enforces_billing:
+            # If the organization enforces customer billing requirements, check the requirements
+            _, missing_documents = utils.check_billing_requirements(
+                user=user, invoice=invoice
             )
+            # Append missing_documents only when it is not empty
+            if missing_documents:
+                order_missing_info.append(missing_documents)
+            else:
+                # If the customer billing requirements are met, bill the order
+                utils.order_billing_actions(invoice=invoice, user=user)
+                billed_invoices.append(invoice.invoice_number)
+
+            print("I'm here in the mass billing service 1")
         else:
             # If the customer billing requirements are met or not enforced, bill the order
             utils.order_billing_actions(invoice=invoice, user=user)
+            print("I'm here in the mass billing service 2", invoice.invoice_number)
+            billed_invoices.append(invoice.invoice_number)
+    print(order_missing_info, billed_invoices)
+    return order_missing_info, billed_invoices
 
 
 def untransfer_order_service(invoice_numbers: QuerySet[models.BillingQueue]) -> None:
@@ -285,3 +297,141 @@ def ready_to_bill_service(order: QuerySet[Order]) -> None:
             if utils.check_billing_requirements(user=order.created_by, invoice=order):
                 order.ready_to_bill = True
                 order.save()
+
+
+class BillingClientSessionManager:
+    """
+    Manages client sessions for billing through a Redis datastore.
+
+    Attributes:
+        client (redis.Redis): Redis client used for session management.
+
+    Args:
+        host (str): The hostname of the Redis server. Defaults to "localhost".
+        port (int): The port of the Redis server. Defaults to 6379.
+        db (int): The DB number to connect to on the Redis server. Defaults to 4.
+    """
+
+    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 4):
+        """
+        Constructs all the necessary attributes for the BillingClientSessionManager object.
+
+        Args:
+            host (str): The hostname of the Redis server. Defaults to "localhost".
+            port (int): The port of the Redis server. Defaults to 6379.
+            db (int): The DB number to connect to on the Redis server. Defaults to 4.
+        """
+        self.client = redis.Redis(host=host, port=port, db=db)
+
+    @staticmethod
+    def _get_session_key(user_id: uuid.UUID) -> str:
+        """
+        Generates a session key string based on user_id.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier for the user.
+
+        Returns:
+            str: A session key string.
+        """
+        return f"billing_client_session_{user_id}"
+
+    @staticmethod
+    def _serialize(data: Any) -> str:
+        """
+        Serializes the given data into a JSON string.
+
+        Args:
+            data (dict): The data to be serialized.
+
+        Returns:
+            str: The serialized data.
+        """
+        return json.dumps(data, cls=UUIDEncoder)
+
+    @staticmethod
+    def _deserialize(data: Any) -> dict[str, Any]:
+        """
+        Deserializes the given JSON string into a Python object.
+        If data is None, returns None.
+
+        Args:
+            data (str): The JSON string to be deserialized.
+
+        Returns:
+            dict: The deserialized data if data is not None.
+            None: If data is None.
+        """
+        return json.loads(data)
+
+    def set_new_billing_client_session(self, user_id: uuid.UUID):
+        """
+        Sets a new billing client session for a user.
+
+        If a session already exists, this function fetches and returns it.
+        Otherwise, a new session is created with a predefined structure and stored in Redis.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier for the user.
+
+        Returns:
+            dict: The client session.
+        """
+        session_key = self._get_session_key(user_id)
+        user_sessions = self.client.get(session_key)
+        if user_sessions is None:
+            billing_client_session = {
+                "user_id": user_id,
+                "current_action": "getting_started",
+                "previous_action": None,
+                "last_response": None,
+                "last_payload": None,
+            }
+            self.client.set(session_key, self._serialize(billing_client_session))
+        else:
+            billing_client_session = self._deserialize(user_sessions)
+        return billing_client_session
+
+    def update_billing_client_session(
+        self, user_id: uuid.UUID, billing_client_session: dict[str, Any]
+    ) -> None:
+        """
+        Updates a user's billing client session in the Redis datastore.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier for the user.
+            billing_client_session (dict): The updated session data.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        session_key = self._get_session_key(user_id)
+        self.client.set(session_key, self._serialize(billing_client_session))
+
+    def get_billing_client_session(self, user_id: uuid.UUID) -> dict[str, Any] | None:
+        """
+        Retrieves a user's billing client session from the Redis datastore.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier for the user.
+
+        Returns:
+            dict: The client session if it exists.
+            None: If no session is found for the user.
+        """
+        session_key = self._get_session_key(user_id)
+        billing_client_session = self.client.get(session_key)
+        return self._deserialize(billing_client_session)
+
+    def delete_billing_client_session(self, user_id: uuid.UUID) -> None:
+        """
+        Deletes a user's billing client session from the Redis datastore.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier for the user.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        session_key = self._get_session_key(user_id)
+        self.client.delete(session_key)

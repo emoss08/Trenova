@@ -24,7 +24,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from billing import models, serializers, services, tasks
+from billing import models, serializers, services, tasks, selectors
 
 
 class BillingControlViewSet(viewsets.ModelViewSet):
@@ -508,3 +508,15 @@ def untransfer_orders(request: Request) -> Response:
         return Response(
             {"error": "Invoice numbers not found."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(["GET"])
+def get_orders_ready(request: Request) -> Response:
+    orders_ready = selectors.get_billable_orders(organization=request.user.organization)  # type: ignore
+    serializer = serializers.OrdersReadySerializer(orders_ready, many=True)
+    return Response(
+        {
+            "results": serializer.data,
+        },
+        status=status.HTTP_200_OK,
+    )

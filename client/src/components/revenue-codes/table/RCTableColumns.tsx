@@ -40,7 +40,6 @@ export const RCTableColumns = (): MRT_ColumnDef<RevenueCode>[] => {
       Cell: ({ row }) => (
         <MontaTableActionMenu
           store={revenueCodeTableStore}
-          name="Revenue Code"
           data={row.original}
         />
       ),

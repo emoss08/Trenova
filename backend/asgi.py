@@ -20,9 +20,11 @@ import sys
 
 from art import text2art
 from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
 from django.core.asgi import get_asgi_application
 from rich.console import Console
 
+from core.middleware.channels import TokenAuthMiddleware
 from organization.routing import websocket_urlpatterns
 
 if sys.implementation.name == "pypy":
@@ -40,5 +42,10 @@ console.print(logo, style="bold purple")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 
 application = ProtocolTypeRouter(
-    {"http": get_asgi_application(), "websocket": URLRouter(websocket_urlpatterns)}
+    {
+        "http": get_asgi_application(),
+        "websocket": AllowedHostsOriginValidator(
+            TokenAuthMiddleware(URLRouter(websocket_urlpatterns))
+        ),
+    }
 )

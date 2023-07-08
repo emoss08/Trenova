@@ -695,6 +695,9 @@ class BillingQueue(GenericModel):  # type:ignore
         verbose_name = _("Billing Queue")
         verbose_name_plural = _("Billing Queues")
         db_table = "billing_queue"
+        permissions = [
+            ("billing.client", "Has access to the billing client"),
+        ]
 
     def __str__(self) -> str:
         """String Representation of the BillingQueue model
@@ -727,12 +730,12 @@ class BillingQueue(GenericModel):  # type:ignore
             )
 
         # If order is already transferred to billing raise ValidationError
-        if self.order.transferred_to_billing:
-            errors.append(
-                _(
-                    "Order has already been transferred to billing. Please try again with a different order."
-                )
-            )
+        # if self.order.transferred_to_billing:
+        #     errors.append(
+        #         _(
+        #             "Order has already been transferred to billing. Please try again with a different order."
+        #         )
+        #     )
 
         # If order is voided raise ValidationError
         if self.order.status == StatusChoices.VOIDED:

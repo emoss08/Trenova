@@ -22,8 +22,6 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.layers import get_channel_layer
 
-from accounts.authentication import BearerTokenAuthentication
-
 channel_layer = get_channel_layer()
 
 
@@ -59,33 +57,8 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         Raises:
             HTTPError: If the token_authenticator.authenticate() fails to authenticate.
         """
-
-        token_authenticator = BearerTokenAuthentication()
-
-        headers = dict(self.scope["headers"])
-        cookies = SimpleCookie()
-        cookies.load(headers.get(b"cookie", b"").decode())
-
-        token = cookies.get("auth_token")
-        token = token.value if token else None
-
-        if token is None:
-            return
-
-        mock_request = type("", (), {})()
-        mock_request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
-
-        user_token = await database_sync_to_async(token_authenticator.authenticate)(
-            mock_request
-        )
-        if user_token is None:
-            return
-
-        self.scope["user"] = user_token[0]
         self.room_group_name = await sync_to_async(self.scope["user"].get_username)()
-        await self.channel_layer.group_add(
-            self.room_group_name, self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
         await self.accept()
 
     async def disconnect(self, close_code: int) -> None:

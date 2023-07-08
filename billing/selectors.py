@@ -18,10 +18,12 @@
 import uuid
 from typing import TYPE_CHECKING
 
+from channels.db import database_sync_to_async
 from django.db.models import Q, QuerySet
 from notifications.signals import notify
 
 from billing import models
+from order.serializers import OrderSerializer
 from utils.models import StatusChoices
 
 if TYPE_CHECKING:
@@ -131,3 +133,17 @@ def get_invoice_by_id(*, invoice_id: "ModelUUID") -> models.BillingQueue | None:
         return models.BillingQueue.objects.get(pk__exact=invoice_id)
     except models.BillingQueue.DoesNotExist:
         return None
+
+
+def get_invoices_by_invoice_number(
+    *, invoices: list[str]
+) -> QuerySet[models.BillingQueue]:
+    """Retrieves a queryset of BillingQueue objects by their invoice numbers.
+
+    Args:
+        invoices (list[str]):
+
+    Returns:
+        QuerySet[models.BillingQueue]: A queryset of BillingQueue objects.
+    """
+    return models.BillingQueue.objects.filter(invoice_number__in=invoices)

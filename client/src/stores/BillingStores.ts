@@ -18,6 +18,7 @@
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
 import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import { WebsocketMessageProps } from "@/utils/websockets";
 
 export const chargeTypeTableStore = createGlobalStore<
   Omit<TableStoreProps<ChargeType>, "drawerOpen">
@@ -55,4 +56,22 @@ export const accessorialChargeTableStore = createGlobalStore<
   columnFilters: false,
   rowSelection: {},
   errorCount: 0,
+});
+
+interface BillingClientStoreProps {
+  step: number;
+  websocketMessage: WebsocketMessageProps;
+  exceptionModalOpen: boolean;
+}
+
+export const billingClientStore = createGlobalStore<BillingClientStoreProps>({
+  step: 0,
+  websocketMessage: {
+    action: "",
+    payload: {
+      status: "",
+      message: "",
+    },
+  },
+  exceptionModalOpen: false,
 });

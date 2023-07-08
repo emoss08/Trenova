@@ -174,7 +174,7 @@ DATABASES = {
         "CONN_HEALTH_CHECK": True,
     },
 }
-DATABASE_ROUTERS = ["core.database.PrimaryReplicaRouter"]
+# DATABASE_ROUTERS = ["core.database.PrimaryReplicaRouter"]
 
 # Internationalization
 LANGUAGE_CODE = "en-us"

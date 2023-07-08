@@ -22,6 +22,22 @@ type WebSocketEventHandlers = {
   onError?: (event: Event) => void;
 };
 
+export interface WebsocketMessageProps {
+  action?: string | null;
+  step?: number | null;
+  payload: {
+    status: string;
+    message:
+      | string
+      | Array<
+          Array<{
+            invoice_number: string;
+            missing_documents: Array<string>;
+          }>
+        >;
+  };
+}
+
 /**
  * Represents a WebSocket connection, providing lifecycle event handling.
  */
@@ -137,21 +153,33 @@ export class WebSocketManager {
   }
 
   /**
-   * Sends a message to the WebSocket connection with the specified ID.
+   * Sends a JSON message to the WebSocket connection with the specified ID.
    * @param id - The ID of the WebSocket connection to which the message should be sent.
    * @param data - The data to be sent.
    * @throws Will throw an error if no connection with the specified ID is found.
    */
-  sendMessage(
-    id: string,
-    data: string | ArrayBufferLike | Blob | ArrayBufferView
-  ) {
+  sendJsonMessage(id: string, data: any) {
     const connection = this.connections.get(id);
     if (!connection) {
       throw new Error(`WebSocket connection with id "${id}" not found`);
     }
 
-    connection.socket.send(data);
+    connection.socket.send(JSON.stringify(data));
+  }
+
+  /**
+   * Sends a message to the WebSocket connection with the specified ID.
+   * @param id - The ID of the WebSocket connection to which the message should be sent.
+   * @param data - The data to be sent.
+   * @throws Will throw an error if no connection with the specified ID is found.
+   */
+  sendMessage(id: string, data: any) {
+    const connection = this.connections.get(id);
+    if (!connection) {
+      throw new Error(`WebSocket connection with id "${id}" not found`);
+    }
+
+    connection.socket.send(JSON.stringify(data));
   }
 
   /**

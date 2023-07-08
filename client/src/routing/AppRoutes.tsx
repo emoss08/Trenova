@@ -40,6 +40,7 @@ const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 const AccessorialChargePage = lazy(
   () => import("../pages/billing/AccessorialCharges")
 );
+const BillingClientPage = lazy(() => import("../pages/billing/BillingClient"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -163,6 +164,14 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/accessorial-charges",
     description: "Manage accessorial charges",
     element: <AccessorialChargePage />,
+    permission: "view_accessorialcharge",
+  },
+  {
+    title: "Billing Client",
+    group: "billing",
+    path: "/billing/client",
+    description: "Your efficient partner for end-to-end billing management",
+    element: <BillingClientPage />,
     permission: "view_accessorialcharge",
   },
   // Error Page

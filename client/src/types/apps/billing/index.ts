@@ -68,3 +68,43 @@ export type AccessorialCharge = {
 
 export interface AccessorialChargeFormValues
   extends Omit<AccessorialCharge, "id" | "charge_amount_currency"> {}
+
+/** Types for Orders Ready to Bill */
+export interface OrdersReadyProps {
+  id: string;
+  pro_number: string;
+  mileage: string;
+  other_charge_amount: string;
+  freight_charge_amount: string;
+  sub_total: string;
+  customer_name: string;
+  missing_documents: string[];
+  is_missing_documents: boolean;
+}
+
+/** Types for Billing Queue */
+export type BillingQueue = {
+  id: string;
+  order_type: string;
+  order: string;
+  revenue_code: string;
+  customer: string;
+  invoice_number: string;
+  pieces: number;
+  weight: number;
+  bill_type: string;
+  ready_to_bill: boolean;
+  bill_date: Date;
+  mileage: number;
+  worker: string;
+  commodity: string;
+  commodity_descr: string;
+  consignee_ref_number: string;
+  other_charge_total: string;
+  total_amount: string;
+  is_summary: boolean;
+  is_cancelled: boolean;
+  bol_number: string;
+  user: string;
+  customer_name: string;
+};
