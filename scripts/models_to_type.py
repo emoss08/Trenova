@@ -49,6 +49,7 @@ TYPE_MAP = {
     "IPAddressField": "string",
     "NullBooleanField": "boolean",
     "PositiveSmallIntegerField": "number",
+    "MoneyField": "number",
 }
 
 

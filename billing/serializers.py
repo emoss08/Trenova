@@ -14,11 +14,15 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import decimal
 from typing import Any
 
+from djmoney.contrib.django_rest_framework import MoneyField
 from rest_framework import serializers
 
 from billing import models
+from customer.models import CustomerBillingProfile
+from order.models import Order
 from utils.serializers import GenericSerializer
 
 
@@ -75,6 +79,11 @@ class BillingQueueSerializer(GenericSerializer):
         """
 
         model = models.BillingQueue
+
+    def to_representation(self, instance: Order) -> dict[str, Any]:
+        data = super().to_representation(instance)
+        data["customer_name"] = instance.customer.name
+        return data
 
 
 class BillingHistorySerializer(GenericSerializer):
@@ -153,3 +162,65 @@ class DocumentClassificationSerializer(GenericSerializer):
         """
 
         model = models.DocumentClassification
+
+
+class OrdersReadySerializer(serializers.Serializer):
+    id = serializers.UUIDField(read_only=True)
+    pro_number = serializers.CharField(
+        help_text="Pro Number of the Order", label="Pro Number", read_only=True
+    )
+    mileage = serializers.FloatField(
+        allow_null=True,
+        help_text="Total Mileage",
+        label="Total Mileage",
+        required=False,
+    )
+    other_charge_amount = MoneyField(
+        decimal_places=4,
+        help_text="Additional Charge Amount",
+        label="Additional Charge Amount",
+        max_digits=19,
+        required=False,
+    )
+    freight_charge_amount = MoneyField(
+        decimal_places=4,
+        help_text="Freight Charge Amount",
+        label="Freight Charge Amount",
+        max_digits=19,
+        required=False,
+    )
+    sub_total = MoneyField(
+        decimal_places=4,
+        help_text="Sub Total",
+        label="Sub Total",
+        max_digits=19,
+        required=False,
+    )
+
+    def find_missing_documents(self, instance: Order) -> tuple[list[str], bool]:
+        missing_documents = []
+        is_missing_documents = False
+
+        if billing_profile := instance.customer.billing_profile:  # type: ignore
+            if rule_profile := billing_profile.rule_profile:
+                # Get the name of each document_class required in CustomerRuleProfile
+                required_documents = rule_profile.document_class.all()
+
+                # Query the OrderDocumentation for each document_class
+                for required_document in required_documents:
+                    order_document = instance.order_documentation.filter(
+                        document_class=required_document
+                    ).first()
+                    if not order_document:
+                        missing_documents.append(required_document.name)
+                        is_missing_documents = True
+
+        return missing_documents, is_missing_documents
+
+    def to_representation(self, instance: Order) -> dict[str, Any]:
+        data = super().to_representation(instance)
+        data["customer_name"] = instance.customer.name
+        missing_documents, is_missing_documents = self.find_missing_documents(instance)
+        data["missing_documents"] = missing_documents
+        data["is_missing_documents"] = is_missing_documents
+        return data

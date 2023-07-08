@@ -14,14 +14,47 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.urls import re_path
+from http.cookies import SimpleCookie
 
-from billing.consumers import BillingClientConsumer
-from organization.consumers import KeepAliveConsumer
-from reports.consumers import NotificationConsumer
+from channels.db import database_sync_to_async
+from accounts.authentication import BearerTokenAuthentication
 
-websocket_urlpatterns = [
-    re_path(r"ws/keepalive/$", KeepAliveConsumer.as_asgi()),
-    re_path(r"ws/notifications/$", NotificationConsumer.as_asgi()),
-    re_path(r"ws/billing_client/$", BillingClientConsumer.as_asgi()),
-]
+
+class TokenAuthMiddleware:
+    def __init__(self, app) -> None:
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        token_authenticator = BearerTokenAuthentication()
+
+        headers = dict(scope["headers"])
+        cookies = SimpleCookie()
+        cookies.load(headers.get(b"cookie", b"").decode())
+
+        token = cookies.get("auth_token")
+        token = token.value if token else None
+
+        if token is None:
+            return await self.close(send)
+
+        mock_request = type("", (), {})()
+        mock_request.META = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+        user_token = await database_sync_to_async(token_authenticator.authenticate)(
+            mock_request
+        )
+
+        if user_token is None:
+            return await self.close(send)
+
+        scope["user"] = user_token[0]
+        return await self.app(scope, receive, send)
+
+    async def close(self, send) -> None:
+        await send(
+            {
+                "type": "websocket.close",
+                "code": 1000,
+                "reason": "Authentication failed",
+            }
+        )

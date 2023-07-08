@@ -18,10 +18,10 @@
 import React from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
-import { SelectItem } from "@/components/ui/fields/SelectInput";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { JobTitle } from "@/types/apps/accounts";
+import { ChoiceProps } from "@/types";
 
 export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => {
   return [
@@ -44,7 +44,7 @@ export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => {
           { value: "", label: "All" },
           { value: "A", label: "Active" },
           { value: "I", label: "Inactive" },
-        ] as SelectItem[],
+        ] as ChoiceProps[],
       },
       filterVariant: "select",
     },
@@ -64,11 +64,7 @@ export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => {
       id: "actions",
       header: "Actions",
       Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={jobTitleTableStore}
-          name="Job Title"
-          data={row.original}
-        />
+        <MontaTableActionMenu store={jobTitleTableStore} data={row.original} />
       ),
     },
   ];

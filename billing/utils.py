@@ -257,7 +257,7 @@ def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
 
 def check_billing_requirements(
     *, invoice: models.BillingQueue | Order, user: User
-) -> bool:
+) -> bool | tuple[bool, list[str]]:
     """Check if a BillingQueue instance satisfies the billing requirements of its customer.
 
     This function checks if the passed BillingQueue instance meets the billing requirements of its corresponding
@@ -275,6 +275,7 @@ def check_billing_requirements(
         bool: True if the BillingQueue instance satisfies the billing requirements of its customer, False otherwise.
     """
 
+    missing_documents = []
     customer_billing_requirements = set_billing_requirements(customer=invoice.customer)
     if customer_billing_requirements is False:
         create_billing_exception(
@@ -291,8 +292,16 @@ def check_billing_requirements(
         set(order_document_ids)
     )
     if not is_match:
-        missing_documents = list(
-            set(customer_billing_requirements) - set(order_document_ids)  # type: ignore
+        # missing_documents = list(
+        #     set(customer_billing_requirements) - set(order_document_ids)  # type: ignore
+        # )
+        missing_documents.append(
+            {
+                "invoice_number": invoice.invoice_number,
+                "missing_documents": list(
+                    set(customer_billing_requirements) - set(order_document_ids)  # type: ignore
+                ),
+            }
         )
         create_billing_exception(
             user=user,
@@ -300,7 +309,8 @@ def check_billing_requirements(
             invoice=invoice,
             exception_message=f"Missing customer required documents: {missing_documents}",
         )
-    return is_match
+        print(missing_documents)
+    return is_match, missing_documents
 
 
 def transfer_order_details(obj: models.BillingHistory | models.BillingQueue) -> None:
