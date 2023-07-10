@@ -21,18 +21,17 @@ import logging
 import os
 import socket
 from pathlib import Path
-from typing import Any, TypeAlias
 
 from confluent_kafka import KafkaException, admin
 from environ import environ
+
+from kafka.types import ConsumerGroupMetadata
 
 logger = logging.getLogger(__name__)
 
 env = environ.Env()
 ENV_DIR = Path(__file__).parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
-
-ConsumerGroupMetadata: TypeAlias = dict[str, list[dict[str, Any]]]
 
 
 class KafkaManager:
@@ -108,8 +107,8 @@ class KafkaManager:
             logger.error(f"Kafka is not available: {err}")
             return False
 
-    @property
-    def admin_client(self) -> admin.AdminClient:
+    @staticmethod
+    def admin_client() -> admin.AdminClient:
         return admin.AdminClient({"bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS")})
 
     def get_available_topics(self) -> list[tuple]:
@@ -126,15 +125,15 @@ class KafkaManager:
 
         exclude_topics = ["localhost.public.silk_response"]
 
-        if self.admin_client is None:
+        if self.admin_client() is None:
             # raise KafkaException("Kafka admin client is not available.")
             return []
-        if not self.is_kafka_available():
+        if not self.is_kafka_available(timeout=5):
             # raise KafkaException("Kafka is not available.")
             return []
 
         try:
-            topic_metadata = self.admin_client.list_topics(timeout=5)
+            topic_metadata = self.admin_client().list_topics(timeout=5)
             return [
                 (topic, topic)
                 for topic in list(topic_metadata.topics.keys())
@@ -159,7 +158,7 @@ class KafkaManager:
         """
 
         new_topic = admin.NewTopic(topic, num_partitions, replication_factor)
-        self.admin_client.create_topics([new_topic])
+        self.admin_client().create_topics([new_topic])
 
     def delete_topic(self, *, topic: str) -> None:
         """Deletes the specified Kafka topic.
@@ -171,7 +170,7 @@ class KafkaManager:
             None: This function does not return anything.
         """
 
-        self.admin_client.delete_topics([topic])
+        self.admin_client().delete_topics([topic])
 
     def increase_topic_partitions(self, *, topic: str, new_partitions: int) -> None:
         """Increases the number of partitions for the specified Kafka topic.
@@ -185,7 +184,7 @@ class KafkaManager:
         """
 
         new_partitions = admin.NewPartitions(topic, new_partitions)
-        self.admin_client.create_partitions([new_partitions])
+        self.admin_client().create_partitions([new_partitions])
 
     def list_consumer_groups(self) -> list[str]:
         """Lists all consumer group IDs.
@@ -194,7 +193,7 @@ class KafkaManager:
             list[str]: A list of all consumer group IDs.
         """
 
-        return list(self.admin_client.list_groups().groups.keys())
+        return list(self.admin_client().list_groups().groups.keys())
 
     def describe_topic(self, *, topic_name: str) -> dict[str, str]:
         """Describe a specific topic's configuration.
@@ -207,7 +206,7 @@ class KafkaManager:
         """
 
         resource = admin.ConfigResource(admin.ResourceType.TOPIC, topic_name)
-        config = self.admin_client.describe_configs([resource])
+        config = self.admin_client().describe_configs([resource])
         return {
             config_entry[0]: config_entry[1].value
             for config_entry in config[topic_name].items()
@@ -230,7 +229,7 @@ class KafkaManager:
         entries = {
             key: admin.NewPartitions(value) for key, value in config_dict.items()
         }
-        self.admin_client.alter_configs({resource: entries})
+        self.admin_client().alter_configs({resource: entries})
 
     def describe_consumer_group(self, *, group_id: str) -> ConsumerGroupMetadata:
         """Describe a specific consumer group.
@@ -242,7 +241,7 @@ class KafkaManager:
             dict[str, str]: A dictionary representing the configuration of the consumer group.
         """
 
-        group_description = self.admin_client.list_groups([group_id]).groups[group_id]
+        group_description = self.admin_client().list_groups([group_id]).groups[group_id]
         return {
             "state": group_description.state,
             "protocol_type": group_description.protocol_type,
