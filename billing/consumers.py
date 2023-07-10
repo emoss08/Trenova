@@ -42,11 +42,12 @@ from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.layers import get_channel_layer
+
 from billing.selectors import get_invoices_by_invoice_number
 from billing.services import (
-    transfer_to_billing_queue_service,
-    bill_orders,
     BillingClientSessionManager,
+    bill_orders,
+    transfer_to_billing_queue_service,
 )
 
 channel_layer = get_channel_layer()

@@ -23,7 +23,7 @@ from django.core.management.base import CommandParser
 from django.db.transaction import atomic
 
 from accounts.models import JobTitle, User, UserProfile
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 
 class Command(BaseCommand):
