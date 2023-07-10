@@ -62,7 +62,9 @@ def create_dispatch_control(
     """
 
     if created:
-        DispatchControl.objects.create(organization=instance)
+        DispatchControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
 
 
 def create_order_control(
@@ -87,7 +89,9 @@ def create_order_control(
         None: This function does not return anything.
     """
     if created:
-        OrderControl.objects.create(organization=instance)
+        OrderControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
 
 
 def create_route_control(
@@ -108,7 +112,9 @@ def create_route_control(
         None: This function does not return anything.
     """
     if created:
-        RouteControl.objects.create(organization=instance)
+        RouteControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
 
 
 def create_billing_control(
@@ -133,7 +139,9 @@ def create_billing_control(
         None: This function does not return anything.
     """
     if created:
-        BillingControl.objects.create(organization=instance)
+        BillingControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
 
 
 def create_email_control(
@@ -158,7 +166,9 @@ def create_email_control(
         None: This function does not return anything.
     """
     if created:
-        EmailControl.objects.create(organization=instance)
+        EmailControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
 
 
 def create_invoice_control(
@@ -183,7 +193,9 @@ def create_invoice_control(
         None: This function does not return anything.
     """
     if created:
-        InvoiceControl.objects.create(organization=instance)
+        InvoiceControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
 
 
 def create_depot_detail(
@@ -206,7 +218,9 @@ def create_depot_detail(
     """
     if created:
         models.DepotDetail.objects.create(
-            organization=instance.organization, depot=instance
+            organization=instance.organization,
+            depot=instance,
+            business_unit=instance.organization.business_unit,
         )
 
 

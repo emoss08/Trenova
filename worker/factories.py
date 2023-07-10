@@ -31,6 +31,7 @@ class WorkerFactory(factory.django.DjangoModelFactory):
         model = "worker.Worker"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("text", locale="en_US", max_nb_chars=10)
     first_name = factory.Faker("name")
@@ -82,6 +83,7 @@ class WorkerContactFactory(factory.django.DjangoModelFactory):
             "worker",
         )
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     worker = factory.SubFactory("worker.factories.WorkerFactory")
     name = factory.Faker("name", locale="en_US")
@@ -106,6 +108,7 @@ class WorkerCommentFactory(factory.django.DjangoModelFactory):
             "entered_by",
         )
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     worker = factory.SubFactory("worker.factories.WorkerFactory")
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")

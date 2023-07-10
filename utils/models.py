@@ -21,6 +21,7 @@ from typing import Any, final
 
 from django.core import checks
 from django.core.checks import CheckMessage, Error
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
@@ -102,9 +103,24 @@ class GenericModel(TimeStampedModel):
         verbose_name=_("Organization"),
         help_text=_("Organization"),
     )
+    business_unit = models.ForeignKey(
+        "organization.BusinessUnit",
+        on_delete=models.CASCADE,
+        related_name="%(class)ss",
+        related_query_name="%(class)s",
+        verbose_name=_("Business Unit"),
+        help_text=_("Business Unit"),
+    )
 
     class Meta:
         abstract = True
+
+    def clean(self) -> None:
+        """ "Validate Organization is a part of the Business Unit"""
+        if self.organization not in self.business_unit.organizations.all():
+            raise ValidationError(
+                {"organization": _("Organization must be apart of the Business Unit.")}
+            )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the model instance

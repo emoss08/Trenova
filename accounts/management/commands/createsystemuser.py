@@ -23,7 +23,7 @@ from django.core.management.base import CommandParser
 from django.db.transaction import atomic
 
 from accounts.models import JobTitle, User, UserProfile
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 
 class Command(BaseCommand):
@@ -84,9 +84,25 @@ class Command(BaseCommand):
             help="Name of the system organization.",
             default="sys",
         )
+        parser.add_argument(
+            "--business_unit",
+            type=str,
+            help="Name of the system business unit.",
+            default="sys",
+        )
 
     @staticmethod
-    def create_system_organization(organization_name: str) -> Organization:
+    def create_system_business_unit(bs_name: str) -> BusinessUnit:
+        business_unit: BusinessUnit
+        created: bool
+
+        business_unit, created = BusinessUnit.objects.get_or_create(name=bs_name)
+        return business_unit
+
+    @staticmethod
+    def create_system_organization(
+        organization_name: str, bs_unit: BusinessUnit
+    ) -> Organization:
         """
         Creates a system organization with the specified name.
 
@@ -95,6 +111,7 @@ class Command(BaseCommand):
 
         Args:
             organization_name (str): The name of the system organization to create.
+            bs_unit (BusinessUnit): The business unit to create the system organization for.
 
         Returns:
             (Organization): The newly created or existing system organization.
@@ -104,14 +121,16 @@ class Command(BaseCommand):
 
         organization, created = Organization.objects.get_or_create(
             name=organization_name,
+            business_unit=bs_unit,
             defaults={"scac_code": organization_name[:4]},
         )
         return organization
 
     @staticmethod
-    def create_system_job_title(organization: Organization) -> JobTitle:
-        """
-        Creates a system job title for the specified organization.
+    def create_system_job_title(
+        organization: Organization, bs_unit: BusinessUnit
+    ) -> JobTitle:
+        """Creates a system job title for the specified organization.
 
         If a job title with the name "System" already exists for the specified organization, this method returns
         that job title. Otherwise, it creates a new job title with the name "System" and a default description, and
@@ -119,6 +138,7 @@ class Command(BaseCommand):
 
         Args:
             organization (Organization): The organization to create the system job title for.
+            bs_unit (BusinessUnit): The business unit to create the system job title for.
 
         Returns:
             (JobTitle): The newly created or existing system job title.
@@ -129,6 +149,7 @@ class Command(BaseCommand):
         job_title, created = JobTitle.objects.get_or_create(
             organization=organization,
             name="System",
+            business_unit=bs_unit,
             defaults={"description": "System job title."},
             job_function=JobTitle.JobFunctionChoices.SYS_ADMIN,
         )
@@ -154,6 +175,7 @@ class Command(BaseCommand):
         email = options["email"]
         password = options["password"]
         organization_name = options["organization"]
+        bs_unit_name = options["business_unit"]
 
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             self.stderr.write(self.style.ERROR("Invalid email address"))
@@ -163,8 +185,9 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR("Invalid username"))
             return
 
-        organization = self.create_system_organization(organization_name)
-        job_title = self.create_system_job_title(organization)
+        business_unit = self.create_system_business_unit(bs_unit_name)
+        organization = self.create_system_organization(organization_name, business_unit)
+        job_title = self.create_system_job_title(organization, business_unit)
 
         if User.objects.filter(username=username).exists():
             self.stderr.write(self.style.ERROR(f"User {username} already exists"))
@@ -175,10 +198,12 @@ class Command(BaseCommand):
             email=email,
             password=password,
             organization=organization,
+            business_unit=business_unit,
         )
 
         UserProfile.objects.get_or_create(
             organization=organization,
+            business_unit=business_unit,
             user=user,
             job_title=job_title,
             defaults={

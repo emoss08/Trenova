@@ -23,6 +23,17 @@ from organization import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
+@admin.register(models.BusinessUnit)
+class BusinessUnitAdmin(admin.ModelAdmin[models.BusinessUnit]):
+    """
+    Business Unit Admin
+    """
+
+    list_display = ("name", "description")
+    list_filter = ("name",)
+    search_fields = ("name",)
+
+
 @admin.register(models.Organization)
 class OrganizationAdmin(admin.ModelAdmin[models.Organization]):
     """

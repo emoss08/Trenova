@@ -29,6 +29,7 @@ from rest_framework.request import Request
 from accounts import models, serializers
 from accounts.permissions import ViewAllUsersPermission
 from utils.exceptions import InvalidTokenException
+from utils.types import AuthenticatedRequest
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -286,7 +287,9 @@ class TokenVerifyView(views.APIView):
     permission_classes = []
     http_method_names = ["post"]
 
-    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
+    def post(
+        self, request: AuthenticatedRequest, *args: Any, **kwargs: Any
+    ) -> response.Response:
         """The post function is used to refresh the token.
 
         Args:
@@ -299,20 +302,18 @@ class TokenVerifyView(views.APIView):
             A response object, which is a dictionary with the following keys:
 
         """
+        # Get the token from the cookies
         token = request.COOKIES.get("auth_token")
 
-        if request.user.is_anonymous:
-            return response.Response(
-                {"message": "User is not authenticated"},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
-
+        # Get organization token expiration days
         token_expire_days = request.user.organization.token_expiration_days
 
+        # Check if token is provided. If not, raise an exception.
         if not token:
             raise InvalidTokenException("No token provided")
 
         try:
+            # Get the token object
             token_obj = models.Token.objects.get(key=token)
             # Update token's expiration time
             token_obj.expires = timezone.now() + timedelta(
@@ -320,11 +321,13 @@ class TokenVerifyView(views.APIView):
             )  # set expires to 1 day from now
             token_obj.save()
 
+            # Create a data object, with the user_id and organization_id
             data = {
                 "user_id": token_obj.user_id,
                 "organization_id": token_obj.user.organization_id,
             }
 
+            # Create a response object
             res = response.Response(data, status=status.HTTP_200_OK)
 
             # Set the token in the cookies again
@@ -333,7 +336,7 @@ class TokenVerifyView(views.APIView):
                 value=token_obj.key,
                 expires=token_obj.expires,
                 httponly=True,
-                secure=False,
+                secure=True,
                 samesite="Lax",
                 domain=None,
             )
@@ -348,6 +351,7 @@ class TokenProvisionView(ObtainAuthToken):
     throttle_scope = "auth"
     permission_classes = (permissions.AllowAny,)
     serializer_class = serializers.TokenProvisionSerializer
+    authentication_classes = []  # bypass authentication for this endpoint
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
         """The post function is used to log in a user.

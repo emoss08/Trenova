@@ -36,6 +36,7 @@ class StopFactory(factory.django.DjangoModelFactory):
             "location",
         )
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     status = "N"
     sequence = 1
