@@ -15,12 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type NonNegativeNumber = number;
+import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+
 export type Decimal = number;
 
-export interface ChoiceProps {
+export type TChoiceProps = {
   value: string;
   label: string;
-}
+};
 
 export type StatusChoiceProps = "A" | "I";
+
+export type TNavigationLink = {
+  icon: IconDefinition;
+  title: string;
+  description: string;
+  href?: string | null;
+  permission: string;
+  subLinks?: TNavigationLink[] | null;
+};
