@@ -21,7 +21,7 @@ import { DivisionCode } from "@/types/apps/accounting";
 import { Badge } from "@mantine/core";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 
 export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
   return [
@@ -44,7 +44,7 @@ export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
           { value: "", label: "All" },
           { value: "A", label: "Active" },
           { value: "I", label: "Inactive" },
-        ] as ChoiceProps[],
+        ] as TChoiceProps[],
       },
       filterVariant: "select",
     },
@@ -62,7 +62,6 @@ export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
       Cell: ({ row }) => (
         <MontaTableActionMenu
           store={divisionCodeTableStore}
-          name="Division Code"
           data={row.original}
         />
       ),

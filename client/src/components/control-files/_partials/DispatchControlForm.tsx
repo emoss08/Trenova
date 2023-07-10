@@ -147,8 +147,6 @@ export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
               variant="filled"
               withAsterisk
             />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <SwitchInput
               form={form}
               className={classes.fields}

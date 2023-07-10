@@ -33,7 +33,7 @@ export type InvoiceControl = {
   attach_pdf: boolean;
 };
 
-export interface InvoiceControlFormValues {
+export type InvoiceControlFormValues = {
   invoice_number_prefix: string;
   credit_memo_number_prefix: string;
   invoice_due_after_days: number;
@@ -45,4 +45,4 @@ export interface InvoiceControlFormValues {
   invoice_date_format: DateFormatChoiceProps;
   show_amount_due: boolean;
   attach_pdf: boolean;
-}
+};

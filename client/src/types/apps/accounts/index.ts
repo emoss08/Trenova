@@ -52,7 +52,7 @@ export type User = {
   profile?: UserProfile;
 };
 
-export interface UserFormValues {
+export type UserFormValues = {
   organization: string;
   username: string;
   department?: string;
@@ -69,7 +69,7 @@ export interface UserFormValues {
     zip_code: string;
     phone_number?: string;
   };
-}
+};
 
 export type JobTitle = {
   id: string;

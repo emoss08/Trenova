@@ -30,7 +30,7 @@ export type DispatchControl = {
   tractor_worker_fleet_constraint: boolean;
 };
 
-export interface DispatchControlFormValues {
+export type DispatchControlFormValues = {
   record_service_incident: string;
   grace_period: number;
   deadhead_target: number;
@@ -41,4 +41,4 @@ export interface DispatchControlFormValues {
   prev_orders_on_hold: boolean;
   driver_time_away_restriction: boolean;
   tractor_worker_fleet_constraint: boolean;
-}
+};

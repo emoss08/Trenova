@@ -29,13 +29,13 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
 import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
 import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   revenueCode: RevenueCode;
-  selectGlAccountData: ChoiceProps[];
+  selectGlAccountData: TChoiceProps[];
 };
 
 export const EditRCModalForm: React.FC<Props> = ({

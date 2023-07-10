@@ -16,7 +16,7 @@
  */
 
 // User info constants
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 
 export const USER_ID_KEY = import.meta.env.VITE_USER_ID_KEY;
 export const ORGANIZATION_ID_KEY = import.meta.env.VITE_ORGANIZATION_ID_KEY;
@@ -28,7 +28,7 @@ export const WEBSOCKET_RETRY_INTERVAL = import.meta.env
   .VITE_WEBSOCKET_RETRY_INTERVAL;
 export const ENABLE_WEBSOCKETS = import.meta.env.VITE_ENABLE_WEBSOCKETS;
 
-// Api constants
+// API constants
 export const API_URL = import.meta.env.VITE_API_URL as string;
 
 /**
@@ -103,7 +103,11 @@ export function clearAllCookies() {
   });
 }
 
-export const statusChoices: ChoiceProps[] = [
+/**
+ * Returns status choices for a select input.
+ * @returns An array of status choices.
+ */
+export const statusChoices: TChoiceProps[] = [
   { value: "A", label: "Active" },
   { value: "I", label: "Inactive" },
 ];

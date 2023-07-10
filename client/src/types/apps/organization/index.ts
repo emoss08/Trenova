@@ -65,7 +65,7 @@ export type EmailControl = {
   rate_expiration_email_profile?: string | null;
 };
 
-export interface EmailControlFormValues {
+export type EmailControlFormValues = {
   billing_email_profile?: string | null;
   rate_expiration_email_profile?: string | null;
-}
+};

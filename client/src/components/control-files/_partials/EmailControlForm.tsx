@@ -29,13 +29,13 @@ import {
   EmailControl,
   EmailControlFormValues,
 } from "@/types/apps/organization";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { emailControlSchema } from "@/utils/apps/organization/schema";
 import { useFormStyles } from "@/styles/FormStyles";
 
 interface Props {
   emailControl: EmailControl;
-  selectEmailProfileData: ChoiceProps[];
+  selectEmailProfileData: TChoiceProps[];
 }
 
 export const EmailControlForm: React.FC<Props> = ({

@@ -34,7 +34,7 @@ export type BillingControl = {
   enforce_customer_billing: boolean;
 };
 
-export interface BillingControlFormValues {
+export type BillingControlFormValues = {
   remove_billing_history: boolean;
   auto_bill_orders: boolean;
   auto_mark_ready_to_bill: boolean;
@@ -42,7 +42,7 @@ export interface BillingControlFormValues {
   auto_bill_criteria: AutoBillingCriteriaChoicesProps;
   order_transfer_criteria: OrderTransferCriteriaChoicesProps;
   enforce_customer_billing: boolean;
-}
+};
 
 /** Types for Division Codes */
 export type ChargeType = {
@@ -70,7 +70,7 @@ export interface AccessorialChargeFormValues
   extends Omit<AccessorialCharge, "id" | "charge_amount_currency"> {}
 
 /** Types for Orders Ready to Bill */
-export interface OrdersReadyProps {
+export type OrdersReadyProps = {
   id: string;
   pro_number: string;
   mileage: string;
@@ -80,7 +80,7 @@ export interface OrdersReadyProps {
   customer_name: string;
   missing_documents: string[];
   is_missing_documents: boolean;
-}
+};
 
 /** Types for Billing Queue */
 export type BillingQueue = {

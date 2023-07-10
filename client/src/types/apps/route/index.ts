@@ -28,8 +28,8 @@ export type RouteControl = {
   generate_routes: boolean;
 };
 
-export interface RouteControlFormValues {
+export type RouteControlFormValues = {
   distance_method: DistanceMethodChoiceProps;
   mileage_unit: RouteModelChoiceProps;
   generate_routes: boolean;
-}
+};

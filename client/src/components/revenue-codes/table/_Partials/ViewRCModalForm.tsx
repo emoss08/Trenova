@@ -27,12 +27,12 @@ import {
   Group,
 } from "@mantine/core";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   revenueCode: RevenueCode;
-  selectGlAccountData: ChoiceProps[];
+  selectGlAccountData: TChoiceProps[];
 };
 
 export const ViewRCModalForm: React.FC<Props> = ({

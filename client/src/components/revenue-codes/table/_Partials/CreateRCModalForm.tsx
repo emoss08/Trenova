@@ -27,13 +27,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { RevenueCodeFormValues } from "@/types/apps/accounting";
 import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
 import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
-  selectGlAccountData: ChoiceProps[];
+  selectGlAccountData: TChoiceProps[];
 };
 
 export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {

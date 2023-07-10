@@ -20,7 +20,7 @@ import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { useQuery, useQueryClient } from "react-query";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { Modal, Skeleton, Stack } from "@mantine/core";
+import { Modal, Skeleton } from "@mantine/core";
 import { ViewRCModalForm } from "./_Partials/ViewRCModalForm";
 
 export const ViewRCModal: React.FC = () => {

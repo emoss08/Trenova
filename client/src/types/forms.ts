@@ -15,18 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export interface ExportModelOptionType {
-  value: string;
-  label: string;
-}
+import { TChoiceProps } from "@/types/index";
 
-export const exportModelTypes: ExportModelOptionType[] = [
+/** Types for Export Model */
+export const exportModelTypes: TChoiceProps[] = [
   { value: "csv", label: "CSV" },
   { value: "xlsx", label: "Excel" },
   { value: "pdf", label: "PDF" },
 ];
 
-export interface ExportModelFormValues {
+export type TExportModelFormValue = {
   file_format: string;
   columns: string[];
-}
+};
