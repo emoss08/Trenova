@@ -123,7 +123,7 @@ class KafkaListener:
             except KafkaError as e:
                 if e.args[0].code() != KafkaError._ALL_BROKERS_DOWN:
                     logging.error(f"KafkaError: {e}")
-                    raise
+                    raise e
                 logging.info("All brokers are down. Retrying connection...")
                 time.sleep(5)
         return None
