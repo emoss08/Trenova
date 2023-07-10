@@ -29,7 +29,7 @@ import { useAuthStore } from "@/stores/AuthStore";
  */
 export function useUserPermissions() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = getSessionItem("mt_is_admin") === "true";
+  const isAdmin = getSessionItem("mt_is_admin");
   const permissions = getSessionItem("mt_user_permissions") || [];
 
   const userHasPermission = (permission: string) => {
