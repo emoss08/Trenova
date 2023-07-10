@@ -54,7 +54,7 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
       } catch (error) {
         console.error(error);
       } finally {
-        queryClient.invalidateQueries("user").then(() => {
+        queryClient.invalidateQueries(["user", user.id]).then(() => {
           notifications.show({
             title: "Success",
             message: "Your profile picture has been updated.",
