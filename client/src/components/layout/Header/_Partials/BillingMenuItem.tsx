@@ -15,32 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/utils/zustand";
+import React from "react";
+import { MenuItem } from "@/components/layout/Header/_Partials/MenuItem";
+import { billingNavLinks } from "@/utils/apps/billing";
+import { useBillingHeaderStore } from "@/stores/HeaderStore";
 
-interface HeaderStoreType {
-  downloadMenuOpen: boolean;
-  themeSwitcherOpen: boolean;
-  headerMenuOpen: boolean;
-  notificationsMenuOpen: boolean;
-  linksOpen: boolean;
-}
+export const BillingMenuItem = () => {
+  console.log("Billing Menu Item", new Date().toLocaleTimeString());
 
-export const useHeaderStore = createGlobalStore<HeaderStoreType>({
-  downloadMenuOpen: false,
-  themeSwitcherOpen: false,
-  headerMenuOpen: false,
-  notificationsMenuOpen: false,
-  linksOpen: false,
-});
-
-type THeaderStoreProps = {
-  currentMenu?: string | null;
+  return (
+    <MenuItem
+      store={useBillingHeaderStore}
+      menuLinks={billingNavLinks}
+      name="Billing & AR"
+      numOfColumns={2}
+    />
+  );
 };
-
-export const useBillingHeaderStore = createGlobalStore<THeaderStoreProps>({
-  currentMenu: null,
-});
-
-export const useAdminHeaderStore = createGlobalStore<THeaderStoreProps>({
-  currentMenu: null,
-});

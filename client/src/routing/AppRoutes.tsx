@@ -172,7 +172,7 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/client",
     description: "Your efficient partner for end-to-end billing management",
     element: <BillingClientPage />,
-    permission: "view_accessorialcharge",
+    permission: "billing.use_billing_client",
   },
   // Error Page
   {

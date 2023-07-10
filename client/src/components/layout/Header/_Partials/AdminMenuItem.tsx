@@ -15,32 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/utils/zustand";
+import React from "react";
+import { adminNavLinks } from "@/utils/apps/admin";
+import { MenuItem } from "./MenuItem";
+import { useAdminHeaderStore } from "@/stores/HeaderStore";
 
-interface HeaderStoreType {
-  downloadMenuOpen: boolean;
-  themeSwitcherOpen: boolean;
-  headerMenuOpen: boolean;
-  notificationsMenuOpen: boolean;
-  linksOpen: boolean;
-}
+export const AdministratorMenuItem = () => {
+  console.log("Admin Menu Item", new Date().toLocaleTimeString());
 
-export const useHeaderStore = createGlobalStore<HeaderStoreType>({
-  downloadMenuOpen: false,
-  themeSwitcherOpen: false,
-  headerMenuOpen: false,
-  notificationsMenuOpen: false,
-  linksOpen: false,
-});
-
-type THeaderStoreProps = {
-  currentMenu?: string | null;
+  return (
+    <MenuItem
+      store={useAdminHeaderStore}
+      menuLinks={adminNavLinks}
+      name="Administrator"
+      numOfColumns={3}
+    />
+  );
 };
-
-export const useBillingHeaderStore = createGlobalStore<THeaderStoreProps>({
-  currentMenu: null,
-});
-
-export const useAdminHeaderStore = createGlobalStore<THeaderStoreProps>({
-  currentMenu: null,
-});
