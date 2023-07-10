@@ -72,6 +72,7 @@ Our fourth release will include the following features:
 - Trailer Integration
 - Customer Portal
 - EDI Module
+- Beam (Artificial Intelligence Chatbot)
 
 ### 0.5.0 (May 1st, 2024)
 
