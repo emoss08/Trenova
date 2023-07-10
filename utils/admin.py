@@ -41,7 +41,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     """
 
     autocomplete: bool = True
-    exclude: tuple[str, ...] = ("organization",)
+    # exclude: tuple[str, ...] = ("organization", "business_unit")
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
@@ -78,6 +78,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
             None
         """
         obj.organization = request.user.organization  # type: ignore
+        obj.business_unit = request.user.organization.business_unit  # type: ignore
         super().save_model(request, obj, form, change)
 
     def save_formset(
@@ -97,6 +98,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         instances = formset.save(commit=False)
         for instance in instances:
             instance.organization = request.user.organization  # type: ignore
+            instance.business_unit = request.user.organization.business_unit  # type: ignore
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
@@ -123,6 +125,9 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         for field in form.base_fields:
             if field == "organization":
                 form.base_fields[field].initial = request.user.organization  # type: ignore
+                form.base_fields[field].widget = form.base_fields[field].hidden_widget()
+            elif field == "business_unit":
+                form.base_fields[field].initial = request.user.organization.business_unit  # type: ignore
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             form.base_fields[field].widget.attrs["placeholder"] = field.title()
         return form

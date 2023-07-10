@@ -14,43 +14,57 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 import factory
+from django.db import models
 
 
-class CommodityFactory(factory.django.DjangoModelFactory):
-    """
-    Commodity factory
-    """
+class UpdateGetOrCreateMetaClass(factory.base.FactoryMetaClass):
+    def __new__(mcs, name, bases, attrs):
+        cls = super().__new__(mcs, name, bases, attrs)
+        if hasattr(cls, "Meta"):
+            cls.update_get_or_create()
+        return cls
 
+
+class FactoryMixin(
+    factory.django.DjangoModelFactory, metaclass=UpdateGetOrCreateMetaClass
+):
     class Meta:
-        """
-        Metaclass for CommodityFactory
-        """
-
-        model = "commodities.Commodity"
-        django_get_or_create = ("organization",)
+        model = models.Model
+        django_get_or_create = ()
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-    hazmat = factory.SubFactory("commodities.factories.HazardousMaterialFactory")
+
+    @classmethod
+    def update_get_or_create(cls):
+        django_get_or_create = list(cls.Meta.django_get_or_create)
+        django_get_or_create.extend(
+            attr_name
+            for attr_name, attr_value in cls.__dict__.items()
+            if isinstance(attr_value, factory.SubFactory)
+        )
+        cls.Meta.django_get_or_create = tuple(django_get_or_create)
 
 
-class HazardousMaterialFactory(factory.django.DjangoModelFactory):
-    """
-    HazardousMaterial Factory
-    """
-
-    class Meta:
-        """
-        Metaclass for HazardousMaterialFactory
-        """
-
-        model = "commodities.HazardousMaterial"
-        django_get_or_create = ("organization",)
-
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
-    hazard_class = "4.1"
+#
+#
+# class FactoryMixin(
+#     factory.django.DjangoModelFactory, metaclass=UpdateGetOrCreateMetaClass
+# ):
+#     class Meta:
+#         model = models.Model
+#         django_get_or_create = ()
+#
+#     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+#     organization = factory.SubFactory("organization.factories.OrganizationFactory")
+#
+#     @classmethod
+#     def update_get_or_create(cls):
+#         django_get_or_create = list(cls.Meta.django_get_or_create)
+#         django_get_or_create.extend(
+#             attr_name
+#             for attr_name, attr_value in cls.__dict__.items()
+#             if isinstance(attr_value, factory.SubFactory)
+#         )
+#         cls.Meta.django_get_or_create = tuple(django_get_or_create)

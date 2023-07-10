@@ -84,7 +84,6 @@ INSTALLED_APPS = [
     "djmoney",
     "auditlog",
     "notifications",
-    "guardian",
     # Monta Apps
     "backend",
     "core",
@@ -163,16 +162,16 @@ DATABASES = {
         "ATOMIC_REQUESTS": True,
         "CONN_HEALTH_CHECK": True,
     },
-    "replica1": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DB_REPLICA_NAME"),
-        "USER": env("DB_REPLICA_USER"),
-        "PASSWORD": env("DB_REPLICA_PASSWORD"),
-        "HOST": env("DB_REPLICA_HOST"),
-        "PORT": env("DB_REPLICA_PORT"),
-        "ATOMIC_REQUESTS": True,
-        "CONN_HEALTH_CHECK": True,
-    },
+    # "replica1": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": env("DB_REPLICA_NAME"),
+    #     "USER": env("DB_REPLICA_USER"),
+    #     "PASSWORD": env("DB_REPLICA_PASSWORD"),
+    #     "HOST": env("DB_REPLICA_HOST"),
+    #     "PORT": env("DB_REPLICA_PORT"),
+    #     "ATOMIC_REQUESTS": True,
+    #     "CONN_HEALTH_CHECK": True,
+    # },
 }
 # DATABASE_ROUTERS = ["core.database.PrimaryReplicaRouter"]
 
@@ -219,7 +218,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "guardian.backends.ObjectPermissionBackend",
 ]
 
 # REDIS Configurations
@@ -300,7 +298,6 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-        # "rest_framework.permissions.DjangoObjectPermissions",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
@@ -396,4 +393,4 @@ CACHEOPS = {
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
-GUARDIAN_MONKEY_PATCH = False
+# GUARDIAN_MONKEY_PATCH = False

@@ -36,6 +36,63 @@ kafka_manager = KafkaManager()
 AVAILABLE_TOPICS = kafka_manager.get_available_topics()
 
 
+class BusinessUnit(TimeStampedModel):
+    id = models.UUIDField(
+        _("Business Unit ID"),
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        _("Business Unit Name"),
+        max_length=255,
+        unique=True,
+    )
+    description = models.TextField(
+        _("Business Unit Description"),
+        blank=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the Organization model
+        """
+
+        verbose_name = _("Business Unit")
+        verbose_name_plural = _("Business Units")
+        db_table = "business_unit"
+
+    def __str__(self) -> str:
+        """String representation of the Business Unit.
+
+        Returns:
+            str: String representation of the Business Unit.
+        """
+        return textwrap.wrap(self.name, 50)[0]
+
+    def save(self, **kwargs: Any) -> None:
+        """Business Unit save method.
+
+        Args:
+            **kwargs (Any): Keyword arguments
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        self.name = self.name.title()
+        super().save(**kwargs)
+
+    def get_absolute_url(self) -> str:
+        """Absolute URl for the Business Unit.
+
+        Returns:
+            str: The absolute url for the Business Unit.
+        """
+        return reverse("organizations-detail", kwargs={"pk": self.pk})
+
+
 class Organization(TimeStampedModel):
     """
     Organization Model Fields
@@ -65,6 +122,13 @@ class Organization(TimeStampedModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="organizations",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
     )
     name = models.CharField(
         _("Organization Name"),
@@ -223,6 +287,13 @@ class Depot(TimeStampedModel):
         editable=False,
         unique=True,
     )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="depots",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
@@ -286,6 +357,13 @@ class DepotDetail(TimeStampedModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="depot_details",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
     )
     organization = models.ForeignKey(
         Organization,
@@ -386,6 +464,13 @@ class Department(models.Model):
         editable=False,
         unique=True,
     )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="departments",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
@@ -468,6 +553,13 @@ class EmailProfile(TimeStampedModel):
         _("Name"),
         max_length=255,
         help_text=_("The name of the Email Profile."),
+    )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="email_profiles",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
     )
     organization = models.ForeignKey(
         Organization,
@@ -552,6 +644,13 @@ class EmailControl(TimeStampedModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="email_controls",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
     )
     organization = models.OneToOneField(
         Organization,
@@ -668,6 +767,13 @@ class TaxRate(TimeStampedModel):
         editable=False,
         unique=True,
     )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="tax_rates",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
@@ -764,6 +870,13 @@ class TableChangeAlert(TimeStampedModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="table_change_alerts",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
     )
     organization = models.ForeignKey(
         Organization,
@@ -966,6 +1079,13 @@ class NotificationType(TimeStampedModel):
         editable=False,
         unique=True,
     )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="notification_types",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
@@ -1029,6 +1149,13 @@ class NotificationSetting(TimeStampedModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    business_unit = models.ForeignKey(
+        BusinessUnit,
+        on_delete=models.CASCADE,
+        related_name="notification_setting",
+        verbose_name=_("Business Unit"),
+        help_text=_("The business unit that the organization belongs to."),
     )
     organization = models.OneToOneField(
         Organization,

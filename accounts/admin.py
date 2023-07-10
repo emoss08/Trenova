@@ -86,6 +86,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             {
                 "fields": (
                     "is_active",
+                    "business_unit",
                     "organization",
                     "department",
                     "username",
@@ -107,6 +108,7 @@ class UserAdmin(admin.ModelAdmin[models.User]):
             {
                 "classes": ("wide",),
                 "fields": (
+                    "business_unit",
                     "organization",
                     "department",
                     "username",

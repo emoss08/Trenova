@@ -31,6 +31,7 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
         model = "accounting.GeneralLedgerAccount"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     account_number = factory.Faker(
         "numerify",
@@ -56,6 +57,7 @@ class RevenueCodeFactory(factory.django.DjangoModelFactory):
         model = "accounting.RevenueCode"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
@@ -74,6 +76,7 @@ class DivisionCodeFactory(factory.django.DjangoModelFactory):
         model = "accounting.DivisionCode"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     is_active = True
     code = factory.Faker("pystr", max_chars=4)

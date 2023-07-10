@@ -18,6 +18,18 @@
 import factory
 
 
+class BusinessUnitFactory(factory.django.DjangoModelFactory):
+    """
+    Business Unit factory class
+    """
+
+    class Meta:
+        model = "organization.BusinessUnit"
+        django_get_or_create = ("name",)
+
+    name = factory.Faker("company", locale="en_US")
+
+
 class OrganizationFactory(factory.django.DjangoModelFactory):
     """
     Organization factory class
@@ -29,8 +41,9 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "organization.Organization"
-        django_get_or_create = ("name",)
+        django_get_or_create = ("name", "business_unit")
 
+    business_unit = factory.SubFactory(BusinessUnitFactory)
     name = factory.Faker("company", locale="en_US")
     scac_code = "RNDM"
 
@@ -65,6 +78,7 @@ class EmailProfileFactory(factory.django.DjangoModelFactory):
         model = "organization.EmailProfile"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory(BusinessUnitFactory)
     organization = factory.SubFactory(OrganizationFactory)
     name = factory.Faker("name", locale="en_US")
     email = factory.Faker("email", locale="en_US")
@@ -91,6 +105,7 @@ class TableChangeAlertFactory(factory.django.DjangoModelFactory):
         model = "organization.TableChangeAlert"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory(BusinessUnitFactory)
     organization = factory.SubFactory(OrganizationFactory)
     is_active = True
     name = factory.Faker("name", locale="en_US")

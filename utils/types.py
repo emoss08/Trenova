@@ -19,6 +19,9 @@ from typing import Any, TypeAlias, Union
 from uuid import UUID
 
 from django.db.models import UUIDField
+from rest_framework.request import Request
+
+from accounts.models import User
 
 ModelUUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
 HealthStatus: TypeAlias = Union[dict[str, Union[str, int, int, int]]]
@@ -26,3 +29,7 @@ HealthStatusAndTime: TypeAlias = Union[
     dict[str, Union[str, int, int, int, float, float]]
 ]
 DiskUsage: TypeAlias = tuple[int, int, int]
+
+
+class AuthenticatedRequest(Request):
+    user: User

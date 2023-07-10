@@ -192,6 +192,9 @@ class BillingControl(GenericModel):
         verbose_name = _("Billing Control")
         verbose_name_plural = _("Billing Controls")
         db_table = "billing_control"
+        permissions = [
+            ("billing.use_billing_client", "Can use the billing client"),
+        ]
 
     def __str__(self) -> str:
         """Billing control string representation

@@ -22,7 +22,7 @@ from django.utils.functional import cached_property
 from rest_framework import serializers
 
 from accounts.models import Token
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 
 class GenericSerializer(serializers.ModelSerializer):
@@ -44,9 +44,22 @@ class GenericSerializer(serializers.ModelSerializer):
         token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization
 
+    @cached_property
+    def get_business_unit(self) -> BusinessUnit:
+        if self.context["request"].user.is_authenticated:
+            _business_unit: BusinessUnit = self.context[
+                "request"
+            ].user.organization.business_unit
+            return _business_unit
+        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+        return Token.objects.get(key=token).user.organization.business_unit
+
     def create(self, validated_data: Any) -> Any:
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
+
+        business_unit: BusinessUnit = self.get_business_unit
+        validated_data["business_unit"] = business_unit
 
         return super().create(validated_data)
 
@@ -54,10 +67,18 @@ class GenericSerializer(serializers.ModelSerializer):
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
+        business_unit: BusinessUnit = self.get_business_unit
+        validated_data["business_unit"] = business_unit
+
         return super().update(instance, validated_data)
 
     def set_fields(self) -> None:
-        read_only_fields: tuple[str, ...] = ("organization", "created", "modified")
+        read_only_fields: tuple[str, ...] = (
+            "organization",
+            "business_unit",
+            "created",
+            "modified",
+        )
 
         original_fields = getattr(self.Meta, "fields", None)
         excluded_fields = set(getattr(self.Meta, "exclude", ()))

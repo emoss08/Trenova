@@ -31,6 +31,7 @@ class CustomerFactory(factory.django.DjangoModelFactory):
         model = "customer.Customer"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("name", locale="en_US")
 
@@ -48,6 +49,7 @@ class DocumentClassificationFactory(factory.django.DjangoModelFactory):
         model = "billing.DocumentClassification"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("name", locale="en_US")
 
@@ -65,6 +67,7 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
         model = "customer.CustomerContact"
         django_get_or_create = ("organization", "customer")
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
     name = factory.Faker("name", locale="en_US")
@@ -86,6 +89,7 @@ class CustomerEmailProfileFactory(factory.django.DjangoModelFactory):
         model = "customer.CustomerEmailProfile"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
     subject = factory.Faker("word", locale="en_US")
@@ -109,6 +113,7 @@ class CustomerRuleProfileFactory(factory.django.DjangoModelFactory):
         model = "customer.CustomerRuleProfile"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
 
@@ -144,6 +149,7 @@ class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
             "rule_profile",
         )
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory(CustomerFactory)
     email_profile = factory.SubFactory(CustomerEmailProfileFactory)

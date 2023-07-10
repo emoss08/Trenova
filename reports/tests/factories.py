@@ -31,6 +31,7 @@ class CustomReportFactory(factory.django.DjangoModelFactory):
         model = "reports.CustomReport"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
     table = factory.Faker(

@@ -26,6 +26,7 @@ class DispatchControlFactory(factory.django.DjangoModelFactory):
     Dispatch control factory
     """
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     regulatory_check = True
 
@@ -43,6 +44,7 @@ class DelayCodeFactory(factory.django.DjangoModelFactory):
     Delay code factory
     """
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
     description = factory.Faker("text", locale="en_US", max_nb_chars=10)
@@ -61,6 +63,7 @@ class FleetCodeFactory(factory.django.DjangoModelFactory):
     Fleet code factory
     """
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
     description = factory.Faker("text", locale="en_US", max_nb_chars=10)
@@ -79,6 +82,7 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
     Comment type factory
     """
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
     description = factory.Faker("text", locale="en_US", max_nb_chars=10)
@@ -97,6 +101,7 @@ class RateFactory(factory.django.DjangoModelFactory):
     Rate Factory
     """
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory("customer.factories.CustomerFactory")
     effective_date = timezone.now().date()
@@ -126,6 +131,7 @@ class RateBillingTableFactory(factory.django.DjangoModelFactory):
     Rate Billing Table Factory
     """
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     rate = factory.SubFactory(RateFactory)
     accessorial_charge = factory.SubFactory(

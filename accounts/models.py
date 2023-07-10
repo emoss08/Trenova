@@ -34,7 +34,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from guardian.mixins import GuardianUserMixin
 from localflavor.us.models import USStateField, USZipCodeField
 
 from accounts import services
@@ -106,7 +105,7 @@ class UserManager(BaseUserManager):
         return self.create_user(username, email, password, **extra_fields)
 
 
-class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):  # type: ignore
+class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
     """
     Stores basic user information.
     """
@@ -118,12 +117,22 @@ class User(AbstractBaseUser, PermissionsMixin, GuardianUserMixin):  # type: igno
         unique=True,
         help_text=_("Unique ID for the user."),
     )
+    business_unit = models.ForeignKey(
+        "organization.BusinessUnit",
+        on_delete=models.CASCADE,
+        related_name="users",
+        related_query_name="user",
+        verbose_name=_("Business Unit"),
+        # null=True,
+        # blank=True,
+    )
     organization = models.ForeignKey(
         "organization.Organization",
         on_delete=models.CASCADE,
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
+        # null=True,
     )
     department = models.ForeignKey(
         "organization.Department",

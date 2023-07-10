@@ -32,6 +32,7 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
         model = "accounts.JobTitle"
         django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("pystr", max_chars=100)
     description = factory.Faker("text")
@@ -49,8 +50,9 @@ class UserFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounts.User"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "business_unit")
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     username = factory.Faker("user_name")
     password = factory.Faker("password")
@@ -76,6 +78,7 @@ class ProfileFactory(factory.django.DjangoModelFactory):
     """
 
     user = factory.SubFactory(UserFactory)
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     job_title = factory.SubFactory(JobTitleFactory)
     first_name = factory.Faker("first_name")
