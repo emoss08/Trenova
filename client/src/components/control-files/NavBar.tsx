@@ -49,6 +49,7 @@ interface NavBarProps {
   navigate: (path: string) => void;
 }
 
+// TODO(Wolfred): Add permissions to control files to restrict access to certain users
 export const controlFileData: ControlFileData[] = [
   {
     icon: faBuildingColumns,
