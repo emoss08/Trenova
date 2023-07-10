@@ -38,3 +38,4 @@ celerybeat-schedule
 my_pypy_ven
 */migrations/*
 kafka_listener_pid.txt
+machine_learning
