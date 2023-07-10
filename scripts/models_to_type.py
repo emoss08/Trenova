@@ -14,9 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import ast
 import argparse
+import ast
 import os
+
 import rich
 from rich.progress import Progress
 
