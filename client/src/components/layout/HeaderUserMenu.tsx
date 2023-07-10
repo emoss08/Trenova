@@ -148,159 +148,155 @@ export const HeaderUserMenu: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Group position="apart">
-        <Burger
-          opened={headerMenuOpen}
-          onClick={() => useHeaderStore.set("headerMenuOpen", !headerMenuOpen)}
-          className={classes.burger}
-          size="sm"
-        />
+    <Group position="apart">
+      <Burger
+        opened={headerMenuOpen}
+        onClick={() => useHeaderStore.set("headerMenuOpen", !headerMenuOpen)}
+        className={classes.burger}
+        size="sm"
+      />
 
-        <Menu
-          width={260}
-          position="bottom-end"
-          transitionProps={{ transition: "pop-top-right" }}
-          onClose={() => useHeaderStore.set("headerMenuOpen", false)}
-          onOpen={() => useHeaderStore.set("headerMenuOpen", true)}
-          withinPortal
-        >
-          <Menu.Target>
-            <ActionIcon>
-              <Group spacing={7}>
-                <Indicator
-                  inline
-                  withBorder
-                  processing
-                  size={10}
-                  offset={3}
-                  position="bottom-end"
-                  color="green"
-                >
-                  {userData.profile?.profile_picture ? (
-                    <Avatar
-                      src={userData.profile?.profile_picture}
-                      alt={"Test"}
-                      radius="xl"
-                      size={30}
-                    />
-                  ) : (
-                    <Avatar color="blue" radius="xl" size={30}>
-                      {userData.profile?.first_name.charAt(0)}
-                      {userData.profile?.last_name.charAt(0)}
-                    </Avatar>
-                  )}
-                </Indicator>
-              </Group>
-            </ActionIcon>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {/* User Information */}
-            <Group my={10}>
-              {userData.profile?.profile_picture ? (
-                <Avatar
-                  src={userData.profile?.profile_picture}
-                  alt={"Test"}
-                  radius="xl"
-                  size={40}
-                  ml={5}
-                  mb={2}
-                />
-              ) : (
-                <Avatar color="blue" radius="xl" ml={5} mb={2} size={40}>
-                  {userData.profile?.first_name.charAt(0)}
-                  {userData.profile?.last_name.charAt(0)}
-                </Avatar>
-              )}
-
-              <div style={{ flex: 1 }}>
-                <Text size="sm" weight={500}>
-                  {userData.profile?.first_name} {userData.profile?.last_name}
-                </Text>
-                <Text color="dimmed" size="xs">
-                  {userData.email}
-                </Text>
-              </div>
-            </Group>
-            <Menu.Divider />
-            <Menu.Item
-              icon={
-                <IconHeart
-                  size="0.9rem"
-                  color={theme.colors.red[6]}
-                  stroke={1.5}
-                />
-              }
-            >
-              Liked posts
-            </Menu.Item>
-            <Menu.Item
-              icon={
-                <IconStar
-                  size="0.9rem"
-                  color={theme.colors.yellow[6]}
-                  stroke={1.5}
-                />
-              }
-            >
-              Saved posts
-            </Menu.Item>
-            <Menu.Item
-              icon={
-                <IconMessage
-                  size="0.9rem"
-                  color={theme.colors.blue[6]}
-                  stroke={1.5}
-                />
-              }
-            >
-              Your comments
-            </Menu.Item>
-
-            <Menu.Label>Settings</Menu.Label>
-            <Link
-              to={`/account/settings/${userData.id}/`}
-              style={{ textDecoration: "none" }}
-            >
-              <Menu.Item icon={<FontAwesomeIcon icon={faGear} stroke="1.5" />}>
-                Account settings
-              </Menu.Item>
-            </Link>
-            <Menu.Item
-              icon={<IconSwitchHorizontal size="0.9rem" stroke={1.5} />}
-            >
-              Change account
-            </Menu.Item>
-
-            <Link to="/logout/" style={{ textDecoration: "none" }}>
-              <Menu.Item
-                icon={
-                  <FontAwesomeIcon
-                    size="sm"
-                    icon={faRightFromBracket}
-                    stroke="1.5"
-                  />
-                }
+      <Menu
+        width={260}
+        position="bottom-end"
+        transitionProps={{ transition: "pop-top-right" }}
+        onClose={() => useHeaderStore.set("headerMenuOpen", false)}
+        onOpen={() => useHeaderStore.set("headerMenuOpen", true)}
+        withinPortal
+      >
+        <Menu.Target>
+          <ActionIcon>
+            <Group spacing={7}>
+              <Indicator
+                inline
+                withBorder
+                processing
+                size={10}
+                offset={3}
+                position="bottom-end"
+                color="green"
               >
-                Logout
-              </Menu.Item>
-            </Link>
+                {userData.profile?.profile_picture ? (
+                  <Avatar
+                    src={userData.profile?.profile_picture}
+                    alt={"Test"}
+                    radius="xl"
+                    size={30}
+                  />
+                ) : (
+                  <Avatar color="blue" radius="xl" size={30}>
+                    {userData.profile?.first_name.charAt(0)}
+                    {userData.profile?.last_name.charAt(0)}
+                  </Avatar>
+                )}
+              </Indicator>
+            </Group>
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          {/* User Information */}
+          <Group my={10}>
+            {userData.profile?.profile_picture ? (
+              <Avatar
+                src={userData.profile?.profile_picture}
+                alt={"Test"}
+                radius="xl"
+                size={40}
+                ml={5}
+                mb={2}
+              />
+            ) : (
+              <Avatar color="blue" radius="xl" ml={5} mb={2} size={40}>
+                {userData.profile?.first_name.charAt(0)}
+                {userData.profile?.last_name.charAt(0)}
+              </Avatar>
+            )}
 
-            <Menu.Divider />
+            <div style={{ flex: 1 }}>
+              <Text size="sm" weight={500}>
+                {userData.profile?.first_name} {userData.profile?.last_name}
+              </Text>
+              <Text color="dimmed" size="xs">
+                {userData.email}
+              </Text>
+            </div>
+          </Group>
+          <Menu.Divider />
+          <Menu.Item
+            icon={
+              <IconHeart
+                size="0.9rem"
+                color={theme.colors.red[6]}
+                stroke={1.5}
+              />
+            }
+          >
+            Liked posts
+          </Menu.Item>
+          <Menu.Item
+            icon={
+              <IconStar
+                size="0.9rem"
+                color={theme.colors.yellow[6]}
+                stroke={1.5}
+              />
+            }
+          >
+            Saved posts
+          </Menu.Item>
+          <Menu.Item
+            icon={
+              <IconMessage
+                size="0.9rem"
+                color={theme.colors.blue[6]}
+                stroke={1.5}
+              />
+            }
+          >
+            Your comments
+          </Menu.Item>
 
-            <Menu.Label>Danger zone</Menu.Label>
-            <Menu.Item icon={<IconPlayerPause size="0.9rem" stroke={1.5} />}>
-              Pause subscription
+          <Menu.Label>Settings</Menu.Label>
+          <Link
+            to={`/account/settings/${userData.id}/`}
+            style={{ textDecoration: "none" }}
+          >
+            <Menu.Item icon={<FontAwesomeIcon icon={faGear} stroke="1.5" />}>
+              Account settings
             </Menu.Item>
+          </Link>
+          <Menu.Item icon={<IconSwitchHorizontal size="0.9rem" stroke={1.5} />}>
+            Change account
+          </Menu.Item>
+
+          <Link to="/logout/" style={{ textDecoration: "none" }}>
             <Menu.Item
-              color="red"
-              icon={<IconTrash size="0.9rem" stroke={1.5} />}
+              icon={
+                <FontAwesomeIcon
+                  size="sm"
+                  icon={faRightFromBracket}
+                  stroke="1.5"
+                />
+              }
             >
-              Delete account
+              Logout
             </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
-      </Group>
-    </Container>
+          </Link>
+
+          <Menu.Divider />
+
+          <Menu.Label>Danger zone</Menu.Label>
+          <Menu.Item icon={<IconPlayerPause size="0.9rem" stroke={1.5} />}>
+            Pause subscription
+          </Menu.Item>
+          <Menu.Item
+            color="red"
+            icon={<IconTrash size="0.9rem" stroke={1.5} />}
+          >
+            Delete account
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    </Group>
   );
 };

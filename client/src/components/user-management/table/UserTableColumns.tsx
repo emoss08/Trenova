@@ -129,11 +129,7 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => {
       id: "actions",
       header: "Actions",
       Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={userTableStore}
-          name="User Profile"
-          data={row.original}
-        />
+        <MontaTableActionMenu store={userTableStore} data={row.original} />
       ),
     },
   ];

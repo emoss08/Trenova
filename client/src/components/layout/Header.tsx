@@ -16,20 +16,14 @@
  */
 
 import {
-  Anchor,
-  Box,
   Burger,
-  Button,
-  Center,
   Collapse,
   Divider,
   Drawer,
   Group,
   Header,
-  HoverCard,
   rem,
   ScrollArea,
-  SimpleGrid,
   Text,
   ThemeIcon,
   UnstyledButton,
@@ -39,7 +33,6 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuildingColumns,
-  faChevronDown,
   faTruckFast,
 } from "@fortawesome/pro-solid-svg-icons";
 import { Link } from "react-router-dom";
@@ -52,6 +45,11 @@ import { HeaderLogo } from "@/components/layout/Header/_Partials/HeaderLogo";
 import { UserNotifications } from "./Header/UserNotifications";
 import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
 import { SearchSpotlight } from "@/components/layout/Header/Search";
+import { CustomerServiceMenuItem } from "@/components/layout/Header/_Partials/CustomerServiceMenuItem";
+import { BillingMenuItem } from "@/components/layout/Header/_Partials/BillingMenuItem";
+import { EquipmentMenuItem } from "@/components/layout/Header/_Partials/EquipmentMenuItem";
+import { AdministratorMenuItem } from "@/components/layout/Header/_Partials/AdminMenuItem";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 const navigationLinks = [
   {
@@ -71,7 +69,8 @@ const navigationLinks = [
 export function HeaderMegaMenu() {
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
-  const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
+  const [linksOpened] = useHeaderStore.use("linksOpen");
+  // const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
   const { classes, theme } = useHeaderStyles();
 
   const customerServiceLinks = navigationLinks.map((item) => (
@@ -98,75 +97,27 @@ export function HeaderMegaMenu() {
         <Group position="apart" sx={{ height: "100%" }}>
           <HeaderLogo />
           <Group
-            sx={{ height: "100%" }}
+            sx={{
+              height: "100%",
+            }}
             spacing={0}
             className={classes.hiddenMobile}
           >
             <Link to="/" className={classes.link}>
               Home
             </Link>
-            <HoverCard
-              width={600}
-              position="bottom"
-              radius="md"
-              shadow="md"
-              withinPortal
-            >
-              <HoverCard.Target>
-                <Link to="#" className={classes.link}>
-                  <Center inline>
-                    <Box component="span" mr={5}>
-                      Customer Service
-                    </Box>
-                    <FontAwesomeIcon
-                      icon={faChevronDown}
-                      size="xs"
-                      color={theme.fn.primaryColor()}
-                    />
-                  </Center>
-                </Link>
-              </HoverCard.Target>
 
-              <HoverCard.Dropdown sx={{ overflow: "hidden" }}>
-                <Group position="apart" px="md">
-                  <Text fw={500}>Customer Service</Text>
-                  <Anchor href="#" fz="xs">
-                    View all
-                  </Anchor>
-                </Group>
+            {/* Customer Service */}
+            <CustomerServiceMenuItem />
 
-                <Divider
-                  my="sm"
-                  mx="-md"
-                  color={theme.colorScheme === "dark" ? "dark.5" : "gray.1"}
-                />
+            {/* Billing & AR */}
+            <BillingMenuItem />
 
-                <SimpleGrid cols={2} spacing={0}>
-                  {customerServiceLinks}
-                </SimpleGrid>
+            {/* Equipment Management */}
+            <EquipmentMenuItem />
 
-                <div className={classes.dropdownFooter}>
-                  <Group position="apart">
-                    <div>
-                      <Text fw={500} fz="sm">
-                        Get started
-                      </Text>
-                      <Text size="xs" color="dimmed">
-                        Their food sources have decreased, and their numbers
-                      </Text>
-                    </div>
-                    <Button variant="default">Get started</Button>
-                  </Group>
-                </div>
-              </HoverCard.Dropdown>
-            </HoverCard>
-
-            <Link to="/admin/users/" className={classes.link}>
-              Admin Panel
-            </Link>
-            <a href="#" className={classes.link}>
-              Academy
-            </a>
+            {/* Administrator*/}
+            <AdministratorMenuItem />
           </Group>
 
           <Group className={classes.hiddenMobile}>
@@ -214,18 +165,18 @@ export function HeaderMegaMenu() {
           <a href="#" className={classes.link}>
             Home
           </a>
-          <UnstyledButton className={classes.link} onClick={toggleLinks}>
-            <Center inline>
-              <Box component="span" mr={5}>
-                Features
-              </Box>
-              <FontAwesomeIcon
-                icon={faChevronDown}
-                size="xs"
-                color={theme.fn.primaryColor()}
-              />
-            </Center>
-          </UnstyledButton>
+          {/*<UnstyledButton className={classes.link} onClick={toggleLinks}>*/}
+          {/*  <Center inline>*/}
+          {/*    <Box component="span" mr={5}>*/}
+          {/*      Features*/}
+          {/*    </Box>*/}
+          {/*    <FontAwesomeIcon*/}
+          {/*      icon={faChevronDown}*/}
+          {/*      size="xs"*/}
+          {/*      color={theme.fn.primaryColor()}*/}
+          {/*    />*/}
+          {/*  </Center>*/}
+          {/*</UnstyledButton>*/}
           <Collapse in={linksOpened}>{customerServiceLinks}</Collapse>
           <a href="#" className={classes.link}>
             Learn
