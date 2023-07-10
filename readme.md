@@ -44,7 +44,7 @@ priorities without incurring extra labor costs or needing supplementary resource
 - Equipment Management System
 - Custom Reporting System
 - Automated Task Management System
-- AI-driven Natural Language Processing Tool - [Read More](<https://github.com/Monta-Application/Monta/blob/main/beam.md>.)
+- AI-driven Natural Language Processing Tool - [Read More](<https://github.com/Monta-Application/Monta/blob/main/beam.md>)
 - Plugin System
 - and more ...
 
