@@ -19,12 +19,12 @@ import { DivisionCode } from "@/types/apps/accounting";
 import React from "react";
 import { Box, SimpleGrid, Select, TextInput, Textarea } from "@mantine/core";
 import { statusChoices } from "@/lib/utils";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   divisionCode: DivisionCode;
-  selectGlAccountData: ChoiceProps[];
+  selectGlAccountData: TChoiceProps[];
 };
 
 export const ViewDCModalForm: React.FC<Props> = ({

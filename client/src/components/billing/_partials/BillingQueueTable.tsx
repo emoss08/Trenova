@@ -23,7 +23,7 @@ import {
 } from "mantine-react-table";
 import { BillingQueue } from "@/types/apps/billing";
 import { Badge, Button, Stack } from "@mantine/core";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { WebSocketManager } from "@/utils/websockets";
 import { billingClientStore } from "@/stores/BillingStores";
 
@@ -75,7 +75,7 @@ export const BillingQueueTable = ({ data, websocketManager }: Props) => {
             { value: "", label: "All" },
             { value: "true", label: "Yes" },
             { value: "false", label: "No" },
-          ] as ChoiceProps[],
+          ] as TChoiceProps[],
         },
         filterVariant: "select",
       },

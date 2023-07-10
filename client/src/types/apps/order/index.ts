@@ -30,7 +30,7 @@ export type OrderControl = {
   remove_orders: boolean;
 };
 
-export interface OrderControlFormValues {
+export type OrderControlFormValues = {
   auto_rate_orders: boolean;
   calculate_distance: boolean;
   enforce_rev_code: boolean;
@@ -42,7 +42,7 @@ export interface OrderControlFormValues {
   enforce_origin_destination: boolean;
   check_for_duplicate_bol: boolean;
   remove_orders: boolean;
-}
+};
 
 export type Order = {
   mileage: number;

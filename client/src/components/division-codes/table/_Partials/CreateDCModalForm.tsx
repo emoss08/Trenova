@@ -27,14 +27,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { DivisionCodeFormValues } from "@/types/apps/accounting";
 import { divisionCodeSchema } from "@/utils/apps/accounting/schema";
 import { statusChoices } from "@/lib/utils";
 import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
-  selectGlAccountData: ChoiceProps[];
+  selectGlAccountData: TChoiceProps[];
 };
 
 export const CreateDCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {

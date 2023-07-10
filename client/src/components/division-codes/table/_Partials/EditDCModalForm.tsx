@@ -30,13 +30,13 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
 import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 import { divisionCodeSchema } from "@/utils/apps/accounting/schema";
 import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   divisionCode: DivisionCode;
-  selectGlAccountData: ChoiceProps[];
+  selectGlAccountData: TChoiceProps[];
 };
 
 export const EditDCModalForm: React.FC<Props> = ({

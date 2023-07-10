@@ -16,14 +16,7 @@
  */
 
 import React from "react";
-import {
-  Box,
-  Button,
-  createStyles,
-  Group,
-  rem,
-  SimpleGrid,
-} from "@mantine/core";
+import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";

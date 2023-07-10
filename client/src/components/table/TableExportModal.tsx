@@ -28,7 +28,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
-import { ExportModelFormValues, exportModelTypes } from "@/types/forms";
+import { exportModelTypes, TExportModelFormValue } from "@/types/forms";
 import { ExportModelSchema } from "@/utils/schema";
 import { notifications } from "@mantine/notifications";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
@@ -58,7 +58,7 @@ export const TableExportModal: React.FC<Props> = ({
     staleTime: Infinity,
   });
 
-  const form = useForm<ExportModelFormValues>({
+  const form = useForm<TExportModelFormValue>({
     validate: yupResolver(ExportModelSchema),
     initialValues: {
       file_format: "csv",
@@ -71,7 +71,7 @@ export const TableExportModal: React.FC<Props> = ({
     value: column,
   }));
 
-  const submitForm = async (values: ExportModelFormValues) => {
+  const submitForm = async (values: TExportModelFormValue) => {
     setLoading(true);
 
     try {

@@ -21,7 +21,7 @@ import { Badge } from "@mantine/core";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { JobTitle } from "@/types/apps/accounts";
-import { ChoiceProps } from "@/types";
+import { TChoiceProps } from "@/types";
 
 export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => {
   return [
@@ -44,7 +44,7 @@ export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => {
           { value: "", label: "All" },
           { value: "A", label: "Active" },
           { value: "I", label: "Inactive" },
-        ] as ChoiceProps[],
+        ] as TChoiceProps[],
       },
       filterVariant: "select",
     },
