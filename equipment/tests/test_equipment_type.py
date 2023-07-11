@@ -33,13 +33,18 @@ def test_equipment_type_details(equipment_type: models.EquipmentType) -> None:
     assert equipment_type.equipment_type_details is not None
 
 
-def test_create_equipment_type(
+def test_create_equipment_type_post(
     api_client: APIClient, organization: Organization
 ) -> None:
-    """
-    Test create equipment type
-    """
+    """Test create equipment type
 
+    Args:
+        api_client (APIClient): Api Client
+        organization (Organization): Organization object
+
+    Returns:
+        None: This function does return anything.
+    """
     url = "/api/equipment_types/"
     data = {
         "name": "test_equipment_type",
@@ -55,10 +60,15 @@ def test_create_equipment_type(
 def test_create_equip_type_with_detail(
     api_client: APIClient, organization: Organization
 ) -> None:
-    """
-    Test create equipment type with detail
-    """
+    """Test create equipment type with equipment type details
 
+    Args:
+        api_client (APIClient): Api Client
+        organization (Organization): Organization object.
+
+    Returns:
+        None: This function does return anything.
+    """
     url = "/api/equipment_types/"
     data = {
         "name": "test_equipment_type",
@@ -91,10 +101,15 @@ def test_create_equip_type_with_detail(
 
 
 def test_detail_signal_fire(api_client: APIClient, organization: Organization) -> None:
-    """
-    Test detail signal fire
-    """
+    """Test equipment type detail is created when equipment type is created.
 
+    Args:
+        api_client (APIClient): Api Client
+        organization (Organization): Organization object
+
+    Returns:
+        None: This function does return anything.
+    """
     url = "/api/equipment_types/"
     data = {
         "organization": organization.id,
@@ -111,10 +126,16 @@ def test_detail_signal_fire(api_client: APIClient, organization: Organization) -
 def test_update_equipment_type(
     api_client: APIClient, equipment_type_api: Response, organization: Organization
 ) -> None:
-    """
-    Test update equipment type
-    """
+    """Test update equipment type
 
+    Args:
+        api_client (APIClient): Api Client
+        equipment_type_api (Response): Equipment Type API Response
+        organization (): Organization Object
+
+    Returns:
+        None: This function does return anything.
+    """
     put_data = {
         "organization": organization.id,
         "name": "test_updated",
@@ -134,10 +155,16 @@ def test_update_equipment_type(
 def test_update_equipment_details(
     api_client: APIClient, equipment_type_api: Response, organization: Organization
 ) -> None:
-    """
-    Test update equipment details
-    """
+    """Test update equipment type details
 
+    Args:
+        api_client (APIClient): Api Client
+        equipment_type_api (Response): Equipment Type API Response
+        organization (): Organization Object
+
+    Returns:
+        None: This function does return anything.
+    """
     put_data = {
         "organization": organization.id,
         "name": "test_equipment_type",
@@ -172,3 +199,24 @@ def test_update_equipment_details(
     assert response.data["equipment_type_details"]["width"] == "3.0000"
     assert response.data["equipment_type_details"]["weight"] == "0.0000"
     assert response.data["equipment_type_details"]["idling_fuel_usage"] == "0.0000"
+
+
+def test_delete_equipment_type(
+    api_client: APIClient, equipment_type_api: Response, organization: Organization
+) -> None:
+    """Test delete equipment type
+
+    Args:
+        api_client (APIClient): Api Client
+        equipment_type_api (Response): Equipment Type API Response
+        organization (): Organization Object
+
+    Returns:
+        None: This function does return anything.
+    """
+    response = api_client.delete(
+        reverse("equipment-types-detail", kwargs={"pk": equipment_type_api.data["id"]}),
+        format="json",
+    )
+
+    assert response.status_code == 204
