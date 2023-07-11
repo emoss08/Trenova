@@ -442,6 +442,30 @@ def mass_order_bill(request: Request) -> Response:
     )
 
 
+@extend_schema(
+    tags=["Transfer to billing"],
+    description="Transfer a group of orders by pro number.",
+    request={
+        "type": "object",
+        "properties": {
+            "type": "array",
+            "order_pros": {
+                "type": "string",
+                "example": "123456",
+            },
+        },
+    },
+    responses={
+        (200, "application/json"): {
+            "type": "string",
+            "message": "Transfer to billing task started.",
+        },
+        (400, "application/json"): {
+            "type": "string",
+            "message": "Order Pro(s) is required. Please Try Again.",
+        },
+    },
+)
 @api_view(["POST"])
 def transfer_to_billing(request: Request) -> Response:
     """
@@ -486,6 +510,70 @@ def transfer_to_billing(request: Request) -> Response:
     )
 
 
+@extend_schema(
+    tags=["Orders Ready to Bill"],
+    description="Get a list of orders ready to bill.",
+    request=None,
+    responses={
+        (200, "application/json"): {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "pro_number": {"type": "string"},
+                    "mileage": {"type": "float"},
+                    "other_charge_amount": {"type": "decimal"},
+                    "freight_charge_amount": {"type": "decimal"},
+                    "sub_total": {"type": "decimal"},
+                    "customer_name": {"type": "string"},
+                    "missing_documents": {"type": "list"},
+                    "is_missing_documents": {"type": "boolean"},
+                },
+            },
+        },
+    },
+)
+@api_view(["GET"])
+def get_orders_ready(request: Request) -> Response:
+    orders_ready = selectors.get_billable_orders(organization=request.user.organization)  # type: ignore
+    serializer = serializers.OrdersReadySerializer(orders_ready, many=True)
+    return Response(
+        {
+            "results": serializer.data,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@extend_schema(
+    tags=["Untransfer Orders"],
+    description="Untransfers a group of orders by invoice number.",
+    request={
+        "type": "object",
+        "properties": {
+            "type": "array",
+            "invoice_numbers": {
+                "type": "string",
+                "example": "123456",
+            },
+        },
+    },
+    responses={
+        (200, "application/json"): {
+            "type": "string",
+            "success": "Orders untransferred successfully.",
+        },
+        (400, "application/json"): {
+            "type": "string",
+            "error": "No invoice numbers provided.",
+        },
+        (404, "application/json"): {
+            "type": "string",
+            "error": "Invoice numbers not found.",
+        },
+    },
+)
 @api_view(["POST"])
 def untransfer_orders(request: Request) -> Response:
     invoice_numbers = request.data.get("invoice_numbers")
@@ -513,15 +601,3 @@ def untransfer_orders(request: Request) -> Response:
         return Response(
             {"error": "Invoice numbers not found."}, status=status.HTTP_404_NOT_FOUND
         )
-
-
-@api_view(["GET"])
-def get_orders_ready(request: Request) -> Response:
-    orders_ready = selectors.get_billable_orders(organization=request.user.organization)  # type: ignore
-    serializer = serializers.OrdersReadySerializer(orders_ready, many=True)
-    return Response(
-        {
-            "results": serializer.data,
-        },
-        status=status.HTTP_200_OK,
-    )
