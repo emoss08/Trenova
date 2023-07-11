@@ -26,9 +26,9 @@ from organization.models import Organization
 pytestmark = pytest.mark.django_db
 
 
-def test_equipment_type_detail_hook(equipment_type: models.EquipmentType) -> None:
+def test_equipment_type_details(equipment_type: models.EquipmentType) -> None:
     """
-    Test equipment type detail is added from create_equipment_type_details_after_create Hook
+    Test equipment type detail is created when equipment type is created.
     """
     assert equipment_type.equipment_type_details is not None
 
