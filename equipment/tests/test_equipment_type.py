@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework.test import APIClient
@@ -209,7 +210,7 @@ def test_delete_equipment_type(
     Args:
         api_client (APIClient): Api Client
         equipment_type_api (Response): Equipment Type API Response
-        organization (): Organization Object
+        organization (Organization): Organization Object
 
     Returns:
         None: This function does return anything.
@@ -220,3 +221,20 @@ def test_delete_equipment_type(
     )
 
     assert response.status_code == 204
+
+
+def test_unique_name_constrain(organization: Organization) -> None:
+    models.EquipmentType(
+        name="test", business_unit=organization.business_unit, organization=organization
+    ).save()
+    with pytest.raises(ValidationError) as excinfo:
+        models.EquipmentType(
+            name="test",
+            business_unit=organization.business_unit,
+            organization=organization,
+        ).save()
+
+    assert (
+        excinfo.value.message_dict["__all__"][0]
+        == "Equipment Type with this Name and Organization already exists."
+    )
