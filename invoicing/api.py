@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 
 from rest_framework import permissions, viewsets
 
+from core.permissions import CustomObjectPermissions
 from invoicing import models, serializers
 
 if TYPE_CHECKING:

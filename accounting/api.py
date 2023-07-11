@@ -19,6 +19,7 @@ from django.db.models import QuerySet
 from rest_framework import viewsets
 
 from accounting import models, serializers
+from core.permissions import CustomObjectPermissions
 
 
 class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
@@ -44,6 +45,8 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
         "account_sub_type",
         "account_classification",
     )
+    permission_classes = [CustomObjectPermissions]
+
 
     def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
         """The get_queryset function is used to filter the queryset by organization_id.
@@ -84,6 +87,7 @@ class RevenueCodeViewSet(viewsets.ModelViewSet):
         "expense_account",
         "revenue_account",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.RevenueCode]:
         """The get_queryset function is used to filter the queryset by organization_id.
@@ -118,7 +122,7 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.DivisionCodeSerializer
     queryset = models.DivisionCode.objects.all()
     search_fields = ("code", "status")
-
+    permission_classes = [CustomObjectPermissions]
     filterset_fields = (
         "status",
         "cash_account",

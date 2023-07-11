@@ -19,6 +19,7 @@ from django.db.models import QuerySet
 from rest_framework import viewsets
 
 from commodities import models, serializers
+from core.permissions import CustomObjectPermissions
 
 
 class HazardousMaterialViewSet(viewsets.ModelViewSet):
@@ -39,6 +40,7 @@ class HazardousMaterialViewSet(viewsets.ModelViewSet):
         "is_active",
         "name",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.HazardousMaterial]:
         queryset = self.queryset.filter(
@@ -72,6 +74,7 @@ class CommodityViewSet(viewsets.ModelViewSet):
     queryset = models.Commodity.objects.all()
     serializer_class = serializers.CommoditySerializer
     filterset_fields = ("name",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Commodity]:
         """

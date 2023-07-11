@@ -17,6 +17,7 @@
 from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions, viewsets
 
+from core.permissions import CustomObjectPermissions
 from dispatch import models, serializers
 
 
@@ -32,6 +33,7 @@ class CommentTypeViewSet(viewsets.ModelViewSet):
 
     queryset = models.CommentType.objects.all()
     serializer_class = serializers.CommentTypeSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.CommentType]:
         queryset = self.queryset.filter(
@@ -52,6 +54,7 @@ class DelayCodeViewSet(viewsets.ModelViewSet):
 
     queryset = models.DelayCode.objects.all()
     serializer_class = serializers.DelayCodeSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.DelayCode]:
         queryset = self.queryset.filter(
@@ -79,6 +82,7 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
     queryset = models.FleetCode.objects.all()
     serializer_class = serializers.FleetCodeSerializer
     filterset_fields = ("is_active",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.FleetCode]:
         queryset = self.queryset.filter(
@@ -145,6 +149,7 @@ class RateViewSet(viewsets.ModelViewSet):
 
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Rate]:
         queryset = self.queryset.prefetch_related(
@@ -202,6 +207,7 @@ class RateBillingTableViewSet(viewsets.ModelViewSet):
     queryset = models.RateBillingTable.objects.all()
     serializer_class = serializers.RateBillingTableSerializer
     filterset_fields = ("rate",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.RateBillingTable]:
         queryset = self.queryset.filter(

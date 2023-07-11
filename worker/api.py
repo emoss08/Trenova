@@ -18,12 +18,14 @@
 from django.db.models import Prefetch, QuerySet
 from rest_framework import viewsets
 
+from core.permissions import CustomObjectPermissions
 from worker import models, serializers
 
 
 class WorkerCommentViewSet(viewsets.ModelViewSet):
     queryset = models.WorkerComment.objects.all()
     serializer_class = serializers.WorkerCommentSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.WorkerComment]:
         queryset = self.queryset.filter(
@@ -42,6 +44,7 @@ class WorkerCommentViewSet(viewsets.ModelViewSet):
 class WorkerContactViewSet(viewsets.ModelViewSet):
     queryset = models.WorkerContact.objects.all()
     serializer_class = serializers.WorkerContactSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.WorkerContact]:
         queryset = self.queryset.filter(
@@ -63,6 +66,7 @@ class WorkerContactViewSet(viewsets.ModelViewSet):
 class WorkerProfileViewSet(viewsets.ModelViewSet):
     queryset = models.WorkerProfile.objects.all()
     serializer_class = serializers.WorkerProfileSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.WorkerProfile]:
         queryset = self.queryset.filter(
@@ -100,6 +104,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
 
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Worker]:
         """Returns a queryset of workers for the current user's organization.

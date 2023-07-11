@@ -17,6 +17,7 @@
 from django.db.models import QuerySet
 from rest_framework import permissions, viewsets
 
+from core.permissions import CustomObjectPermissions
 from route import models, serializers
 
 
@@ -37,6 +38,7 @@ class RouteViewSet(viewsets.ModelViewSet):
         "origin_location",
         "destination_location",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Route]:
         queryset = self.queryset.filter(

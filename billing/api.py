@@ -103,6 +103,7 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
         "order_type",
     )
     http_method_names = ["get", "put", "patch", "post", "head", "options"]
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.BillingQueue]:
         """The get_queryset function is used to filter the queryset based on the request.
@@ -175,6 +176,7 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
         "order_type",
     )
     http_method_names = ["get", "head", "options"]
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.BillingHistory]:
         """The get_queryset function is used to filter the queryset based on the request.
@@ -239,6 +241,7 @@ class BillingTransferLogViewSet(viewsets.ModelViewSet):
         "transferred_by__username",
     )
     http_method_names = ["get", "head", "options"]
+    permission_classes = [CustomObjectPermissions]
 
 
 class ChargeTypeViewSet(viewsets.ModelViewSet):

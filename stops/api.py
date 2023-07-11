@@ -17,6 +17,7 @@
 from django.db.models import QuerySet
 from rest_framework import viewsets
 
+from core.permissions import CustomObjectPermissions
 from stops import models, serializers
 
 
@@ -36,6 +37,7 @@ class QualifierCodeViewSet(viewsets.ModelViewSet):
 
     queryset = models.QualifierCode.objects.all()
     serializer_class = serializers.QualifierCodeSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.QualifierCode]:
         queryset = self.queryset.filter(
@@ -64,6 +66,7 @@ class StopCommentViewSet(viewsets.ModelViewSet):
 
     queryset = models.StopComment.objects.all()
     serializer_class = serializers.StopCommentSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.StopComment]:
         queryset = self.queryset.filter(
@@ -102,6 +105,7 @@ class StopViewSet(viewsets.ModelViewSet):
         "location__code",
     )
     filterset_fields = ("status", "stop_type")
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Stop]:
         queryset = self.queryset.filter(
@@ -143,3 +147,4 @@ class ServiceIncidentViewSet(viewsets.ModelViewSet):
     queryset = models.ServiceIncident.objects.all()
     serializer_class = serializers.ServiceIncidentSerializer
     filterset_fields = ("delay_code",)
+    permission_classes = [CustomObjectPermissions]

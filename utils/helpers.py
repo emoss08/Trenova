@@ -14,29 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from typing import Any
-
-from equipment import models
+from organization.models import BusinessUnit
 
 
-def create_equipment_type_details(
-    sender: models.EquipmentType,
-    instance: models.EquipmentType,
-    created: bool,
-    **kwargs: Any,
-) -> None:
-    """Create Equipment Type details
+def get_or_create_business_unit(*, bs_name: str) -> BusinessUnit:
+    business_unit: BusinessUnit
+    created: bool
 
-    After the initial creation of the Equipment Type, if equipment_type_details doesn't
-    exist then create it.
-
-    Returns:
-        None: None
-    """
-    if created:
-        models.EquipmentTypeDetail.objects.create(
-            equipment_type=instance,
-            organization=instance.organization,
-            business_unit=instance.organization.business_unit,
-        )
+    business_unit, created = BusinessUnit.objects.get_or_create(name=bs_name)
+    return business_unit

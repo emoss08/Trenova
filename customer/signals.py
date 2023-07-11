@@ -64,6 +64,7 @@ def create_customer_billing_profile(
         default_rule_profile,
         rule_profile_exists,
     ) = models.CustomerRuleProfile.objects.get_or_create(
+        business_unit=instance.organization.business_unit,
         organization=instance.organization,
         name="Default",
     )
@@ -74,6 +75,7 @@ def create_customer_billing_profile(
         and created
     ):
         models.CustomerBillingProfile.objects.create(
+            business_unit=instance.organization.business_unit,
             organization=instance.organization,
             customer=instance,
             is_active=True,

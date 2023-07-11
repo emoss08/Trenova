@@ -17,6 +17,7 @@
 from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions, viewsets
 
+from core.permissions import CustomObjectPermissions
 from movements.models import Movement
 from order import models, serializers
 
@@ -88,6 +89,7 @@ class OrderTypeViewSet(viewsets.ModelViewSet):
     queryset = models.OrderType.objects.all()
     serializer_class = serializers.OrderTypeSerializer
     filterset_fields = ("is_active",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.OrderType]":
         queryset = self.queryset.filter(
@@ -123,6 +125,7 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
     queryset = models.ReasonCode.objects.all()
     serializer_class = serializers.ReasonCodeSerializer
     filterset_fields = ("is_active",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.ReasonCode]":
         queryset = self.queryset.filter(
@@ -141,6 +144,7 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.Order]":
         queryset = (
@@ -246,6 +250,7 @@ class OrderDocumentationViewSet(viewsets.ModelViewSet):
 
     queryset = models.OrderDocumentation.objects.all()
     serializer_class = serializers.OrderDocumentationSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.OrderDocumentation]":
         queryset = self.queryset.filter(
@@ -283,6 +288,7 @@ class OrderCommentViewSet(viewsets.ModelViewSet):
         "comment_type",
         "entered_by",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.OrderComment]":
         queryset = self.queryset.filter(
@@ -321,6 +327,7 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
         "accessorial_charge",
         "entered_by",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.AdditionalCharge]":
         queryset = self.queryset.filter(

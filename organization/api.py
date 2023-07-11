@@ -31,6 +31,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core import checks
+from core.permissions import CustomObjectPermissions
 from organization import exceptions, models, selectors, serializers
 
 
@@ -49,6 +50,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.OrganizationSerializer
     queryset = models.Organization.objects.all()
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Organization]:
         """Filter the queryset to only include the current user
@@ -97,6 +99,7 @@ class DepotViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.DepotSerializer
     queryset = models.Depot.objects.all()
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Depot]:
         """The get_queryset function is used to filter the queryset of all depots
@@ -143,6 +146,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.DepartmentSerializer
     queryset = models.Department.objects.all()
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Department]:
         """The get_queryset function is used to filter the queryset of departments
@@ -175,6 +179,7 @@ class EmailProfileViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.EmailProfileSerializer
     queryset = models.EmailProfile.objects.all()
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.EmailProfile]:
         """
@@ -239,8 +244,8 @@ class EmailLogViewSet(viewsets.ModelViewSet):
 
     queryset = models.EmailLog.objects.all()
     serializer_class = serializers.EmailLogSerializer
-    permission_classes = [permissions.IsAdminUser]
     http_method_names = ["get", "head", "options"]
+    permission_classes = [CustomObjectPermissions]
 
 
 class TaxRateViewSet(viewsets.ModelViewSet):
@@ -250,6 +255,7 @@ class TaxRateViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.TaxRateSerializer
     queryset = models.TaxRate.objects.all()
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.TaxRate]:
         """
@@ -280,6 +286,7 @@ class TableChangeAlertViewSet(viewsets.ModelViewSet):
 
     serializer_class = serializers.TableChangeAlertSerializer
     queryset = models.TableChangeAlert.objects.all()
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.TableChangeAlert]:
         """The get_queryset function is used to filter the queryset based on the request.user's

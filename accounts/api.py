@@ -28,6 +28,7 @@ from rest_framework.request import Request
 
 from accounts import models, serializers
 from accounts.permissions import ViewAllUsersPermission
+from core.permissions import CustomObjectPermissions
 from utils.exceptions import InvalidTokenException
 from utils.types import AuthenticatedRequest
 
@@ -41,7 +42,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     filterset_fields = ["name"]
     ordering_fields = "__all__"
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CustomObjectPermissions]
 
 
 class PermissionViewSet(viewsets.ModelViewSet):
@@ -53,7 +54,7 @@ class PermissionViewSet(viewsets.ModelViewSet):
     queryset = Permission.objects.all()
     filterset_fields = ["name"]
     ordering_fields = "__all__"
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [CustomObjectPermissions]
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -75,7 +76,7 @@ class UserViewSet(viewsets.ModelViewSet):
         "is_staff",
         "username",
     )
-    permission_classes = [permissions.IsAuthenticated, ViewAllUsersPermission]
+    permission_classes = [ViewAllUsersPermission, CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.User]:
         """The get_queryset function is used to filter the queryset of users by organization.
@@ -249,6 +250,7 @@ class JobTitleViewSet(viewsets.ModelViewSet):
     queryset = models.JobTitle.objects.all()
     filterset_fields = ["status", "name"]
     search_fields = ("name", "status")
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.JobTitle]:
         """The get_queryset function is used to filter the queryset of JobTitles by organization_id.
