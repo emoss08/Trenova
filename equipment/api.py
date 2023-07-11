@@ -17,6 +17,7 @@
 from django.db.models import Prefetch, QuerySet
 from rest_framework import viewsets
 
+from core.permissions import CustomObjectPermissions
 from equipment import models, serializers
 
 
@@ -34,6 +35,7 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
 
     queryset = models.EquipmentType.objects.all()
     serializer_class = serializers.EquipmentTypeSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.EquipmentType]:
         queryset = (
@@ -81,6 +83,7 @@ class TractorViewSet(viewsets.ModelViewSet):
         "has_berth",
         "highway_use_tax",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
         queryset = self.queryset.filter(
@@ -136,6 +139,7 @@ class TrailerViewSet(viewsets.ModelViewSet):
     queryset = models.Trailer.objects.all()
     serializer_class = serializers.TrailerSerializer
     filterset_fields = ("is_active", "equipment_type__name", "fleet__code", "is_leased")
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Tractor]:
         queryset = self.queryset.filter(
@@ -184,6 +188,7 @@ class EquipmentManufacturerViewSet(viewsets.ModelViewSet):
 
     queryset = models.EquipmentManufacturer.objects.all()
     serializer_class = serializers.EquipmentManufacturerSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.EquipmentManufacturer]:
         queryset = self.queryset.filter(
@@ -211,6 +216,7 @@ class EquipmentMaintenancePlanViewSet(viewsets.ModelViewSet):
 
     queryset = models.EquipmentMaintenancePlan.objects.all()
     serializer_class = serializers.EquipmentMaintenancePlanSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.EquipmentMaintenancePlan]:
         queryset = (

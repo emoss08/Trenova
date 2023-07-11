@@ -22,6 +22,7 @@ from rest_framework import viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.permissions import CustomObjectPermissions
 from location import models, selectors, serializers
 
 
@@ -39,6 +40,7 @@ class LocationCategoryViewSet(viewsets.ModelViewSet):
 
     queryset = models.LocationCategory.objects.all()
     serializer_class = serializers.LocationCategorySerializer
+    permission_classes = [CustomObjectPermissions]
 
 
 class LocationViewSet(viewsets.ModelViewSet):
@@ -56,6 +58,7 @@ class LocationViewSet(viewsets.ModelViewSet):
     queryset = models.Location.objects.all()
     serializer_class = serializers.LocationSerializer
     filterset_fields = ("location_category__name", "depot__name", "is_geocoded")
+    permission_classes = [CustomObjectPermissions]
 
     def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         queryset = self.filter_queryset(self.get_queryset())
@@ -139,6 +142,7 @@ class LocationContactViewSet(viewsets.ModelViewSet):
 
     queryset = models.LocationContact.objects.all()
     serializer_class = serializers.LocationContactSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.LocationContact]:
         queryset = self.queryset.filter(
@@ -168,6 +172,7 @@ class LocationCommentViewSet(viewsets.ModelViewSet):
 
     queryset = models.LocationComment.objects.all()
     serializer_class = serializers.LocationCommentSerializer
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.LocationComment]:
         queryset = self.queryset.filter().only(

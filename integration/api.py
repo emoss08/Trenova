@@ -17,6 +17,7 @@
 
 from rest_framework import viewsets
 
+from core.permissions import CustomObjectPermissions
 from integration import models, serializers
 
 
@@ -32,6 +33,7 @@ class IntegrationVendorViewSet(viewsets.ModelViewSet):
 
     queryset = models.IntegrationVendor.objects.all()
     serializer_class = serializers.IntegrationVendorSerializer
+    permission_classes = [CustomObjectPermissions]
 
 
 class IntegrationViewSet(viewsets.ModelViewSet):
@@ -45,6 +47,7 @@ class IntegrationViewSet(viewsets.ModelViewSet):
 
     queryset = models.Integration.objects.all()
     serializer_class = serializers.IntegrationSerializer
+    permission_classes = [CustomObjectPermissions]
 
 
 class GoogleAPIViewSet(viewsets.ModelViewSet):
@@ -61,3 +64,4 @@ class GoogleAPIViewSet(viewsets.ModelViewSet):
 
     queryset = models.GoogleAPI.objects.all()
     serializer_class = serializers.GoogleAPISerializer
+    permission_classes = [CustomObjectPermissions]

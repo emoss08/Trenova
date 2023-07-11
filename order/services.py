@@ -54,7 +54,11 @@ def create_initial_movement(*, order: models.Order) -> None:
     Returns:
         None: This function does not return anything.
     """
-    Movement.objects.create(organization=order.organization, order=order)
+    Movement.objects.create(
+        organization=order.organization,
+        business_unit=order.organization.business_unit,
+        order=order,
+    )
 
 
 def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:

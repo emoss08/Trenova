@@ -18,6 +18,7 @@
 from django.db.models import Prefetch, QuerySet
 from rest_framework import viewsets
 
+from core.permissions import CustomObjectPermissions
 from customer import models, serializers
 
 
@@ -36,6 +37,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
     queryset = models.Customer.objects.all()
     serializer_class = serializers.CustomerSerializer
     filterset_fields = ("code", "name")
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Customer]:
         """Returns a queryset of customers for the current organization.
@@ -95,6 +97,7 @@ class CustomerBillingProfileViewSet(viewsets.ModelViewSet):
     queryset = models.CustomerBillingProfile.objects.all()
     serializer_class = serializers.CustomerBillingProfileSerializer
     filterset_fields = ("is_active", "customer", "rule_profile")
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.CustomerBillingProfile]:
         queryset = self.queryset.filter(
@@ -129,6 +132,7 @@ class CustomerFuelTableViewSet(viewsets.ModelViewSet):
         "id",
         "name",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.CustomerFuelTable]:
         """Get the queryset for the viewset.
@@ -185,6 +189,7 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
     queryset = models.CustomerRuleProfile.objects.all()
     serializer_class = serializers.CustomerRuleProfileSerializer
     filterset_fields = ("name",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.CustomerRuleProfile]:
         """Get the queryset for the viewset.

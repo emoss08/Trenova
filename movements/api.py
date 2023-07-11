@@ -17,6 +17,7 @@
 from django.db.models import QuerySet
 from rest_framework import viewsets
 
+from core.permissions import CustomObjectPermissions
 from movements import models, serializers
 
 
@@ -44,6 +45,7 @@ class MovementViewSet(viewsets.ModelViewSet):
         "secondary_worker__code",
         "order__pro_number",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Movement]:
         queryset = self.queryset.filter(

@@ -57,6 +57,7 @@ def create_initial_stops(
     try:
         origin_stop: Stop = Stop.objects.create(
             organization=movement.organization,
+            business_unit=movement.organization.business_unit,
             movement=movement,
             sequence=1,
             stop_type=StopChoices.PICKUP,
@@ -67,6 +68,7 @@ def create_initial_stops(
         )
         destination_stop: Stop = Stop.objects.create(
             organization=movement.organization,
+            business_unit=movement.organization.business_unit,
             movement=movement,
             sequence=2,
             stop_type=StopChoices.DELIVERY,

@@ -24,6 +24,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from core.permissions import CustomObjectPermissions
 from reports import models, serializers, tasks
 from reports.exceptions import DisallowedModelException
 from reports.helpers import ALLOWED_MODELS
@@ -102,6 +103,7 @@ class CustomReportViewSet(viewsets.ModelViewSet):
         "name",
         "table",
     )
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.CustomReport]":
         """Returns the queryset for this viewset, filtered by the organization of the current user.
@@ -255,6 +257,7 @@ class UserReportViewSet(viewsets.ModelViewSet):
     queryset = models.UserReport.objects.all()
     serializer_class = serializers.UserReportSerializer
     filterset_fields = ("user_id",)
+    permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> "QuerySet[models.UserReport]":
         """Returns the queryset for the viewset.
