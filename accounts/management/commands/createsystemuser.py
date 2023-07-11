@@ -24,6 +24,7 @@ from django.db.transaction import atomic
 
 from accounts.models import JobTitle, User, UserProfile
 from organization.models import BusinessUnit, Organization
+from utils.helpers import get_or_create_business_unit
 
 
 class Command(BaseCommand):
@@ -90,14 +91,6 @@ class Command(BaseCommand):
             help="Name of the system business unit.",
             default="sys",
         )
-
-    @staticmethod
-    def create_system_business_unit(bs_name: str) -> BusinessUnit:
-        business_unit: BusinessUnit
-        created: bool
-
-        business_unit, created = BusinessUnit.objects.get_or_create(name=bs_name)
-        return business_unit
 
     @staticmethod
     def create_system_organization(
@@ -185,7 +178,7 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR("Invalid username"))
             return
 
-        business_unit = self.create_system_business_unit(bs_unit_name)
+        business_unit = get_or_create_business_unit(bs_name=bs_unit_name)
         organization = self.create_system_organization(organization_name, business_unit)
         job_title = self.create_system_job_title(organization, business_unit)
 

@@ -29,6 +29,7 @@ from equipment.models import EquipmentType
 from location.models import Location
 from order.models import Order, OrderType
 from organization.models import Organization
+from utils.helpers import get_or_create_business_unit
 
 DESCRIPTION = "GENERATED FROM CREATE TEST ORDERS COMMAND"
 
@@ -116,7 +117,7 @@ class Command(BaseCommand):
             "--organization",
             type=str,
             help="Name of the system organization.",
-            default="sys",
+            default="Sys",
         )
 
     @staticmethod
@@ -136,8 +137,9 @@ class Command(BaseCommand):
         """
         organization: Organization
         created: bool
+        business_unit = get_or_create_business_unit(bs_name=organization_name)
 
-        defaults = {"scac_code": organization_name[:4]}
+        defaults = {"scac_code": organization_name[:4], "business_unit": business_unit}
         organization, created = Organization.objects.get_or_create(
             name=organization_name, defaults=defaults
         )
@@ -160,6 +162,7 @@ class Command(BaseCommand):
         """
         user, created = User.objects.get_or_create(
             organization=organization,
+            business_unit=organization.business_unit,
             username="walle",
             password="0&7Wj4Htiqwv3HAF1!",
             email=f"walle@{organization.name}.com",
@@ -186,6 +189,7 @@ class Command(BaseCommand):
             "city": "New York",
             "state": "NY",
             "zip_code": "10001",
+            "business_unit": organization.business_unit,
         }
         location_1, created = Location.objects.get_or_create(
             organization=organization,
@@ -216,7 +220,10 @@ class Command(BaseCommand):
         is assigned a default description. If the order type already exists, it returns the existing order type
         instead.
         """
-        defaults = {"description": DESCRIPTION}
+        defaults = {
+            "description": DESCRIPTION,
+            "business_unit": organization.business_unit,
+        }
         order_type, created = OrderType.objects.get_or_create(
             organization=organization, name="Test Order", defaults=defaults
         )
@@ -244,6 +251,7 @@ class Command(BaseCommand):
             "city": "New York",
             "state": "NY",
             "zip_code": "10001",
+            "business_unit": organization.business_unit,
         }
         customer, created = Customer.objects.get_or_create(
             organization=organization, code="test", defaults=defaults
@@ -265,7 +273,10 @@ class Command(BaseCommand):
         type is assigned a default description. If the equipment type already exists, it returns the existing
         equipment type instead.
         """
-        defaults = {"description": DESCRIPTION}
+        defaults = {
+            "description": DESCRIPTION,
+            "business_unit": organization.business_unit,
+        }
         equipment_type, created = EquipmentType.objects.get_or_create(
             organization=organization, name="test", defaults=defaults
         )
@@ -289,6 +300,7 @@ class Command(BaseCommand):
         defaults = {
             "description": "System job title.",
             "job_function": JobTitle.JobFunctionChoices.SYS_ADMIN,
+            "business_unit": organization.business_unit,
         }
         job_title, created = JobTitle.objects.get_or_create(
             organization=organization, name="System", defaults=defaults
@@ -339,6 +351,7 @@ class Command(BaseCommand):
             for _ in range(order_count):
                 Order.objects.create(
                     organization=organization,
+                    business_unit=organization.business_unit,
                     order_type=order_type,
                     customer=customer,
                     origin_location=location_1,
