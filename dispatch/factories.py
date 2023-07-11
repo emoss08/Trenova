@@ -55,7 +55,7 @@ class DelayCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.DelayCode"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "business_unit")
 
 
 class FleetCodeFactory(factory.django.DjangoModelFactory):
@@ -74,7 +74,7 @@ class FleetCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.FleetCode"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "business_unit")
 
 
 class CommentTypeFactory(factory.django.DjangoModelFactory):
@@ -93,7 +93,7 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.CommentType"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "business_unit")
 
 
 class RateFactory(factory.django.DjangoModelFactory):

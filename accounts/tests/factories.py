@@ -30,7 +30,7 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounts.JobTitle"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "business_unit")
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
