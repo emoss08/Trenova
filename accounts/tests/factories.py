@@ -52,14 +52,14 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = "accounts.User"
         django_get_or_create = ("organization", "business_unit")
 
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
     username = factory.Faker("user_name")
     password = factory.Faker("password")
     email = factory.Faker("email")
     is_staff = True
     is_superuser = True
     date_joined = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
 
     @factory.post_generation
     def profile(self, create, extracted, **kwargs):
@@ -77,17 +77,6 @@ class ProfileFactory(factory.django.DjangoModelFactory):
     Profile Factory
     """
 
-    user = factory.SubFactory(UserFactory)
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    job_title = factory.SubFactory(JobTitleFactory)
-    first_name = factory.Faker("first_name")
-    last_name = factory.Faker("last_name")
-    address_line_1 = factory.Faker("street_address", locale="en_US")
-    city = factory.Faker("city")
-    state = "NC"
-    zip_code = factory.Faker("zipcode")
-
     class Meta:
         """
         Metaclass for ProfileFactory
@@ -97,8 +86,20 @@ class ProfileFactory(factory.django.DjangoModelFactory):
         django_get_or_create = (
             "organization",
             "job_title",
+            "business_unit",
             "user",
         )
+
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    user = factory.SubFactory(UserFactory)
+    job_title = factory.SubFactory(JobTitleFactory)
+    first_name = factory.Faker("first_name")
+    last_name = factory.Faker("last_name")
+    address_line_1 = factory.Faker("street_address", locale="en_US")
+    city = factory.Faker("city")
+    state = "NC"
+    zip_code = factory.Faker("zipcode")
 
 
 class TokenFactory(factory.django.DjangoModelFactory):

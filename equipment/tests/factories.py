@@ -31,10 +31,11 @@ class EquipmentTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "equipment.EquipmentType"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("organization", "business_unit")
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("pystr", max_chars=50)
+    name = factory.Faker("name")
 
 
 class EquipmentTypeDetailFactory(factory.django.DjangoModelFactory):

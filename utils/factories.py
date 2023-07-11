@@ -45,26 +45,3 @@ class FactoryMixin(
             if isinstance(attr_value, factory.SubFactory)
         )
         cls.Meta.django_get_or_create = tuple(django_get_or_create)
-
-
-#
-#
-# class FactoryMixin(
-#     factory.django.DjangoModelFactory, metaclass=UpdateGetOrCreateMetaClass
-# ):
-#     class Meta:
-#         model = models.Model
-#         django_get_or_create = ()
-#
-#     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-#     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-#
-#     @classmethod
-#     def update_get_or_create(cls):
-#         django_get_or_create = list(cls.Meta.django_get_or_create)
-#         django_get_or_create.extend(
-#             attr_name
-#             for attr_name, attr_value in cls.__dict__.items()
-#             if isinstance(attr_value, factory.SubFactory)
-#         )
-#         cls.Meta.django_get_or_create = tuple(django_get_or_create)

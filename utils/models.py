@@ -27,7 +27,7 @@ from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
-from organization.models import Organization
+from organization.models import BusinessUnit, Organization
 
 
 def generate_random_string(length: int = 10) -> str:
@@ -115,12 +115,15 @@ class GenericModel(TimeStampedModel):
     class Meta:
         abstract = True
 
-    def clean(self) -> None:
-        """ "Validate Organization is a part of the Business Unit"""
-        if self.organization not in self.business_unit.organizations.all():
-            raise ValidationError(
-                {"organization": _("Organization must be apart of the Business Unit.")}
-            )
+    # def clean(self) -> None:
+    #     """ "Validate Organization is a part of the Business Unit"""
+    #     if (
+    #         self.organization
+    #         not in self.business_unit.organizations.all()
+    #     ):
+    #         raise ValidationError(
+    #             {"organization": _("Organization must be apart of the Business Unit.")}
+    #         )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the model instance
