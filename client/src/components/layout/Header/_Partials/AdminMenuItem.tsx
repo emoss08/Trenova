@@ -29,6 +29,7 @@ export const AdministratorMenuItem = () => {
       menuLinks={adminNavLinks}
       name="Administrator"
       numOfColumns={3}
+      width={900}
     />
   );
 };
