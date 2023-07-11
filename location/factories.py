@@ -17,8 +17,6 @@
 
 import factory
 
-from utils.factories import FactoryMixin
-
 
 class LocationCategoryFactory(factory.django.DjangoModelFactory):
     """
@@ -87,7 +85,7 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
     email = factory.Faker("email", locale="en_US")
 
 
-class LocationCommentFactory(FactoryMixin):
+class LocationCommentFactory(factory.django.DjangoModelFactory):
     """
     LocationComment factory
     """
@@ -98,10 +96,17 @@ class LocationCommentFactory(FactoryMixin):
         """
 
         model = "location.LocationComment"
+        django_get_or_create = (
+            "organization",
+            "location",
+            "comment_type",
+            "business_unit",
+            "entered_by",
+        )
 
-    # business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    # organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    # location = factory.SubFactory("location.factories.LocationFactory")
-    # comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    location = factory.SubFactory("location.factories.LocationFactory")
+    comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
     comment = factory.Faker("text", locale="en_US")
-    # entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+    entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")

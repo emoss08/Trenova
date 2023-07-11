@@ -41,9 +41,9 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "organization.Organization"
-        django_get_or_create = ("name", "business_unit")
+        django_get_or_create = ("name", "business_unit",)
 
-    business_unit = factory.SubFactory(BusinessUnitFactory)
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     name = factory.Faker("company", locale="en_US")
     scac_code = "RNDM"
 
