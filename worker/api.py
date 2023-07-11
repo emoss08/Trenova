@@ -168,6 +168,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
                 "fleet_id",
                 "depot_id",
                 "organization_id",
+                "business_unit_id",
                 "profiles__license_expiration_date",
                 "profiles__hazmat_expiration_date",
                 "profiles__sex",

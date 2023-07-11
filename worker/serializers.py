@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 from typing import Any
 
 from django.db import transaction
@@ -37,7 +38,10 @@ class WorkerCommentSerializer(GenericSerializer):
 
         model = models.WorkerComment
         extra_fields = ("id",)
-        extra_read_only_fields = ("worker",)
+        extra_read_only_fields = (
+            "worker",
+            "business_unit",
+        )
 
 
 class WorkerContactSerializer(GenericSerializer):
@@ -56,6 +60,7 @@ class WorkerContactSerializer(GenericSerializer):
         extra_read_only_fields = ("worker",)
         extra_fields = (
             "organization",
+            "business_unit",
             "id",
         )
 
@@ -72,7 +77,10 @@ class WorkerProfileSerializer(GenericSerializer):
 
         model = models.WorkerProfile
         extra_read_only_fields = ("worker",)
-        extra_fields = ("organization",)
+        extra_fields = (
+            "organization",
+            "business_unit",
+        )
 
 
 class WorkerSerializer(GenericSerializer):
@@ -100,6 +108,7 @@ class WorkerSerializer(GenericSerializer):
         model = models.Worker
         extra_fields = (
             "organization",
+            "business_unit",
             "is_active",
             "depot",
             "manager",
@@ -122,6 +131,9 @@ class WorkerSerializer(GenericSerializer):
         # Get the organization of the user from the request.
         organization = super().get_organization
 
+        # Get the business unit of the user from the request.
+        business_unit = super().get_business_unit
+
         # Get the user from the request.
         user = self.context["request"].user
 
@@ -132,6 +144,7 @@ class WorkerSerializer(GenericSerializer):
 
         # Create the Worker.
         validated_data["organization"] = organization
+        validated_data["business_unit"] = business_unit
         validated_data["entered_by"] = user
         worker = models.Worker.objects.create(**validated_data)
 
@@ -145,18 +158,21 @@ class WorkerSerializer(GenericSerializer):
             worker_profile.delete()
 
             profile_data["organization"] = organization
+            profile_data["business_unit"] = business_unit
             models.WorkerProfile.objects.create(worker=worker, **profile_data)
 
         # Create the Worker Contacts
         if contacts_data:
             for contact in contacts_data:
                 contact["organization"] = organization
-                worker.contacts.create(**contact)
+                contact["business_unit"] = business_unit
+                models.WorkerContact.objects.create(worker=worker, **contact)
 
         # Create the Worker Comments
         if comments_data:
             for comment_data in comments_data:
                 comment_data["organization"] = organization
+                comment_data["business_unit"] = business_unit
                 models.WorkerComment.objects.create(worker=worker, **comment_data)
 
         return worker
@@ -184,7 +200,11 @@ class WorkerSerializer(GenericSerializer):
 
             for comment_data in comments_data:
                 comment_id = comment_data.pop("id", None)
-                defaults = {**comment_data, "organization": instance.organization}
+                defaults = {
+                    **comment_data,
+                    "organization": instance.organization,
+                    "business_unit": instance.organization.business_unit,
+                }
                 if comment_id:
                     updated = models.WorkerComment.objects.filter(
                         id=comment_id, worker=instance
@@ -200,7 +220,11 @@ class WorkerSerializer(GenericSerializer):
 
             for contact_data in contacts_data:
                 contact_id = contact_data.pop("id", None)
-                defaults = {**contact_data, "organization": instance.organization}
+                defaults = {
+                    **contact_data,
+                    "organization": instance.organization,
+                    "business_unit": instance.organization.business_unit,
+                }
                 if contact_id:
                     updated = models.WorkerContact.objects.filter(
                         id=contact_id, worker=instance

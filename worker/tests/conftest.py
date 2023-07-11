@@ -58,6 +58,7 @@ def worker_api(organization: Organization, user: User) -> Generator[Any, Any, No
     fleet = FleetCodeFactory()
     yield models.Worker.objects.create(
         organization=organization,
+        business_unit=organization.business_unit,
         code="Test",
         is_active=True,
         worker_type="EMPLOYEE",
