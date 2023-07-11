@@ -66,19 +66,25 @@ class EquipmentTypeSerializer(GenericSerializer):
         """
         detail_data = validated_data.pop("equipment_type_details", {})
         organization = super().get_organization
+        business_unit = super().get_business_unit
 
         equipment_type = models.EquipmentType.objects.create(
-            organization=organization, **validated_data
+            organization=organization, business_unit=business_unit, **validated_data
         )
 
         if detail_data:
             if details := models.EquipmentTypeDetail.objects.get(  # type: ignore
-                organization=organization, equipment_type=equipment_type
+                organization=organization,
+                business_unit=business_unit,
+                equipment_type=equipment_type,
             ):
                 details.delete()
 
             models.EquipmentTypeDetail.objects.create(
-                organization=organization, equipment_type=equipment_type, **detail_data
+                organization=organization,
+                business_unit=business_unit,
+                equipment_type=equipment_type,
+                **detail_data,
             )
 
         return equipment_type
