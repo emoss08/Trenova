@@ -28,22 +28,21 @@ pytestmark = pytest.mark.django_db
 
 def test_get(api_client: APIClient) -> None:
     """
-    Test get Document Classification
+    Test get Worker
     """
     response = api_client.get("/api/workers/")
     assert response.status_code == 200
 
 
-#
-# def test_get_by_id(api_client: APIClient, worker_api: Worker, user: User) -> None:
-#     """
-#     Test get Document classification by ID
-#     """
-#     response = api_client.get(f"/api/workers/{worker_api.id}/")
-#     assert response.status_code == 200
+def test_get_by_id(api_client: APIClient, worker_api: Worker, user: User) -> None:
+    """
+    Test get Document classification by ID
+    """
+    response = api_client.get(f"/api/workers/{worker_api.id}/")
+    assert response.status_code == 200
 
 
-def test_create(
+def test_post_worker(
     api_client: APIClient,
     comment_type: CommentType,
     user: User,
@@ -57,7 +56,6 @@ def test_create(
     response = api_client.post(
         "/api/workers/",
         {
-            "organization": organization.id,
             "is_active": True,
             "worker_type": "EMPLOYEE",
             "first_name": "foo",
@@ -71,6 +69,7 @@ def test_create(
             "fleet": fleet.code,
             "profile": {
                 "organization": organization.id,
+                "business_unit": organization.business_unit_id,
                 "race": "TEST",
                 "sex": "MALE",
                 "date_of_birth": "1970-12-10",
@@ -82,6 +81,7 @@ def test_create(
             "comments": [
                 {
                     "organization": organization.id,
+                    "business_unit": organization.business_unit_id,
                     "comment": "TEST COMMENT CREATION",
                     "comment_type": comment_type.id,
                     "entered_by": user.id,
@@ -90,6 +90,7 @@ def test_create(
             "contacts": [
                 {
                     "organization": organization.id,
+                    "business_unit": organization.business_unit_id,
                     "name": "Test Contact",
                     "phone": "1234567890",
                     "email": "test@test.com",

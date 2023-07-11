@@ -40,5 +40,7 @@ def create_worker_profile(
         and not models.WorkerProfile.objects.filter(pk__exact=instance.pk).exists()
     ):
         models.WorkerProfile.objects.create(
-            worker=instance, organization=instance.organization
+            worker=instance,
+            organization=instance.organization,
+            business_unit=instance.organization.business_unit,
         )
