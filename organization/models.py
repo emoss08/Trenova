@@ -71,19 +71,6 @@ class BusinessUnit(TimeStampedModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def save(self, **kwargs: Any) -> None:
-        """Business Unit save method.
-
-        Args:
-            **kwargs (Any): Keyword arguments
-
-        Returns:
-            None: This function does not return anything.
-        """
-
-        self.name = self.name.title()
-        super().save(**kwargs)
-
     def get_absolute_url(self) -> str:
         """Absolute URl for the Business Unit.
 

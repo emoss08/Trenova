@@ -29,8 +29,8 @@ class ChargeTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "billing.ChargeType"
-        django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
 
@@ -46,8 +46,8 @@ class AccessorialChargeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "billing.AccessorialCharge"
-        django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("word", locale="en_US")
     charge_amount = 100.0
@@ -64,8 +64,8 @@ class DocumentClassificationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "billing.DocumentClassification"
-        django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("word", locale="en_US")
 
@@ -77,8 +77,8 @@ class BillingQueueFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = "billing.BillingQueue"
-        django_get_or_create = ("order", "organization", "customer")
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     order = factory.SubFactory("order.tests.factories.OrderFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory("customer.factories.CustomerFactory")

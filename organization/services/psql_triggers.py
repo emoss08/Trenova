@@ -24,7 +24,7 @@ from .table_choices import TableChoiceService
 table_service = TableChoiceService()
 
 
-def create_insert_field_string(fields: list[str]) -> str:
+def create_insert_field_string(*, fields: list[str]) -> str:
     """Creates a comma-separated string of field names for a SQL query.
 
     This function takes a list of field names and creates a string that can be used
@@ -82,7 +82,7 @@ def create_insert_function(
         django.db.utils.DatabaseError: If there is an error executing the SQL query.
 
     """
-    fields_string: str = create_insert_field_string(fields)
+    fields_string: str = create_insert_field_string(fields=fields)
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
@@ -159,7 +159,7 @@ def create_insert_trigger(
         cursor.execute(query)
 
 
-def create_update_field_string(fields: list[str]) -> str:
+def create_update_field_string(*, fields: list[str]) -> str:
     excluded: set[str] = {"id", "created", "modified", "organization_id"}
     return f"({' OR '.join(f'OLD.{f} IS DISTINCT FROM NEW.{f}' for f in fields if f not in excluded)})"
 
@@ -172,8 +172,8 @@ def create_update_function(
     fields: list[str],
     organization_id: ModelUUID,
 ) -> None:
-    fields_string: str = create_insert_field_string(fields)
-    comparison_string: str = create_update_field_string(fields)
+    fields_string: str = create_insert_field_string(fields=fields)
+    comparison_string: str = create_update_field_string(fields=fields)
     with connection.cursor() as cursor:
         cursor.execute(
             f"""

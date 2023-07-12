@@ -22,6 +22,7 @@ from rest_framework.test import APIClient
 
 from accounting import models
 from accounting.models import GeneralLedgerAccount, RevenueCode
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -35,6 +36,8 @@ def test_list(revenue_code: RevenueCode) -> None:
 
 def test_create(
     revenue_code: RevenueCode,
+    organization: Organization,
+    business_unit: BusinessUnit,
     expense_account: GeneralLedgerAccount,
     revenue_account: GeneralLedgerAccount,
 ) -> None:
@@ -43,7 +46,8 @@ def test_create(
     """
 
     rev_code = models.RevenueCode.objects.create(
-        organization=expense_account.organization,
+        organization=organization,
+        business_unit=business_unit,
         code="TEST",
         description="Another Description",
         expense_account=expense_account,
@@ -76,11 +80,14 @@ def test_expense_account(
     is passed.
     """
 
-    with pytest.raises(
-        ValidationError, match="Entered account is not an expense account."
-    ):
+    with pytest.raises(ValidationError) as excinfo:
         revenue_code.expense_account = revenue_account
         revenue_code.full_clean()
+
+    assert (
+        excinfo.value.message_dict["expense_account"][0]
+        == "Entered account is a REVENUE account, not a expense account. Please try again."
+    )
 
 
 def test_revenue_account(
@@ -91,11 +98,14 @@ def test_revenue_account(
     is passed.
     """
 
-    with pytest.raises(
-        ValidationError, match="Entered account is not a revenue account."
-    ):
+    with pytest.raises(ValidationError) as excinfo:
         revenue_code.revenue_account = expense_account
         revenue_code.full_clean()
+
+    assert (
+        excinfo.value.message_dict["revenue_account"][0]
+        == "Entered account is a EXPENSE account, not a revenue account. Please try again."
+    )
 
 
 def test_api_get(api_client: APIClient) -> None:

@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from billing import models
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -32,12 +32,13 @@ def test_list(charge_type: models.ChargeType) -> None:
     assert charge_type is not None
 
 
-def test_create(organization: Organization) -> None:
+def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
     """
     Test Create Charge Type
     """
     charge_type = models.ChargeType.objects.create(
         organization=organization,
+        business_unit=business_unit,
         name="test",
         description="Test Description",
     )

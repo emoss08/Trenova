@@ -50,7 +50,7 @@ def test_order_control_creation(organization: models.Organization) -> None:
     assert organization.order_control.organization == organization
 
 
-def test_billing_control_hook(organization) -> None:
+def test_billing_control_hook(organization: models.Organization) -> None:
     """
     Test that the billing control hook is created when a new organization is
     created.
@@ -58,7 +58,7 @@ def test_billing_control_hook(organization) -> None:
     assert organization.billing_control is not None
 
 
-def test_order_control_hook(organization) -> None:
+def test_order_control_hook(organization: models.Organization) -> None:
     """
     Test that the order control hook is created when a new organization is
     created.
@@ -66,7 +66,7 @@ def test_order_control_hook(organization) -> None:
     assert organization.order_control is not None
 
 
-def test_dispatch_control_hook(organization) -> None:
+def test_dispatch_control_hook(organization: models.Organization) -> None:
     """
     Test that the dispatch control hook is created when a new organization is
     created.
@@ -74,14 +74,14 @@ def test_dispatch_control_hook(organization) -> None:
     assert organization.dispatch_control is not None
 
 
-def test_depot_creation(depot) -> None:
+def test_depot_creation(depot: models.Depot) -> None:
     """
     Test depot creation
     """
     assert depot is not None
 
 
-def test_depot_update(depot) -> None:
+def test_depot_update(depot: models.Depot) -> None:
     """
     Test depot update
     """
@@ -90,14 +90,14 @@ def test_depot_update(depot) -> None:
     assert depot.name == "New Name"
 
 
-def test_depot_organization(depot) -> None:
+def test_depot_organization(depot: models.Depot) -> None:
     """
     Test dispatch control is created from create_depot_detail post_save signal
     """
     assert depot.details.organization == depot.organization
 
 
-def test_depot_details_hook(depot) -> None:
+def test_depot_details_hook(depot: models.Depot) -> None:
     """
     Test that the depot details hook is created when a new depot is
     created.
@@ -114,7 +114,7 @@ def test_create_celery_beat_configurations_command() -> None:
     assert IntervalSchedule.objects.count() == 0
 
     # Call the command to create configurations
-    call_command("setupcelerybeat")
+    call_command("setupcelerybeat")  # TODO(WOLFRED): Add call count to this test.
 
     # Check that configurations have been created
     assert IntervalSchedule.objects.count() > 0

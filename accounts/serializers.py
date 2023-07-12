@@ -275,6 +275,10 @@ class UserSerializer(GenericSerializer):
         many=True, read_only=True, slug_field="codename"
     )
     profile = UserProfileSerializer(required=False)
+    organization = serializers.PrimaryKeyRelatedField(
+        queryset=Organization.objects.all(),
+        pk_field=serializers.UUIDField(format="hex_verbose"),
+    )
 
     class Meta:
         """
@@ -282,13 +286,14 @@ class UserSerializer(GenericSerializer):
         """
 
         model = models.User
-        extra_fields = ("profile", "organization")
+        extra_fields = ("profile", "groups", "user_permissions", "organization")
         extra_read_only_fields = (
             "id",
             "online",
             "last_login",
             "groups",
             "user_permissions",
+            "organization",
             "is_staff",
             "is_active",
             "is_superuser",
@@ -312,6 +317,10 @@ class UserSerializer(GenericSerializer):
         organization = super().get_organization
         validated_data["organization"] = organization
 
+        # Get the business unit of ther user from the request.
+        business_unit = super().get_business_unit
+        validated_data["business_unit"] = business_unit
+
         if validated_data.pop("password", None):
             raise serializers.ValidationError(
                 {
@@ -322,6 +331,7 @@ class UserSerializer(GenericSerializer):
         # Popped data (profile)
         profile_data = validated_data.pop("profile", {})
         profile_data["organization"] = organization
+        profile_data["business_unit"] = business_unit
 
         # Create the user
         new_password = models.User.objects.make_random_password()
@@ -330,6 +340,7 @@ class UserSerializer(GenericSerializer):
             email=validated_data["email"],
             password=new_password,
             organization=organization,
+            business_unit=business_unit,
         )
 
         send_mail(
@@ -360,14 +371,13 @@ class UserSerializer(GenericSerializer):
         Returns:
             None
         """
-
-        if profile_data := validated_data.pop("profile", None):
-            instance.profile.update_profile(**profile_data)
-
         if validated_data.pop("password", None):
             raise serializers.ValidationError(
                 "Password cannot be changed using this endpoint. Please use the change password endpoint."
             )
+
+        if profile_data := validated_data.pop("profile", None):
+            instance.profile.update_profile(**profile_data)
 
         instance.update_user(**validated_data)
 

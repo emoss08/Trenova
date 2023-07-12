@@ -35,7 +35,7 @@ from movements.models import Movement
 from order import models, selectors
 from order.selectors import get_order_stops
 from order.tests.factories import OrderFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 from stops.models import Stop
 from utils.models import StatusChoices
 from worker.factories import WorkerFactory
@@ -52,6 +52,7 @@ def test_list(order: models.Order) -> None:
 
 def test_create(
     organization: Organization,
+    business_unit: BusinessUnit,
     order_type: models.OrderType,
     revenue_code: RevenueCode,
     origin_location: Location,
@@ -66,6 +67,7 @@ def test_create(
 
     order = models.Order.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order_type=order_type,
         revenue_code=revenue_code,
         origin_location=origin_location,
@@ -121,12 +123,14 @@ def test_first_stop_completion_puts_order_movement_in_progress(
     customer: Customer,
     equipment_type: EquipmentType,
     user: User,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test when the first stop in a movement is completed. The associated movement and order are both
     put in progress.
     """
     order = models.Order.objects.create(
+        business_unit=business_unit,
         organization=organization,
         order_type=order_type,
         revenue_code=revenue_code,
@@ -185,12 +189,14 @@ def test_create_initial_movement_signal(
     customer: Customer,
     equipment_type: EquipmentType,
     user: User,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test create initial movement hook when order is created.
     """
 
     order = models.Order.objects.create(
+        business_unit=business_unit,
         organization=organization,
         order_type=order_type,
         revenue_code=revenue_code,

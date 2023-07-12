@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import Tuple, List, Dict, LiteralString
 
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -137,8 +138,9 @@ def create_billing_exception(
 
     models.BillingException.objects.create_billing_exception(
         organization=user.organization,
+        business_unit=user.organization.business_unit,
         exception_type=exception_type,
-        order=invoice.order,
+        order=invoice,
         exception_message=exception_message,
     )
 
@@ -169,6 +171,7 @@ def create_billing_history(*, invoice: models.BillingQueue, user: User) -> None:
     try:
         models.BillingHistory.objects.create(
             organization=invoice.organization,
+            business_unit=invoice.organization.business_unit,
             order=invoice.order,
             worker=worker,
             order_type=invoice.order_type,
@@ -257,7 +260,7 @@ def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
 
 def check_billing_requirements(
     *, invoice: models.BillingQueue | Order, user: User
-) -> bool | tuple[bool, list[str]]:
+) -> bool | tuple[bool, list[dict[LiteralString, str | list[str]]]]:
     """Check if a BillingQueue instance satisfies the billing requirements of its customer.
 
     This function checks if the passed BillingQueue instance meets the billing requirements of its corresponding
@@ -309,7 +312,6 @@ def check_billing_requirements(
             invoice=invoice,
             exception_message=f"Missing customer required documents: {missing_documents}",
         )
-        print(missing_documents)
     return is_match, missing_documents
 
 

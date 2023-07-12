@@ -20,17 +20,20 @@ from django.core.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from billing import models
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
 
-def test_document_classification_creation(organization: Organization) -> None:
+def test_document_classification_creation(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test document classification creation
     """
     document_classification = models.DocumentClassification.objects.create(
         organization=organization,
+        business_unit=business_unit,
         name="TEST",
         description="Test document classification",
     )
@@ -171,13 +174,16 @@ def test_cannot_delete_con_hook(
     ]
 
 
-def test_unique_name(document_classification: models.DocumentClassification) -> None:
+def test_unique_name(
+    document_classification: models.DocumentClassification, business_unit: BusinessUnit
+) -> None:
     """
     Test for unique name
     """
     with pytest.raises(ValidationError) as excinfo:
         models.DocumentClassification.objects.create(
             organization=document_classification.organization,
+            business_unit=business_unit,
             name=document_classification.name,
             description="Test document classification",
         )

@@ -69,7 +69,9 @@ def test_license_state(worker: Worker) -> None:
     """
     with pytest.raises(ValidationError) as excinfo:
         worker.profile.update_worker_profile(
-            license_number="1234567890", license_expiration_date="2022-01-01"
+            license_number="1234567890",
+            license_expiration_date="2022-01-01",
+            license_state="",
         )
 
     assert excinfo.value.message_dict["license_state"] == [
@@ -84,7 +86,7 @@ def test_license_expiration_date(worker: Worker) -> None:
     """
     with pytest.raises(ValidationError) as excinfo:
         worker.profile.update_worker_profile(
-            license_number="1234567890", license_state="CA"
+            license_number="1234567890", license_state="CA", license_expiration_date=""
         )
 
     assert excinfo.value.message_dict["license_expiration_date"] == [

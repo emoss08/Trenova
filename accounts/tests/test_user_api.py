@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from uuid import UUID
 
 import pytest
 from django.core import mail
@@ -24,7 +25,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from accounts.serializers import UserSerializer
 from accounts.tests.factories import JobTitleFactory, UserFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -41,22 +42,27 @@ def test_get_by_id(api_client: APIClient, user_api: Response) -> None:
     """
     Test get user by ID
     """
+
     response = api_client.get(f"/api/users/{user_api.data['id']}/")
 
     assert response.status_code == 200
 
 
-def test_create_success(api_client: APIClient, organization: Organization) -> None:
+def test_create_success(
+    api_client: APIClient, organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test Create user
     """
     job_title = JobTitleFactory()
 
     payload = {
+        "business_unit": business_unit.id,
         "organization": organization.id,
-        "username": "test_user",
+        "username": "test_username",
         "email": "test_user@example.com",
         "profile": {
+            "business_unit": business_unit.id,
             "organization": organization.id,
             "first_name": "test",
             "last_name": "user",
@@ -79,7 +85,7 @@ def test_create_success(api_client: APIClient, organization: Organization) -> No
 
 
 def test_user_with_email_exists_error(
-    api_client: APIClient, organization: Organization
+    api_client: APIClient, organization: Organization, business_unit: BusinessUnit
 ) -> None:
     """
     Test Create user with email exists
@@ -98,6 +104,7 @@ def test_user_with_email_exists_error(
     }
     User.objects.create_user(
         organization=organization,
+        business_unit=business_unit,
         username=payload["username"],
         email=payload["email"],
     )
@@ -151,12 +158,16 @@ def test_delete(user_api: Response, api_client: APIClient) -> None:
     assert response.data is None
 
 
-def test_user_cannot_change_password_on_update(user: User) -> None:
+def test_user_cannot_change_password_on_update(
+    user: User, business_unit, organization
+) -> None:
     """
     Test ValidationError is thrown when posting to update user endpoint
     with password.
     """
     payload = {
+        "organization": organization.id,
+        "business_unit": business_unit.id,
         "username": "test_user",
         "email": "test_user@example.com",
         "password": "test_password1234%",
@@ -171,10 +182,9 @@ def test_user_cannot_change_password_on_update(user: User) -> None:
     }
 
     with pytest.raises(ValidationError) as excinfo:
-        serializer = UserSerializer.update(
+        UserSerializer.update(
             self=UserSerializer, instance=user, validated_data=payload
         )
-        serializer.is_valid(raise_exception=True)
 
     assert (
         "Password cannot be changed using this endpoint. Please use the change password endpoint."
@@ -228,8 +238,10 @@ def test_login_user(unauthenticated_api_client: APIClient, user_api: Response) -
         "/api/login/",
         {"username": user_api.data["username"], "password": "trashuser12345%"},
     )
+
     assert response.status_code == 200
-    assert response.data["token"]
+    assert response.data["user_id"] == UUID(user_api.data["id"])
+    assert response.data["organization_id"] == UUID(user_api.data["organization"])
 
     user.refresh_from_db()
     assert user.online is True
@@ -237,8 +249,7 @@ def test_login_user(unauthenticated_api_client: APIClient, user_api: Response) -
 
 
 def test_logout_user(api_client: APIClient, user_api: Response) -> None:
-    """
-    Test logout user
+    """Test logout user
 
     Args:
         api_client (APIClient): API Client
@@ -449,9 +460,7 @@ def test_change_email_with_other_users_email(user: User) -> None:
     user.save()
     user.refresh_from_db()
 
-    user_2 = UserFactory()
-    user_2.email = "test@monta.io"
-    user_2.save()
+    user_2 = UserFactory(username="test_user_2", email="test_another@monta.io")
 
     client = APIClient()
     client.force_authenticate(user=user)
@@ -475,7 +484,7 @@ def test_validate_password_not_allowed_on_post(
 
     payload = {
         "organization": organization.id,
-        "username": "test_user",
+        "username": "test_user_4",
         "email": "test_user@example.com",
         "password": "test_password",
         "profile": {

@@ -22,7 +22,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from billing.models import AccessorialCharge
 from order import models
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -36,6 +36,7 @@ def test_list(additional_charge: models.AdditionalCharge) -> None:
 
 def test_create(
     organization: Organization,
+    business_unit: BusinessUnit,
     order: models.Order,
     accessorial_charge: AccessorialCharge,
     user: User,
@@ -46,6 +47,7 @@ def test_create(
 
     add_charge = models.AdditionalCharge.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order,
         accessorial_charge=accessorial_charge,
         unit=1,

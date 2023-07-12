@@ -16,6 +16,26 @@
 # --------------------------------------------------------------------------------------------------
 
 import factory
+from django.utils import timezone
+
+
+class WorkerProfileFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        """
+        Metaclass for WorkerFactory
+        """
+
+        model = "worker.WorkerProfile"
+
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    worker = factory.SubFactory("worker.factories.WorkerFactory")
+    license_number = factory.Faker("text", locale="en_US", max_nb_chars=10)
+    license_state = "CA"
+    license_expiration_date = timezone.now()
+    physical_due_date = timezone.now()
+    medical_cert_date = timezone.now()
+    mvr_due_date = timezone.now()
 
 
 class WorkerFactory(factory.django.DjangoModelFactory):
@@ -29,7 +49,7 @@ class WorkerFactory(factory.django.DjangoModelFactory):
         """
 
         model = "worker.Worker"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("code",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -78,10 +98,6 @@ class WorkerContactFactory(factory.django.DjangoModelFactory):
         """
 
         model = "worker.WorkerContact"
-        django_get_or_create = (
-            "organization",
-            "worker",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -101,12 +117,6 @@ class WorkerCommentFactory(factory.django.DjangoModelFactory):
         """
 
         model = "worker.WorkerComment"
-        django_get_or_create = (
-            "organization",
-            "worker",
-            "comment_type",
-            "entered_by",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

@@ -25,14 +25,16 @@ from dispatch.factories import FleetCodeFactory
 from equipment.tests.factories import TractorFactory
 from order.selectors import get_order_movements, get_order_stops
 from order.tests.factories import OrderFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 from worker.factories import WorkerFactory
 from worker.models import WorkerHOS
 
 pytestmark = pytest.mark.django_db
 
 
-def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
+def test_feasibility_tool_eligible_driver(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
     """Tests worker is eligible for order based on feasibility tool.
 
     Args:
@@ -41,10 +43,15 @@ def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
     Returns:
         None: this function does not return anything.
     """
-    fleet = FleetCodeFactory(organization=organization)
-    worker = WorkerFactory(organization=organization, fleet=fleet)
+    fleet = FleetCodeFactory(organization=organization, business_unit=business_unit)
+    worker = WorkerFactory(
+        organization=organization, fleet=fleet, business_unit=business_unit
+    )
     tractor = TractorFactory(
-        organization=organization, fleet=fleet, primary_worker=worker
+        organization=organization,
+        fleet=fleet,
+        primary_worker=worker,
+        business_unit=business_unit,
     )
 
     order = OrderFactory()
@@ -74,6 +81,7 @@ def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
     # Query all available WorkerHOS instances
     worker_hos = WorkerHOS.objects.create(
         organization=organization,
+        business_unit=business_unit,
         worker=worker,
         drive_time=11 * 60,
         off_duty_time=10 * 60,
@@ -91,6 +99,7 @@ def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
     # Create a FeasibilityControl instance
     models.FeasibilityToolControl.objects.create(
         organization=organization,
+        business_unit=business_unit,
         mpw_operator=models.FeasibilityToolControl.OperatorChoices.GREATER_THAN_OR_EQUAL_TO,
         mpw_criteria=2,
         mpd_operator=models.FeasibilityToolControl.OperatorChoices.GREATER_THAN_OR_EQUAL_TO,
@@ -126,7 +135,9 @@ def test_feasibility_tool_eligible_driver(organization: Organization) -> None:
     assert worker_hos in eligible_workers_hos
 
 
-def test_feasibility_tool_not_eligible(organization: Organization) -> None:
+def test_feasibility_tool_not_eligible(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
     """Test Driver not eligible for order.
 
     Args:
@@ -168,6 +179,7 @@ def test_feasibility_tool_not_eligible(organization: Organization) -> None:
     # Query all available WorkerHOS instances
     worker_hos = WorkerHOS.objects.create(
         organization=organization,
+        business_unit=business_unit,
         worker=worker,
         drive_time=11,
         off_duty_time=10,
@@ -184,6 +196,7 @@ def test_feasibility_tool_not_eligible(organization: Organization) -> None:
 
     # Create a FeasibilityControl instance
     models.FeasibilityToolControl.objects.create(
+        business_unit=business_unit,
         organization=organization,
         mpw_operator=models.FeasibilityToolControl.OperatorChoices.GREATER_THAN_OR_EQUAL_TO,
         mpw_criteria=100,

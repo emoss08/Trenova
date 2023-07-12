@@ -34,23 +34,7 @@ def job_title() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def token() -> Generator[Any, Any, None]:
-    """
-    Token fixture
-    """
-    yield TokenFactory()
-
-
-@pytest.fixture
-def user() -> Generator[Any, Any, None]:
-    """
-    User fixture
-    """
-    yield UserFactory()
-
-
-@pytest.fixture
-def user_api(api_client, organization) -> Generator[Any, Any, None]:
+def user_api(api_client, organization, business_unit) -> Generator[Any, Any, None]:
     """
     User Fixture
     """
@@ -59,11 +43,13 @@ def user_api(api_client, organization) -> Generator[Any, Any, None]:
     yield api_client.post(
         "/api/users/",
         {
-            "organization": f"{organization.id}",
+            "organization": organization.id,
+            "business_unit": business_unit.id,
             "username": "foobar",
             "email": "foobar@user.com",
             "profile": {
-                "organization": f"{organization.id}",
+                "business_unit": business_unit.id,
+                "organization": organization.id,
                 "first_name": "foo",
                 "last_name": "bar",
                 "address_line_1": "test address line 1",

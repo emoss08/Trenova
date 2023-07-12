@@ -432,7 +432,7 @@ class UserLogoutView(views.APIView):
             user.online = False
             user.save()
 
-        res = response.Response(status=status.HTTP_200_OK)
+        res = response.Response(status=status.HTTP_204_NO_CONTENT)
         res.delete_cookie("auth_token")
 
         return res

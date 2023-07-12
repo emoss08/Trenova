@@ -22,7 +22,7 @@ from rest_framework.test import APIClient
 from accounts.models import User
 from dispatch.models import CommentType
 from order import models
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -39,6 +39,7 @@ def test_create(
     user: User,
     order: models.Order,
     comment_type: CommentType,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test Order Create
@@ -46,6 +47,7 @@ def test_create(
 
     order_comment = models.OrderComment.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order,
         comment_type=comment_type,
         comment="DONT BE SAD",

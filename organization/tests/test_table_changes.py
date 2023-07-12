@@ -42,6 +42,7 @@ def test_create_table_charge_alert(organization: models.Organization) -> None:
         None: This function does not return anything.
     """
     table_charge = models.TableChangeAlert.objects.create(
+        business_unit=organization.business_unit,
         organization=organization,
         is_active=True,
         name="Test",

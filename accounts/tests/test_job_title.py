@@ -19,6 +19,7 @@ import pytest
 
 from accounts import models
 from accounts.models import JobTitle
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 
@@ -30,13 +31,14 @@ def test_list(job_title: JobTitle) -> None:
     assert job_title is not None
 
 
-def test_create(job_title: JobTitle) -> None:
+def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
     """
     Test job title creation
     """
     new_job_title = models.JobTitle.objects.create(
-        organization=job_title.organization,
-        is_active=True,
+        organization=organization,
+        business_unit=business_unit,
+        status="A",
         name="TEST",
         description="Another Description",
         job_function="SYS_ADMIN",

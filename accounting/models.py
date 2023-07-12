@@ -361,7 +361,7 @@ class DivisionCode(GenericModel):
     status = ChoiceField(
         _("Status"),
         choices=PrimaryStatusChoices.choices,
-        help_text=_("Status of the general ledger account."),
+        help_text=_("Status of the division code."),
         default=PrimaryStatusChoices.ACTIVE,
     )
     code = models.CharField(

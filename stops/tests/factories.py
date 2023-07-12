@@ -30,11 +30,6 @@ class StopFactory(factory.django.DjangoModelFactory):
         """
 
         model = "stops.Stop"
-        django_get_or_create = (
-            "organization",
-            "movement",
-            "location",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
