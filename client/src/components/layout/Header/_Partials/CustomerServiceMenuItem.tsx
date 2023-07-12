@@ -23,6 +23,7 @@ import {
   Divider,
   Group,
   HoverCard,
+  Menu,
   SimpleGrid,
   Text,
   ThemeIcon,
@@ -37,6 +38,7 @@ import {
 } from "@fortawesome/pro-solid-svg-icons";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { Link } from "react-router-dom";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 const navigationLinks = [
   {
@@ -55,6 +57,9 @@ const navigationLinks = [
 
 export const CustomerServiceMenuItem = () => {
   const { classes, theme } = useHeaderStyles();
+  const [linksOpened] = useHeaderStore.use("linksOpen");
+
+  console.info("linksOpened: ", linksOpened);
 
   const customerServiceLinks = navigationLinks.map((item) => (
     <UnstyledButton className={classes.subLink} key={item.title}>

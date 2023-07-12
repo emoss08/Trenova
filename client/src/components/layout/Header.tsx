@@ -29,7 +29,6 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBuildingColumns,
@@ -70,7 +69,6 @@ export function HeaderMegaMenu() {
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [linksOpened] = useHeaderStore.use("linksOpen");
-  // const [linksOpened, { toggle: toggleLinks }] = useDisclosure(false);
   const { classes, theme } = useHeaderStyles();
 
   const customerServiceLinks = navigationLinks.map((item) => (
