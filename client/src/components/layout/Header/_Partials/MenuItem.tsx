@@ -34,8 +34,8 @@ import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { Link } from "react-router-dom";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { adminNavLinks } from "@/utils/apps/admin";
 import { TNavigationLink } from "@/types";
+import { useHeaderStore } from "@/stores/HeaderStore";
 
 type MenuItemProps = {
   menuLinks: Record<string, TNavigationLink[]>;
@@ -55,6 +55,7 @@ export const MenuItem = ({
   const { userHasPermission } = useUserPermissions();
   const { classes, theme } = useHeaderStyles();
   const [currentMenu, setCurrentMenu] = store.use("currentMenu");
+  const [clickCount, setClickCount] = useHeaderStore.use("clickCount");
 
   const links = React.useMemo(() => {
     return Object.entries(menuLinks).reduce(
@@ -128,7 +129,14 @@ export const MenuItem = ({
                         );
 
                         return (
-                          <Link to={sublink.href || "#"} key={sublink.title}>
+                          <Link
+                            to={sublink.href || "#"}
+                            key={sublink.title}
+                            onClick={() => {
+                              setClickCount((prevCount) => prevCount + 1); // Increment clickCount
+                              useHeaderStore.set("linksOpen", false); // Close the menu
+                            }}
+                          >
                             {subLinkContent}
                           </Link>
                         );
@@ -139,7 +147,12 @@ export const MenuItem = ({
                 // If there is no current menu, render the top-level links
                 groupAcc.push(
                   item.href ? (
-                    <Link to={item.href}>{linkContent}</Link>
+                    <Link
+                      to={item.href}
+                      onClick={() => useHeaderStore.set("linksOpen", false)}
+                    >
+                      {linkContent}
+                    </Link>
                   ) : (
                     linkContent
                   )
@@ -176,8 +189,11 @@ export const MenuItem = ({
       width={width ? width : currentMenu ? "lg" : numOfColumns ? "md" : "sm"}
       position="bottom"
       radius="md"
+      // since mantine does not provide a way to control the open/close state of the hover-card, we have to force it to re-render by changing the key
+      key={clickCount}
       shadow="md"
       withinPortal
+      withArrow
     >
       <HoverCard.Target>
         <Link to="#" className={classes.link}>

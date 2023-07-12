@@ -23,6 +23,7 @@ interface HeaderStoreType {
   headerMenuOpen: boolean;
   notificationsMenuOpen: boolean;
   linksOpen: boolean;
+  clickCount: number; // way to force unmount of hovercard
 }
 
 export const useHeaderStore = createGlobalStore<HeaderStoreType>({
@@ -31,6 +32,7 @@ export const useHeaderStore = createGlobalStore<HeaderStoreType>({
   headerMenuOpen: false,
   notificationsMenuOpen: false,
   linksOpen: false,
+  clickCount: 0,
 });
 
 type THeaderStoreProps = {
