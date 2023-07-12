@@ -61,6 +61,20 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
     )
     search_fields = ("invoice_number", "order", "bol_number")
 
+    def has_change_permission(
+        self, request: HttpRequest, obj: BillingHistory | None = None
+    ) -> bool:
+        """Has permission to change.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+            obj (BillingHistory | None): Object to be deleted (if any).
+
+        Returns:
+            bool: True if the user has permission to delete the given object, False otherwise.
+        """
+        return False
+
     def has_delete_permission(
         self, request: HttpRequest, obj: BillingHistory | None = None
     ) -> bool:
