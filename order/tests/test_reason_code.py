@@ -20,7 +20,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from order import models
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -32,12 +32,13 @@ def test_list(reason_code: models.ReasonCode) -> None:
     assert reason_code is not None
 
 
-def test_create(organization: Organization) -> None:
+def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
     """
     Test Reason Code Create
     """
     r_code = models.ReasonCode.objects.create(
         organization=organization,
+        business_unit=business_unit,
         is_active=True,
         code="foobo",
         description="foo bar",

@@ -14,9 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import secrets
 
 import factory
 from django.utils import timezone
+
+from accounts.models import Token, User
+from organization.models import BusinessUnit, Organization
 
 
 class JobTitleFactory(factory.django.DjangoModelFactory):
@@ -30,7 +34,6 @@ class JobTitleFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounts.JobTitle"
-        django_get_or_create = ("organization", "business_unit")
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -50,26 +53,29 @@ class UserFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounts.User"
-        django_get_or_create = ("organization", "business_unit")
 
-    username = factory.Faker("user_name")
-    password = factory.Faker("password")
-    email = factory.Faker("email")
-    is_staff = True
-    is_superuser = True
-    date_joined = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    username = "test_user"
+    email = "test_user@monta.io"
 
-    @factory.post_generation
-    def profile(self, create, extracted, **kwargs):
-        """
-        Create profile
-        """
-        if not create:
-            return
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        business_unit, b_created = BusinessUnit.objects.get_or_create(name="RNDM")
+        organization, o_created = Organization.objects.get_or_create(
+            name="Random Company",
+            scac_code="RNDM",
+            business_unit=business_unit,
+        )
 
-        self.profile = extracted or ProfileFactory(user=self)
+        user, created = User.objects.get_or_create(
+            username=kwargs["username"],
+            password="test_password1234%",
+            email=kwargs["email"],
+            is_staff=True,
+            is_superuser=True,
+            business_unit=business_unit,
+            organization=organization,
+        )
+        return user
 
 
 class ProfileFactory(factory.django.DjangoModelFactory):
@@ -83,12 +89,6 @@ class ProfileFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounts.UserProfile"
-        django_get_or_create = (
-            "organization",
-            "job_title",
-            "business_unit",
-            "user",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -113,6 +113,13 @@ class TokenFactory(factory.django.DjangoModelFactory):
         """
 
         model = "accounts.Token"
-        django_get_or_create = ("user",)
 
     user = factory.SubFactory(UserFactory)
+    key = secrets.token_hex(20)
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        token, created = Token.objects.get_or_create(
+            key=kwargs["key"], user=kwargs["user"]
+        )
+        return token

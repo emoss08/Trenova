@@ -30,7 +30,7 @@ from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
 from order.models import Order
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 from utils.models import ChoiceField, GenericModel, StatusChoices
 
 
@@ -169,6 +169,7 @@ class BillingControl(GenericModel):
         choices=AutoBillingCriteriaChoices.choices,
         default=AutoBillingCriteriaChoices.MARKED_READY_TO_BILL,
         help_text=_("Define a criteria on when auto billing is to occur."),
+        blank=True,
     )
     order_transfer_criteria = ChoiceField(
         _("Order Transfer Criteria"),
@@ -1144,6 +1145,7 @@ class BillingExceptionManager(models.Manager):
         self,
         *,
         organization: Organization,
+        business_unit: BusinessUnit,
         exception_type: str,
         order: Order,
         exception_message: str,
@@ -1162,6 +1164,7 @@ class BillingExceptionManager(models.Manager):
 
         Args:
             organization (Organization): The Organization object associated with the BillingException.
+            business_unit (BusinessUnit): The BusinessUnit object associated with the BillingException.
             exception_type (str): A string representing the type of the BillingException.
             order (Order): The Order object associated with the BillingException.
             exception_message (str): A message describing the BillingException.
@@ -1174,6 +1177,7 @@ class BillingExceptionManager(models.Manager):
         """
         return self.create(  # type: ignore
             organization=organization,
+            business_unit=business_unit,
             exception_type=exception_type,
             order=order,
             exception_message=exception_message,

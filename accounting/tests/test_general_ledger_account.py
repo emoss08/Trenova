@@ -27,7 +27,7 @@ from rest_framework.test import APIClient
 from accounting import models
 from accounting.models import GeneralLedgerAccount
 from accounting.tests.factories import GeneralLedgerAccountFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -38,7 +38,7 @@ class GeneralLedgerAccountBase(BaseModel):
     """
 
     organization_id: uuid.UUID
-    is_active: bool
+    status: str
     account_number: str
     description: str
     account_type: str
@@ -69,7 +69,7 @@ def test_create_schema() -> None:
     """
     gl_account_create = GeneralAccountLedgerAccountCreate(
         organization_id=uuid.uuid4(),
-        is_active=True,
+        status="A",
         account_number="1234-1234-1234-1234",
         description="Description",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
@@ -78,10 +78,10 @@ def test_create_schema() -> None:
         account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
     )
 
-    gl_account = gl_account_create.dict()
+    gl_account = gl_account_create.model_dump()
 
     assert gl_account is not None
-    assert gl_account["is_active"] is True
+    assert gl_account["status"] == "A"
     assert gl_account["account_number"] == "1234-1234-1234-1234"
     assert gl_account["description"] == "Description"
     assert (
@@ -110,7 +110,7 @@ def test_update_schema() -> None:
     gl_account_update = GeneralAccountLedgerAccountUpdate(
         id=uuid.uuid4(),
         organization_id=uuid.uuid4(),
-        is_active=True,
+        status="A",
         account_number="1234-1234-1234-1234",
         description="Description",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
@@ -119,10 +119,10 @@ def test_update_schema() -> None:
         account_classification=models.GeneralLedgerAccount.AccountClassificationChoices.ACCOUNTS_PAYABLE,
     )
 
-    gl_account = gl_account_update.dict()
+    gl_account = gl_account_update.model_dump()
 
     assert gl_account is not None
-    assert gl_account["is_active"] is True
+    assert gl_account["status"] == "A"
     assert gl_account["account_number"] == "1234-1234-1234-1234"
     assert gl_account["description"] == "Description"
     assert (
@@ -151,7 +151,7 @@ def test_delete_schema() -> None:
     gl_accounts = [
         GeneralLedgerAccountBase(
             organization_id=uuid.uuid4(),
-            is_active=True,
+            status="A",
             account_number="1234-1234-1234-1234",
             description="Description 1",
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
@@ -161,7 +161,7 @@ def test_delete_schema() -> None:
         ),
         GeneralLedgerAccountBase(
             organization_id=uuid.uuid4(),
-            is_active=True,
+            status="A",
             account_number="1234-1234-1234-1235",
             description="Description 2",
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
@@ -214,12 +214,13 @@ def test_list(general_ledger_account: GeneralLedgerAccount) -> None:
     assert general_ledger_account is not None
 
 
-def test_create(general_ledger_account: GeneralLedgerAccount) -> None:
+def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
     """
     Test general ledger account creation
     """
     gl_account = models.GeneralLedgerAccount.objects.create(
-        organization=general_ledger_account.organization,
+        organization=organization,
+        business_unit=business_unit,
         account_number="1234-1234-1234-1234",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
         description="Another Description",

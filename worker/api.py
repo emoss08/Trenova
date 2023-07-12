@@ -116,7 +116,9 @@ class WorkerViewSet(viewsets.ModelViewSet):
             QuerySet[models.Worker]: A queryset of workers for the current user's organization.
         """
         queryset = (
-            self.queryset.filter(organization_id=self.request.user.organization_id)  # type: ignore
+            self.queryset.filter(
+                organization_id=self.request.user.organization_id  # type: ignore
+            )
             .select_related(
                 "profiles",
             )

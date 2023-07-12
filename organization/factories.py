@@ -17,6 +17,8 @@
 
 import factory
 
+from organization.models import Organization, BusinessUnit
+
 
 class BusinessUnitFactory(factory.django.DjangoModelFactory):
     """
@@ -25,9 +27,13 @@ class BusinessUnitFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = "organization.BusinessUnit"
-        django_get_or_create = ("name",)
 
-    name = factory.Faker("company", locale="en_US")
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        business_unit, created = BusinessUnit.objects.get_or_create(
+            name="RNDM",
+        )
+        return business_unit
 
 
 class OrganizationFactory(factory.django.DjangoModelFactory):
@@ -41,11 +47,17 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "organization.Organization"
-        django_get_or_create = ("name", "business_unit",)
 
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    name = factory.Faker("company", locale="en_US")
-    scac_code = "RNDM"
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        business_unit, b_created = BusinessUnit.objects.get_or_create(name="RNDM")
+        organization, o_created = Organization.objects.get_or_create(
+            name="Random Company",
+            scac_code="RNDM",
+            business_unit=business_unit,
+        )
+
+        return organization
 
 
 class DepotFactory(factory.django.DjangoModelFactory):
@@ -59,10 +71,11 @@ class DepotFactory(factory.django.DjangoModelFactory):
         """
 
         model = "organization.Depot"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("name",)
 
     name = factory.Faker("company", locale="en_US")
     organization = factory.SubFactory(OrganizationFactory)
+    business_unit = factory.SubFactory(BusinessUnitFactory)
 
 
 class EmailProfileFactory(factory.django.DjangoModelFactory):
@@ -76,7 +89,7 @@ class EmailProfileFactory(factory.django.DjangoModelFactory):
         """
 
         model = "organization.EmailProfile"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("name",)
 
     business_unit = factory.SubFactory(BusinessUnitFactory)
     organization = factory.SubFactory(OrganizationFactory)
@@ -103,7 +116,6 @@ class TableChangeAlertFactory(factory.django.DjangoModelFactory):
         """
 
         model = "organization.TableChangeAlert"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory(BusinessUnitFactory)
     organization = factory.SubFactory(OrganizationFactory)

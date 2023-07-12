@@ -29,7 +29,6 @@ class CustomReportFactory(factory.django.DjangoModelFactory):
         """
 
         model = "reports.CustomReport"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -55,7 +54,6 @@ class ReportColumnFactory(factory.django.DjangoModelFactory):
         """
 
         model = "reports.ReportColumn"
-        django_get_or_create = ("organization", "report")
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     report = factory.SubFactory(CustomReportFactory)
@@ -74,7 +72,6 @@ class ScheduledReportFactory(factory.django.DjangoModelFactory):
         """
 
         model = "reports.ScheduledReport"
-        django_get_or_create = ("organization", "report")
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     report = factory.SubFactory(CustomReportFactory)
@@ -96,7 +93,6 @@ class UserReportFactory(factory.django.DjangoModelFactory):
         """
 
         model = "reports.UserReport"
-        django_get_or_create = ("organization",)
 
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     report = factory.django.FileField(filename="test_report.csv")

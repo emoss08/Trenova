@@ -112,7 +112,7 @@ def division_code_api(api_client, organization) -> Generator[Any, Any, None]:
         reverse("division-codes-list"),
         {
             "organization": organization.id,
-            "is_active": True,
+            "status": "A",
             "code": "Test",
             "description": "Test Description",
         },

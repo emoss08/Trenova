@@ -32,14 +32,16 @@ from customer.factories import CustomerFactory
 from customer.models import Customer
 from order.models import Order
 from order.tests.factories import OrderFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 from utils.models import StatusChoices
 from worker.models import Worker
 
 pytestmark = pytest.mark.django_db
 
 
-def test_generate_invoice_number(organization: Organization) -> None:
+def test_generate_invoice_number(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test that invoice number increments by 1 for each new invoice
     and adds the correct suffix when an order is rebilled.
@@ -55,7 +57,11 @@ def test_generate_invoice_number(organization: Organization) -> None:
 
     # Test first invoice
     invoice_1 = models.BillingQueue.objects.create(
-        organization=organization, order=order_1, user=user, customer=order_1.customer
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
     )
     assert (
         invoice_1.invoice_number
@@ -64,6 +70,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
 
     invoice_1_cm = models.BillingQueue.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
@@ -75,7 +82,11 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
 
     invoice_1_next_invoice = models.BillingQueue.objects.create(
-        organization=organization, order=order_1, user=user, customer=order_1.customer
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
     )
 
     assert (
@@ -85,6 +96,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
 
     invoice_1_next_invoice_cm = models.BillingQueue.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
@@ -97,7 +109,11 @@ def test_generate_invoice_number(organization: Organization) -> None:
     )
 
     invoice_1_final_invoice = models.BillingQueue.objects.create(
-        organization=organization, order=order_1, user=user, customer=order_1.customer
+        organization=organization,
+        order=order_1,
+        user=user,
+        business_unit=business_unit,
+        customer=order_1.customer,
     )
 
     assert (
@@ -107,6 +123,7 @@ def test_generate_invoice_number(organization: Organization) -> None:
 
     invoice_1_final_invoice_cm = models.BillingQueue.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
@@ -120,7 +137,11 @@ def test_generate_invoice_number(organization: Organization) -> None:
 
 
 def test_invoice_number_generation(
-    organization: Organization, customer: Customer, user: User, worker: Worker
+    organization: Organization,
+    customer: Customer,
+    user: User,
+    worker: Worker,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test that invoice number is generated for each new invoice
@@ -134,7 +155,8 @@ def test_invoice_number_generation(
     order.save()
 
     invoice = models.BillingQueue.objects.create(
-        organization=user.organization,
+        organization=organization,
+        business_unit=business_unit,
         order_type=order.order_type,
         order=order,
         revenue_code=order.revenue_code,
@@ -153,7 +175,11 @@ def test_invoice_number_generation(
 
 
 def test_invoice_number_increments(
-    organization: Organization, customer: Customer, user: User, worker: Worker
+    organization: Organization,
+    business_unit: BusinessUnit,
+    customer: Customer,
+    user: User,
+    worker: Worker,
 ) -> None:
     """
     Test that invoice number increments by 1 for each new invoice
@@ -175,7 +201,8 @@ def test_invoice_number_increments(
     order_2.save()
 
     invoice = models.BillingQueue.objects.create(
-        organization=user.organization,
+        organization=organization,
+        business_unit=business_unit,
         order_type=order.order_type,
         order=order,
         revenue_code=order.revenue_code,
@@ -189,6 +216,7 @@ def test_invoice_number_increments(
     invoice.save()
 
     second_invoice = models.BillingQueue.objects.create(
+        business_unit=business_unit,
         organization=user.organization,
         order_type=order_2.order_type,
         order=order_2,
@@ -214,7 +242,9 @@ def test_invoice_number_increments(
     )
 
 
-def test_unbilled_order_in_billing_history(order: Order) -> None:
+def test_unbilled_order_in_billing_history(
+    order: Order, business_unit: BusinessUnit, organization: Organization
+) -> None:
     """
     Test ValidationError is thrown when adding an order in billing history
     that hasn't billed.
@@ -222,7 +252,8 @@ def test_unbilled_order_in_billing_history(order: Order) -> None:
 
     with pytest.raises(ValidationError) as excinfo:
         models.BillingHistory.objects.create(
-            organization=order.organization,
+            business_unit=business_unit,
+            organization=organization,
             order=order,
         )
 
@@ -366,7 +397,9 @@ def test_get_billable_orders_ready() -> None:
         assert order.billing_transfer_date is None
 
 
-def test_get_billing_queue_information() -> None:
+def test_get_billing_queue_information(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test that the correct billing queue is returned when using the
     `get_billing_queue_information` selector.
@@ -384,7 +417,10 @@ def test_get_billing_queue_information() -> None:
     order.save()
 
     billing_queue = models.BillingQueue.objects.create(
-        organization=order.organization, order=order, customer=customer
+        organization=organization,
+        order=order,
+        customer=customer,
+        business_unit=business_unit,
     )
 
     result = selectors.get_billing_queue_information(order=order)
@@ -392,7 +428,7 @@ def test_get_billing_queue_information() -> None:
 
 
 def test_cannot_delete_billing_history(
-    organization: Organization, order: Order
+    organization: Organization, order: Order, business_unit: BusinessUnit
 ) -> None:
     """
     Test that if the organization has remove_billing_history as false that
@@ -405,7 +441,10 @@ def test_cannot_delete_billing_history(
     order.save()
 
     billing_history = models.BillingHistory.objects.create(
-        organization=organization, order=order, customer=order.customer
+        organization=organization,
+        order=order,
+        customer=order.customer,
+        business_unit=business_unit,
     )
 
     with pytest.raises(ValidationError) as excinfo:
@@ -416,7 +455,9 @@ def test_cannot_delete_billing_history(
     ]
 
 
-def test_can_delete_billing_history(organization: Organization, order: Order) -> None:
+def test_can_delete_billing_history(
+    organization: Organization, order: Order, business_unit: BusinessUnit
+) -> None:
     """
     Test that if the organization has remove_billing_history as true that the billing
     history can be deleted.
@@ -428,7 +469,10 @@ def test_can_delete_billing_history(organization: Organization, order: Order) ->
     order.save()
 
     billing_history = models.BillingHistory.objects.create(
-        organization=organization, order=order, customer=order.customer
+        organization=organization,
+        order=order,
+        customer=order.customer,
+        business_unit=business_unit,
     )
 
     billing_history.delete()
@@ -436,7 +480,9 @@ def test_can_delete_billing_history(organization: Organization, order: Order) ->
     assert models.BillingHistory.objects.count() == 0
 
 
-def test_generate_invoice_number_before_save(order: Order) -> None:
+def test_generate_invoice_number_before_save(
+    order: Order, organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test that the invoice number is generated before the save method is called.
     """
@@ -445,7 +491,10 @@ def test_generate_invoice_number_before_save(order: Order) -> None:
     order.ready_to_bill = True
 
     billing_queue = models.BillingQueue.objects.create(
-        organization=order.organization, order=order, customer=order.customer
+        organization=organization,
+        order=order,
+        customer=order.customer,
+        business_unit=business_unit,
     )
 
     assert (
@@ -454,7 +503,9 @@ def test_generate_invoice_number_before_save(order: Order) -> None:
     )
 
 
-def test_save_order_details_to_billing_history_before_save(order: Order) -> None:
+def test_save_order_details_to_billing_history_before_save(
+    order: Order, organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test that the order details are saved to the billing history before the
     save method is called.
@@ -463,7 +514,10 @@ def test_save_order_details_to_billing_history_before_save(order: Order) -> None
     order.save()
 
     billing_history = models.BillingHistory.objects.create(
-        organization=order.organization, order=order, customer=order.customer
+        organization=organization,
+        order=order,
+        customer=order.customer,
+        business_unit=business_unit,
     )
 
     assert billing_history.pieces == order.pieces
@@ -479,7 +533,9 @@ def test_save_order_details_to_billing_history_before_save(order: Order) -> None
     assert billing_history.total_amount == order.sub_total
 
 
-def test_transfer_order_to_billing_queue(organization: Organization) -> None:
+def test_transfer_order_to_billing_queue(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
     """
     Test an order is transferred to the billing queue.
     """
@@ -488,7 +544,7 @@ def test_transfer_order_to_billing_queue(organization: Organization) -> None:
     organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
     organization.billing_control.save()
 
-    order = OrderFactory(organization=organization)
+    order = OrderFactory(organization=organization, business_unit=business_unit)
 
     order_movements = order.movements.all()
     order_movements.update(status="C")
@@ -499,7 +555,7 @@ def test_transfer_order_to_billing_queue(organization: Organization) -> None:
     order.billing_transfer_date = None
     order.save()
 
-    user = UserFactory(organization=organization)
+    user = UserFactory(organization=organization, business_unit=business_unit)
 
     services.transfer_to_billing_queue_service(
         user_id=user.id,
@@ -529,6 +585,7 @@ def test_transfer_order_to_billing_queue(organization: Organization) -> None:
 
 def test_bill_orders(
     organization: Organization,
+    business_unit: BusinessUnit,
     user: User,
     worker: Worker,
 ) -> None:
@@ -541,7 +598,7 @@ def test_bill_orders(
     organization.billing_control.save()
 
     # Create an order from the Order Factory
-    order = OrderFactory(organization=organization)
+    order = OrderFactory(organization=organization, business_unit=business_unit)
 
     # Update the order movements to be completed
     order_movements = order.movements.all()
@@ -555,7 +612,7 @@ def test_bill_orders(
     order.save()
 
     # Create a User from the User Factory
-    user = UserFactory(organization=organization)
+    user = UserFactory(organization=organization, business_unit=business_unit)
 
     # transfer the order to the billing queue
     services.transfer_to_billing_queue_service(
@@ -596,6 +653,7 @@ def test_bill_orders(
 
 def test_single_order_billing_service(
     organization: Organization,
+    business_unit: BusinessUnit,
     user: User,
     worker: Worker,
 ) -> None:
@@ -607,7 +665,7 @@ def test_single_order_billing_service(
     organization.billing_control.save()
 
     # Create an order from the Order Factory
-    order = OrderFactory(organization=organization)
+    order = OrderFactory(organization=organization, business_unit=business_unit)
 
     # Update the order movements to be completed
     order_movements = order.movements.all()
@@ -621,7 +679,7 @@ def test_single_order_billing_service(
     order.save()
 
     # Create a User from the User Factory
-    user = UserFactory(organization=organization)
+    user = UserFactory(organization=organization, business_unit=business_unit)
 
     # transfer the order to the billing queue
     services.transfer_to_billing_queue_service(
@@ -661,9 +719,9 @@ def test_single_order_billing_service(
 
 
 def test_untransfer_single_order(
-    api_client: APIClient, organization: Organization
+    api_client: APIClient, organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    order = OrderFactory(organization=organization)
+    order = OrderFactory(organization=organization, business_unit=business_unit)
 
     order_movements = order.movements.all()
     order_movements.update(status="C")
@@ -687,9 +745,9 @@ def test_untransfer_single_order(
 
 
 def test_untransfer_multiple_orders(
-    api_client: APIClient, organization: Organization
+    api_client: APIClient, organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    order1 = OrderFactory(organization=organization)
+    order1 = OrderFactory(organization=organization, business_unit=business_unit)
 
     order_movements = order1.movements.all()
     order_movements.update(status="C")
@@ -700,7 +758,7 @@ def test_untransfer_multiple_orders(
     order1.billing_transfer_date = None
     order1.save()
 
-    order2 = OrderFactory(organization=organization)
+    order2 = OrderFactory(organization=organization, business_unit=business_unit)
 
     order_movements = order2.movements.all()
     order_movements.update(status="C")
@@ -774,7 +832,11 @@ def test_validate_invoice_number_does_not_start_with_invoice_prefix(
 
 
 def test_validate_invoice_number_does_start_with_invoice_prefix(
-    organization: Organization, customer: Customer, user: User, worker: Worker
+    organization: Organization,
+    business_unit: BusinessUnit,
+    customer: Customer,
+    user: User,
+    worker: Worker,
 ) -> None:
     """
     Test that validates if invoice number is manually entered, it must start with invoice prefix
@@ -798,7 +860,8 @@ def test_validate_invoice_number_does_start_with_invoice_prefix(
     order.save()
 
     invoice = models.BillingQueue.objects.create(
-        organization=user.organization,
+        organization=organization,
+        business_unit=business_unit,
         order_type=order.order_type,
         order=order,
         revenue_code=order.revenue_code,

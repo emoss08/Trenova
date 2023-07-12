@@ -29,7 +29,6 @@ class CustomerFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.Customer"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -47,7 +46,6 @@ class DocumentClassificationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "billing.DocumentClassification"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -65,7 +63,6 @@ class CustomerContactFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerContact"
-        django_get_or_create = ("organization", "customer")
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -87,7 +84,6 @@ class CustomerEmailProfileFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerEmailProfile"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -111,7 +107,6 @@ class CustomerRuleProfileFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerRuleProfile"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -142,12 +137,6 @@ class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
         """
 
         model = "customer.CustomerBillingProfile"
-        django_get_or_create = (
-            "organization",
-            "customer",
-            "email_profile",
-            "rule_profile",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

@@ -29,7 +29,6 @@ class LocationCategoryFactory(factory.django.DjangoModelFactory):
         """
 
         model = "location.LocationCategory"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -47,10 +46,6 @@ class LocationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "location.Location"
-        django_get_or_create = (
-            "organization",
-            "location_category",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -73,10 +68,6 @@ class LocationContactFactory(factory.django.DjangoModelFactory):
         """
 
         model = "location.LocationContact"
-        django_get_or_create = (
-            "organization",
-            "location",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
@@ -96,13 +87,6 @@ class LocationCommentFactory(factory.django.DjangoModelFactory):
         """
 
         model = "location.LocationComment"
-        django_get_or_create = (
-            "organization",
-            "location",
-            "comment_type",
-            "business_unit",
-            "entered_by",
-        )
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

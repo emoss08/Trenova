@@ -14,8 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from datetime import timedelta
 from typing import Any
+
+from django.utils import timezone
 
 from worker import models
 
@@ -34,6 +36,13 @@ def create_worker_profile(
         instance (models.Worker): The instance of the Worker model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
+
+    Notes:
+        This signal will be ``deprecated`` once user have the ability to directly
+        create a WorkerProfile for a Worker.
+
+    Returns:
+        None: This function does not return anything.
     """
     if (
         created
@@ -43,4 +52,10 @@ def create_worker_profile(
             worker=instance,
             organization=instance.organization,
             business_unit=instance.organization.business_unit,
+            license_number="123456789",
+            license_expiration_date=timezone.now() + timedelta(days=1),
+            license_state="CA",
+            physical_due_date=timezone.now() + timedelta(days=1),
+            medical_cert_date=timezone.now() + timedelta(days=1),
+            mvr_due_date=timezone.now() + timedelta(days=1),
         )

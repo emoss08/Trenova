@@ -34,7 +34,7 @@ from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from order.tests.factories import OrderTypeFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -179,13 +179,14 @@ def test_list(rate: models.Rate) -> None:
     assert rate is not None
 
 
-def test_rate_create(organization: Organization) -> None:
+def test_rate_create(organization: Organization, business_unit: BusinessUnit) -> None:
     customer = CustomerFactory()
     commodity = CommodityFactory()
     order_type = OrderTypeFactory()
     equipment_type = EquipmentTypeFactory()
 
     rate = models.Rate.objects.create(
+        business_unit=business_unit,
         organization=organization,
         customer=customer,
         effective_date=timezone.now().date(),

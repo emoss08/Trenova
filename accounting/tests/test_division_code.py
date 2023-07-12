@@ -26,7 +26,7 @@ from rest_framework.test import APIClient
 from accounting import models
 from accounting.models import DivisionCode, GeneralLedgerAccount
 from accounting.tests.factories import GeneralLedgerAccountFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -37,7 +37,7 @@ class DivisionCodeBase(BaseModel):
     """
 
     organization_id: uuid.UUID
-    is_active: bool
+    status: str
     code: str
     description: str
     cash_account_id: uuid.UUID | None
@@ -67,7 +67,7 @@ def test_create_schema() -> None:
     """
     div_code_create = DivisionCodeCreate(
         organization_id=uuid.uuid4(),
-        is_active=True,
+        status="A",
         code="NEW",
         description="Test Description",
         cash_account_id=uuid.uuid4(),
@@ -75,10 +75,10 @@ def test_create_schema() -> None:
         expense_account_id=uuid.uuid4(),
     )
 
-    div_code = div_code_create.dict()
+    div_code = div_code_create.model_dump()
 
     assert div_code is not None
-    assert div_code["is_active"] is True
+    assert div_code["status"] == "A"
     assert div_code["code"] == "NEW"
     assert div_code["description"] == "Test Description"
 
@@ -91,7 +91,7 @@ def test_update_schema() -> None:
     div_code_update = DivisionCodeUpdate(
         id=uuid.uuid4(),
         organization_id=uuid.uuid4(),
-        is_active=True,
+        status="A",
         code="FOOB",
         description="Test Description",
         cash_account_id=uuid.uuid4(),
@@ -99,11 +99,11 @@ def test_update_schema() -> None:
         expense_account_id=uuid.uuid4(),
     )
 
-    div_code = div_code_update.dict()
+    div_code = div_code_update.model_dump()
 
     assert div_code is not None
     assert div_code["code"] == "FOOB"
-    assert div_code["is_active"] is True
+    assert div_code["status"] == "A"
     assert div_code["description"] == "Test Description"
     assert div_code["id"] is not None
     assert div_code["organization_id"] is not None
@@ -119,7 +119,7 @@ def test_delete_schema() -> None:
     division_codes = [
         DivisionCodeBase(
             organization_id=uuid.uuid4(),
-            is_active=True,
+            status="A",
             code="NEW1",
             description="Test Description 1",
             cash_account_id=uuid.uuid4(),
@@ -128,7 +128,7 @@ def test_delete_schema() -> None:
         ),
         DivisionCodeBase(
             organization_id=uuid.uuid4(),
-            is_active=True,
+            status="A",
             code="NEW2",
             description="Test Description 2",
             cash_account_id=uuid.uuid4(),
@@ -243,6 +243,7 @@ def test_list(division_code: DivisionCode) -> None:
 
 
 def test_create(
+    business_unit: BusinessUnit,
     organization: Organization,
     expense_account: GeneralLedgerAccount,
     cash_account: GeneralLedgerAccount,
@@ -256,8 +257,9 @@ def test_create(
     )
 
     div_code = models.DivisionCode.objects.create(
+        business_unit=business_unit,
         organization=organization,
-        is_active=True,
+        status="A",
         code="NEW",
         description="Test Description",
         cash_account=cash_account,
@@ -266,7 +268,7 @@ def test_create(
     )
 
     assert div_code is not None
-    assert div_code.is_active is True
+    assert div_code.status == "A"
     assert div_code.code == "NEW"
     assert div_code.description == "Test Description"
 
@@ -303,7 +305,7 @@ def test_api_get_by_id(
     response = api_client.get(f"/api/division_codes/{division_code_api.data['id']}/")
 
     assert response.status_code == 200
-    assert response.data["is_active"] is True
+    assert response.data["status"] == "A"
     assert response.data["code"] == "Test"
     assert response.data["description"] == "Test Description"
 
@@ -319,7 +321,7 @@ def test_api_put(
         "/api/gl_accounts/",
         {
             "organization": organization.id,
-            "is_active": True,
+            "status": "A",
             "account_number": "7000-0000-0000-0000",
             "description": "Foo bar",
             "account_type": "ASSET",
@@ -333,7 +335,7 @@ def test_api_put(
         {
             "organization": organization.id,
             "code": "foob",
-            "is_active": False,
+            "status": "A",
             "description": "Another Description",
             "cash_account": f"{cash_account_data.data['id']}",
         },
@@ -342,7 +344,7 @@ def test_api_put(
 
     assert response.status_code == 200
     assert response.data["code"] == "foob"
-    assert response.data["is_active"] is False
+    assert response.data["status"] == "A"
     assert response.data["description"] == "Another Description"
 
 

@@ -21,24 +21,38 @@ from rest_framework.test import APIClient
 from dispatch.factories import FleetCodeFactory
 from dispatch.models import CommentType
 from organization.models import Organization
-from worker.models import User, Worker
+from worker import models
+from accounts.models import User
 
 pytestmark = pytest.mark.django_db
 
 
-def test_get(api_client: APIClient) -> None:
-    """
-    Test get Worker
+def test_get_worker(api_client: APIClient) -> None:
+    """Test get worker
+
+    Args:
+        api_client (APIClient): Api Client
+
+    Returns:
+        None: This function does return anything.
     """
     response = api_client.get("/api/workers/")
     assert response.status_code == 200
 
 
-def test_get_by_id(api_client: APIClient, worker_api: Worker, user: User) -> None:
+def test_get_worker_by_id(api_client: APIClient, worker: models.Worker) -> None:
+    """Test get worker by ID
+
+    Args:
+        api_client (APIClient): Api Client
+        worker (Worker): Worker object
+
+    Returns:
+        None: This function does return anything.
     """
-    Test get Document classification by ID
-    """
-    response = api_client.get(f"/api/workers/{worker_api.id}/")
+
+    response = api_client.get(f"/api/workers/{worker.id}/")
+
     assert response.status_code == 200
 
 
@@ -240,7 +254,7 @@ def test_put(
     api_client: APIClient,
     comment_type: CommentType,
     user: User,
-    worker: Worker,
+    worker: models.Worker,
     organization: Organization,
 ) -> None:
     """

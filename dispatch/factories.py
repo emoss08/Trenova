@@ -36,7 +36,6 @@ class DispatchControlFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.DispatchControl"
-        django_get_or_create = ("organization",)
 
 
 class DelayCodeFactory(factory.django.DjangoModelFactory):
@@ -55,7 +54,6 @@ class DelayCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.DelayCode"
-        django_get_or_create = ("organization", "business_unit")
 
 
 class FleetCodeFactory(factory.django.DjangoModelFactory):
@@ -74,7 +72,6 @@ class FleetCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.FleetCode"
-        django_get_or_create = ("organization", "business_unit")
 
 
 class CommentTypeFactory(factory.django.DjangoModelFactory):
@@ -93,7 +90,6 @@ class CommentTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.CommentType"
-        django_get_or_create = ("organization", "business_unit")
 
 
 class RateFactory(factory.django.DjangoModelFactory):
@@ -119,11 +115,6 @@ class RateFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.Rate"
-        django_get_or_create = (
-            "organization",
-            "order_type",
-            "equipment_type",
-        )
 
 
 class RateBillingTableFactory(factory.django.DjangoModelFactory):
@@ -147,8 +138,3 @@ class RateBillingTableFactory(factory.django.DjangoModelFactory):
         """
 
         model = "dispatch.RateBillingTable"
-        django_get_or_create = (
-            "organization",
-            "rate",
-            "accessorial_charge",
-        )

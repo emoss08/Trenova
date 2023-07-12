@@ -225,7 +225,10 @@ def generate_report(
 
     # Save the report to the UserReport model
     new_report = models.UserReport.objects.create(
-        organization=user.organization, user=user, report=django_file
+        organization=user.organization,
+        user=user,
+        report=django_file,
+        business_unit=user.business_unit,
     )
 
     # Send notification to the user

@@ -35,8 +35,9 @@ class OrderTypeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.OrderType"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("name",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     name = factory.Faker("pystr", max_chars=255)
 
@@ -52,8 +53,9 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.ReasonCode"
-        django_get_or_create = ("organization",)
+        django_get_or_create = ("code",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     code = factory.Faker("pystr", max_chars=4)
     description = factory.Faker("text", locale="en_US", max_nb_chars=100)
@@ -74,15 +76,8 @@ class OrderFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.Order"
-        django_get_or_create = (
-            "organization",
-            "order_type",
-            "revenue_code",
-            "origin_location",
-            "destination_location",
-            "customer",
-        )
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order_type = factory.SubFactory(OrderTypeFactory)
     status = "N"
@@ -114,8 +109,8 @@ class OrderCommentFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.OrderComment"
-        django_get_or_create = ("organization",)
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
@@ -134,8 +129,8 @@ class OrderDocumentationFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.OrderDocumentation"
-        django_get_or_create = ("organization", "order", "document_class")
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     document = SimpleUploadedFile(
@@ -157,13 +152,8 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
         """
 
         model = "order.AdditionalCharge"
-        django_get_or_create = (
-            "organization",
-            "order",
-            "accessorial_charge",
-            "entered_by",
-        )
 
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     order = factory.SubFactory(OrderFactory)
     accessorial_charge = factory.SubFactory(

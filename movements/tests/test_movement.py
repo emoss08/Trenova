@@ -31,7 +31,7 @@ from movements import models, services
 from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 from worker.factories import WorkerFactory
 from worker.models import Worker
 
@@ -39,7 +39,11 @@ pytestmark = pytest.mark.django_db
 
 
 def test_create(
-    worker: Worker, tractor: Tractor, organization: Organization, order: Order
+    worker: Worker,
+    tractor: Tractor,
+    organization: Organization,
+    order: Order,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test Movement Create
@@ -55,6 +59,7 @@ def test_create(
 
     movement = models.Movement.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order,
         tractor=tractor,
         primary_worker=worker,
@@ -80,7 +85,12 @@ def test_update(movement: models.Movement, tractor: Tractor) -> None:
     assert add_movement.tractor == tractor
 
 
-def test_initial_stop_creation_hook(worker: Worker, tractor: Tractor) -> None:
+def test_initial_stop_creation_hook(
+    worker: Worker,
+    tractor: Tractor,
+    organization: Organization,
+    business_unit: BusinessUnit,
+) -> None:
     """
     Test that an initial stop is created when a movement is created.
     """
@@ -92,7 +102,8 @@ def test_initial_stop_creation_hook(worker: Worker, tractor: Tractor) -> None:
     )
 
     movement = models.Movement.objects.create(
-        organization=order.organization,
+        organization=organization,
+        business_unit=business_unit,
         order=order,
         tractor=tractor,
         primary_worker=worker,
@@ -182,6 +193,8 @@ def test_primary_worker_license_expiration_date() -> None:
     """
     worker = WorkerFactory()
     worker.profile.license_expiration_date = timezone.now() - timedelta(days=1)
+    worker.profile.license_number = "123456789"
+    worker.profile.license_state = "CA"
     worker.profile.save()
 
     dispatch_control = worker.organization.dispatch_control
@@ -189,7 +202,11 @@ def test_primary_worker_license_expiration_date() -> None:
     dispatch_control.save()
 
     with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(organization=worker.organization, primary_worker=worker)
+        MovementFactory(
+            organization=worker.organization,
+            primary_worker=worker,
+            business_unit=worker.business_unit,
+        )
 
     assert excinfo.value.message_dict["primary_worker"] == [
         "Cannot assign a worker with an expired license. Please update the worker's profile and try again."

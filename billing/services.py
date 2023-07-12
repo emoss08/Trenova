@@ -134,7 +134,10 @@ def transfer_to_billing_queue_service(
         try:
             # Create a BillingQueue object
             models.BillingQueue.objects.create(
-                organization=order.organization, order=order, customer=order.customer
+                organization=order.organization,
+                order=order,
+                customer=order.customer,
+                business_unit=order.business_unit,
             )
 
             # Update the order
@@ -146,6 +149,7 @@ def transfer_to_billing_queue_service(
                 models.BillingTransferLog(
                     order=order,
                     organization=order.organization,
+                    business_unit=order.business_unit,
                     task_id=task_id,
                     transferred_at=now,
                     transferred_by=user,
@@ -250,13 +254,10 @@ def bill_orders(
                 utils.order_billing_actions(invoice=invoice, user=user)
                 billed_invoices.append(invoice.invoice_number)
 
-            print("I'm here in the mass billing service 1")
         else:
             # If the customer billing requirements are met or not enforced, bill the order
             utils.order_billing_actions(invoice=invoice, user=user)
-            print("I'm here in the mass billing service 2", invoice.invoice_number)
             billed_invoices.append(invoice.invoice_number)
-    print(order_missing_info, billed_invoices)
     return order_missing_info, billed_invoices
 
 

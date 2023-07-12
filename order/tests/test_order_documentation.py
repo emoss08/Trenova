@@ -26,7 +26,7 @@ from rest_framework.test import APIClient
 
 from billing.models import DocumentClassification
 from order import models
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -84,6 +84,7 @@ def test_list(order_document: models.OrderDocumentation) -> None:
 
 def test_create(
     organization: Organization,
+    business_unit: BusinessUnit,
     order: models.Order,
     document_classification: DocumentClassification,
 ) -> None:
@@ -96,6 +97,7 @@ def test_create(
 
     created_document = models.OrderDocumentation.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order=order,
         document=pdf_file,
         document_class=document_classification,

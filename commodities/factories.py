@@ -48,7 +48,6 @@ class HazardousMaterialFactory(factory.django.DjangoModelFactory):
         """
 
         model = "commodities.HazardousMaterial"
-        django_get_or_create = ("organization",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")

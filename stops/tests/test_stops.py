@@ -35,7 +35,7 @@ from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.models import Order, OrderType
-from organization.models import Organization
+from organization.models import Organization, BusinessUnit
 from stops import models
 from stops.models import ServiceIncident
 from stops.tests.factories import StopFactory
@@ -54,13 +54,17 @@ def test_list(stop: models.Stop) -> None:
 
 
 def test_create(
-    movement: Movement, organization: Organization, location: Location
+    movement: Movement,
+    organization: Organization,
+    location: Location,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test Stop Create
     """
     stop = models.Stop.objects.create(
         organization=organization,
+        business_unit=business_unit,
         movement=movement,
         location=location,
         appointment_time_window_start=timezone.now(),
@@ -87,7 +91,10 @@ def test_update(stop: models.Stop, movement: Movement, location: Location) -> No
 
 
 def test_location_address(
-    location: Location, organization: Organization, movement: Movement
+    location: Location,
+    organization: Organization,
+    movement: Movement,
+    business_unit: BusinessUnit,
 ) -> None:
     """
     Test when adding location code to a stop, that the address_line
@@ -95,6 +102,7 @@ def test_location_address(
     """
 
     stop = models.Stop.objects.create(
+        business_unit=business_unit,
         organization=organization,
         movement=movement,
         location=location,
@@ -377,6 +385,7 @@ def test_service_incident_created(
     customer: Customer,
     equipment_type: EquipmentType,
     user: User,
+    business_unit: BusinessUnit,
 ) -> None:
     """Test create a service incident if the stop is late.
 
@@ -389,6 +398,7 @@ def test_service_incident_created(
         customer (Customer): A customer instance.
         equipment_type (EquipmentType): An equipment type instance.
         user (User): A user instance.
+        business_unit (BusinessUnit): A business unit instance.
 
     Returns:
         None: This function does not return anything.
@@ -396,6 +406,7 @@ def test_service_incident_created(
 
     order = Order.objects.create(
         organization=organization,
+        business_unit=business_unit,
         order_type=order_type,
         revenue_code=revenue_code,
         origin_location=origin_location,

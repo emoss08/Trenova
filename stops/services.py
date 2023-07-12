@@ -61,6 +61,7 @@ def create_service_incident(*, obj: models.Stop) -> None:
         delay_time = obj.arrival_time - obj.appointment_time_window_end
         models.ServiceIncident.objects.create(
             organization=obj.organization,
+            business_unit=obj.business_unit,
             movement=obj.movement,
             stop=obj,
             delay_time=delay_time,

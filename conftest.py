@@ -23,7 +23,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Token
 from accounts.tests.factories import TokenFactory, UserFactory
-from organization.factories import OrganizationFactory
+from organization.factories import OrganizationFactory, BusinessUnitFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -34,6 +34,16 @@ def token() -> Generator[Any, Any, None]:
     Token Fixture
     """
     yield TokenFactory()
+
+
+@pytest.fixture
+def business_unit() -> Generator[Any, Any, None]:
+    """Business Unit Fixture
+
+    Yields:
+        Generator[Any, Any, None]: Business Unit object
+    """
+    yield BusinessUnitFactory()
 
 
 @pytest.fixture
