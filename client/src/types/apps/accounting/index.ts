@@ -34,7 +34,7 @@ export type DivisionCode = {
   description: string;
   ap_account?: string | null;
   cash_account?: string | null;
-  expense_account: string | null;
+  expense_account?: string | null;
 };
 
 export interface DivisionCodeFormValues
