@@ -14,6 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import random
+import string
 from datetime import timedelta
 from typing import Any
 
@@ -117,7 +119,7 @@ class Command(BaseCommand):
             "--organization",
             type=str,
             help="Name of the system organization.",
-            default="Sys",
+            default="Monta Transportation",
         )
 
     @staticmethod
@@ -160,10 +162,12 @@ class Command(BaseCommand):
         default username, password, and email address based on the organization name. If the user already exists, it
         returns the existing user instead.
         """
+        random_string = "".join(random.choice(string.ascii_letters) for _ in range(10))
+
         user, created = User.objects.get_or_create(
             organization=organization,
             business_unit=organization.business_unit,
-            username="walle",
+            username=f"walle-{random_string}",
             password="0&7Wj4Htiqwv3HAF1!",
             email=f"walle@{organization.name}.com",
         )
