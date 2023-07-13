@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from order import models
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 

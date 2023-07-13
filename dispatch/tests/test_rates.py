@@ -34,7 +34,7 @@ from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from order.tests.factories import OrderTypeFactory
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 

@@ -25,7 +25,7 @@ from dispatch.factories import FleetCodeFactory
 from equipment.tests.factories import TractorFactory
 from order.selectors import get_order_movements, get_order_stops
 from order.tests.factories import OrderFactory
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 from worker.factories import WorkerFactory
 from worker.models import WorkerHOS
 

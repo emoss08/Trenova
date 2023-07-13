@@ -35,7 +35,7 @@ from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.models import Order, OrderType
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 from stops import models
 from stops.models import ServiceIncident
 from stops.tests.factories import StopFactory

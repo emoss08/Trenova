@@ -26,7 +26,7 @@ from rest_framework.test import APIClient
 from accounting import models
 from accounting.models import DivisionCode, GeneralLedgerAccount
 from accounting.tests.factories import GeneralLedgerAccountFactory
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 
