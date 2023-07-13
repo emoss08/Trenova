@@ -27,7 +27,9 @@ import {
   faInbox,
   faServer,
   faTruckFast,
+  faUsers,
   faUserSecret,
+  faUserTie,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
 
@@ -67,6 +69,22 @@ export const adminNavLinks: Record<string, TNavigationLink[]> = {
       description: "Manage & Monitor system cache management",
       href: "#",
       permission: "admin.view_cachemanager",
+    },
+  ],
+  "Configuration Files": [
+    {
+      icon: faUsers,
+      title: "User Management",
+      description: "Manage users & their permissions",
+      href: "/admin/users",
+      permission: "admin.users.view",
+    },
+    {
+      icon: faUserTie,
+      title: "Job Titles",
+      description: "Manage your organization's job titles & their permissions",
+      href: "/accounts/job-titles",
+      permission: "view_jobtitles",
     },
   ],
   "Control Files": [
