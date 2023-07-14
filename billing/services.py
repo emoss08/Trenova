@@ -16,9 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 import json
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import redis
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
@@ -27,11 +28,20 @@ from django.utils import timezone
 
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
+from billing.exceptions import InvalidSessionKeyError, DuplicateSessionKeyError
 from order.models import Order
 from utils.services.pdf import UUIDEncoder
 
-if TYPE_CHECKING:
-    from utils.types import ModelUUID
+from utils.types import (
+    ModelUUID,
+    BillingClientSessionResponse,
+    BillingClientActions,
+    BilledOrders,
+)
+
+import logging
+
+logger = logging.getLogger("billing_client")
 
 
 def generate_invoice_number(
@@ -200,7 +210,7 @@ def bill_orders(
     *,
     user_id: "ModelUUID",
     invoices: QuerySet[models.BillingQueue] | models.BillingQueue,
-) -> tuple[list[str], list[str]] | None:
+) -> BilledOrders:
     """
     Bills the specified orders. If the organization enforces customer billing requirements,
     checks these requirements before billing the order. If requirements are not met, a
@@ -212,7 +222,8 @@ def bill_orders(
             or a single BillingQueue instance representing the orders to be billed.
 
     Returns:
-        None: This function does not return anything.
+        BilledOrders: A namedtuple containing the number of orders billed and the number of orders that
+            failed to bill.
 
     Raises:
         Http404: If the user with the given user_id does not exist.
@@ -313,7 +324,13 @@ class BillingClientSessionManager:
         db (int): The DB number to connect to on the Redis server. Defaults to 4.
     """
 
-    def __init__(self, host: str = "localhost", port: int = 6379, db: int = 4):
+    client_host = settings.BILLING_CLIENT_HOST
+    client_port = settings.BILLING_CLIENT_PORT
+    client_db = settings.BILLING_CLIENT_DB
+
+    def __init__(
+        self, host: str = client_host, port: int = client_port, db: int = client_db
+    ):
         """
         Constructs all the necessary attributes for the BillingClientSessionManager object.
 
@@ -322,10 +339,10 @@ class BillingClientSessionManager:
             port (int): The port of the Redis server. Defaults to 6379.
             db (int): The DB number to connect to on the Redis server. Defaults to 4.
         """
-        self.client = redis.Redis(host=host, port=port, db=db)
+        self.client = redis.StrictRedis(host=host, port=port, db=db)
 
     @staticmethod
-    def _get_session_key(user_id: uuid.UUID) -> str:
+    def _get_session_key(*, user_id: uuid.UUID) -> str:
         """
         Generates a session key string based on user_id.
 
@@ -335,10 +352,10 @@ class BillingClientSessionManager:
         Returns:
             str: A session key string.
         """
-        return f"billing_client_session_{user_id}"
+        return f"billing_client:{user_id}"
 
     @staticmethod
-    def _serialize(data: Any) -> str:
+    def _serialize(*, data: BillingClientSessionResponse) -> str:
         """
         Serializes the given data into a JSON string.
 
@@ -351,7 +368,7 @@ class BillingClientSessionManager:
         return json.dumps(data, cls=UUIDEncoder)
 
     @staticmethod
-    def _deserialize(data: Any) -> dict[str, Any]:
+    def _deserialize(*, data: str | bytes | bytearray) -> dict[str, Any]:
         """
         Deserializes the given JSON string into a Python object.
         If data is None, returns None.
@@ -363,53 +380,69 @@ class BillingClientSessionManager:
             dict: The deserialized data if data is not None.
             None: If data is None.
         """
+        print(type(data))
+        print(type(json.loads(data)))
         return json.loads(data)
 
-    def set_new_billing_client_session(self, user_id: uuid.UUID):
+    def set_new_billing_client_session(
+        self, user_id: uuid.UUID
+    ) -> BillingClientSessionResponse:
         """
         Sets a new billing client session for a user.
 
-        If a session already exists, this function fetches and returns it.
-        Otherwise, a new session is created with a predefined structure and stored in Redis.
+        If a session already exists, this function deletes it.
+        Then, a new session is created with a predefined structure and stored in Redis.
 
         Args:
             user_id (uuid.UUID): The unique identifier for the user.
 
         Returns:
-            dict: The client session.
+            dict: The newly created client session.
         """
-        session_key = self._get_session_key(user_id)
-        user_sessions = self.client.get(session_key)
-        if user_sessions is None:
-            billing_client_session = {
-                "user_id": user_id,
-                "current_action": "getting_started",
-                "previous_action": None,
-                "last_response": None,
-                "last_payload": None,
-            }
-            self.client.set(session_key, self._serialize(billing_client_session))
-        else:
-            billing_client_session = self._deserialize(user_sessions)
+        session_key = self._get_session_key(user_id=user_id)
+
+        if self.client.exists(session_key):
+            logger.info(
+                f"Session already exists for user_id: {user_id}. Deleting existing session and creating a new one."
+            )
+            self.client.delete(session_key)
+
+        billing_client_session: BillingClientSessionResponse = {
+            "user_id": user_id,
+            "current_action": BillingClientActions.GET_STARTED.value,
+            "previous_action": None,
+            "last_response": None,
+            "last_message": None,
+        }
+        self.client.set(session_key, self._serialize(data=billing_client_session))
         return billing_client_session
 
     def update_billing_client_session(
-        self, user_id: uuid.UUID, billing_client_session: dict[str, Any]
+        self,
+        user_id: uuid.UUID,
+        data: BillingClientSessionResponse,
     ) -> None:
         """
         Updates a user's billing client session in the Redis datastore.
 
         Args:
             user_id (uuid.UUID): The unique identifier for the user.
-            billing_client_session (dict): The updated session data.
+            data (BillingClientSessionResponse): The updated session data.
 
         Returns:
             None: This function does not return anything.
         """
-        session_key = self._get_session_key(user_id)
-        self.client.set(session_key, self._serialize(billing_client_session))
+        if not self.check_billing_client_session(user_id=user_id):
+            raise InvalidSessionKeyError(
+                f"Billing client session for user {user_id} does not exist."
+            )
 
-    def get_billing_client_session(self, user_id: uuid.UUID) -> dict[str, Any] | None:
+        session_key = self._get_session_key(user_id=user_id)
+        self.client.set(session_key, self._serialize(data=data))
+
+    def get_billing_client_session(
+        self, *, user_id: uuid.UUID
+    ) -> dict[str, Any] | None:
         """
         Retrieves a user's billing client session from the Redis datastore.
 
@@ -420,11 +453,16 @@ class BillingClientSessionManager:
             dict: The client session if it exists.
             None: If no session is found for the user.
         """
-        session_key = self._get_session_key(user_id)
-        billing_client_session = self.client.get(session_key)
-        return self._deserialize(billing_client_session)
+        if not self.check_billing_client_session(user_id=user_id):
+            raise InvalidSessionKeyError(
+                f"Billing client session for user {user_id} does not exist."
+            )
 
-    def delete_billing_client_session(self, user_id: uuid.UUID) -> None:
+        session_key = self._get_session_key(user_id=user_id)
+        billing_client_session = self.client.get(session_key)
+        return self._deserialize(data=billing_client_session)
+
+    def delete_billing_client_session(self, *, user_id: uuid.UUID) -> None:
         """
         Deletes a user's billing client session from the Redis datastore.
 
@@ -434,5 +472,25 @@ class BillingClientSessionManager:
         Returns:
             None: This function does not return anything.
         """
-        session_key = self._get_session_key(user_id)
+
+        if not self.check_billing_client_session(user_id=user_id):
+            raise InvalidSessionKeyError(
+                f"Billing client session for user {user_id} does not exist."
+            )
+
+        session_key = self._get_session_key(user_id=user_id)
         self.client.delete(session_key)
+
+    def check_billing_client_session(self, *, user_id: uuid.UUID) -> bool:
+        """Checks if a user's billing client session exists in the Redis datastore.
+
+        Args:
+            user_id (uuid.UUID): The unique identifier for the user.
+
+        Returns:
+            bool: True if the session exists, False otherwise.
+        """
+        session_key = self._get_session_key(user_id=user_id)
+        session_exists = self.client.exists(session_key)
+
+        return session_exists != 0
