@@ -14,12 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+import redis
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, status, viewsets, views
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -601,3 +601,10 @@ def untransfer_orders(request: Request) -> Response:
         return Response(
             {"error": "Invoice numbers not found."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+class BillingClientManagerView(views.APIView):
+    def get(self, request: Request) -> Response:
+        pass
+        # r = redis.StrictRedis(host=)
+        # r.set("foo", "bar")
