@@ -72,7 +72,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
+const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
   const queryClient = useQueryClient();
   const { classes } = useStyles();
   const el = React.useRef(null);
@@ -119,3 +119,5 @@ export const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
     </>
   );
 };
+
+export default OrdersReady;
