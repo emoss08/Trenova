@@ -83,9 +83,10 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
         action_map = {
             "restart": self.get_started,
             "get_started": self.get_started,
-            # "orders_ready": self.send_to_billing_queue,
-            # "billing_queue": self.send_to_billing_queue,
-            # "bill_orders": self.bill_orders,
+            "orders_ready": self.send_orders_ready,
+            "billing_queue": self.send_to_billing_queue,
+            "bill_orders": self.bill_orders,
+            "confirm_exceptions": self.confirm_exceptions,
         }
 
         # Save the previous action and last payload before processing the new action
@@ -117,142 +118,138 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
         await self.update_session_action_and_payload(
             action=BillingClientActions.GET_STARTED.value, data=content
         )
-        # await self.send_and_update_session_response(
-        #     data={
-        #         "action": "get_started",
-        #         "status": BillingClientStatuses.SUCCESS.value,
-        #         "step": 0,
-        #         "message": "Blast off! Please wait while we load your orders ready to be billed.",
-        #     }
-        # )
+        await self.send_and_update_session_response(
+            data={
+                "action": "get_started",
+                "status": BillingClientStatuses.SUCCESS.value,
+                "step": 0,
+                "message": "Blast off! Please wait while we load your orders ready to be billed.",
+            }
+        )
+        await sleep(2)  # simulate loading time for testing
+        await self.send_orders_ready(content)
 
-        # await sleep(2)  # simulate loading time for testing
-        # await self.send_orders_ready()
-
-    async def send_orders_ready(self) -> None:
+    async def send_orders_ready(self, content) -> None:
         await self.update_session_action(action=BillingClientActions.ORDERS_READY.value)
         await self.send_and_update_session_response(
             data={
                 "action": "orders_ready",
-                "status": BillingClientStatuses.SUCCESS,
+                "status": BillingClientStatuses.SUCCESS.value,
                 "step": 1,
                 "message": "Transferring user to orders ready to be billed.",
             }
         )
 
-    # async def send_to_billing_queue(self, content: dict[str, Any]) -> None:
-    #     await self.update_session_action_and_payload(
-    #         action="send_to_billing_queue", payload=content
-    #     )
-    #     await self.send_and_update_session_response(
-    #         payload={
-    #             "action": "orders_ready",
-    #             "step": 2,
-    #             "payload": {
-    #                 "message": "Please wait while we transfer your orders to the billing queue.",
-    #             },
-    #         }
-    #     )
-    #
-    #     if not content["payload"]:
-    #         await self.send_and_update_session_response(
-    #             payload={
-    #                 "action": "orders_ready",
-    #                 "step": 3,
-    #                 "payload": {
-    #                     "message": "No orders selected to be billed.",
-    #                 },
-    #             }
-    #         )
-    #         return
-    #
-    #     billing_queue_response = await database_sync_to_async(
-    #         transfer_to_billing_queue_service
-    #     )(
-    #         user_id=self.scope["user"].id,
-    #         order_pros=content["payload"],
-    #         task_id=str(uuid.uuid4()),
-    #     )
-    #     await sleep(2)  # simulate loading time for testing
-    #     await self.send_and_update_session_response(
-    #         payload={
-    #             "action": "billing_queue",
-    #             "step": 3,
-    #             "payload": {
-    #                 "message": billing_queue_response,
-    #             },
-    #         }
-    #     )
-    #
-    # async def bill_orders(self, content: dict[str, Any]) -> None:
-    #     await self.update_session_action_and_payload(
-    #         action="bill_orders", payload=content
-    #     )
-    #     await self.send_and_update_session_response(
-    #         payload={
-    #             "action": "bill_orders",
-    #             "step": 4,
-    #             "payload": {
-    #                 "status": "processing",
-    #                 "message": "Please wait while we bill your orders.",
-    #             },
-    #         }
-    #     )
-    #
-    #     invoices = await database_sync_to_async(get_invoices_by_invoice_number)(
-    #         invoices=content["payload"]
-    #     )
-    #
-    #     order_missing_info, billed_invoices = await database_sync_to_async(bill_orders)(
-    #         user_id=self.scope["user"].id,
-    #         invoices=invoices,
-    #     )
-    #     await sleep(2)  # simulate loading time for testing
-    #
-    #     if len(order_missing_info) > 0:
-    #         # Send failure message back to user and update session
-    #         await self.send_and_update_session_response(
-    #             payload={
-    #                 "action": "bill_orders",
-    #                 "step": 4,
-    #                 "payload": {
-    #                     "status": "failure",
-    #                     "message": order_missing_info,
-    #                 },
-    #             }
-    #         )
-    #
-    #     # if len(billed_invoices) > 0:
-    #     #     # Send success message back to user and update session
-    #     #     await self.send_and_update_session_response(
-    #     #         payload={
-    #     #             "action": "bill_orders",
-    #     #             "step": 4,
-    #     #             "payload": {
-    #     #                 "status": "success",
-    #     #                 "message": f"Successfully billed {len(billed_invoices)} invoices",
-    #     #             },
-    #     #         }
-    #     #     )
-    #     #     await sleep(2)  # simulate loading time for testing
-    #     #     await self.good_job()
-    #
-    # async def confirm_missing_info(self, content: dict[str, Any]) -> None:
-    #     # Here, `content` would contain the user's confirmation
-    #     # Once you receive confirmation, call `self.good_job()`
-    #     await self.good_job()
-    #
-    # async def good_job(self) -> None:
-    #     # Send success message back to user and update session
-    #     await self.send_and_update_session_response(
-    #         payload={
-    #             "action": "good_job",
-    #             "step": 5,
-    #             "payload": {
-    #                 "message": "Good job! You have successfully billed your orders.",
-    #             },
-    #         }
-    #     )
+    async def send_to_billing_queue(self, content: BillingClientResponse) -> None:
+        await self.send_and_update_session_response(
+            data={
+                "action": "orders_ready",
+                "step": 2,
+                "message": "Please wait while we transfer your orders to the billing queue.",
+                "status": BillingClientStatuses.SUCCESS.value,
+            }
+        )
+        await self.update_session_action_and_payload(
+            action="send_to_billing_queue", data=content
+        )
+
+        print(content)
+
+        if not content["message"]:
+            await self.send_and_update_session_response(
+                data={
+                    "action": "orders_ready",
+                    "step": 3,
+                    "message": "No orders selected to be billed.",
+                    "status": BillingClientStatuses.FAILURE.value,
+                }
+            )
+
+        billing_queue_response = await database_sync_to_async(
+            transfer_to_billing_queue_service
+        )(
+            user_id=self.scope["user"].id,
+            order_pros=content["message"],
+            task_id=str(uuid.uuid4()),
+        )
+        await sleep(2)  # simulate loading time for testing
+        await self.send_and_update_session_response(
+            data={
+                "action": "billing_queue",
+                "step": 3,
+                "message": billing_queue_response,
+                "status": BillingClientStatuses.SUCCESS.value,
+            }
+        )
+
+    async def bill_orders(self, content: BillingClientResponse) -> None:
+        await self.update_session_action_and_payload(action="bill_orders", data=content)
+        await self.send_and_update_session_response(
+            data={
+                "action": "bill_orders",
+                "step": 4,
+                "status": BillingClientStatuses.PROCESSING.value,
+                "message": "Please wait while we bill your orders.",
+            }
+        )
+
+        invoices = await database_sync_to_async(get_invoices_by_invoice_number)(
+            invoices=content["message"]
+        )
+
+        order_missing_info, billed_invoices = await database_sync_to_async(bill_orders)(
+            user_id=self.scope["user"].id,
+            invoices=invoices,
+        )
+        await sleep(2)  # simulate loading time for testing
+
+        if len(order_missing_info) > 0:
+            # Send failure message back to user and update session
+            await self.send_and_update_session_response(
+                data={
+                    "action": "bill_orders",
+                    "step": 4,
+                    "status": BillingClientStatuses.FAILURE.value,
+                    "message": order_missing_info,
+                }
+            )
+
+        if len(billed_invoices) > 0:
+            await self.send_and_update_session_response(
+                data={
+                    "action": "bill_orders",
+                    "step": 4,
+                    "status": BillingClientStatuses.SUCCESS.value,
+                    "message": billed_invoices,
+                }
+            )
+
+        await sleep(2)  # simulate loading time for testing
+        await self.good_job()
+
+    async def confirm_exceptions(self, content: BillingClientResponse) -> None:
+        if content["message"] == "confirmed":
+            # await self.send_and_update_session_response(
+            #     data={
+            #         "action": "confirm_exceptions",
+            #         "step": 5,
+            #         "status": BillingClientStatuses.SUCCESS.value,
+            #         "message": "Good job! You have successfully billed your orders.",
+            #     }
+            # )
+            print(content)
+            await self.good_job()
+
+    async def good_job(self) -> None:
+        # Send success message back to user and update session
+        await self.send_and_update_session_response(
+            data={
+                "action": "good_job",
+                "step": 5,
+                "status": BillingClientStatuses.SUCCESS.value,
+                "message": "Good job! You have successfully billed your orders.",
+            }
+        )
 
     async def update_session_action(self, *, action: str) -> None:
         self.session["previous_action"] = self.session["current_action"]

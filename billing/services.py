@@ -380,8 +380,6 @@ class BillingClientSessionManager:
             dict: The deserialized data if data is not None.
             None: If data is None.
         """
-        print(type(data))
-        print(type(json.loads(data)))
         return json.loads(data)
 
     def set_new_billing_client_session(
