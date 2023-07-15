@@ -22,21 +22,26 @@ type WebSocketEventHandlers = {
   onError?: (event: Event) => void;
 };
 
-export interface WebsocketMessageProps {
+export type TWebsocketStatuses =
+  | "SUCCESS"
+  | "FAILURE"
+  | "WARNING"
+  | "PROCESSING"
+  | "INFO";
+
+export type WebsocketMessageProps = {
   action?: string | null;
   step?: number | null;
-  payload: {
-    status: string;
-    message:
-      | string
-      | Array<
-          Array<{
-            invoice_number: string;
-            missing_documents: Array<string>;
-          }>
-        >;
-  };
-}
+  status?: TWebsocketStatuses | null;
+  message:
+    | string
+    | Array<
+        Array<{
+          invoice_number: string;
+          missing_documents: Array<string>;
+        }>
+      >;
+};
 
 /**
  * Represents a WebSocket connection, providing lifecycle event handling.

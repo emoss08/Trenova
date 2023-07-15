@@ -18,7 +18,7 @@
 import React, { Suspense, useEffect } from "react";
 import { Card, Flex, Skeleton } from "@mantine/core";
 import { usePageStyles } from "@/styles/PageStyles";
-import { WebSocketManager } from "@/utils/websockets";
+import { WebSocketManager, WebsocketMessageProps } from "@/utils/websockets";
 import {
   ENABLE_WEBSOCKETS,
   getUserId,
@@ -29,12 +29,9 @@ import { useAuthStore } from "@/stores/AuthStore";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX } from "@fortawesome/pro-duotone-svg-icons";
-import { GettingStarted } from "@/components/billing/GettingStarted";
 import { billingClientStore } from "@/stores/BillingStores";
-import { OrdersReady } from "@/components/billing/OrdersReady";
-import { BillingQueue } from "@/components/billing/BillingQueue";
-import { GoodJob } from "@/components/billing/GoodJob";
 import { BillingExceptionModal } from "@/components/billing/_partials/BillingExceptionModal";
+import { TransferConfirmModal } from "@/components/billing/_partials/TransferConfirmModal";
 
 const webSocketManager = new WebSocketManager();
 export const STEPS = [
@@ -43,6 +40,20 @@ export const STEPS = [
   "billing_queue",
   "good_job",
 ];
+
+/** Partial Page components */
+const GettingStartedPage = React.lazy(
+  () => import("../../components/billing/GettingStarted")
+);
+const OrdersReadyPage = React.lazy(
+  () => import("../../components/billing/OrdersReady")
+);
+const BillingQueuePage = React.lazy(
+  () => import("../../components/billing/BillingQueue")
+);
+const GoodJobPage = React.lazy(
+  () => import("../../components/billing/GoodJob")
+);
 
 const BillingClient: React.FC = () => {
   const { classes } = usePageStyles();
@@ -68,13 +79,14 @@ const BillingClient: React.FC = () => {
           },
 
           onMessage: (event: MessageEvent) => {
-            const data = JSON.parse(event.data);
-            console.log("Received websocket message", data);
+            const data = JSON.parse(event.data) as WebsocketMessageProps;
+
+            console.log("Billing Client Websocket Message", data);
             if (data.action === "orders_ready" && data.step === 2) {
               notifications.show({
                 id: "billing_client_orders_ready",
                 title: "Please wait...",
-                message: data.payload.message,
+                message: data.message as string,
                 color: "blue",
                 loading: true,
                 autoClose: false,
@@ -85,7 +97,7 @@ const BillingClient: React.FC = () => {
               notifications.update({
                 id: "billing_client_orders_ready",
                 title: "Completed",
-                message: data.payload.message,
+                message: data.message as string,
                 color: "green",
                 icon: <FontAwesomeIcon icon={faCheck} />,
                 autoClose: 5_000,
@@ -94,12 +106,12 @@ const BillingClient: React.FC = () => {
             if (
               data.action === "bill_orders" &&
               data.step === 4 &&
-              data.payload.status === "processing"
+              data.status === "PROCESSING"
             ) {
               notifications.show({
                 id: "bill_orders",
                 title: "Please wait...",
-                message: data.payload.message,
+                message: data.message as string,
                 color: "blue",
                 loading: true,
                 autoClose: false,
@@ -109,7 +121,7 @@ const BillingClient: React.FC = () => {
             if (
               data.action === "bill_orders" &&
               data.step === 4 &&
-              data.payload.status === "failure"
+              data.status === "FAILURE"
             ) {
               notifications.update({
                 id: "bill_orders",
@@ -124,12 +136,12 @@ const BillingClient: React.FC = () => {
             if (
               data.action === "bill_orders" &&
               data.step === 4 &&
-              data.payload.status === "success"
+              data.status === "SUCCESS"
             ) {
               notifications.update({
                 id: "bill_orders",
                 title: "Success!",
-                message: data.payload.message,
+                message: "Successfully billed orders!",
                 color: "green",
                 icon: <FontAwesomeIcon icon={faCheck} />,
                 autoClose: 5_000,
@@ -189,25 +201,25 @@ const BillingClient: React.FC = () => {
       case 0:
         return (
           <Suspense fallback={<Skeleton height={700} />}>
-            <GettingStarted websocketManager={webSocketManager} />
+            <GettingStartedPage websocketManager={webSocketManager} />
           </Suspense>
         );
       case 1:
         return (
           <Suspense fallback={<Skeleton height={700} />}>
-            <OrdersReady websocketManager={webSocketManager} />
+            <OrdersReadyPage websocketManager={webSocketManager} />
           </Suspense>
         );
       case 2:
         return (
           <Suspense fallback={<Skeleton height={700} />}>
-            <BillingQueue websocketManager={webSocketManager} />
+            <BillingQueuePage websocketManager={webSocketManager} />
           </Suspense>
         );
       case 3:
         return (
           <Suspense fallback={<Skeleton height={700} />}>
-            <GoodJob websocketManager={webSocketManager} />
+            <GoodJobPage websocketManager={webSocketManager} />
           </Suspense>
         );
       // Add more cases here for more steps...
@@ -220,7 +232,11 @@ const BillingClient: React.FC = () => {
       <Flex>
         <Card className={classes.card}>{renderStep()}</Card>
       </Flex>
-      <BillingExceptionModal websocketMessage={websocketMessage} />
+      <BillingExceptionModal
+        websocketMessage={websocketMessage}
+        websocketManager={webSocketManager}
+      />
+      <TransferConfirmModal />
     </>
   );
 };

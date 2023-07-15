@@ -34,6 +34,29 @@ interface Props {
 
 export const OrdersReadyTable = ({ data, websocketManager }: Props) => {
   const [, setStep] = billingClientStore.use("step");
+  const [approveTransfer, setApproveTransfer] =
+    billingClientStore.use("approveTransfer");
+
+  const sendTransferRequest = () => {
+    const proNumbers = table
+      .getSelectedRowModel()
+      .flatRows.map((row) => row.getValue("pro_number"));
+
+    console.log("proNumbers", proNumbers);
+    websocketManager.sendJsonMessage("billing_client", {
+      action: "billing_queue",
+      message: proNumbers,
+    });
+  };
+
+  React.useEffect(() => {
+    if (approveTransfer) {
+      billingClientStore.set("invalidOrders", []);
+      billingClientStore.set("transferConfirmModalOpen", false);
+      setApproveTransfer(false);
+      sendTransferRequest();
+    }
+  }, [approveTransfer]);
 
   const columns = useMemo<MRT_ColumnDef<OrdersReadyProps>[]>(
     () => [
@@ -135,17 +158,27 @@ export const OrdersReadyTable = ({ data, websocketManager }: Props) => {
     ),
     renderTopToolbarCustomActions: ({ table }) => {
       const handleTransfer = () => {
-        const proNumbers = table
-          .getSelectedRowModel()
-          .flatRows.map((row) => row.getValue("pro_number"));
+        // If any selected row is missing documents and the user hasn't approved the transfer yet, show the modal
+        if (
+          table
+            .getSelectedRowModel()
+            .flatRows.some((row) => row.getValue("is_missing_documents")) &&
+          !approveTransfer
+        ) {
+          // Set all invalid orders in state
+          billingClientStore.set(
+            "invalidOrders",
+            table
+              .getSelectedRowModel()
+              .flatRows.filter((row) => row.getValue("is_missing_documents"))
+          );
+          billingClientStore.set("transferConfirmModalOpen", true);
+          return;
+        }
 
-        console.info(proNumbers);
-        websocketManager.sendJsonMessage("billing_client", {
-          action: "billing_queue",
-          payload: proNumbers,
-        });
-
-        // Then you can send proNumbers to your backend
+        // If we're here, then either all the rows are valid or the user has confirmed the transfer, so start the transfer
+        console.log("sending transfer request");
+        sendTransferRequest();
       };
 
       const restart = () => {

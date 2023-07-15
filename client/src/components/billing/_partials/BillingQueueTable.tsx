@@ -150,7 +150,7 @@ export const BillingQueueTable = ({ data, websocketManager }: Props) => {
 
         websocketManager.sendJsonMessage("billing_client", {
           action: "bill_orders",
-          payload: invoiceNumbers,
+          message: invoiceNumbers,
         });
       };
 

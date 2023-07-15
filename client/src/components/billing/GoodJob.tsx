@@ -81,7 +81,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const GoodJob: React.FC<Props> = ({ websocketManager }) => {
+const GoodJob = ({ websocketManager }: Props) => {
   const [websocketMessage] = billingClientStore.use("websocketMessage");
   const { classes } = useStyles();
 
@@ -130,3 +130,5 @@ export const GoodJob: React.FC<Props> = ({ websocketManager }) => {
     </>
   );
 };
+
+export default GoodJob;

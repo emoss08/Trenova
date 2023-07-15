@@ -42,6 +42,10 @@ const AccessorialChargePage = lazy(
 );
 const BillingClientPage = lazy(() => import("../pages/billing/BillingClient"));
 
+const HazardousMaterialPage = lazy(
+  () => import("../pages/commodities/HazardousMaterial")
+);
+
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
   group: string;
@@ -173,6 +177,16 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Your efficient partner for end-to-end billing management",
     element: <BillingClientPage />,
     permission: "billing.use_billing_client",
+  },
+  // Commodities Pages
+  {
+    title: "Hazardous Material",
+    group: "commodities",
+    subMenu: "configuration files",
+    path: "/commodities/hazardous-material",
+    description: "Manage hazardous materials",
+    element: <HazardousMaterialPage />,
+    permission: "view_hazardousmaterial",
   },
   // Error Page
   {
