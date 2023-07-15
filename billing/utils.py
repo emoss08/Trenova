@@ -140,7 +140,7 @@ def create_billing_exception(
         organization=user.organization,
         business_unit=user.organization.business_unit,
         exception_type=exception_type,
-        order=invoice,
+        order=invoice.order,
         exception_message=exception_message,
     )
 
