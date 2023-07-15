@@ -39,7 +39,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const BillingQueue: React.FC<Props> = ({ websocketManager }) => {
+const BillingQueue: React.FC<Props> = ({ websocketManager }) => {
   const queryClient = useQueryClient();
   const { classes } = useStyles();
   const el = React.useRef(null);
@@ -85,3 +85,5 @@ export const BillingQueue: React.FC<Props> = ({ websocketManager }) => {
     </>
   );
 };
+
+export default BillingQueue;

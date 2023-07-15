@@ -26,30 +26,14 @@ import {
 } from "@mantine/core";
 import React from "react";
 import { billingClientStore } from "@/stores/BillingStores";
-import { WebSocketManager, WebsocketMessageProps } from "@/utils/websockets";
 
-interface Props {
-  websocketMessage: WebsocketMessageProps;
-  websocketManager: WebSocketManager;
-}
-
-export const BillingExceptionModal: React.FC<Props> = ({
-  websocketMessage,
-  websocketManager,
-}) => {
-  const [modalOpen, setModalOpen] =
-    billingClientStore.use("exceptionModalOpen");
-
-  const submitConfirmation = () => {
-    websocketManager.sendJsonMessage("billing_client", {
-      action: "confirm_exceptions",
-      message: "confirmed",
-    });
-  };
+export const TransferConfirmModal = () => {
+  const [modalOpen, setModalOpen] = billingClientStore.use(
+    "transferConfirmModalOpen"
+  );
+  const [invalidOrders] = billingClientStore.use("invalidOrders");
 
   if (!modalOpen) return null;
-
-  console.log("Websocket message in ExceptionModal", websocketMessage);
 
   return (
     <Modal.Root
@@ -68,9 +52,10 @@ export const BillingExceptionModal: React.FC<Props> = ({
       <Modal.Content>
         <Modal.Header>
           <Modal.Title>
-            Billing Exceptions
+            Transfer Exceptions
             <Text size="xs" color="dimmed" mt={2}>
-              The following invoices have failed due to missing documentation.
+              The following orders have missing documentation, please confirm
+              the transfer.
             </Text>
           </Modal.Title>
           <Modal.CloseButton />
@@ -86,26 +71,23 @@ export const BillingExceptionModal: React.FC<Props> = ({
                 </tr>
               </thead>
               <tbody>
-                {typeof websocketMessage.message !== "string" &&
-                websocketMessage.status === "FAILURE" ? (
-                  websocketMessage.message?.flatMap((subArray, index) =>
-                    subArray.map((item, subIndex) => (
-                      <tr key={`${index}-${subIndex}`}>
-                        <td>{item.invoice_number}</td>
-                        <td>{item.missing_documents.join(", ")}</td>
-                      </tr>
-                    ))
-                  )
-                ) : (
-                  <tr>
-                    <td colSpan={2}>{websocketMessage.message as string}</td>
-                  </tr>
-                )}
+                {invalidOrders.map((order) => {
+                  return (
+                    <tr key={order.original.pro_number}>
+                      <td>{order.original.pro_number}</td>
+                      <td>{order.original.missing_documents.join(", ")}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </ScrollArea>
           <Group position="right" mt="md">
-            <Button onClick={submitConfirmation}>Confirm Exceptions</Button>
+            <Button
+              onClick={() => billingClientStore.set("approveTransfer", true)}
+            >
+              Transfer Orders
+            </Button>
           </Group>
         </Modal.Body>
       </Modal.Content>

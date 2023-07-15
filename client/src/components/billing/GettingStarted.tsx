@@ -81,8 +81,9 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
+const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
   const [websocketMessage] = billingClientStore.use("websocketMessage");
+  const [step] = billingClientStore.use("step");
   const { classes } = useStyles();
 
   const getStarted = () => {
@@ -91,6 +92,10 @@ export const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
       action: STEPS[0], // or "get_started"
     });
   };
+
+  if (step !== 0) {
+    return null;
+  }
 
   return (
     <>
@@ -107,14 +112,16 @@ export const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
             </Title>
 
             <Text color="dimmed" size="lg">
-              {websocketMessage?.payload?.message
-                ? (websocketMessage?.payload?.message as string)
+              {websocketMessage.action === "get_started" &&
+              websocketMessage.step === 0 &&
+              websocketMessage.status === "SUCCESS"
+                ? (websocketMessage.message as string)
                 : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
                   " This ingenious software client for interacting with the billing API offers a streamlined" +
                   " approach for handling your financial transactions."}
             </Text>
 
-            {!websocketMessage?.payload?.message && (
+            {!websocketMessage?.message && (
               <Button
                 variant="outline"
                 size="md"
@@ -132,3 +139,5 @@ export const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
     </>
   );
 };
+
+export default GettingStarted;

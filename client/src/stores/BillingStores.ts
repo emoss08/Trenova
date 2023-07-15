@@ -17,8 +17,13 @@
 
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
-import { AccessorialCharge, ChargeType } from "@/types/apps/billing";
+import {
+  AccessorialCharge,
+  ChargeType,
+  OrdersReadyProps,
+} from "@/types/apps/billing";
 import { WebsocketMessageProps } from "@/utils/websockets";
+import { MRT_Row } from "mantine-react-table";
 
 export const chargeTypeTableStore = createGlobalStore<
   Omit<TableStoreProps<ChargeType>, "drawerOpen">
@@ -62,16 +67,20 @@ interface BillingClientStoreProps {
   step: number;
   websocketMessage: WebsocketMessageProps;
   exceptionModalOpen: boolean;
+  transferConfirmModalOpen: boolean;
+  approveTransfer: boolean;
+  invalidOrders: MRT_Row<OrdersReadyProps>[];
 }
 
 export const billingClientStore = createGlobalStore<BillingClientStoreProps>({
   step: 0,
   websocketMessage: {
     action: "",
-    payload: {
-      status: "",
-      message: "",
-    },
+    status: "SUCCESS",
+    message: "",
   },
   exceptionModalOpen: false,
+  transferConfirmModalOpen: false,
+  approveTransfer: false,
+  invalidOrders: [],
 });
