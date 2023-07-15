@@ -15,27 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import React from "react";
+import { MontaTable } from "@/components/MontaTable";
+import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
+import { HMTableColumns } from "@/components/hazardous-material/HMTableColumns";
+import { CreateHMModal } from "@/components/hazardous-material/CreateHMModal";
+import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
+import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
 
-export type Decimal = number;
-
-export type TChoiceProps = {
-  value: string;
-  label: string;
-};
-
-export interface IChoiceProps<T extends string> {
-  value: T;
-  label: string;
-}
-
-export type StatusChoiceProps = "A" | "I";
-
-export type TNavigationLink = {
-  icon: IconDefinition;
-  title: string;
-  description: string;
-  href?: string | null;
-  permission: string;
-  subLinks?: TNavigationLink[] | null;
+export const HazardousMaterialTable = () => {
+  return (
+    <MontaTable
+      store={hazardousMaterialTableStore}
+      link="/hazardous_materials"
+      columns={HMTableColumns}
+      TableEditModal={EditHMModal}
+      TableViewModal={ViewHMModal}
+      displayDeleteModal={true}
+      TableCreateDrawer={CreateHMModal}
+      tableQueryKey="hazardous-material-table-data"
+      exportModelName="HazardousMaterial"
+      name="Hazardous Material"
+    />
+  );
 };

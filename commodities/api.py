@@ -37,10 +37,11 @@ class HazardousMaterialViewSet(viewsets.ModelViewSet):
     queryset = models.HazardousMaterial.objects.all()
     serializer_class = serializers.HazardousMaterialSerializer
     filterset_fields = (
-        "is_active",
+        "status",
         "name",
     )
     permission_classes = [CustomObjectPermissions]
+    search_fields = ("name", "status", "erg_number", "proper_shipping_name")
 
     def get_queryset(self) -> QuerySet[models.HazardousMaterial]:
         queryset = self.queryset.filter(
@@ -52,7 +53,7 @@ class HazardousMaterialViewSet(viewsets.ModelViewSet):
             "organization_id",
             "name",
             "description",
-            "is_active",
+            "status",
             "erg_number",
             "proper_shipping_name",
         )

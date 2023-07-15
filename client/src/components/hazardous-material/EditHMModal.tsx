@@ -15,27 +15,32 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { Modal } from "@mantine/core";
+import React from "react";
+import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
+import { EditHMModalForm } from "@/components/hazardous-material/_partials/EditHMModalForm";
 
-export type Decimal = number;
+export const EditHMModal: React.FC = () => {
+  const [showEditModal, setShowEditModal] =
+    hazardousMaterialTableStore.use("editModalOpen");
+  const [hazardousMaterial] = hazardousMaterialTableStore.use("selectedRecord");
 
-export type TChoiceProps = {
-  value: string;
-  label: string;
-};
+  if (!showEditModal) return null;
 
-export interface IChoiceProps<T extends string> {
-  value: T;
-  label: string;
-}
-
-export type StatusChoiceProps = "A" | "I";
-
-export type TNavigationLink = {
-  icon: IconDefinition;
-  title: string;
-  description: string;
-  href?: string | null;
-  permission: string;
-  subLinks?: TNavigationLink[] | null;
+  return (
+    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Edit Revenue Code</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          {hazardousMaterial && (
+            <EditHMModalForm hazardousMaterial={hazardousMaterial} />
+          )}
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
+  );
 };
