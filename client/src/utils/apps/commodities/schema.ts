@@ -15,27 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { ObjectSchema } from "yup";
+import * as Yup from "yup";
+import { HazardousMaterialFormValues } from "@/types/apps/commodities";
+import { StatusChoiceProps } from "@/types";
+import {
+  HazardousClassChoiceProps,
+  PackingGroupChoiceProps,
+  UnitOfMeasureChoiceProps,
+} from "@/utils/apps/commodities/index";
 
-export type Decimal = number;
-
-export type TChoiceProps = {
-  value: string;
-  label: string;
-};
-
-export interface IChoiceProps<T extends string> {
-  value: T;
-  label: string;
-}
-
-export type StatusChoiceProps = "A" | "I";
-
-export type TNavigationLink = {
-  icon: IconDefinition;
-  title: string;
-  description: string;
-  href?: string | null;
-  permission: string;
-  subLinks?: TNavigationLink[] | null;
-};
+export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> =
+  Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    name: Yup.string().required("Description is required"),
+    description: Yup.string().notRequired(),
+    hazard_class: Yup.string<HazardousClassChoiceProps>().required(
+      "Description is required"
+    ),
+    packing_group: Yup.string<PackingGroupChoiceProps>().notRequired(),
+    erg_number: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
+    proper_shipping_name: Yup.string().notRequired(),
+  });

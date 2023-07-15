@@ -42,7 +42,7 @@ export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
 
 export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
   Yup.object().shape({
-    status: Yup.string().required("Status is required"),
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     account_number: Yup.string()
       .required("Code is required")
       .test(

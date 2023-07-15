@@ -15,27 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
+import { createGlobalStore } from "@/utils/zustand";
+import { TableStoreProps } from "@/types/tables";
+import { HazardousMaterial } from "@/types/apps/commodities";
 
-export type Decimal = number;
-
-export type TChoiceProps = {
-  value: string;
-  label: string;
-};
-
-export interface IChoiceProps<T extends string> {
-  value: T;
-  label: string;
-}
-
-export type StatusChoiceProps = "A" | "I";
-
-export type TNavigationLink = {
-  icon: IconDefinition;
-  title: string;
-  description: string;
-  href?: string | null;
-  permission: string;
-  subLinks?: TNavigationLink[] | null;
-};
+export const hazardousMaterialTableStore = createGlobalStore<
+  Omit<TableStoreProps<HazardousMaterial>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});

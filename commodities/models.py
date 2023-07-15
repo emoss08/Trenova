@@ -23,7 +23,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 class HazardousMaterial(GenericModel):  # type: ignore
@@ -93,20 +93,21 @@ class HazardousMaterial(GenericModel):  # type: ignore
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name=_("Is Active"),
-        help_text=_("Whether or not the hazardous material is active."),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Hazardous Material."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     name = models.CharField(
         _("Name"),
         max_length=255,
-        help_text=_("Name of the Hazardous Class"),
+        help_text=_("Name of the Hazardous Material"),
     )
     description = models.TextField(
         _("Description"),
         blank=True,
-        help_text=_("Description of the Hazardous Class"),
+        help_text=_("Description of the Hazardous Material"),
     )
     hazard_class = ChoiceField(
         _("Hazard Class"),
