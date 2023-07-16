@@ -53,7 +53,8 @@ class BillingClientStatuses(Enum):
     """
 
     SUCCESS = "SUCCESS"
-    ERROR = "ERROR"
+    PROCESSING = "PROCESSING"
+    FAILURE = "FAILURE"
     WARNING = "WARNING"
     INFO = "INFO"
 
