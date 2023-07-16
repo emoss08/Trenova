@@ -603,5 +603,5 @@ class Token(models.Model):
 
 # Audit Log Registration
 auditlog.register(User, exclude_fields=["online", "password"])
-auditlog.register(UserProfile, exclude_fields=["user"])
-auditlog.register(JobTitle, exclude_fields=["organization"])
+auditlog.register(UserProfile)
+auditlog.register(JobTitle)
