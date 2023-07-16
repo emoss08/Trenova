@@ -15,14 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { MenuItem } from "@/components/layout/Header/_Partials/MenuItem";
 import { billingNavLinks } from "@/utils/apps/billing";
 import { useBillingHeaderStore } from "@/stores/HeaderStore";
 
 export const BillingMenuItem = () => {
-  console.log("Billing Menu Item", new Date().toLocaleTimeString());
-
   return (
     <MenuItem
       store={useBillingHeaderStore}

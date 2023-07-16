@@ -15,14 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { adminNavLinks } from "@/utils/apps/admin";
 import { MenuItem } from "./MenuItem";
 import { useAdminHeaderStore } from "@/stores/HeaderStore";
 
 export const AdministratorMenuItem = () => {
-  console.log("Admin Menu Item", new Date().toLocaleTimeString());
-
   return (
     <MenuItem
       store={useAdminHeaderStore}

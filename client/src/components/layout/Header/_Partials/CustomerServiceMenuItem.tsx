@@ -57,9 +57,6 @@ const navigationLinks = [
 
 export const CustomerServiceMenuItem = () => {
   const { classes, theme } = useHeaderStyles();
-  const [linksOpened] = useHeaderStore.use("linksOpen");
-
-  console.info("linksOpened: ", linksOpened);
 
   const customerServiceLinks = navigationLinks.map((item) => (
     <UnstyledButton className={classes.subLink} key={item.title}>
