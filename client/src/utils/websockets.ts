@@ -15,13 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-type WebSocketEventHandlers = {
-  onOpen?: (event: Event) => void;
-  onMessage?: (event: MessageEvent) => void;
-  onClose?: (event: CloseEvent) => void;
-  onError?: (event: Event) => void;
-};
-
 export type TWebsocketStatuses =
   | "SUCCESS"
   | "FAILURE"
@@ -29,7 +22,7 @@ export type TWebsocketStatuses =
   | "PROCESSING"
   | "INFO";
 
-export type WebsocketMessageProps = {
+export type WebSocketMessageProps = {
   action?: string | null;
   step?: number | null;
   status?: TWebsocketStatuses | null;
@@ -46,7 +39,7 @@ export type WebsocketMessageProps = {
 /**
  * Represents a WebSocket connection, providing lifecycle event handling.
  */
-class WebSocketConnection {
+export class WebSocketConnection {
   /**
    * The underlying WebSocket object.
    */
@@ -57,7 +50,7 @@ class WebSocketConnection {
    * @param url - The URL to which the WebSocket should connect.
    * @param eventHandlers - Event handlers for the WebSocket's lifecycle events.
    */
-  constructor(url: string, private eventHandlers: WebSocketEventHandlers = {}) {
+  constructor(url: string, private eventHandlers: Handlers) {
     this.socket = new WebSocket(url);
 
     this.socket.onopen = this.handleOpen.bind(this);
@@ -106,95 +99,80 @@ class WebSocketConnection {
   }
 }
 
-/**
- * Manages WebSocket connections by providing functionality
- * to connect, disconnect, send messages, and check the existence of connections.
- */
-export class WebSocketManager {
-  /**
-   * A map to keep track of WebSocket connections.
-   * @private
-   */
-  private connections = new Map<string, WebSocketConnection>();
+interface Handlers {
+  onOpen?: (event: Event) => void;
+  onMessage?: (event: MessageEvent) => void;
+  onError?: (event: Event) => void;
+  onClose?: (event: CloseEvent) => void;
+}
 
-  /**
-   * Establishes a WebSocket connection with the specified ID.
-   * @param id - Unique identifier for the WebSocket connection.
-   * @param url - URL to which the WebSocket connection should be established.
-   * @param eventHandlers - Optional event handlers for the WebSocket connection.
-   * @throws Will throw an error if a connection with the same ID already exists.
-   */
-  connect(id: string, url: string, eventHandlers: WebSocketEventHandlers = {}) {
-    if (this.connections.has(id)) {
+interface WebSocketEventMap {
+  close: CloseEvent;
+  error: Event;
+  message: MessageEvent;
+  open: Event;
+}
+
+export type WebSocketEvent = WebSocketEventMap[keyof WebSocketEventMap];
+
+interface WebSocketManager {
+  connect: (id: string, url: string, handlers: Handlers) => WebSocketConnection;
+  disconnect: (id: string) => void;
+  disconnectAll: () => void;
+  get: (id: string) => WebSocketConnection;
+  send: (id: string, data: any) => void;
+  sendJson: (id: string, data: any) => void;
+  receive: (id: string, handler: (event: WebSocketEvent) => void) => void;
+  has: (id: string) => boolean;
+}
+
+export function createWebsocketManager(): WebSocketManager {
+  const connections = new Map<string, WebSocketConnection>();
+
+  function connect(id: string, url: string, handlers: Handlers) {
+    if (connections.has(id)) {
       throw new Error(`WebSocket connection with id "${id}" already exists`);
     }
 
-    const connection = new WebSocketConnection(url, eventHandlers);
-    this.connections.set(id, connection);
+    const connection = new WebSocketConnection(url, handlers);
+    connections.set(id, connection);
+
+    return connection;
   }
 
-  /**
-   * Closes a WebSocket connection with the specified ID.
-   * @param id - The ID of the WebSocket connection to close.
-   * @throws Will throw an error if no connection with the specified ID is found.
-   */
-  disconnect(id: string) {
-    const connection = this.connections.get(id);
+  function disconnect(id: string) {
+    const connection = connections.get(id);
     if (!connection) {
       throw new Error(`WebSocket connection with id "${id}" not found`);
     }
 
     connection.close();
-    this.connections.delete(id);
+    connections.delete(id);
+
+    // return connection;
   }
 
-  /**
-   * Closes all WebSocket connections managed by the instance.
-   */
-  disconnectAll() {
-    for (const id of this.connections.keys()) {
-      this.disconnect(id);
+  function disconnectAll() {
+    for (const id of connections.keys()) {
+      disconnect(id);
     }
   }
 
-  /**
-   * Sends a JSON message to the WebSocket connection with the specified ID.
-   * @param id - The ID of the WebSocket connection to which the message should be sent.
-   * @param data - The data to be sent.
-   * @throws Will throw an error if no connection with the specified ID is found.
-   */
-  sendJsonMessage(id: string, data: any) {
-    const connection = this.connections.get(id);
+  function send(id: string, data: any) {
+    const connection = connections.get(id);
     if (!connection) {
-      throw new Error(`WebSocket connection with id "${id}" not found`);
+      throw new Error(`No connection with id ${id} found`);
     }
 
-    connection.socket.send(JSON.stringify(data));
+    connection.socket.send(data);
   }
 
-  /**
-   * Sends a message to the WebSocket connection with the specified ID.
-   * @param id - The ID of the WebSocket connection to which the message should be sent.
-   * @param data - The data to be sent.
-   * @throws Will throw an error if no connection with the specified ID is found.
-   */
-  sendMessage(id: string, data: any) {
-    const connection = this.connections.get(id);
-    if (!connection) {
-      throw new Error(`WebSocket connection with id "${id}" not found`);
-    }
-
-    connection.socket.send(JSON.stringify(data));
+  function sendJson(id: string, data: any) {
+    send(id, JSON.stringify(data));
   }
 
-  /**
-   * Retrieves the WebSocketConnection object for the specified ID.
-   * @param id - The ID of the WebSocket connection to retrieve.
-   * @returns The WebSocketConnection object associated with the specified ID.
-   * @throws Will throw an error if no connection with the specified ID is found.
-   */
-  get(id: string) {
-    const connection = this.connections.get(id);
+  function get(id: string) {
+    const connection = connections.get(id);
     if (!connection) {
       throw new Error(`WebSocket connection with id "${id}" not found`);
     }
@@ -202,12 +180,27 @@ export class WebSocketManager {
     return connection;
   }
 
-  /**
-   * Checks if a WebSocket connection with the specified ID exists.
-   * @param id - The ID of the WebSocket connection to check.
-   * @returns True if a connection with the specified ID exists, false otherwise.
-   */
-  has(id: string) {
-    return this.connections.has(id);
+  function receive(id: string, handler: (event: WebSocketEvent) => void) {
+    const connection = connections.get(id);
+    if (!connection) {
+      throw new Error(`No connection with id ${id} found`);
+    }
+
+    connection.socket.onmessage = handler;
   }
+
+  function has(id: string) {
+    return connections.has(id);
+  }
+
+  return {
+    connect,
+    disconnect,
+    disconnectAll,
+    send,
+    sendJson,
+    receive,
+    get,
+    has,
+  };
 }
