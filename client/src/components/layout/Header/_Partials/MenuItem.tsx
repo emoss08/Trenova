@@ -149,7 +149,10 @@ export const MenuItem = ({
                   item.href ? (
                     <Link
                       to={item.href}
-                      onClick={() => useHeaderStore.set("linksOpen", false)}
+                      onClick={() => {
+                        setClickCount((prevCount) => prevCount + 1); // Increment clickCount
+                        useHeaderStore.set("linksOpen", false); // Close the menu
+                      }}
                     >
                       {linkContent}
                     </Link>
