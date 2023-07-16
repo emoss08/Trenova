@@ -17,7 +17,7 @@
 from typing import Any
 
 from djmoney.contrib.django_rest_framework import MoneyField
-from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
 
 from billing import models

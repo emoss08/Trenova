@@ -47,7 +47,6 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
     )
     permission_classes = [CustomObjectPermissions]
 
-
     def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
         """The get_queryset function is used to filter the queryset by organization_id.
         This is done so that a user can only see their own GeneralLedgerAccounts and not those of other organizations.

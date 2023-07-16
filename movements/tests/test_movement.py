@@ -31,7 +31,7 @@ from movements import models, services
 from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 from worker.factories import WorkerFactory
 from worker.models import Worker
 
