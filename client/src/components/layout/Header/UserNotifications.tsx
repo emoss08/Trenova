@@ -32,16 +32,11 @@ import { faCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
 import { useQuery, useQueryClient } from "react-query";
 import { getUserNotifications } from "@/requests/UserRequestFactory";
-import {
-  getUserId,
-  WEBSOCKET_RETRY_INTERVAL,
-  WEB_SOCKET_URL,
-  ENABLE_WEBSOCKETS,
-} from "@/lib/utils";
+import { getUserId, WEB_SOCKET_URL, ENABLE_WEBSOCKETS } from "@/lib/utils";
 import axios from "axios";
 import { notifications } from "@mantine/notifications";
 import { useAuthStore } from "@/stores/AuthStore";
-import { WebSocketManager } from "@/utils/websockets";
+import { createWebsocketManager } from "@/utils/websockets";
 import { Howl, Howler } from "howler";
 
 import NotificationSound from "@/assets/audio/notification.webm";
@@ -75,7 +70,17 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const webSocketManager = new WebSocketManager();
+const webSocketManager = createWebsocketManager();
+
+const reconnect = () => {
+  webSocketManager.connect(
+    "notificaitons",
+    `${WEB_SOCKET_URL}/notifications/`,
+    {
+      onOpen: () => console.info("Connected to notifications websocket"),
+    }
+  );
+};
 
 export const UserNotifications: React.FC = () => {
   const [notificationsMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
@@ -87,6 +92,7 @@ export const UserNotifications: React.FC = () => {
   useEffect(() => {
     if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
       // Connecting the websocket
+
       webSocketManager.connect(
         "notifications",
         `${WEB_SOCKET_URL}/notifications/`,
@@ -95,7 +101,6 @@ export const UserNotifications: React.FC = () => {
 
           onMessage: (event: MessageEvent) => {
             const data = JSON.parse(event.data);
-            console.log("Message from notifications websocket", data);
 
             queryClient
               .invalidateQueries(["userNotifications", userId])
@@ -110,7 +115,6 @@ export const UserNotifications: React.FC = () => {
                 Howler.volume(0.5);
               });
           },
-
           onClose: (event: CloseEvent) => {
             if (event.wasClean) {
               console.info(
@@ -120,17 +124,9 @@ export const UserNotifications: React.FC = () => {
               console.info(
                 "[close] Connection died. Reconnect will be attempted in 1 second."
               );
-              setTimeout(
-                () =>
-                  webSocketManager.connect(
-                    "notifications",
-                    `${WEB_SOCKET_URL}/notifications/`
-                  ),
-                WEBSOCKET_RETRY_INTERVAL
-              );
+              reconnect();
             }
           },
-
           onError: (error: Event) => {
             console.log(`[error] ${error}`);
           },
@@ -139,7 +135,6 @@ export const UserNotifications: React.FC = () => {
     } else if (isAuthenticated && !userId) {
       webSocketManager.disconnect("notifications");
     }
-
     // On component unmount, disconnect the websocket
     return () => {
       if (isAuthenticated) {
