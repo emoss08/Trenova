@@ -20,8 +20,8 @@ import { MRT_ColumnDef } from "mantine-react-table";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { Badge } from "@mantine/core";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
-import { SelectItem } from "@/components/ui/fields/SelectInput";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { TChoiceProps } from "@/types";
 
 export const GLAccountTableColumns =
   (): MRT_ColumnDef<GeneralLedgerAccount>[] => {
@@ -45,7 +45,7 @@ export const GLAccountTableColumns =
             { value: "", label: "All" },
             { value: "A", label: "Active" },
             { value: "I", label: "Inactive" },
-          ] as SelectItem[],
+          ] as TChoiceProps[],
         },
         filterVariant: "select",
       },
@@ -67,7 +67,6 @@ export const GLAccountTableColumns =
         Cell: ({ row }) => (
           <MontaTableActionMenu
             store={generalLedgerTableStore}
-            name="GL Account"
             data={row.original}
           />
         ),
