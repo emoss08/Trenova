@@ -32,7 +32,7 @@ from customer.factories import CustomerFactory
 from customer.models import Customer
 from order.models import Order
 from order.tests.factories import OrderFactory
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 from utils.models import StatusChoices
 from worker.models import Worker
 

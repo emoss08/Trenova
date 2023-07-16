@@ -20,11 +20,13 @@ from typing import TYPE_CHECKING
 from auditlog.models import LogEntry
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+
 from reports import models
 
 if TYPE_CHECKING:
-    from utils.types import ModelUUID
     from django.db.models import QuerySet
+
+    from utils.types import ModelUUID
 
 
 def get_scheduled_report_by_id(report_id: "ModelUUID") -> models.ScheduledReport:

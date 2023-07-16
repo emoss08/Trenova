@@ -18,11 +18,11 @@
 import pytest
 from rest_framework.test import APIClient
 
+from accounts.models import User
 from dispatch.factories import FleetCodeFactory
 from dispatch.models import CommentType
 from organization.models import Organization
 from worker import models
-from accounts.models import User
 
 pytestmark = pytest.mark.django_db
 

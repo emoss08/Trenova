@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import uuid
 from enum import Enum
-from typing import Any, TypeAlias, Union, TypedDict
+from typing import Any, TypeAlias, TypedDict, Union
 from uuid import UUID
 
 from django.db.models import UUIDField

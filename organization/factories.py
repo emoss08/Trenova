@@ -17,7 +17,7 @@
 
 import factory
 
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 
 class BusinessUnitFactory(factory.django.DjangoModelFactory):
