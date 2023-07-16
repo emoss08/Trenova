@@ -18,6 +18,7 @@
 import os
 from typing import Any
 
+from auditlog.models import LogEntry
 from rest_framework import serializers
 
 from reports import models
@@ -105,4 +106,27 @@ class UserReportSerializer(GenericSerializer):
 
         representation = super().to_representation(instance)
         representation["file_name"] = os.path.basename(instance.report.name)
+        return representation
+
+
+class LogEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LogEntry
+        fields = (
+            "content_type",
+            "object_pk",
+            "object_id",
+            "object_repr",
+            "serialized_data",
+            "action",
+            "changes",
+            "actor",
+            "remote_addr",
+            "timestamp",
+            "additional_data",
+        )
+
+    def to_representation(self, instance: LogEntry) -> dict[str, Any]:
+        representation = super().to_representation(instance)
+        representation["actor"] = instance.actor.username if instance.actor else None
         return representation
