@@ -356,12 +356,28 @@ CACHEOPS_REDIS = env("CACHEOPS_REDIS_LOCATION")
 CACHEOPS_DEFAULTS = {
     "timeout": 60 * 60,
 }
+
+# Logging Configurations
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+        "verbose": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]"
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+        },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": "logs/billing_client/billing_client.log",
+            "when": "midnight",
+            "interval": 1,  # 1 day
+            "backupCount": 7,  # 7 days
         },
     },
     "root": {
@@ -369,6 +385,12 @@ LOGGING = {
         "level": "WARNING",
     },
     "loggers": {
+        "billing_client": {
+            "handlers": ["file"],
+            "level": "DEBUG",
+            "propagate": False,
+            "formatter": "verbose",
+        },
         "django": {
             "handlers": ["console"],
             "level": "INFO",
@@ -376,28 +398,6 @@ LOGGING = {
         },
     },
 }
-# LOGGING = {
-#     "version": 1,
-#     "filters": {
-#         "require_debug_true": {
-#             "()": "django.utils.log.RequireDebugTrue",
-#         }
-#     },
-#     "handlers": {
-#         "console": {
-#             "level": "DEBUG",
-#             "filters": ["require_debug_true"],
-#             "class": "logging.FileHandler",
-#             "filename": "debug.log",
-#         }
-#     },
-#     "loggers": {
-#         "django.db.backends": {
-#             "level": "DEBUG",
-#             "handlers": ["console"],
-#         }
-#     },
-# }
 
 CACHEOPS = {
     "order.ordercontrol": {"ops": "all"},
@@ -416,3 +416,9 @@ CACHEOPS = {
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # GUARDIAN_MONKEY_PATCH = False
+
+# Billing Client Configurations
+BILLING_CLIENT_PASSWORD = env("BILLING_CLIENT_REDIS_PASSWORD")
+BILLING_CLIENT_HOST = env("BILLING_CLIENT_REDIS_HOST")
+BILLING_CLIENT_PORT = env("BILLING_CLIENT_REDIS_PORT")
+BILLING_CLIENT_DB = env("BILLING_CLIENT_REDIS_DB")
