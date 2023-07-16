@@ -389,9 +389,11 @@ urlpatterns = [
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]
 
 admin.site.site_header = "Monta TMS Administration"
 admin.site.site_title = "Monta TMS Administration"
 admin.site.index_title = "Monta TMS Administration"
 admin.site.empty_value_display = "N/A"
+
+if settings.DEBUG:
+    urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]

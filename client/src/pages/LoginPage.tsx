@@ -121,6 +121,17 @@ const LoginPage: React.FC = () => {
               });
             }
           });
+        } else {
+          form.setFieldError("username", error.response.data.detail);
+          form.setFieldError("password", error.response.data.detail);
+          notifications.show({
+            title: "Error",
+            message: error.response.data.detail,
+            color: "red",
+            withCloseButton: true,
+            icon: <FontAwesomeIcon icon={faXmark} />,
+            autoClose: 10_000, // 10 seconds
+          });
         }
       }
     } finally {

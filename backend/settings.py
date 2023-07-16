@@ -40,21 +40,6 @@ DEBUG = env("DEBUG")
 INTERNAL_IPS = ["127.0.0.1", "monta.local", "localhost"]
 ALLOWED_HOSTS = ["monta.local", "127.0.0.1", "localhost"]
 
-# Sentry Configuration
-# sentry_sdk.init(
-#     dsn=env("SENTRY_DSN"),
-#     integrations=[
-#         DjangoIntegration(),
-#     ],
-#     traces_sample_rate=1.0,
-#     send_default_pii=True,
-#     # To set a uniform sample rate
-#     # Set profiles_sample_rate to 1.0 to profile 100%
-#     # of sampled transactions.
-#     # We recommend adjusting this value in production
-#     profiles_sample_rate=1.0,
-# )
-
 # Application definition
 INSTALLED_APPS = [
     # Django Apps
@@ -77,7 +62,6 @@ INSTALLED_APPS = [
     "phonenumber_field",
     "django_celery_results",
     "django_celery_beat",
-    "silk",
     "encrypted_model_fields",
     "nested_inline",
     "drf_spectacular",
@@ -110,7 +94,6 @@ INSTALLED_APPS = [
 
 # Middleware configurations
 MIDDLEWARE = [
-    "silk.middleware.SilkyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -118,6 +101,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.business_unit_middleware.BusinessUnitMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
@@ -422,3 +406,12 @@ BILLING_CLIENT_PASSWORD = env("BILLING_CLIENT_REDIS_PASSWORD")
 BILLING_CLIENT_HOST = env("BILLING_CLIENT_REDIS_HOST")
 BILLING_CLIENT_PORT = env("BILLING_CLIENT_REDIS_PORT")
 BILLING_CLIENT_DB = env("BILLING_CLIENT_REDIS_DB")
+
+# Development Configurations
+if DEBUG:
+    INSTALLED_APPS += [
+        "silk",
+    ]
+    MIDDLEWARE += [
+        "silk.middleware.SilkyMiddleware",
+    ]
