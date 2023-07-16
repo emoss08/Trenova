@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import json
+import logging
 import uuid
 from typing import Any
 
@@ -28,18 +29,15 @@ from django.utils import timezone
 
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
-from billing.exceptions import InvalidSessionKeyError, DuplicateSessionKeyError
+from billing.exceptions import DuplicateSessionKeyError, InvalidSessionKeyError
 from order.models import Order
 from utils.services.pdf import UUIDEncoder
-
 from utils.types import (
-    ModelUUID,
-    BillingClientSessionResponse,
-    BillingClientActions,
     BilledOrders,
+    BillingClientActions,
+    BillingClientSessionResponse,
+    ModelUUID,
 )
-
-import logging
 
 logger = logging.getLogger("billing_client")
 
@@ -211,8 +209,7 @@ def bill_orders(
     user_id: "ModelUUID",
     invoices: QuerySet[models.BillingQueue] | models.BillingQueue,
 ) -> BilledOrders:
-    """
-    Bills the specified orders. If the organization enforces customer billing requirements,
+    """Bills the specified orders. If the organization enforces customer billing requirements,
     checks these requirements before billing the order. If requirements are not met, a
     BillingException is created.
 
