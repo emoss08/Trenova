@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from auditlog.registry import auditlog
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -322,3 +323,8 @@ class Commodity(GenericModel):  # type: ignore
             str: Commodity Absolute URL
         """
         return reverse("commodity-details", kwargs={"pk": self.pk})
+
+
+# Audit Log Registration
+auditlog.register(HazardousMaterial)
+auditlog.register(Commodity)
