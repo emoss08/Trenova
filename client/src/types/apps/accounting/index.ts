@@ -44,7 +44,7 @@ export interface DivisionCodeFormValues
 export type GeneralLedgerAccount = {
   id: string;
   organization: string;
-  status: string;
+  status: StatusChoiceProps;
   account_number: string;
   description: string;
   account_type: AccountTypeChoiceProps | "";
