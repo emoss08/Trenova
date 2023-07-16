@@ -169,7 +169,7 @@ class Command(BaseCommand):
             business_unit=organization.business_unit,
             username=f"walle-{random_string}",
             password="0&7Wj4Htiqwv3HAF1!",
-            email=f"walle@{organization.name}.com",
+            email=f"walle@{random_string}.com",
         )
         return user
 
