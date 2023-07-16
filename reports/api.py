@@ -17,6 +17,7 @@
 
 from typing import TYPE_CHECKING
 
+from auditlog.models import LogEntry
 from django.apps import apps
 from notifications.helpers import get_notification_list
 from rest_framework import exceptions, generics, status, viewsets
@@ -28,6 +29,8 @@ from core.permissions import CustomObjectPermissions
 from reports import models, serializers, tasks
 from reports.exceptions import DisallowedModelException
 from reports.helpers import ALLOWED_MODELS
+from reports.selectors import get_audit_logs_by_model_name
+from utils.types import AuthenticatedRequest
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -303,3 +306,30 @@ def get_user_notifications(request: Request) -> Response:
     }
 
     return Response(data, status=status.HTTP_200_OK)
+
+
+class LogEntryViewSet(viewsets.ModelViewSet):
+    queryset = LogEntry.objects.all()
+    serializer_class = serializers.LogEntrySerializer
+    http_method_names = ["get"]
+
+    def get_queryset(self) -> "QuerySet[models.UserReport]":
+        """Returns the queryset for the viewset.
+
+        Returns:
+            QuerySet[models.UserReport]: The queryset for the viewset.
+        """
+
+        model_name = self.request.query_params.get("model_name", None)
+        app_label = self.request.query_params.get("app_label", None)
+
+        if not model_name:
+            raise exceptions.ValidationError("Query parameter 'model_name' is required")
+        if not app_label:
+            raise exceptions.ValidationError("Query parameter 'app_label' is required")
+
+        return get_audit_logs_by_model_name(
+            model_name=model_name,
+            app_label=app_label,
+            organization_id=self.request.user.organization_id,  # type: ignore
+        )

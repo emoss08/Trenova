@@ -17,10 +17,14 @@
 
 from typing import TYPE_CHECKING
 
+from auditlog.models import LogEntry
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 from reports import models
 
 if TYPE_CHECKING:
     from utils.types import ModelUUID
+    from django.db.models import QuerySet
 
 
 def get_scheduled_report_by_id(report_id: "ModelUUID") -> models.ScheduledReport:
@@ -35,3 +39,13 @@ def get_scheduled_report_by_id(report_id: "ModelUUID") -> models.ScheduledReport
     """
 
     return models.ScheduledReport.objects.get(pk__exact=report_id)
+
+
+def get_audit_logs_by_model_name(
+    *, model_name: str, organization_id: "ModelUUID", app_label: str
+) -> "QuerySet[LogEntry]":
+    return LogEntry.objects.filter(
+        Q(content_type__model=model_name.lower())
+        | Q(content_type__app_label=app_label.lower())
+        | Q(actor__organization_id=organization_id)
+    )
