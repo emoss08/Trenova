@@ -153,4 +153,17 @@ ALLOWED_MODELS = {
             "method",
         ],
     },
+    "HazardousMaterial": {
+        "app_label": "commodities",
+        "allowed_fields": [
+            "organization__name",
+            "status",
+            "name",
+            "description",
+            "hazard_class",
+            "packing_group",
+            "erg_number",
+            "proper_shipping_name",
+        ],
+    },
 }
