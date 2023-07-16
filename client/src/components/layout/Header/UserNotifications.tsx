@@ -218,26 +218,30 @@ export const UserNotifications: React.FC = () => {
           <ScrollArea h={250} scrollbarSize={4}>
             <Notifications />
           </ScrollArea>
-          <Divider mb={2} mt={10} />
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "5px",
-            }}
-          >
-            <Button
-              leftIcon={<FontAwesomeIcon icon={faCheck} />}
-              variant="subtle"
-              color="dark"
-              size="sm"
-              className={classes.button}
-              onClick={readAllNotifications}
-            >
-              Mark all as read
-            </Button>
-          </div>
+          {notificationsData && notificationsData?.unread_count > 0 ? (
+            <>
+              <Divider mb={2} mt={10} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: "5px",
+                }}
+              >
+                <Button
+                  leftIcon={<FontAwesomeIcon icon={faCheck} />}
+                  variant="subtle"
+                  color="dark"
+                  size="sm"
+                  className={classes.button}
+                  onClick={readAllNotifications}
+                >
+                  Mark all as read
+                </Button>
+              </div>
+            </>
+          ) : null}
         </Popover.Dropdown>
       </Popover>
     </>

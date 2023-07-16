@@ -40,16 +40,8 @@ export type WebSocketMessageProps = {
  * Represents a WebSocket connection, providing lifecycle event handling.
  */
 export class WebSocketConnection {
-  /**
-   * The underlying WebSocket object.
-   */
-  socket: WebSocket;
+  private socket: WebSocket;
 
-  /**
-   * Creates a new WebSocketConnection instance.
-   * @param url - The URL to which the WebSocket should connect.
-   * @param eventHandlers - Event handlers for the WebSocket's lifecycle events.
-   */
   constructor(url: string, private eventHandlers: Handlers) {
     this.socket = new WebSocket(url);
 
@@ -59,42 +51,31 @@ export class WebSocketConnection {
     this.socket.onerror = this.handleError.bind(this);
   }
 
-  /**
-   * Handles the WebSocket's open event.
-   * @param event - The open event.
-   */
-  handleOpen(event: Event) {
-    this.eventHandlers.onOpen && this.eventHandlers.onOpen(event);
+  private handleOpen(event: Event) {
+    this.eventHandlers.onOpen?.(event);
   }
 
-  /**
-   * Handles the WebSocket's message event.
-   * @param event - The message event.
-   */
-  handleMessage(event: MessageEvent) {
-    this.eventHandlers.onMessage && this.eventHandlers.onMessage(event);
+  private handleMessage(event: MessageEvent) {
+    this.eventHandlers.onMessage?.(event);
   }
 
-  /**
-   * Handles the WebSocket's close event.
-   * @param event - The close event.
-   */
-  handleClose(event: CloseEvent) {
-    this.eventHandlers.onClose && this.eventHandlers.onClose(event);
+  private handleClose(event: CloseEvent) {
+    this.eventHandlers.onClose?.(event);
   }
 
-  /**
-   * Handles the WebSocket's error event.
-   * @param event - The error event.
-   */
-  handleError(event: Event) {
-    this.eventHandlers.onError && this.eventHandlers.onError(event);
+  private handleError(event: Event) {
+    this.eventHandlers.onError?.(event);
   }
 
-  /**
-   * Closes the WebSocket connection.
-   */
-  close() {
+  public send(data: any) {
+    this.socket.send(data);
+  }
+
+  public receive(handler: (event: WebSocketEvent) => void) {
+    this.socket.onmessage = handler;
+  }
+
+  public close() {
     this.socket.close();
   }
 }
@@ -118,7 +99,6 @@ export type WebSocketEvent = WebSocketEventMap[keyof WebSocketEventMap];
 interface WebSocketManager {
   connect: (id: string, url: string, handlers: Handlers) => WebSocketConnection;
   disconnect: (id: string) => void;
-  disconnectAll: () => void;
   get: (id: string) => WebSocketConnection;
   send: (id: string, data: any) => void;
   sendJson: (id: string, data: any) => void;
@@ -149,13 +129,7 @@ export function createWebsocketManager(): WebSocketManager {
     connection.close();
     connections.delete(id);
 
-    // return connection;
-  }
-
-  function disconnectAll() {
-    for (const id of connections.keys()) {
-      disconnect(id);
-    }
+    return connection;
   }
 
   function send(id: string, data: any) {
@@ -164,7 +138,7 @@ export function createWebsocketManager(): WebSocketManager {
       throw new Error(`No connection with id ${id} found`);
     }
 
-    connection.socket.send(data);
+    connection.send(data);
   }
 
   function sendJson(id: string, data: any) {
@@ -186,7 +160,7 @@ export function createWebsocketManager(): WebSocketManager {
       throw new Error(`No connection with id ${id} found`);
     }
 
-    connection.socket.onmessage = handler;
+    connection.receive(handler);
   }
 
   function has(id: string) {
@@ -196,7 +170,6 @@ export function createWebsocketManager(): WebSocketManager {
   return {
     connect,
     disconnect,
-    disconnectAll,
     send,
     sendJson,
     receive,
