@@ -22,6 +22,7 @@ from typing import Any, final
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
@@ -37,6 +38,10 @@ AVAILABLE_TOPICS = kafka_manager.get_available_topics()
 
 
 class BusinessUnit(TimeStampedModel):
+    """
+    Stores information about the Business Unit.
+    """
+
     id = models.UUIDField(
         _("Business Unit ID"),
         primary_key=True,
@@ -53,10 +58,21 @@ class BusinessUnit(TimeStampedModel):
         _("Business Unit Description"),
         blank=True,
     )
+    paid_until = models.DateField(
+        _("Paid Until"),
+        null=True,
+        blank=True,
+        help_text=_("The date until which the business unit is paid."),
+    )
+    free_trail = models.BooleanField(
+        _("Free Trail"),
+        default=False,
+        help_text=_("Whether the business unit is on free trail."),
+    )
 
     class Meta:
         """
-        Metaclass for the Organization model
+        Metaclass for the BusinessUnit model
         """
 
         verbose_name = _("Business Unit")
@@ -77,7 +93,16 @@ class BusinessUnit(TimeStampedModel):
         Returns:
             str: The absolute url for the Business Unit.
         """
-        return reverse("organizations-detail", kwargs={"pk": self.pk})
+        return reverse("businessunits-detail", kwargs={"pk": self.pk})
+
+    @property
+    def paid(self) -> bool:
+        """Whether the business unit is paid or not.
+
+        Returns:
+            bool: Whether the business unit is paid or not.
+        """
+        return self.paid_until > timezone.now().date()
 
 
 class Organization(TimeStampedModel):
