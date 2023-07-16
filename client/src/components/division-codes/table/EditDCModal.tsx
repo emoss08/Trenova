@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton, Stack } from "@mantine/core";
+import { Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { EditDCModalForm } from "@/components/division-codes/table/_Partials/EditDCModalForm";
