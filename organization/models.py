@@ -102,7 +102,8 @@ class BusinessUnit(TimeStampedModel):
         Returns:
             bool: Whether the business unit is paid or not.
         """
-        return self.paid_until > timezone.now().date()
+
+        return bool(self.paid_until and self.paid_until > timezone.now().date())
 
 
 class Organization(TimeStampedModel):
