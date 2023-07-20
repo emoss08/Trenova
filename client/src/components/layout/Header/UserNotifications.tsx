@@ -83,7 +83,7 @@ const reconnect = () => {
 };
 
 export const UserNotifications: React.FC = () => {
-  const [notificationsMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
+  const [notificationMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
@@ -143,18 +143,19 @@ export const UserNotifications: React.FC = () => {
     };
   }, [isAuthenticated, userId]); // add dependencies here if necessary
 
-  const { data: notificationsData } = useQuery({
-    queryKey: ["userNotifications", userId],
-    queryFn: () => {
-      if (!userId) {
-        return Promise.resolve(null);
-      }
-      return getUserNotifications();
-    },
-    initialData: () => {
-      return queryClient.getQueryData(["userNotifications", userId]);
-    },
-  });
+  const { data: notificationData, isLoading: isNotificationDataLoading } =
+    useQuery({
+      queryKey: ["userNotifications", userId],
+      queryFn: () => {
+        if (!userId) {
+          return Promise.resolve(null);
+        }
+        return getUserNotifications();
+      },
+      initialData: () => {
+        return queryClient.getQueryData(["userNotifications", userId]);
+      },
+    });
 
   const readAllNotifications = async () => {
     await axios.get("/user/notifications/?max=10&mark_as_read=true");
@@ -179,21 +180,21 @@ export const UserNotifications: React.FC = () => {
         position="bottom"
         withArrow
         shadow="md"
-        opened={notificationsMenuOpen}
+        opened={notificationMenuOpen}
         trapFocus
         onClose={() => {
           useHeaderStore.set("notificationsMenuOpen", false);
         }}
       >
         <Popover.Target>
-          {notificationsData && notificationsData?.unread_count > 0 ? (
+          {notificationData && notificationData?.unread_count > 0 ? (
             <Indicator withBorder processing color="violet">
               <ActionIcon
                 className={classes.hoverEffect}
                 onClick={() => {
                   useHeaderStore.set(
                     "notificationsMenuOpen",
-                    !notificationsMenuOpen
+                    !notificationMenuOpen
                   );
                 }}
               >
@@ -206,7 +207,7 @@ export const UserNotifications: React.FC = () => {
               onClick={() => {
                 useHeaderStore.set(
                   "notificationsMenuOpen",
-                  !notificationsMenuOpen
+                  !notificationMenuOpen
                 );
               }}
             >
@@ -216,12 +217,16 @@ export const UserNotifications: React.FC = () => {
         </Popover.Target>
         <Popover.Dropdown>
           <ScrollArea h={250} scrollbarSize={4}>
-            <Notifications />
+            <Notifications
+              notification={notificationData}
+              notificationLoading={isNotificationDataLoading}
+            />
           </ScrollArea>
-          {notificationsData && notificationsData?.unread_count > 0 ? (
+          {notificationData && notificationData?.unread_count > 0 ? (
             <>
               <Divider mb={2} mt={10} />
               <div
+                key={Math.random()}
                 style={{
                   display: "flex",
                   alignItems: "center",
