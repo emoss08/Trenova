@@ -56,12 +56,12 @@ export const Notifications = ({ notification, notificationLoading }: Props) => {
         <>
           <Group mt={5} mb={10} mr={10} key={notification.id}>
             <FontAwesomeIcon icon={faEnvelope} />
-            <Paper style={{ flex: 1 }}>
+            <div style={{ flex: 1 }}>
               <Text fw={700} size="xs">
                 {notification.verb}
               </Text>
               <Text size="xs">{notification.description}</Text>
-            </Paper>
+            </div>
             <Badge size="xs" radius="xs" variant="filled" color="violet">
               {humanReadableTimestamp}
             </Badge>
