@@ -28,8 +28,7 @@ from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 class HazardousMaterial(GenericModel):  # type: ignore
-    """
-    A class representing a hazardous material.
+    """A class representing a hazardous material.
 
     This class stores information about a hazardous material, including its name, description, hazard
     class, packing group, ERG number, proper shipping name, and UN number. It also defines two
