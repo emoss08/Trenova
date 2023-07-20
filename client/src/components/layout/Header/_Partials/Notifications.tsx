@@ -15,38 +15,22 @@
  * Grant, and not modifying the license in any other way.
  */
 import React from "react";
-import { QueryKey, useQuery, useQueryClient } from "react-query";
-import { getUserNotifications } from "@/requests/UserRequestFactory";
-import { getUserId } from "@/lib/utils";
-import { useHeaderStore } from "@/stores/HeaderStore";
-import { Badge, Group, Skeleton, Text } from "@mantine/core";
+import { Badge, Group, Paper, Skeleton, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faEnvelopeOpen } from "@fortawesome/pro-duotone-svg-icons";
-import { UserNotification, Notification } from "@/types/apps/accounts";
+import { Notification } from "@/types/apps/accounts";
 import { formatTimestamp } from "@/utils/date";
 
-export const Notifications: React.FC = () => {
-  const [notificationsMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
-  const userId = getUserId() || "";
-  const queryClient = useQueryClient();
-
-  const { data: notificationsData, isLoading: notificationsLoading } = useQuery<
-    UserNotification,
-    QueryKey
-  >({
-    queryKey: ["userNotifications", userId],
-    queryFn: getUserNotifications,
-    initialData: () => {
-      return queryClient.getQueryData(["userNotifications", userId]);
-    },
-    enabled: notificationsMenuOpen,
-  });
-
-  if (notificationsLoading) {
+type Props = {
+  notification: any;
+  notificationLoading: boolean;
+};
+export const Notifications = ({ notification, notificationLoading }: Props) => {
+  if (notificationLoading) {
     return <Skeleton width={300} height={250} />;
   }
 
-  if (!notificationsData || notificationsData?.unread_list.length === 0) {
+  if (!notification || notification?.unread_list.length === 0) {
     return (
       <div
         style={{
@@ -65,19 +49,19 @@ export const Notifications: React.FC = () => {
     );
   }
 
-  const notificationItems = notificationsData?.unread_list.map(
+  const notificationItems = notification?.unread_list.map(
     (notification: Notification) => {
       const humanReadableTimestamp = formatTimestamp(notification.timestamp);
       return (
         <>
           <Group mt={5} mb={10} mr={10} key={notification.id}>
             <FontAwesomeIcon icon={faEnvelope} />
-            <div style={{ flex: 1 }}>
+            <Paper style={{ flex: 1 }}>
               <Text fw={700} size="xs">
                 {notification.verb}
               </Text>
               <Text size="xs">{notification.description}</Text>
-            </div>
+            </Paper>
             <Badge size="xs" radius="xs" variant="filled" color="violet">
               {humanReadableTimestamp}
             </Badge>
