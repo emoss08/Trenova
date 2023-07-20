@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     "invoicing",
     "reports",
     "plugin",
+    "edi",
 ]
 
 # Middleware configurations
@@ -398,8 +399,6 @@ CACHEOPS = {
     "accounting.generalledgeraccount": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
-
-# GUARDIAN_MONKEY_PATCH = False
 
 # Billing Client Configurations
 BILLING_CLIENT_PASSWORD = env("BILLING_CLIENT_REDIS_PASSWORD")
