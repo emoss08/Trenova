@@ -23,6 +23,7 @@ import os
 import signal
 import time
 import types
+from concurrent.futures import ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any
 
@@ -69,6 +70,7 @@ class KafkaListener:
     NO_ALERTS_MSG = "No active table change alerts."
     running = True
     MAX_CONCURRENT_JOBS = 100
+    THREAD_POOL_SIZE = env("THREAD_POOL_SIZE", default=10)
 
     # TODO(Wolfred): Replace all prints with SSE or websockets. Still haven't decided.
 
@@ -80,6 +82,9 @@ class KafkaListener:
         """
 
         return f"KafkaListener({self.KAFKA_HOST}, {self.KAFKA_PORT}, {self.KAFKA_GROUP_ID})"
+
+    def __init__(self, thread_pool_size=10) -> None:
+        self.thread_pool_size = thread_pool_size
 
     @classmethod
     def _signal_handler(cls, _signal: int, frame: types.FrameType | None) -> None:
@@ -277,7 +282,7 @@ class KafkaListener:
         if data is None:  # Added to handle cases where message is not valid JSON.
             return
 
-        op_type: str | None = data.get("op")
+        op_type = data.get("op")
 
         op_type_mapping = {
             "c": models.TableChangeAlert.DatabaseActionChoices.INSERT,
@@ -309,7 +314,7 @@ class KafkaListener:
         )
         send_mail(
             subject=subject,
-            message=KafkaListener._format_message(field_value_dict=field_value_dict),
+            message=cls._format_message(field_value_dict=field_value_dict),
             from_email="table_change@monta.io",
             recipient_list=recipient_list,
         )
@@ -349,7 +354,7 @@ class KafkaListener:
         )
 
         futures = set()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_SIZE) as executor:
             try:
                 while cls.running:
                     # Backpressure mechanism. If there are too many ongoing tasks, stop pulling in new messages.
@@ -405,7 +410,7 @@ class KafkaListener:
 
                     # Wait for at least one of the futures to complete if there's too many of them.
                     if len(futures) >= cls.MAX_CONCURRENT_JOBS:
-                        done, futures = concurrent.futures.wait(
+                        done, futures = wait(
                             futures, return_when=concurrent.futures.FIRST_COMPLETED
                         )
 
