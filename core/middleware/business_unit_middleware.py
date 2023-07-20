@@ -17,7 +17,7 @@
 from collections.abc import Callable
 
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpRequest
 from rest_framework import status
 
 
@@ -29,16 +29,24 @@ class BusinessUnitMiddleware:
     def __init__(self, get_response: Callable) -> None:
         self.get_response = get_response
 
-    def __call__(self, request):
+    def __call__(self, request: HttpRequest) -> JsonResponse:
+        """Check if the user's business unit is paid.
+
+        Args:
+            request (HttpRequest): The request object.
+
+        Returns:
+            JsonResponse: The response object.
+        """
         try:
             # existing middleware logic
-            if not request.user.business_unit.paid:
+            if request.user.is_authenticated and not request.user.business_unit.paid:
                 raise ValidationError(
                     "Your business unit is not paid, please contact your Account Manager."
                 )
 
         except ValidationError as e:
-            errors = e.messages  # this is a list
-            return JsonResponse({"detail": errors[0]}, status=403)
+            errors = e.messages
+            return JsonResponse({"detail": errors[0]}, status=status.HTTP_403_FORBIDDEN)
 
         return self.get_response(request)
