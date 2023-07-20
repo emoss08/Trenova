@@ -26,10 +26,10 @@ import {
 } from "@mantine/core";
 import React from "react";
 import { billingClientStore } from "@/stores/BillingStores";
-import { WebSocketManager, WebsocketMessageProps } from "@/utils/websockets";
+import { WebSocketManager, WebSocketMessageProps } from "@/utils/websockets";
 
 interface Props {
-  websocketMessage: WebsocketMessageProps;
+  websocketMessage: WebSocketMessageProps;
   websocketManager: WebSocketManager;
 }
 
@@ -47,9 +47,11 @@ export const BillingExceptionModal: React.FC<Props> = ({
     });
   };
 
-  if (!modalOpen) return null;
+  websocketManager.receiveMessage("billing_client", (data) => {
+    console.log(data);
+  });
 
-  console.log("Websocket message in ExceptionModal", websocketMessage);
+  if (!modalOpen) return null;
 
   return (
     <Modal.Root
