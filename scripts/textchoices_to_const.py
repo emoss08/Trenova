@@ -88,4 +88,4 @@ def find_and_convert_choices(directory: str) -> None:
             f.close()
 
 
-find_and_convert_choices("../billing")
+find_and_convert_choices("../commodities")
