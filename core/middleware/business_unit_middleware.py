@@ -17,7 +17,7 @@
 from collections.abc import Callable
 
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse, HttpRequest
+from django.http import HttpRequest, JsonResponse
 from rest_framework import status
 
 

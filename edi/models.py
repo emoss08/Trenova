@@ -21,9 +21,9 @@ from typing import final
 
 from django.db import models
 from django.urls import reverse
-
-from utils.models import GenericModel, ChoiceField
 from django.utils.translation import gettext_lazy as _
+
+from utils.models import ChoiceField, GenericModel
 
 
 class EDISegmentField(GenericModel):
