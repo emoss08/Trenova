@@ -257,6 +257,8 @@ def generate_report(
         user.username,
         {
             "type": "send_notification",
+            "recipient": user.username,
+            "attr": "report",
             "event": "New Report is available",
             "description": f"New {model_name} report is available for download.",
         },
