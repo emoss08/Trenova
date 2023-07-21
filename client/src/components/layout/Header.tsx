@@ -37,13 +37,9 @@ import {
 import { Link } from "react-router-dom";
 import ActionButton from "../ActionButton";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
-import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
 import { ThemeSwitcher } from "./Header/_Partials/ThemeSwitcher";
-import { HeaderUserMenu } from "./HeaderUserMenu";
 import { HeaderLogo } from "@/components/layout/Header/_Partials/HeaderLogo";
-import { UserNotifications } from "./Header/UserNotifications";
 import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
-import { SearchSpotlight } from "@/components/layout/Header/Search";
 import { CustomerServiceMenuItem } from "@/components/layout/Header/_Partials/CustomerServiceMenuItem";
 import { BillingMenuItem } from "@/components/layout/Header/_Partials/BillingMenuItem";
 import { EquipmentMenuItem } from "@/components/layout/Header/_Partials/EquipmentMenuItem";
@@ -119,23 +115,14 @@ export function HeaderMegaMenu() {
           </Group>
 
           <Group className={classes.hiddenMobile}>
-            {/* Search */}
-            <SearchSpotlight />
-
-            {/* User Downloads */}
-            <UserDownloads />
-
-            {/* Notifications */}
-            <UserNotifications />
-
             {/* Applications */}
             <ActionButton icon={faGrid2} />
 
             {/* Theme Switcher */}
             <ThemeSwitcher />
 
-            {/* User Menu */}
-            <HeaderUserMenu />
+            {/*/!* User Menu *!/*/}
+            {/*<HeaderUserMenu />*/}
           </Group>
 
           <Burger

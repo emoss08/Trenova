@@ -17,8 +17,8 @@
 
 import React, { PropsWithChildren } from "react";
 import { AppShell, Container, useMantineTheme } from "@mantine/core";
-import { HeaderMegaMenu } from "./Header";
 import { Breadcrumb } from "@/components/ui/BreadCrumbs";
+import { NavbarSearch } from "@/components/layout/Navbar";
 
 const Layout: React.FC<PropsWithChildren> = ({ children }) => {
   const theme = useMantineTheme();
@@ -35,7 +35,8 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
           },
         }}
         padding="md"
-        header={<HeaderMegaMenu />}
+        asideOffsetBreakpoint="sm"
+        aside={<NavbarSearch />}
       >
         <Container size="xl">
           <Breadcrumb />

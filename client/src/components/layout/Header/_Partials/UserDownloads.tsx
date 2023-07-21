@@ -15,23 +15,100 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ActionIcon, Divider, Menu, ScrollArea } from "@mantine/core";
+import {
+  Badge,
+  createStyles,
+  Divider,
+  Menu,
+  rem,
+  ScrollArea,
+  Skeleton,
+  UnstyledButton,
+} from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faDownload } from "@fortawesome/pro-duotone-svg-icons";
+import { faArrowRight } from "@fortawesome/pro-duotone-svg-icons";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
 import React from "react";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { Link } from "react-router-dom";
+import { IconDownload } from "@tabler/icons-react";
+import { useQuery, useQueryClient } from "react-query";
+import { getUserReports } from "@/requests/UserRequestFactory";
+import { getUserId } from "@/lib/utils";
+
+const useStyles = createStyles((theme) => ({
+  mainLinks: {
+    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+  },
+
+  mainLink: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    fontSize: theme.fontSizes.xs,
+    padding: `${rem(8)} ${theme.spacing.xs}`,
+    borderRadius: theme.radius.sm,
+    fontWeight: 500,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7],
+
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[6]
+          : theme.colors.gray[0],
+      color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+  },
+
+  mainLinkInner: {
+    display: "flex",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  mainLinkIcon: {
+    marginRight: theme.spacing.sm,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[2]
+        : theme.colors.gray[6],
+  },
+
+  mainLinkBadge: {
+    padding: 0,
+    width: rem(20),
+    height: rem(20),
+    pointerEvents: "none",
+  },
+}));
 
 export const UserDownloads: React.FC = () => {
   const [downloadMenuOpen] = useHeaderStore.use("downloadMenuOpen");
-  const { classes } = useHeaderStyles();
+  const { classes } = useStyles();
+  const { classes: headerClasses } = useHeaderStyles();
+  const userId = getUserId() || "";
+  const queryClient = useQueryClient();
+
+  // No stale time on this we want it to always be up-to-date
+  const { data: userReportData, isLoading: isUserReportDataLoading } = useQuery(
+    {
+      queryKey: ["userReport", userId],
+      queryFn: () => getUserReports(),
+      initialData: () => {
+        return queryClient.getQueryData(["userReport", userId]);
+      },
+    }
+  );
 
   return (
     <>
       <Menu
-        position="bottom-end"
+        position="right-start"
         width={230}
         opened={downloadMenuOpen}
         onChange={(changeEvent) => {
@@ -42,15 +119,37 @@ export const UserDownloads: React.FC = () => {
         arrowSize={5}
       >
         <Menu.Target>
-          <ActionIcon className={classes.hoverEffect}>
-            <FontAwesomeIcon icon={faDownload} />
-          </ActionIcon>
+          <div className={classes.mainLinks}>
+            <UnstyledButton className={classes.mainLink}>
+              <div className={classes.mainLinkInner}>
+                <IconDownload
+                  size={20}
+                  className={classes.mainLinkIcon}
+                  stroke={1.5}
+                />
+                <span>Downloads</span>
+              </div>
+              <Badge
+                size="sm"
+                variant="filled"
+                className={classes.mainLinkBadge}
+              >
+                {userReportData?.count || 0}
+              </Badge>
+            </UnstyledButton>
+          </div>
         </Menu.Target>
         <Menu.Dropdown>
           <Menu.Label>Downloads</Menu.Label>
-          <ScrollArea h={250} scrollbarSize={4}>
-            <UserReports />
-          </ScrollArea>
+          <>
+            {isUserReportDataLoading ? (
+              <Skeleton width={220} height={250} />
+            ) : (
+              <ScrollArea h={250} scrollbarSize={5} offsetScrollbars>
+                {userReportData && <UserReports reportData={userReportData} />}
+              </ScrollArea>
+            )}
+          </>
           <Divider mb={2} mt={10} />
           <Link
             to="#"
@@ -60,7 +159,7 @@ export const UserDownloads: React.FC = () => {
               justifyContent: "center",
               marginTop: "5px",
             }}
-            className={classes.link}
+            className={headerClasses.link}
           >
             View all{" "}
             <FontAwesomeIcon
