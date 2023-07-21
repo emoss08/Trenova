@@ -258,10 +258,12 @@ class Commodity(GenericModel):  # type: ignore
         null=True,
         blank=True,
     )
-    is_hazmat = models.BooleanField(
+    is_hazmat = models.CharField(
         _("Is Hazardous Material"),
-        default=False,
-        help_text=_("Is the Commodity a Hazardous Material"),
+        max_length=1,
+        choices=[("Y", "Yes"), ("N", "No")],
+        default="N",
+        help_text=_("Is the Commodity a Hazardous Material?"),
     )
 
     class Meta:
@@ -292,7 +294,10 @@ class Commodity(GenericModel):  # type: ignore
         """Update Commodity
 
         Args:
-            **kwargs: Keyword arguments that are used to update the commodity.
+            **kwargs(Any): Keyword arguments that are used to update the commodity.
+
+        Returns:
+            None: This function does not return anything.
         """
 
         for key, value in kwargs.items():
@@ -306,13 +311,13 @@ class Commodity(GenericModel):  # type: ignore
             **kwargs (Any): Keyword Arguments
 
         Returns:
-            None
+            None: This function does not return anything.
         """
 
         self.full_clean()
 
         if self.hazmat:
-            self.is_hazmat = True
+            self.is_hazmat = "Y"
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:

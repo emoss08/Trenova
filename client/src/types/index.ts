@@ -31,6 +31,8 @@ export interface IChoiceProps<T extends string> {
 
 export type StatusChoiceProps = "A" | "I";
 
+export type YesNoChoiceProps = "Y" | "N";
+
 export type TNavigationLink = {
   icon: IconDefinition;
   title: string;
