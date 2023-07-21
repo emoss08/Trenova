@@ -615,6 +615,10 @@ class Order(GenericModel):  # type:ignore
         if self.destination_location and not self.destination_address:
             self.destination_address = self.destination_location.get_address_combination
 
+        if self.commodity and self.commodity.min_temp and self.commodity.max_temp:
+            self.temperature_min = self.commodity.min_temp
+            self.temperature_max = self.commodity.max_temp
+
         if self.commodity and self.commodity.hazmat:
             self.hazmat = self.commodity.hazmat
 
