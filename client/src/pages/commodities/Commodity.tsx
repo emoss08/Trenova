@@ -15,18 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { usePageStyles } from "@/styles/PageStyles";
 import { Card, Flex } from "@mantine/core";
-import { HazardousMaterialTable } from "@/components/hazardous-material/HazardousMaterialTable";
+import React from "react";
+import CommodityTable from "@/components/commodities/CommodityTable";
 
-export default function HazardousMaterial() {
+export default function Commodity() {
   const { classes } = usePageStyles();
 
   return (
     <Flex>
       <Card className={classes.card}>
-        <HazardousMaterialTable />
+        <CommodityTable />
       </Card>
     </Flex>
   );

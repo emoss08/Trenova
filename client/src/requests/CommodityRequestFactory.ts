@@ -15,19 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { usePageStyles } from "@/styles/PageStyles";
-import { Card, Flex } from "@mantine/core";
-import { HazardousMaterialTable } from "@/components/hazardous-material/HazardousMaterialTable";
+import axios from "@/lib/AxiosConfig";
+import { HazardousMaterial } from "@/types/apps/commodities";
 
-export default function HazardousMaterial() {
-  const { classes } = usePageStyles();
-
-  return (
-    <Flex>
-      <Card className={classes.card}>
-        <HazardousMaterialTable />
-      </Card>
-    </Flex>
-  );
+/**
+ * Fetches accessorial charges from the server.
+ * @returns A promise that resolves to an array of accessorial charges.
+ */
+export async function getHazardousMaterials(): Promise<HazardousMaterial[]> {
+  const response = await axios.get("/hazardous_materials/");
+  return response.data.results;
 }

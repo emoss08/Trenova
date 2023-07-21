@@ -17,10 +17,29 @@
 
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
-import { HazardousMaterial } from "@/types/apps/commodities";
+import { Commodity, HazardousMaterial } from "@/types/apps/commodities";
 
 export const hazardousMaterialTableStore = createGlobalStore<
   Omit<TableStoreProps<HazardousMaterial>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
+
+export const commodityTableStore = createGlobalStore<
+  Omit<TableStoreProps<Commodity>, "drawerOpen">
 >({
   pagination: {
     pageIndex: 0,
