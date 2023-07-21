@@ -189,6 +189,9 @@ def generate_report(
     user = User.objects.get(pk__exact=user_id)
     model: type[Model] = apps.get_model(allowed_model["app_label"], model_name)  # type: ignore
 
+    if not model:
+        raise exceptions.InvalidModelException("Invalid model name")
+
     # Get the related fields
     related_fields = [field.split("__")[0] for field in columns if "__" in field]
 
@@ -204,6 +207,12 @@ def generate_report(
     for column in df.columns:
         if pd.api.types.is_datetime64tz_dtype(df[column]):
             df[column] = df[column].dt.tz_convert(None)
+
+    # Extract 'value' and 'label' from each dictionary in the 'allowed_fields' list
+    allowed_fields_dict = {field["value"]: field["label"] for field in allowed_model["allowed_fields"]}
+
+    # Rename the columns
+    df.rename(columns=allowed_fields_dict, inplace=True)
 
     buffer = BytesIO()
 
