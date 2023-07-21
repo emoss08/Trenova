@@ -92,7 +92,7 @@ export const CreateHMModalForm = () => {
       name: "",
       description: "",
       hazard_class: "1.3",
-      packing_group: "",
+      packing_group: "I",
       erg_number: "",
       proper_shipping_name: "",
     },
