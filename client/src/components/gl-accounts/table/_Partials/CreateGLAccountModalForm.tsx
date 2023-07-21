@@ -90,7 +90,7 @@ export const CreateGLAccountModalForm: React.FC = () => {
   const form = useForm<GLAccountFormValues>({
     validate: yupResolver(glAccountSchema),
     initialValues: {
-      status: statusChoices[0].value,
+      status: "A",
       account_number: "0000-0000-0000-0000",
       description: "",
       account_type: "",
