@@ -18,7 +18,7 @@
 import factory
 
 from edi import models
-from edi.tests.test_data import test_edi_segments
+from edi.tests.data import test_edi_segments
 
 
 class EDIBillingProfileFactory(factory.django.DjangoModelFactory):
