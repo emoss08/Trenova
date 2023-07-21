@@ -20,7 +20,7 @@ from typing import Any
 from django.utils import timezone
 
 from billing.models import BillingQueue
-from edi import models, exceptions
+from edi import exceptions, models
 
 
 def generate_edi_envelope_headers(

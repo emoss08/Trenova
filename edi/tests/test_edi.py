@@ -20,7 +20,7 @@ from django.utils import timezone
 
 from accounts.tests.factories import UserFactory
 from billing.models import BillingQueue
-from edi import helpers, exceptions, models
+from edi import exceptions, helpers
 from edi.tests import factories
 from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
@@ -211,8 +211,9 @@ def test_generate_edi_content(
     assert lines[10].endswith("*MR")
     assert lines[11].endswith("*E")
 
+
 def test_generate_edi_content_value_returns_empty_string(
-        organization: Organization, business_unit: BusinessUnit
+    organization: Organization, business_unit: BusinessUnit
 ) -> None:
     """Test generate_edi_content value returns an empty string if value is ``None``
 
@@ -256,6 +257,7 @@ def test_generate_edi_content_value_returns_empty_string(
 
     # Assert that the content contains the fields.
     assert lines[0] == "B3*B**********"
+
 
 def test_generate_edi_content_parser_error(
     organization: Organization, business_unit: BusinessUnit
