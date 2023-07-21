@@ -48,7 +48,6 @@ export const ValidatedNumberInput = <TFormValues extends object>({
 }: ValidatedNumberInputProps<TFormValues>) => {
   const { classes } = useStyles();
   const error = form.errors[name as string];
-
   return (
     <NumberInput
       {...rest}
