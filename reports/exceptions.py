@@ -34,3 +34,6 @@ class DisallowedModelException(CustomReportException):
 
 class DisallowedFieldException(CustomReportException):
     """Disallowed field exception class."""
+
+class InvalidModelException(CustomReportException):
+    """Invalid model exception class."""

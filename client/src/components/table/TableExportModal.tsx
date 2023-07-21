@@ -67,8 +67,8 @@ export const TableExportModal: React.FC<Props> = ({
   });
 
   const columns = columnsData?.map((column: any) => ({
-    label: column,
-    value: column,
+    label: column.label,
+    value: column.value,
   }));
 
   const submitForm = async (values: TExportModelFormValue) => {

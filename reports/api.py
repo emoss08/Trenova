@@ -223,9 +223,12 @@ def generate_report_api(request: Request) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Extract 'value' from each dictionary in the 'allowed_fields' list
+    allowed_fields = [field["value"] for field in allowed_model["allowed_fields"]]
+
     # Check if columns are valid for the model
     for column in columns:
-        if column not in allowed_model["allowed_fields"]:
+        if column not in allowed_fields:
             return Response(
                 {"error": f"Invalid column for model: {column}"},
                 status=status.HTTP_400_BAD_REQUEST,
