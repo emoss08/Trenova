@@ -140,7 +140,7 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
             self: Refer to the current instance of a class
 
         Returns:
-            QuerySet[models.DivisionCode]: A queryset of divisioncode objects
+            QuerySet[models.DivisionCode]: A queryset of Division Code objects
         """
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
