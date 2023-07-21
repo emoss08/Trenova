@@ -16,7 +16,11 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { User, UserNotification, UserReport } from "@/types/apps/accounts";
+import {
+  User,
+  UserNotification,
+  UserReportResponse,
+} from "@/types/apps/accounts";
 
 /**
  * Fetches the details of the user with the specified ID.
@@ -32,9 +36,9 @@ export async function getUserDetails(id: string): Promise<User> {
  * Fetches user reports from the server.
  * @returns A promise that resolves to an array of user reports.
  */
-export async function getUserReports(): Promise<UserReport[]> {
+export async function getUserReports(): Promise<UserReportResponse> {
   const response = await axios.get("/user_reports/");
-  return response.data.results;
+  return response.data;
 }
 
 /**
