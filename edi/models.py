@@ -98,7 +98,7 @@ class EDISegment(GenericModel):
     )
     name = models.CharField(
         _("Name"),
-        max_length=30,
+        max_length=60,
         help_text=_(
             "A human readable name that describes the segment (e.g. Supplier Name)"
         ),

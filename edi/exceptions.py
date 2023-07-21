@@ -20,5 +20,8 @@ class EDIException(Exception):
     pass
 
 
-class EDIParserError(Exception):
+class EDIParserError(EDIException):
+    pass
+
+class FieldDoesNotExist(EDIException):
     pass

@@ -23,7 +23,7 @@ from billing.models import BillingQueue
 from edi import models, exceptions
 
 
-def generate_edi_envelope(
+def generate_edi_envelope_headers(
     *, edi_profile: models.EDIBillingProfile, date: str, time: str
 ) -> str:
     """Generate EDI X12 ISA and GS envelope headers and trailers.
@@ -36,6 +36,7 @@ def generate_edi_envelope(
     Returns:
         str: The EDI envelope headers and trailers.
     """
+
     # Interchange Control Header (ISA)
     isa_header = (
         "ISA*{auth_info_qualifier}*{auth_info}*"
@@ -79,7 +80,15 @@ def generate_edi_envelope(
         version_release_industry_id_code=edi_profile.edi_version,
     )
 
-    return f"{isa_header}\n{gs_header}"
+    # Transaction Set Header (ST)
+    st_header = (
+        "ST*{transaction_set_identifier_code}*{transaction_set_control_number}"
+    ).format(
+        transaction_set_identifier_code="210",
+        transaction_set_control_number="1",  # TODO(Wolfred): This should increment by 1 for each transaction set
+    )
+
+    return f"{isa_header}\n{gs_header}\n{st_header}"
 
 
 def generate_edi_trailers() -> str:
@@ -101,13 +110,20 @@ def generate_edi_trailers() -> str:
 
         The trailers are joined with a newline and returned as a string.
     """
+
+    # SE Transaction Set Trailer (SE)
+    # TODO(Wolfred): First value should be the number of segments in the transaction set
+    # TODO(Wolfred): Second Number should be the transaction set control number
+    # Which in the ST header is currently 1 ,but should be the same value as transaction_set_control_number
+    se_trailer = "SE*1*1"
+
     # Functional Group Trailer (GE)
     ge_trailer = "GE*1*1"
 
     # Interchange Control Trailer (IEA)
     iea_trailer = "IEA*1*000000001"
 
-    return f"{ge_trailer}\n{iea_trailer}"
+    return f"{se_trailer}\n{ge_trailer}\n{iea_trailer}"
 
 
 def get_nested_attr(*, obj: BillingQueue, attr: str) -> Any:
@@ -120,16 +136,23 @@ def get_nested_attr(*, obj: BillingQueue, attr: str) -> Any:
     Returns:
         Any: The value of the attribute
     """
-    return reduce(getattr, attr.split("."), obj)
+    try:
+        obj = reduce(getattr, attr.split("."), obj)
+    except AttributeError as e:
+        raise exceptions.FieldDoesNotExist(
+            f"Field `{attr}` does not exist on BillingQueue model."
+        ) from e
+
+    return obj
 
 
 def generate_edi_content(
-    *, billing_queue: BillingQueue, edi_billing_profile: models.EDIBillingProfile
+    *, billing_item: BillingQueue, edi_billing_profile: models.EDIBillingProfile
 ) -> str:
     """Generates EDI content from a billing queue and EDI billing profile.
 
     Args:
-        billing_queue: The billing queue instance to generate EDI content for.
+        billing_item: The billing queue instance to generate EDI content for.
         edi_billing_profile: The EDI billing profile that defines the EDI schema.
 
     Returns:
@@ -150,26 +173,39 @@ def generate_edi_content(
         EDIException: If the number of value placeholders in the parser
                        does not match the number of field values.
     """
+
+    # Initialize the segments' list
     segments = []
+
+    # Get the EDI segments defined in the profile ordered by sequence
     edi_segments = edi_billing_profile.segments.order_by("sequence")
 
     for edi_segment in edi_segments:
+        # Get the defined fields
         fields = edi_segment.fields.all()
+
+        # Initialize the values' list
         values = []
         for field in fields:
-            value = get_nested_attr(obj=billing_queue, attr=field.model_field)
+            # Lookup the value for each field from the billing queue object
+            value = get_nested_attr(obj=billing_item, attr=field.model_field)
             if value is None:
                 value = ""  # replace None with an empty string
             values.append(value)
 
+        # Use the segment parser string to format the values
         if edi_segment.parser.count("%s") != len(values):
-            raise exceptions.EDIException(
-                f"Number of placeholders in parser does not match number of values for segment {edi_segment.code}"
+            raise exceptions.EDIParserError(
+                f"Number of placeholders in parser does not match number of values for segment `{edi_segment.code}`"
             )
 
+        # Validate the number of placeholders matches the number of values
         segment = edi_segment.parser % tuple(values)
+
+        # Append the formatted segment string
         segments.append(segment)
 
+    # Join the segment strings with newlines and return
     return "\n".join(segments)
 
 
@@ -185,17 +221,20 @@ def generate_edi_document(
     Returns:
         str: The EDI document string.
     """
+
     # Get the current date and time
     now = timezone.now()
     date = now.strftime("%y%m%d")
     time = now.strftime("%H%M")
 
-    # Generate the envelope headers and trailers
-    envelope = generate_edi_envelope(edi_profile=edi_profile, date=date, time=time)
+    # Generate the envelope headers
+    envelope = generate_edi_envelope_headers(
+        edi_profile=edi_profile, date=date, time=time
+    )
 
     # Generate the document content
     content = generate_edi_content(
-        billing_queue=billing_queue_item, edi_billing_profile=edi_profile
+        billing_item=billing_queue_item, edi_billing_profile=edi_profile
     )
 
     # Generate the envelope trailers

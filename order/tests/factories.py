@@ -96,6 +96,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
     )
     bol_number = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
+    pieces = 1
 
 
 class OrderCommentFactory(factory.django.DjangoModelFactory):

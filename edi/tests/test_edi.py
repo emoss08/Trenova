@@ -16,16 +16,78 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from django.utils import timezone
 
 from accounts.tests.factories import UserFactory
 from billing.models import BillingQueue
-from edi import helpers, models
+from edi import helpers, exceptions, models
+from edi.tests import factories
 from order.tests.factories import OrderFactory
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 
 
-def test_generate_edi_document(organization, business_unit) -> None:
+def test_generate_edi_envelope_headers(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test generation of EDI envelope headers and trailers.
+
+    Args:
+        organization (Organization): The organization instance.
+        business_unit (): The business unit instance.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    now = timezone.now()
+    date = now.strftime("%y%m%d")
+    time = now.strftime("%H%M")
+
+    _, _, edi_billing_profile = factories.EDISegmentFactory(
+        business_unit=business_unit,
+        organization=organization,
+    )
+
+    headers = helpers.generate_edi_envelope_headers(
+        edi_profile=edi_billing_profile,
+        date=date,
+        time=time,
+    )
+
+    # Split the headers into lines
+    lines = headers.split("\n")
+
+    # Assert that the headers start with ISA and GS
+    assert lines[0].startswith("ISA*")
+    assert lines[1].startswith("GS*")
+
+
+def test_generate_edi_trailers() -> None:
+    """Test generation of EDI envelope trailers.
+
+    Returns:
+        None: This function does return anything.
+    """
+
+    # This is going to change as it will increment based on the number of transactions
+    trailers = helpers.generate_edi_trailers()
+
+    lines = trailers.split("\n")
+
+    assert lines[0].startswith("SE*1")
+    assert lines[1].startswith("GE*1")
+    assert lines[2].startswith("IEA*1*")
+
+
+def test_get_nested_attr(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test getting nested attribute.
+
+    Returns:
+        None: This function does not return anything.
+    """
     order_1 = OrderFactory()
     user = UserFactory()
 
@@ -43,149 +105,228 @@ def test_generate_edi_document(organization, business_unit) -> None:
         customer=order_1.customer,
     )
 
-    # Create EDI Segment
-    segment = models.EDISegment.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        code="BIG",
-        name="Beginning Segment for Invoice",
-        parser="BIG*%s*%s**%s*%s",
-        sequence=1,
+    nest_attr = helpers.get_nested_attr(
+        obj=billing_item,
+        attr="order.customer.name",
     )
 
-    segment_field_1 = models.EDISegmentField.objects.create(
-        business_unit=business_unit,
+    assert nest_attr == billing_item.order.customer.name
+    assert nest_attr == order_1.customer.name
+
+
+def test_get_nested_attr_exception(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test getting nested attribute exception.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    billing_item = BillingQueue.objects.create(
         organization=organization,
-        edi_segment=segment,
-        model_field="invoice_number",
-        position=2,
-    )
-    segment_field_2 = models.EDISegmentField.objects.create(
         business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment,
-        model_field="mileage",
-        position=3,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
     )
 
-    segment_field_3 = models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment,
-        model_field="bill_date",
-        format="%Y%m%d",  # if the field is a date
-        position=4,
-    )
+    with pytest.raises(exceptions.FieldDoesNotExist) as excinfo:
+        helpers.get_nested_attr(
+            obj=billing_item,
+            attr="order.customer.name1",
+        )
 
-    segment_field_4 = models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment,
-        model_field="weight",
-        position=5,
-    )
-
-    # Create second EDI Segment
-    segment2 = models.EDISegment.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        code="N3",
-        name="Beginning Segment for Invoice",
-        parser="N3*%s",
-        sequence=2,
-    )
-
-    models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment2,
-        model_field="order.origin_location.city",
-        format="%Y%m%d",  # if the field is a date
-        position=1,
-    )
-
-    edi_billing_profile = models.EDIBillingProfile.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        customer=billing_item.customer,
-        edi_enabled=True,
-        edi_format="X12",
-        destination="http://www.example.com",
-        username="test_username",
-        password="test_password",
-        edi_isa_id="SenderISAId",  # typically a DUNS number or another identifier assigned to you
-        edi_gs_id="SenderGSId",  # usually the same as the ISA ID, but not always
-        edi_version="4010",  # version of the X12 standards you're using (4010 in this case)
-        edi_test_mode=True,
-        edi_functional_ack=True,
-        edi_ta1_timeout=100,
-        edi_997_ack=True,
-        edi_gs3_receiver_id="ReceiverGSId",  # typically the receiver's DUNS number or other ID
-        edi_gs2_application_sender_id="SenderGSId",  # usually the same as the GS ID
-        processing_settings='{"test": "test"}',
-        validation_settings='{"test": "test"}',
-        edi_isa_authority="U",  # "U" for U.S. Department of Transportation, "X" for Accredited Standards Committee X12
-        edi_isa_security="01",  # "01" for password
-        edi_isa_security_info="Password",  # the actual password
-        edi_isa_interchange_id_qualifier="01",  # "01" for DUNS (Dun & Bradstreet), "14" for D-U-N-S+4 (Dun & Bradstreet)
-        edi_gs_code="PO",  # functional identifier code, "PO"  for purchase order
-        edi_isa_receiver_id="ReceiverISAId",  # typically the receiver's DUNS number or other ID
-        edi_gs_application_receiver_id="RECEIVERAPP1",  # usually the same as the GS ID
-    )
-
-    segment_st = models.EDISegment.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        code="ST",
-        name="Transaction Set Header",
-        parser="ST*%s*%s",
-        sequence=1,
-    )
-
-    models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment_st,
-        model_field="invoice_number",
-        position=1,
-    )
-    models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment_st,
-        model_field="order.pro_number",
-        position=2,
-    )
-
-    segment_se = models.EDISegment.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        code="SE",
-        name="Transaction Set Header",
-        parser="SE*%s*%s",
-        sequence=1,
-    )
-
-    models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment_se,
-        model_field="invoice_number",
-        position=1,
-    )
-    models.EDISegmentField.objects.create(
-        business_unit=business_unit,
-        organization=organization,
-        edi_segment=segment_se,
-        model_field="order.pro_number",
-        position=2,
+    assert (
+        excinfo.value.args[0]
+        == "Field `order.customer.name1` does not exist on BillingQueue model."
     )
 
 
-    edi_billing_profile.segments.add(segment)
-    edi_billing_profile.segments.add(segment2)
-    edi_billing_profile.segments.add(segment_st)
-    edi_billing_profile.segments.add(segment_se)
+def test_generate_edi_content(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    billing_item = BillingQueue.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
+    )
+
+    _, fields, edi_billing_profile = factories.EDISegmentFactory(
+        business_unit=business_unit,
+        organization=organization,
+    )
+
+    content = helpers.generate_edi_content(
+        billing_item=billing_item, edi_billing_profile=edi_billing_profile
+    )
+
+    # Split the content into lines
+    lines = content.split("\n")
+
+    # Assert that the content contains the fields.
+    assert lines[0].startswith("B3*")
+    assert lines[1].startswith("C3*")
+    assert lines[2].startswith("N9*")
+    assert lines[3].startswith("N1*")
+    assert lines[4].startswith("N3*")
+    assert lines[5].startswith("N4*")
+    assert lines[6].startswith("N7*")
+    assert lines[7].startswith("LX*")
+    assert lines[8].startswith("L5*")
+    assert lines[9].startswith("L0*")
+    assert lines[10].startswith("L1*")
+    assert lines[11].startswith("L3*")
+
+    # Assert that the content contains the values.
+    assert lines[0].endswith("*1")
+    assert lines[1].endswith("*USD")
+    assert lines[2].endswith("*1")
+    assert lines[3].endswith("*1")
+    assert lines[4].endswith("*1")
+    assert lines[5].endswith("*1")
+    assert lines[6].endswith("*1")
+    assert lines[7].endswith("*1")
+    assert lines[8].endswith("*T")
+    assert lines[9].endswith("*TKR")
+    assert lines[10].endswith("*MR")
+    assert lines[11].endswith("*E")
+
+def test_generate_edi_content_value_returns_empty_string(
+        organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test generate_edi_content value returns an empty string if value is ``None``
+
+    Args:
+        organization (Organization): The organization instance.
+        business_unit (BusinessUnit): The business unit instance.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    billing_item = BillingQueue.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
+    )
+
+    _, fields, edi_billing_profile = factories.EDISegmentFactory(
+        business_unit=business_unit,
+        organization=organization,
+    )
+
+    fields.update(model_field="order.commodity")
+
+    content = helpers.generate_edi_content(
+        billing_item=billing_item, edi_billing_profile=edi_billing_profile
+    )
+
+    # Split the content into lines
+    lines = content.split("\n")
+
+    # Assert that the content contains the fields.
+    assert lines[0] == "B3*B**********"
+
+def test_generate_edi_content_parser_error(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test Generate EDI content throws parser error if placeholders are not found, but passed.
+
+    Args:
+        organization (Organization): The organization instance.
+        business_unit (BusinessUnit): The business unit instance.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    billing_item = BillingQueue.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
+    )
+
+    _, fields, edi_billing_profile = factories.EDISegmentFactory(
+        business_unit=business_unit,
+        organization=organization,
+    )
+    fields.delete()
+
+    with pytest.raises(exceptions.EDIParserError) as excinfo:
+        helpers.generate_edi_content(
+            billing_item=billing_item, edi_billing_profile=edi_billing_profile
+        )
+
+    assert (
+        excinfo.value.args[0]
+        == "Number of placeholders in parser does not match number of values for segment `B3`"
+    )
+
+
+def test_generate_edi_document(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    billing_item = BillingQueue.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
+    )
+
+    _, _, edi_billing_profile = factories.EDISegmentFactory(
+        business_unit=business_unit,
+        organization=organization,
+    )
 
     document = helpers.generate_edi_document(
         billing_queue_item=billing_item,
@@ -204,10 +345,9 @@ def test_generate_edi_document(organization, business_unit) -> None:
     assert "GE*" in lines[-2]
 
     # Assert that the document has ST followed by SE
-    st_index = [i for i, s in enumerate(lines) if 'ST*' in s][0]
-    se_index = [i for i, s in enumerate(lines) if 'SE*' in s][0]
+    st_index = [i for i, s in enumerate(lines) if "ST*" in s][0]
+    se_index = [i for i, s in enumerate(lines) if "SE*" in s][0]
     assert st_index < se_index
 
     # Assert that BIG and N3 segments are in the document
-    assert "BIG*" in document
     assert "N3*" in document
