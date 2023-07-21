@@ -92,6 +92,13 @@ export type UserReport = {
   modified: string;
 };
 
+export type UserReportResponse = {
+  count: number;
+  next?: string | null;
+  previous?: string | null;
+  results: UserReport[];
+};
+
 export type Notification = {
   id: number;
   level: string;
