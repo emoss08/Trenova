@@ -17,17 +17,14 @@
 
 import React from "react";
 import {
-  Container,
   Avatar,
   Group,
   Text,
   Menu,
   Burger,
-  rem,
   createStyles,
-  ActionIcon,
+  UnstyledButton,
   Indicator,
-  Skeleton,
 } from "@mantine/core";
 import {
   IconHeart,
@@ -36,114 +33,44 @@ import {
   IconPlayerPause,
   IconTrash,
   IconSwitchHorizontal,
+  IconChevronRight,
 } from "@tabler/icons-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
-import { getUserId } from "@/lib/utils";
-import { useQuery, useQueryClient } from "react-query";
-import { getUserDetails } from "@/requests/UserRequestFactory";
 import { useHeaderStore } from "@/stores/HeaderStore";
+import { User } from "@/types/apps/accounts";
 
-const useStyles = createStyles((theme) => ({
-  header: {
-    paddingTop: theme.spacing.sm,
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[6]
-        : theme.colors.gray[0],
-    borderBottom: `${rem(1)} solid ${
-      theme.colorScheme === "dark" ? "transparent" : theme.colors.gray[2]
-    }`,
-    marginBottom: rem(120),
-  },
-
+const pageStyles = createStyles((theme) => ({
   user: {
+    display: "block",
+    width: "100%",
+    padding: theme.spacing.md,
     color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-    padding: `${theme.spacing.xs} ${theme.spacing.sm}`,
-    borderRadius: theme.radius.sm,
-    transition: "background-color 100ms ease",
 
     "&:hover": {
       backgroundColor:
-        theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
-    },
-
-    [theme.fn.smallerThan("xs")]: {
-      display: "none",
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[8]
+          : theme.colors.gray[0],
     },
   },
-
   burger: {
     [theme.fn.largerThan("xs")]: {
       display: "none",
     },
   },
-
-  userActive: {
-    backgroundColor:
-      theme.colorScheme === "dark" ? theme.colors.dark[8] : theme.white,
-  },
-
-  tabs: {
-    [theme.fn.smallerThan("sm")]: {
-      display: "none",
-    },
-  },
-
-  tabsList: {
-    borderBottom: "0 !important",
-  },
-
-  tab: {
-    fontWeight: 500,
-    height: rem(38),
-    backgroundColor: "transparent",
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[5]
-          : theme.colors.gray[1],
-    },
-
-    "&[data-active]": {
-      backgroundColor:
-        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.white,
-      borderColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[7]
-          : theme.colors.gray[2],
-    },
-  },
 }));
 
-export const HeaderUserMenu: React.FC = () => {
-  const { classes, theme } = useStyles();
+type Props = {
+  user: User;
+};
+
+export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
+  const { classes, theme } = pageStyles();
   const [headerMenuOpen] = useHeaderStore.use("headerMenuOpen");
-  const queryClient = useQueryClient();
 
-  // Get User data
-  const userId = getUserId() || "";
-  const { data: userData, isLoading: isUserDataLoading } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => {
-      if (!userId) {
-        return Promise.resolve(null);
-      }
-      return getUserDetails(userId);
-    },
-    initialData: () => {
-      return queryClient.getQueryData(["user", userId]);
-    },
-    staleTime: Infinity, // never refetch
-  });
-
-  if (isUserDataLoading) {
-    return <Skeleton width={rem(150)} height={rem(40)} circle />;
-  }
-
-  if (!userData) {
+  if (!user) {
     return <div>No user data available</div>;
   }
 
@@ -158,15 +85,15 @@ export const HeaderUserMenu: React.FC = () => {
 
       <Menu
         width={260}
-        position="bottom-end"
+        position="right-start"
         transitionProps={{ transition: "pop-top-right" }}
         onClose={() => useHeaderStore.set("headerMenuOpen", false)}
         onOpen={() => useHeaderStore.set("headerMenuOpen", true)}
         withinPortal
       >
         <Menu.Target>
-          <ActionIcon>
-            <Group spacing={7}>
+          <UnstyledButton className={classes.user}>
+            <Group>
               <Indicator
                 inline
                 withBorder
@@ -176,52 +103,36 @@ export const HeaderUserMenu: React.FC = () => {
                 position="bottom-end"
                 color="green"
               >
-                {userData.profile?.profile_picture ? (
+                {user.profile?.profile_picture ? (
                   <Avatar
-                    src={userData.profile?.profile_picture}
+                    src={user.profile?.profile_picture}
                     alt={"Test"}
                     radius="xl"
-                    size={30}
                   />
                 ) : (
-                  <Avatar color="blue" radius="xl" size={30}>
-                    {userData.profile?.first_name.charAt(0)}
-                    {userData.profile?.last_name.charAt(0)}
+                  <Avatar color="blue" radius="xl">
+                    {user.profile?.first_name.charAt(0)}
+                    {user.profile?.last_name.charAt(0)}
                   </Avatar>
                 )}
               </Indicator>
+              {/*<Avatar src={user.profile?.profile_picture} radius="xl" />*/}
+
+              <div style={{ flex: 1 }}>
+                <Text size="sm" weight={500}>
+                  {user.profile?.first_name} {user.profile?.last_name}
+                </Text>
+
+                <Text color="dimmed" size="xs">
+                  {user.email}
+                </Text>
+              </div>
+              <IconChevronRight size="0.9rem" stroke={1.5} />
             </Group>
-          </ActionIcon>
+          </UnstyledButton>
         </Menu.Target>
         <Menu.Dropdown>
           {/* User Information */}
-          <Group my={10}>
-            {userData.profile?.profile_picture ? (
-              <Avatar
-                src={userData.profile?.profile_picture}
-                alt={"Test"}
-                radius="xl"
-                size={40}
-                ml={5}
-                mb={2}
-              />
-            ) : (
-              <Avatar color="blue" radius="xl" ml={5} mb={2} size={40}>
-                {userData.profile?.first_name.charAt(0)}
-                {userData.profile?.last_name.charAt(0)}
-              </Avatar>
-            )}
-
-            <div style={{ flex: 1 }}>
-              <Text size="sm" weight={500}>
-                {userData.profile?.first_name} {userData.profile?.last_name}
-              </Text>
-              <Text color="dimmed" size="xs">
-                {userData.email}
-              </Text>
-            </div>
-          </Group>
-          <Menu.Divider />
           <Menu.Item
             icon={
               <IconHeart
@@ -258,7 +169,7 @@ export const HeaderUserMenu: React.FC = () => {
 
           <Menu.Label>Settings</Menu.Label>
           <Link
-            to={`/account/settings/${userData.id}/`}
+            to={`/account/settings/${user.id}/`}
             style={{ textDecoration: "none" }}
           >
             <Menu.Item icon={<FontAwesomeIcon icon={faGear} stroke="1.5" />}>

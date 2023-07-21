@@ -18,15 +18,16 @@
 import React, { useEffect } from "react";
 import { useHeaderStore } from "@/stores/HeaderStore";
 import {
-  ActionIcon,
+  Badge,
   Button,
   createStyles,
   Divider,
   Indicator,
   Popover,
+  rem,
   ScrollArea,
+  UnstyledButton,
 } from "@mantine/core";
-import { faBell } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
@@ -41,12 +42,18 @@ import { Howl, Howler } from "howler";
 
 import NotificationSound from "@/assets/audio/notification.webm";
 import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
+import { IconBell } from "@tabler/icons-react";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
 });
 
 const useStyles = createStyles((theme) => ({
+  mainLinks: {
+    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingBottom: theme.spacing.xs,
+  },
   button: {
     "&:hover": {
       backgroundColor: "transparent",
@@ -54,19 +61,47 @@ const useStyles = createStyles((theme) => ({
     height: "30px",
     width: "160px",
   },
-  hoverEffect: {
-    svg: {
-      color:
+  mainLink: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    fontSize: theme.fontSizes.xs,
+    padding: `${rem(8)} ${theme.spacing.xs}`,
+    borderRadius: theme.radius.sm,
+    fontWeight: 500,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7],
+
+    "&:hover": {
+      backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.gray[5]
-          : theme.colors.gray[9],
+          ? theme.colors.dark[6]
+          : theme.colors.gray[0],
+      color: theme.colorScheme === "dark" ? theme.white : theme.black,
     },
-    "&:hover svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[0]
-          : theme.colors.gray[7],
-    },
+  },
+
+  mainLinkInner: {
+    display: "flex",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  mainLinkIcon: {
+    marginRight: theme.spacing.sm,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[2]
+        : theme.colors.gray[6],
+  },
+
+  mainLinkBadge: {
+    padding: 0,
+    width: rem(20),
+    height: rem(20),
+    pointerEvents: "none",
   },
 }));
 
@@ -111,6 +146,11 @@ export const UserNotifications: React.FC = () => {
                   color: "blue",
                   icon: <FontAwesomeIcon icon={faCheck} />,
                 });
+
+                if (data.attr === "report") {
+                  queryClient.invalidateQueries(["userReport", userId]);
+                }
+
                 sound.play();
                 Howler.volume(0.5);
               });
@@ -118,8 +158,9 @@ export const UserNotifications: React.FC = () => {
           onClose: (event: CloseEvent) => {
             if (event.wasClean) {
               console.info(
-                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
+                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}, will reconnect in 1 second`
               );
+              reconnect();
             } else {
               console.info(
                 "[close] Connection died. Reconnect will be attempted in 1 second."
@@ -177,7 +218,7 @@ export const UserNotifications: React.FC = () => {
     <>
       <Popover
         width={300}
-        position="bottom"
+        position="right-start"
         withArrow
         shadow="md"
         opened={notificationMenuOpen}
@@ -188,9 +229,37 @@ export const UserNotifications: React.FC = () => {
       >
         <Popover.Target>
           {notificationData && notificationData?.unread_count > 0 ? (
-            <Indicator withBorder processing color="violet">
-              <ActionIcon
-                className={classes.hoverEffect}
+            <div className={classes.mainLinks}>
+              <UnstyledButton
+                className={classes.mainLink}
+                onClick={() =>
+                  useHeaderStore.set("notificationsMenuOpen", true)
+                }
+              >
+                <div className={classes.mainLinkInner}>
+                  <IconBell
+                    size={20}
+                    className={classes.mainLinkIcon}
+                    stroke={1.5}
+                  />
+
+                  <span>Notifications</span>
+                </div>
+                <Indicator withBorder processing color="violet">
+                  <Badge
+                    size="sm"
+                    variant="filled"
+                    className={classes.mainLinkBadge}
+                  >
+                    {notificationData?.unread_count || 0}
+                  </Badge>
+                </Indicator>
+              </UnstyledButton>
+            </div>
+          ) : (
+            <div className={classes.mainLinks}>
+              <UnstyledButton
+                className={classes.mainLink}
                 onClick={() => {
                   useHeaderStore.set(
                     "notificationsMenuOpen",
@@ -198,21 +267,23 @@ export const UserNotifications: React.FC = () => {
                   );
                 }}
               >
-                <FontAwesomeIcon icon={faBell} />
-              </ActionIcon>
-            </Indicator>
-          ) : (
-            <ActionIcon
-              className={classes.hoverEffect}
-              onClick={() => {
-                useHeaderStore.set(
-                  "notificationsMenuOpen",
-                  !notificationMenuOpen
-                );
-              }}
-            >
-              <FontAwesomeIcon icon={faBell} />
-            </ActionIcon>
+                <div className={classes.mainLinkInner}>
+                  <IconBell
+                    size={20}
+                    className={classes.mainLinkIcon}
+                    stroke={1.5}
+                  />
+                  <span>Notifications</span>
+                </div>
+                <Badge
+                  size="sm"
+                  variant="filled"
+                  className={classes.mainLinkBadge}
+                >
+                  0
+                </Badge>
+              </UnstyledButton>
+            </div>
           )}
         </Popover.Target>
         <Popover.Dropdown>

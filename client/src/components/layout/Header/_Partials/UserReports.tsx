@@ -21,36 +21,18 @@ import {
   faFileCsv,
   faFileExcel,
 } from "@fortawesome/free-solid-svg-icons";
-import { useQuery, useQueryClient } from "react-query";
-import { getUserReports } from "@/requests/UserRequestFactory";
-import { getUserId } from "@/lib/utils";
-import { Menu, Skeleton, Text } from "@mantine/core";
+import { Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDownload } from "@fortawesome/pro-duotone-svg-icons";
-import { useHeaderStore } from "@/stores/HeaderStore";
+import { UserReportResponse } from "@/types/apps/accounts";
+import { SwippableMenuItem } from "@/components/layout/Header/_Partials/SwippableMenuItem";
 
-export const UserReports: React.FC = () => {
-  const userId = getUserId() || "";
-  const queryClient = useQueryClient();
-  const [downloadMenuOpen] = useHeaderStore.use("downloadMenuOpen");
+type Props = {
+  reportData: UserReportResponse;
+};
 
-  // No stale time on this we want it to always be up-to-date
-  const { data: userReportData, isLoading: isUserReportDataLoading } = useQuery(
-    {
-      queryKey: ["userReport", userId],
-      queryFn: () => getUserReports(),
-      initialData: () => {
-        return queryClient.getQueryData(["userReport", userId]);
-      },
-      enabled: downloadMenuOpen,
-    }
-  );
-
-  if (isUserReportDataLoading) {
-    return <Skeleton width={200} height={250} />;
-  }
-
-  if (!userReportData || userReportData.length === 0) {
+export const UserReports: React.FC<Props> = ({ reportData }) => {
+  if (!reportData || reportData.results.length === 0) {
     return (
       <div
         style={{
@@ -69,7 +51,7 @@ export const UserReports: React.FC = () => {
     );
   }
 
-  const menuItems = userReportData.map((item) => {
+  const menuItems = reportData.results.map((item) => {
     let icon;
 
     if (item.file_name) {
@@ -95,17 +77,8 @@ export const UserReports: React.FC = () => {
       icon = faDownload; // use the default download icon if `file_name` is not defined
     }
 
-    return (
-      <Menu.Item
-        key={item.id}
-        icon={<FontAwesomeIcon icon={icon} />}
-        component="a"
-        href={item.report}
-      >
-        {item.file_name}
-      </Menu.Item>
-    );
+    return <SwippableMenuItem key={item.id} item={item} icon={icon} />;
   });
 
-  return <>{menuItems}</>; // return the list of Menu.Item components
+  return <>{menuItems}</>;
 };

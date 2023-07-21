@@ -18,78 +18,20 @@
 import React from "react";
 import { faMagnifyingGlass } from "@fortawesome/pro-solid-svg-icons";
 import { spotlight } from "@mantine/spotlight";
-import { createStyles, Group, UnstyledButton } from "@mantine/core";
+import { Code, createStyles, Input, rem, UnstyledButton } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const useStyles = createStyles((theme) => ({
-  button: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? "rgb(37, 38, 43)"
-        : "rgba(248, 249, 250, 0.35)",
-    borderRadius: "8px",
-    borderStyle: "solid",
-    borderColor:
-      theme.colorScheme === "dark" ? "rgb(55, 58, 64)" : "rgb(222, 226, 230)",
-    borderWidth: "1px",
-    color:
-      theme.colorScheme === "dark"
-        ? "rgb(144, 146, 150)"
-        : "rgb(173, 181, 189)",
-    fontSize: "16px",
-    paddingLeft: "12px",
-    paddingRight: "5px",
-    textAlign: "left",
-    height: "34px",
-    ":hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? "rgb(39, 39, 43)"
-          : "rgba(249, 250, 250, 0.35)",
-    },
-    "&:hover svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[0]
-          : theme.colors.gray[6],
-    },
-  },
-  text: {
-    backgroundColor:
-      theme.colorScheme === "dark" ? "#2c2d33" : "rgb(248, 249, 250)",
-    borderRadius: "4px",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    borderColor:
-      theme.colorScheme === "dark" ? "#2c2d33" : "rgb(233, 236, 239)",
-    boxSizing: "border-box",
-    color: theme.colorScheme === "dark" ? "#c1c2c5" : "rgb(73, 80, 87)",
-    fontSize: "11px",
+  searchCode: {
     fontWeight: 700,
-    paddingLeft: "7px",
-    paddingRight: "7px",
-    textAlign: "left",
-    marginLeft: "1px",
-  },
-  mainText: {
-    textAlign: "left",
-    fontSize: "14px",
-    color: "rgb(144, 146, 150)",
-    paddingRight: "40px",
-    textDecorationStyle: "solid",
-  },
-  group: {
-    alignItems: "center",
-    color: theme.colorScheme === "dark" ? "#c1c2c5" : "#c1c2c5",
-    columnGap: "10px",
-    display: "flex",
-    flexDirection: "row",
-    flexWrap: "wrap",
-    fontSize: "16px",
-    justifyContent: "flex-start",
-    lineHeight: "18.4px",
-    rowGap: "10px",
-    textAlign: "left",
+    fontSize: rem(10),
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[7]
+        : theme.colors.gray[0],
+    border: `${rem(1)} solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[2]
+    }`,
   },
 }));
 
@@ -97,12 +39,17 @@ export const SearchControl = () => {
   const { classes } = useStyles();
 
   return (
-    <UnstyledButton onClick={() => spotlight.open()} className={classes.button}>
-      <Group className={classes.group}>
-        <FontAwesomeIcon size={"xs"} icon={faMagnifyingGlass} />
-        <div className={classes.mainText}>Search</div>
-        <div className={classes.text}>Ctrl + K</div>
-      </Group>
+    <UnstyledButton onClick={() => spotlight.open()}>
+      <Input
+        placeholder="Search"
+        size="xs"
+        icon={<FontAwesomeIcon size={"xs"} icon={faMagnifyingGlass} />}
+        rightSectionWidth={70}
+        rightSection={<Code className={classes.searchCode}>Ctrl + K</Code>}
+        styles={{ rightSection: { pointerEvents: "none" } }}
+        mb="sm"
+        readOnly
+      />
     </UnstyledButton>
   );
 };
