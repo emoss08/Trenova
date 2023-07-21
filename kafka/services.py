@@ -329,6 +329,8 @@ class KafkaListener:
             None: This function does not return anything.
         """
 
+        # TODO(Wolfred): I need to break this method down into smaller methods. It's too long.
+
         signal.signal(signal.SIGINT, cls._signal_handler)
         signal.signal(signal.SIGTERM, cls._signal_handler)
         consumers = cls._connect()
