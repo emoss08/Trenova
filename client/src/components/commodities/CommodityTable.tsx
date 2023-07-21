@@ -16,18 +16,26 @@
  */
 
 import React from "react";
-import { usePageStyles } from "@/styles/PageStyles";
-import { Card, Flex } from "@mantine/core";
-import { HazardousMaterialTable } from "@/components/hazardous-material/HazardousMaterialTable";
+import { MontaTable } from "@/components/MontaTable";
+import { commodityTableStore } from "@/stores/CommodityStore";
+import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
+import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
+import { CommodityTableColumns } from "@/components/commodities/CommodityTableColumns";
+import CreateCommodityModal from "@/components/commodities/CreateCommodityModal";
 
-export default function HazardousMaterial() {
-  const { classes } = usePageStyles();
-
+export default function CommodityTable() {
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <HazardousMaterialTable />
-      </Card>
-    </Flex>
+    <MontaTable
+      store={commodityTableStore}
+      link="/commodities"
+      columns={CommodityTableColumns}
+      TableEditModal={EditHMModal}
+      TableViewModal={ViewHMModal}
+      displayDeleteModal={true}
+      TableCreateDrawer={CreateCommodityModal}
+      tableQueryKey="commodity-table-data"
+      exportModelName="Commodity"
+      name="Commodity"
+    />
   );
 }

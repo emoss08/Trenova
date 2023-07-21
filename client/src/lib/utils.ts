@@ -113,6 +113,15 @@ export const statusChoices: TChoiceProps[] = [
 ];
 
 /**
+ * Returns yes & no choices for a select input.
+ * @returns An array of yes & no choices.
+ */
+export const yesAndNoChoices: TChoiceProps[] = [
+  { value: "Y", label: "Yes" },
+  { value: "N", label: "No" },
+];
+
+/**
  * Truncates the provided text to the specified limit.
  * @param text
  * @param limit
