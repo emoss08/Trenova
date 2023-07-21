@@ -15,10 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { StatusChoiceProps } from "@/types";
+import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
 import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
+  UnitOfMeasureChoiceProps,
 } from "@/utils/apps/commodities";
 
 export type HazardousMaterial = {
@@ -34,3 +35,20 @@ export type HazardousMaterial = {
 
 export interface HazardousMaterialFormValues
   extends Omit<HazardousMaterial, "id"> {}
+
+export type Commodity = {
+  id: string;
+  name: string;
+  description?: string | null;
+  min_temp?: number | null;
+  max_temp?: number | null;
+  set_point_temp?: number | null;
+  unit_of_measure?: UnitOfMeasureChoiceProps | null;
+  hazmat?: string | null;
+  is_hazmat: YesNoChoiceProps;
+  created: string;
+  modified: string;
+};
+
+export interface CommodityFormValues
+  extends Omit<Commodity, "id" | "created" | "modified"> {}
