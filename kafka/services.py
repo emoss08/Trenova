@@ -23,7 +23,7 @@ import os
 import signal
 import time
 import types
-from concurrent.futures import ThreadPoolExecutor, wait
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import Any
 
@@ -40,11 +40,7 @@ ENV_DIR = Path(__file__).parent.parent
 environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
 
 # Logging Configuration
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("kafka_listener.log"), logging.StreamHandler()],
-)
+logger = logging.getLogger("kafka")
 
 
 class KafkaListener:
@@ -99,7 +95,7 @@ class KafkaListener:
             None: This function does not return anything.
         """
 
-        logging.info("Received termination signal. Stopping listener...")
+        logger.info("Received termination signal. Stopping listener...")
         cls.running = False
 
     @classmethod
@@ -127,9 +123,9 @@ class KafkaListener:
                 return consumer, Consumer(config)
             except KafkaError as e:
                 if e.args[0].code() != KafkaError._ALL_BROKERS_DOWN:
-                    logging.error(f"KafkaError: {e}")
+                    logger.error(f"KafkaError: {e}")
                     raise e
-                logging.info("All brokers are down. Retrying connection...")
+                logger.info("All brokers are down. Retrying connection...")
                 time.sleep(5)
         return None
 
@@ -165,7 +161,7 @@ class KafkaListener:
             if message is None:
                 continue
             elif message.error():
-                logging.error(f"Consumer error: {message.error()}")
+                logger.error(f"Consumer error: {message.error()}")
                 continue
             valid_messages.append(message)
         return valid_messages
@@ -186,7 +182,7 @@ class KafkaListener:
         try:
             data = json.loads(message_value)
         except json.JSONDecodeError:
-            logging.error("Error decoding message value as JSON.")
+            logger.error("Error decoding message value as JSON.")
             return None
         return data.get("payload", {})
 
@@ -206,7 +202,7 @@ class KafkaListener:
         if message is None:
             return None
         elif message.error():
-            logging.error(f"Consumer error: {message.error()}")
+            logger.error(f"Consumer error: {message.error()}")
             return None
         return message
 
@@ -236,13 +232,13 @@ class KafkaListener:
             table_change.get_topic_display() for table_change in table_changes
         }
         if added_alerts := new_table_changes.difference(old_table_changes):
-            logging.info(f"New alerts added: {', '.join(added_alerts)}")
+            logger.info(f"New alerts added: {', '.join(added_alerts)}")
         data_consumer.unsubscribe()
         if table_changes:
             data_consumer.subscribe(
                 [table_change.get_topic_display() for table_change in table_changes]
             )
-            logging.info(
+            logger.info(
                 f"Subscribed to topics: {', '.join([table_change.get_topic_display() for table_change in table_changes])}"
             )
 
@@ -309,7 +305,7 @@ class KafkaListener:
             associated_table_change.custom_subject
             or f"Table Change Alert: {data_message.topic()}"
         )
-        logging.info(
+        logger.info(
             f"Sending email to {recipient_list} with subject {subject} for message {data_message}"
         )
         send_mail(
@@ -321,125 +317,256 @@ class KafkaListener:
 
     @classmethod
     def listen(cls) -> None:
-        """Initiates the Kafka listener. It establishes a connection to the Kafka service, subscribes to the necessary topics,
+        """Entry point for Kafka listener. It establishes a connection, subscribes to the necessary topics,
         and begins processing messages. This method runs indefinitely until the listener receives a termination signal.
         It also handles exceptions due to lost connection to the Kafka service by attempting to reconnect.
 
         Returns:
             None: This function does not return anything.
         """
-
-        # TODO(Wolfred): I need to break this method down into smaller methods. It's too long.
-
-        signal.signal(signal.SIGINT, cls._signal_handler)
-        signal.signal(signal.SIGTERM, cls._signal_handler)
+        cls.register_signals()
         consumers = cls._connect()
 
         if consumers is None:
-            logging.error("Failed to connect, exiting...")
+            logger.error("Failed to connect, exiting...")
             return
 
         data_consumer, alert_update_consumer = consumers
+        cls.subscribe_consumers_to_topics(data_consumer, alert_update_consumer)
 
+        cls.execute_tasks(data_consumer, alert_update_consumer)
+
+        alert_update_consumer.close()
+        data_consumer.close()
+        logger.info("Consumers closed.")
+
+    @classmethod
+    def register_signals(cls) -> None:
+        """Register signals for termination. These signals are used to terminate the Kafka listener gracefully.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        signal.signal(signal.SIGINT, cls._signal_handler)
+        signal.signal(signal.SIGTERM, cls._signal_handler)
+
+    @classmethod
+    def subscribe_consumers_to_topics(
+        cls, data_consumer: Consumer, alert_update_consumer: Consumer
+    ) -> None:
+        """
+        Subscribe the provided consumers to the necessary topics. The topics are fetched from the _get_topic_list method.
+
+        Args:
+            data_consumer (Consumer): Consumer for data messages.
+            alert_update_consumer (Consumer): Consumer for alert update messages.
+
+        Returns:
+            None: This function does not return anything.
+        """
         table_changes = cls._get_topic_list()
         if not table_changes:
-            logging.info(cls.NO_ALERTS_MSG)
+            logger.info(cls.NO_ALERTS_MSG)
             return
 
         alert_update_consumer.subscribe([cls.ALERT_UPDATE_TOPIC])
-        logging.info(f"Subscribed to alert update topic: {cls.ALERT_UPDATE_TOPIC}")
+        logger.info(f"Subscribed to alert update topic: {cls.ALERT_UPDATE_TOPIC}")
         data_consumer.subscribe(
             [table_change.get_topic_display() for table_change in table_changes]
         )
-        logging.info(
+        logger.info(
             f"Subscribed to topics: {[table_change.get_topic_display() for table_change in table_changes]}"
         )
 
+    @classmethod
+    def execute_tasks(
+        cls, data_consumer: Consumer, alert_update_consumer: Consumer
+    ) -> None:
+        """Start executing tasks based on the received Kafka messages.
+
+        Args:
+            data_consumer (Consumer): Consumer for data messages.
+            alert_update_consumer (Consumer): Consumer for alert update messages.
+
+        Returns:
+            None: This function does not return anything.
+        """
         futures = set()
         with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_SIZE) as executor:
             try:
                 while cls.running:
-                    # Backpressure mechanism. If there are too many ongoing tasks, stop pulling in new messages.
                     if len(futures) < cls.MAX_CONCURRENT_JOBS:
-                        alert_message = cls._get_message(
-                            consumer=alert_update_consumer, timeout=cls.POLL_TIMEOUT
+                        cls.handle_messages(
+                            data_consumer, alert_update_consumer, futures, executor
                         )
 
-                        if alert_message is not None:
-                            logging.info(
-                                f"Received alert update: {alert_message.value()}"
-                            )
-                            cls._update_subscriptions(
-                                data_consumer=data_consumer, table_changes=table_changes
-                            )
+                    cls.wait_for_futures_to_complete(futures)
 
-                            table_changes = cls._get_topic_list()
+            except Exception as e:
+                cls.handle_exception(e, data_consumer, alert_update_consumer)
 
-                        data_messages = cls._get_messages(
-                            consumer=data_consumer, timeout=cls.POLL_TIMEOUT
-                        )
+    @classmethod
+    def handle_messages(
+        cls,
+        data_consumer: Consumer,
+        alert_update_consumer: Consumer,
+        futures: set[Future],
+        executor: ThreadPoolExecutor,
+    ) -> None:
+        """Handle alert and data messages from Kafka.
 
-                        for data_message in data_messages:
-                            if (
-                                data_message is not None
-                                and not data_message.error()
-                                and data_message.value() is not None
-                            ):
-                                logging.info(
-                                    f"Received data: {data_message.value().decode('utf-8')} from topic: {data_message.topic()}"
-                                )
+        Args:
+            data_consumer (KafkaConsumer): Consumer for data messages.
+            alert_update_consumer (KafkaConsumer): Consumer for alert update messages.
+            futures (set[Future]): Set of futures for tracking ongoing tasks.
+            executor (ThreadPoolExecutor): Executor for running tasks.
 
-                                associated_table_change = next(
-                                    (
-                                        table_change
-                                        for table_change in table_changes
-                                        if table_change.get_topic_display()
-                                        == data_message.topic()
-                                    ),
-                                    None,
-                                )
+        Returns:
+            None: This function does not return anything.
+        """
+        cls.handle_alert_message(alert_update_consumer, data_consumer)
+        cls.handle_data_messages(data_consumer, futures, executor)
 
-                                if associated_table_change and data_message:
-                                    logging.info(
-                                        f"Table Change Alert found. {associated_table_change.name}"
-                                    )
-                                    future = executor.submit(
-                                        cls._process_message,
-                                        data_message=data_message,
-                                        associated_table_change=associated_table_change,
-                                    )
-                                    futures.add(future)
+    @classmethod
+    def handle_alert_message(
+        cls, alert_update_consumer: Consumer, data_consumer: Consumer
+    ) -> None:
+        """Handle alert messages from Kafka and update subscriptions if necessary.
 
-                    # Wait for at least one of the futures to complete if there's too many of them.
-                    if len(futures) >= cls.MAX_CONCURRENT_JOBS:
-                        done, futures = wait(
-                            futures, return_when=concurrent.futures.FIRST_COMPLETED
-                        )
+        Args:
+            alert_update_consumer (KafkaConsumer): Consumer for alert update messages.
+            data_consumer (KafkaConsumer): Consumer for data messages.
 
-                    # Always try to get completed futures and remove them from the set of futures.
-                    done, futures = concurrent.futures.wait(
-                        futures, return_when=concurrent.futures.FIRST_COMPLETED
-                    )
-                    for future in done:
-                        try:
-                            future.result()
-                        except Exception as e:
-                            logging.info(
-                                f"Error processing message: {e}", exc_info=True
-                            )
+        Returns:
+            None: This function does not return anything.
+        """
+        alert_message = cls._get_message(
+            consumer=alert_update_consumer, timeout=cls.POLL_TIMEOUT
+        )
 
-                    data_consumer.commit(asynchronous=True)
-                    futures = {f for f in futures if not f.done()}
+        if alert_message is not None:
+            logger.info(f"Received alert update: {alert_message.value()}")
+            cls._update_subscriptions(
+                data_consumer=data_consumer, table_changes=cls._get_topic_list()
+            )
 
-            except KafkaException as e:
-                if e.args[0].code() != KafkaError._ALL_BROKERS_DOWN:
-                    raise e
-                logging.error(
-                    "All brokers are down. Attempting to reconnect...", exc_info=True
+    @classmethod
+    def handle_data_messages(
+        cls,
+        data_consumer: Consumer,
+        futures: set[Future],
+        executor: ThreadPoolExecutor,
+    ) -> None:
+        """Handle data messages from Kafka and submit tasks for processing.
+
+        Args:
+            data_consumer (KafkaConsumer): Consumer for data messages.
+            futures (set[Future]): Set of futures for tracking ongoing tasks.
+            executor (ThreadPoolExecutor): Executor for running tasks.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        data_messages = cls._get_messages(
+            consumer=data_consumer, timeout=cls.POLL_TIMEOUT
+        )
+
+        for data_message in data_messages:
+            cls.process_data_message(data_message, futures, executor)
+
+    @classmethod
+    def process_data_message(
+        cls, data_message: Message, futures: set[Future], executor: ThreadPoolExecutor
+    ) -> None:
+        """Process a single data message.
+
+        Args:
+            data_message (str): The data message to process.
+            futures (set): Set of futures for tracking ongoing tasks.
+            executor (ThreadPoolExecutor): Executor for running tasks.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        if (
+            data_message is not None
+            and not data_message.error()
+            and data_message.value() is not None
+        ):
+            logger.info(
+                f"Received data: {data_message.value().decode('utf-8')} from topic: {data_message.topic()}"
+            )
+
+            if associated_table_change := next(
+                (
+                    table_change
+                    for table_change in cls._get_topic_list()
+                    if table_change.get_topic_display() == data_message.topic()
+                ),
+                None,
+            ):
+                logger.info(f"Table Change Alert found. {associated_table_change.name}")
+                future = executor.submit(
+                    cls._process_message,
+                    data_message=data_message,
+                    associated_table_change=associated_table_change,
                 )
-                data_consumer, alert_update_consumer = cls._connect()
+                futures.add(future)
 
-            finally:
-                alert_update_consumer.close()
-                data_consumer.close()
-                logging.info("Consumers closed.")
+    @classmethod
+    def wait_for_futures_to_complete(cls, futures: set[Future]) -> None:
+        """Wait for tasks to complete, and if they raise any exceptions, log the error.
+
+        Args:
+            futures (set): Set of futures for tracking ongoing tasks.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        if len(futures) >= cls.MAX_CONCURRENT_JOBS:
+            done, futures = wait(
+                futures, return_when=concurrent.futures.FIRST_COMPLETED
+            )
+
+        done, futures = concurrent.futures.wait(
+            futures, return_when=concurrent.futures.FIRST_COMPLETED
+        )
+
+        for future in done:
+            try:
+                future.result()
+            except Exception as e:
+                logger.error(f"Error processing message: {e}", exc_info=True)
+
+        futures = {f for f in futures if not f.done()}
+
+    @classmethod
+    def handle_exception(
+        cls,
+        e: Exception,
+        data_consumer: Consumer,
+        alert_update_consumer: Consumer,
+    ) -> None:
+        """
+        Handle exceptions that occur while processing tasks. If the exception is due to all Kafka brokers being down,
+        it attempts to reconnect.
+
+        Args:
+            e (Exception): The exception to handle.
+            data_consumer (Consumer): Consumer for data messages.
+            alert_update_consumer (Consumer): Consumer for alert update messages.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        if (
+            isinstance(e, KafkaException)
+            and e.args[0].code() == KafkaError._ALL_BROKERS_DOWN
+        ):
+            logger.error(
+                "All brokers are down. Attempting to reconnect...", exc_info=True
+            )
+            data_consumer, alert_update_consumer = cls._connect()
+        else:
+            logging.error("An unexpected error occurred: ", exc_info=True)
+            raise e
