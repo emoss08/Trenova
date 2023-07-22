@@ -547,8 +547,7 @@ class KafkaListener:
         data_consumer: Consumer,
         alert_update_consumer: Consumer,
     ) -> None:
-        """
-        Handle exceptions that occur while processing tasks. If the exception is due to all Kafka brokers being down,
+        """Handle exceptions that occur while processing tasks. If the exception is due to all Kafka brokers being down,
         it attempts to reconnect.
 
         Args:
