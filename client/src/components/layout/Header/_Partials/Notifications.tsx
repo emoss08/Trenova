@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 import React from "react";
-import { Badge, Group, Paper, Skeleton, Text } from "@mantine/core";
+import { Badge, Group, Skeleton, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faEnvelopeOpen } from "@fortawesome/pro-duotone-svg-icons";
 import { Notification } from "@/types/apps/accounts";
@@ -25,6 +25,7 @@ type Props = {
   notification: any;
   notificationLoading: boolean;
 };
+
 export const Notifications = ({ notification, notificationLoading }: Props) => {
   if (notificationLoading) {
     return <Skeleton width={300} height={250} />;

@@ -38,7 +38,7 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
-import { useHeaderStore } from "@/stores/HeaderStore";
+import { useNavbarStore } from "@/stores/HeaderStore";
 import { User } from "@/types/apps/accounts";
 
 const pageStyles = createStyles((theme) => ({
@@ -68,7 +68,7 @@ type Props = {
 
 export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
   const { classes, theme } = pageStyles();
-  const [headerMenuOpen] = useHeaderStore.use("headerMenuOpen");
+  const [userMenuOpen] = useNavbarStore.use("userMenuOpen");
 
   if (!user) {
     return <div>No user data available</div>;
@@ -77,8 +77,8 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
   return (
     <Group position="apart">
       <Burger
-        opened={headerMenuOpen}
-        onClick={() => useHeaderStore.set("headerMenuOpen", !headerMenuOpen)}
+        opened={userMenuOpen}
+        onClick={() => useNavbarStore.set("userMenuOpen", !userMenuOpen)}
         className={classes.burger}
         size="sm"
       />
@@ -87,8 +87,8 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
         width={260}
         position="right-start"
         transitionProps={{ transition: "pop-top-right" }}
-        onClose={() => useHeaderStore.set("headerMenuOpen", false)}
-        onOpen={() => useHeaderStore.set("headerMenuOpen", true)}
+        onClose={() => useNavbarStore.set("userMenuOpen", false)}
+        onOpen={() => useNavbarStore.set("userMenuOpen", true)}
         withinPortal
       >
         <Menu.Target>

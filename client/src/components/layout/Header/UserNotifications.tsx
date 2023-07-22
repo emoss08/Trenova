@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect } from "react";
-import { useHeaderStore } from "@/stores/HeaderStore";
+import { useNavbarStore } from "@/stores/HeaderStore";
 import {
   Badge,
   Button,
@@ -52,7 +52,6 @@ const useStyles = createStyles((theme) => ({
   mainLinks: {
     paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
     paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-    paddingBottom: theme.spacing.xs,
   },
   button: {
     "&:hover": {
@@ -118,7 +117,7 @@ const reconnect = () => {
 };
 
 export const UserNotifications: React.FC = () => {
-  const [notificationMenuOpen] = useHeaderStore.use("notificationsMenuOpen");
+  const [notificationMenuOpen] = useNavbarStore.use("notificationsMenuOpen");
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
@@ -207,7 +206,7 @@ export const UserNotifications: React.FC = () => {
       icon: <FontAwesomeIcon icon={faCheck} />,
     });
     await queryClient.invalidateQueries(["userNotifications", userId]);
-    useHeaderStore.set("notificationsMenuOpen", false);
+    useNavbarStore.set("notificationsMenuOpen", false);
   };
 
   if (!userId) {
@@ -224,7 +223,7 @@ export const UserNotifications: React.FC = () => {
         opened={notificationMenuOpen}
         trapFocus
         onClose={() => {
-          useHeaderStore.set("notificationsMenuOpen", false);
+          useNavbarStore.set("notificationsMenuOpen", false);
         }}
       >
         <Popover.Target>
@@ -233,7 +232,7 @@ export const UserNotifications: React.FC = () => {
               <UnstyledButton
                 className={classes.mainLink}
                 onClick={() =>
-                  useHeaderStore.set("notificationsMenuOpen", true)
+                  useNavbarStore.set("notificationsMenuOpen", true)
                 }
               >
                 <div className={classes.mainLinkInner}>
@@ -261,7 +260,7 @@ export const UserNotifications: React.FC = () => {
               <UnstyledButton
                 className={classes.mainLink}
                 onClick={() => {
-                  useHeaderStore.set(
+                  useNavbarStore.set(
                     "notificationsMenuOpen",
                     !notificationMenuOpen
                   );

@@ -15,15 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TChoiceProps, TNavigationLink } from "@/types";
+import { TChoiceProps } from "@/types";
 import {
   faBuildingColumns,
-  faFileInvoiceDollar,
-  faFolders,
   faHandHoldingDollar,
-  faMoneyBillTransfer,
-  faMoneyCheckDollar,
 } from "@fortawesome/pro-duotone-svg-icons";
+import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
 /** Type for fuel method choices */
 export type fuelMethodChoicesProps = "D" | "F" | "P";
@@ -97,57 +94,53 @@ export const billingExceptionChoices: TChoiceProps[] = [
 ];
 
 /** Links for Billing Navigation Menu */
-export const billingNavLinks: Record<string, TNavigationLink[]> = {
-  Billing: [
-    {
-      icon: faHandHoldingDollar,
-      title: "Billing Control",
-      description: "Control & Monitor your organization's billing processes",
-      href: "/admin/control-files#billing-controls",
-      permission: "view_billingcontrol",
-    },
-    {
-      icon: faMoneyBillTransfer,
-      title: "Billing Client",
-      description: "Your efficient partner for end-to-end billing management",
-      href: "/billing/client",
-      permission: "billing.use_billing_client",
-    },
-    {
-      icon: faFolders,
-      title: "Configuration Files",
-      description: "Manage your organization's billing configuration files",
-      permission: "admin.can_view_all_controls",
-      subLinks: [
-        {
-          icon: faFileInvoiceDollar,
-          title: "Charge Types",
-          description: "Manage your organization's charge types",
-          href: "/billing/charge-types",
-          permission: "view_chargetype",
-        },
-        {
-          icon: faMoneyCheckDollar,
-          title: "Division Codes",
-          description: "Manage your organization's division codes",
-          href: "/accounting/division-codes",
-          permission: "view_divisioncode",
-        },
-        {
-          icon: faBuildingColumns,
-          title: "GL Accounts",
-          description: "Manage your organization's GL accounts",
-          href: "/accounting/gl-accounts",
-          permission: "view_generalledgeraccount",
-        },
-        {
-          icon: faBuildingColumns,
-          title: "Revenue Codes",
-          description: "Manage your organization's revenue codes",
-          href: "/accounting/revenue-codes",
-          permission: "view_revenuecode",
-        },
-      ],
-    },
-  ],
-};
+export const billingNavLinks = [
+  {
+    label: "Dashboard",
+    icon: faBuildingColumns,
+    link: "/",
+  },
+  {
+    label: "Billing & Accounting",
+    icon: faHandHoldingDollar,
+    link: "/billing", // Placeholder, replace with the actual link
+    links: [
+      {
+        label: "Billing Client",
+        link: "/billing/client/",
+        permission: "billing.use_billing_client",
+      },
+      {
+        label: "Billing Control",
+        link: "/admin/control-files#billing-controls/",
+        permission: "view_billingcontrol",
+      },
+      {
+        label: "Configuration Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "Charge Types",
+            link: "/billing/charge-types/",
+            permission: "view_chargetype",
+          },
+          {
+            label: "Division Codes",
+            link: "/accounting/division-codes/",
+            permission: "view_divisioncode",
+          },
+          {
+            label: "GL Accounts",
+            link: "/accounting/gl-accounts/",
+            permission: "view_generalledgeraccount",
+          },
+          {
+            label: "Revenue Codes",
+            link: "/accounting/revenue-codes/",
+            permission: "view_revenuecode",
+          },
+        ],
+      },
+    ],
+  },
+] as LinksGroupProps[];

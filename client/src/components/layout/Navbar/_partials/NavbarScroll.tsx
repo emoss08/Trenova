@@ -15,37 +15,16 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { PropsWithChildren } from "react";
-import { AppShell, Container, useMantineTheme } from "@mantine/core";
-import { Breadcrumb } from "@/components/ui/BreadCrumbs";
-import { NavbarSearch } from "@/components/layout/Navbar";
+import { ScrollArea } from "@mantine/core";
 
-const Layout: React.FC<PropsWithChildren> = ({ children }) => {
-  const theme = useMantineTheme();
-
-  return (
-    <>
-      <AppShell
-        styles={{
-          main: {
-            background:
-              theme.colorScheme === "dark"
-                ? theme.colors.dark[8]
-                : theme.colors.gray[0],
-          },
-        }}
-        // padding="md"
-        // asideOffsetBreakpoint="sm"
-        aside={<NavbarSearch />}
-      >
-        <Container size="xl">
-          <Breadcrumb />
-          {/*{shouldRenderBreadcrumbs && <Breadcrumb />}*/}
-          {children}
-        </Container>
-      </AppShell>
-    </>
-  );
+type NavbarScrollProps = {
+  children: React.ReactNode;
 };
 
-export default Layout;
+export const navbarScroll = ({ children }: NavbarScrollProps) => {
+  return (
+    <ScrollArea w="auto" h="auto" scrollbarSize={5}>
+      {children}
+    </ScrollArea>
+  );
+};
