@@ -364,6 +364,14 @@ LOGGING = {
             "interval": 1,  # 1 day
             "backupCount": 7,  # 7 days
         },
+        "kafka_file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": "logs/kafka/listener.log",
+            "when": "midnight",
+            "interval": 1,  # 1 day
+            "backupCount": 7,  # 7 days
+        },
     },
     "root": {
         "handlers": ["console"],
@@ -372,6 +380,12 @@ LOGGING = {
     "loggers": {
         "billing_client": {
             "handlers": ["file"],
+            "level": "DEBUG",
+            "propagate": False,
+            "formatter": "verbose",
+        },
+        "kafka": {
+            "handlers": ["kafka_file"],
             "level": "DEBUG",
             "propagate": False,
             "formatter": "verbose",
