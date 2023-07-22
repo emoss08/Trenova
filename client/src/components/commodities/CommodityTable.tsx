@@ -21,9 +21,9 @@ import { commodityTableStore } from "@/stores/CommodityStore";
 import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
 import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
 import { CommodityTableColumns } from "@/components/commodities/CommodityTableColumns";
-import CreateCommodityModal from "@/components/commodities/CreateCommodityModal";
+import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
 
-export default function CommodityTable() {
+export function CommodityTable() {
   return (
     <MontaTable
       store={commodityTableStore}

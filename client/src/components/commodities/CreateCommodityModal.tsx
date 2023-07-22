@@ -18,12 +18,12 @@
 import React, { Suspense } from "react";
 import { Modal, Skeleton } from "@mantine/core";
 import { commodityTableStore } from "@/stores/CommodityStore";
-import CreateCommodityModalForm from "@/components/commodities/_partials/CreateCommodityModalForm";
+import { CreateCommodityModalForm } from "@/components/commodities/_partials/CreateCommodityModalForm";
 import { useQuery, useQueryClient } from "react-query";
 import { HazardousMaterial } from "@/types/apps/commodities";
 import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
 
-export default function CreateCommodityModal() {
+export function CreateCommodityModal() {
   const [showCreateModal, setShowCreateModal] =
     commodityTableStore.use("createModalOpen");
   const queryClient = useQueryClient();
