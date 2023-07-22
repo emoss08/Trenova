@@ -29,7 +29,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
-from billing.exceptions import DuplicateSessionKeyError, InvalidSessionKeyError
+from billing.exceptions import InvalidSessionKeyError
 from order.models import Order
 from utils.services.pdf import UUIDEncoder
 from utils.types import (
