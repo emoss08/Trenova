@@ -255,7 +255,11 @@ class Organization(TimeStampedModel):
         ordering = ["name"]
         db_table = "organization"
         permissions = [
-            ("admin.can_view_all_controls", "Can View All Control Files"),
+            ("admin.view_systemhealth", "Can View System Health"),
+            ("admin.view_activesessions", "Can View Active Sessions"),
+            ("admin.active_threads", "Can View Active Threads"),
+            ("admin.view_activetriggers", "Can View Active Triggers"),
+            ("admin.view_cachemanager", "Can View Cahce Manager"),
         ]
 
     def __str__(self) -> str:
