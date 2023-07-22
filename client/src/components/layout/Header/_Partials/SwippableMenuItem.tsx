@@ -32,25 +32,6 @@ type SwippableMenuItemProps<T extends Record<string, any>> = {
   icon: IconProp;
 };
 
-const useDeleteMutation = (userId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation((id: string) => axios.delete(`/user_reports/${id}/`), {
-    onSuccess: () => {
-      queryClient.invalidateQueries(["userReport", userId]);
-    },
-    onError: () => {
-      notifications.show({
-        title: "Error",
-        message: "An error occurred while deleting the report",
-        color: "red",
-        withCloseButton: true,
-        icon: <FontAwesomeIcon icon={faXmark} />,
-        autoClose: 10_000, // 10 seconds
-      });
-    },
-  });
-};
-
 export function SwippableMenuItem<T extends Record<string, any>>({
   item,
   icon,
@@ -58,6 +39,26 @@ export function SwippableMenuItem<T extends Record<string, any>>({
   const [status, setStatus] = useState("normal"); // can be "normal", "swiped", or "deleted"
   const userId = getUserId() || "";
   const [{ x }, set] = useSpring(() => ({ x: 0 }));
+  const queryClient = useQueryClient();
+
+  const useDeleteMutation = useMutation(
+    (id: string) => axios.delete(`/user_reports/${id}/`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["userReport", userId]);
+      },
+      onError: () => {
+        notifications.show({
+          title: "Error",
+          message: "An error occurred while deleting the report",
+          color: "red",
+          withCloseButton: true,
+          icon: <FontAwesomeIcon icon={faXmark} />,
+          autoClose: 10_000, // 10 seconds
+        });
+      },
+    }
+  );
 
   const bind = useDrag(({ down, movement: [mx], cancel, last }) => {
     set({
@@ -76,7 +77,7 @@ export function SwippableMenuItem<T extends Record<string, any>>({
 
   const handleDelete = (id: string) => {
     setStatus("deleted");
-    useDeleteMutation(userId).mutate(id);
+    useDeleteMutation.mutate(id);
   };
 
   const handleCancel = () => {
@@ -109,18 +110,19 @@ export function SwippableMenuItem<T extends Record<string, any>>({
         <div>
           <Button
             w="50%"
+            h={60}
             radius="xs"
             color="red"
-            // variant="light"
             onClick={() => handleDelete(item.id)}
           >
             Delete
           </Button>
           <Button
             w="50%"
+            h={60}
             radius="xs"
-            variant="subtle"
             color="gray"
+            variant="subtle"
             onClick={handleCancel}
           >
             Cancel

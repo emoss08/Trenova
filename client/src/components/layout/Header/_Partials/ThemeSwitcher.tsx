@@ -16,65 +16,136 @@
  */
 
 import {
-  ActionIcon,
+  createStyles,
+  Divider,
   Menu,
-  Tooltip,
+  rem,
+  UnstyledButton,
   useMantineColorScheme,
 } from "@mantine/core";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDisplay, faMoon, faSun } from "@fortawesome/pro-duotone-svg-icons";
 import React, { useRef } from "react";
-import { useHeaderStyles } from "@/styles/HeaderStyles";
-import { useHeaderStore } from "@/stores/HeaderStore";
+import { useNavbarStore } from "@/stores/HeaderStore";
+import { IconDeviceLaptop, IconMoon, IconSun } from "@tabler/icons-react";
+
+const useStyles = createStyles((theme) => ({
+  mainLinks: {
+    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingBottom: theme.spacing.xs,
+  },
+  button: {
+    "&:hover": {
+      backgroundColor: "transparent",
+    },
+    height: "30px",
+    width: "160px",
+  },
+  mainLink: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    fontSize: theme.fontSizes.xs,
+    padding: `${rem(8)} ${theme.spacing.xs}`,
+    borderRadius: theme.radius.sm,
+    fontWeight: 500,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7],
+
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[6]
+          : theme.colors.gray[0],
+      color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+  },
+
+  mainLinkInner: {
+    display: "flex",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  mainLinkIcon: {
+    marginRight: theme.spacing.sm,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[2]
+        : theme.colors.gray[6],
+  },
+
+  mainLinkBadge: {
+    padding: 0,
+    width: rem(20),
+    height: rem(20),
+    pointerEvents: "none",
+  },
+}));
 
 export const ThemeSwitcher: React.FC = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { classes } = useHeaderStyles();
-  const [themeSwitcherOpen] = useHeaderStore.use("themeSwitcherOpen");
+  const { classes } = useStyles();
+  const [themeSwitcherOpen] = useNavbarStore.use("themeSwitcherOpen");
   const ref = useRef<HTMLButtonElement>(null);
 
   const getThemeIcon = () => {
     if (colorScheme === "light") {
-      return <FontAwesomeIcon icon={faSun} />;
+      return (
+        <IconSun size={20} className={classes.mainLinkIcon} stroke={1.5} />
+      );
     } else if (colorScheme === "dark") {
-      return <FontAwesomeIcon icon={faMoon} />;
+      return (
+        <IconMoon size={20} className={classes.mainLinkIcon} stroke={1.5} />
+      );
     } else {
-      return <FontAwesomeIcon icon={faDisplay} />;
+      return (
+        <IconDeviceLaptop
+          size={20}
+          className={classes.mainLinkIcon}
+          stroke={1.5}
+        />
+      );
     }
   };
 
   return (
     <>
       <Menu
-        position="bottom-end"
+        position="right-start"
         width={200}
         opened={themeSwitcherOpen}
         onChange={(changeEvent) => {
-          useHeaderStore.set("themeSwitcherOpen", changeEvent);
+          useNavbarStore.set("themeSwitcherOpen", changeEvent);
         }}
         withinPortal
         withArrow
         arrowSize={5}
       >
         <Menu.Target>
-          <Tooltip label="Theme: Ctrl + J" withArrow>
-            <ActionIcon ref={ref} className={classes.hoverEffect}>
-              {getThemeIcon()}
-            </ActionIcon>
-          </Tooltip>
+          <div className={classes.mainLinks}>
+            <UnstyledButton className={classes.mainLink} ref={ref}>
+              <div className={classes.mainLinkInner}>
+                {getThemeIcon()}
+                <span>Switch Theme</span>
+              </div>
+            </UnstyledButton>
+          </div>
         </Menu.Target>
 
         <Menu.Dropdown>
-          <Menu.Label>Theme Mode</Menu.Label>
+          <Menu.Label>Theme Modes</Menu.Label>
+          <Divider />
           <Menu.Item
             onClick={() => toggleColorScheme("light")}
-            icon={<FontAwesomeIcon icon={faSun} />}
+            icon={<IconSun size={15} stroke={1.5} />}
           >
             Light Theme
           </Menu.Item>
           <Menu.Item
             onClick={() => toggleColorScheme("dark")}
-            icon={<FontAwesomeIcon icon={faMoon} />}
+            icon={<IconMoon size={15} stroke={1.5} />}
           >
             Dark Theme
           </Menu.Item>

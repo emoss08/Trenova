@@ -20,29 +20,17 @@ import { createGlobalStore } from "@/utils/zustand";
 interface HeaderStoreType {
   downloadMenuOpen: boolean;
   themeSwitcherOpen: boolean;
-  headerMenuOpen: boolean;
+  userMenuOpen: boolean;
   notificationsMenuOpen: boolean;
   linksOpen: boolean;
   clickCount: number; // way to force unmount of hovercard
 }
 
-export const useHeaderStore = createGlobalStore<HeaderStoreType>({
+export const useNavbarStore = createGlobalStore<HeaderStoreType>({
   downloadMenuOpen: false,
   themeSwitcherOpen: false,
-  headerMenuOpen: false,
+  userMenuOpen: false,
   notificationsMenuOpen: false,
   linksOpen: false,
   clickCount: 0,
-});
-
-type THeaderStoreProps = {
-  currentMenu?: string | null;
-};
-
-export const useBillingHeaderStore = createGlobalStore<THeaderStoreProps>({
-  currentMenu: null,
-});
-
-export const useAdminHeaderStore = createGlobalStore<THeaderStoreProps>({
-  currentMenu: null,
 });

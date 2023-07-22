@@ -29,7 +29,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/pro-duotone-svg-icons";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
 import React from "react";
-import { useHeaderStore } from "@/stores/HeaderStore";
+import { useNavbarStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { Link } from "react-router-dom";
 import { IconDownload } from "@tabler/icons-react";
@@ -88,7 +88,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export const UserDownloads: React.FC = () => {
-  const [downloadMenuOpen] = useHeaderStore.use("downloadMenuOpen");
+  const [downloadMenuOpen] = useNavbarStore.use("downloadMenuOpen");
   const { classes } = useStyles();
   const { classes: headerClasses } = useHeaderStyles();
   const userId = getUserId() || "";
@@ -112,7 +112,7 @@ export const UserDownloads: React.FC = () => {
         width={230}
         opened={downloadMenuOpen}
         onChange={(changeEvent) => {
-          useHeaderStore.set("downloadMenuOpen", changeEvent);
+          useNavbarStore.set("downloadMenuOpen", changeEvent);
         }}
         withinPortal
         withArrow
@@ -141,6 +141,7 @@ export const UserDownloads: React.FC = () => {
         </Menu.Target>
         <Menu.Dropdown>
           <Menu.Label>Downloads</Menu.Label>
+          <Divider />
           <>
             {isUserReportDataLoading ? (
               <Skeleton width={220} height={250} />

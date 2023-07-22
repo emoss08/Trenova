@@ -15,37 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { PropsWithChildren } from "react";
-import { AppShell, Container, useMantineTheme } from "@mantine/core";
-import { Breadcrumb } from "@/components/ui/BreadCrumbs";
-import { NavbarSearch } from "@/components/layout/Navbar";
+import { LinksGroup } from "@/components/layout/Navbar/_partials/LinksGroup";
+import React from "react";
+import { adminNavLinks } from "@/utils/apps/admin";
 
-const Layout: React.FC<PropsWithChildren> = ({ children }) => {
-  const theme = useMantineTheme();
+export function AdminLinks() {
+  const administratorLinks = adminNavLinks.map((item) => (
+    <LinksGroup {...item} key={item.label} />
+  ));
 
-  return (
-    <>
-      <AppShell
-        styles={{
-          main: {
-            background:
-              theme.colorScheme === "dark"
-                ? theme.colors.dark[8]
-                : theme.colors.gray[0],
-          },
-        }}
-        // padding="md"
-        // asideOffsetBreakpoint="sm"
-        aside={<NavbarSearch />}
-      >
-        <Container size="xl">
-          <Breadcrumb />
-          {/*{shouldRenderBreadcrumbs && <Breadcrumb />}*/}
-          {children}
-        </Container>
-      </AppShell>
-    </>
-  );
-};
-
-export default Layout;
+  return <>{administratorLinks}</>;
+}

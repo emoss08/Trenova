@@ -15,131 +15,89 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TNavigationLink } from "@/types";
-import {
-  faBox,
-  faChartSimple,
-  faDatabase,
-  faFileInvoiceDollar,
-  faFolders,
-  faHandHoldingDollar,
-  faHeartPulse,
-  faInbox,
-  faServer,
-  faTruckFast,
-  faUsers,
-  faUserSecret,
-  faUserTie,
-} from "@fortawesome/pro-duotone-svg-icons";
-import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
+import { faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
+import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-export const adminNavLinks: Record<string, TNavigationLink[]> = {
-  "System Health": [
-    {
-      icon: faHeartPulse,
-      title: "System Health",
-      description: "Montior the overall health of your system",
-      href: "#",
-      permission: "admin.view_systemhealth",
-    },
-    {
-      icon: faUserSecret,
-      title: "Active Sessions",
-      description: "Control & Monitor user sessions",
-      href: "#",
-      permission: "admin.view_activesessions",
-    },
-    {
-      icon: faChartSimple,
-      title: "Active Threads",
-      description: "Monitor system processes & threads",
-      href: "#",
-      permission: "admin.view_activesessions",
-    },
-    {
-      icon: faServer,
-      title: "Active DB Triggers",
-      description: "Monitor & management database triggers",
-      href: "#",
-      permission: "admin.view_activetriggers",
-    },
-    {
-      icon: faDatabase,
-      title: "Cache Manager",
-      description: "Manage & Monitor system cache management",
-      href: "#",
-      permission: "admin.view_cachemanager",
-    },
-  ],
-  "Configuration Files": [
-    {
-      icon: faUsers,
-      title: "User Management",
-      description: "Manage users & their permissions",
-      href: "/admin/users",
-      permission: "admin.users.view",
-    },
-    {
-      icon: faUserTie,
-      title: "Job Titles",
-      description: "Manage your organization's job titles & their permissions",
-      href: "/accounts/job-titles",
-      permission: "view_jobtitles",
-    },
-  ],
-  "Control Files": [
-    {
-      icon: faFolders,
-      title: "Control Files",
-      description: "Control & Monitor your organization's billing processes",
-      permission: "admin.can_view_all_controls",
-      subLinks: [
-        {
-          icon: faHandHoldingDollar,
-          title: "Billing Controls",
-          description:
-            "Control & Monitor your organization's billing processes",
-          href: "/admin/control-files#billing-controls",
-          permission: "view_billingcontrol",
-        },
-        {
-          icon: faTruckFast,
-          title: "Dispatch Controls",
-          description:
-            "Control & Oversee your organization's dispatch operations",
-          href: "/admin/control-files#dispatch-controls",
-          permission: "view_dispatchcontrol",
-        },
-        {
-          icon: faFileInvoiceDollar,
-          title: "Invoice Controls",
-          description: "Control & Oversee your organization's invoicing",
-          href: "/admin/control-files#invoice-controls",
-          permission: "view_invoicecontrol",
-        },
-        {
-          icon: faBox,
-          title: "Order Controls",
-          description:
-            "Administer & Manage your organization's order procedures",
-          href: "/admin/control-files#order-controls",
-          permission: "view_ordercontrol",
-        },
-        {
-          icon: faInbox,
-          title: "Email Controls",
-          description: "Supervise & Modify your organization's email settings",
-          href: "/admin/control-files#email-controls",
-          permission: "view_emailcontrol",
-        },
-        {
-          icon: faRoad,
-          title: "Route Controls",
-          description: "Manage & Optimize your organization's route setting",
-          href: "/admin/control-files#route-controls",
-          permission: "view_routecontrol",
-        },
-      ],
-    },
-  ],
-};
+/** Links for System Health Navigation Menu */
+export const adminNavLinks = [
+  {
+    label: "Administrator",
+    icon: faUserCrown,
+    link: "/",
+    permission: "admin.view_systemhealth",
+    links: [
+      {
+        label: "Active Sessions",
+        link: "#",
+        permission: "admin.view_activesessions",
+      },
+      {
+        label: "Active Threads",
+        link: "#",
+        permission: "admin.active_threads",
+      },
+      {
+        label: "Active DB Triggers",
+        link: "#",
+        permission: "admin.view_activetriggers",
+      },
+      {
+        label: "Cache Manager",
+        link: "#",
+        permission: "admin.view_cachemanager",
+      },
+      {
+        label: "Configuration Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "User Management",
+            link: "/admin/users",
+            permission: "admin.users.view",
+          },
+          {
+            label: "Job Titles",
+            link: "/accounts/job-titles",
+            permission: "view_jobtitles",
+          },
+        ],
+      },
+      {
+        label: "Control Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "Billing Controls",
+            link: "/admin/control-files#billing-controls",
+            permission: "view_billingcontrol",
+          },
+          {
+            label: "Dispatch Controls",
+            link: "/admin/control-files#dispatch-controls",
+            permission: "view_dispatchcontrol",
+          },
+          {
+            label: "Invoice Controls",
+            link: "/admin/control-files#invoice-controls",
+            permission: "view_invoicecontrol",
+          },
+          {
+            label: "Order Controls",
+            link: "/admin/control-files#order-controls",
+            permission: "view_ordercontrol",
+          },
+          {
+            label: "Email Controls",
+            link: "/admin/control-files#email-controls",
+            permission: "view_emailcontrol",
+          },
+          {
+            label: "Route Controls",
+            link: "/admin/control-files#route-controls",
+            permission: "view_routecontrol",
+          },
+        ],
+      },
+    ],
+  },
+] as LinksGroupProps[];
