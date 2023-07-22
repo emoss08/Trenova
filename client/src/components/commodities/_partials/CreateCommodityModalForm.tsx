@@ -40,7 +40,7 @@ type Props = {
   selectHazmatData: TChoiceProps[];
 };
 
-export default function CreateCommodityModalForm({ selectHazmatData }: Props) {
+export function CreateCommodityModalForm({ selectHazmatData }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
