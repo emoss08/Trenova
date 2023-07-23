@@ -314,7 +314,7 @@ class Commodity(GenericModel):  # type: ignore
         Raises:
             ValidationError: If the commodity is marked as hazardous, but no hazardous material is selected.
         """
-        if self.is_hazmat and not self.hazmat:
+        if self.is_hazmat == "Y" and not self.hazmat:
             raise ValidationError(
                 {
                     "is_hazmat": _(

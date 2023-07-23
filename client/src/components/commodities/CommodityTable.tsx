@@ -18,10 +18,10 @@
 import React from "react";
 import { MontaTable } from "@/components/MontaTable";
 import { commodityTableStore } from "@/stores/CommodityStore";
-import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
-import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
 import { CommodityTableColumns } from "@/components/commodities/CommodityTableColumns";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
+import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
+import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 
 export function CommodityTable() {
   return (
@@ -29,8 +29,8 @@ export function CommodityTable() {
       store={commodityTableStore}
       link="/commodities"
       columns={CommodityTableColumns}
-      TableEditModal={EditHMModal}
-      TableViewModal={ViewHMModal}
+      TableEditModal={EditCommodityModal}
+      TableViewModal={ViewCommodityModal}
       displayDeleteModal={true}
       TableCreateDrawer={CreateCommodityModal}
       tableQueryKey="commodity-table-data"
