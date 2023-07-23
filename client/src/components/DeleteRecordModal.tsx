@@ -87,7 +87,7 @@ export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
             <Text size="sm">
               This action is irreversible and will permanently remove all data
               associated with this record. If you proceed, there will be no way
-              to recover this user's information. Are you sure you want to
+              to recover this records information. Are you sure you want to
               proceed?
             </Text>
             <Box

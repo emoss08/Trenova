@@ -18,7 +18,7 @@
 import { usePageStyles } from "@/styles/PageStyles";
 import { Card, Flex } from "@mantine/core";
 import React from "react";
-import CommodityTable from "@/components/commodities/CommodityTable";
+import { CommodityTable } from "@/components/commodities/CommodityTable";
 
 export default function Commodity() {
   const { classes } = usePageStyles();

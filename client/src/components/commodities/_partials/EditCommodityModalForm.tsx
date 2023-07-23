@@ -15,59 +15,63 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import React from "react";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { APIError } from "@/types/server";
 import { useForm, yupResolver } from "@mantine/form";
-import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { useFormStyles } from "@/styles/FormStyles";
-import { CommodityFormValues } from "@/types/apps/commodities";
-import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { unitOfMeasureChoices } from "@/utils/apps/commodities";
-import { TChoiceProps } from "@/types";
-import { commoditySchema } from "@/utils/apps/commodities/schema";
 import { yesAndNoChoices } from "@/lib/utils";
+import { useFormStyles } from "@/styles/FormStyles";
+import { Commodity, CommodityFormValues } from "@/types/apps/commodities";
+import { commodityTableStore } from "@/stores/CommodityStore";
+import { commoditySchema } from "@/utils/apps/commodities/schema";
+import { unitOfMeasureChoices } from "@/utils/apps/commodities";
+import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
+import { TChoiceProps } from "@/types";
 
 type Props = {
+  commodity: Commodity;
   selectHazmatData: TChoiceProps[];
 };
 
-export function CreateCommodityModalForm({ selectHazmatData }: Props) {
+export function EditCommodityModalForm({ commodity, selectHazmatData }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: CommodityFormValues) => axios.post("/commodities/", values),
+    (values: CommodityFormValues) =>
+      axios.put(`/commodities/${commodity.id}/`, values),
     {
       onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["commodity-table-data"],
+        });
         queryClient
           .invalidateQueries({
-            queryKey: ["commodity-table-data"],
+            queryKey: ["commodity", commodity.id],
           })
           .then(() => {
             notifications.show({
               title: "Success",
-              message: "Commodity created successfully",
+              message: "Commodity updated successfully",
               color: "green",
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
             });
-            chargeTypeTableStore.set("createModalOpen", false);
+            commodityTableStore.set("editModalOpen", false);
           });
       },
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
+          data.errors.forEach((error: any) => {
             form.setFieldError(error.attr, error.detail);
             if (error.attr === "non_field_errors") {
               notifications.show({
@@ -91,14 +95,14 @@ export function CreateCommodityModalForm({ selectHazmatData }: Props) {
   const form = useForm<CommodityFormValues>({
     validate: yupResolver(commoditySchema),
     initialValues: {
-      name: "",
-      description: "",
-      min_temp: undefined,
-      max_temp: undefined,
-      set_point_temp: undefined,
-      unit_of_measure: undefined,
-      hazmat: "",
-      is_hazmat: "N",
+      name: commodity.name,
+      description: commodity.description,
+      min_temp: commodity.min_temp,
+      max_temp: commodity.max_temp,
+      set_point_temp: commodity.set_point_temp,
+      unit_of_measure: commodity.unit_of_measure,
+      hazmat: commodity.hazmat,
+      is_hazmat: commodity.is_hazmat,
     },
   });
 

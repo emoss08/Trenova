@@ -16,10 +16,9 @@
  */
 
 import React from "react";
-import { NumberInput, NumberInputProps, rem } from "@mantine/core";
+import { NumberInput, NumberInputProps } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { createStyles } from "@mantine/styles";
-import { PasswordInputProps } from "@mantine/core/lib/PasswordInput/PasswordInput";
 import { UseFormReturnType } from "@mantine/form";
 
 const useStyles = createStyles((theme) => {

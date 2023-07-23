@@ -53,23 +53,23 @@ export const CommodityTableColumns = (): MRT_ColumnDef<Commodity>[] => {
     },
     {
       id: "is_hazmat",
-      accessorFn: (originalRow) => (originalRow.is_hazmat ? "true" : "false"),
       header: "Is Hazmat",
+      accessorKey: "is_hazmat",
       filterFn: "equals",
       Cell: ({ cell }) => (
         <Badge
-          color={cell.getValue() === "true" ? "green" : "red"}
+          color={cell.getValue() === "N" ? "green" : "red"}
           variant="filled"
           radius="xs"
         >
-          {cell.getValue() === "true" ? "Yes" : "No"}
+          {cell.getValue() === "Y" ? "Yes" : "No"}
         </Badge>
       ),
       mantineFilterSelectProps: {
         data: [
           { value: "", label: "All" },
-          { value: "true", label: "Active" },
-          { value: "false", label: "Inactive" },
+          { value: "Y", label: "Yes" },
+          { value: "N", label: "No" },
         ] as any,
       },
       filterVariant: "select",
