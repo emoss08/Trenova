@@ -20,6 +20,7 @@ import uuid
 from typing import Any, final
 
 from auditlog.registry import auditlog
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -303,6 +304,24 @@ class Commodity(GenericModel):  # type: ignore
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
+
+    def clean(self) -> None:
+        """Method that is called when the model is validated.
+
+        Returns:
+            None: This function does return anything.
+
+        Raises:
+            ValidationError: If the commodity is marked as hazardous, but no hazardous material is selected.
+        """
+        if self.is_hazmat and not self.hazmat:
+            raise ValidationError(
+                {
+                    "is_hazmat": _(
+                        "Commodity is marked as hazardous, but no hazardous material is selected."
+                    )
+                }
+            )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save Commodity
