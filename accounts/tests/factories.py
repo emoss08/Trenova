@@ -17,9 +17,8 @@
 import secrets
 
 import factory
-from django.utils import timezone
 
-from accounts.models import Token, User, UserProfile
+from accounts.models import Token, User
 from organization.models import BusinessUnit, Organization
 
 

@@ -30,7 +30,6 @@ from reports import models, serializers, tasks
 from reports.exceptions import DisallowedModelException
 from reports.helpers import ALLOWED_MODELS
 from reports.selectors import get_audit_logs_by_model_name
-from utils.types import AuthenticatedRequest
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet

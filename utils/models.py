@@ -21,13 +21,12 @@ from typing import Any, final
 
 from django.core import checks
 from django.core.checks import CheckMessage, Error
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import CharField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 
-from organization.models import BusinessUnit, Organization
+from organization.models import Organization
 
 
 def generate_random_string(length: int = 10) -> str:
