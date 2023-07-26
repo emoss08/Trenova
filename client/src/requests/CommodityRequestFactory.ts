@@ -19,8 +19,8 @@ import axios from "@/lib/AxiosConfig";
 import { HazardousMaterial } from "@/types/apps/commodities";
 
 /**
- * Fetches accessorial charges from the server.
- * @returns A promise that resolves to an array of accessorial charges.
+ * Fetches hazardous material from the server.
+ * @returns A promise that resolves to an array of hazardous material.
  */
 export async function getHazardousMaterials(): Promise<HazardousMaterial[]> {
   const response = await axios.get("/hazardous_materials/");

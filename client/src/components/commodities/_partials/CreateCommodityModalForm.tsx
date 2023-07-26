@@ -29,7 +29,6 @@ import { useForm, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { useFormStyles } from "@/styles/FormStyles";
 import { CommodityFormValues } from "@/types/apps/commodities";
-import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { unitOfMeasureChoices } from "@/utils/apps/commodities";
 import { TChoiceProps } from "@/types";
@@ -44,6 +43,15 @@ export function CreateCommodityModalForm({ selectHazmatData }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
+
+  // Set is_hazmat value based on hazmat value
+  React.useEffect(() => {
+    if (form.values.hazmat) {
+      form.setFieldValue("is_hazmat", "Y");
+    } else {
+      form.setFieldValue("is_hazmat", "N");
+    }
+  });
 
   const mutation = useMutation(
     (values: CommodityFormValues) => axios.post("/commodities/", values),

@@ -15,11 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
-import React from "react";
 import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
@@ -32,7 +32,6 @@ import { Commodity, CommodityFormValues } from "@/types/apps/commodities";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { commoditySchema } from "@/utils/apps/commodities/schema";
 import { unitOfMeasureChoices } from "@/utils/apps/commodities";
-import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
 import { TChoiceProps } from "@/types";
 
 type Props = {
@@ -104,6 +103,15 @@ export function EditCommodityModalForm({ commodity, selectHazmatData }: Props) {
       hazmat: commodity.hazmat,
       is_hazmat: commodity.is_hazmat,
     },
+  });
+
+  // Set is_hazmat value based on hazmat value
+  React.useEffect(() => {
+    if (form.values.hazmat) {
+      form.setFieldValue("is_hazmat", "Y");
+    } else {
+      form.setFieldValue("is_hazmat", "N");
+    }
   });
 
   const submitForm = (values: CommodityFormValues) => {
