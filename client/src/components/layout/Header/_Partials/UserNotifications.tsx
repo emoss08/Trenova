@@ -29,7 +29,7 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/pro-duotone-svg-icons";
+import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
 import { useQuery, useQueryClient } from "react-query";
 import { getUserNotifications } from "@/requests/UserRequestFactory";
@@ -42,7 +42,6 @@ import { Howl, Howler } from "howler";
 
 import NotificationSound from "@/assets/audio/notification.webm";
 import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
-import { IconBell } from "@tabler/icons-react";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
@@ -68,10 +67,15 @@ const useStyles = createStyles((theme) => ({
     padding: `${rem(8)} ${theme.spacing.xs}`,
     borderRadius: theme.radius.sm,
     fontWeight: 500,
+    // Turn svg color to black
+    "& svg": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[2]
+          : theme.colors.gray[6],
+    },
     color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7],
+      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
 
     "&:hover": {
       backgroundColor:
@@ -79,6 +83,9 @@ const useStyles = createStyles((theme) => ({
           ? theme.colors.dark[6]
           : theme.colors.gray[0],
       color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+    "&:hover svg": {
+      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
     },
   },
 
@@ -236,12 +243,11 @@ export const UserNotifications: React.FC = () => {
                 }
               >
                 <div className={classes.mainLinkInner}>
-                  <IconBell
-                    size={20}
+                  <FontAwesomeIcon
+                    size="lg"
+                    icon={faBell}
                     className={classes.mainLinkIcon}
-                    stroke={1.5}
                   />
-
                   <span>Notifications</span>
                 </div>
                 <Indicator withBorder processing color="violet">
@@ -267,10 +273,10 @@ export const UserNotifications: React.FC = () => {
                 }}
               >
                 <div className={classes.mainLinkInner}>
-                  <IconBell
-                    size={20}
+                  <FontAwesomeIcon
+                    size="lg"
+                    icon={faBell}
                     className={classes.mainLinkIcon}
-                    stroke={1.5}
                   />
                   <span>Notifications</span>
                 </div>

@@ -15,17 +15,4 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { ScrollArea } from "@mantine/core";
-
-type NavbarScrollProps = {
-  children: React.ReactNode;
-};
-
-export const navbarScroll = ({ children }: NavbarScrollProps) => {
-  return (
-    <ScrollArea w="auto" h="auto" scrollbarSize={5}>
-      {children}
-    </ScrollArea>
-  );
-};
+export const allowedSearchModels = ["Order", "DivisionCode"]; // List of models

@@ -20,7 +20,6 @@ import {
   Group,
   Box,
   Collapse,
-  ThemeIcon,
   Text,
   UnstyledButton,
   createStyles,
@@ -39,15 +38,26 @@ const useStyles = createStyles((theme) => ({
     display: "block",
     width: "100%",
     padding: `${theme.spacing.xs}`,
-    color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
+    marginBottom: rem(1),
     fontSize: theme.fontSizes.sm,
+    "& svg": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[2]
+          : theme.colors.gray[6],
+    },
+    color:
+      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
 
     "&:hover": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.dark[7]
+          ? theme.colors.dark[6]
           : theme.colors.gray[0],
       color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+    "&:hover svg": {
+      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
     },
   },
 
@@ -102,6 +112,7 @@ export interface LinksGroupProps {
   links?: LinkItem[];
   permission?: string;
 }
+
 export function LinksGroup({
   icon,
   label,
@@ -180,9 +191,7 @@ export function LinksGroup({
       <UnstyledButton onClick={handleOpenedToggle} className={classes.control}>
         <Group position="apart" spacing={0}>
           <Box sx={{ display: "flex", alignItems: "center" }}>
-            <ThemeIcon variant="default" size={30}>
-              <FontAwesomeIcon icon={icon} size="lg" />
-            </ThemeIcon>
+            <FontAwesomeIcon icon={icon} size="lg" />
             <Box ml="md">{label}</Box>
           </Box>
           {hasLinks && (

@@ -17,19 +17,19 @@
 
 import React from "react";
 import { Navbar, Code, Group, rem, Skeleton } from "@mantine/core";
-import { SearchSpotlight } from "@/components/layout/Header/Search";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import { getUserId } from "@/lib/utils";
 import { useQuery, useQueryClient } from "react-query";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
-import { UserNotifications } from "@/components/layout/Header/UserNotifications";
+import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
 import { ThemeSwitcher } from "@/components/layout/Header/_Partials/ThemeSwitcher";
 import { useNavbarStyles } from "@/styles/NavbarStyles";
 import { navbarScroll } from "@/components/layout/Navbar/_partials/NavbarScroll";
 import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks";
 import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
+import { SearchModal } from "@/components/layout/Navbar/_partials/SearchModal";
 
 export function NavbarSearch() {
   const { classes } = useNavbarStyles();
@@ -67,7 +67,7 @@ export function NavbarSearch() {
         </>
       </Navbar.Section>
 
-      <SearchSpotlight />
+      <SearchModal />
 
       <Navbar.Section className={classes.section}>
         <UserDownloads />

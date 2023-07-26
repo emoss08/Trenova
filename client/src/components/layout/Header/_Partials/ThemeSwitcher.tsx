@@ -26,6 +26,13 @@ import {
 import React, { useRef } from "react";
 import { useNavbarStore } from "@/stores/HeaderStore";
 import { IconDeviceLaptop, IconMoon, IconSun } from "@tabler/icons-react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faDownload,
+  faLaptop,
+  faMoon,
+  faSun,
+} from "@fortawesome/pro-duotone-svg-icons";
 
 const useStyles = createStyles((theme) => ({
   mainLinks: {
@@ -48,10 +55,14 @@ const useStyles = createStyles((theme) => ({
     padding: `${rem(8)} ${theme.spacing.xs}`,
     borderRadius: theme.radius.sm,
     fontWeight: 500,
+    "& svg": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[2]
+          : theme.colors.gray[6],
+    },
     color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7],
+      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
 
     "&:hover": {
       backgroundColor:
@@ -59,6 +70,9 @@ const useStyles = createStyles((theme) => ({
           ? theme.colors.dark[6]
           : theme.colors.gray[0],
       color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+    "&:hover svg": {
+      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
     },
   },
 
@@ -93,18 +107,26 @@ export const ThemeSwitcher: React.FC = () => {
   const getThemeIcon = () => {
     if (colorScheme === "light") {
       return (
-        <IconSun size={20} className={classes.mainLinkIcon} stroke={1.5} />
+        <FontAwesomeIcon
+          size="lg"
+          icon={faSun}
+          className={classes.mainLinkIcon}
+        />
       );
     } else if (colorScheme === "dark") {
       return (
-        <IconMoon size={20} className={classes.mainLinkIcon} stroke={1.5} />
+        <FontAwesomeIcon
+          size="lg"
+          icon={faMoon}
+          className={classes.mainLinkIcon}
+        />
       );
     } else {
       return (
-        <IconDeviceLaptop
-          size={20}
+        <FontAwesomeIcon
+          size="lg"
+          icon={faLaptop}
           className={classes.mainLinkIcon}
-          stroke={1.5}
         />
       );
     }
