@@ -18,6 +18,7 @@
 import { TChoiceProps } from "@/types";
 import {
   faBuildingColumns,
+  faGrid2,
   faHandHoldingDollar,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
@@ -97,7 +98,7 @@ export const billingExceptionChoices: TChoiceProps[] = [
 export const billingNavLinks = [
   {
     label: "Dashboard",
-    icon: faBuildingColumns,
+    icon: faGrid2,
     link: "/",
   },
   {
@@ -138,6 +139,11 @@ export const billingNavLinks = [
             label: "Revenue Codes",
             link: "/accounting/revenue-codes/",
             permission: "view_revenuecode",
+          },
+          {
+            label: "Customers",
+            link: "/billing/customers/",
+            permission: "view_customer",
           },
         ],
       },
