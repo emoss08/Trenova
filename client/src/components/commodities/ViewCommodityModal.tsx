@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Suspense } from "react";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { Modal, Skeleton } from "@mantine/core";
-import { Suspense } from "react";
-import { ViewCommodityModalForm } from "@/components/commodities/ViewCommodityModalForm";
+import { ViewCommodityModalForm } from "@/components/commodities/_partials/ViewCommodityModalForm";
 import { useQuery, useQueryClient } from "react-query";
 import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
 import { HazardousMaterial } from "@/types/apps/commodities";

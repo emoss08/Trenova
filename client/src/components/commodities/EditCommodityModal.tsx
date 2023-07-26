@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal } from "@mantine/core";
 import React from "react";
+import { Modal } from "@mantine/core";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { EditCommodityModalForm } from "@/components/commodities/_partials/EditCommodityModalForm";
 import { useQuery, useQueryClient } from "react-query";
