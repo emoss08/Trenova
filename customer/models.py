@@ -29,7 +29,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 @final
@@ -54,13 +54,11 @@ class Customer(GenericModel):  # type: ignore
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Active"),
-        default=True,
-        help_text=_(
-            "Designates whether this customer should be treated as active. "
-            "Unselect this instead of deleting customers."
-        ),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Customer."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     code = models.CharField(
         _("Code"),
@@ -203,13 +201,11 @@ class CustomerBillingProfile(GenericModel):
         help_text=_("Customer"),
         verbose_name=_("Customer"),
     )
-    is_active = models.BooleanField(
-        _("Active"),
-        default=True,
-        help_text=_(
-            "Designates whether this customer billing profile should be treated as active. "
-            "Unselect this instead of deleting customer billing profiles."
-        ),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Customer Billing Profile."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     email_profile = models.ForeignKey(
         "CustomerEmailProfile",
@@ -255,7 +251,7 @@ class CustomerBillingProfile(GenericModel):
             str: Customer Billing Profile url
         """
         return reverse(
-            "billing:customer-billing-profile-detail", kwargs={"pk": self.pk}
+            "customer-billing-profile-detail", kwargs={"pk": self.pk}
         )
 
 
@@ -339,7 +335,7 @@ class CustomerEmailProfile(GenericModel):
         Returns:
             str: Customer Email Profile string representation
         """
-        return textwrap.wrap(f"{self.name}", 50)[0]
+        return textwrap.wrap(f"{self.name}", 40)[0]
 
     def update_customer_email_profile(self, **kwargs: Any) -> None:
         """Updates customer email profile information
@@ -424,7 +420,7 @@ class CustomerRuleProfile(GenericModel):
         Returns:
             str: Customer rule profile url
         """
-        return reverse("billing:customer-rule-profile", kwargs={"pk": self.pk})
+        return reverse("customer-rule-profile", kwargs={"pk": self.pk})
 
 
 class CustomerContact(GenericModel):
