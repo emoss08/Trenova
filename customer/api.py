@@ -73,7 +73,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 "organization_id",
                 "state",
                 "has_customer_portal",
-                "is_active",
+                "status",
                 "name",
             )
         )

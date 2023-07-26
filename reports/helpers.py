@@ -207,4 +207,19 @@ ALLOWED_MODELS = {
             {"value": "is_hazmat", "label": "Is Hazardous Material"},
         ],
     },
+    "Customer": {
+        "app_label": "customer",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "status", "label": "Status"},
+            {"value": "code", "label": "Code"},
+            {"value": "name", "label": "Name"},
+            {"value": "address_line_1", "label": "Address Line 1"},
+            {"value": "address_line_2", "label": "Address Line 2"},
+            {"value": "city", "label": "City"},
+            {"value": "zip_code", "label": "Zip Code"},
+            {"value": "has_customer_portal", "label": "Has Customer Portal"},
+            {"value": "auto_mark_ready_to_bill", "label": "Auto Mark Ready To Bill"},
+        ],
+    },
 }

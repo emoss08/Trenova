@@ -202,3 +202,23 @@ class CustomerSerializer(GenericSerializer):
         """
 
         model = models.Customer
+
+    def to_representation(self, instance: models.Customer) -> dict[str, Any]:
+        """Transforms the instance's data into a dictionary.
+
+        This method retrieve the data from an instance of `Customer`, and then
+        transforms it into a dictionary format suitable for serialization.
+        It also adds a new field `full_address` which extracts the address from
+        the `get_address_combination` property.
+
+        Args:
+            instance (models.Customer): The `Customer` model instance that will be serialized.
+
+        Returns:
+            dict: A dictionary containing the serialized data from th `Customer` model instance,
+                including the `full_address` field.
+        """
+
+        data = super().to_representation(instance)
+        data["full_address"] = instance.get_address_combination
+        return data
