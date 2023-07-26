@@ -21,7 +21,7 @@ import { ACTableColumns } from "@/components/accessorial-charges/table/ACTableCo
 import { CreateACModal } from "@/components/accessorial-charges/table/CreateACModal";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
-import { ViewACModal } from "@/components/accessorial-charges/table/_partials/ViewACModal";
+import { ViewACModal } from "@/components/accessorial-charges/table/ViewACModal";
 
 export const ACChargeTable = () => {
   return (
