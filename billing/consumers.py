@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+# type: ignore
 import uuid
 from asyncio import sleep
 from typing import Any

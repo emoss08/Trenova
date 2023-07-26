@@ -16,12 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 from django.urls import re_path
 
-from billing.consumers import BillingClientConsumer
+from billing import consumers
 from organization.consumers import KeepAliveConsumer
 from reports.consumers import NotificationConsumer
 
 websocket_urlpatterns = [
     re_path(r"ws/keepalive/$", KeepAliveConsumer.as_asgi()),
     re_path(r"ws/notifications/$", NotificationConsumer.as_asgi()),
-    re_path(r"ws/billing_client/$", BillingClientConsumer.as_asgi()),
+    re_path(r"ws/billing_client/$", consumers.BillingClientConsumer.as_asgi()),  # type: ignore
 ]

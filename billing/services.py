@@ -455,7 +455,7 @@ class BillingClientSessionManager:
 
         session_key = self._get_session_key(user_id=user_id)
         billing_client_session = self.client.get(session_key)
-        return self._deserialize(data=billing_client_session)
+        return self._deserialize(data=billing_client_session)  # type: ignore
 
     def delete_billing_client_session(self, *, user_id: uuid.UUID) -> None:
         """

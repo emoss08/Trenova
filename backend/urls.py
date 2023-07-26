@@ -26,6 +26,7 @@ from drf_spectacular.views import (
 )
 from rest_framework_nested import routers
 
+from core import api as core_api
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
@@ -381,9 +382,14 @@ urlpatterns = [
         name="user-notifications",
     ),
     path(
-        "api/billing/orders_ready",
+        "api/billing/orders_ready/",
         billing_api.get_orders_ready,
         name="get-orders-ready",
+    ),
+    path(
+        "api/search/",
+        core_api.SearchView.as_view(),
+        name="search",
     ),
 ]
 

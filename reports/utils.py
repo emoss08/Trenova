@@ -210,7 +210,7 @@ def generate_report(
 
     # Extract 'value' and 'label' from each dictionary in the 'allowed_fields' list
     allowed_fields_dict = {
-        field["value"]: field["label"] for field in allowed_model["allowed_fields"]
+        field["value"]: field["label"] for field in allowed_model["allowed_fields"]  # type: ignore
     }
 
     # Rename the columns
