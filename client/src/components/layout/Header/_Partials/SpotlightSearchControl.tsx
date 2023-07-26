@@ -17,7 +17,6 @@
 
 import React from "react";
 import { faMagnifyingGlass } from "@fortawesome/pro-solid-svg-icons";
-import { spotlight } from "@mantine/spotlight";
 import { Code, createStyles, Input, rem, UnstyledButton } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
@@ -35,11 +34,11 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const SearchControl = () => {
+export const SearchControl = ({ ...others }) => {
   const { classes } = useStyles();
 
   return (
-    <UnstyledButton onClick={() => spotlight.open()}>
+    <UnstyledButton {...others}>
       <Input
         placeholder="Search"
         size="xs"

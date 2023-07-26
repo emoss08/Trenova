@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import {
   Badge,
   createStyles,
@@ -26,13 +27,11 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight } from "@fortawesome/pro-duotone-svg-icons";
+import { faArrowRight, faDownload } from "@fortawesome/pro-duotone-svg-icons";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
-import React from "react";
 import { useNavbarStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 import { Link } from "react-router-dom";
-import { IconDownload } from "@tabler/icons-react";
 import { useQuery, useQueryClient } from "react-query";
 import { getUserReports } from "@/requests/UserRequestFactory";
 import { getUserId } from "@/lib/utils";
@@ -51,10 +50,14 @@ const useStyles = createStyles((theme) => ({
     padding: `${rem(8)} ${theme.spacing.xs}`,
     borderRadius: theme.radius.sm,
     fontWeight: 500,
+    "& svg": {
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[2]
+          : theme.colors.gray[6],
+    },
     color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7],
+      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
 
     "&:hover": {
       backgroundColor:
@@ -62,6 +65,9 @@ const useStyles = createStyles((theme) => ({
           ? theme.colors.dark[6]
           : theme.colors.gray[0],
       color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+    "&:hover svg": {
+      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
     },
   },
 
@@ -122,10 +128,10 @@ export const UserDownloads: React.FC = () => {
           <div className={classes.mainLinks}>
             <UnstyledButton className={classes.mainLink}>
               <div className={classes.mainLinkInner}>
-                <IconDownload
-                  size={20}
+                <FontAwesomeIcon
+                  size="lg"
+                  icon={faDownload}
                   className={classes.mainLinkIcon}
-                  stroke={1.5}
                 />
                 <span>Downloads</span>
               </div>
