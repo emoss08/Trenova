@@ -224,7 +224,7 @@ def generate_report_api(request: Request) -> Response:
         )
 
     # Extract 'value' from each dictionary in the 'allowed_fields' list
-    allowed_fields = [field["value"] for field in allowed_model["allowed_fields"]]
+    allowed_fields = [field["value"] for field in allowed_model["allowed_fields"]]  # type: ignore
 
     # Check if columns are valid for the model
     for column in columns:
