@@ -15,45 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/utils/zustand";
-import { TableStoreProps } from "@/types/tables";
 import { Customer } from "@/types/apps/customer";
-import { BillingHistory } from "@/types/apps/billing";
 
-export const customerTableStore = createGlobalStore<
-  Omit<TableStoreProps<Customer>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  createModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+type Props = {
+  customer: Customer;
+};
 
-export const paymentRecordsTableStore = createGlobalStore<
-  Omit<TableStoreProps<BillingHistory>, "drawerOpen">
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  viewModalOpen: false,
-  editModalOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  createModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+export function CustomerAsideMenu(props: Props) {}

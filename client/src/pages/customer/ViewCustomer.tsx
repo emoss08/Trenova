@@ -15,12 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "react-query";
 import { getCustomerDetails } from "@/requests/CustomerRequestFactory";
+import { ViewCustomerNavbar } from "./ViewCustomerNavbar";
+import { Box, Button, Card, Grid, Skeleton, Tabs, Text } from "@mantine/core";
+import { usePageStyles } from "@/styles/PageStyles";
+import { ViewCustomerTable } from "@/components/customer/ViewCustomerTable";
+import { CustomerStats } from "@/components/customer/CustomerStats";
 
 export default function ViewCustomer() {
-  // Get the customer ID from the URL using React Router
+  const { classes } = usePageStyles();
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
@@ -39,7 +45,7 @@ export default function ViewCustomer() {
   });
 
   if (isCustomerDataLoading) {
-    return <div>Loading...</div>;
+    return <Skeleton height={500} />;
   }
 
   if (!customerData) {
@@ -47,14 +53,44 @@ export default function ViewCustomer() {
   }
 
   return (
-    <div>
-      <p>
-        <strong>Customer ID:</strong> {customerData.id}
-        <br />
-        <strong>Customer Status:</strong> {customerData.status}
-        <br />
-        <strong>Customer Code:</strong> {customerData.status}
-      </p>
-    </div>
+    <Grid gutter="md">
+      <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
+        <Suspense fallback={<Skeleton height={500} />}>
+          <ViewCustomerNavbar customer={customerData} />
+        </Suspense>
+      </Grid.Col>
+      <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
+        <Tabs defaultValue="overview">
+          <Tabs.List grow mb={20}>
+            <Tabs.Tab value="overview">Overview</Tabs.Tab>
+            <Tabs.Tab value="second">Second tab</Tabs.Tab>
+            <Tabs.Tab value="third">Third tab</Tabs.Tab>
+          </Tabs.List>
+
+          {/** Overview Tab */}
+          <Tabs.Panel value="overview" pt="xs">
+            {id && <CustomerStats id={id} />}
+            <Card className={classes.card} withBorder>
+              <Box
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+                my={20}
+              >
+                <Text fw={600} fz={20}>
+                  Billing History
+                </Text>
+                <Button size="xs">View All</Button>
+              </Box>
+
+              <Suspense fallback={<Skeleton height={500} />}></Suspense>
+              {id ? <ViewCustomerTable id={id} /> : <Skeleton height={500} />}
+            </Card>
+          </Tabs.Panel>
+        </Tabs>
+      </Grid.Col>
+    </Grid>
   );
 }

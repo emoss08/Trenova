@@ -108,3 +108,33 @@ export type BillingQueue = {
   user: string;
   customer_name: string;
 };
+
+/** Types for Billing History */
+export type BillingHistory = {
+  id: string;
+  organization: string;
+  order_type: string;
+  order: string;
+  revenue_code: string;
+  customer: string;
+  invoice_number: string;
+  pieces: number;
+  weight: number;
+  bill_type: string;
+  bill_date: string;
+  mileage: number;
+  worker: string;
+  commodity: string;
+  commodity_descr: string;
+  consignee_ref_number: string;
+  other_charge_total: number;
+  freight_charge_amount: number;
+  total_amount: number;
+  total_amount_currency: string;
+  is_summary: boolean;
+  is_cancelled: boolean;
+  bol_number: string;
+  user: string;
+  created: string;
+  modified: string;
+};
