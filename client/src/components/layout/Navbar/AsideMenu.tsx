@@ -31,7 +31,7 @@ import { OrganizationLogo } from "@/components/layout/Navbar/_partials/Organizat
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
 import { SearchModal } from "@/components/layout/Navbar/_partials/SearchModal";
 
-export function NavbarSearch() {
+export function AsideMenu() {
   const { classes } = useNavbarStyles();
   const queryClient = useQueryClient();
   const userId = getUserId() || "";

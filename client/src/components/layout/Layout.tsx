@@ -18,7 +18,7 @@
 import React, { PropsWithChildren } from "react";
 import { AppShell, Container, useMantineTheme } from "@mantine/core";
 import { Breadcrumb } from "@/components/ui/BreadCrumbs";
-import { NavbarSearch } from "@/components/layout/Navbar";
+import { AsideMenu } from "@/components/layout/Navbar/AsideMenu";
 
 const Layout: React.FC<PropsWithChildren> = ({ children }) => {
   const theme = useMantineTheme();
@@ -34,9 +34,7 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
                 : theme.colors.gray[0],
           },
         }}
-        // padding="md"
-        // asideOffsetBreakpoint="sm"
-        aside={<NavbarSearch />}
+        aside={<AsideMenu />}
       >
         <Container size="xl">
           <Breadcrumb />

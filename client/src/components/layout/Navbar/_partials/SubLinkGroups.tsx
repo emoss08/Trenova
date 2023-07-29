@@ -37,7 +37,7 @@ const useStyles = createStyles((theme) => ({
     width: "100%",
     padding: `${theme.spacing.xs}`,
     color: theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.black,
-    fontSize: theme.fontSizes.sm,
+    fontSize: theme.fontSizes.xs,
 
     "&:hover": {
       backgroundColor:
@@ -55,7 +55,7 @@ const useStyles = createStyles((theme) => ({
     padding: `${theme.spacing.xs} ${theme.spacing.md}`,
     paddingLeft: rem(31),
     marginLeft: rem(30),
-    fontSize: theme.fontSizes.sm,
+    fontSize: theme.fontSizes.xs,
     color:
       theme.colorScheme === "dark"
         ? theme.colors.dark[0]
