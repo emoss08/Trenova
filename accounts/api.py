@@ -17,6 +17,8 @@
 from datetime import timedelta
 from typing import Any
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
@@ -391,6 +393,7 @@ class TokenProvisionView(ObtainAuthToken):
             login(request, user)
             user.online = True
             user.last_login = timezone.now()
+            user.session_key = request.session.session_key
             user.save()
 
         res.set_cookie(
@@ -438,9 +441,80 @@ class UserLogoutView(views.APIView):
         if user.is_authenticated:
             logout(request)
             user.online = False
+            user.session_key = None
             user.save()
 
         res = response.Response(status=status.HTTP_204_NO_CONTENT)
         res.delete_cookie("auth_token")
 
         return res
+
+
+class RemoveUserSessionView(views.APIView):
+    """
+    This class-based view handles the removal of a user's session.
+
+    It provides the option to logout a user and subsequently send a logout message
+    to the user using Django's channels library. It's intended for use by admins, hence
+    the permission_classes attribute being set to only allow admin users.
+
+    Attributes:
+        permission_classes: A list of permission classes an user needs to have
+            in order to access this endpoint. Set to IsAdminUser, thus only admin users
+            can access.
+        http_method_names: A list of HTTP methods this view accepts. This endpoint
+            only accepts POST requests.
+
+    Methods:
+        post: Implements the POST HTTP verb. It receives a Request object and
+            passes in any additional arguments. It returns a Response object.
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["post"]
+
+    def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
+        """
+        Users can be logged out by admins using this endpoint. If the provided user id
+        is valid and authenticated, this method logs out the user and changes the user's
+        status to offline. It also sends a logout message to the user via channels.
+
+        Args:
+            request (Request): A Django Request object.
+            args (Any): Additional positional arguments.
+            kwargs (Any): Additional named arguments.
+
+        Returns:
+            response (Response): A Django Response object with a status of 204 which means 'No Content'
+                if everything goes smoothly.
+
+        Raises:
+            exceptions.ValidationError: A Django Rest Framework exception that is raised if no user_id
+                is provided in the request body.
+        """
+        # Get user id from request body
+        user_id = request.data.get("user_id")
+
+        # If user_id does not exist, raise an exception
+        if not user_id:
+            raise exceptions.ValidationError({"user_id": "This field is required."})
+
+        # Get user object
+        user = models.User.objects.get(pk__exact=user_id)
+
+        # Logout user
+        if user.is_authenticated:
+            logout(request)
+            user.online = False
+            user.session_key = None
+            user.save()
+
+        # Send logout message to user
+        channel_layer = get_channel_layer()
+        # Replace 'user_id' with the actual user's ID
+        async_to_sync(channel_layer.group_send)(
+            f"logout_{user_id}",
+            {"type": "user_logout", "message": "logout", "user_id": user_id},
+        )
+
+        return response.Response(status=status.HTTP_204_NO_CONTENT)

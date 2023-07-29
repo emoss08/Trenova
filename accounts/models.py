@@ -175,6 +175,13 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         default=False,
         help_text=_("Designates whether the user is currently online."),
     )
+    session_key = models.CharField(
+        _("Session Key"),
+        max_length=40,
+        null=True,
+        blank=True,
+        help_text=_("Stores the current session key."),
+    )
 
     objects = UserManager()
 

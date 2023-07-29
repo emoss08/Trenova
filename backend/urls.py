@@ -26,11 +26,11 @@ from drf_spectacular.views import (
 )
 from rest_framework_nested import routers
 
-from core import api as core_api
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
 from commodities import api as commodities_api
+from core import api as core_api
 from customer import api as customer_api
 from dispatch import api as dispatch_api
 from equipment import api as equipment_api
@@ -390,6 +390,11 @@ urlpatterns = [
         "api/search/",
         core_api.SearchView.as_view(),
         name="search",
+    ),
+    path(
+        "api/sessions/kick/",
+        accounts_api.RemoveUserSessionView.as_view(),
+        name="kick-user-session",
     ),
 ]
 
