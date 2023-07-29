@@ -43,13 +43,13 @@ const useStyles = createStyles((theme) => ({
   },
 
   mainLink: {
+    fontWeight: 500,
     display: "flex",
     alignItems: "center",
     width: "100%",
     fontSize: theme.fontSizes.xs,
     padding: `${rem(8)} ${theme.spacing.xs}`,
     borderRadius: theme.radius.sm,
-    fontWeight: 500,
     "& svg": {
       color:
         theme.colorScheme === "dark"
@@ -74,6 +74,7 @@ const useStyles = createStyles((theme) => ({
   mainLinkInner: {
     display: "flex",
     alignItems: "center",
+    fontWeight: 500,
     flex: 1,
   },
 
