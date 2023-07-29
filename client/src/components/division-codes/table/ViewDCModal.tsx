@@ -17,12 +17,9 @@
 
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { useQuery, useQueryClient } from "react-query";
-import {
-  getDivisionCodeDetail,
-  getGLAccounts,
-} from "@/requests/AccountingRequestFactory";
+import { getGLAccounts } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { Modal, Skeleton, Stack } from "@mantine/core";
+import { Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
 import { ViewDCModalForm } from "@/components/division-codes/table/_Partials/ViewDCModalForm";
 
@@ -32,7 +29,7 @@ export const ViewDCModal: React.FC = () => {
   const [divisionCode] = divisionCodeTableStore.use("selectedRecord");
   const queryClient = useQueryClient();
 
-  const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({
+  const { data: glAccountData } = useQuery({
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showViewModal,

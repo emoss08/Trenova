@@ -46,14 +46,14 @@ export const ViewJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
             <Select
               data={statusChoices}
               className={classes.fields}
-              disabled
+              readOnly
               value={jobTitle.status}
               label="Status"
               variant="filled"
             />
             <TextInput
               value={jobTitle.name}
-              disabled
+              readOnly
               className={classes.fields}
               label="Name"
               variant="filled"
@@ -63,13 +63,13 @@ export const ViewJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
             value={jobTitle.description || ""}
             className={classes.fields}
             label="Description"
-            disabled
+            readOnly
             variant="filled"
           />
           <Select
             data={jobFunctionChoices}
             value={jobTitle.job_function}
-            disabled
+            readOnly
             label="Account Type"
             className={classes.fields}
             variant="filled"

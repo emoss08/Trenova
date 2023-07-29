@@ -17,10 +17,19 @@
 
 import { DivisionCode } from "@/types/apps/accounting";
 import React from "react";
-import { Box, SimpleGrid, Select, TextInput, Textarea } from "@mantine/core";
+import {
+  Box,
+  SimpleGrid,
+  Select,
+  TextInput,
+  Textarea,
+  Group,
+  Button,
+} from "@mantine/core";
 import { statusChoices } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/styles/FormStyles";
+import { divisionCodeTableStore } from "@/stores/AccountingStores";
 
 type Props = {
   divisionCode: DivisionCode;
@@ -41,14 +50,14 @@ export const ViewDCModalForm: React.FC<Props> = ({
             <Select
               data={statusChoices}
               className={classes.fields}
-              disabled
+              readOnly
               value={divisionCode.status}
               label="Status"
               variant="filled"
             />
             <TextInput
               value={divisionCode.code}
-              disabled
+              readOnly
               className={classes.fields}
               label="Code"
               variant="filled"
@@ -58,14 +67,14 @@ export const ViewDCModalForm: React.FC<Props> = ({
             value={divisionCode.description}
             className={classes.fields}
             label="Description"
-            disabled
+            readOnly
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <Select
               data={selectGlAccountData}
               value={divisionCode.ap_account || ""}
-              disabled
+              readOnly
               label="AP Account"
               className={classes.fields}
               variant="filled"
@@ -73,7 +82,7 @@ export const ViewDCModalForm: React.FC<Props> = ({
             <Select
               data={selectGlAccountData}
               value={divisionCode.cash_account || ""}
-              disabled
+              readOnly
               label="Cash Account"
               className={classes.fields}
               variant="filled"
@@ -82,11 +91,25 @@ export const ViewDCModalForm: React.FC<Props> = ({
           <Select
             data={selectGlAccountData}
             value={divisionCode.expense_account || ""}
-            disabled
+            readOnly
             label="Expense Account"
             className={classes.fields}
             variant="filled"
           />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              onClick={() => {
+                divisionCodeTableStore.set("selectedRecord", divisionCode);
+                divisionCodeTableStore.set("viewModalOpen", false);
+                divisionCodeTableStore.set("editModalOpen", true);
+              }}
+            >
+              Edit Division Code
+            </Button>
+          </Group>
         </Box>
       </Box>
     </>
