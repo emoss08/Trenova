@@ -37,9 +37,10 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 500,
     display: "block",
     width: "100%",
-    padding: `${theme.spacing.xs}`,
+    paddingBottom: `${theme.spacing.xs}`,
+    paddingTop: `${theme.spacing.xs}`,
     marginBottom: rem(1),
-    fontSize: theme.fontSizes.sm,
+    fontSize: theme.fontSizes.xs,
     "& svg": {
       color:
         theme.colorScheme === "dark"
@@ -49,13 +50,13 @@ const useStyles = createStyles((theme) => ({
     color:
       theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
 
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-      color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    },
+    // "&:hover": {
+    //   backgroundColor:
+    //     theme.colorScheme === "dark"
+    //       ? theme.colors.dark[6]
+    //       : theme.colors.gray[0],
+    //   color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    // },
     "&:hover svg": {
       color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
     },
@@ -68,7 +69,7 @@ const useStyles = createStyles((theme) => ({
     padding: `${theme.spacing.xs} ${theme.spacing.md}`,
     paddingLeft: rem(31),
     marginLeft: rem(30),
-    fontSize: theme.fontSizes.sm,
+    fontSize: theme.fontSizes.xs,
     color:
       theme.colorScheme === "dark"
         ? theme.colors.dark[0]
