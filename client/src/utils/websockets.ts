@@ -96,7 +96,7 @@ interface WebSocketEventMap {
 
 export type WebSocketEvent = WebSocketEventMap[keyof WebSocketEventMap];
 
-interface WebSocketManager {
+export interface WebSocketManager {
   connect: (id: string, url: string, handlers: Handlers) => WebSocketConnection;
   disconnect: (id: string) => void;
   get: (id: string) => WebSocketConnection;
