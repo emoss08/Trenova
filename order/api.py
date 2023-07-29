@@ -145,6 +145,10 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = models.Order.objects.all()
     serializer_class = serializers.OrderSerializer
     permission_classes = [CustomObjectPermissions]
+    filterset_fields = (
+        "pro_number",
+        "customer"
+    )
 
     def get_queryset(self) -> "QuerySet[models.Order]":
         queryset = (
@@ -345,3 +349,5 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
             "sub_total_currency",
         )
         return queryset
+
+
