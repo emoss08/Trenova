@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "djmoney",
     "auditlog",
     "notifications",
+    "channels",
     # Monta Apps
     "backend",
     "core",
@@ -233,7 +234,7 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PREFIX": "sessions",
+            "PREFIX": "celery",
             "PARSER_CLASS": "redis.connection.HiredisParser",
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
@@ -246,7 +247,7 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PREFIX": "sessions",
+            "PREFIX": "orders",
             "PARSER_CLASS": "redis.connection.HiredisParser",
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
@@ -257,7 +258,7 @@ CACHES = {
 }
 
 # Session Configurations
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # Cors Configurations
 CORS_ALLOWED_ORIGINS = [
@@ -294,7 +295,7 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    # "DEFAULT_THROTTLE_RATES": {"user": "20/second", "auth": "20/minute"},
+    "DEFAULT_THROTTLE_RATES": {"user": "20/second", "auth": "20/minute"},
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_FILTER_BACKENDS": [
