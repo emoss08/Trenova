@@ -49,7 +49,7 @@ export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
             description="Code for the accessorial charge."
             placeholder="Code"
             variant="filled"
-            disabled
+            readOnly
             value={accessorialCharge.code}
           />
           <Textarea
@@ -59,7 +59,7 @@ export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
             description="Description of the accessorial charge."
             placeholder="Description"
             variant="filled"
-            disabled
+            readOnly
             value={accessorialCharge.description || ""}
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
@@ -70,7 +70,7 @@ export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
               placeholder="Charge Amount"
               description="Charge amount for the accessorial charge."
               variant="filled"
-              disabled
+              readOnly
               value={accessorialCharge.charge_amount}
             />
             <Select
@@ -81,7 +81,7 @@ export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
               description="Method for calculating the other charge."
               placeholder="Fuel Method"
               variant="filled"
-              disabled
+              readOnly
               value={accessorialCharge.method}
             />
             <Switch
@@ -91,7 +91,7 @@ export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
               description="Is detention charge?"
               placeholder="Detention"
               variant="filled"
-              disabled
+              readOnly
               checked={accessorialCharge.is_detention}
             />
           </SimpleGrid>

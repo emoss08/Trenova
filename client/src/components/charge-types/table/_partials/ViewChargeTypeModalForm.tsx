@@ -34,7 +34,7 @@ export const ViewChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
         <Box>
           <TextInput
             value={chargeType.name}
-            disabled
+            readOnly
             className={classes.fields}
             label="Name"
             variant="filled"
@@ -43,7 +43,7 @@ export const ViewChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
             value={chargeType.description || ""}
             className={classes.fields}
             label="Description"
-            disabled
+            readOnly
             variant="filled"
           />
           <Group position="right" mt="md">

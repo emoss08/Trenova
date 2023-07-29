@@ -47,7 +47,7 @@ export const ViewRCModalForm: React.FC<Props> = ({
         <Box>
           <TextInput
             value={revenueCode.code}
-            disabled
+            readOnly
             className={classes.fields}
             label="Code"
             variant="filled"
@@ -56,14 +56,14 @@ export const ViewRCModalForm: React.FC<Props> = ({
             value={revenueCode.description}
             className={classes.fields}
             label="Description"
-            disabled
+            readOnly
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <Select
               data={selectGlAccountData}
               value={revenueCode.expense_account || ""}
-              disabled
+              readOnly
               label="AP Account"
               className={classes.fields}
               variant="filled"
@@ -71,7 +71,7 @@ export const ViewRCModalForm: React.FC<Props> = ({
             <Select
               data={selectGlAccountData}
               value={revenueCode.revenue_account || ""}
-              disabled
+              readOnly
               label="Cash Account"
               className={classes.fields}
               variant="filled"

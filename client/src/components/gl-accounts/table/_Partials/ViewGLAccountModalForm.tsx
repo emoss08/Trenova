@@ -51,14 +51,14 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
             <Select
               data={statusChoices}
               className={classes.fields}
-              disabled
+              readOnly
               value={glAccount.status}
               label="Status"
               variant="filled"
             />
             <TextInput
               value={glAccount.account_number}
-              disabled
+              readOnly
               className={classes.fields}
               label="Account Number"
               variant="filled"
@@ -68,14 +68,14 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
             value={glAccount.description}
             className={classes.fields}
             label="Description"
-            disabled
+            readOnly
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <Select
               data={accountTypeChoices}
               value={glAccount.account_type}
-              disabled
+              readOnly
               label="Account Type"
               className={classes.fields}
               variant="filled"
@@ -83,7 +83,7 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
             <Select
               data={cashFlowTypeChoices}
               value={glAccount.cash_flow_type}
-              disabled
+              readOnly
               label="Cash Flow Type"
               className={classes.fields}
               variant="filled"
@@ -93,7 +93,7 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
             <Select
               data={accountSubTypeChoices}
               value={glAccount.account_sub_type}
-              disabled
+              readOnly
               label="Account Sub Type"
               className={classes.fields}
               variant="filled"
@@ -101,7 +101,7 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
             <Select
               data={accountClassificationChoices}
               value={glAccount.account_classification}
-              disabled
+              readOnly
               label="Account Classification"
               className={classes.fields}
               variant="filled"

@@ -54,7 +54,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
               label="Status"
               placeholder="Status"
               variant="filled"
-              disabled
+              readOnly
             />
             <TextInput
               className={classes.fields}
@@ -63,7 +63,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
               label="Name"
               placeholder="Name"
               variant="filled"
-              disabled
+              readOnly
             />
           </SimpleGrid>
           <Textarea
@@ -73,7 +73,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
             label="Description"
             placeholder="Description"
             variant="filled"
-            disabled
+            readOnly
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <Select
@@ -84,7 +84,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
               label="Hazard Class"
               placeholder="Hazard Class"
               variant="filled"
-              disabled
+              readOnly
             />
             <Select
               data={packingGroupChoices}
@@ -94,7 +94,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
               label="Packing Group"
               placeholder="Packing Group"
               variant="filled"
-              disabled
+              readOnly
             />
           </SimpleGrid>
           <TextInput
@@ -104,7 +104,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
             label="ERG Number"
             placeholder="ERG Number"
             variant="filled"
-            disabled
+            readOnly
           />
           <TextInput
             className={classes.fields}
@@ -113,7 +113,7 @@ export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
             label="Proper Shipping Name"
             placeholder="Proper Shipping Name"
             variant="filled"
-            disabled
+            readOnly
           />
           <Group position="right" mt="md">
             <Button
