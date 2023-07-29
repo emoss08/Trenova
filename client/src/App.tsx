@@ -75,6 +75,7 @@ function App() {
         <MantineProvider
           theme={{
             colorScheme,
+            fontFamily: "Inter, sans-serif",
           }}
           withGlobalStyles
           withNormalizeCSS
