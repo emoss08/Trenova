@@ -17,11 +17,12 @@
 from django.urls import re_path
 
 from billing import consumers
-from organization.consumers import KeepAliveConsumer
+from organization.consumers import KeepAliveConsumer, LogoutConsumer
 from reports.consumers import NotificationConsumer
 
 websocket_urlpatterns = [
     re_path(r"ws/keepalive/$", KeepAliveConsumer.as_asgi()),
     re_path(r"ws/notifications/$", NotificationConsumer.as_asgi()),
     re_path(r"ws/billing_client/$", consumers.BillingClientConsumer.as_asgi()),  # type: ignore
+    re_path(r"ws/session/(?P<user_id>[0-9a-f-]+)/$", LogoutConsumer.as_asgi()),
 ]
