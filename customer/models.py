@@ -250,9 +250,7 @@ class CustomerBillingProfile(GenericModel):
         Returns:
             str: Customer Billing Profile url
         """
-        return reverse(
-            "customer-billing-profile-detail", kwargs={"pk": self.pk}
-        )
+        return reverse("customer-billing-profile-detail", kwargs={"pk": self.pk})
 
 
 class CustomerEmailProfile(GenericModel):

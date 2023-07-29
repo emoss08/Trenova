@@ -28,6 +28,7 @@ from stops.models import Stop
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
+
     from utils.types import ModelUUID
 
 

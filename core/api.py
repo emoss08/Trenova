@@ -17,12 +17,12 @@
 from typing import Any
 
 from django.apps import apps
-from django.contrib.postgres.search import SearchVector, SearchQuery
+from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import cache
 from rest_framework import pagination, status
 from rest_framework.request import Request
-from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from core.helpers import searchable_models
 
