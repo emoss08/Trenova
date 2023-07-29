@@ -35,7 +35,7 @@ export function CustomerTableColumns(): MRT_ColumnDef<Customer>[] {
       filterFn: "equals",
       Cell: ({ cell }) => (
         <Badge
-          color={cell.getValue() === "I" ? "green" : "red"}
+          color={cell.getValue() === "A" ? "green" : "red"}
           variant="filled"
           radius="xs"
         >
@@ -45,8 +45,8 @@ export function CustomerTableColumns(): MRT_ColumnDef<Customer>[] {
       mantineFilterSelectProps: {
         data: [
           { value: "", label: "All" },
-          { value: "Y", label: "Yes" },
-          { value: "N", label: "No" },
+          { value: "A", label: "Active" },
+          { value: "I", label: "Inactive" },
         ] as any,
       },
       filterVariant: "select",

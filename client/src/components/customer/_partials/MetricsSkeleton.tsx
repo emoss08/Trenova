@@ -15,36 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-/** Customer Type */
-export type Customer = {
-  id: string;
-  organization: string;
-  status: string;
-  code: string;
-  name: string;
-  address_line_1: string;
-  address_line_2: string;
-  city: string;
-  zip_code: string;
-  has_customer_portal: boolean;
-  auto_mark_ready_to_bill: boolean;
-  created: string;
-  modified: string;
-};
+import { Group, Paper, Skeleton } from "@mantine/core";
 
-/** Customer Form Values Type */
-export type CustomerFormValues = Omit<
-  Customer,
-  "id" | "organization" | "created" | "modified"
->;
+export function MetricsSkeleton() {
+  return (
+    <Paper withBorder p="md" radius="md">
+      <Group position="apart">
+        <Skeleton height={25} />
+      </Group>
 
-/** Customer Order Metric Type */
+      <Group align="flex-end" spacing="xs">
+        <Skeleton mt={7} height={35} width={100} />
+      </Group>
 
-type TotalOrderMetricsType = {
-  total_orders: number;
-  last_month_diff: number;
-  month_before_last_diff: number;
-};
-export type CustomerOrderMetrics = {
-  total_order_metrics: TotalOrderMetricsType;
-};
+      <Skeleton mt={7} height={20} />
+    </Paper>
+  );
+}

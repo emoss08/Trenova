@@ -15,36 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-/** Customer Type */
-export type Customer = {
-  id: string;
-  organization: string;
-  status: string;
-  code: string;
-  name: string;
-  address_line_1: string;
-  address_line_2: string;
-  city: string;
-  zip_code: string;
-  has_customer_portal: boolean;
-  auto_mark_ready_to_bill: boolean;
-  created: string;
-  modified: string;
-};
-
-/** Customer Form Values Type */
-export type CustomerFormValues = Omit<
-  Customer,
-  "id" | "organization" | "created" | "modified"
->;
-
-/** Customer Order Metric Type */
-
-type TotalOrderMetricsType = {
-  total_orders: number;
-  last_month_diff: number;
-  month_before_last_diff: number;
-};
-export type CustomerOrderMetrics = {
-  total_order_metrics: TotalOrderMetricsType;
-};
+export function mapStatuses(status: string) {
+  switch (status) {
+    case "N":
+      return "New";
+    case "P":
+      return "In Progress";
+    case "C":
+      return "Completed";
+    case "H":
+      return "Hold";
+    case "B":
+      return "Billed";
+    case "V":
+      return "Voided";
+    default:
+      return "Unknown";
+  }
+}
