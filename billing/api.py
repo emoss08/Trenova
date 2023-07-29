@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import redis
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
@@ -171,7 +170,7 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
     filterset_fields = (
         "order__pro_number",
         "worker__code",
-        "customer__code",
+        "customer",
         "revenue_code__code",
         "order_type",
     )
@@ -389,7 +388,7 @@ def bill_invoice_view(request: Request) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    tasks.bill_invoice_task.delay(user_id=request.user.id, invoice_id=invoice_id)
+    tasks.bill_invoice_task.delay(user_id=str(request.user.id), invoice_id=invoice_id)
     return Response({"message": "Billing task started."}, status=status.HTTP_200_OK)
 
 

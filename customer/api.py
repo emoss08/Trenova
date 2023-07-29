@@ -16,10 +16,14 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from customer import models, serializers
+from order.selectors import get_customer_order_diff, get_customer_revenue_diff
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -38,6 +42,25 @@ class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CustomerSerializer
     filterset_fields = ("code", "name")
     permission_classes = [CustomObjectPermissions]
+
+    @action(detail=True, methods=["get"])
+    def order_metrics(self, request: Request, pk: str | None) -> Response:
+        customer: models.Customer = self.get_object()
+
+        total_orders_metrics = get_customer_order_diff(customer_id=customer.id)
+
+        (
+            this_month_revenue,
+            last_month_revenue,
+            month_before_last_revenue,
+        ) = get_customer_revenue_diff(customer_id=customer.id)
+
+        return Response(
+            {
+                "total_order_metrics": total_orders_metrics,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def get_queryset(self) -> QuerySet[models.Customer]:
         """Returns a queryset of customers for the current organization.

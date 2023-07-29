@@ -18,14 +18,16 @@
 from typing import TYPE_CHECKING
 
 from django.db.models.aggregates import Sum
+from django.utils import timezone
 
+from billing.models import BillingHistory
 from movements.models import Movement
 from order import models
+from order.types import OrderDiffResponse
 from stops.models import Stop
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
-
     from utils.types import ModelUUID
 
 
@@ -85,3 +87,134 @@ def sum_order_additional_charges(*, order: models.Order) -> float:
 
     # If there are no additional charges associated with the order, return 0
     return additional_charges_total or 0
+
+
+def get_customer_order_diff(*, customer_id: str) -> OrderDiffResponse:
+    """Calculates and returns the total order count for a customer for the current month,
+    the percentage difference in order count from the last month, and the month before last.
+
+    Function takes a customer's ID, filters out the orders placed by the customer in each month,
+    and calculates the percentage difference between the order counts of these months.
+
+    Args:
+        customer_id (str): A unique identifier of a customer, used to filter the orders for the specific customer.
+
+    Returns:
+        OrderDiffResponse:
+            total_orders (int): The total order count for the current month.
+            last_month_diff (int): The percentage difference in order count from the last month.
+            month_before_last_diff (int): The percentage difference in order count from the month before last.
+    """
+    now = timezone.now()
+    this_month = now.month
+    this_year = now.year
+    last_month = this_month - 1 if this_month != 1 else 12
+    last_month_year = this_year if this_month != 1 else this_year - 1
+    month_before_last = last_month - 1 if last_month != 1 else 12
+    month_before_last_year = last_month_year if last_month != 1 else last_month_year - 1
+
+    this_month_orders_count = models.Order.objects.filter(
+        customer_id=customer_id, created__month=this_month, created__year=this_year
+    ).count()
+
+    last_month_orders_count = models.Order.objects.filter(
+        customer_id=customer_id,
+        created__month=last_month,
+        created__year=last_month_year,
+    ).count()
+
+    month_before_last_orders_count = models.Order.objects.filter(
+        customer_id=customer_id,
+        created__month=month_before_last,
+        created__year=month_before_last_year,
+    ).count()
+
+    # Calculate differences
+    if last_month_orders_count > 0:
+        last_month_diff = (
+            (this_month_orders_count - last_month_orders_count)
+            / last_month_orders_count
+            * 100
+        )
+    else:
+        last_month_diff = 0
+
+    if month_before_last_orders_count > 0:
+        month_before_last_diff = (
+            (last_month_orders_count - month_before_last_orders_count)
+            / month_before_last_orders_count
+            * 100
+        )
+    else:
+        month_before_last_diff = 0
+
+    return {
+        "total_orders": this_month_orders_count,
+        "last_month_diff": last_month_diff,
+        "month_before_last_diff": month_before_last_diff,
+    }
+
+
+def get_customer_revenue_diff(*, customer_id: str) -> tuple[float, float, float]:
+    """Calculates the current month's revenue difference, and the percentage difference from the
+    last month and the month before for a customer based on the given customer id.
+
+    The function works by extracting the revenue for current month, last month and the month
+    before from BillingHistory and calculates the difference.
+
+    Args:
+        customer_id (str): The unique identifier of a customer.
+
+    Returns:
+        tuple: Returns a tuple with three elements:
+               1. `float`: The revenue difference of the customer for the current month.
+               2. `float`: The percentage difference in revenue from the last month.
+               3. `float`: The percentage difference in revenue from the month before last.
+
+    """
+    now = timezone.now()
+    this_month = now.month
+    this_year = now.year
+    last_month = this_month - 1 if this_month != 1 else 12
+    last_month_year = this_year if this_month != 1 else this_year - 1
+    month_before_last = last_month - 1 if last_month != 1 else 12
+    month_before_last_year = last_month_year if last_month != 1 else last_month_year - 1
+
+    this_month_revenue = BillingHistory.objects.filter(
+        customer_id=customer_id, created__month=this_month, created__year=this_year
+    ).aggregate(total=Sum("total_amount"))["total"]
+
+    last_month_revenue = BillingHistory.objects.filter(
+        customer_id=customer_id,
+        created__month=last_month,
+        created__year=last_month_year,
+    ).aggregate(total=Sum("total_amount"))["total"]
+
+    month_before_last_revenue = BillingHistory.objects.filter(
+        customer_id=customer_id,
+        created__month=month_before_last,
+        created__year=month_before_last_year,
+    ).aggregate(total=Sum("total_amount"))["total"]
+
+    # Calculate differences
+    if last_month_revenue:
+        last_month_diff = (
+            (this_month_revenue - last_month_revenue) / last_month_revenue * 100
+        )
+    else:
+        last_month_diff = 0
+
+    if month_before_last_revenue:
+        month_before_last_diff = (
+            (last_month_revenue - month_before_last_revenue)
+            / month_before_last_revenue
+            * 100
+        )
+    else:
+        month_before_last_diff = 0
+
+    return (
+        this_month_revenue,
+        last_month_diff,
+        month_before_last_diff,
+    )
