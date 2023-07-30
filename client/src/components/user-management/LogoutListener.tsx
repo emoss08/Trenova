@@ -27,7 +27,7 @@ interface LogoutListenerProps {
 
 export function LogoutListener({ userId }: LogoutListenerProps) {
   const webSocketManager = createWebsocketManager();
-  const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
+  const [, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
   ]);
