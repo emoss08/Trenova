@@ -19,16 +19,51 @@ import { Group, Paper, Skeleton } from "@mantine/core";
 
 export function MetricsSkeleton() {
   return (
-    <Paper withBorder p="md" radius="md">
-      <Group position="apart">
-        <Skeleton height={25} />
-      </Group>
+    <>
+      <Paper withBorder p="md" radius="md">
+        <Group position="apart">
+          <Skeleton height={25} />
+        </Group>
 
-      <Group align="flex-end" spacing="xs">
-        <Skeleton mt={7} height={35} width={100} />
-      </Group>
+        <Group align="flex-end" spacing="xs">
+          <Skeleton mt={7} height={35} width={100} />
+        </Group>
 
-      <Skeleton mt={7} height={20} />
-    </Paper>
+        <Skeleton mt={7} height={20} />
+      </Paper>
+      <Paper withBorder p="md" radius="md">
+        <Group position="apart">
+          <Skeleton height={25} />
+        </Group>
+
+        <Group align="flex-end" spacing="xs">
+          <Skeleton mt={7} height={35} width={100} />
+        </Group>
+
+        <Skeleton mt={7} height={20} />
+      </Paper>
+      <Paper withBorder p="md" radius="md">
+        <Group position="apart">
+          <Skeleton height={25} />
+        </Group>
+
+        <Group align="flex-end" spacing="xs">
+          <Skeleton mt={7} height={35} width={100} />
+        </Group>
+
+        <Skeleton mt={7} height={20} />
+      </Paper>
+      <Paper withBorder p="md" radius="md">
+        <Group position="apart">
+          <Skeleton height={25} />
+        </Group>
+
+        <Group align="flex-end" spacing="xs">
+          <Skeleton mt={7} height={35} width={100} />
+        </Group>
+
+        <Skeleton mt={7} height={20} />
+      </Paper>
+    </>
   );
 }

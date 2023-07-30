@@ -15,20 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  createStyles,
-  Group,
-  Paper,
-  SimpleGrid,
-  Text,
-  rem,
-} from "@mantine/core";
-import {
-  IconArrowUpRight,
-  IconArrowDownRight,
-  IconBox,
-} from "@tabler/icons-react";
-import { TotalOrders } from "@/components/customer/_partials/TotalOrders";
+import { createStyles, SimpleGrid, rem } from "@mantine/core";
+import { OrdersMetric } from "@/components/customer/_partials/OrdersMetric";
+import { useQuery, useQueryClient } from "react-query";
+import { getCustomerMetrics } from "@/requests/CustomerRequestFactory";
+import { CustomerOrderMetrics } from "@/types/apps/customer";
+import { RevenueMetric } from "@/components/customer/_partials/RevenueMetric";
+import { PerformanceMetric } from "@/components/customer/_partials/PerformanceMetric";
+import { MetricsSkeleton } from "@/components/customer/_partials/MetricsSkeleton";
+import { MileageMetric } from "@/components/customer/_partials/MileageMetric";
+
+export type CustomerMetricProps = {
+  metrics: CustomerOrderMetrics;
+};
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -66,7 +65,23 @@ type CustomerStatsProps = {
 
 export function CustomerStats({ id }: CustomerStatsProps) {
   const { classes } = useStyles();
-  // const DiffIcon = stat.diff > 0 ? IconArrowUpRight : IconArrowDownRight;
+  const queryClient = useQueryClient();
+
+  const { data: customerMetrics, isLoading: isCustomerMetricsLoading } =
+    useQuery({
+      queryKey: ["customerMetrics", id],
+      queryFn: () => {
+        if (!id) {
+          return Promise.resolve(null);
+        }
+        return getCustomerMetrics(id);
+      },
+      initialData: () => {
+        return queryClient.getQueryData(["customerMetrics", id]);
+      },
+      staleTime: Infinity,
+    });
+
   return (
     <div className={classes.root}>
       <SimpleGrid
@@ -76,67 +91,18 @@ export function CustomerStats({ id }: CustomerStatsProps) {
           { maxWidth: "xs", cols: 1 },
         ]}
       >
-        <TotalOrders id={id} />
-        <Paper withBorder p="md" radius="md">
-          <Group position="apart">
-            <Text size="xs" color="dimmed" className={classes.title}>
-              Total Orders
-            </Text>
-            <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
-          </Group>
-
-          <Group align="flex-end" spacing="xs" mt={25}>
-            <Text className={classes.value}>20</Text>
-            <Text color={"teal"} fz="sm" fw={500} className={classes.diff}>
-              <span>{20}%</span>
-              <IconArrowUpRight size="1rem" stroke={1.5} />
-            </Text>
-          </Group>
-
-          <Text fz="xs" c="dimmed" mt={7}>
-            Compared to previous month
-          </Text>
-        </Paper>
-        <Paper withBorder p="md" radius="md">
-          <Group position="apart">
-            <Text size="xs" color="dimmed" className={classes.title}>
-              Total Orders
-            </Text>
-            <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
-          </Group>
-
-          <Group align="flex-end" spacing="xs" mt={25}>
-            <Text className={classes.value}>20</Text>
-            <Text color={"teal"} fz="sm" fw={500} className={classes.diff}>
-              <span>{20}%</span>
-              <IconArrowUpRight size="1rem" stroke={1.5} />
-            </Text>
-          </Group>
-
-          <Text fz="xs" c="dimmed" mt={7}>
-            Compared to previous month
-          </Text>
-        </Paper>
-        <Paper withBorder p="md" radius="md">
-          <Group position="apart">
-            <Text size="xs" color="dimmed" className={classes.title}>
-              Total Orders
-            </Text>
-            <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
-          </Group>
-
-          <Group align="flex-end" spacing="xs" mt={25}>
-            <Text className={classes.value}>20</Text>
-            <Text color={"teal"} fz="sm" fw={500} className={classes.diff}>
-              <span>{20}%</span>
-              <IconArrowUpRight size="1rem" stroke={1.5} />
-            </Text>
-          </Group>
-
-          <Text fz="xs" c="dimmed" mt={7}>
-            Compared to previous month
-          </Text>
-        </Paper>
+        {isCustomerMetricsLoading ? (
+          <MetricsSkeleton />
+        ) : (
+          customerMetrics && (
+            <>
+              <OrdersMetric metrics={customerMetrics} />
+              <RevenueMetric metrics={customerMetrics} />
+              <PerformanceMetric metrics={customerMetrics} />
+              <MileageMetric metrics={customerMetrics} />
+            </>
+          )
+        )}
       </SimpleGrid>
     </div>
   );
