@@ -17,8 +17,9 @@
 
 import { MRT_ColumnDef } from "mantine-react-table";
 import { BillingHistory } from "@/types/apps/billing";
+import { USDollarFormat } from "@/lib/utils";
 
-export function ViewCustomerTableColumns(): MRT_ColumnDef<BillingHistory>[] {
+export function CustomerBillingHistoryTableColumns(): MRT_ColumnDef<BillingHistory>[] {
   return [
     {
       accessorKey: "invoice_number",
@@ -37,10 +38,10 @@ export function ViewCustomerTableColumns(): MRT_ColumnDef<BillingHistory>[] {
       header: "Bill Date",
     },
     {
-      accessorFn: (row) => `$${row.total_amount} ${row.total_amount_currency}`,
       id: "total_amount",
+      accessorKey: "total_amount",
       header: "Total Amount",
-      Cell: ({ renderedCellValue }) => <span>{renderedCellValue}</span>,
+      Cell: ({ cell }) => USDollarFormat(Math.round(cell.getValue() as number)),
     },
   ];
 }
