@@ -22,8 +22,8 @@ import { getCustomerDetails } from "@/requests/CustomerRequestFactory";
 import { ViewCustomerNavbar } from "./ViewCustomerNavbar";
 import { Box, Button, Card, Grid, Skeleton, Tabs, Text } from "@mantine/core";
 import { usePageStyles } from "@/styles/PageStyles";
-import { ViewCustomerTable } from "@/components/customer/ViewCustomerTable";
 import { CustomerStats } from "@/components/customer/CustomerStats";
+import { CustomerBillingHistoryTable } from "@/components/customer/CustomerBillingHistoryTable";
 
 export default function ViewCustomer() {
   const { classes } = usePageStyles();
@@ -45,7 +45,7 @@ export default function ViewCustomer() {
   });
 
   if (isCustomerDataLoading) {
-    return <Skeleton height={500} />;
+    return <Skeleton height={600} />;
   }
 
   if (!customerData) {
@@ -86,7 +86,7 @@ export default function ViewCustomer() {
               </Box>
 
               <Suspense fallback={<Skeleton height={500} />}></Suspense>
-              {id ? <ViewCustomerTable id={id} /> : <Skeleton height={500} />}
+              {id && <CustomerBillingHistoryTable id={id} />}
             </Card>
           </Tabs.Panel>
         </Tabs>
