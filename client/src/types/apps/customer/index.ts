@@ -39,12 +39,39 @@ export type CustomerFormValues = Omit<
 >;
 
 /** Customer Order Metric Type */
-
 type TotalOrderMetricsType = {
   total_orders: number;
   last_month_diff: number;
   month_before_last_diff: number;
 };
+
+type TotalRevenueMetricsType = {
+  total_revenue: number;
+  last_month_diff: number;
+  month_before_last_diff: number;
+};
+
+type PerformanceMetricType = {
+  this_month_on_time_percentage: number;
+  last_month_on_time_percentage: number;
+  on_time_diff: number;
+  this_month_early_percentage: number;
+  last_month_early_percentage: number;
+  early_diff: number;
+  this_month_late_percentage: number;
+  last_month_late_percentage: number;
+  late_diff: number;
+};
+
+type TotalMileageMetricsType = {
+  this_month_miles: number;
+  last_month_miles: number;
+  mileage_diff: number;
+};
+
 export type CustomerOrderMetrics = {
   total_order_metrics: TotalOrderMetricsType;
+  total_revenue_metrics: TotalRevenueMetricsType;
+  on_time_performance: PerformanceMetricType;
+  total_mile_metrics: TotalMileageMetricsType;
 };
