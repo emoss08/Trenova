@@ -18,7 +18,6 @@
 from typing import TYPE_CHECKING
 
 from auditlog.models import LogEntry
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 
 from reports import models
