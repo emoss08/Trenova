@@ -22,13 +22,13 @@ import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { API_URL } from "@/lib/utils";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
-import { ViewCustomerTableColumns } from "@/components/customer/ViewCustomerTableColumns";
+import { CustomerBillingHistoryTableColumns } from "@/components/customer/CustomerBillingHistoryTableColumns";
 
 type Props = {
   id: string;
 };
 
-export function ViewCustomerTable({ id }: Props) {
+export function CustomerBillingHistoryTable({ id }: Props) {
   const [pagination] = paymentRecordsTableStore.use("pagination");
   const [globalFilter, setGlobalFilter] =
     paymentRecordsTableStore.use("globalFilter");
@@ -60,11 +60,16 @@ export function ViewCustomerTable({ id }: Props) {
   return (
     <>
       <MantineReactTable
-        columns={ViewCustomerTableColumns()}
+        columns={CustomerBillingHistoryTableColumns()}
         data={data?.results ?? []}
         manualPagination
         onPaginationChange={(newPagination) => {
           paymentRecordsTableStore.set("pagination", newPagination);
+        }}
+        mantinePaperProps={{
+          // remove shadow
+          shadow: "none",
+          withBorder: false,
         }}
         mantinePaginationProps={{
           rowsPerPageOptions: ["5", "10"],
