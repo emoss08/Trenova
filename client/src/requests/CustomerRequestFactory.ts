@@ -42,9 +42,9 @@ export async function getCustomerDetails(id: string): Promise<Customer> {
  * @param id
  * @returns A promise that resolves to an object containing the order metrics.
  */
-export async function getCustomerOrderMetrics(
+export async function getCustomerMetrics(
   id: string
 ): Promise<CustomerOrderMetrics> {
-  const response = await axios.get(`customers/${id}/order_metrics/`);
+  const response = await axios.get(`customers/${id}/customer_metrics/`);
   return response.data;
 }
