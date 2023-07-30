@@ -130,3 +130,10 @@ export const yesAndNoChoices: TChoiceProps[] = [
 export function truncateText(text: string, limit: number): string {
   return text.length > limit ? text.substring(0, limit) + "..." : text;
 }
+
+export function USDollarFormat(amount: number): string {
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
