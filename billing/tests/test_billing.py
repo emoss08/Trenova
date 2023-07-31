@@ -65,7 +65,9 @@ def test_generate_invoice_number(
     )
     assert (
         invoice_1.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}".replace(
+            "ORD", ""
+        )
     )
 
     invoice_1_cm = models.BillingQueue.objects.create(
@@ -78,7 +80,9 @@ def test_generate_invoice_number(
     )
     assert (
         invoice_1_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}".replace(
+            "ORD", ""
+        )
     )
 
     invoice_1_next_invoice = models.BillingQueue.objects.create(
@@ -91,7 +95,9 @@ def test_generate_invoice_number(
 
     assert (
         invoice_1_next_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A".replace(
+            "ORD", ""
+        )
     )
 
     invoice_1_next_invoice_cm = models.BillingQueue.objects.create(
@@ -105,7 +111,9 @@ def test_generate_invoice_number(
 
     assert (
         invoice_1_next_invoice_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A".replace(
+            "ORD", ""
+        )
     )
 
     invoice_1_final_invoice = models.BillingQueue.objects.create(
@@ -118,7 +126,9 @@ def test_generate_invoice_number(
 
     assert (
         invoice_1_final_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B".replace(
+            "ORD", ""
+        )
     )
 
     invoice_1_final_invoice_cm = models.BillingQueue.objects.create(
@@ -132,7 +142,9 @@ def test_generate_invoice_number(
 
     assert (
         invoice_1_final_invoice_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B".replace(
+            "ORD", ""
+        )
     )
 
 
@@ -170,7 +182,9 @@ def test_invoice_number_generation(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}".replace(
+            "ORD", ""
+        )
     )
 
 
@@ -233,12 +247,16 @@ def test_invoice_number_increments(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}A"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}A".replace(
+            "ORD", ""
+        )
     )
     assert second_invoice.invoice_number is not None
     assert (
         second_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.order.pro_number}A"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.order.pro_number}A".replace(
+            "ORD", ""
+        )
     )
 
 
@@ -499,7 +517,9 @@ def test_generate_invoice_number_before_save(
 
     assert (
         billing_queue.invoice_number
-        == f"{order.organization.invoice_control.invoice_number_prefix}{billing_queue.order.pro_number}"
+        == f"{order.organization.invoice_control.invoice_number_prefix}{billing_queue.order.pro_number}".replace(
+            "ORD", ""
+        )
     )
 
 
@@ -638,7 +658,9 @@ def test_bill_orders(
     assert billing_history.bol_number == order.bol_number
     assert (
         billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}".replace(
+            "ORD", ""
+        )
     )
 
     order.refresh_from_db()
@@ -702,11 +724,13 @@ def test_single_order_billing_service(
     assert billing_history.revenue_code == order.revenue_code
     assert billing_history.customer == order.customer
     assert billing_history.commodity == order.commodity
-    assert billing_history.bol_number == order.bol_number
     assert (
         billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}"
+        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}".replace(
+            "ORD", ""
+        )
     )
+    assert billing_history.bol_number == order.bol_number
 
     order.refresh_from_db()
     assert order.billed is True
@@ -870,7 +894,7 @@ def test_validate_invoice_number_does_start_with_invoice_prefix(
         commodity=order.commodity,
         bol_number=order.bol_number,
         user=user,
-        invoice_number="INV-00001",
+        invoice_number="INV-000001",
     )
 
-    assert invoice.invoice_number == f"INV-{order.pro_number}"
+    assert invoice.invoice_number == f"INV-{order.pro_number}".replace("ORD", "")

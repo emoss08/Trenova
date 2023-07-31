@@ -18,6 +18,7 @@
 from typing import TYPE_CHECKING
 
 from django.db.models.aggregates import Sum
+
 from movements.models import Movement
 from order import models
 from stops.models import Stop

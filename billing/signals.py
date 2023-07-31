@@ -112,7 +112,11 @@ def generate_invoice_number_on_billing_queue(
     instance: models.BillingQueue, **kwargs: Any
 ) -> None:
     is_credit_memo = instance.bill_type == models.BillingQueue.BillTypeChoices.CREDIT
-    services.generate_invoice_number(instance=instance, is_credit_memo=is_credit_memo)
+
+    if not instance.invoice_number:
+        services.generate_invoice_number(
+            instance=instance, is_credit_memo=is_credit_memo
+        )
 
 
 def transfer_order_details_to_billing_queue(
