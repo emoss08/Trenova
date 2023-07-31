@@ -18,6 +18,7 @@
 from typing import Any
 
 from customer import models, services
+from utils.models import PrimaryStatusChoices
 
 
 def generate_customer_code(instance: models.Customer, **kwargs: Any) -> None:
@@ -78,6 +79,6 @@ def create_customer_billing_profile(
             business_unit=instance.organization.business_unit,
             organization=instance.organization,
             customer=instance,
-            is_active=True,
+            status=PrimaryStatusChoices.ACTIVE,
             rule_profile=default_rule_profile,
         )
