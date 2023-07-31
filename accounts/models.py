@@ -178,7 +178,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
     session_key = models.CharField(
         _("Session Key"),
         max_length=40,
-        null=True,
         blank=True,
         help_text=_("Stores the current session key."),
     )
@@ -211,6 +210,13 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         """
         return self.username
 
+    def get_absolute_url(self) -> str:
+        """
+        Returns:
+            str: Absolute URL for the User
+        """
+        return reverse("users-detail", kwargs={"pk": self.pk})
+
     def update_user(self, **kwargs: Any) -> None:
         """
         Updates the user with the given kwargs
@@ -218,13 +224,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """
-        Returns:
-            str: Absolute URL for the User
-        """
-        return reverse("users-detail", kwargs={"pk": self.pk})
 
 
 class UserProfile(GenericModel):
@@ -343,6 +342,14 @@ class UserProfile(GenericModel):
 
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self) -> str:
+        """Absolute URL for the Profile.
+
+        Returns:
+            str: Get the absolute url of the Profile
+        """
+        return reverse("user:profile-view", kwargs={"pk": self.pk})
+
     def update_profile(self, **kwargs: Any) -> None:
         """
         Updates the profile with the given kwargs
@@ -374,14 +381,6 @@ class UserProfile(GenericModel):
                 },
                 code="invalid",
             )
-
-    def get_absolute_url(self) -> str:
-        """Absolute URL for the Profile.
-
-        Returns:
-            str: Get the absolute url of the Profile
-        """
-        return reverse("user:profile-view", kwargs={"pk": self.pk})
 
     @property
     def get_user_profile_pic(self) -> Any | str:

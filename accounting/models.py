@@ -160,6 +160,14 @@ class GeneralLedgerAccount(GenericModel):
             f"{self.account_type} - {self.account_number}", width=40, placeholder="..."
         )
 
+    def get_absolute_url(self) -> str:
+        """GeneralLedgerAccount absolute url
+
+        Returns:
+            str: GeneralLedgerAccount absolute url
+        """
+        return reverse("gl-accounts-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """General ledger account clean method
 
@@ -184,14 +192,6 @@ class GeneralLedgerAccount(GenericModel):
                 },
                 code="invalid",
             )
-
-    def get_absolute_url(self) -> str:
-        """GeneralLedgerAccount absolute url
-
-        Returns:
-            str: GeneralLedgerAccount absolute url
-        """
-        return reverse("gl-accounts-detail", kwargs={"pk": self.pk})
 
     def update_gl_account(self, **kwargs):
         """Update the General Ledger account
@@ -271,6 +271,31 @@ class RevenueCode(GenericModel):  # type: ignore
         """
         return textwrap.wrap(self.code, 4)[0]
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """RevenueCode save method
+
+        Args:
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments
+
+        Returns:
+            None
+        """
+        self.full_clean()
+
+        if self.code:
+            self.code = self.code.upper()
+
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        """RevenueCode absolute url
+
+        Returns:
+            str: RevenueCode absolute url
+        """
+        return reverse("accounting:revenue_code_detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """RevenueCode model validation
 
@@ -302,31 +327,6 @@ class RevenueCode(GenericModel):  # type: ignore
 
         if errors:
             raise ValidationError(errors)
-
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        """RevenueCode save method
-
-        Args:
-            *args (Any): Variable length argument list.
-            **kwargs (Any): Arbitrary keyword arguments
-
-        Returns:
-            None
-        """
-        self.full_clean()
-
-        if self.code:
-            self.code = self.code.upper()
-
-        super().save(*args, **kwargs)
-
-    def get_absolute_url(self) -> str:
-        """RevenueCode absolute url
-
-        Returns:
-            str: RevenueCode absolute url
-        """
-        return reverse("accounting:revenue_code_detail", kwargs={"pk": self.pk})
 
     def update_revenue_code(self, **kwargs: Any) -> None:
         """Update the revenue code.
@@ -427,6 +427,14 @@ class DivisionCode(GenericModel):
         """
         return textwrap.wrap(self.code, 4)[0]
 
+    def get_absolute_url(self) -> str:
+        """DivisionCode absolute url
+
+        Returns:
+            str: DivisionCode absolute url
+        """
+        return reverse("division-codes-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """DivisionCode model validation method
 
@@ -472,14 +480,6 @@ class DivisionCode(GenericModel):
 
         if errors:
             raise ValidationError(errors)
-
-    def get_absolute_url(self) -> str:
-        """DivisionCode absolute url
-
-        Returns:
-            str: DivisionCode absolute url
-        """
-        return reverse("division-codes-detail", kwargs={"pk": self.pk})
 
 
 # Audit Log Registration

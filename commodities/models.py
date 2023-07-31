@@ -146,6 +146,14 @@ class HazardousMaterial(GenericModel):  # type: ignore
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Hazardous Material Absolute URL
+
+        Returns:
+            str: Hazardous Material Absolute URL
+        """
+        return reverse("hazardous-materials-detail", kwargs={"pk": self.pk})
+
     def update_hazmat(self, **kwargs: Any) -> None:
         """Update Hazardous Material
 
@@ -155,14 +163,6 @@ class HazardousMaterial(GenericModel):  # type: ignore
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """Hazardous Material Absolute URL
-
-        Returns:
-            str: Hazardous Material Absolute URL
-        """
-        return reverse("hazardous-materials-detail", kwargs={"pk": self.pk})
 
 
 class Commodity(GenericModel):  # type: ignore
@@ -291,38 +291,6 @@ class Commodity(GenericModel):  # type: ignore
         """
         return textwrap.wrap(self.name, 50)[0]
 
-    def update_commodity(self, **kwargs: Any) -> None:
-        """Update Commodity
-
-        Args:
-            **kwargs(Any): Keyword arguments that are used to update the commodity.
-
-        Returns:
-            None: This function does not return anything.
-        """
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
-
-    def clean(self) -> None:
-        """Method that is called when the model is validated.
-
-        Returns:
-            None: This function does return anything.
-
-        Raises:
-            ValidationError: If the commodity is marked as hazardous, but no hazardous material is selected.
-        """
-        if self.is_hazmat == "Y" and not self.hazmat:
-            raise ValidationError(
-                {
-                    "is_hazmat": _(
-                        "Commodity is marked as hazardous, but no hazardous material is selected."
-                    )
-                }
-            )
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save Commodity
 
@@ -346,6 +314,38 @@ class Commodity(GenericModel):  # type: ignore
             str: Commodity Absolute URL
         """
         return reverse("commodity-details", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        """Method that is called when the model is validated.
+
+        Returns:
+            None: This function does return anything.
+
+        Raises:
+            ValidationError: If the commodity is marked as hazardous, but no hazardous material is selected.
+        """
+        if self.is_hazmat == "Y" and not self.hazmat:
+            raise ValidationError(
+                {
+                    "is_hazmat": _(
+                        "Commodity is marked as hazardous, but no hazardous material is selected."
+                    )
+                }
+            )
+
+    def update_commodity(self, **kwargs: Any) -> None:
+        """Update Commodity
+
+        Args:
+            **kwargs(Any): Keyword arguments that are used to update the commodity.
+
+        Returns:
+            None: This function does not return anything.
+        """
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 # Audit Log Registration

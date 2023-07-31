@@ -67,14 +67,6 @@ class Weekday(models.Model):
 
     name = models.PositiveIntegerField(_("Name"), choices=Weekdays.choices, unique=True)
 
-    def __str__(self) -> str:
-        """String representation of the weekday.
-
-        Returns:
-            str: The name of the weekday.
-        """
-        return textwrap.shorten(self.get_name_display(), width=50, placeholder="...")
-
     class Meta:
         """
         Metaclass for the Weekday model.
@@ -90,6 +82,14 @@ class Weekday(models.Model):
         verbose_name_plural = _("Weekdays")
         ordering = ("name",)
         db_table = "weekday"
+
+    def __str__(self) -> str:
+        """String representation of the weekday.
+
+        Returns:
+            str: The name of the weekday.
+        """
+        return textwrap.shorten(self.get_name_display(), width=50, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Returns the absolute URL for the weekday.
@@ -133,14 +133,6 @@ class CustomReport(GenericModel):
         choices=TABLE_NAME_CHOICES,
     )
 
-    def __str__(self) -> str:
-        """String representation of the custom report.
-
-        Returns:
-            str: The name of the custom report.
-        """
-        return textwrap.shorten(self.name, width=50, placeholder="...")
-
     class Meta:
         """
         Metaclass for the CustomReport model.
@@ -162,6 +154,14 @@ class CustomReport(GenericModel):
                 fields=["name", "organization"], name="unique_report_name_organization"
             )
         ]
+
+    def __str__(self) -> str:
+        """String representation of the custom report.
+
+        Returns:
+            str: The name of the custom report.
+        """
+        return textwrap.shorten(self.name, width=50, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Returns the absolute URL for the custom report.
@@ -206,14 +206,6 @@ class ReportColumn(GenericModel):
         help_text=_("The order of the column to be displayed in the report."),
     )
 
-    def __str__(self) -> str:
-        """String representation of the report column.
-
-        Returns:
-            str: The name of the report column.
-        """
-        return textwrap.shorten(self.column_name, width=50, placeholder="...")
-
     class Meta:
         """
         Metaclass for the ReportColumn model.
@@ -236,6 +228,14 @@ class ReportColumn(GenericModel):
                 name="unique_report_column_name_order",
             )
         ]
+
+    def __str__(self) -> str:
+        """String representation of the report column.
+
+        Returns:
+            str: The name of the report column.
+        """
+        return textwrap.shorten(self.column_name, width=50, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Returns the absolute URL for the report column.
@@ -319,14 +319,6 @@ class ScheduledReport(GenericModel):
         default="UTC",
     )
 
-    def __str__(self) -> str:
-        """String representation of the scheduled report.
-
-        Returns:
-            str: The name of the scheduled report.
-        """
-        return textwrap.shorten(self.custom_report.name, width=50, placeholder="...")
-
     class Meta:
         """
         Metaclass for the ScheduledReport model.
@@ -349,6 +341,14 @@ class ScheduledReport(GenericModel):
                 name="unique_scheduled_report_report_organization",
             )
         ]
+
+    def __str__(self) -> str:
+        """String representation of the scheduled report.
+
+        Returns:
+            str: The name of the scheduled report.
+        """
+        return textwrap.shorten(self.custom_report.name, width=50, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Returns the absolute URL for the scheduled report.

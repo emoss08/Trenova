@@ -205,6 +205,15 @@ class BillingControl(GenericModel):
         """
         return textwrap.wrap(self.organization.name, width=25, placeholder="...")[0]
 
+    def get_absolute_url(self) -> str:
+        """Billing Control absolute url
+
+        Returns:
+            Absolute url for the billing control object. For example,
+            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-control-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Billing control clean method
 
@@ -223,15 +232,6 @@ class BillingControl(GenericModel):
                 },
                 code="invalid_billing_control",
             )
-
-    def get_absolute_url(self) -> str:
-        """Billing Control absolute url
-
-        Returns:
-            Absolute url for the billing control object. For example,
-            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
-        """
-        return reverse("billing-control-detail", kwargs={"pk": self.pk})
 
 
 class ChargeType(GenericModel):
@@ -445,6 +445,14 @@ class DocumentClassification(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular document classification instance
+
+        Returns:
+            str: Document classification url
+        """
+        return reverse("billing:document-classification-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """DocumentClassification Clean Method
 
@@ -465,14 +473,6 @@ class DocumentClassification(GenericModel):
                     ),
                 },
             )
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular document classification instance
-
-        Returns:
-            str: Document classification url
-        """
-        return reverse("billing:document-classification-detail", kwargs={"pk": self.pk})
 
     def update_doc_class(self, **kwargs: Any) -> None:
         """
@@ -711,6 +711,15 @@ class BillingQueue(GenericModel):  # type:ignore
         """
         return textwrap.wrap(self.order.pro_number, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Billing Queue absolute url
+
+        Returns:
+            Absolute url for the billing queue object. For example,
+            `/billing_queue/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-queue-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """
         Clean method for the BillingQueue model.
@@ -804,15 +813,6 @@ class BillingQueue(GenericModel):  # type:ignore
                 },
                 code="invalid",
             )
-
-    def get_absolute_url(self) -> str:
-        """Billing Queue absolute url
-
-        Returns:
-            Absolute url for the billing queue object. For example,
-            `/billing_queue/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
-        """
-        return reverse("billing-queue-detail", kwargs={"pk": self.pk})
 
 
 class BillingTransferLog(GenericModel):
@@ -1077,6 +1077,15 @@ class BillingHistory(GenericModel):  # type:ignore
         """
         return textwrap.wrap(self.order.pro_number, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Billing History absolute url
+
+        Returns:
+            Absolute url for the billing history object. For example,
+            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-history-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Clean method for the BillingHistory model.
 
@@ -1094,15 +1103,6 @@ class BillingHistory(GenericModel):  # type:ignore
                     ),
                 },
             )
-
-    def get_absolute_url(self) -> str:
-        """Billing History absolute url
-
-        Returns:
-            Absolute url for the billing history object. For example,
-            `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
-        """
-        return reverse("billing-history-detail", kwargs={"pk": self.pk})
 
 
 class BillingExceptionManager(models.Manager):

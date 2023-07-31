@@ -115,6 +115,28 @@ class Movement(GenericModel):
             placeholder="...",
         )
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save method for the Movement
+
+        Args:
+            *args (Any): Arguments
+            **kwargs (Any): Keyword Arguments
+
+        Returns:
+            None: This function does return anything.
+        """
+        self.set_tractor_and_workers()
+
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        """Get the absolute url for the Movement
+
+        Returns:
+            str: Absolute url for the Movement
+        """
+        return reverse("movement-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Stop clean method
 
@@ -126,11 +148,6 @@ class Movement(GenericModel):
         MovementValidation(movement=self)
         super().clean()
 
-    def save(self, *args: Any, **kwargs: Any) -> None:
-        self.set_tractor_and_workers()
-
-        super().save(*args, **kwargs)
-
     def set_tractor_and_workers(self) -> None:
         if self.tractor:
             if self.tractor.primary_worker and not self.primary_worker:
@@ -140,11 +157,3 @@ class Movement(GenericModel):
 
         if self.primary_worker and not self.tractor:
             self.tractor = self.primary_worker.primary_tractor
-
-    def get_absolute_url(self) -> str:
-        """Get the absolute url for the Movement
-
-        Returns:
-            str: Absolute url for the Movement
-        """
-        return reverse("movement-detail", kwargs={"pk": self.pk})

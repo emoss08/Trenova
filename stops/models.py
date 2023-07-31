@@ -190,21 +190,6 @@ class Stop(GenericModel):
             placeholder="...",
         )
 
-    def clean(self) -> None:
-        """Stop clean Method
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the stop is not valid.
-
-        """
-        super().clean()
-        from stops.validation import StopValidation
-
-        StopValidation(instance=self)
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the stop object
 
@@ -223,14 +208,6 @@ class Stop(GenericModel):
         if self.location and not self.address_line:
             self.address_line = self.location.get_address_combination
 
-    def update_status_based_on_times(self) -> None:
-        if self.arrival_time is not None and self.departure_time is not None:
-            self.status = StatusChoices.COMPLETED
-        elif self.arrival_time is not None:
-            self.status = StatusChoices.IN_PROGRESS
-        else:
-            self.status = StatusChoices.NEW
-
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
 
@@ -238,6 +215,29 @@ class Stop(GenericModel):
             str: The absolute url for the stop
         """
         return reverse("stops-detail", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        """Stop clean Method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the stop is not valid.
+
+        """
+        super().clean()
+        from stops.validation import StopValidation
+
+        StopValidation(instance=self)
+
+    def update_status_based_on_times(self) -> None:
+        if self.arrival_time is not None and self.departure_time is not None:
+            self.status = StatusChoices.COMPLETED
+        elif self.arrival_time is not None:
+            self.status = StatusChoices.IN_PROGRESS
+        else:
+            self.status = StatusChoices.NEW
 
 
 class StopComment(GenericModel):

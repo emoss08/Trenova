@@ -140,6 +140,14 @@ class Customer(GenericModel):  # type: ignore
         """
         return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer instance
+
+        Returns:
+            str: Customer url
+        """
+        return reverse("customer:customer-detail", kwargs={"pk": self.pk})
+
     @cached_property
     def get_address_combination(self) -> str:
         """
@@ -163,14 +171,6 @@ class Customer(GenericModel):  # type: ignore
             str: String representation of the customer address.
         """
         return f"{self.city}, {self.state} {self.zip_code}"
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer instance
-
-        Returns:
-            str: Customer url
-        """
-        return reverse("customer:customer-detail", kwargs={"pk": self.pk})
 
     def update_customer(self, **kwargs: Any) -> None:
         """Updates customer information
@@ -335,6 +335,14 @@ class CustomerEmailProfile(GenericModel):
         """
         return textwrap.wrap(f"{self.name}", 40)[0]
 
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer email profile instance
+
+        Returns:
+            str: Customer email profile url
+        """
+        return reverse("billing:customer-email-profile", kwargs={"pk": self.pk})
+
     def update_customer_email_profile(self, **kwargs: Any) -> None:
         """Updates customer email profile information
 
@@ -344,14 +352,6 @@ class CustomerEmailProfile(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer email profile instance
-
-        Returns:
-            str: Customer email profile url
-        """
-        return reverse("billing:customer-email-profile", kwargs={"pk": self.pk})
 
 
 class CustomerRuleProfile(GenericModel):
@@ -401,6 +401,14 @@ class CustomerRuleProfile(GenericModel):
         """
         return textwrap.wrap(f"{self.name}", 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer rule profile instance
+
+        Returns:
+            str: Customer rule profile url
+        """
+        return reverse("customer-rule-profile", kwargs={"pk": self.pk})
+
     @atomic
     def update_customer_rule_profile(self, **kwargs: Any) -> None:
         """Updates customer rule profile information
@@ -411,14 +419,6 @@ class CustomerRuleProfile(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer rule profile instance
-
-        Returns:
-            str: Customer rule profile url
-        """
-        return reverse("customer-rule-profile", kwargs={"pk": self.pk})
 
 
 class CustomerContact(GenericModel):
@@ -492,15 +492,13 @@ class CustomerContact(GenericModel):
         """
         return textwrap.wrap(f"{self.customer.code} - {self.name}", 50)[0]
 
-    def update_customer_contact(self, **kwargs: Any) -> None:
-        """Updates customer contact information
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer contact instance
 
-        Args:
-            **kwargs (Any): Customer contact information to update
+        Returns:
+            str: Customer contact url
         """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
+        return reverse("billing:customer-contact-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Customer Contact clean method
@@ -522,13 +520,15 @@ class CustomerContact(GenericModel):
                 }
             )
 
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer contact instance
+    def update_customer_contact(self, **kwargs: Any) -> None:
+        """Updates customer contact information
 
-        Returns:
-            str: Customer contact url
+        Args:
+            **kwargs (Any): Customer contact information to update
         """
-        return reverse("billing:customer-contact-detail", kwargs={"pk": self.pk})
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.save()
 
 
 class CustomerFuelProfile(GenericModel):
@@ -688,6 +688,14 @@ class CustomerFuelProfile(GenericModel):
         """
         return textwrap.wrap(f"{self.customer}", 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular customer fuel profile instance
+
+        Returns:
+            str: Customer fuel profile url
+        """
+        return reverse("billing:customer-fuel-profile", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """CustomerFuelProfile clean method
 
@@ -709,14 +717,6 @@ class CustomerFuelProfile(GenericModel):
                 },
                 code="required",
             )
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer fuel profile instance
-
-        Returns:
-            str: Customer fuel profile url
-        """
-        return reverse("billing:customer-fuel-profile", kwargs={"pk": self.pk})
 
 
 class CustomerFuelTable(GenericModel):

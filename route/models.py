@@ -188,6 +188,24 @@ class RouteControl(GenericModel):
         ordering = ("organization",)
         db_table = "route_control"
 
+    def __str__(self) -> str:
+        """Route Control string representation
+
+        Returns:
+            str: Route Control string representation
+        """
+        return textwrap.shorten(
+            f"Route Control for {self.organization.name}", width=30, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """Route Control absolute URL
+
+        Returns:
+            str: Route Control absolute URL
+        """
+        return reverse("route:control-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Route Control clean method
 
@@ -226,21 +244,3 @@ class RouteControl(GenericModel):
                 },
                 code="invalid",
             )
-
-    def __str__(self) -> str:
-        """Route Control string representation
-
-        Returns:
-            str: Route Control string representation
-        """
-        return textwrap.shorten(
-            f"Route Control for {self.organization.name}", width=30, placeholder="..."
-        )
-
-    def get_absolute_url(self) -> str:
-        """Route Control absolute URL
-
-        Returns:
-            str: Route Control absolute URL
-        """
-        return reverse("route:control-detail", kwargs={"pk": self.pk})

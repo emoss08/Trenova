@@ -180,6 +180,13 @@ class Integration(GenericModel):
         """
         return textwrap.wrap(self.integration_vendor.name, 50)[0]  # type: ignore
 
+    def get_absolute_url(self) -> str:
+        """
+        Returns:
+            str: Absolute URL for the Integration
+        """
+        return reverse("integrations-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Clean method to validate the Integration Model
 
@@ -231,13 +238,6 @@ class Integration(GenericModel):
 
         if errors:
             raise ValidationError(errors)
-
-    def get_absolute_url(self) -> str:
-        """
-        Returns:
-            str: Absolute URL for the Integration
-        """
-        return reverse("integrations-detail", kwargs={"pk": self.pk})
 
 
 class GoogleAPI(GenericModel):

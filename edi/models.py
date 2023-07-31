@@ -51,7 +51,6 @@ class EDISegmentField(GenericModel):
     format = models.CharField(
         _("Format"),
         max_length=30,
-        null=True,
         blank=True,
         help_text=_(
             "The format of the data in this field (e.g. 'MMDDYYYY' for a date field)"
@@ -73,6 +72,18 @@ class EDISegmentField(GenericModel):
         verbose_name = _("EDI Segment Field")
         verbose_name_plural = _("EDI Segment Fields")
         ordering = ["position"]
+
+    def __str__(self) -> str:
+        """EDI Segment Field as string
+
+        Returns:
+            str: String representation of the EDI Segment Field
+        """
+        return textwrap.shorten(
+            f"{self.edi_segment.code} - {self.model_field}",
+            width=50,
+            placeholder="...",
+        )
 
 
 class EDISegment(GenericModel):
@@ -191,7 +202,6 @@ class EDIBillingProfile(GenericModel):
         max_length=255,
         help_text=_("The URL to send the EDI file to"),
         blank=True,
-        null=True,
     )
     username = models.CharField(
         _("Username"),

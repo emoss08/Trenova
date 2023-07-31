@@ -14,18 +14,18 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import Q, F
+from django.db.models import F, Q
+from django.db.models.aggregates import Sum
 from django.utils import timezone
+
 from billing.models import BillingHistory
 from customer.types import (
-    CustomerOnTimePerfResponse,
     CustomerDiffResponse,
-    OrderDiffResponse,
     CustomerMileageResponse,
+    CustomerOnTimePerfResponse,
+    OrderDiffResponse,
 )
 from order.models import Order
-from django.db.models.aggregates import Sum
-
 from stops.models import Stop
 from utils.models import StatusChoices
 
