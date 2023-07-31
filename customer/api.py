@@ -24,10 +24,10 @@ from rest_framework.response import Response
 from core.permissions import CustomObjectPermissions
 from customer import models, serializers
 from customer.selectors import (
+    calculate_customer_total_miles,
+    get_customer_on_time_performance_diff,
     get_customer_order_diff,
     get_customer_revenue_diff,
-    get_customer_on_time_performance_diff,
-    calculate_customer_total_miles,
 )
 
 
@@ -127,7 +127,7 @@ class CustomerBillingProfileViewSet(viewsets.ModelViewSet):
 
     queryset = models.CustomerBillingProfile.objects.all()
     serializer_class = serializers.CustomerBillingProfileSerializer
-    filterset_fields = ("is_active", "customer", "rule_profile")
+    filterset_fields = ("status", "customer", "rule_profile")
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.CustomerBillingProfile]:
@@ -135,7 +135,7 @@ class CustomerBillingProfileViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
-            "is_active",
+            "status",
             "rule_profile_id",
             "email_profile_id",
             "customer_id",
