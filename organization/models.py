@@ -23,6 +23,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from localflavor.us.models import USStateField, USZipCodeField
@@ -290,6 +291,30 @@ class Organization(TimeStampedModel):
             str: The absolute url for the organization.
         """
         return reverse("organizations-detail", kwargs={"pk": self.pk})
+
+    @cached_property
+    def get_address(self) -> str:
+        """
+        Returns:
+            str: The address of the organization.
+        """
+        return f"{self.address_line_1} {self.address_line_2}"
+
+    @cached_property
+    def get_city_state_zip(self) -> str:
+        """
+        Returns:
+            str: The city, state, and zip code of the organization.
+        """
+        return f"{self.city}, {self.state} {self.zip_code}"
+
+    @cached_property
+    def get_full_address(self) -> str:
+        """
+        Returns:
+            str: The full address of the organization.
+        """
+        return f"{self.get_address} {self.get_city_state_zip}"
 
 
 class Depot(TimeStampedModel):
@@ -1022,6 +1047,15 @@ class TableChangeAlert(TimeStampedModel):
 
         return textwrap.wrap(self.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """TableChangeAlert absolute URL
+
+        Returns:
+            str: The absolute url for the table change alert.
+        """
+
+        return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """TableChangeAlert clean method.
 
@@ -1067,15 +1101,6 @@ class TableChangeAlert(TimeStampedModel):
                 code="invalid",
             )
         super().clean()
-
-    def get_absolute_url(self) -> str:
-        """TableChangeAlert absolute URL
-
-        Returns:
-            str: The absolute url for the table change alert.
-        """
-
-        return reverse("table-change-alerts-detail", kwargs={"pk": self.pk})
 
 
 class NotificationType(TimeStampedModel):
@@ -1250,6 +1275,14 @@ class NotificationSetting(TimeStampedModel):
             placeholder="...",
         )
 
+    def get_absolute_url(self) -> str:
+        """NotificationSetting absolute URL
+
+        Returns:
+            str: The absolute url for the notification setting.
+        """
+        return reverse("notification-settings-detail", kwargs={"pk": self.pk})
+
     def get_email_recipients(self) -> list[str]:
         """Get the email recipients as a list of strings.
 
@@ -1259,11 +1292,3 @@ class NotificationSetting(TimeStampedModel):
         return [
             email.strip() for email in self.email_recipients.split(",") if email.strip()
         ]
-
-    def get_absolute_url(self) -> str:
-        """NotificationSetting absolute URL
-
-        Returns:
-            str: The absolute url for the notification setting.
-        """
-        return reverse("notification-settings-detail", kwargs={"pk": self.pk})

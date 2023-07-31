@@ -294,6 +294,14 @@ class LocationContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """LocationContact absolute URL
+
+        Returns:
+            str: LocationContact absolute URL
+        """
+        return reverse("location-contacts-detail", kwargs={"pk": self.pk})
+
     def update_location_contact(self, **kwargs: Any) -> None:
         """Update LocationContact
 
@@ -303,14 +311,6 @@ class LocationContact(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """LocationContact absolute URL
-
-        Returns:
-            str: LocationContact absolute URL
-        """
-        return reverse("location-contacts-detail", kwargs={"pk": self.pk})
 
 
 class LocationComment(GenericModel):
@@ -368,6 +368,14 @@ class LocationComment(GenericModel):
         """
         return textwrap.wrap(self.comment, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """LocationComment absolute URL
+
+        Returns:
+            str: LocationComment absolute URL
+        """
+        return reverse("location-comments-detail", kwargs={"pk": self.pk})
+
     def update_location_comment(self, **kwargs: Any) -> None:
         """Update LocationComment
 
@@ -377,11 +385,3 @@ class LocationComment(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """LocationComment absolute URL
-
-        Returns:
-            str: LocationComment absolute URL
-        """
-        return reverse("location-comments-detail", kwargs={"pk": self.pk})

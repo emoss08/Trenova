@@ -190,6 +190,15 @@ class Worker(GenericModel):  # type:ignore
             self.code = services.generate_worker_code(instance=self)
         super().save(*args, **kwargs)
 
+    def get_absolute_url(self) -> str:
+        """Worker absolute url
+
+        Returns:
+            str: Worker absolute url
+        """
+
+        return reverse("worker:detail", kwargs={"pk": self.pk})
+
     @cached_property
     def get_full_name(self) -> str:
         """Worker full name
@@ -212,15 +221,6 @@ class Worker(GenericModel):  # type:ignore
             f"{self.address_line_1} {self.address_line_2}"
             f" {self.city} {self.state} {self.zip_code}"
         )
-
-    def get_absolute_url(self) -> str:
-        """Worker absolute url
-
-        Returns:
-            str: Worker absolute url
-        """
-
-        return reverse("worker:detail", kwargs={"pk": self.pk})
 
 
 class WorkerProfile(GenericModel):
@@ -373,6 +373,15 @@ class WorkerProfile(GenericModel):
             f"{self.worker.first_name} {self.worker.last_name} Profile", 50
         )[0]
 
+    def get_absolute_url(self) -> str:
+        """Worker Profile absolute url
+
+        Returns:
+            str: Worker Profile absolute url
+        """
+
+        return reverse("worker:profile-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Worker Profile clean method
 
@@ -441,15 +450,6 @@ class WorkerProfile(GenericModel):
             )
 
         validate_worker_regulatory_information(self)
-
-    def get_absolute_url(self) -> str:
-        """Worker Profile absolute url
-
-        Returns:
-            str: Worker Profile absolute url
-        """
-
-        return reverse("worker:profile-detail", kwargs={"pk": self.pk})
 
     def update_worker_profile(self, **kwargs):
         """Update the worker profile
@@ -537,6 +537,15 @@ class WorkerContact(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Worker Contact absolute url
+
+        Returns:
+            str: Worker Contact absolute url
+        """
+
+        return reverse("worker:contact-detail", kwargs={"pk": self.pk})
+
     def update_worker_contact(self, **kwargs: Any) -> None:
         """Update the location contact
 
@@ -550,15 +559,6 @@ class WorkerContact(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """Worker Contact absolute url
-
-        Returns:
-            str: Worker Contact absolute url
-        """
-
-        return reverse("worker:contact-detail", kwargs={"pk": self.pk})
 
 
 class WorkerComment(GenericModel):
@@ -621,6 +621,15 @@ class WorkerComment(GenericModel):
 
         return textwrap.wrap(self.comment, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Worker Comment absolute url
+
+        Returns:
+            str: Worker Comment absolute url
+        """
+
+        return reverse("worker:comment-detail", kwargs={"pk": self.pk})
+
     def update_worker_comment(self, **kwargs: Any) -> None:
         """Update the worker comment
 
@@ -634,15 +643,6 @@ class WorkerComment(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """Worker Comment absolute url
-
-        Returns:
-            str: Worker Comment absolute url
-        """
-
-        return reverse("worker:comment-detail", kwargs={"pk": self.pk})
 
 
 class WorkerTimeAway(GenericModel):

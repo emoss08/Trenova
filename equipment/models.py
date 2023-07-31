@@ -198,6 +198,14 @@ class EquipmentTypeDetail(GenericModel):
         """
         return textwrap.wrap(self.equipment_type.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Equipment Type Detail absolute URL
+
+        Returns:
+            str: Absolute URL of the Equipment Type Detail Model
+        """
+        return reverse("equipment-type-details", kwargs={"pk": self.pk})
+
     def update_details(self, **kwargs: Any) -> None:
         """Updates the Equipment Type Detail Model
 
@@ -210,14 +218,6 @@ class EquipmentTypeDetail(GenericModel):
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-    def get_absolute_url(self) -> str:
-        """Equipment Type Detail absolute URL
-
-        Returns:
-            str: Absolute URL of the Equipment Type Detail Model
-        """
-        return reverse("equipment-type-details", kwargs={"pk": self.pk})
 
 
 class EquipmentManufacturer(GenericModel):
@@ -500,6 +500,14 @@ class Tractor(GenericModel):
         """
         return textwrap.wrap(self.code, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Tractor absolute URL
+
+        Returns:
+            str: Absolute URL of the Tractor Model
+        """
+        return reverse("tractor-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Tractor Model clean method
 
@@ -529,14 +537,6 @@ class Tractor(GenericModel):
 
         if errors:
             raise ValidationError(errors)
-
-    def get_absolute_url(self) -> str:
-        """Tractor absolute URL
-
-        Returns:
-            str: Absolute URL of the Tractor Model
-        """
-        return reverse("tractor-detail", kwargs={"pk": self.pk})
 
 
 class Trailer(GenericModel):
@@ -695,14 +695,6 @@ class Trailer(GenericModel):
         help_text=_("Lease expiration date of the trailer."),
     )
 
-    def __str__(self) -> str:
-        """String representation of the Trailer model
-
-        Returns:
-            str: String representation of the Trailer model
-        """
-        return textwrap.shorten(self.code, width=50, placeholder="...")
-
     class Meta:
         """
         Tractor Model Metaclass
@@ -718,6 +710,22 @@ class Trailer(GenericModel):
                 name="unique_trailer_code_organization",
             )
         ]
+
+    def __str__(self) -> str:
+        """String representation of the Trailer model
+
+        Returns:
+            str: String representation of the Trailer model
+        """
+        return textwrap.shorten(self.code, width=50, placeholder="...")
+
+    def get_absolute_url(self) -> str:
+        """Trailer absolute URL
+
+        Returns:
+            str: Absolute URL of the trailer Model
+        """
+        return reverse("trailer-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Clean method for the Trailer model
@@ -745,14 +753,6 @@ class Trailer(GenericModel):
                 },
                 code="invalid",
             )
-
-    def get_absolute_url(self) -> str:
-        """Trailer absolute URL
-
-        Returns:
-            str: Absolute URL of the trailer Model
-        """
-        return reverse("trailer-detail", kwargs={"pk": self.pk})
 
 
 class EquipmentMaintenancePlan(GenericModel):
@@ -838,6 +838,14 @@ class EquipmentMaintenancePlan(GenericModel):
         """
         return textwrap.wrap(self.name, 50)[0]
 
+    def get_absolute_url(self) -> str:
+        """Equipment Maintenance Plan absolute URL
+
+        Returns:
+            str: Absolute URL of the EquipmentMaintenancePlan Model
+        """
+        return reverse("equipment-maintenance-plans-detail", kwargs={"pk": self.pk})
+
     def clean(self) -> None:
         """Equipment Maintenance Plan clean method
 
@@ -871,11 +879,3 @@ class EquipmentMaintenancePlan(GenericModel):
 
         if errors:
             raise ValidationError(errors)
-
-    def get_absolute_url(self) -> str:
-        """Equipment Maintenance Plan absolute URL
-
-        Returns:
-            str: Absolute URL of the EquipmentMaintenancePlan Model
-        """
-        return reverse("equipment-maintenance-plans-detail", kwargs={"pk": self.pk})

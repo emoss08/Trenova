@@ -549,6 +549,13 @@ class Order(GenericModel):  # type:ignore
         default=True,
         help_text=_("Determines whether order will be auto-rated by entered rate."),
     )
+    current_suffix = models.CharField(
+        _("Current Suffix"),
+        max_length=2,
+        default="",
+        help_text=_("Current suffix for order in the BillingQueue."),
+        blank=True,
+    )
 
     class Meta:
         """
@@ -573,20 +580,6 @@ class Order(GenericModel):  # type:ignore
             str: String representation of the Order
         """
         return textwrap.wrap(self.pro_number, 10)[0]
-
-    def clean(self) -> None:
-        """Order clean method
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If the Order is not valid
-        """
-        from order.validation import OrderValidation
-
-        OrderValidation(order=self)
-        super().clean()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         from dispatch.services import transfer_rate_details
@@ -623,6 +616,7 @@ class Order(GenericModel):  # type:ignore
             self.hazmat = self.commodity.hazmat
 
         self.sub_total = self.calculate_total()
+        self.calculate_other_charge_amount()
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -632,6 +626,20 @@ class Order(GenericModel):  # type:ignore
             str: Absolute url for the Order
         """
         return reverse("order-detail", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        """Order clean method
+
+        Returns:
+            None
+
+        Raises:
+            ValidationError: If the Order is not valid
+        """
+        from order.validation import OrderValidation
+
+        OrderValidation(order=self)
+        super().clean()
 
     def calculate_total(self) -> Any | decimal.Decimal:
         """Calculate the sub_total for an order
@@ -657,6 +665,14 @@ class Order(GenericModel):  # type:ignore
         ):
             return self.freight_charge_amount * self.mileage + self.other_charge_amount
         return self.freight_charge_amount
+
+    def calculate_other_charge_amount(self):
+        if other_charges := self.additional_charges.all():
+            self.other_charge_amount = sum(
+                other_charge.charge_amount for other_charge in other_charges
+            )
+        else:
+            self.other_charge_amount = 0
 
 
 class OrderDocumentation(GenericModel):
