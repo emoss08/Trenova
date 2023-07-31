@@ -349,3 +349,4 @@ def transfer_order_details(obj: models.BillingHistory | models.BillingQueue) -> 
     obj.other_charge_total = order.other_charge_amount
     obj.freight_charge_amount = order.freight_charge_amount
     obj.total_amount = order.sub_total
+    obj.user = obj.user or order.entered_by

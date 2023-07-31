@@ -45,47 +45,58 @@ logger = logging.getLogger("billing_client")
 def generate_invoice_number(
     *, instance: models.BillingQueue, is_credit_memo: bool = False
 ) -> str:
-    """
-    Generate an invoice number for a given BillingQueue instance.
+    """Generate an invoice number based on a BillingQueue instance and an optional boolean flag
+    for credit memos.
 
-    This function generates an invoice number for a given BillingQueue instance, taking into
-    account whether the instance is a credit memo or not. For non-credit memos, the function
-    increments the invoice number with a letter suffix (A, B, C, etc.) for each new invoice
-    related to the same order. For credit memos, it assigns the invoice number of the latest
-    invoice related to the same order.
+    The invoice number generated depends on 3 cases:
+        - When the `is_credit_memo` is True, it re-uses the latest invoice number of the order
+          associated with the provided `BillingQueue` instance.
+        - When the order associated with the provided `BillingQueue` instance already exists in
+          the billing queue and has a current suffix, the function adds a new suffix (or extends it
+          in case the suffixes list is exceeded) to the base invoice number.
+        - When none of the above cases apply, the function sets the `BillingQueue` instance's
+          invoice number to the base invoice number only.
 
     Args:
-        instance (models.BillingQueue): The instance for which to generate an invoice number.
-        is_credit_memo (bool, optional): Flag indicating whether the instance is a credit memo.
-            Defaults to False.
+        instance (models.BillingQueue): The BillingQueue instance for which the invoice number is to be generated.
+        is_credit_memo (bool, optional): A flag to indicate if a credit memo is being created. Defaults to False.
 
     Returns:
         str: The generated invoice number.
-
-    Time Complexity: O(1) - Constant time is required to generate the invoice number,
-        assuming that database lookups take constant time.
     """
     prefix = instance.organization.invoice_control.invoice_number_prefix
-    order_pro_number = instance.order.pro_number
-    if instance.order.billing_queue.exists():
-        latest_invoice = instance.order.billing_queue.latest("created")
+    order = instance.order
+    suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-        if is_credit_memo:
-            instance.invoice_number = latest_invoice.invoice_number
-        else:
-            suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    # Remove 'ORD' from pro_number
+    pro_number = order.pro_number.replace("ORD", "")
 
-            if latest_invoice.invoice_number[-1] in suffixes:
-                next_suffix = suffixes[
-                    suffixes.index(latest_invoice.invoice_number[-1]) + 1
-                ]
-                instance.invoice_number = (
-                    latest_invoice.invoice_number[:-1] + next_suffix
-                )
+    base_invoice_number = f"{prefix}{pro_number}"
+
+    if is_credit_memo:
+        # Here we are re-using the latest invoice number for the credit memo
+        latest_invoice = order.billing_queue.latest("created")
+        instance.invoice_number = latest_invoice.invoice_number
+    elif order.billing_queue.exists():
+        if order.current_suffix:
+            # Get the next suffix in the list
+            next_suffix_index = (suffixes.index(order.current_suffix) + 1) % len(
+                suffixes
+            )
+            next_suffix = suffixes[next_suffix_index]
+
+            # Handle the case when the suffix exceeds the list
+            if next_suffix_index == 0:
+                order.current_suffix += suffixes[0]
             else:
-                instance.invoice_number = f"{latest_invoice.invoice_number}A"
+                order.current_suffix = next_suffix
+        else:
+            order.current_suffix = "A"
+        order.save()
+
+        instance.invoice_number = f"{base_invoice_number}{order.current_suffix}"
     else:
-        instance.invoice_number = f"{prefix}{order_pro_number}"
+        instance.invoice_number = base_invoice_number
 
     return instance.invoice_number
 
