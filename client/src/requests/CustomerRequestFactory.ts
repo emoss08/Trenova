@@ -19,15 +19,6 @@ import axios from "@/lib/AxiosConfig";
 import { Customer, CustomerOrderMetrics } from "@/types/apps/customer";
 
 /**
- * Fetches customers from the server.
- * @returns A promise that resolves to an array of customers.
- */
-export async function getCustomers(): Promise<Customer[]> {
-  const response = await axios.get("/customers/");
-  return response.data.results;
-}
-
-/**
  * Fetches the details of the customer with the specified ID.
  * @param id The ID of the customer to fetch details for.
  * @returns A promise that resolves to a customer details.
