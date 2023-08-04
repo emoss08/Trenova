@@ -58,8 +58,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
         )
         total_mile_metrics = calculate_customer_total_miles(customer_id=customer.id)
 
-        print(total_mile_metrics)
-
         return Response(
             {
                 "total_order_metrics": total_orders_metrics,
