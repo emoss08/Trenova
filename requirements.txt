@@ -47,6 +47,7 @@ weasyprint==59.0
 whitenoise==6.5.0
 xhtml2pdf==0.2.11
 pandas==2.0.3
-reportlab==4.0.4
+reportlab<=4.0.0
 django-tenants==3.5.0
 pyx12==2.3.3
+django-compressor==4.4

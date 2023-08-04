@@ -1,4 +1,4 @@
 # Made this just for isort
 [tool.isort]
 profile = "black"
-skip = [".venv", ".git", "migrations", "rvenv", "client", ".tox"]
+skip = ["venv", ".git", "migrations", ".venv", "client", ".tox"]
