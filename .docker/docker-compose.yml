@@ -1,4 +1,4 @@
-version: '3'
+version: '4'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
@@ -68,25 +68,11 @@ services:
       PGADMIN_DEFAULT_PASSWORD: root
     restart: always
 
-  redis:
-    image: redis:latest
-    container_name: monta-cache
-    volumes:
-      - "./.data:/data"
-    environment:
-      REDIS_PASSWORD: redis
+  monta_redis_stack:
+    image: redis/redis-stack:latest
+    container_name: monta-cache-stack
     ports:
       - "6379:6379"
-    restart: always
-    expose:
-      - "6379"
-
-  redis-slave:
-    container_name: monta-cache-slave
-    image: redis:latest
-    ports:
-      - "6380:6379"
-    command: redis-server --slaveof monta-cache 6379
-    depends_on:
-      - redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     restart: always
