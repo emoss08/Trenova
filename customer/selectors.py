@@ -14,8 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import F, Q
-from django.db.models.aggregates import Sum
+from django.db.models import Case, F, FloatField, IntegerField, Q, When
+from django.db.models.aggregates import Count, Sum
 from django.utils import timezone
 
 from billing.models import BillingHistory
@@ -31,20 +31,44 @@ from utils.models import StatusChoices
 
 
 def get_customer_order_diff(*, customer_id: str) -> OrderDiffResponse:
-    """Calculates and returns the total order count for a customer for the current month,
-    the percentage difference in order count from the last month, and the month before last.
+    """Calculate and return the percentage difference in the number of orders a customer made
+    between the current month, previous month and the month before the previous month.
 
-    Function takes a customer's ID, filters out the orders placed by the customer in each month,
-    and calculates the percentage difference between the order counts of these months.
+    This function first counts the total number of orders a customer has made in the current,
+    previous, and month before previous month.
+
+    It then calculates the percentage difference in number of orders between the months:
+    - Percent change between the current month and the previous month
+    - Percent change between the previous month and the month before previous month
 
     Args:
-        customer_id (str): A unique identifier of a customer, used to filter the orders for the specific customer.
+        customer_id (str): The ID of the customer.
 
     Returns:
-        OrderDiffResponse:
-            total_orders (int): The total order count for the current month.
-            last_month_diff (int): The percentage difference in order count from the last month.
-            month_before_last_diff (int): The percentage difference in order count from the month before last.
+        OrderDiffResponse: A dictionary containing the structure as follows:
+            {
+              "total_orders": int,
+              "last_month_diff": float,
+              "month_before_last_diff": float,
+            }
+
+    Note:
+        - The "last_month_diff" and "month_before_last_diff" percentages are calculated with
+          last month and month before last month as the base respectively. If there were no
+          orders in the base month, the percentage difference is considered 0.
+
+    Example:
+
+        >> get_customer_order_diff(customer_id='123')
+        >> {
+          "total_orders": 50,
+          "last_month_diff": 25.0,
+          "month_before_last_diff": 33.33,
+        }
+
+        The response signifies that the customer 123 has made 50 orders in the current month,
+        which is a 25% increase compared to the previous month and there was a 33.33% increase
+        in the number of orders in the previous month compared to the month before previous month.
     """
     now = timezone.now()
     this_month = now.month
@@ -54,40 +78,58 @@ def get_customer_order_diff(*, customer_id: str) -> OrderDiffResponse:
     month_before_last = last_month - 1 if last_month != 1 else 12
     month_before_last_year = last_month_year if last_month != 1 else last_month_year - 1
 
-    this_month_orders_count = Order.objects.filter(
-        customer_id=customer_id, created__month=this_month, created__year=this_year
-    ).count()
+    order_counts = (
+        Order.objects.filter(customer_id=customer_id)
+        .annotate(
+            this_month_count=Count(
+                Case(
+                    When(created__month=this_month, created__year=this_year, then=1),
+                    output_field=IntegerField(),
+                )
+            ),
+            last_month_count=Count(
+                Case(
+                    When(
+                        created__month=last_month, created__year=last_month_year, then=1
+                    ),
+                    output_field=IntegerField(),
+                )
+            ),
+            month_before_last_count=Count(
+                Case(
+                    When(
+                        created__month=month_before_last,
+                        created__year=month_before_last_year,
+                        then=1,
+                    ),
+                    output_field=IntegerField(),
+                )
+            ),
+        )
+        .values("this_month_count", "last_month_count", "month_before_last_count")
+        .first()
+    )
 
-    last_month_orders_count = Order.objects.filter(
-        customer_id=customer_id,
-        created__month=last_month,
-        created__year=last_month_year,
-    ).count()
-
-    month_before_last_orders_count = Order.objects.filter(
-        customer_id=customer_id,
-        created__month=month_before_last,
-        created__year=month_before_last_year,
-    ).count()
+    this_month_orders_count = order_counts["this_month_count"]
+    last_month_orders_count = order_counts["last_month_count"]
+    month_before_last_orders_count = order_counts["month_before_last_count"]
 
     # Calculate differences
-    if last_month_orders_count > 0:
-        last_month_diff = (
-            (this_month_orders_count - last_month_orders_count)
-            / last_month_orders_count
-            * 100
-        )
-    else:
-        last_month_diff = 0
+    last_month_diff = (
+        (this_month_orders_count - last_month_orders_count)
+        / last_month_orders_count
+        * 100
+        if last_month_orders_count > 0
+        else 0
+    )
 
-    if month_before_last_orders_count > 0:
-        month_before_last_diff = (
-            (last_month_orders_count - month_before_last_orders_count)
-            / month_before_last_orders_count
-            * 100
-        )
-    else:
-        month_before_last_diff = 0
+    month_before_last_diff = (
+        (last_month_orders_count - month_before_last_orders_count)
+        / month_before_last_orders_count
+        * 100
+        if month_before_last_orders_count > 0
+        else 0
+    )
 
     return {
         "total_orders": this_month_orders_count,
@@ -97,20 +139,44 @@ def get_customer_order_diff(*, customer_id: str) -> OrderDiffResponse:
 
 
 def get_customer_revenue_diff(*, customer_id: str) -> CustomerDiffResponse:
-    """Calculates the current month's revenue difference, and the percentage difference from the
-    last month and the month before for a customer based on the given customer id.
+    """Calculate and return the percentage difference in the total revenue generated from a
+    customer between the current month, previous month and the month before the previous month.
 
-    The function works by extracting the revenue for current month, last month and the month
-    before from BillingHistory and calculates the difference.
+    This function first sums up the total revenue a customer has generated in the current,
+    previous, and the month before the previous month.
+
+    It then calculates the percentage difference in revenue between the months:
+    - Percent change between the current month and the previous month
+    - Percent change between the previous month and the month before previous month
 
     Args:
-        customer_id (str): The unique identifier of a customer.
+        customer_id (str): The ID of the customer.
 
     Returns:
-        CustomerDiffResponse:
-            this_month_revenue (float): The revenue for the current month.
-            last_month_diff (float): The percentage difference in revenue from the last month.
-            month_before_last_diff (float): The percentage difference in revenue from the month before last.
+        CustomerDiffResponse: A dictionary with the following structure:
+            {
+              "total_revenue": float,
+              "last_month_diff": float,
+              "month_before_last_diff": float,
+            }
+
+    Note:
+        - The "last_month_diff" and "month_before_last_diff" percentages are calculated with
+          the revenue of last month and month before last month as the base respectively. If
+          there were no revenue in the base month, the percentage difference is considered 0.
+
+    Example:
+
+        >> get_customer_revenue_diff(customer_id='123')
+        >> {
+          "total_revenue": 5000.00,
+          "last_month_diff": 25.0,
+          "month_before_last_diff": 33.33,
+        }
+
+        The response signifies that the customer 123 has generated 5000.00 in revenue in the
+        current month which is a 25% increase compared to the previous month and there was a
+        33.33% increase in the revenue in the previous month compared to the month before previous month.
     """
     now = timezone.now()
     this_month = now.month
@@ -120,38 +186,58 @@ def get_customer_revenue_diff(*, customer_id: str) -> CustomerDiffResponse:
     month_before_last = last_month - 1 if last_month != 1 else 12
     month_before_last_year = last_month_year if last_month != 1 else last_month_year - 1
 
-    this_month_revenue = BillingHistory.objects.filter(
-        customer_id=customer_id, created__month=this_month, created__year=this_year
-    ).aggregate(total=Sum("total_amount"))["total"]
+    revenue_diffs = BillingHistory.objects.filter(customer_id=customer_id).aggregate(
+        this_month_revenue=Sum(
+            Case(
+                When(
+                    created__month=this_month,
+                    created__year=this_year,
+                    then="total_amount",
+                ),
+                output_field=FloatField(),
+            ),
+            default=0,
+        ),
+        last_month_revenue=Sum(
+            Case(
+                When(
+                    created__month=last_month,
+                    created__year=last_month_year,
+                    then="total_amount",
+                ),
+                output_field=FloatField(),
+            ),
+            default=0,
+        ),
+        month_before_last_revenue=Sum(
+            Case(
+                When(
+                    created__month=month_before_last,
+                    created__year=month_before_last_year,
+                    then="total_amount",
+                ),
+                output_field=FloatField(),
+            ),
+            default=0,
+        ),
+    )
 
-    last_month_revenue = BillingHistory.objects.filter(
-        customer_id=customer_id,
-        created__month=last_month,
-        created__year=last_month_year,
-    ).aggregate(total=Sum("total_amount"))["total"]
+    this_month_revenue = revenue_diffs["this_month_revenue"] or 0
+    last_month_revenue = revenue_diffs["last_month_revenue"] or 0
+    month_before_last_revenue = revenue_diffs["month_before_last_revenue"] or 0
 
-    month_before_last_revenue = BillingHistory.objects.filter(
-        customer_id=customer_id,
-        created__month=month_before_last,
-        created__year=month_before_last_year,
-    ).aggregate(total=Sum("total_amount"))["total"]
-
-    # Calculate differences
-    if last_month_revenue:
-        last_month_diff = (
-            (this_month_revenue - last_month_revenue) / last_month_revenue * 100
-        )
-    else:
-        last_month_diff = 0
-
-    if month_before_last_revenue:
-        month_before_last_diff = (
-            (last_month_revenue - month_before_last_revenue)
-            / month_before_last_revenue
-            * 100
-        )
-    else:
-        month_before_last_diff = 0
+    last_month_diff = (
+        (this_month_revenue - last_month_revenue) / last_month_revenue * 100
+        if last_month_revenue
+        else 0
+    )
+    month_before_last_diff = (
+        (last_month_revenue - month_before_last_revenue)
+        / month_before_last_revenue
+        * 100
+        if month_before_last_revenue
+        else 0
+    )
 
     return {
         "total_revenue": this_month_revenue,
@@ -163,118 +249,61 @@ def get_customer_revenue_diff(*, customer_id: str) -> CustomerDiffResponse:
 def get_customer_on_time_performance_diff(
     *, customer_id: str
 ) -> CustomerOnTimePerfResponse:
-    now = timezone.now()
-    this_month = now.month
-    this_year = now.year
-    last_month = this_month - 1 if this_month != 1 else 12
-    last_month_year = this_year if this_month != 1 else this_year - 1
+    """Calculate and return the on-time performance metrics difference for a customer between
+    the current month and the previous month. The function considers all stops the customer made.
 
-    def _calculate_stop_percentages(year, month):
-        # Get the stops for orders delivered for the particular customer in the given month and year.
-        customer_stops = Stop.objects.filter(
-            movement__order__customer_id=customer_id,
-            movement__order__status__in=[StatusChoices.COMPLETED, StatusChoices.BILLED],
-            arrival_time__year=year,
-            arrival_time__month=month,
-        )
+    This function first determines the total number of stops the customer made in the given months.
+    These stops are then categorized into three categories namely: On-time, Early and Late stops based
+    on appointment time windows.
 
-        # Get the total number of stops
-        total_stops = customer_stops.count()
+    - Early if the arrival time was before the start of the appointment time window.
+    - Late if the arrival time was after the end of the appointment time window.
+    - On-time if the arrival time was within the appointment time window.
 
-        if total_stops == 0:
-            return 0, 0, 0
-
-        # Get the number of stops that are on time
-        on_time_stops = customer_stops.filter(
-            Q(arrival_time__gte=F("appointment_time_window_start"))
-            & Q(arrival_time__lte=F("appointment_time_window_end"))
-        ).count()
-
-        # Get the number of stops that are early
-        early_stops = customer_stops.filter(
-            arrival_time__lt=F("appointment_time_window_start")
-        ).count()
-
-        # Get the number of stops that are late
-        late_stops = customer_stops.filter(
-            arrival_time__gt=F("appointment_time_window_end")
-        ).count()
-
-        # Calculate the percentage of on time stops, early stops and late stops
-        return (
-            on_time_stops / total_stops * 100,
-            early_stops / total_stops * 100,
-            late_stops / total_stops * 100,
-        )
-
-    # Calculate the on-time, early and late percentage for this month and the last month
-    (
-        this_month_on_time_percentage,
-        this_month_early_percentage,
-        this_month_late_percentage,
-    ) = _calculate_stop_percentages(this_year, this_month)
-
-    (
-        last_month_on_time_percentage,
-        last_month_early_percentage,
-        last_month_late_percentage,
-    ) = _calculate_stop_percentages(last_month_year, last_month)
-
-    # Calculate the difference in on-time, early and late performance
-    on_time_diff = (
-        (this_month_on_time_percentage - last_month_on_time_percentage)
-        / last_month_on_time_percentage
-        * 100
-        if last_month_on_time_percentage
-        else 0
-    )
-
-    early_diff = (
-        (this_month_early_percentage - last_month_early_percentage)
-        / last_month_early_percentage
-        * 100
-        if last_month_early_percentage
-        else 0
-    )
-
-    late_diff = (
-        (this_month_late_percentage - last_month_late_percentage)
-        / last_month_late_percentage
-        * 100
-        if last_month_late_percentage
-        else 0
-    )
-
-    return {
-        "this_month_on_time_percentage": this_month_on_time_percentage,
-        "last_month_on_time_percentage": last_month_on_time_percentage,
-        "on_time_diff": on_time_diff,
-        "this_month_early_percentage": this_month_early_percentage,
-        "last_month_early_percentage": last_month_early_percentage,
-        "early_diff": early_diff,
-        "this_month_late_percentage": this_month_late_percentage,
-        "last_month_late_percentage": last_month_late_percentage,
-        "late_diff": late_diff,
-    }
-
-
-def calculate_customer_total_miles(*, customer_id: str) -> CustomerMileageResponse:
-    """Calculates and returns a customer's total mileage for the current and previous month, and the difference
-    in percentage.
-
-    The function first determines the current month and year. It calculates the mileage for the customer's
-    completed or billed orders for this month. This process is repeated to calculate the mileage for the
-    last month as well.
-
-    This function subsequently calculates the percentage difference in mileage of this month and last month.
-    If no miles were logged last month, the function safely avoids a divide-by-zero error and sets the percentage difference as zero.
+    The function finally calculates the monthly percentage for each stop type (on-time, early, late)
+    for both months. It then calculates the difference in percentages between the current month
+    and the previous month for each stop type.
 
     Args:
-        customer_id (str): The unique identifier for a customer.
+        customer_id (str): The ID of the customer.
 
     Returns:
-        CustomerMileageResponse: A dictionary representing the customer's mileage data,
-        including total mileage for this month and last month, and the percentage difference in mileage.
+        CustomerOnTimePerfResponse: A dictionary containing the structure as follows:
+            {
+              "this_month_on_time_percentage": float,
+              "last_month_on_time_percentage": float,
+              "on_time_diff": float,
+              "this_month_early_percentage": float,
+              "last_month_early_percentage": float,
+              "early_diff": float,
+              "this_month_late_percentage": float,
+              "last_month_late_percentage": float,
+              "late_diff": float,
+            }
+
+    Note:
+        - The function does not handle corner cases like when the total stops is 0. In such cases, the
+        percentages will be 0.
+        - The function also does not handle cases where the last month does not have any on-time, early
+        or late stops. In such cases, the difference will be 0.
+
+    Example:
+
+        >> get_customer_on_time_performance_diff(customer_id='123')
+        >> {
+          "this_month_on_time_percentage": 75.0,
+          "last_month_on_time_percentage": 80.0,
+          "on_time_diff": -6.25,
+          "this_month_early_percentage": 15.0,
+          "last_month_early_percentage": 10.0,
+          "early_diff": 50.0,
+          "this_month_late_percentage": 10.0,
+          "last_month_late_percentage": 10.0,
+          "late_diff": 0.0,
+        }
+
+        The response signifies that customer 123 had an on-time performance of 75% in the current
+        month, down 6.25% from 80% in the previous month.
     """
     now = timezone.now()
     this_month = now.month
@@ -282,25 +311,162 @@ def calculate_customer_total_miles(*, customer_id: str) -> CustomerMileageRespon
     last_month = this_month - 1 if this_month != 1 else 12
     last_month_year = this_year if this_month != 1 else this_year - 1
 
-    this_month_miles = (
+    months = [
+        (this_year, this_month),
+        (last_month_year, last_month),
+    ]
+
+    stop_percentages = {}
+
+    for year, month in months:
+        customer_stops = Stop.objects.filter(
+            movement__order__customer_id=customer_id,
+            movement__order__status__in=[StatusChoices.COMPLETED, StatusChoices.BILLED],
+            arrival_time__year=year,
+            arrival_time__month=month,
+        )
+
+        total_stops = customer_stops.count()
+
+        if total_stops == 0:
+            stop_percentages[month] = {
+                "on_time_percentage": 0,
+                "early_percentage": 0,
+                "late_percentage": 0,
+            }
+            continue
+
+        on_time_stops = customer_stops.filter(
+            Q(arrival_time__gte=F("appointment_time_window_start"))
+            & Q(arrival_time__lte=F("appointment_time_window_end"))
+        ).count()
+
+        early_stops = customer_stops.filter(
+            arrival_time__lt=F("appointment_time_window_start")
+        ).count()
+
+        late_stops = customer_stops.filter(
+            arrival_time__gt=F("appointment_time_window_end")
+        ).count()
+
+        stop_percentages[month] = {
+            "on_time_percentage": on_time_stops / total_stops * 100,
+            "early_percentage": early_stops / total_stops * 100,
+            "late_percentage": late_stops / total_stops * 100,
+        }
+
+    this_month_data = stop_percentages[this_month]
+    last_month_data = stop_percentages[last_month]
+
+    return {
+        "this_month_on_time_percentage": this_month_data["on_time_percentage"],
+        "last_month_on_time_percentage": last_month_data["on_time_percentage"],
+        "on_time_diff": (
+            this_month_data["on_time_percentage"]
+            - last_month_data["on_time_percentage"]
+        )
+        / last_month_data["on_time_percentage"]
+        * 100
+        if last_month_data["on_time_percentage"]
+        else 0,
+        "this_month_early_percentage": this_month_data["early_percentage"],
+        "last_month_early_percentage": last_month_data["early_percentage"],
+        "early_diff": (
+            this_month_data["early_percentage"] - last_month_data["early_percentage"]
+        )
+        / last_month_data["early_percentage"]
+        * 100
+        if last_month_data["early_percentage"]
+        else 0,
+        "this_month_late_percentage": this_month_data["late_percentage"],
+        "last_month_late_percentage": last_month_data["late_percentage"],
+        "late_diff": (
+            this_month_data["late_percentage"] - last_month_data["late_percentage"]
+        )
+        / last_month_data["late_percentage"]
+        * 100
+        if last_month_data["late_percentage"]
+        else 0,
+    }
+
+
+def calculate_customer_total_miles(*, customer_id: str) -> CustomerMileageResponse:
+    """Calculate and return the total mileage and its percentage difference a customer has covered between the current
+    month and the previous month.
+
+    This function first sums up the total miles a customer has covered in their completed or billed orders in the current
+    and the previous month.
+
+    It then calculates the percentage difference in total miles covered between the current month and the previous month.
+
+    Args:
+        customer_id (str): The ID of the customer.
+
+    Returns:
+        CustomerMileageResponse: A dictionary with the following structure:
+            {
+              "this_month_miles": float,
+              "last_month_miles": float,
+              "mileage_diff": float,
+            }
+
+    Note:
+        - The "mileage_diff" percentage is calculated taking the mileage of the previous month as the base.
+          If there is no mileage covered in the previous month, the percentage difference is considered 0.
+
+    Example:
+
+        >> calculate_customer_total_miles(customer_id='123')
+        >> {
+          "this_month_miles": 1500.0,
+          "last_month_miles": 1200.0,
+          "mileage_diff": 25.0,
+        }
+
+        The response states that the customer 123 has covered 1500.0 miles in the current month, which is a
+        25% increase compared to the 1200.0 miles covered in the previous month.
+
+    """
+    now = timezone.now()
+    this_month = now.month
+    this_year = now.year
+    last_month = this_month - 1 if this_month != 1 else 12
+    last_month_year = this_year if this_month != 1 else this_year - 1
+
+    aggregated_miles = (
         Order.objects.filter(
             customer_id=customer_id,
             status__in=[StatusChoices.COMPLETED, StatusChoices.BILLED],
-            created__month=this_month,
-            created__year=this_year,
-        ).aggregate(total=Sum("mileage"))["total"]
-        or 0
+        )
+        .annotate(
+            current_month_miles=Sum(
+                Case(
+                    When(
+                        created__month=this_month,
+                        created__year=this_year,
+                        then=F("mileage"),
+                    ),
+                    default=0,
+                    output_field=FloatField(),
+                )
+            ),
+            previous_month_miles=Sum(
+                Case(
+                    When(
+                        created__month=last_month,
+                        created__year=last_month_year,
+                        then=F("mileage"),
+                    ),
+                    default=0,
+                    output_field=FloatField(),
+                )
+            ),
+        )
+        .first()
     )
 
-    last_month_miles = (
-        Order.objects.filter(
-            customer_id=customer_id,
-            status__in=[StatusChoices.COMPLETED, StatusChoices.BILLED],
-            created__month=last_month,
-            created__year=last_month_year,
-        ).aggregate(total=Sum("mileage"))["total"]
-        or 0
-    )
+    this_month_miles = aggregated_miles.current_month_miles or 0
+    last_month_miles = aggregated_miles.previous_month_miles or 0
 
     # Avoid divide by zero error
     if last_month_miles:
