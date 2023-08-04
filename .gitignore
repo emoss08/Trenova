@@ -41,3 +41,4 @@ kafka_listener_pid.txt
 machine_learning
 .coverage
 ts_models
+venv
