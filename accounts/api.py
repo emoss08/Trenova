@@ -128,6 +128,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 "is_staff",
                 "date_joined",
                 "online",
+                "session_key",
                 "profiles__created",
                 "profiles__modified",
                 "profiles__organization_id",
