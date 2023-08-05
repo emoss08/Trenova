@@ -18,6 +18,14 @@
 from typing import Any
 
 from customer import models
+from customer.selectors import (
+    calculate_customer_total_miles,
+    get_customer_credit_balance,
+    get_customer_on_time_performance_diff,
+    get_customer_order_diff,
+    get_customer_revenue_diff,
+    get_customer_shipment_metrics,
+)
 from utils.serializers import GenericSerializer
 
 
@@ -221,4 +229,24 @@ class CustomerSerializer(GenericSerializer):
 
         data = super().to_representation(instance)
         data["full_address"] = instance.get_address_combination
+
+        if self.context["request"].query_params.get("expand_metrics", False):
+            data["total_order_metrics"] = get_customer_order_diff(
+                customer_id=instance.id
+            )
+            data["total_revenue_metrics"] = get_customer_revenue_diff(
+                customer_id=instance.id
+            )
+            data["on_time_performance"] = get_customer_on_time_performance_diff(
+                customer_id=instance.id
+            )
+            data["total_mileage_metrics"] = calculate_customer_total_miles(
+                customer_id=instance.id
+            )
+            data["customer_shipment_metrics"] = get_customer_shipment_metrics(
+                customer_id=instance.id
+            )
+            data["credit_balance"] = get_customer_credit_balance(
+                customer_id=instance.id
+            )
         return data

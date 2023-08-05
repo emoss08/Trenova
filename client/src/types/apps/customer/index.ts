@@ -15,29 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-/** Customer Type */
-export type Customer = {
-  id: string;
-  organization: string;
-  status: string;
-  code: string;
-  name: string;
-  address_line_1: string;
-  address_line_2: string;
-  city: string;
-  zip_code: string;
-  has_customer_portal: boolean;
-  auto_mark_ready_to_bill: boolean;
-  created: string;
-  modified: string;
-};
-
-/** Customer Form Values Type */
-export type CustomerFormValues = Omit<
-  Customer,
-  "id" | "organization" | "created" | "modified"
->;
-
 /** Customer Order Metric Type */
 type TotalOrderMetricsType = {
   total_orders: number;
@@ -69,9 +46,37 @@ type TotalMileageMetricsType = {
   mileage_diff: number;
 };
 
-export type CustomerOrderMetrics = {
+/** Customer Shipment Metric Type */
+type CustomerShipmentMetrics = {
+  last_bill_date?: string | null;
+  last_shipment_date?: string | null;
+};
+
+/** Customer Type */
+export type Customer = {
+  id: string;
+  organization: string;
+  status: string;
+  code: string;
+  name: string;
+  address_line_1: string;
+  address_line_2: string;
+  city: string;
+  zip_code: string;
+  has_customer_portal: boolean;
+  auto_mark_ready_to_bill: boolean;
+  created: string;
+  modified: string;
+  customer_shipment_metrics: CustomerShipmentMetrics;
   total_order_metrics: TotalOrderMetricsType;
   total_revenue_metrics: TotalRevenueMetricsType;
   on_time_performance: PerformanceMetricType;
-  total_mile_metrics: TotalMileageMetricsType;
+  total_mileage_metrics: TotalMileageMetricsType;
+  credit_balance: number;
 };
+
+/** Customer Form Values Type */
+export type CustomerFormValues = Omit<
+  Customer,
+  "id" | "organization" | "created" | "modified"
+>;
