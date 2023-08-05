@@ -208,6 +208,11 @@ class Stop(GenericModel):
         if self.location and not self.address_line:
             self.address_line = self.location.get_address_combination
 
+        # Set ship_date in order if stop is first stop.
+        if self.sequence == 1 and self.arrival_time:
+            self.movement.order.ship_date = self.arrival_time.date()
+            self.movement.order.save()
+
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
 
