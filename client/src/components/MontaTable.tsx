@@ -25,6 +25,7 @@ import { DeleteRecordModal } from "@/components/DeleteRecordModal";
 import { API_URL } from "@/lib/utils";
 import { TableTopToolbar } from "@/components/table/TableTopToolbar";
 import { TableExportModal } from "./table/TableExportModal";
+import { useMantineTheme } from "@mantine/core";
 
 interface MontaTableProps<T extends Record<string, any>> {
   store: any;
@@ -53,6 +54,7 @@ export const MontaTable = <T extends Record<string, any>>({
   displayDeleteModal,
   name,
 }: MontaTableProps<T>) => {
+  const theme = useMantineTheme();
   const [pagination] = store.use("pagination");
   const [globalFilter, setGlobalFilter] = store.use("globalFilter");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
@@ -129,6 +131,14 @@ export const MontaTable = <T extends Record<string, any>>({
         mantineFilterSelectProps={{
           sx: { borderBottom: "unset", marginTop: "8px" },
           variant: "filled",
+        }}
+        mantineTableBodyCellProps={() => {
+          return {
+            sx: {
+              backgroundColor:
+                theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+            },
+          };
         }}
         renderTopToolbar={({ table }) => (
           <TableTopToolbar table={table} store={store} name={name} />
