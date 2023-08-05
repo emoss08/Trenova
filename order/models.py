@@ -441,7 +441,13 @@ class Order(GenericModel):  # type:ignore
         _("Billed Date"),
         null=True,
         blank=True,
-        help_text=_("Billed Date"),
+        help_text=_("Date order was billed to the Customer."),
+    )
+    ship_date = models.DateField(
+        _("Ship Date"),
+        null=True,
+        blank=True,
+        help_text=_("Date order was shipped."),
     )
     billed = models.BooleanField(
         _("Billed"),
