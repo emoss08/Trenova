@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
 from collections.abc import Sequence
 from typing import Any, TypeVar
 
@@ -24,6 +23,7 @@ from django.db.models import Model, QuerySet
 from django.forms import BaseModelForm
 from django.forms.models import ModelForm
 from django.http import HttpRequest
+
 
 # Model Generic Type
 _M = TypeVar("_M", bound=Model)
