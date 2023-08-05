@@ -25,13 +25,15 @@ import { CustomerMetricProps } from "@/components/customer/CustomerStats";
 
 const useStyles = createStyles((theme) => ({
   root: {
-    paddingBottom: rem(20),
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
   },
 
   value: {
     fontSize: rem(24),
     fontWeight: 700,
     lineHeight: 1,
+    color: theme.colorScheme === "dark" ? "white" : "black",
   },
 
   diff: {
@@ -53,19 +55,18 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export function OrdersMetric({ metrics }: CustomerMetricProps) {
+export function OrdersMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStyles();
 
   const DiffIcon =
-    metrics &&
-    metrics?.total_order_metrics.last_month_diff >
-      metrics.total_order_metrics.month_before_last_diff
+    customer?.total_order_metrics.last_month_diff >
+    customer.total_order_metrics.month_before_last_diff
       ? IconArrowUpRight
       : IconArrowDownRight;
 
   return (
     <>
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" className={classes.root}>
         <Group position="apart">
           <Text size="xs" color="dimmed" className={classes.title}>
             Total Orders
@@ -75,12 +76,12 @@ export function OrdersMetric({ metrics }: CustomerMetricProps) {
 
         <Group align="flex-end" spacing="xs" mt={25}>
           <Text className={classes.value}>
-            {metrics?.total_order_metrics.total_orders}
+            {customer?.total_order_metrics.total_orders}
           </Text>
           <Text
             color={
-              metrics?.total_order_metrics.last_month_diff >
-              metrics.total_order_metrics.month_before_last_diff
+              customer?.total_order_metrics.last_month_diff >
+              customer.total_order_metrics.month_before_last_diff
                 ? "teal"
                 : "red"
             }
@@ -88,7 +89,7 @@ export function OrdersMetric({ metrics }: CustomerMetricProps) {
             fw={500}
             className={classes.diff}
           >
-            <span>{metrics?.total_order_metrics.last_month_diff}%</span>
+            <span>{customer?.total_order_metrics.last_month_diff}%</span>
             <DiffIcon size="1rem" stroke={1.5} />
           </Text>
         </Group>
