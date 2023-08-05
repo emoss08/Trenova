@@ -145,3 +145,17 @@ def get_invoices_by_invoice_number(
         QuerySet[models.BillingQueue]: A queryset of BillingQueue objects.
     """
     return models.BillingQueue.objects.filter(invoice_number__in=invoices)
+
+
+def get_billing_history_by_customer_id(
+    *, customer_id: uuid.UUID
+) -> QuerySet[models.BillingHistory]:
+    """Retrieves a queryset of BillingHistory objects by their customer id.
+
+    Args:
+        customer_id (uuid.UUID):
+
+    Returns:
+        QuerySet[models.BillingHistory]: A queryset of BillingHistory objects.
+    """
+    return models.BillingHistory.objects.filter(customer_id__exact=customer_id)

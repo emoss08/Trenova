@@ -27,6 +27,7 @@ from billing.models import (
     BillingTransferLog,
     ChargeType,
     DocumentClassification,
+    BillingLogEntry,
 )
 from utils.admin import GenericAdmin
 
@@ -116,6 +117,55 @@ class BillingTransferLogAdmin(GenericAdmin[BillingTransferLog]):
     )
     search_fields = ("order", "task_id", "transferred_by", "transferred_at")
     readonly_fields = ("task_id", "transferred_at", "transferred_by", "order")
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: BillingTransferLog | None = None
+    ) -> bool:
+        """Has permission to delete.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+            obj (BillingTransferLog | None): Object to be deleted (if any).
+
+        Returns:
+            bool: True if the user has permission to delete the given object, False otherwise.
+        """
+        return False
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        """Has permissions to add.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+
+        Returns:
+            bool: True if the user has permission to add an object, False otherwise.
+        """
+        return False
+
+
+@admin.register(BillingLogEntry)
+class BillingTransferLogAdmin(GenericAdmin[BillingLogEntry]):
+    """
+    Billing Transfer Log Admin
+    """
+
+    model: type[BillingLogEntry] = BillingLogEntry
+    list_display = (
+        "customer",
+        "created",
+        "action",
+    )
+    search_fields = (
+        "customer__name",
+        "task_id",
+        "created",
+    )
+    readonly_fields = (
+        "customer",
+        "task_id",
+        "created",
+    )
 
     def has_delete_permission(
         self, request: HttpRequest, obj: BillingTransferLog | None = None
