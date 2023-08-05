@@ -454,3 +454,52 @@ def test_service_incident_created(
         ServiceIncident.objects.filter(stop=stop_1, movement=order_movement).exists()
         == expected
     )
+
+
+def test_first_stop_sets_ship_date(
+    organization: Organization,
+    order_type: OrderType,
+    revenue_code: RevenueCode,
+    origin_location: Location,
+    destination_location: Location,
+    customer: Customer,
+    equipment_type: EquipmentType,
+    user: User,
+    business_unit: BusinessUnit,
+) -> None:
+    """ """
+    order = Order.objects.create(
+        business_unit=business_unit,
+        organization=organization,
+        order_type=order_type,
+        revenue_code=revenue_code,
+        origin_location=origin_location,
+        destination_location=destination_location,
+        origin_appointment_window_start=timezone.now(),
+        origin_appointment_window_end=timezone.now(),
+        destination_appointment_window_start=timezone.now()
+        + datetime.timedelta(days=2),
+        destination_appointment_window_end=timezone.now() + datetime.timedelta(days=2),
+        customer=customer,
+        freight_charge_amount=100.00,
+        equipment_type=equipment_type,
+        entered_by=user,
+        bol_number="1234567890",
+    )
+
+    fleet_code = FleetCodeFactory()
+    worker = WorkerFactory(fleet=fleet_code)
+    tractor = TractorFactory(primary_worker=worker, fleet=fleet_code)
+    Movement.objects.filter(order=order).update(tractor=tractor, primary_worker=worker)
+    order_movement = Movement.objects.get(order=order)
+
+    # Act: Complete the first stop in the movement
+    stop_1 = models.Stop.objects.get(movement=order_movement, sequence=1)
+    stop_1.arrival_time = timezone.now() - datetime.timedelta(hours=1)
+    stop_1.departure_time = timezone.now()
+    stop_1.save()
+
+    order.refresh_from_db()
+
+    # Assert: Order has ship date set
+    assert order.ship_date == stop_1.arrival_time.date()
