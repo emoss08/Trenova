@@ -16,7 +16,7 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { Customer, CustomerOrderMetrics } from "@/types/apps/customer";
+import { Customer } from "@/types/apps/customer";
 
 /**
  * Fetches the details of the customer with the specified ID.
@@ -29,13 +29,13 @@ export async function getCustomerDetails(id: string): Promise<Customer> {
 }
 
 /**
- * Fetches the order metrics of the customer with the specified ID.
- * @param id
- * @returns A promise that resolves to an object containing the order metrics.
+ * Fetaches the details of the customer including metrics with the specified ID.
+ * @param id The ID of the customer to fetch details for.
+ * @returns A promise that resolves to a customer details.
  */
-export async function getCustomerMetrics(
+export async function getCustomerDetailsWithMetrics(
   id: string
-): Promise<CustomerOrderMetrics> {
-  const response = await axios.get(`customers/${id}/customer_metrics/`);
+): Promise<Customer> {
+  const response = await axios.get(`customers/${id}/?expand_metrics=True`);
   return response.data;
 }
