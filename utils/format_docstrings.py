@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import os
+import pathlib
 import re
 import sys
 from textwrap import wrap
@@ -92,9 +93,7 @@ def reformat_docstrings(file_path: str) -> None:
         None: This function does not return anything.
     """
 
-    with open(file_path) as f:
-        content = f.read()
-
+    content = pathlib.Path(file_path).read_text()
     docstrings = re.findall(r'("""[\s\S]*?""")', content)
 
     for docstring in docstrings:

@@ -145,6 +145,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
                     "weight",
                     "ready_to_bill",
                     "bill_date",
+                    "ship_date",
                     "billed",
                     "transferred_to_billing",
                     "billing_transfer_date",
