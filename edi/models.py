@@ -26,6 +26,20 @@ from django.utils.translation import gettext_lazy as _
 from utils.models import ChoiceField, GenericModel
 
 
+@final
+class DataTypeChoices(models.TextChoices):
+    """
+    Choices for the DataType field
+    """
+
+    STRING = "str", _("String")
+    INTEGER = "int", _("Integer")
+    DATE = "date", _("Date")
+    DATETIME = "datetime", _("Datetime")
+    TIME = "time", _("Time")
+    BOOLEAN = "bool", _("Boolean")
+
+
 class EDISegmentField(GenericModel):
     id = models.UUIDField(
         primary_key=True,
@@ -54,6 +68,21 @@ class EDISegmentField(GenericModel):
         blank=True,
         help_text=_(
             "The format of the data in this field (e.g. 'MMDDYYYY' for a date field)"
+        ),
+    )
+    data_type = models.CharField(
+        _("Data Type"),
+        max_length=10,
+        choices=DataTypeChoices.choices,
+        default=DataTypeChoices.STRING,
+        help_text=_("The data type of the data in this field"),
+    )
+    validation_regex = models.CharField(
+        _("Validation Regex"),
+        max_length=255,
+        blank=True,
+        help_text=_(
+            "A regular expression that can be used to validate the data in this field"
         ),
     )
     position = models.PositiveIntegerField(

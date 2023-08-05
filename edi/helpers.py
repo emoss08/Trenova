@@ -149,31 +149,6 @@ def get_nested_attr(*, obj: BillingQueue, attr: str) -> Any:
 def generate_edi_content(
     *, billing_item: BillingQueue, edi_billing_profile: models.EDIBillingProfile
 ) -> str:
-    """Generates EDI content from a billing queue and EDI billing profile.
-
-    Args:
-        billing_item: The billing queue instance to generate EDI content for.
-        edi_billing_profile: The EDI billing profile that defines the EDI schema.
-
-    Returns:
-        str: The generated EDI content as a string.
-
-    Steps:
-        1. Get the EDI segments defined in the profile ordered by sequence.
-        2. For each EDI segment:
-            a. Get the defined fields.
-            b. Lookup the value for each field from the billing queue object.
-            c. Replace None values with empty strings.
-            d. Use the segment parser string to format the values.
-            e. Validate the number of placeholders matches the number of values.
-            f. Append the formatted segment string.
-        3. Join the segment strings with newlines and return.
-
-    Raises:
-        EDIException: If the number of value placeholders in the parser
-                       does not match the number of field values.
-    """
-
     # Initialize the segments' list
     segments = []
 
