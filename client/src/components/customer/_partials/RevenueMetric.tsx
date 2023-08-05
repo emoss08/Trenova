@@ -26,13 +26,15 @@ import { truncateText, USDollarFormat } from "@/lib/utils";
 
 const useStyles = createStyles((theme) => ({
   root: {
-    paddingBottom: rem(20),
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
   },
 
   value: {
     fontSize: rem(24),
     fontWeight: 700,
     lineHeight: 1,
+    color: theme.colorScheme === "dark" ? "white" : "black",
   },
 
   diff: {
@@ -54,19 +56,18 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export function RevenueMetric({ metrics }: CustomerMetricProps) {
+export function RevenueMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStyles();
 
   const DiffIcon =
-    metrics &&
-    metrics?.total_revenue_metrics.last_month_diff >
-      metrics.total_revenue_metrics.month_before_last_diff
+    customer?.total_revenue_metrics.last_month_diff >
+    customer.total_revenue_metrics.month_before_last_diff
       ? IconArrowUpRight
       : IconArrowDownRight;
 
   return (
     <>
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" className={classes.root}>
         <Group position="apart">
           <Text size="xs" color="dimmed" className={classes.title}>
             Total Revenue
@@ -81,11 +82,13 @@ export function RevenueMetric({ metrics }: CustomerMetricProps) {
         <Group align="flex-end" spacing="xs" mt={25}>
           <Tooltip
             withArrow
-            label={USDollarFormat(metrics?.total_revenue_metrics.total_revenue)}
+            label={USDollarFormat(
+              customer?.total_revenue_metrics.total_revenue
+            )}
           >
             <Text className={classes.value}>
               {truncateText(
-                USDollarFormat(metrics?.total_revenue_metrics.total_revenue),
+                USDollarFormat(customer?.total_revenue_metrics.total_revenue),
                 9
               )}
             </Text>
@@ -93,8 +96,8 @@ export function RevenueMetric({ metrics }: CustomerMetricProps) {
 
           <Text
             color={
-              metrics?.total_revenue_metrics.last_month_diff >
-              metrics.total_revenue_metrics.month_before_last_diff
+              customer?.total_revenue_metrics.last_month_diff >
+              customer.total_revenue_metrics.month_before_last_diff
                 ? "teal"
                 : "red"
             }
@@ -102,7 +105,7 @@ export function RevenueMetric({ metrics }: CustomerMetricProps) {
             fw={500}
             className={classes.diff}
           >
-            <span>{metrics?.total_revenue_metrics.last_month_diff}%</span>
+            <span>{customer?.total_revenue_metrics.last_month_diff}%</span>
             <DiffIcon size="1rem" stroke={1.5} />
           </Text>
         </Group>

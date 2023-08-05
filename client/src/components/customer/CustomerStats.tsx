@@ -17,16 +17,13 @@
 
 import { createStyles, SimpleGrid, rem } from "@mantine/core";
 import { OrdersMetric } from "@/components/customer/_partials/OrdersMetric";
-import { useQuery, useQueryClient } from "react-query";
-import { getCustomerMetrics } from "@/requests/CustomerRequestFactory";
-import { CustomerOrderMetrics } from "@/types/apps/customer";
+import { Customer } from "@/types/apps/customer";
 import { RevenueMetric } from "@/components/customer/_partials/RevenueMetric";
 import { PerformanceMetric } from "@/components/customer/_partials/PerformanceMetric";
-import { MetricsSkeleton } from "@/components/customer/_partials/MetricsSkeleton";
 import { MileageMetric } from "@/components/customer/_partials/MileageMetric";
 
 export type CustomerMetricProps = {
-  metrics: CustomerOrderMetrics;
+  customer: Customer;
 };
 
 const useStyles = createStyles((theme) => ({
@@ -60,27 +57,11 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type CustomerStatsProps = {
-  id: string;
+  customer: Customer;
 };
 
-export function CustomerStats({ id }: CustomerStatsProps) {
+export function CustomerStats({ customer }: CustomerStatsProps) {
   const { classes } = useStyles();
-  const queryClient = useQueryClient();
-
-  const { data: customerMetrics, isLoading: isCustomerMetricsLoading } =
-    useQuery({
-      queryKey: ["customerMetrics", id],
-      queryFn: () => {
-        if (!id) {
-          return Promise.resolve(null);
-        }
-        return getCustomerMetrics(id);
-      },
-      initialData: () => {
-        return queryClient.getQueryData(["customerMetrics", id]);
-      },
-      staleTime: Infinity,
-    });
 
   return (
     <div className={classes.root}>
@@ -91,18 +72,12 @@ export function CustomerStats({ id }: CustomerStatsProps) {
           { maxWidth: "xs", cols: 1 },
         ]}
       >
-        {isCustomerMetricsLoading ? (
-          <MetricsSkeleton />
-        ) : (
-          customerMetrics && (
-            <>
-              <OrdersMetric metrics={customerMetrics} />
-              <RevenueMetric metrics={customerMetrics} />
-              <PerformanceMetric metrics={customerMetrics} />
-              <MileageMetric metrics={customerMetrics} />
-            </>
-          )
-        )}
+        <>
+          <OrdersMetric customer={customer} />
+          <RevenueMetric customer={customer} />
+          <PerformanceMetric customer={customer} />
+          <MileageMetric customer={customer} />
+        </>
       </SimpleGrid>
     </div>
   );

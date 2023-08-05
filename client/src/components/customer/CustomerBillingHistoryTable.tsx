@@ -23,16 +23,18 @@ import { montaTableIcons } from "@/components/ui/table/Icons";
 import { API_URL } from "@/lib/utils";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
 import { CustomerBillingHistoryTableColumns } from "@/components/customer/CustomerBillingHistoryTableColumns";
+import { useMantineTheme } from "@mantine/core";
 
 type Props = {
   id: string;
 };
 
 export function CustomerBillingHistoryTable({ id }: Props) {
+  const theme = useMantineTheme();
   const [pagination] = paymentRecordsTableStore.use("pagination");
   const [globalFilter, setGlobalFilter] =
     paymentRecordsTableStore.use("globalFilter");
-  const [rowSelection, _] = paymentRecordsTableStore.use("rowSelection");
+  const [rowSelection] = paymentRecordsTableStore.use("rowSelection");
 
   const { data, isError, isFetching, isLoading } = useQuery(
     [
@@ -54,7 +56,7 @@ export function CustomerBillingHistoryTable({ id }: Props) {
       refetchOnWindowFocus: false,
       keepPreviousData: true,
       staleTime: 1000 * 60 * 5, // 5 minutes
-    }
+    },
   );
 
   return (
@@ -67,7 +69,6 @@ export function CustomerBillingHistoryTable({ id }: Props) {
           paymentRecordsTableStore.set("pagination", newPagination);
         }}
         mantinePaperProps={{
-          // remove shadow
           shadow: "none",
           withBorder: false,
         }}
@@ -91,14 +92,15 @@ export function CustomerBillingHistoryTable({ id }: Props) {
           density: "xs",
         }}
         positionGlobalFilter="left"
-        mantineSearchTextInputProps={{
-          placeholder: data?.count
-            ? `Search ${data.count} records...`
-            : "Search...",
-          sx: { minWidth: "300px" },
-          variant: "filled",
-        }}
         enableGlobalFilterModes={false}
+        mantineTableBodyCellProps={() => {
+          return {
+            sx: {
+              backgroundColor:
+                theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+            },
+          };
+        }}
         onGlobalFilterChange={(filter: string) => {
           setGlobalFilter(filter);
         }}
