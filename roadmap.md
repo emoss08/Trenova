@@ -45,13 +45,11 @@ features will be included:
 - Feasibility Analysis
 - Automated Task Management
 
-### 0.2.0 (August 1st, 2023)
+### 0.2.0 (September 1st, 2023)
 
 Our second release will include the following features:
 
-- Equipment Maintenance Module
-- Fuel Tax Module
-- Recurring Orders Module
+- EDI Module
 - Credit Memo Generation
 - Export reports to Excel, CSV, PDF
 - GraphQL API
@@ -60,19 +58,21 @@ Our second release will include the following features:
 
 Our third release will include the following features:
 
-- ELD Integration
-- PCMiler Integration
-- Fuel Card Integration
-- Safety OS&D Module
-- Driver Scorecards
+- Fuel Tax Module
+- Equipment Maintenance Module
+- Recurring Orders Module
 
 ### 0.4.0 (February 1st, 2024)
 
 Our fourth release will include the following features:
 
+- ELD Integration
+- PCMiler Integration
+- Fuel Card Integration
+- Safety OS&D Module
+- Driver Scorecards
 - Trailer Integration
 - Customer Portal
-- EDI Module
 - Beam (Artificial Intelligence Chatbot)
 
 ### 0.5.0 (May 1st, 2024)
