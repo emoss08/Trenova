@@ -54,6 +54,7 @@ Our second release will include the following features:
 - Recurring Orders Module
 - Credit Memo Generation
 - Export reports to Excel, CSV, PDF
+- GraphQL API
 
 ### 0.3.0 (November 1st, 2023)
 
