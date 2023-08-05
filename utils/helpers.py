@@ -14,6 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django.db import models
+
 from organization.models import BusinessUnit
 
 
@@ -23,3 +25,13 @@ def get_or_create_business_unit(*, bs_name: str) -> BusinessUnit:
 
     business_unit, created = BusinessUnit.objects.get_or_create(name=bs_name)
     return business_unit
+
+
+def get_pk_value(*, instance):
+    pk_field = instance._meta.pk.name
+    pk = getattr(instance, pk_field, None)
+
+    # Check to make sure that we got an pk not a model object.
+    if isinstance(pk, models.Model):
+        pk = get_pk_value(instance=pk)
+    return pk
