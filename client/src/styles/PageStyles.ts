@@ -22,6 +22,8 @@ export const usePageStyles = createStyles((theme) => ({
     width: "100%",
     maxWidth: "100%",
     height: "auto",
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
     "@media (max-width: 576px)": {
       height: "auto",
       maxHeight: "none",
