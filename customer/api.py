@@ -16,19 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.request import Request
-from rest_framework.response import Response
+from rest_framework import viewsets
 
 from core.permissions import CustomObjectPermissions
 from customer import models, serializers
-from customer.selectors import (
-    calculate_customer_total_miles,
-    get_customer_on_time_performance_diff,
-    get_customer_order_diff,
-    get_customer_revenue_diff,
-)
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -47,26 +38,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CustomerSerializer
     filterset_fields = ("code", "name")
     permission_classes = [CustomObjectPermissions]
-
-    @action(detail=True, methods=["get"])
-    def customer_metrics(self, request: Request, pk: str | None) -> Response:
-        customer: models.Customer = self.get_object()
-        total_orders_metrics = get_customer_order_diff(customer_id=customer.id)
-        total_revenue_metrics = get_customer_revenue_diff(customer_id=customer.id)
-        on_time_performance = get_customer_on_time_performance_diff(
-            customer_id=customer.id
-        )
-        total_mile_metrics = calculate_customer_total_miles(customer_id=customer.id)
-
-        return Response(
-            {
-                "total_order_metrics": total_orders_metrics,
-                "total_revenue_metrics": total_revenue_metrics,
-                "on_time_performance": on_time_performance,
-                "total_mile_metrics": total_mile_metrics,
-            },
-            status=status.HTTP_200_OK,
-        )
 
     def get_queryset(self) -> QuerySet[models.Customer]:
         """Returns a queryset of customers for the current organization.
