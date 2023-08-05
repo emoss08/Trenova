@@ -21,6 +21,7 @@ from typing import Any
 
 import redis
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
@@ -31,6 +32,7 @@ from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from billing.exceptions import InvalidSessionKeyError
 from order.models import Order
+from utils.helpers import get_pk_value
 from utils.services.pdf import UUIDEncoder
 from utils.types import (
     BilledOrders,
@@ -148,6 +150,9 @@ def transfer_to_billing_queue_service(
     # Create a list of BillingTransferLog objects
     transfer_log = []
 
+    # Create a list of BillingLogEntry objects
+    log_entries = []
+
     # Loop through the orders and create a BillingQueue object for each
     for order in orders:
         try:
@@ -163,6 +168,21 @@ def transfer_to_billing_queue_service(
             order.transferred_to_billing = True
             order.billing_transfer_date = now
 
+            # Create a BillingLogEntry object
+            log_entries.append(
+                models.BillingLogEntry(
+                    content_type=ContentType.objects.get_for_model(order),
+                    task_id=task_id,
+                    organization=order.organization,
+                    business_unit=order.business_unit,
+                    order=order,
+                    customer=order.customer,
+                    action="TRANSFERRED",
+                    actor=user,
+                    object_pk=get_pk_value(instance=order),
+                )
+            )
+
             # Create a BillingTransferLog object
             transfer_log.append(
                 models.BillingTransferLog(
@@ -175,20 +195,28 @@ def transfer_to_billing_queue_service(
                 )
             )
 
-        # If there is a ValidationError or IntegrityError, create a BillingException
-        except (ValidationError, IntegrityError) as error:
-            error_type = type(error).__name__
+        except* ValidationError as val_error:
             utils.create_billing_exception(
                 user=user,
                 exception_type="OTHER",
                 invoice=order,
-                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {error_type} - {error}",
+                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {val_error}",
+            )
+        except* IntegrityError as int_error:
+            utils.create_billing_exception(
+                user=user,
+                exception_type="OTHER",
+                invoice=order,
+                exception_message=f"Order {order.pro_number} already exists and must be un-transferred: {int_error}",
             )
 
     # Bulk update the orders
     Order.objects.bulk_update(
         orders, ["transferred_to_billing", "billing_transfer_date"]
     )
+
+    # Bulk create log entry
+    models.BillingLogEntry.objects.bulk_create(log_entries)
 
     # Bulk create the transfer log
     models.BillingTransferLog.objects.bulk_create(transfer_log)

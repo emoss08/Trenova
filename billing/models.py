@@ -21,7 +21,9 @@ import textwrap
 import uuid
 from typing import Any, final
 
+from auditlog.models import LogEntry
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -889,6 +891,116 @@ class BillingTransferLog(GenericModel):
             `/billing_transfer_log/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
         """
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
+
+
+@final
+class ActionChoices(models.TextChoices):
+    """
+    Class for storing choices for the `action` field.
+    """
+
+    TRANSFERRED = "TRANSFERRED", _("Transferred")
+    UN_TRANSFERRED = "UN_TRANSFERRED", _("Un-transferred")
+    BILLED = "BILLED", _("Billed")
+    VOIDED = "VOIDED", _("Voided")
+
+
+class BillingLogEntry(GenericModel):
+    """
+    Class for storing information about the billing transfer log.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        help_text=_("Unique identifier for the Billing Log"),
+        verbose_name=_("Billing Log ID"),
+    )
+    task_id = models.CharField(
+        verbose_name=_("Task ID"),
+        max_length=255,
+        help_text=_("Task ID for the Billing Log"),
+        blank=True,
+    )
+    object_pk = models.CharField(
+        verbose_name=_("Object PK"),
+        max_length=255,
+        help_text=_("Object PK for the Billing Log"),
+        db_index=True,
+    )
+    content_type = models.ForeignKey(
+        to="contenttypes.ContentType",
+        on_delete=models.CASCADE,
+        verbose_name=_("Content Type"),
+        related_name="billing_log_entries",
+        help_text=_("Content Type for the Billing Log"),
+    )
+    action = ChoiceField(
+        verbose_name=_("Action"),
+        choices=ActionChoices.choices,
+        help_text=_("Action for the Billing Log"),
+        default=ActionChoices.TRANSFERRED,
+        db_index=True,
+    )
+    order = models.ForeignKey(
+        to="order.Order",
+        on_delete=models.RESTRICT,
+        verbose_name=_("Order"),
+        related_name="billing_log_entries",
+        help_text=_("Order for the Billing Log"),
+        blank=True,
+        null=True,
+    )
+    customer = models.ForeignKey(
+        to="customer.Customer",
+        on_delete=models.RESTRICT,
+        verbose_name=_("Customer"),
+        related_name="billing_log_entries",
+        help_text=_("Customer for the Billing Log"),
+    )
+    actor = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        verbose_name=_("Actor"),
+        related_name="billing_log_entries",
+        help_text=_("Actor for the Billing Log"),
+        blank=True,
+        null=True,
+    )
+
+    class Meta:
+        """
+        Metaclass for the BillingTransferLog model.
+        """
+
+        verbose_name = _("Billing Log Entry")
+        verbose_name_plural = _("Billing Log Entries")
+        ordering = ["-created"]
+        db_table = "billing_log_entry"
+
+    def __str__(self) -> str:
+        """
+        String representation for the BillingLogEntry model.
+
+        Returns:
+            String representation for the BillingLogEntry model.
+        """
+        return textwrap.shorten(
+            f"{self.object_pk} {self.action} by {self.actor}",
+            width=100,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """Billing Log Entry absolute url
+
+        Returns:
+            Absolute url for the billing transfer log object. For example,
+            `/billing_entry_log/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("billing-log-entry-detail", kwargs={"pk": self.pk})
 
 
 class BillingHistory(GenericModel):  # type:ignore
