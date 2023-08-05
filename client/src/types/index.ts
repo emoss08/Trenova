@@ -31,6 +31,11 @@ export interface IChoiceProps<T extends string> {
 
 export type StatusChoiceProps = "A" | "I";
 
+export const enum StatusChoice {
+  ACTIVE = "A",
+  INACTIVE = "I",
+}
+
 export type YesNoChoiceProps = "Y" | "N";
 
 export type TNavigationLink = {

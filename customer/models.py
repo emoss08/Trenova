@@ -138,7 +138,26 @@ class Customer(GenericModel):  # type: ignore
         Returns:
             str: Customer string representation
         """
-        return textwrap.wrap(f"{self.code} - {self.name}", 50)[0]
+        return textwrap.shorten(
+            f"Customer {self.code}: {self.name}", width=40, placeholder="..."
+        )
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Customer save method
+
+        Args:
+            *args (Any): Variable length argument list.
+            **kwargs (Any): Arbitrary keyword arguments
+
+        Returns:
+            None: This function does return anything.
+        """
+
+        # Uppercase the code for the customer if it not already.
+        if self.code and not self.code.isupper():
+            self.code = self.code.upper()
+
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer instance
@@ -242,7 +261,11 @@ class CustomerBillingProfile(GenericModel):
         Returns:
             str: Customer Billing Profile string representation
         """
-        return textwrap.wrap(f"{self.customer}", 50)[0]
+        return textwrap.shorten(
+            f"Customer Billing Profile for {self.customer.name}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer billing profile instance
@@ -333,7 +356,9 @@ class CustomerEmailProfile(GenericModel):
         Returns:
             str: Customer Email Profile string representation
         """
-        return textwrap.wrap(f"{self.name}", 40)[0]
+        return textwrap.shorten(
+            f"Customer Email Profile {self.name}", width=40, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer email profile instance
@@ -399,7 +424,9 @@ class CustomerRuleProfile(GenericModel):
         Returns:
             str: Customer Rule Profile string representation
         """
-        return textwrap.wrap(f"{self.name}", 50)[0]
+        return textwrap.shorten(
+            f"Customer Rule profile {self.name}", width=40, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer rule profile instance
@@ -490,7 +517,11 @@ class CustomerContact(GenericModel):
         Returns:
             str: Customer Contact string representation
         """
-        return textwrap.wrap(f"{self.customer.code} - {self.name}", 50)[0]
+        return textwrap.shorten(
+            f"Contact {self.name} for Customer {self.customer.name}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer contact instance
@@ -686,7 +717,11 @@ class CustomerFuelProfile(GenericModel):
         Returns:
             str: Customer Fuel Profile string representation
         """
-        return textwrap.wrap(f"{self.customer}", 50)[0]
+        return textwrap.shorten(
+            f"Customer Fuel Profile for Customer {self.customer.name}",
+            width=40,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer fuel profile instance
@@ -755,12 +790,16 @@ class CustomerFuelTable(GenericModel):
         ]
 
     def __str__(self) -> str:
-        """Customer Fuel Profile string representation
+        """Customer Fuel Table string representation
 
         Returns:
-            str: Customer Fuel Profile string representation
+            str: Customer Fuel Table string representation
         """
-        return textwrap.wrap(f"{self.id} - {self.description}", 50)[0]
+        return textwrap.shorten(
+            f"Customer Fuel Table {self.name}",
+            width=30,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer fuel profile instance
@@ -832,7 +871,11 @@ class CustomerFuelTableDetail(GenericModel):
         Returns:
             str: Customer Fuel Profile Detail string representation
         """
-        return textwrap.wrap(f"{self.customer_fuel_table}", 50)[0]
+        return textwrap.shorten(
+            f"Details for Customer fuel table {self.customer_fuel_table.name}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer fuel profile detail instance
