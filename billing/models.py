@@ -815,6 +815,9 @@ class BillingQueue(GenericModel):  # type:ignore
             )
 
 
+# TODO(WOLFRED): Remove BillingTransferLog model and replace with BillingLogEntry
+
+
 class BillingTransferLog(GenericModel):
     """
     Class for storing information about the billing transfer log.
