@@ -951,6 +951,12 @@ class BillingLogEntry(GenericModel):
         blank=True,
         null=True,
     )
+    invoice_number = models.CharField(
+        _("Invoice Number"),
+        max_length=50,
+        blank=True,
+        help_text=_("Invoice number for the Billing Log Entry"),
+    )
     customer = models.ForeignKey(
         to="customer.Customer",
         on_delete=models.RESTRICT,
@@ -986,7 +992,7 @@ class BillingLogEntry(GenericModel):
             String representation for the BillingLogEntry model.
         """
         return textwrap.shorten(
-            f"{self.object_pk} {self.action} by {self.actor}",
+            f"{self.order.pro_number if self.order else self.invoice_number} {self.action} by {self.actor}",
             width=100,
             placeholder="...",
         )
