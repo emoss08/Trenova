@@ -23,11 +23,11 @@ from billing.models import (
     BillingControl,
     BillingException,
     BillingHistory,
+    BillingLogEntry,
     BillingQueue,
     BillingTransferLog,
     ChargeType,
     DocumentClassification,
-    BillingLogEntry,
 )
 from utils.admin import GenericAdmin
 

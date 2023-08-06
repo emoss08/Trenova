@@ -24,7 +24,6 @@ from django.forms import BaseModelForm
 from django.forms.models import ModelForm
 from django.http import HttpRequest
 
-
 # Model Generic Type
 _M = TypeVar("_M", bound=Model)
 
