@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React from 'react';
 import {
   Button,
   Container,
@@ -24,30 +24,30 @@ import {
   rem,
   SimpleGrid,
   Text,
-  Title,
-} from "@mantine/core";
-import { WebSocketManager } from "@/utils/websockets";
-import { STEPS } from "@/pages/billing/BillingClient";
-import { billingClientStore } from "@/stores/BillingStores";
+  Title
+} from '@mantine/core';
+import { WebSocketManager } from '@/utils/websockets';
+import { STEPS } from '@/pages/billing/BillingClient';
+import { billingClientStore } from '@/stores/BillingStores';
 
-import image from "@/assets/images/love.png";
+import image from '@/assets/images/love.png';
 
 interface Props {
   websocketManager: WebSocketManager;
 }
 
 const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
+  const BREAKPOINT = theme.fn.smallerThan('sm');
 
   return {
     text: {
       fontSize: BREAKPOINT ? theme.fontSizes.xl : theme.fontSizes.xxl,
       fontWeight: 700,
-      color: theme.colorScheme === "dark" ? "white" : "black",
+      color: theme.colorScheme === 'dark' ? 'white' : 'black'
     },
     root: {
       paddingTop: rem(80),
-      paddingBottom: rem(80),
+      paddingBottom: rem(80)
     },
 
     title: {
@@ -56,49 +56,45 @@ const useStyles = createStyles((theme) => {
       marginBottom: theme.spacing.md,
       fontFamily: `Greycliff CF, ${theme.fontFamily}`,
 
-      [theme.fn.smallerThan("sm")]: {
-        fontSize: rem(32),
-      },
+      [theme.fn.smallerThan('sm')]: {
+        fontSize: rem(32)
+      }
     },
 
     control: {
-      [theme.fn.smallerThan("sm")]: {
-        width: "100%",
-      },
+      [theme.fn.smallerThan('sm')]: {
+        width: '100%'
+      }
     },
 
     mobileImage: {
-      [theme.fn.largerThan("sm")]: {
-        display: "none",
-      },
+      [theme.fn.largerThan('sm')]: {
+        display: 'none'
+      }
     },
 
     desktopImage: {
-      [theme.fn.smallerThan("sm")]: {
-        display: "none",
-      },
-    },
+      [theme.fn.smallerThan('sm')]: {
+        display: 'none'
+      }
+    }
   };
 });
 
 function GoodJob({ websocketManager }: Props) {
-  const [websocketMessage] = billingClientStore.use("websocketMessage");
+  const [websocketMessage] = billingClientStore.use('websocketMessage');
   const { classes } = useStyles();
 
   const getStarted = () => {
     // send message to websocket to get started
-    websocketManager.sendJsonMessage("billing_client", {
-      action: STEPS[0], // or "get_started"
+    websocketManager.sendJsonMessage('billing_client', {
+      action: STEPS[0] // or "get_started"
     });
   };
 
   return (
     <Container className={classes.root}>
-      <SimpleGrid
-        spacing={80}
-        cols={2}
-        breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
-      >
+      <SimpleGrid spacing={80} cols={2} breakpoints={[{ maxWidth: 'sm', cols: 1, spacing: 40 }]}>
         <Image src={image} className={classes.mobileImage} />
         <div>
           <Title className={classes.title}>🎉 You are all done!</Title>
@@ -106,9 +102,9 @@ function GoodJob({ websocketManager }: Props) {
           <Text color="dimmed" size="lg">
             {websocketMessage?.payload?.message
               ? (websocketMessage?.payload?.message as string)
-              : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
-                  " This ingenious software client for interacting with the billing API offers a streamlined" +
-                  " approach for handling your financial transactions."}
+              : 'The Monta Billing Client is your efficient partner for end-to-end billing management.' +
+                ' This ingenious software client for interacting with the billing API offers a streamlined' +
+                ' approach for handling your financial transactions.'}
           </Text>
 
           {!websocketMessage?.payload?.message && (
@@ -117,9 +113,8 @@ function GoodJob({ websocketManager }: Props) {
               size="md"
               mt="xl"
               className={classes.control}
-              onClick={getStarted}
-            >
-                Get Started
+              onClick={getStarted}>
+              Get Started
             </Button>
           )}
         </div>
