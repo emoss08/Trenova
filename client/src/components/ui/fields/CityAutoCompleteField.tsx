@@ -18,8 +18,8 @@ import React, { useRef, useState } from "react";
 import { createStyles } from "@mantine/styles";
 import { Autocomplete, Loader } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { stateData } from "./StateSelect";
 import { AutocompleteProps } from "@mantine/core/lib/Autocomplete/Autocomplete";
+import { stateData } from "./StateSelect";
 
 interface CityAutoCompleteFieldProps<TFormValues extends object>
   extends Omit<AutocompleteProps, "data"> {
@@ -27,26 +27,24 @@ interface CityAutoCompleteFieldProps<TFormValues extends object>
   stateSelection: string;
 }
 
-const useStyles = createStyles((theme) => {
-  return {
-    invalid: {
-      backgroundColor:
+const useStyles = createStyles((theme) => ({
+  invalid: {
+    backgroundColor:
         theme.colorScheme === "dark"
           ? theme.fn.rgba(theme.colors.red[8], 0.15)
           : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
+  },
+  invalidIcon: {
+    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+  },
+}));
 
-export const CityAutoCompleteField = <TFormValues extends object>({
+export function CityAutoCompleteField<TFormValues extends object>({
   form,
   stateSelection,
   name,
   ...rest
-}: CityAutoCompleteFieldProps<TFormValues>) => {
+}: CityAutoCompleteFieldProps<TFormValues>) {
   const { classes } = useStyles();
   const error = form.errors[name as string];
   const timeoutRef = useRef<number>(-1);
@@ -117,4 +115,4 @@ export const CityAutoCompleteField = <TFormValues extends object>({
       }
     />
   );
-};
+}

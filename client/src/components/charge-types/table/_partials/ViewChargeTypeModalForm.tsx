@@ -29,39 +29,37 @@ export const ViewChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
-          <TextInput
-            value={chargeType.name}
-            readOnly
-            className={classes.fields}
-            label="Name"
-            variant="filled"
-          />
-          <Textarea
-            value={chargeType.description || ""}
-            className={classes.fields}
-            label="Description"
-            readOnly
-            variant="filled"
-          />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              onClick={() => {
-                chargeTypeTableStore.set("selectedRecord", chargeType);
-                chargeTypeTableStore.set("viewModalOpen", false);
-                chargeTypeTableStore.set("editModalOpen", true);
-              }}
-              className={classes.control}
-            >
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          value={chargeType.name}
+          readOnly
+          className={classes.fields}
+          label="Name"
+          variant="filled"
+        />
+        <Textarea
+          value={chargeType.description || ""}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              chargeTypeTableStore.set("selectedRecord", chargeType);
+              chargeTypeTableStore.set("viewModalOpen", false);
+              chargeTypeTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
               Edit Charge Type
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 };

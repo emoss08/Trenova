@@ -21,8 +21,8 @@ import {
   MRT_ColumnDef,
   useMantineReactTable,
 } from "mantine-react-table";
-import { BillingQueue } from "@/types/apps/billing";
 import { Badge, Button, Stack } from "@mantine/core";
+import { BillingQueue } from "@/types/apps/billing";
 import { TChoiceProps } from "@/types";
 import { WebSocketManager } from "@/utils/websockets";
 import { billingClientStore } from "@/stores/BillingStores";
@@ -32,7 +32,7 @@ interface Props {
   websocketManager: WebSocketManager;
 }
 
-export const BillingQueueTable = ({ data, websocketManager }: Props) => {
+export function BillingQueueTable({ data, websocketManager }: Props) {
   const [, setStep] = billingClientStore.use("step");
 
   // Add up the total amounts of each row
@@ -184,4 +184,4 @@ export const BillingQueueTable = ({ data, websocketManager }: Props) => {
   });
 
   return <MantineReactTable table={table} />;
-};
+}

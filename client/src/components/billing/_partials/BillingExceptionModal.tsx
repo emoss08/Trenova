@@ -90,19 +90,19 @@ export const BillingExceptionModal: React.FC<Props> = ({
               <tbody>
                 {typeof websocketMessage.message !== "string" &&
                 websocketMessage.status === "FAILURE" ? (
-                  websocketMessage.message?.flatMap((subArray, index) =>
-                    subArray.map((item, subIndex) => (
-                      <tr key={`${index}-${subIndex}`}>
-                        <td>{item.invoice_number}</td>
-                        <td>{item.missing_documents.join(", ")}</td>
-                      </tr>
-                    ))
-                  )
-                ) : (
-                  <tr>
-                    <td colSpan={2}>{websocketMessage.message as string}</td>
-                  </tr>
-                )}
+                    websocketMessage.message?.flatMap((subArray, index) =>
+                      subArray.map((item, subIndex) => (
+                        <tr key={`${index}-${subIndex}`}>
+                          <td>{item.invoice_number}</td>
+                          <td>{item.missing_documents.join(", ")}</td>
+                        </tr>
+                      ))
+                    )
+                  ) : (
+                    <tr>
+                      <td colSpan={2}>{websocketMessage.message as string}</td>
+                    </tr>
+                  )}
               </tbody>
             </Table>
           </ScrollArea>

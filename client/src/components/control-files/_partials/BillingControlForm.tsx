@@ -16,20 +16,20 @@
  */
 
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
-import { BillingControl, BillingControlFormValues } from "@/types/apps/billing";
 import { useForm, yupResolver } from "@mantine/form";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import axios from "@/lib/AxiosConfig";
 import {
   autoBillingCriteriaChoices,
   orderTransferCriteriaChoices,
 } from "@/utils/apps/billing";
-import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
-import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { BillingControl, BillingControlFormValues } from "@/types/apps/billing";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { APIError } from "@/types/server";
 import { billingControlSchema } from "@/utils/apps/billing/schema";
 import { useFormStyles } from "@/styles/FormStyles";

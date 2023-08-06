@@ -74,58 +74,56 @@ export const Alert: React.FC<Props> = ({
   const shouldRenderIcon = withIcon === undefined ? false : withIcon;
 
   return (
-    <>
-      <Paper
-        p="lg"
-        shadow="xs"
-        style={{
-          borderColor: borderColorChoice,
-          borderRadius: "6.175px",
-          textAlign: "start",
-          borderStyle: "dashed",
-          backgroundColor: backgroundColorChoice,
-          borderWidth: "1px",
-        }}
-      >
-        <Grid>
-          <Col
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-            }}
-          >
-            {shouldRenderIcon && icon && (
-              <FontAwesomeIcon
-                icon={icon}
-                style={{
-                  marginRight: 15,
-                  marginBottom: 30,
-                  color: iconColorChoice,
-                }}
-                size="2xl"
-              />
-            )}
-            <div style={{ flexGrow: 1 }}>
-              <Text fw={700}>{title}</Text>
-              <Text fw={400} c="dimmed" style={{ paddingTop: 5 }}>
-                {message}
-              </Text>
-            </div>
-            {shouldRenderButton && (
-              <Button
-                color={color}
-                size="md"
-                style={{ marginLeft: 10 }}
-                radius={5}
-                onClick={onClick}
-              >
-                {buttonText}
-              </Button>
-            )}
-          </Col>
-        </Grid>
-      </Paper>
-    </>
+    <Paper
+      p="lg"
+      shadow="xs"
+      style={{
+        borderColor: borderColorChoice,
+        borderRadius: "6.175px",
+        textAlign: "start",
+        borderStyle: "dashed",
+        backgroundColor: backgroundColorChoice,
+        borderWidth: "1px",
+      }}
+    >
+      <Grid>
+        <Col
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          {shouldRenderIcon && icon && (
+            <FontAwesomeIcon
+              icon={icon}
+              style={{
+                marginRight: 15,
+                marginBottom: 30,
+                color: iconColorChoice,
+              }}
+              size="2xl"
+            />
+          )}
+          <div style={{ flexGrow: 1 }}>
+            <Text fw={700}>{title}</Text>
+            <Text fw={400} c="dimmed" style={{ paddingTop: 5 }}>
+              {message}
+            </Text>
+          </div>
+          {shouldRenderButton && (
+            <Button
+              color={color}
+              size="md"
+              style={{ marginLeft: 10 }}
+              radius={5}
+              onClick={onClick}
+            >
+              {buttonText}
+            </Button>
+          )}
+        </Col>
+      </Grid>
+    </Paper>
   );
 };

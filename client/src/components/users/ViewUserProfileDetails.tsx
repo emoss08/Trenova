@@ -74,65 +74,63 @@ export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
   const { classes } = useStyles();
 
   return (
-    <>
-      <Flex>
-        <Card className={classes.card} withBorder>
-          <Container mx="xs" my="xs">
-            <SimpleGrid cols={3} className={classes.grid}>
-              <AvatarInput
-                defaultAvatar={user.profile?.profile_picture}
-                user={user}
-              />
-              <Grid className={classes.grid}>
-                <Grid.Col>
-                  <Flex direction="column" justify="start">
-                    <Text className={classes.text} fz="35px" fw={650}>
-                      {user.profile?.first_name} {user.profile?.last_name}
-                    </Text>
-                    <Grid grow gutter={30} align="flex-start">
-                      <Grid.Col span={1}>
-                        <div className={classes.div}>
-                          <FontAwesomeIcon
-                            icon={faCircleUser}
-                            className={classes.icon}
-                          />
-                          <Text className={classes.text}>
-                            {jobTitle.name ?? ""}
-                          </Text>
-                        </div>
-                      </Grid.Col>
-                      <Grid.Col span={5}>
-                        <div className={classes.div}>
-                          <FontAwesomeIcon
-                            icon={faMapPin}
-                            className={classes.icon}
-                          />
-                          <Text className={classes.text}>
-                            {user.profile?.address_line_1} {user.profile?.address_line_2 ?? ""} {user.profile?.city}{" "}
-                            {user.profile?.state} {user.profile?.zip_code}
-                          </Text>
-                        </div>
-                      </Grid.Col>
-                      <Grid.Col span={1}>
-                        <div className={classes.div}>
-                          <FontAwesomeIcon
-                            icon={faEnvelope}
-                            className={classes.icon}
-                          />
-                          <Text className={classes.text}>{user.email}</Text>
-                        </div>
-                      </Grid.Col>
-                    </Grid>
-                    <Text mt={20}>
+    <Flex>
+      <Card className={classes.card} withBorder>
+        <Container mx="xs" my="xs">
+          <SimpleGrid cols={3} className={classes.grid}>
+            <AvatarInput
+              defaultAvatar={user.profile?.profile_picture}
+              user={user}
+            />
+            <Grid className={classes.grid}>
+              <Grid.Col>
+                <Flex direction="column" justify="start">
+                  <Text className={classes.text} fz="35px" fw={650}>
+                    {user.profile?.first_name} {user.profile?.last_name}
+                  </Text>
+                  <Grid grow gutter={30} align="flex-start">
+                    <Grid.Col span={1}>
+                      <div className={classes.div}>
+                        <FontAwesomeIcon
+                          icon={faCircleUser}
+                          className={classes.icon}
+                        />
+                        <Text className={classes.text}>
+                          {jobTitle.name ?? ""}
+                        </Text>
+                      </div>
+                    </Grid.Col>
+                    <Grid.Col span={5}>
+                      <div className={classes.div}>
+                        <FontAwesomeIcon
+                          icon={faMapPin}
+                          className={classes.icon}
+                        />
+                        <Text className={classes.text}>
+                          {user.profile?.address_line_1} {user.profile?.address_line_2 ?? ""} {user.profile?.city}{" "}
+                          {user.profile?.state} {user.profile?.zip_code}
+                        </Text>
+                      </div>
+                    </Grid.Col>
+                    <Grid.Col span={1}>
+                      <div className={classes.div}>
+                        <FontAwesomeIcon
+                          icon={faEnvelope}
+                          className={classes.icon}
+                        />
+                        <Text className={classes.text}>{user.email}</Text>
+                      </div>
+                    </Grid.Col>
+                  </Grid>
+                  <Text mt={20}>
                       TODO: Add Analytics based on job function
-                    </Text>
-                  </Flex>
-                </Grid.Col>
-              </Grid>
-            </SimpleGrid>
-          </Container>
-        </Card>
-      </Flex>
-    </>
+                  </Text>
+                </Flex>
+              </Grid.Col>
+            </Grid>
+          </SimpleGrid>
+        </Container>
+      </Card>
+    </Flex>
   );
 };

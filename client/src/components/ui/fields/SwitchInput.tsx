@@ -23,9 +23,7 @@ interface ValidatedSwitchInputProps<TFormValues extends object>
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
-export const SwitchInput = <TFormValues extends object>(
-  props: ValidatedSwitchInputProps<TFormValues>
-) => {
+export function SwitchInput<TFormValues extends object>(props: ValidatedSwitchInputProps<TFormValues>) {
   const { form, name, ...rest } = props;
 
   return (
@@ -34,4 +32,4 @@ export const SwitchInput = <TFormValues extends object>(
       {...form.getInputProps(name as string, { type: "checkbox" })}
     />
   );
-};
+}

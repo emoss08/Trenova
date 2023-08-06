@@ -23,7 +23,7 @@ import { EditJobTitleModal } from "@/components/job-title/table/EditJobTitleModa
 import { ViewJobTitleModal } from "@/components/job-title/table/ViewJobTitleModal";
 import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
 
-export const JobTitleTable = () => {
+export function JobTitleTable() {
   return (
     <MontaTable
       store={jobTitleTableStore}
@@ -31,11 +31,11 @@ export const JobTitleTable = () => {
       columns={JobTitleTableColumns}
       TableEditModal={EditJobTitleModal}
       TableViewModal={ViewJobTitleModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateJobTitleModal}
       tableQueryKey="job-title-table-data"
       exportModelName="JobTitle"
       name="Job Title"
     />
   );
-};
+}

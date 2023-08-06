@@ -30,11 +30,11 @@ import { WebSocketManager } from "@/utils/websockets";
 import { STEPS } from "@/pages/billing/BillingClient";
 import { billingClientStore } from "@/stores/BillingStores";
 
+import image from "@/assets/images/profit.png";
+
 interface Props {
   websocketManager: WebSocketManager;
 }
-
-import image from "@/assets/images/profit.png";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -98,45 +98,43 @@ const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
   }
 
   return (
-    <>
-      <Container className={classes.root}>
-        <SimpleGrid
-          spacing={80}
-          cols={2}
-          breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
-        >
-          <Image src={image} className={classes.mobileImage} />
-          <div>
-            <Title className={classes.title}>
+    <Container className={classes.root}>
+      <SimpleGrid
+        spacing={80}
+        cols={2}
+        breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
+      >
+        <Image src={image} className={classes.mobileImage} />
+        <div>
+          <Title className={classes.title}>
               🚀 Introducing the Monta Billing Client
-            </Title>
+          </Title>
 
-            <Text color="dimmed" size="lg">
-              {websocketMessage.action === "get_started" &&
+          <Text color="dimmed" size="lg">
+            {websocketMessage.action === "get_started" &&
               websocketMessage.step === 0 &&
               websocketMessage.status === "SUCCESS"
-                ? (websocketMessage.message as string)
-                : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
+              ? (websocketMessage.message as string)
+              : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
                   " This ingenious software client for interacting with the billing API offers a streamlined" +
                   " approach for handling your financial transactions."}
-            </Text>
+          </Text>
 
-            {!websocketMessage?.message && (
-              <Button
-                variant="outline"
-                size="md"
-                mt="xl"
-                className={classes.control}
-                onClick={getStarted}
-              >
+          {!websocketMessage?.message && (
+            <Button
+              variant="outline"
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={getStarted}
+            >
                 Get Started
-              </Button>
-            )}
-          </div>
-          <Image src={image} className={classes.desktopImage} />
-        </SimpleGrid>
-      </Container>
-    </>
+            </Button>
+          )}
+        </div>
+        <Image src={image} className={classes.desktopImage} />
+      </SimpleGrid>
+    </Container>
   );
 };
 

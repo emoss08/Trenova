@@ -21,25 +21,23 @@ import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { ChargeType } from "@/types/apps/billing";
 
-export const ChargeTypeTableColumns = (): MRT_ColumnDef<ChargeType>[] => {
-  return [
-    {
-      accessorKey: "name", //access nested data with dot notation
-      header: "Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={chargeTypeTableStore}
-          data={row.original}
-        />
-      ),
-    },
-  ];
-};
+export const ChargeTypeTableColumns = (): MRT_ColumnDef<ChargeType>[] => [
+  {
+    accessorKey: "name", // access nested data with dot notation
+    header: "Name",
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    Cell: ({ row }) => (
+      <MontaTableActionMenu
+        store={chargeTypeTableStore}
+        data={row.original}
+      />
+    ),
+  },
+];

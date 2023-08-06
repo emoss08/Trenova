@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { useEffect, useState } from "react";
 import {
   WebSocketConnection,
   WebSocketManager,
   WebSocketMessageProps,
 } from "@/utils/websockets";
-import { useEffect, useState } from "react";
 import { WEB_SOCKET_URL } from "@/lib/utils";
 
 interface Props {

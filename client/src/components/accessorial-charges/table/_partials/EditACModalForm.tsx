@@ -24,16 +24,16 @@ import {
   rem,
   SimpleGrid,
 } from "@mantine/core";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { APIError } from "@/types/server";
 import { useForm, yupResolver } from "@mantine/form";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
 import {
   AccessorialCharge,
   AccessorialChargeFormValues,
@@ -146,73 +146,71 @@ export const EditACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
   };
 
   return (
-    <>
-      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-        <Box className={classes.div}>
-          <Box>
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="code"
+            label="Code"
+            description="Code for the accessorial charge."
+            placeholder="Code"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            description="Description of the accessorial charge."
+            placeholder="Description"
+            variant="filled"
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <ValidatedTextInput
               form={form}
               className={classes.fields}
-              name="code"
-              label="Code"
-              description="Code for the accessorial charge."
-              placeholder="Code"
+              name="charge_amount"
+              label="Charge Amount"
+              placeholder="Charge Amount"
+              description="Charge amount for the accessorial charge."
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextArea
+            <SelectInput
               form={form}
+              data={fuelMethodChoices}
               className={classes.fields}
-              name="description"
-              label="Description"
-              description="Description of the accessorial charge."
-              placeholder="Description"
+              name="method"
+              label="Fuel Method"
+              description="Method for calculating the other charge."
+              placeholder="Fuel Method"
               variant="filled"
             />
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="charge_amount"
-                label="Charge Amount"
-                placeholder="Charge Amount"
-                description="Charge amount for the accessorial charge."
-                variant="filled"
-                withAsterisk
-              />
-              <SelectInput
-                form={form}
-                data={fuelMethodChoices}
-                className={classes.fields}
-                name="method"
-                label="Fuel Method"
-                description="Method for calculating the other charge."
-                placeholder="Fuel Method"
-                variant="filled"
-              />
-              <SwitchInput
-                form={form}
-                className={classes.fields}
-                name="is_detention"
-                label="Detention"
-                description="Is detention charge?"
-                placeholder="Detention"
-                variant="filled"
-              />
-            </SimpleGrid>
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
+            <SwitchInput
+              form={form}
+              className={classes.fields}
+              name="is_detention"
+              label="Detention"
+              description="Is detention charge?"
+              placeholder="Detention"
+              variant="filled"
+            />
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
                 Submit
-              </Button>
-            </Group>
-          </Box>
+            </Button>
+          </Group>
         </Box>
-      </form>
-    </>
+      </Box>
+    </form>
   );
 };

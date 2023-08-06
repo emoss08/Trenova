@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { LinksGroup } from "@/components/layout/Navbar/_partials/LinksGroup";
 import React from "react";
+import { LinksGroup } from "@/components/layout/Navbar/_partials/LinksGroup";
 import { billingNavLinks } from "@/utils/apps/billing";
 
 export function BillingLinks() {

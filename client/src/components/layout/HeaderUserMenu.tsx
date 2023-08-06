@@ -106,7 +106,7 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
                 {user.profile?.profile_picture ? (
                   <Avatar
                     src={user.profile?.profile_picture}
-                    alt={"Test"}
+                    alt="Test"
                     radius="xl"
                   />
                 ) : (
@@ -116,7 +116,7 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
                   </Avatar>
                 )}
               </Indicator>
-              {/*<Avatar src={user.profile?.profile_picture} radius="xl" />*/}
+              {/* <Avatar src={user.profile?.profile_picture} radius="xl" /> */}
 
               <div style={{ flex: 1 }}>
                 <Text size="sm" weight={500}>

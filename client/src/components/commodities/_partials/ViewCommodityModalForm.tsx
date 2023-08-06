@@ -41,98 +41,96 @@ export function ViewCommodityModalForm({ commodity, selectHazmatData }: Props) {
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          className={classes.fields}
+          value={commodity.name}
+          name="name"
+          label="Name"
+          placeholder="Name"
+          readOnly
+          variant="filled"
+          withAsterisk
+        />
+        <Textarea
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          readOnly
+          variant="filled"
+          value={commodity.description || ""}
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <TextInput
             className={classes.fields}
-            value={commodity.name}
-            name="name"
-            label="Name"
-            placeholder="Name"
+            name="min_temp"
+            label="Min Temp"
+            placeholder="Min Temp"
             readOnly
             variant="filled"
-            withAsterisk
+            value={commodity.min_temp || ""}
           />
-          <Textarea
+          <TextInput
             className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
+            name="max_temp"
+            label="Max Temp"
+            placeholder="Max Temp"
             readOnly
             variant="filled"
-            value={commodity.description || ""}
+            value={commodity.max_temp || ""}
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <TextInput
-              className={classes.fields}
-              name="min_temp"
-              label="Min Temp"
-              placeholder="Min Temp"
-              readOnly
-              variant="filled"
-              value={commodity.min_temp || ""}
-            />
-            <TextInput
-              className={classes.fields}
-              name="max_temp"
-              label="Max Temp"
-              placeholder="Max Temp"
-              readOnly
-              variant="filled"
-              value={commodity.max_temp || ""}
-            />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              className={classes.fields}
-              data={selectHazmatData || []}
-              name="hazmat"
-              placeholder="Hazardous Material"
-              label="Hazardous Material"
-              variant="filled"
-              value={commodity.hazmat || ""}
-              readOnly
-              clearable
-            />
-            <Select
-              className={classes.fields}
-              data={yesAndNoChoices}
-              name="is_hazmat"
-              label="Is Hazmat"
-              placeholder="Is Hazmat"
-              variant="filled"
-              value={commodity.is_hazmat || ""}
-              readOnly
-              withAsterisk
-            />
-          </SimpleGrid>
+        </SimpleGrid>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <Select
             className={classes.fields}
-            data={unitOfMeasureChoices}
-            name="unit_of_measure"
-            placeholder="Unit of Measure"
-            label="Unit of Measure"
+            data={selectHazmatData || []}
+            name="hazmat"
+            placeholder="Hazardous Material"
+            label="Hazardous Material"
+            variant="filled"
+            value={commodity.hazmat || ""}
+            readOnly
+            clearable
+          />
+          <Select
+            className={classes.fields}
+            data={yesAndNoChoices}
+            name="is_hazmat"
+            label="Is Hazmat"
+            placeholder="Is Hazmat"
+            variant="filled"
             value={commodity.is_hazmat || ""}
             readOnly
-            variant="filled"
+            withAsterisk
           />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              onClick={() => {
-                commodityTableStore.set("selectedRecord", commodity);
-                commodityTableStore.set("viewModalOpen", false);
-                commodityTableStore.set("editModalOpen", true);
-              }}
-            >
+        </SimpleGrid>
+        <Select
+          className={classes.fields}
+          data={unitOfMeasureChoices}
+          name="unit_of_measure"
+          placeholder="Unit of Measure"
+          label="Unit of Measure"
+          value={commodity.is_hazmat || ""}
+          readOnly
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            onClick={() => {
+              commodityTableStore.set("selectedRecord", commodity);
+              commodityTableStore.set("viewModalOpen", false);
+              commodityTableStore.set("editModalOpen", true);
+            }}
+          >
               Edit Commodity
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 }

@@ -17,10 +17,10 @@
 
 import React from "react";
 import { createStyles, Divider, Skeleton } from "@mantine/core";
-import { WebSocketManager } from "@/utils/websockets";
 import { useQuery, useQueryClient } from "react-query";
-import { getBillingQueue } from "@/requests/BillingRequestFactory";
 import Typed from "typed.js";
+import { WebSocketManager } from "@/utils/websockets";
+import { getBillingQueue } from "@/requests/BillingRequestFactory";
 import { BillingQueueTable } from "@/components/billing/_partials/BillingQueueTable";
 
 interface Props {
@@ -63,9 +63,7 @@ const BillingQueue: React.FC<Props> = ({ websocketManager }) => {
     useQuery({
       queryKey: ["billingQueueData"],
       queryFn: () => getBillingQueue(),
-      initialData: () => {
-        return queryClient.getQueryData(["billingQueueData"]);
-      },
+      initialData: () => queryClient.getQueryData(["billingQueueData"]),
     });
 
   return (
@@ -73,7 +71,7 @@ const BillingQueue: React.FC<Props> = ({ websocketManager }) => {
       <span ref={el} className={classes.text} />
       <Divider my={10} />
       {isBillingQueueDataLoading ? (
-        <Skeleton height={500}></Skeleton>
+        <Skeleton height={500} />
       ) : (
         billingQueueData && (
           <BillingQueueTable

@@ -18,6 +18,7 @@
 import React from "react";
 import { MantineReactTable, MRT_ColumnDef } from "mantine-react-table";
 import { useQuery } from "react-query";
+import { useMantineTheme } from "@mantine/core";
 import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { ApiResponse } from "@/types/server";
@@ -25,7 +26,6 @@ import { DeleteRecordModal } from "@/components/DeleteRecordModal";
 import { API_URL } from "@/lib/utils";
 import { TableTopToolbar } from "@/components/table/TableTopToolbar";
 import { TableExportModal } from "./table/TableExportModal";
-import { useMantineTheme } from "@mantine/core";
 
 interface MontaTableProps<T extends Record<string, any>> {
   store: any;
@@ -41,7 +41,7 @@ interface MontaTableProps<T extends Record<string, any>> {
   tableQueryKey: string;
 }
 
-export const MontaTable = <T extends Record<string, any>>({
+export function MontaTable<T extends Record<string, any>>({
   store,
   link,
   columns,
@@ -53,7 +53,7 @@ export const MontaTable = <T extends Record<string, any>>({
   exportModelName,
   displayDeleteModal,
   name,
-}: MontaTableProps<T>) => {
+}: MontaTableProps<T>) {
   const theme = useMantineTheme();
   const [pagination] = store.use("pagination");
   const [globalFilter, setGlobalFilter] = store.use("globalFilter");
@@ -103,7 +103,7 @@ export const MontaTable = <T extends Record<string, any>>({
         }}
         state={{
           isLoading,
-          pagination: pagination,
+          pagination,
           showAlertBanner: isError,
           showSkeletons: isFetching,
           rowSelection,
@@ -132,14 +132,12 @@ export const MontaTable = <T extends Record<string, any>>({
           sx: { borderBottom: "unset", marginTop: "8px" },
           variant: "filled",
         }}
-        mantineTableBodyCellProps={() => {
-          return {
-            sx: {
-              backgroundColor:
+        mantineTableBodyCellProps={() => ({
+          sx: {
+            backgroundColor:
                 theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
-            },
-          };
-        }}
+          },
+        })}
         renderTopToolbar={({ table }) => (
           <TableTopToolbar table={table} store={store} name={name} />
         )}
@@ -154,4 +152,4 @@ export const MontaTable = <T extends Record<string, any>>({
       {TableViewModal && <TableViewModal />}
     </>
   );
-};
+}

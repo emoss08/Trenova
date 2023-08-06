@@ -26,8 +26,8 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
 import React, { lazy } from "react";
-import { usePageStyles } from "@/styles/PageStyles";
 import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { usePageStyles } from "@/styles/PageStyles";
 
 const BillingControlContent = lazy(() => import("./BillingControl"));
 const DispatchControlContent = lazy(() => import("./DispatchControl"));
@@ -89,7 +89,7 @@ export const controlFileData: ControlFileData[] = [
   },
 ];
 
-export const NavBar = ({ activeTab, setActiveTab, navigate }: NavBarProps) => {
+export function NavBar({ activeTab, setActiveTab, navigate }: NavBarProps) {
   const { classes } = usePageStyles();
   const items = controlFileData.map((item, index) => (
     <NavLink
@@ -111,4 +111,4 @@ export const NavBar = ({ activeTab, setActiveTab, navigate }: NavBarProps) => {
       </Card>
     </Flex>
   );
-};
+}

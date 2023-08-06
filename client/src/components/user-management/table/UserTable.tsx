@@ -22,18 +22,18 @@ import { ViewUserModal } from "./ViewUserModal";
 import { userTableStore } from "@/stores/UserTableStore";
 import { MontaTable } from "@/components/MontaTable";
 
-export const UsersAdminTable = () => {
+export function UsersAdminTable() {
   return (
     <MontaTable
       store={userTableStore}
       link="/users"
       columns={UserTableColumns}
       TableCreateDrawer={CreateUserDrawer}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableViewModal={ViewUserModal}
       tableQueryKey="users-table-data"
       name="User"
       exportModelName="User"
     />
   );
-};
+}

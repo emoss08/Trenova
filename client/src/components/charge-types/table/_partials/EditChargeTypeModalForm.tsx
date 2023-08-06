@@ -17,15 +17,15 @@
 
 import React from "react";
 import { Box, Button, Group } from "@mantine/core";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { APIError } from "@/types/server";
 import { useForm, yupResolver } from "@mantine/form";
+import { APIError } from "@/types/server";
+import axios from "@/lib/AxiosConfig";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ChargeType, ChargeTypeFormValues } from "@/types/apps/billing";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { chargeTypeSchema } from "@/utils/apps/billing/schema";
@@ -101,40 +101,38 @@ export const EditChargeTypeModalForm: React.FC<Props> = ({ chargeType }) => {
   };
 
   return (
-    <>
-      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-        <Box className={classes.div}>
-          <Box>
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="name"
-              label="Name"
-              placeholder="Name"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextArea
-              form={form}
-              className={classes.fields}
-              name="description"
-              label="Description"
-              placeholder="Description"
-              variant="filled"
-            />
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="name"
+            label="Name"
+            placeholder="Name"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
                 Submit
-              </Button>
-            </Group>
-          </Box>
+            </Button>
+          </Group>
         </Box>
-      </form>
-    </>
+      </Box>
+    </form>
   );
 };

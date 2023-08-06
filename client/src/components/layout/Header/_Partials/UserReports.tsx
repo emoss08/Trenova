@@ -60,18 +60,18 @@ export const UserReports: React.FC<Props> = ({ reportData }) => {
       ).toLowerCase();
 
       switch (fileExtension) {
-        case "pdf":
-          icon = faFilePdf;
-          break;
-        case "csv":
-          icon = faFileCsv;
-          break;
-        case "xls":
-        case "xlsx":
-          icon = faFileExcel;
-          break;
-        default:
-          icon = faDownload; // default download icon if the file type is not PDF, CSV, or Excel
+      case "pdf":
+        icon = faFilePdf;
+        break;
+      case "csv":
+        icon = faFileCsv;
+        break;
+      case "xls":
+      case "xlsx":
+        icon = faFileExcel;
+        break;
+      default:
+        icon = faDownload; // default download icon if the file type is not PDF, CSV, or Excel
       }
     } else {
       icon = faDownload; // use the default download icon if `file_name` is not defined

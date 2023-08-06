@@ -46,26 +46,24 @@ const LogoutPage: React.FC = () => {
   }, [isAuthenticated, setIsAuthenticated, navigate]);
 
   return (
-    <>
-      <Flex
-        direction={{ base: "column", sm: "row" }}
-        justify={{ sm: "center" }}
-        align={{ sm: "center" }}
-        style={{ height: "90vh" }}
-      >
-        <Card padding="xl" withBorder>
-          <Text weight={500} size="lg">
+    <Flex
+      direction={{ base: "column", sm: "row" }}
+      justify={{ sm: "center" }}
+      align={{ sm: "center" }}
+      style={{ height: "90vh" }}
+    >
+      <Card padding="xl" withBorder>
+        <Text weight={500} size="lg">
             Logging out... Please wait.
-          </Text>
-          <Text mt="xs" color="dimmed" size="sm">
+        </Text>
+        <Text mt="xs" color="dimmed" size="sm">
             If the operation exceeds a duration of 10 seconds, kindly verify the
             status of your internet connectivity. <br />
             In case of persistent difficulty, please get in touch with your
             designated system administrator.
-          </Text>
-        </Card>
-      </Flex>
-    </>
+        </Text>
+      </Card>
+    </Flex>
   );
 };
 

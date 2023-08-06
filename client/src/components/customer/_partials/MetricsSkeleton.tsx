@@ -27,75 +27,73 @@ import {
 
 export function MetricsSkeleton() {
   return (
-    <>
-      <Grid gutter="md">
-        <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
-          <Flex>
-            <Skeleton height={800} width={400} />
-          </Flex>
-        </Grid.Col>
-        <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
-          <div
-            style={{
-              paddingBottom: rem(20),
-            }}
+    <Grid gutter="md">
+      <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
+        <Flex>
+          <Skeleton height={800} width={400} />
+        </Flex>
+      </Grid.Col>
+      <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
+        <div
+          style={{
+            paddingBottom: rem(20),
+          }}
+        >
+          <SimpleGrid
+            cols={4}
+            breakpoints={[
+              { maxWidth: "md", cols: 2 },
+              { maxWidth: "xs", cols: 1 },
+            ]}
           >
-            <SimpleGrid
-              cols={4}
-              breakpoints={[
-                { maxWidth: "md", cols: 2 },
-                { maxWidth: "xs", cols: 1 },
-              ]}
-            >
-              <Paper withBorder p="md" radius="md">
-                <Group position="apart">
-                  <Skeleton height={25} />
-                </Group>
+            <Paper withBorder p="md" radius="md">
+              <Group position="apart">
+                <Skeleton height={25} />
+              </Group>
 
-                <Group align="flex-end" spacing="xs">
-                  <Skeleton mt={7} height={35} width={100} />
-                </Group>
+              <Group align="flex-end" spacing="xs">
+                <Skeleton mt={7} height={35} width={100} />
+              </Group>
 
-                <Skeleton mt={7} height={20} />
-              </Paper>
-              <Paper withBorder p="md" radius="md">
-                <Group position="apart">
-                  <Skeleton height={25} />
-                </Group>
+              <Skeleton mt={7} height={20} />
+            </Paper>
+            <Paper withBorder p="md" radius="md">
+              <Group position="apart">
+                <Skeleton height={25} />
+              </Group>
 
-                <Group align="flex-end" spacing="xs">
-                  <Skeleton mt={7} height={35} width={100} />
-                </Group>
+              <Group align="flex-end" spacing="xs">
+                <Skeleton mt={7} height={35} width={100} />
+              </Group>
 
-                <Skeleton mt={7} height={20} />
-              </Paper>
-              <Paper withBorder p="md" radius="md">
-                <Group position="apart">
-                  <Skeleton height={25} />
-                </Group>
+              <Skeleton mt={7} height={20} />
+            </Paper>
+            <Paper withBorder p="md" radius="md">
+              <Group position="apart">
+                <Skeleton height={25} />
+              </Group>
 
-                <Group align="flex-end" spacing="xs">
-                  <Skeleton mt={7} height={35} width={100} />
-                </Group>
+              <Group align="flex-end" spacing="xs">
+                <Skeleton mt={7} height={35} width={100} />
+              </Group>
 
-                <Skeleton mt={7} height={20} />
-              </Paper>
-              <Paper withBorder p="md" radius="md">
-                <Group position="apart">
-                  <Skeleton height={25} />
-                </Group>
+              <Skeleton mt={7} height={20} />
+            </Paper>
+            <Paper withBorder p="md" radius="md">
+              <Group position="apart">
+                <Skeleton height={25} />
+              </Group>
 
-                <Group align="flex-end" spacing="xs">
-                  <Skeleton mt={7} height={35} width={100} />
-                </Group>
+              <Group align="flex-end" spacing="xs">
+                <Skeleton mt={7} height={35} width={100} />
+              </Group>
 
-                <Skeleton mt={7} height={20} />
-              </Paper>
-              <Skeleton height={600} width={950} />
-            </SimpleGrid>
-          </div>
-        </Grid.Col>
-      </Grid>
-    </>
+              <Skeleton mt={7} height={20} />
+            </Paper>
+            <Skeleton height={600} width={950} />
+          </SimpleGrid>
+        </div>
+      </Grid.Col>
+    </Grid>
   );
 }

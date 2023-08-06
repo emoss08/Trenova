@@ -39,81 +39,79 @@ export const ViewACModalForm: React.FC<Props> = ({ accessorialCharge }) => {
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          className={classes.fields}
+          name="code"
+          label="Code"
+          description="Code for the accessorial charge."
+          placeholder="Code"
+          variant="filled"
+          readOnly
+          value={accessorialCharge.code}
+        />
+        <Textarea
+          className={classes.fields}
+          name="description"
+          label="Description"
+          description="Description of the accessorial charge."
+          placeholder="Description"
+          variant="filled"
+          readOnly
+          value={accessorialCharge.description || ""}
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <TextInput
             className={classes.fields}
-            name="code"
-            label="Code"
-            description="Code for the accessorial charge."
-            placeholder="Code"
+            name="charge_amount"
+            label="Charge Amount"
+            placeholder="Charge Amount"
+            description="Charge amount for the accessorial charge."
             variant="filled"
             readOnly
-            value={accessorialCharge.code}
+            value={accessorialCharge.charge_amount}
           />
-          <Textarea
+          <Select
+            data={fuelMethodChoices}
             className={classes.fields}
-            name="description"
-            label="Description"
-            description="Description of the accessorial charge."
-            placeholder="Description"
+            name="method"
+            label="Fuel Method"
+            description="Method for calculating the other charge."
+            placeholder="Fuel Method"
             variant="filled"
             readOnly
-            value={accessorialCharge.description || ""}
+            value={accessorialCharge.method}
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <TextInput
-              className={classes.fields}
-              name="charge_amount"
-              label="Charge Amount"
-              placeholder="Charge Amount"
-              description="Charge amount for the accessorial charge."
-              variant="filled"
-              readOnly
-              value={accessorialCharge.charge_amount}
-            />
-            <Select
-              data={fuelMethodChoices}
-              className={classes.fields}
-              name="method"
-              label="Fuel Method"
-              description="Method for calculating the other charge."
-              placeholder="Fuel Method"
-              variant="filled"
-              readOnly
-              value={accessorialCharge.method}
-            />
-            <Switch
-              className={classes.fields}
-              name="is_detention"
-              label="Detention"
-              description="Is detention charge?"
-              placeholder="Detention"
-              variant="filled"
-              readOnly
-              checked={accessorialCharge.is_detention}
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              onClick={() => {
-                accessorialChargeTableStore.set(
-                  "selectedRecord",
-                  accessorialCharge
-                );
-                accessorialChargeTableStore.set("viewModalOpen", false);
-                accessorialChargeTableStore.set("editModalOpen", true);
-              }}
-              className={classes.control}
-            >
+          <Switch
+            className={classes.fields}
+            name="is_detention"
+            label="Detention"
+            description="Is detention charge?"
+            placeholder="Detention"
+            variant="filled"
+            readOnly
+            checked={accessorialCharge.is_detention}
+          />
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              accessorialChargeTableStore.set(
+                "selectedRecord",
+                accessorialCharge
+              );
+              accessorialChargeTableStore.set("viewModalOpen", false);
+              accessorialChargeTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
               Edit Accessorial Charge
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 };

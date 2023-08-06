@@ -105,24 +105,22 @@ export function SubLinksGroup({ label, subLinks }: SubLinksGroupProps) {
     [theme.dir]
   );
 
-  const subLinkItems = useMemo(() => {
-    return subLinks
-      ?.filter(
-        (subLink) =>
-          !subLink.permission || userHasPermission(subLink.permission)
-      )
-      .map((subLink) => (
-        <Link
-          to={subLink.link}
-          style={{
-            textDecoration: "none",
-          }}
-          key={subLink.label}
-        >
-          <Text className={classes.link}>{subLink.label}</Text>
-        </Link>
-      ));
-  }, [subLinks, userHasPermission]);
+  const subLinkItems = useMemo(() => subLinks
+    ?.filter(
+      (subLink) =>
+        !subLink.permission || userHasPermission(subLink.permission)
+    )
+    .map((subLink) => (
+      <Link
+        to={subLink.link}
+        style={{
+          textDecoration: "none",
+        }}
+        key={subLink.label}
+      >
+        <Text className={classes.link}>{subLink.label}</Text>
+      </Link>
+    )), [subLinks, userHasPermission]);
 
   if (!hasSubLinks) {
     return null;

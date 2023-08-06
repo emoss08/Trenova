@@ -17,8 +17,8 @@
 
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "react-query";
-import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
 import { Box, Button, Card, Grid, Tabs, Text } from "@mantine/core";
+import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
 import { usePageStyles } from "@/styles/PageStyles";
 import { CustomerStats } from "@/components/customer/CustomerStats";
 import { CustomerBillingHistoryTable } from "@/components/customer/CustomerBillingHistoryTable";
@@ -39,56 +39,50 @@ export default function ViewCustomer() {
       }
       return getCustomerDetailsWithMetrics(id);
     },
-    initialData: () => {
-      return queryClient.getQueryData(["customerWithMetrics", id]);
-    },
+    initialData: () => queryClient.getQueryData(["customerWithMetrics", id]),
     staleTime: Infinity,
   });
 
   return isCustomerDataLoading ? (
-    <>
-      <MetricsSkeleton />
-    </>
+    <MetricsSkeleton />
   ) : (
-    <>
-      <Grid gutter="md">
-        <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
-          {customerData && <ViewCustomerNavbar customer={customerData} />}
-        </Grid.Col>
-        <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
-          <Tabs defaultValue="overview">
-            <Tabs.List grow mb={20}>
-              <Tabs.Tab value="overview">Overview</Tabs.Tab>
-              <Tabs.Tab value="second">Events & Logs</Tabs.Tab>
-              <Tabs.Tab value="third">Statements</Tabs.Tab>
-            </Tabs.List>
+    <Grid gutter="md">
+      <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
+        {customerData && <ViewCustomerNavbar customer={customerData} />}
+      </Grid.Col>
+      <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
+        <Tabs defaultValue="overview">
+          <Tabs.List grow mb={20}>
+            <Tabs.Tab value="overview">Overview</Tabs.Tab>
+            <Tabs.Tab value="second">Events & Logs</Tabs.Tab>
+            <Tabs.Tab value="third">Statements</Tabs.Tab>
+          </Tabs.List>
 
-            {/** Overview Tab */}
-            <Tabs.Panel value="overview" pt="xs">
-              {customerData && <CustomerStats customer={customerData} />}
-              <Card className={classes.card} withBorder>
-                <Box
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                  my={20}
-                >
-                  <Text className={classes.text} fw={600} fz={20}>
+          {/** Overview Tab */}
+          <Tabs.Panel value="overview" pt="xs">
+            {customerData && <CustomerStats customer={customerData} />}
+            <Card className={classes.card} withBorder>
+              <Box
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+                my={20}
+              >
+                <Text className={classes.text} fw={600} fz={20}>
                     Billing History
-                  </Text>
-                  <Button size="xs">View All</Button>
-                </Box>
-                {id && <CustomerBillingHistoryTable id={id} />}
-              </Card>
-              {customerData && (
-                <CustomerCreditBalance customer={customerData} />
-              )}
-            </Tabs.Panel>
-          </Tabs>
-        </Grid.Col>
-      </Grid>
-    </>
+                </Text>
+                <Button size="xs">View All</Button>
+              </Box>
+              {id && <CustomerBillingHistoryTable id={id} />}
+            </Card>
+            {customerData && (
+              <CustomerCreditBalance customer={customerData} />
+            )}
+          </Tabs.Panel>
+        </Tabs>
+      </Grid.Col>
+    </Grid>
   );
 }

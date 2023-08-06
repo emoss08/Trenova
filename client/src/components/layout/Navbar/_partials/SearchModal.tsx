@@ -31,12 +31,12 @@ import {
   Box,
 } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import axios from "@/lib/AxiosConfig";
-import { SearchControl } from "@/components/layout/Header/_Partials/SpotlightSearchControl";
 import { useDisclosure } from "@mantine/hooks";
 import { useDebouncedCallback } from "use-debounce";
 import { faSearch } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { SearchControl } from "@/components/layout/Header/_Partials/SpotlightSearchControl";
+import axios from "@/lib/AxiosConfig";
 import { allowedSearchModels } from "@/utils/apps/search";
 
 export const SearchModal: React.FC = () => {
@@ -147,7 +147,7 @@ export const SearchModal: React.FC = () => {
                 }
               />
             </Modal.Title>
-            {/*<Modal.CloseButton />*/}
+            {/* <Modal.CloseButton /> */}
           </Modal.Header>
           <Divider />
 

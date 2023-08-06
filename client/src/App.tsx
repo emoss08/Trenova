@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { BrowserRouter } from "react-router-dom";
 import React, { Suspense, useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
 import "./styles/App.css";
 import {
   ColorScheme,
@@ -27,11 +27,11 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { Notifications } from "@mantine/notifications";
 import { ReactQueryDevtools } from "react-query/devtools";
+import { ContextMenuProvider } from "mantine-contextmenu";
 import { useAuthStore } from "./stores/AuthStore";
 import LoadingScreen from "./components/LoadingScreen";
 import { ProtectedRoutes } from "./routing/ProtectedRoutes";
 import { useVerifyToken } from "./hooks/withTokenVerification";
-import { ContextMenuProvider } from "mantine-contextmenu";
 
 function App() {
   const { isVerifying } = useVerifyToken();
@@ -45,7 +45,9 @@ function App() {
   const toggleColorScheme = (value?: ColorScheme) =>
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
-  const initialLoading = useAuthStore((state) => state.initialLoading);
+  const initialLoading = useAuthStore(
+    (state: { initialLoading: any }) => state.initialLoading,
+  );
 
   useHotkeys([["mod+J", () => toggleColorScheme()]]);
 
@@ -67,34 +69,32 @@ function App() {
   });
 
   return (
-    <>
-      <ColorSchemeProvider
-        colorScheme={colorScheme}
-        toggleColorScheme={toggleColorScheme}
+    <ColorSchemeProvider
+      colorScheme={colorScheme}
+      toggleColorScheme={toggleColorScheme}
+    >
+      <MantineProvider
+        theme={{
+          colorScheme,
+          fontFamily: "Inter, sans-serif",
+        }}
+        withGlobalStyles
+        withNormalizeCSS
+        withCSSVariables
       >
-        <MantineProvider
-          theme={{
-            colorScheme,
-            fontFamily: "Inter, sans-serif",
-          }}
-          withGlobalStyles
-          withNormalizeCSS
-          withCSSVariables
-        >
-          <ContextMenuProvider>
-            <Notifications limit={3} position="top-right" zIndex={2077} />
-            <QueryClientProvider client={queryClient}>
-              <BrowserRouter>
-                <Suspense fallback={<LoadingScreen />}>
-                  <ProtectedRoutes />
-                </Suspense>
-              </BrowserRouter>
-              <ReactQueryDevtools initialIsOpen={false} />
-            </QueryClientProvider>
-          </ContextMenuProvider>
-        </MantineProvider>
-      </ColorSchemeProvider>
-    </>
+        <ContextMenuProvider>
+          <Notifications limit={3} position="top-right" zIndex={2077} />
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter>
+              <Suspense fallback={<LoadingScreen />}>
+                <ProtectedRoutes />
+              </Suspense>
+            </BrowserRouter>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </QueryClientProvider>
+        </ContextMenuProvider>
+      </MantineProvider>
+    </ColorSchemeProvider>
   );
 }
 

@@ -16,11 +16,11 @@
  */
 
 import { Box, Button, Card, Text } from "@mantine/core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPencil } from "@fortawesome/pro-duotone-svg-icons";
 import { usePageStyles } from "@/styles/PageStyles";
 import { Customer } from "@/types/apps/customer";
 import { USDollarFormat } from "@/lib/utils";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPencil } from "@fortawesome/pro-duotone-svg-icons";
 
 export type CustomerCreditBalanceProps = {
   customer: Customer;

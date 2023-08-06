@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { usePageStyles } from "@/styles/PageStyles";
 import { useQuery, useQueryClient } from "react-query";
-import { getOrderControl } from "@/requests/OrganizationRequestFactory";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
 import React from "react";
+import { getOrderControl } from "@/requests/OrganizationRequestFactory";
+import { usePageStyles } from "@/styles/PageStyles";
 import { OrderControlForm } from "@/components/control-files/_partials/OrderControlForm";
 
-const OrderControlPage = () => {
+function OrderControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
@@ -30,9 +30,7 @@ const OrderControlPage = () => {
     useQuery({
       queryKey: ["orderControl"],
       queryFn: () => getOrderControl(),
-      initialData: () => {
-        return queryClient.getQueryData(["orderControl"]);
-      },
+      initialData: () => queryClient.getQueryData(["orderControl"]),
       staleTime: Infinity,
     });
 
@@ -42,7 +40,7 @@ const OrderControlPage = () => {
   return (
     <>
       {isOrderControlDataLoading ? (
-        <Skeleton height={400}></Skeleton>
+        <Skeleton height={400} />
       ) : (
         <Card className={classes.card} withBorder>
           <Text fz="xl" fw={700} className={classes.text}>
@@ -57,6 +55,6 @@ const OrderControlPage = () => {
       )}
     </>
   );
-};
+}
 
 export default OrderControlPage;

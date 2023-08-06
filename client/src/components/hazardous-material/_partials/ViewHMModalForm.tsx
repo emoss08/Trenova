@@ -38,102 +38,100 @@ type Props = {
   hazardousMaterial: HazardousMaterial;
 };
 
-export const ViewHMModalForm = ({ hazardousMaterial }: Props) => {
+export function ViewHMModalForm({ hazardousMaterial }: Props) {
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={statusChoices}
-              className={classes.fields}
-              value={hazardousMaterial.status}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              readOnly
-            />
-            <TextInput
-              className={classes.fields}
-              value={hazardousMaterial.name}
-              name="name"
-              label="Name"
-              placeholder="Name"
-              variant="filled"
-              readOnly
-            />
-          </SimpleGrid>
-          <Textarea
+    <Box className={classes.div}>
+      <Box>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={statusChoices}
             className={classes.fields}
-            value={hazardousMaterial.description || ""}
-            name="description"
-            label="Description"
-            placeholder="Description"
-            variant="filled"
-            readOnly
-          />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={hazardousClassChoices}
-              className={classes.fields}
-              value={hazardousMaterial.hazard_class}
-              name="hazard_class"
-              label="Hazard Class"
-              placeholder="Hazard Class"
-              variant="filled"
-              readOnly
-            />
-            <Select
-              data={packingGroupChoices}
-              className={classes.fields}
-              value={hazardousMaterial.packing_group || ""}
-              name="packing_group"
-              label="Packing Group"
-              placeholder="Packing Group"
-              variant="filled"
-              readOnly
-            />
-          </SimpleGrid>
-          <TextInput
-            className={classes.fields}
-            value={hazardousMaterial.erg_number || ""}
-            name="erg_number"
-            label="ERG Number"
-            placeholder="ERG Number"
+            value={hazardousMaterial.status}
+            name="status"
+            label="Status"
+            placeholder="Status"
             variant="filled"
             readOnly
           />
           <TextInput
             className={classes.fields}
-            value={hazardousMaterial.proper_shipping_name || ""}
-            name="proper_shipping_name"
-            label="Proper Shipping Name"
-            placeholder="Proper Shipping Name"
+            value={hazardousMaterial.name}
+            name="name"
+            label="Name"
+            placeholder="Name"
             variant="filled"
             readOnly
           />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              onClick={() => {
-                hazardousMaterialTableStore.set(
-                  "selectedRecord",
-                  hazardousMaterial
-                );
-                hazardousMaterialTableStore.set("viewModalOpen", false);
-                hazardousMaterialTableStore.set("editModalOpen", true);
-              }}
-              className={classes.control}
-            >
+        </SimpleGrid>
+        <Textarea
+          className={classes.fields}
+          value={hazardousMaterial.description || ""}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          variant="filled"
+          readOnly
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={hazardousClassChoices}
+            className={classes.fields}
+            value={hazardousMaterial.hazard_class}
+            name="hazard_class"
+            label="Hazard Class"
+            placeholder="Hazard Class"
+            variant="filled"
+            readOnly
+          />
+          <Select
+            data={packingGroupChoices}
+            className={classes.fields}
+            value={hazardousMaterial.packing_group || ""}
+            name="packing_group"
+            label="Packing Group"
+            placeholder="Packing Group"
+            variant="filled"
+            readOnly
+          />
+        </SimpleGrid>
+        <TextInput
+          className={classes.fields}
+          value={hazardousMaterial.erg_number || ""}
+          name="erg_number"
+          label="ERG Number"
+          placeholder="ERG Number"
+          variant="filled"
+          readOnly
+        />
+        <TextInput
+          className={classes.fields}
+          value={hazardousMaterial.proper_shipping_name || ""}
+          name="proper_shipping_name"
+          label="Proper Shipping Name"
+          placeholder="Proper Shipping Name"
+          variant="filled"
+          readOnly
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              hazardousMaterialTableStore.set(
+                "selectedRecord",
+                hazardousMaterial
+              );
+              hazardousMaterialTableStore.set("viewModalOpen", false);
+              hazardousMaterialTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
               Edit Hazardous Material
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
-};
+}

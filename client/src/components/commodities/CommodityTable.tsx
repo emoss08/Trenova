@@ -31,7 +31,7 @@ export function CommodityTable() {
       columns={CommodityTableColumns}
       TableEditModal={EditCommodityModal}
       TableViewModal={ViewCommodityModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateCommodityModal}
       tableQueryKey="commodity-table-data"
       exportModelName="Commodity"

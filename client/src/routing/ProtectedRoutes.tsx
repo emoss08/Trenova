@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import Layout from "@/components/layout/Layout";
 import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
+import Layout from "@/components/layout/Layout";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 

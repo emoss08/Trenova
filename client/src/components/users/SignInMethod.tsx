@@ -56,29 +56,27 @@ export const SignInMethod: React.FC<Props> = ({ user }) => {
   const { classes } = useStyles();
 
   return (
-    <>
-      <Flex>
-        <Card className={classes.card} withBorder>
-          <Text fz="xl" fw={700} className={classes.text}>
+    <Flex>
+      <Card className={classes.card} withBorder>
+        <Text fz="xl" fw={700} className={classes.text}>
             Sign-In Method
-          </Text>
+        </Text>
 
-          <Divider my={10} />
+        <Divider my={10} />
 
-          <EmailChangeForm user={user} />
-          <PasswordChangeForm />
-          <Alert
-            color="blue"
-            icon={faShieldCheck}
-            title="Secure your account"
-            message={`Two-factor authentication adds an extra layer of security to your account. 
+        <EmailChangeForm user={user} />
+        <PasswordChangeForm />
+        <Alert
+          color="blue"
+          icon={faShieldCheck}
+          title="Secure your account"
+          message={`Two-factor authentication adds an extra layer of security to your account. 
             To log in, in addition you'll need to provide a 6 digit code`}
-            buttonText="Enable"
-            withButton
-            withIcon
-          />
-        </Card>
-      </Flex>
-    </>
+          buttonText="Enable"
+          withButton
+          withIcon
+        />
+      </Card>
+    </Flex>
   );
 };

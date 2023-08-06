@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { MRT_Row } from "mantine-react-table";
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
 import {
@@ -23,7 +24,6 @@ import {
   OrdersReadyProps,
 } from "@/types/apps/billing";
 import { WebsocketMessageProps } from "@/utils/websockets";
-import { MRT_Row } from "mantine-react-table";
 
 export const chargeTypeTableStore = createGlobalStore<
   Omit<TableStoreProps<ChargeType>, "drawerOpen">

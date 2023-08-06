@@ -17,9 +17,9 @@
 
 import React from "react";
 import { Navbar, Code, Group, rem, Skeleton } from "@mantine/core";
+import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import { getUserId } from "@/lib/utils";
-import { useQuery, useQueryClient } from "react-query";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
 import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
@@ -44,9 +44,7 @@ export function AsideMenu() {
       }
       return getUserDetails(userId);
     },
-    initialData: () => {
-      return queryClient.getQueryData(["user", userId]);
-    },
+    initialData: () => queryClient.getQueryData(["user", userId]),
     staleTime: Infinity, // never refetch
   });
 

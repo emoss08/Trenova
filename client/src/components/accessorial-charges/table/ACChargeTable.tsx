@@ -23,19 +23,17 @@ import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
 import { ViewACModal } from "@/components/accessorial-charges/table/ViewACModal";
 
-export const ACChargeTable = () => {
-  return (
-    <MontaTable
-      store={accessorialChargeTableStore}
-      link="/accessorial_charges"
-      columns={ACTableColumns}
-      TableEditModal={EditACModal}
-      TableViewModal={ViewACModal}
-      displayDeleteModal={true}
-      TableCreateDrawer={CreateACModal}
-      tableQueryKey="accessorial-charges-table-data"
-      exportModelName="AccessorialCharge"
-      name="Accessorial Charge"
-    />
-  );
-};
+export const ACChargeTable: () => React.JSX.Element = () => (
+  <MontaTable
+    store={accessorialChargeTableStore}
+    link="/accessorial_charges"
+    columns={ACTableColumns}
+    TableEditModal={EditACModal}
+    TableViewModal={ViewACModal}
+    displayDeleteModal
+    TableCreateDrawer={CreateACModal}
+    tableQueryKey="accessorial-charges-table-data"
+    exportModelName="AccessorialCharge"
+    name="Accessorial Charge"
+  />
+);

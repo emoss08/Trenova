@@ -22,10 +22,8 @@ type NavbarScrollProps = {
   children: React.ReactNode;
 };
 
-export const navbarScroll = ({ children }: NavbarScrollProps) => {
-  return (
-    <ScrollArea w="auto" h="auto" scrollbarSize={5}>
-      {children}
-    </ScrollArea>
-  );
-};
+export const navbarScroll = ({ children }: NavbarScrollProps) => (
+  <ScrollArea w="auto" h="auto" scrollbarSize={5}>
+    {children}
+  </ScrollArea>
+);

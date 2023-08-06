@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -26,6 +25,7 @@ import {
   Button,
   Group,
 } from "@mantine/core";
+import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { statusChoices } from "@/lib/utils";
 import {
   accountClassificationChoices,
@@ -44,85 +44,83 @@ export const ViewGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={statusChoices}
-              className={classes.fields}
-              readOnly
-              value={glAccount.status}
-              label="Status"
-              variant="filled"
-            />
-            <TextInput
-              value={glAccount.account_number}
-              readOnly
-              className={classes.fields}
-              label="Account Number"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Textarea
-            value={glAccount.description}
+    <Box className={classes.div}>
+      <Box>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={statusChoices}
             className={classes.fields}
-            label="Description"
             readOnly
+            value={glAccount.status}
+            label="Status"
             variant="filled"
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={accountTypeChoices}
-              value={glAccount.account_type}
-              readOnly
-              label="Account Type"
-              className={classes.fields}
-              variant="filled"
-            />
-            <Select
-              data={cashFlowTypeChoices}
-              value={glAccount.cash_flow_type}
-              readOnly
-              label="Cash Flow Type"
-              className={classes.fields}
-              variant="filled"
-            />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={accountSubTypeChoices}
-              value={glAccount.account_sub_type}
-              readOnly
-              label="Account Sub Type"
-              className={classes.fields}
-              variant="filled"
-            />
-            <Select
-              data={accountClassificationChoices}
-              value={glAccount.account_classification}
-              readOnly
-              label="Account Classification"
-              className={classes.fields}
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              onClick={() => {
-                generalLedgerTableStore.set("selectedRecord", glAccount);
-                generalLedgerTableStore.set("viewModalOpen", false);
-                generalLedgerTableStore.set("editModalOpen", true);
-              }}
-              className={classes.control}
-            >
+          <TextInput
+            value={glAccount.account_number}
+            readOnly
+            className={classes.fields}
+            label="Account Number"
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Textarea
+          value={glAccount.description}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={accountTypeChoices}
+            value={glAccount.account_type}
+            readOnly
+            label="Account Type"
+            className={classes.fields}
+            variant="filled"
+          />
+          <Select
+            data={cashFlowTypeChoices}
+            value={glAccount.cash_flow_type}
+            readOnly
+            label="Cash Flow Type"
+            className={classes.fields}
+            variant="filled"
+          />
+        </SimpleGrid>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={accountSubTypeChoices}
+            value={glAccount.account_sub_type}
+            readOnly
+            label="Account Sub Type"
+            className={classes.fields}
+            variant="filled"
+          />
+          <Select
+            data={accountClassificationChoices}
+            value={glAccount.account_classification}
+            readOnly
+            label="Account Classification"
+            className={classes.fields}
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              generalLedgerTableStore.set("selectedRecord", glAccount);
+              generalLedgerTableStore.set("viewModalOpen", false);
+              generalLedgerTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
               Edit GL Account
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 };

@@ -66,54 +66,52 @@ export function RevenueMetric({ customer }: CustomerMetricProps) {
       : IconArrowDownRight;
 
   return (
-    <>
-      <Paper withBorder p="md" radius="md" className={classes.root}>
-        <Group position="apart">
-          <Text size="xs" color="dimmed" className={classes.title}>
+    <Paper withBorder p="md" radius="md" className={classes.root}>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" className={classes.title}>
             Total Revenue
-          </Text>
-          <IconCurrencyDollar
-            className={classes.icon}
-            size="1.4rem"
-            stroke={1.5}
-          />
-        </Group>
-
-        <Group align="flex-end" spacing="xs" mt={25}>
-          <Tooltip
-            withArrow
-            label={USDollarFormat(
-              customer?.total_revenue_metrics.total_revenue
-            )}
-          >
-            <Text className={classes.value}>
-              {truncateText(
-                USDollarFormat(customer?.total_revenue_metrics.total_revenue),
-                9
-              )}
-            </Text>
-          </Tooltip>
-
-          <Text
-            color={
-              customer?.total_revenue_metrics.last_month_diff >
-              customer.total_revenue_metrics.month_before_last_diff
-                ? "teal"
-                : "red"
-            }
-            fz="sm"
-            fw={500}
-            className={classes.diff}
-          >
-            <span>{customer?.total_revenue_metrics.last_month_diff}%</span>
-            <DiffIcon size="1rem" stroke={1.5} />
-          </Text>
-        </Group>
-
-        <Text fz="xs" c="dimmed" mt={7}>
-          Compared to previous month
         </Text>
-      </Paper>
-    </>
+        <IconCurrencyDollar
+          className={classes.icon}
+          size="1.4rem"
+          stroke={1.5}
+        />
+      </Group>
+
+      <Group align="flex-end" spacing="xs" mt={25}>
+        <Tooltip
+          withArrow
+          label={USDollarFormat(
+            customer?.total_revenue_metrics.total_revenue
+          )}
+        >
+          <Text className={classes.value}>
+            {truncateText(
+              USDollarFormat(customer?.total_revenue_metrics.total_revenue),
+              9
+            )}
+          </Text>
+        </Tooltip>
+
+        <Text
+          color={
+            customer?.total_revenue_metrics.last_month_diff >
+              customer.total_revenue_metrics.month_before_last_diff
+              ? "teal"
+              : "red"
+          }
+          fz="sm"
+          fw={500}
+          className={classes.diff}
+        >
+          <span>{customer?.total_revenue_metrics.last_month_diff}%</span>
+          <DiffIcon size="1rem" stroke={1.5} />
+        </Text>
+      </Group>
+
+      <Text fz="xs" c="dimmed" mt={7}>
+          Compared to previous month
+      </Text>
+    </Paper>
   );
 }

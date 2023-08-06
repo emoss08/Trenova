@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DivisionCode } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -26,6 +25,7 @@ import {
   Group,
   Button,
 } from "@mantine/core";
+import { DivisionCode } from "@/types/apps/accounting";
 import { statusChoices } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/styles/FormStyles";
@@ -43,75 +43,73 @@ export const ViewDCModalForm: React.FC<Props> = ({
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={statusChoices}
-              className={classes.fields}
-              readOnly
-              value={divisionCode.status}
-              label="Status"
-              variant="filled"
-            />
-            <TextInput
-              value={divisionCode.code}
-              readOnly
-              className={classes.fields}
-              label="Code"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Textarea
-            value={divisionCode.description}
+    <Box className={classes.div}>
+      <Box>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={statusChoices}
             className={classes.fields}
-            label="Description"
             readOnly
+            value={divisionCode.status}
+            label="Status"
             variant="filled"
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={selectGlAccountData}
-              value={divisionCode.ap_account || ""}
-              readOnly
-              label="AP Account"
-              className={classes.fields}
-              variant="filled"
-            />
-            <Select
-              data={selectGlAccountData}
-              value={divisionCode.cash_account || ""}
-              readOnly
-              label="Cash Account"
-              className={classes.fields}
-              variant="filled"
-            />
-          </SimpleGrid>
+          <TextInput
+            value={divisionCode.code}
+            readOnly
+            className={classes.fields}
+            label="Code"
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Textarea
+          value={divisionCode.description}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <Select
             data={selectGlAccountData}
-            value={divisionCode.expense_account || ""}
+            value={divisionCode.ap_account || ""}
             readOnly
-            label="Expense Account"
+            label="AP Account"
             className={classes.fields}
             variant="filled"
           />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              onClick={() => {
-                divisionCodeTableStore.set("selectedRecord", divisionCode);
-                divisionCodeTableStore.set("viewModalOpen", false);
-                divisionCodeTableStore.set("editModalOpen", true);
-              }}
-            >
+          <Select
+            data={selectGlAccountData}
+            value={divisionCode.cash_account || ""}
+            readOnly
+            label="Cash Account"
+            className={classes.fields}
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Select
+          data={selectGlAccountData}
+          value={divisionCode.expense_account || ""}
+          readOnly
+          label="Expense Account"
+          className={classes.fields}
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            onClick={() => {
+              divisionCodeTableStore.set("selectedRecord", divisionCode);
+              divisionCodeTableStore.set("viewModalOpen", false);
+              divisionCodeTableStore.set("editModalOpen", true);
+            }}
+          >
               Edit Division Code
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 };

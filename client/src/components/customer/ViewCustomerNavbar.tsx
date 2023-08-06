@@ -16,7 +16,6 @@
  */
 
 import React from "react";
-import { usePageStyles } from "@/styles/PageStyles";
 import {
   Avatar,
   Badge,
@@ -27,6 +26,7 @@ import {
   Flex,
   Text,
 } from "@mantine/core";
+import { usePageStyles } from "@/styles/PageStyles";
 import { Customer } from "@/types/apps/customer";
 import { upperFirst } from "@/lib/utils";
 
@@ -39,18 +39,18 @@ export function ViewCustomerNavbar({ customer }: ViewCustomerNavbarProps) {
 
   const mapStatusToBadge = (status: string) => {
     switch (status) {
-      case "A":
-        return (
-          <Badge color="green" variant="filled" radius="xs" my={10}>
+    case "A":
+      return (
+        <Badge color="green" variant="filled" radius="xs" my={10}>
             Active
-          </Badge>
-        );
-      case "I":
-        return (
-          <Badge radius="xs" variant="filled" my={10} color="red">
+        </Badge>
+      );
+    case "I":
+      return (
+        <Badge radius="xs" variant="filled" my={10} color="red">
             Inactive
-          </Badge>
-        );
+        </Badge>
+      );
     }
   };
 

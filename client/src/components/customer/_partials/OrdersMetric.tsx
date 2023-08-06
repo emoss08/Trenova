@@ -65,39 +65,37 @@ export function OrdersMetric({ customer }: CustomerMetricProps) {
       : IconArrowDownRight;
 
   return (
-    <>
-      <Paper withBorder p="md" radius="md" className={classes.root}>
-        <Group position="apart">
-          <Text size="xs" color="dimmed" className={classes.title}>
+    <Paper withBorder p="md" radius="md" className={classes.root}>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" className={classes.title}>
             Total Orders
-          </Text>
-          <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
-        </Group>
-
-        <Group align="flex-end" spacing="xs" mt={25}>
-          <Text className={classes.value}>
-            {customer?.total_order_metrics.total_orders}
-          </Text>
-          <Text
-            color={
-              customer?.total_order_metrics.last_month_diff >
-              customer.total_order_metrics.month_before_last_diff
-                ? "teal"
-                : "red"
-            }
-            fz="sm"
-            fw={500}
-            className={classes.diff}
-          >
-            <span>{customer?.total_order_metrics.last_month_diff}%</span>
-            <DiffIcon size="1rem" stroke={1.5} />
-          </Text>
-        </Group>
-
-        <Text fz="xs" c="dimmed" mt={7}>
-          Compared to previous month
         </Text>
-      </Paper>
-    </>
+        <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
+      </Group>
+
+      <Group align="flex-end" spacing="xs" mt={25}>
+        <Text className={classes.value}>
+          {customer?.total_order_metrics.total_orders}
+        </Text>
+        <Text
+          color={
+            customer?.total_order_metrics.last_month_diff >
+              customer.total_order_metrics.month_before_last_diff
+              ? "teal"
+              : "red"
+          }
+          fz="sm"
+          fw={500}
+          className={classes.diff}
+        >
+          <span>{customer?.total_order_metrics.last_month_diff}%</span>
+          <DiffIcon size="1rem" stroke={1.5} />
+        </Text>
+      </Group>
+
+      <Text fz="xs" c="dimmed" mt={7}>
+          Compared to previous month
+      </Text>
+    </Paper>
   );
 }

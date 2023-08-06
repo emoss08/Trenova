@@ -5,16 +5,27 @@
     "airbnb",
     "airbnb/hooks",
     "prettier",
-    "plugin:react/recommended"
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "react-hooks"
   ],
+  "rules": {
+    "quotes": ["error", "single"],
+    "semi": ["error", "never"]
+  },
   "settings": {
     "react": {
       "version": "detect"
     }
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true
   },
   "root": true
 }

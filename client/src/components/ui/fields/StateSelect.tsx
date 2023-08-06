@@ -76,19 +76,17 @@ export const stateData: StateProp[] = [
   { label: "Wisconsin", value: "WI" },
   { label: "Wyoming", value: "WY" },
 ];
-const useStyles = createStyles((theme) => {
-  return {
-    invalid: {
-      backgroundColor:
+const useStyles = createStyles((theme) => ({
+  invalid: {
+    backgroundColor:
         theme.colorScheme === "dark"
           ? theme.fn.rgba(theme.colors.red[8], 0.15)
           : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
+  },
+  invalidIcon: {
+    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+  },
+}));
 
 interface StateSelectProps<TFormValues extends object>
   extends Omit<SelectProps, "data" | "form"> {
@@ -111,42 +109,40 @@ const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
   )
 );
 
-export const StateSelect = <StateFormValues extends object>({
+export function StateSelect<StateFormValues extends object>({
   form,
   name,
   searchable,
   ...rest
-}: StateSelectProps<StateFormValues>) => {
+}: StateSelectProps<StateFormValues>) {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
   return (
-    <>
-      <Select
-        {...rest}
-        itemComponent={SelectItem}
-        data={stateData}
-        maxDropdownHeight={200}
-        nothingFound="Nothing found"
-        filter={(value, item: any) =>
-          item.label.toLowerCase().includes(value.toLowerCase().trim())
-        }
-        {...form.getInputProps(name)}
-        error={error}
-        searchable={searchable}
-        classNames={{
-          input: error ? classes.invalid : "",
-        }}
-        rightSection={
-          error && (
-            <IconAlertTriangle
-              stroke={1.5}
-              size="1.1rem"
-              className={classes.invalidIcon}
-            />
-          )
-        }
-      />
-    </>
+    <Select
+      {...rest}
+      itemComponent={SelectItem}
+      data={stateData}
+      maxDropdownHeight={200}
+      nothingFound="Nothing found"
+      filter={(value, item: any) =>
+        item.label.toLowerCase().includes(value.toLowerCase().trim())
+      }
+      {...form.getInputProps(name)}
+      error={error}
+      searchable={searchable}
+      classNames={{
+        input: error ? classes.invalid : "",
+      }}
+      rightSection={
+        error && (
+          <IconAlertTriangle
+            stroke={1.5}
+            size="1.1rem"
+            className={classes.invalidIcon}
+          />
+        )
+      }
+    />
   );
-};
+}

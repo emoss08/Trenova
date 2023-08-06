@@ -28,10 +28,10 @@ import {
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "../ui/fields/TextInput";
 import { StateSelect } from "../ui/fields/StateSelect";
 import { CityAutoCompleteField } from "../ui/fields/CityAutoCompleteField";
@@ -172,109 +172,107 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
   });
 
   return (
-    <>
-      <Flex>
-        <Card className={classes.card} withBorder>
-          <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-            <Text fz="xl" fw={700} className={classes.text}>
+    <Flex>
+      <Card className={classes.card} withBorder>
+        <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+          <Text fz="xl" fw={700} className={classes.text}>
               Profile Details
-            </Text>
+          </Text>
 
-            <Divider my={10} />
+          <Divider my={10} />
 
-            <div className={classes.fields}>
-              <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-                <ValidatedTextInput
-                  form={form}
-                  className={classes.fields}
-                  name="profile.first_name"
-                  label="First Name"
-                  placeholder="First Name"
-                  variant="filled"
-                  withAsterisk
-                />
-                <ValidatedTextInput
-                  form={form}
-                  className={classes.fields}
-                  name="profile.last_name"
-                  label="Last Name"
-                  placeholder="Last Name"
-                  variant="filled"
-                  withAsterisk
-                />
-              </SimpleGrid>
-              <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-                <ValidatedTextInput
-                  form={form}
-                  className={classes.fields}
-                  name="profile.address_line_1"
-                  label="Address Line 1"
-                  placeholder="Address Line 1"
-                  variant="filled"
-                  withAsterisk
-                />
-                <ValidatedTextInput
-                  form={form}
-                  className={classes.fields}
-                  name="profile.address_line_2"
-                  label="Address Line 2"
-                  placeholder="Address Line 2"
-                  variant="filled"
-                />
-              </SimpleGrid>
-              <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-                <CityAutoCompleteField
-                  form={form}
-                  stateSelection={form.values.profile.state}
-                  className={classes.fields}
-                  name="profile.city"
-                  label="City"
-                  placeholder="City"
-                  variant="filled"
-                  withAsterisk
-                />
-                <StateSelect
-                  label="State"
-                  className={classes.fields}
-                  placeholder="State"
-                  variant="filled"
-                  searchable={true}
-                  form={form}
-                  name="profile.state"
-                />
-              </SimpleGrid>
+          <div className={classes.fields}>
+            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
               <ValidatedTextInput
                 form={form}
                 className={classes.fields}
-                name="profile.zip_code"
-                label="Zip Code"
-                placeholder="Zip Code"
+                name="profile.first_name"
+                label="First Name"
+                placeholder="First Name"
                 variant="filled"
                 withAsterisk
               />
               <ValidatedTextInput
                 form={form}
                 className={classes.fields}
-                name="profile.phone_number"
-                label="Phone Number"
-                placeholder="Phone Number"
+                name="profile.last_name"
+                label="Last Name"
+                placeholder="Last Name"
+                variant="filled"
+                withAsterisk
+              />
+            </SimpleGrid>
+            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+              <ValidatedTextInput
+                form={form}
+                className={classes.fields}
+                name="profile.address_line_1"
+                label="Address Line 1"
+                placeholder="Address Line 1"
+                variant="filled"
+                withAsterisk
+              />
+              <ValidatedTextInput
+                form={form}
+                className={classes.fields}
+                name="profile.address_line_2"
+                label="Address Line 2"
+                placeholder="Address Line 2"
                 variant="filled"
               />
-              <Group position="right" mt="md">
-                <Button
-                  color="white"
-                  type="submit"
-                  className={classes.control}
-                  loading={loading}
-                >
+            </SimpleGrid>
+            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+              <CityAutoCompleteField
+                form={form}
+                stateSelection={form.values.profile.state}
+                className={classes.fields}
+                name="profile.city"
+                label="City"
+                placeholder="City"
+                variant="filled"
+                withAsterisk
+              />
+              <StateSelect
+                label="State"
+                className={classes.fields}
+                placeholder="State"
+                variant="filled"
+                searchable
+                form={form}
+                name="profile.state"
+              />
+            </SimpleGrid>
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="profile.zip_code"
+              label="Zip Code"
+              placeholder="Zip Code"
+              variant="filled"
+              withAsterisk
+            />
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="profile.phone_number"
+              label="Phone Number"
+              placeholder="Phone Number"
+              variant="filled"
+            />
+            <Group position="right" mt="md">
+              <Button
+                color="white"
+                type="submit"
+                className={classes.control}
+                loading={loading}
+              >
                   Submit
-                </Button>
-              </Group>
-            </div>
-          </form>
-        </Card>
-      </Flex>
-    </>
+              </Button>
+            </Group>
+          </div>
+        </form>
+      </Card>
+    </Flex>
   );
 };
 

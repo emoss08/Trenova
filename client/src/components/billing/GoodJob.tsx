@@ -30,11 +30,11 @@ import { WebSocketManager } from "@/utils/websockets";
 import { STEPS } from "@/pages/billing/BillingClient";
 import { billingClientStore } from "@/stores/BillingStores";
 
+import image from "@/assets/images/love.png";
+
 interface Props {
   websocketManager: WebSocketManager;
 }
-
-import image from "@/assets/images/love.png";
 
 const useStyles = createStyles((theme) => {
   const BREAKPOINT = theme.fn.smallerThan("sm");
@@ -81,7 +81,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-const GoodJob = ({ websocketManager }: Props) => {
+function GoodJob({ websocketManager }: Props) {
   const [websocketMessage] = billingClientStore.use("websocketMessage");
   const { classes } = useStyles();
 
@@ -93,42 +93,40 @@ const GoodJob = ({ websocketManager }: Props) => {
   };
 
   return (
-    <>
-      <Container className={classes.root}>
-        <SimpleGrid
-          spacing={80}
-          cols={2}
-          breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
-        >
-          <Image src={image} className={classes.mobileImage} />
-          <div>
-            <Title className={classes.title}>🎉 You are all done!</Title>
+    <Container className={classes.root}>
+      <SimpleGrid
+        spacing={80}
+        cols={2}
+        breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
+      >
+        <Image src={image} className={classes.mobileImage} />
+        <div>
+          <Title className={classes.title}>🎉 You are all done!</Title>
 
-            <Text color="dimmed" size="lg">
-              {websocketMessage?.payload?.message
-                ? (websocketMessage?.payload?.message as string)
-                : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
+          <Text color="dimmed" size="lg">
+            {websocketMessage?.payload?.message
+              ? (websocketMessage?.payload?.message as string)
+              : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
                   " This ingenious software client for interacting with the billing API offers a streamlined" +
                   " approach for handling your financial transactions."}
-            </Text>
+          </Text>
 
-            {!websocketMessage?.payload?.message && (
-              <Button
-                variant="outline"
-                size="md"
-                mt="xl"
-                className={classes.control}
-                onClick={getStarted}
-              >
+          {!websocketMessage?.payload?.message && (
+            <Button
+              variant="outline"
+              size="md"
+              mt="xl"
+              className={classes.control}
+              onClick={getStarted}
+            >
                 Get Started
-              </Button>
-            )}
-          </div>
-          <Image src={image} className={classes.desktopImage} />
-        </SimpleGrid>
-      </Container>
-    </>
+            </Button>
+          )}
+        </div>
+        <Image src={image} className={classes.desktopImage} />
+      </SimpleGrid>
+    </Container>
   );
-};
+}
 
 export default GoodJob;

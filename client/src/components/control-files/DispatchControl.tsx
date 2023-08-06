@@ -15,14 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { usePageStyles } from "@/styles/PageStyles";
 import { useQuery, useQueryClient } from "react-query";
-import { getDispatchControl } from "@/requests/OrganizationRequestFactory";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
 import React from "react";
+import { getDispatchControl } from "@/requests/OrganizationRequestFactory";
+import { usePageStyles } from "@/styles/PageStyles";
 import { DispatchControlForm } from "@/components/control-files/_partials/DispatchControlForm";
 
-const DispatchControlPage = () => {
+function DispatchControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
@@ -30,9 +30,7 @@ const DispatchControlPage = () => {
     useQuery({
       queryKey: ["dispatchControl"],
       queryFn: () => getDispatchControl(),
-      initialData: () => {
-        return queryClient.getQueryData(["dispatchControl"]);
-      },
+      initialData: () => queryClient.getQueryData(["dispatchControl"]),
       staleTime: Infinity,
     });
 
@@ -42,7 +40,7 @@ const DispatchControlPage = () => {
   return (
     <>
       {isDispatchControlDataLoading ? (
-        <Skeleton height={400}></Skeleton>
+        <Skeleton height={400} />
       ) : (
         <Card className={classes.card} withBorder>
           <Text fz="xl" fw={700} className={classes.text}>
@@ -57,6 +55,6 @@ const DispatchControlPage = () => {
       )}
     </>
   );
-};
+}
 
 export default DispatchControlPage;

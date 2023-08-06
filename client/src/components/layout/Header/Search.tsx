@@ -18,12 +18,12 @@ import React, { useEffect } from "react";
 import { faMagnifyingGlass } from "@fortawesome/pro-solid-svg-icons";
 import { SpotlightAction, SpotlightProvider } from "@mantine/spotlight";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { routes } from "@/routing/AppRoutes";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@mantine/core";
+import { routes } from "@/routing/AppRoutes";
 import { ActionsWrapper } from "./_Partials/SpotlightActionsWrapper";
 import { SearchControl } from "./_Partials/SpotlightSearchControl";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { Badge } from "@mantine/core";
 import axios from "@/lib/AxiosConfig";
 
 interface RouteSpotlightAction extends SpotlightAction {

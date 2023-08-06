@@ -18,10 +18,10 @@
 import React from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge, Button, Menu } from "@mantine/core";
-import { Customer } from "@/types/apps/customer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
+import { Customer } from "@/types/apps/customer";
 import { customerTableStore } from "@/stores/CustomerStore";
 
 export function CustomerTableColumns(): MRT_ColumnDef<Customer>[] {

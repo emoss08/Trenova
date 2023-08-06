@@ -23,15 +23,15 @@ import {
   rem,
   SimpleGrid,
 } from "@mantine/core";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import axios from "@/lib/AxiosConfig";
+import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { APIError } from "@/types/server";
 import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
@@ -123,7 +123,7 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
     const formData = new FormData();
     for (const key in values) {
       if (Object.prototype.hasOwnProperty.call(values, key)) {
-        let element = values[key as keyof InvoiceControlFormValues];
+        const element = values[key as keyof InvoiceControlFormValues];
         if (element instanceof File || typeof element === "string") {
           formData.append(key, element);
         } else if (

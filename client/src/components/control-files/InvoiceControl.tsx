@@ -16,13 +16,13 @@
  */
 
 import { useQuery, useQueryClient } from "react-query";
-import { getInvoiceControl } from "@/requests/OrganizationRequestFactory";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
 import React from "react";
+import { getInvoiceControl } from "@/requests/OrganizationRequestFactory";
+import { usePageStyles } from "@/styles/PageStyles";
 import { InvoiceControlForm } from "@/components/control-files/_partials/InvoiceControlForm";
 
-const InvoiceControlPage = () => {
+function InvoiceControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
@@ -30,9 +30,7 @@ const InvoiceControlPage = () => {
     useQuery({
       queryKey: ["invoiceControl"],
       queryFn: () => getInvoiceControl(),
-      initialData: () => {
-        return queryClient.getQueryData(["invoiceControl"]);
-      },
+      initialData: () => queryClient.getQueryData(["invoiceControl"]),
       staleTime: Infinity,
     });
 
@@ -42,7 +40,7 @@ const InvoiceControlPage = () => {
   return (
     <>
       {isInvoiceControlDataLoading ? (
-        <Skeleton height={400}></Skeleton>
+        <Skeleton height={400} />
       ) : (
         <Card className={classes.card} withBorder>
           <Text fz="xl" fw={700} className={classes.text}>
@@ -57,6 +55,6 @@ const InvoiceControlPage = () => {
       )}
     </>
   );
-};
+}
 
 export default InvoiceControlPage;

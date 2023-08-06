@@ -21,30 +21,28 @@ import { IconAlertTriangle } from "@tabler/icons-react";
 import { createStyles } from "@mantine/styles";
 import { UseFormReturnType } from "@mantine/form";
 
-const useStyles = createStyles((theme) => {
-  return {
-    invalid: {
-      backgroundColor:
+const useStyles = createStyles((theme) => ({
+  invalid: {
+    backgroundColor:
         theme.colorScheme === "dark"
           ? theme.fn.rgba(theme.colors.red[8], 0.15)
           : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
+  },
+  invalidIcon: {
+    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+  },
+}));
 
 interface ValidatedNumberInputProps<TFormValues>
   extends Omit<NumberInputProps, "form"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
-export const ValidatedNumberInput = <TFormValues extends object>({
+export function ValidatedNumberInput<TFormValues extends object>({
   form,
   name,
   ...rest
-}: ValidatedNumberInputProps<TFormValues>) => {
+}: ValidatedNumberInputProps<TFormValues>) {
   const { classes } = useStyles();
   const error = form.errors[name as string];
   return (
@@ -66,4 +64,4 @@ export const ValidatedNumberInput = <TFormValues extends object>({
       }
     />
   );
-};
+}

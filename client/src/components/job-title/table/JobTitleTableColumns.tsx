@@ -23,49 +23,47 @@ import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { JobTitle } from "@/types/apps/accounts";
 import { TChoiceProps } from "@/types";
 
-export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => {
-  return [
-    {
-      id: "status",
-      accessorKey: "status",
-      header: "Status",
-      filterFn: "equals",
-      Cell: ({ cell }) => (
-        <Badge
-          color={cell.getValue() === "A" ? "green" : "red"}
-          variant="filled"
-          radius="xs"
-        >
-          {cell.getValue() === "A" ? "Active" : "Inactive"}
-        </Badge>
-      ),
-      mantineFilterSelectProps: {
-        data: [
-          { value: "", label: "All" },
-          { value: "A", label: "Active" },
-          { value: "I", label: "Inactive" },
-        ] as TChoiceProps[],
-      },
-      filterVariant: "select",
+export const JobTitleTableColumns = (): MRT_ColumnDef<JobTitle>[] => [
+  {
+    id: "status",
+    accessorKey: "status",
+    header: "Status",
+    filterFn: "equals",
+    Cell: ({ cell }) => (
+      <Badge
+        color={cell.getValue() === "A" ? "green" : "red"}
+        variant="filled"
+        radius="xs"
+      >
+        {cell.getValue() === "A" ? "Active" : "Inactive"}
+      </Badge>
+    ),
+    mantineFilterSelectProps: {
+      data: [
+        { value: "", label: "All" },
+        { value: "A", label: "Active" },
+        { value: "I", label: "Inactive" },
+      ] as TChoiceProps[],
     },
-    {
-      accessorKey: "name", //access nested data with dot notation
-      header: "Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
-      accessorKey: "job_function",
-      header: "Job Function",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu store={jobTitleTableStore} data={row.original} />
-      ),
-    },
-  ];
-};
+    filterVariant: "select",
+  },
+  {
+    accessorKey: "name", // access nested data with dot notation
+    header: "Name",
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+  },
+  {
+    accessorKey: "job_function",
+    header: "Job Function",
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    Cell: ({ row }) => (
+      <MontaTableActionMenu store={jobTitleTableStore} data={row.original} />
+    ),
+  },
+];

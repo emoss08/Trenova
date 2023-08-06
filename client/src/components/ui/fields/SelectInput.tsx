@@ -22,19 +22,17 @@ import React, { forwardRef } from "react";
 import { SelectProps } from "@mantine/core/lib/Select/Select";
 import { UseFormReturnType } from "@mantine/form";
 
-const useStyles = createStyles((theme) => {
-  return {
-    invalid: {
-      backgroundColor:
+const useStyles = createStyles((theme) => ({
+  invalid: {
+    backgroundColor:
         theme.colorScheme === "dark"
           ? theme.fn.rgba(theme.colors.red[8], 0.15)
           : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
+  },
+  invalidIcon: {
+    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+  },
+}));
 
 interface ValidatedSelectInputProps<TFormValues extends object>
   extends Omit<SelectProps, "form"> {
@@ -49,12 +47,12 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
   )
 );
 
-export const SelectInput = <TFormValues extends object>({
+export function SelectInput<TFormValues extends object>({
   form,
   data,
   name,
   ...rest
-}: ValidatedSelectInputProps<TFormValues>) => {
+}: ValidatedSelectInputProps<TFormValues>) {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
@@ -65,7 +63,7 @@ export const SelectInput = <TFormValues extends object>({
       data={data}
       error={error}
       maxDropdownHeight={200}
-      nothingFound={"Nothing found"}
+      nothingFound="Nothing found"
       itemComponent={SelectItem}
       classNames={{
         input: error ? classes.invalid : "",
@@ -85,4 +83,4 @@ export const SelectInput = <TFormValues extends object>({
       searchable
     />
   );
-};
+}

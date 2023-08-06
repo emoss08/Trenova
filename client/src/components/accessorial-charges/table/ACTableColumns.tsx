@@ -23,30 +23,25 @@ import { AccessorialCharge } from "@/types/apps/billing";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { truncateText } from "@/lib/utils";
 
-export const ACTableColumns = (): MRT_ColumnDef<AccessorialCharge>[] => {
-  return [
+export const ACTableColumns: () => MRT_ColumnDef<AccessorialCharge>[] =
+  (): MRT_ColumnDef<AccessorialCharge>[] => [
     {
       accessorKey: "code",
-      header: "Code",
+      header: "Code"
     },
     {
       id: "description",
       accessorKey: "description",
       header: "Description",
-      Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
+      Cell: ({ cell }) => truncateText(cell.getValue() as string, 50)
     },
     {
       id: "is_detention",
-      accessorFn: (originalRow) =>
-        originalRow.is_detention ? "true" : "false",
+      accessorFn: (originalRow) => (originalRow.is_detention ? "true" : "false"),
       header: "Is Detention",
       filterFn: "equals",
       Cell: ({ cell }) => (
-        <Badge
-          color={cell.getValue() === "true" ? "green" : "red"}
-          variant="filled"
-          radius="xs"
-        >
+        <Badge color={cell.getValue() === "true" ? "green" : "red"} variant="filled" radius="xs">
           {cell.getValue() === "true" ? "Yes" : "No"}
         </Badge>
       ),
@@ -54,10 +49,10 @@ export const ACTableColumns = (): MRT_ColumnDef<AccessorialCharge>[] => {
         data: [
           { value: "", label: "All" },
           { value: "true", label: "Active" },
-          { value: "false", label: "Inactive" },
-        ] as any,
+          { value: "false", label: "Inactive" }
+        ] as any
       },
-      filterVariant: "select",
+      filterVariant: "select"
     },
     {
       accessorFn: (row) => `${row.charge_amount} ${row.charge_amount_currency}`,
@@ -65,17 +60,13 @@ export const ACTableColumns = (): MRT_ColumnDef<AccessorialCharge>[] => {
       header: "Charge Amount",
       filterVariant: "text",
       sortingFn: "text",
-      Cell: ({ renderedCellValue }) => <Text>{renderedCellValue}</Text>,
+      Cell: ({ renderedCellValue }) => <Text>{renderedCellValue}</Text>
     },
     {
       id: "actions",
       header: "Actions",
       Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={accessorialChargeTableStore}
-          data={row.original}
-        />
-      ),
-    },
+        <MontaTableActionMenu store={accessorialChargeTableStore} data={row.original} />
+      )
+    }
   ];
-};

@@ -25,12 +25,12 @@ import {
   SimpleGrid,
   Text,
 } from "@mantine/core";
-import axios from "@/lib/AxiosConfig";
 import { useForm, yupResolver } from "@mantine/form";
 import * as Yup from "yup";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 
 const useStyles = createStyles((theme) => ({
@@ -130,31 +130,29 @@ export const PasswordChangeForm: React.FC = () => {
     <>
       <div className={classes.div}>
         {!isEditing ? (
-          <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <Text size="sm" className={classes.text} weight={700}>
+                  Password
+              </Text>
+              <Text color="dimmed">************</Text>
+            </div>
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                flexWrap: "wrap",
+                marginLeft: "auto",
               }}
             >
-              <div>
-                <Text size="sm" className={classes.text} weight={700}>
-                  Password
-                </Text>
-                <Text color="dimmed">************</Text>
-              </div>
-              <div
-                style={{
-                  marginLeft: "auto",
-                }}
-              >
-                <Button color="gray" variant="light" onClick={startEditing}>
+              <Button color="gray" variant="light" onClick={startEditing}>
                   Reset Password
-                </Button>
-              </div>
+              </Button>
             </div>
-          </>
+          </div>
         ) : (
           <Grid>
             <Col w="auto">
@@ -165,21 +163,21 @@ export const PasswordChangeForm: React.FC = () => {
                     type="password"
                     variant="filled"
                     form={form}
-                    name={"old_password"}
+                    name="old_password"
                   />
                   <ValidatedTextInput
                     label="New Password"
                     type="password"
                     variant="filled"
                     form={form}
-                    name={"new_password"}
+                    name="new_password"
                   />
                   <ValidatedTextInput
                     label="Confirm New Password"
                     type="password"
                     variant="filled"
                     form={form}
-                    name={"confirm_password"}
+                    name="confirm_password"
                   />
                 </SimpleGrid>
                 <Button type="submit" color="blue" mx="xs" loading={loading}>

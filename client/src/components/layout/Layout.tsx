@@ -24,25 +24,23 @@ const Layout: React.FC<PropsWithChildren> = ({ children }) => {
   const theme = useMantineTheme();
 
   return (
-    <>
-      <AppShell
-        styles={{
-          main: {
-            background:
+    <AppShell
+      styles={{
+        main: {
+          background:
               theme.colorScheme === "dark"
                 ? theme.colors.dark[8]
                 : theme.colors.gray[0],
-          },
-        }}
-        aside={<AsideMenu />}
-      >
-        <Container size="xl">
-          <Breadcrumb />
-          {/*{shouldRenderBreadcrumbs && <Breadcrumb />}*/}
-          {children}
-        </Container>
-      </AppShell>
-    </>
+        },
+      }}
+      aside={<AsideMenu />}
+    >
+      <Container size="xl">
+        <Breadcrumb />
+        {/* {shouldRenderBreadcrumbs && <Breadcrumb />} */}
+        {children}
+      </Container>
+    </AppShell>
   );
 };
 
