@@ -6,7 +6,10 @@
     "airbnb/hooks",
     "prettier",
     "plugin:react/recommended",
-    "plugin:react-hooks/recommended"
+    "plugin:react-hooks/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": [
@@ -14,18 +17,60 @@
     "react-hooks"
   ],
   "rules": {
-    "quotes": ["error", "single"],
-    "semi": ["error", "never"]
+    "import/no-unresolved": "off",
+    "import/extensions": 0,
+    "quotes": [
+      "error",
+      "double"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "react/jsx-filename-extension": [
+      2,
+      {
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".ts",
+          ".tsx"
+        ]
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "_"
+      }
+    ],
+    "no-use-before-define": "off",
+    "no-unused-expressions": "off"
   },
   "settings": {
     "react": {
       "version": "detect"
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [
+          ".ts",
+          ".tsx",
+          ".d.ts"
+        ],
+        // add .d.ts here
+        "moduleDirectory": [
+          "node_modules",
+          "."
+        ]
+      }
+    },
+    "env": {
+      "browser": true,
+      "node": true,
+      "es6": true
     }
-  },
-  "env": {
-    "browser": true,
-    "node": true,
-    "es6": true
   },
   "root": true
 }
