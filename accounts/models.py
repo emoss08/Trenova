@@ -179,6 +179,7 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore
         _("Session Key"),
         max_length=40,
         blank=True,
+        null=True,
         help_text=_("Stores the current session key."),
     )
 
