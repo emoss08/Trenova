@@ -17,15 +17,15 @@
 
 import React from "react";
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
+import axios from "@/lib/AxiosConfig";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { yesAndNoChoices } from "@/lib/utils";
 import { useFormStyles } from "@/styles/FormStyles";
 import { Commodity, CommodityFormValues } from "@/types/apps/commodities";
@@ -120,89 +120,87 @@ export function EditCommodityModalForm({ commodity, selectHazmatData }: Props) {
   };
 
   return (
-    <>
-      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-        <Box className={classes.div}>
-          <Box>
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="name"
+            label="Name"
+            placeholder="Name"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <ValidatedTextInput
               form={form}
               className={classes.fields}
-              name="name"
-              label="Name"
-              placeholder="Name"
+              name="min_temp"
+              label="Min Temp"
+              placeholder="Min Temp"
+              variant="filled"
+            />
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="max_temp"
+              label="Max Temp"
+              placeholder="Max Temp"
+              variant="filled"
+            />
+          </SimpleGrid>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              className={classes.fields}
+              data={selectHazmatData || []}
+              name="hazmat"
+              placeholder="Hazardous Material"
+              label="Hazardous Material"
+              form={form}
+              variant="filled"
+              clearable
+            />
+            <SelectInput
+              className={classes.fields}
+              data={yesAndNoChoices}
+              name="is_hazmat"
+              label="Is Hazmat"
+              placeholder="Is Hazmat"
+              form={form}
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextArea
-              form={form}
-              className={classes.fields}
-              name="description"
-              label="Description"
-              placeholder="Description"
-              variant="filled"
-            />
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="min_temp"
-                label="Min Temp"
-                placeholder="Min Temp"
-                variant="filled"
-              />
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="max_temp"
-                label="Max Temp"
-                placeholder="Max Temp"
-                variant="filled"
-              />
-            </SimpleGrid>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                className={classes.fields}
-                data={selectHazmatData || []}
-                name="hazmat"
-                placeholder="Hazardous Material"
-                label="Hazardous Material"
-                form={form}
-                variant="filled"
-                clearable
-              />
-              <SelectInput
-                className={classes.fields}
-                data={yesAndNoChoices}
-                name="is_hazmat"
-                label="Is Hazmat"
-                placeholder="Is Hazmat"
-                form={form}
-                variant="filled"
-                withAsterisk
-              />
-            </SimpleGrid>
-            <SelectInput
-              className={classes.fields}
-              data={unitOfMeasureChoices}
-              name="unit_of_measure"
-              placeholder="Unit of Measure"
-              label="Unit of Measure"
-              form={form}
-              variant="filled"
-            />
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
+          </SimpleGrid>
+          <SelectInput
+            className={classes.fields}
+            data={unitOfMeasureChoices}
+            name="unit_of_measure"
+            placeholder="Unit of Measure"
+            label="Unit of Measure"
+            form={form}
+            variant="filled"
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
                 Submit
-              </Button>
-            </Group>
-          </Box>
+            </Button>
+          </Group>
         </Box>
-      </form>
-    </>
+      </Box>
+    </form>
   );
 }

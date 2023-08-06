@@ -17,10 +17,10 @@
 
 import { Grid, Skeleton } from "@mantine/core";
 import { Suspense, useEffect, useState } from "react";
-import { controlFileData, NavBar } from "@/components/control-files/NavBar";
 import { useLocation, useNavigate } from "react-router-dom";
+import { controlFileData, NavBar } from "@/components/control-files/NavBar";
 
-const ControlFiles = () => {
+function ControlFiles() {
   const location = useLocation();
   const navigate = useNavigate();
   const initialTabLabel = location.hash.substring(1).replace(/-/g, " ");
@@ -63,6 +63,6 @@ const ControlFiles = () => {
       </Grid.Col>
     </Grid>
   );
-};
+}
 
 export default ControlFiles;

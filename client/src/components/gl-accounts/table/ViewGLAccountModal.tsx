@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
+import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { ViewGLAccountModalForm } from "./_Partials/ViewGLAccountModalForm";
 
 export const ViewGLAccountModal: React.FC = () => {

@@ -23,7 +23,7 @@ import { CreateDCModal } from "@/components/division-codes/table/CreateDCModal";
 import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
 import { ViewDCModal } from "@/components/division-codes/table/ViewDCModal";
 
-export const DivisionCodeTable = () => {
+export function DivisionCodeTable() {
   return (
     <MontaTable
       store={divisionCodeTableStore}
@@ -31,11 +31,11 @@ export const DivisionCodeTable = () => {
       columns={DCTableColumns}
       TableEditModal={EditDCModal}
       TableViewModal={ViewDCModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateDCModal}
       tableQueryKey="division-code-table-data"
       exportModelName="DivisionCode"
       name="Division Code"
     />
   );
-};
+}

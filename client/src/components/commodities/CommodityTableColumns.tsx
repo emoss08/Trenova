@@ -23,63 +23,61 @@ import { Commodity } from "@/types/apps/commodities";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { truncateText } from "@/lib/utils";
 
-export const CommodityTableColumns = (): MRT_ColumnDef<Commodity>[] => {
-  return [
-    {
-      accessorKey: "name",
-      header: "Name",
+export const CommodityTableColumns = (): MRT_ColumnDef<Commodity>[] => [
+  {
+    accessorKey: "name",
+    header: "Name",
+  },
+  {
+    id: "description",
+    accessorKey: "description",
+    header: "Description",
+    Cell: ({ cell }) => {
+      if (cell.getValue()) {
+        return truncateText(cell.getValue() as string, 50);
+      }
+      return <Text>No Description</Text>;
     },
-    {
-      id: "description",
-      accessorKey: "description",
-      header: "Description",
-      Cell: ({ cell }) => {
-        if (cell.getValue()) {
-          return truncateText(cell.getValue() as string, 50);
-        }
-        return <Text>No Description</Text>;
-      },
+  },
+  {
+    id: "temp_range",
+    accessorFn: (row) => `${row.min_temp} - ${row.max_temp}`,
+    header: "Temperature Range",
+    Cell: ({ cell }) => {
+      if (cell.getValue() === "null - null") {
+        return <Text>No Temp Range</Text>;
+      }
+      return <Text>{cell.getValue() as string}</Text>;
     },
-    {
-      id: "temp_range",
-      accessorFn: (row) => `${row.min_temp} - ${row.max_temp}`,
-      header: "Temperature Range",
-      Cell: ({ cell }) => {
-        if (cell.getValue() === "null - null") {
-          return <Text>No Temp Range</Text>;
-        }
-        return <Text>{cell.getValue() as string}</Text>;
-      },
+  },
+  {
+    id: "is_hazmat",
+    header: "Is Hazmat",
+    accessorKey: "is_hazmat",
+    filterFn: "equals",
+    Cell: ({ cell }) => (
+      <Badge
+        color={cell.getValue() === "N" ? "green" : "red"}
+        variant="filled"
+        radius="xs"
+      >
+        {cell.getValue() === "Y" ? "Yes" : "No"}
+      </Badge>
+    ),
+    mantineFilterSelectProps: {
+      data: [
+        { value: "", label: "All" },
+        { value: "Y", label: "Yes" },
+        { value: "N", label: "No" },
+      ] as any,
     },
-    {
-      id: "is_hazmat",
-      header: "Is Hazmat",
-      accessorKey: "is_hazmat",
-      filterFn: "equals",
-      Cell: ({ cell }) => (
-        <Badge
-          color={cell.getValue() === "N" ? "green" : "red"}
-          variant="filled"
-          radius="xs"
-        >
-          {cell.getValue() === "Y" ? "Yes" : "No"}
-        </Badge>
-      ),
-      mantineFilterSelectProps: {
-        data: [
-          { value: "", label: "All" },
-          { value: "Y", label: "Yes" },
-          { value: "N", label: "No" },
-        ] as any,
-      },
-      filterVariant: "select",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu store={commodityTableStore} data={row.original} />
-      ),
-    },
-  ];
-};
+    filterVariant: "select",
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    Cell: ({ row }) => (
+      <MontaTableActionMenu store={commodityTableStore} data={row.original} />
+    ),
+  },
+];

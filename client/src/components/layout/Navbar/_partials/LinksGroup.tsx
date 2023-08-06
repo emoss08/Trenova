@@ -27,9 +27,9 @@ import {
 } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { SubLinksGroup } from "@/components/layout/Navbar/_partials/SubLinkGroups";
 
 const useStyles = createStyles((theme) => ({
@@ -135,8 +135,8 @@ export function LinksGroup({
 
   const { userHasPermission } = useUserPermissions();
 
-  const linkItems = useMemo(() => {
-    return links
+  const linkItems = useMemo(() => 
+    links
       ?.map((link) => {
         if (link.subLinks) {
           return (
@@ -160,7 +160,7 @@ export function LinksGroup({
               <Text className={classes.link}>{link.label}</Text>
             </Link>
           );
-        } else if (!link.permission) {
+        } if (!link.permission) {
           return (
             <Link
               to={link.link}
@@ -175,8 +175,8 @@ export function LinksGroup({
         }
         return null;
       })
-      .filter(Boolean); // remove null items
-  }, [links, userHasPermission]);
+      .filter(Boolean) // remove null items
+  , [links, userHasPermission]);
 
   // If the `LinksGroup` doesn't have permission, and doesn't have any visible link items, and there's no direct link, don't render it.
   if (

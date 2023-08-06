@@ -64,30 +64,28 @@ const ValueComponent: FileInputProps["valueComponent"] = ({ value }) => {
   return value && <Value file={value} />;
 };
 
-const useStyles = createStyles((theme) => {
-  return {
-    invalid: {
-      backgroundColor:
+const useStyles = createStyles((theme) => ({
+  invalid: {
+    backgroundColor:
         theme.colorScheme === "dark"
           ? theme.fn.rgba(theme.colors.red[8], 0.15)
           : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
+  },
+  invalidIcon: {
+    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+  },
+}));
 
 interface ValidatedFileInputProps<TFormValues>
   extends Omit<FileInputProps, "form"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
-export const ValidatedFileInput = <TFormValues extends object>({
+export function ValidatedFileInput<TFormValues extends object>({
   form,
   name,
   ...rest
-}: ValidatedFileInputProps<TFormValues>) => {
+}: ValidatedFileInputProps<TFormValues>) {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
@@ -111,4 +109,4 @@ export const ValidatedFileInput = <TFormValues extends object>({
       valueComponent={ValueComponent}
     />
   );
-};
+}

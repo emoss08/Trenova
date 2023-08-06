@@ -24,9 +24,9 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import React, { useRef } from "react";
-import { useNavbarStore } from "@/stores/HeaderStore";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLaptop, faMoon, faSun } from "@fortawesome/pro-duotone-svg-icons";
+import { useNavbarStore } from "@/stores/HeaderStore";
 
 const useStyles = createStyles((theme) => ({
   mainLinks: {
@@ -129,7 +129,7 @@ export const ThemeSwitcher: React.FC = () => {
           className={classes.mainLinkIcon}
         />
       );
-    } else if (colorScheme === "dark") {
+    } if (colorScheme === "dark") {
       return (
         <FontAwesomeIcon
           size="lg"
@@ -137,72 +137,70 @@ export const ThemeSwitcher: React.FC = () => {
           className={classes.mainLinkIcon}
         />
       );
-    } else {
-      return (
-        <FontAwesomeIcon
-          size="lg"
-          icon={faLaptop}
-          className={classes.mainLinkIcon}
-        />
-      );
-    }
+    } 
+    return (
+      <FontAwesomeIcon
+        size="lg"
+        icon={faLaptop}
+        className={classes.mainLinkIcon}
+      />
+    );
+    
   };
 
   return (
-    <>
-      <Menu
-        position="right-start"
-        width={200}
-        opened={themeSwitcherOpen}
-        onChange={(changeEvent) => {
-          useNavbarStore.set("themeSwitcherOpen", changeEvent);
-        }}
-        withinPortal
-        withArrow
-        arrowSize={5}
-      >
-        <Menu.Target>
-          <div className={classes.mainLinks}>
-            <UnstyledButton className={classes.mainLink} ref={ref}>
-              <div className={classes.mainLinkInner}>
-                {getThemeIcon()}
-                <span>Switch Theme</span>
-              </div>
-            </UnstyledButton>
-          </div>
-        </Menu.Target>
+    <Menu
+      position="right-start"
+      width={200}
+      opened={themeSwitcherOpen}
+      onChange={(changeEvent) => {
+        useNavbarStore.set("themeSwitcherOpen", changeEvent);
+      }}
+      withinPortal
+      withArrow
+      arrowSize={5}
+    >
+      <Menu.Target>
+        <div className={classes.mainLinks}>
+          <UnstyledButton className={classes.mainLink} ref={ref}>
+            <div className={classes.mainLinkInner}>
+              {getThemeIcon()}
+              <span>Switch Theme</span>
+            </div>
+          </UnstyledButton>
+        </div>
+      </Menu.Target>
 
-        <Menu.Dropdown>
-          <Menu.Label>Theme Modes</Menu.Label>
-          <Divider />
-          <Menu.Item
-            className={classes.menuItem}
-            onClick={() => toggleColorScheme("light")}
-            icon={
-              <FontAwesomeIcon
-                size="lg"
-                icon={faSun}
-                className={classes.mainLinkIcon}
-              />
-            }
-          >
+      <Menu.Dropdown>
+        <Menu.Label>Theme Modes</Menu.Label>
+        <Divider />
+        <Menu.Item
+          className={classes.menuItem}
+          onClick={() => toggleColorScheme("light")}
+          icon={
+            <FontAwesomeIcon
+              size="lg"
+              icon={faSun}
+              className={classes.mainLinkIcon}
+            />
+          }
+        >
             Light Theme
-          </Menu.Item>
-          <Menu.Item
-            className={classes.menuItem}
-            onClick={() => toggleColorScheme("dark")}
-            icon={
-              <FontAwesomeIcon
-                size="lg"
-                icon={faMoon}
-                className={classes.mainLinkIcon}
-              />
-            }
-          >
+        </Menu.Item>
+        <Menu.Item
+          className={classes.menuItem}
+          onClick={() => toggleColorScheme("dark")}
+          icon={
+            <FontAwesomeIcon
+              size="lg"
+              icon={faMoon}
+              className={classes.mainLinkIcon}
+            />
+          }
+        >
             Dark Theme
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
-    </>
+        </Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
   );
 };

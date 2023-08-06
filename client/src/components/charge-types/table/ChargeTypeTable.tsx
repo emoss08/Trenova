@@ -23,7 +23,7 @@ import { EditChargeTypeModal } from "@/components/charge-types/table/EditChargeT
 import { ChargeTypeTableColumns } from "@/components/charge-types/table/ChargeTypeTableColumns";
 import { ViewChargeTypeModal } from "@/components/charge-types/table/ViewChargeTypeModal";
 
-export const ChargeTypeTable = () => {
+export function ChargeTypeTable() {
   return (
     <MontaTable
       store={chargeTypeTableStore}
@@ -31,11 +31,11 @@ export const ChargeTypeTable = () => {
       columns={ChargeTypeTableColumns}
       TableEditModal={EditChargeTypeModal}
       TableViewModal={ViewChargeTypeModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateChargeTypeModal}
       tableQueryKey="charge-type-table-data"
       exportModelName="ChargeType"
       name="Charge Type"
     />
   );
-};
+}

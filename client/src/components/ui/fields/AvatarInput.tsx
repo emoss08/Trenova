@@ -96,54 +96,52 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
     }
   };
   return (
-    <>
-      <div style={{ position: "relative", width: 230, height: 200 }}>
-        {avatar ? (
-          <Avatar src={avatar} size={200} />
-        ) : (
-          <Avatar color="cyan" size={200}>
-            {user.profile?.first_name.charAt(0)}
-            {user.profile?.last_name.charAt(0)}
-          </Avatar>
-        )}
+    <div style={{ position: "relative", width: 230, height: 200 }}>
+      {avatar ? (
+        <Avatar src={avatar} size={200} />
+      ) : (
+        <Avatar color="cyan" size={200}>
+          {user.profile?.first_name.charAt(0)}
+          {user.profile?.last_name.charAt(0)}
+        </Avatar>
+      )}
 
-        {avatar && (
-          <label>
-            <Tooltip withArrow label="Remove Avatar">
-              <ActionIcon
-                component="span"
-                radius="lg"
-                style={{ position: "absolute", right: 20, bottom: -5 }}
-                variant="filled"
-                size="sm"
-                onClick={removeAvatar}
-              >
-                <FontAwesomeIcon icon={faXmark} size="xs" />
-              </ActionIcon>
-            </Tooltip>
-          </label>
-        )}
+      {avatar && (
         <label>
-          <Input
-            type="file"
-            accept=".png, .jpg, .jpeg"
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
-          <Tooltip withArrow label={avatar ? "Change Avatar" : "Add Avatar"}>
+          <Tooltip withArrow label="Remove Avatar">
             <ActionIcon
               component="span"
               radius="lg"
-              style={{ position: "absolute", right: 20, top: -5 }}
+              style={{ position: "absolute", right: 20, bottom: -5 }}
               variant="filled"
               size="sm"
+              onClick={removeAvatar}
             >
-              <FontAwesomeIcon icon={faPencil} size="2xs" />
+              <FontAwesomeIcon icon={faXmark} size="xs" />
             </ActionIcon>
           </Tooltip>
         </label>
-      </div>
-    </>
+      )}
+      <label>
+        <Input
+          type="file"
+          accept=".png, .jpg, .jpeg"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+        <Tooltip withArrow label={avatar ? "Change Avatar" : "Add Avatar"}>
+          <ActionIcon
+            component="span"
+            radius="lg"
+            style={{ position: "absolute", right: 20, top: -5 }}
+            variant="filled"
+            size="sm"
+          >
+            <FontAwesomeIcon icon={faPencil} size="2xs" />
+          </ActionIcon>
+        </Tooltip>
+      </label>
+    </div>
   );
 };
 

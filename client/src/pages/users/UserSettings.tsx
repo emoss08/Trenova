@@ -43,9 +43,7 @@ const UserSettings: React.FC = () => {
       return getUserDetails(userId);
     },
     onError: () => navigate("/error"),
-    initialData: () => {
-      return queryClient.getQueryData(["user", userId]);
-    },
+    initialData: () => queryClient.getQueryData(["user", userId]),
   });
 
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery({
@@ -57,12 +55,10 @@ const UserSettings: React.FC = () => {
       return getJobTitleDetails(userDetails?.profile?.job_title);
     },
     enabled: !!userDetails,
-    initialData: () => {
-      return queryClient.getQueryData([
-        "jobTitle",
-        userDetails?.profile?.job_title,
-      ]);
-    },
+    initialData: () => queryClient.getQueryData([
+      "jobTitle",
+      userDetails?.profile?.job_title,
+    ]),
   });
 
   const isLoading = isUserDetailsLoading || isJobTitlesLoading;
@@ -76,18 +72,16 @@ const UserSettings: React.FC = () => {
           <Skeleton height={100} />
         </Stack>
       ) : (
-        <>
-          <Stack>
-            {userDetails && jobTitleData && (
-              <ViewUserProfileDetails
-                user={userDetails}
-                jobTitle={jobTitleData}
-              />
-            )}
-            {userDetails && <EditUserProfileDetails user={userDetails} />}
-            {userDetails && <SignInMethod user={userDetails} />}
-          </Stack>
-        </>
+        <Stack>
+          {userDetails && jobTitleData && (
+            <ViewUserProfileDetails
+              user={userDetails}
+              jobTitle={jobTitleData}
+            />
+          )}
+          {userDetails && <EditUserProfileDetails user={userDetails} />}
+          {userDetails && <SignInMethod user={userDetails} />}
+        </Stack>
       )}
     </>
   );

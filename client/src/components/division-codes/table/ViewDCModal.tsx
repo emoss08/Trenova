@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { useQuery, useQueryClient } from "react-query";
-import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
+import { divisionCodeTableStore } from "@/stores/AccountingStores";
+import { getGLAccounts } from "@/requests/AccountingRequestFactory";
+import { GeneralLedgerAccount } from "@/types/apps/accounting";
 import { ViewDCModalForm } from "@/components/division-codes/table/_Partials/ViewDCModalForm";
 
 export const ViewDCModal: React.FC = () => {
@@ -33,9 +33,7 @@ export const ViewDCModal: React.FC = () => {
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showViewModal,
-    initialData: () => {
-      return queryClient.getQueryData("gl-account");
-    },
+    initialData: () => queryClient.getQueryData("gl-account"),
     staleTime: Infinity,
   });
 

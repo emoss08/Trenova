@@ -28,11 +28,11 @@ import {
 } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faDownload } from "@fortawesome/pro-duotone-svg-icons";
+import { Link } from "react-router-dom";
+import { useQuery, useQueryClient } from "react-query";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
 import { useNavbarStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
-import { Link } from "react-router-dom";
-import { useQuery, useQueryClient } from "react-query";
 import { getUserReports } from "@/requests/UserRequestFactory";
 import { getUserId } from "@/lib/utils";
 
@@ -106,81 +106,77 @@ export const UserDownloads: React.FC = () => {
     {
       queryKey: ["userReport", userId],
       queryFn: () => getUserReports(),
-      initialData: () => {
-        return queryClient.getQueryData(["userReport", userId]);
-      },
+      initialData: () => queryClient.getQueryData(["userReport", userId]),
     }
   );
 
   return (
-    <>
-      <Menu
-        position="right-start"
-        width={230}
-        opened={downloadMenuOpen}
-        onChange={(changeEvent) => {
-          useNavbarStore.set("downloadMenuOpen", changeEvent);
-        }}
-        withinPortal
-        withArrow
-        arrowSize={5}
-      >
-        <Menu.Target>
-          <div className={classes.mainLinks}>
-            <UnstyledButton className={classes.mainLink}>
-              <div className={classes.mainLinkInner}>
-                <FontAwesomeIcon
-                  size="lg"
-                  icon={faDownload}
-                  className={classes.mainLinkIcon}
-                />
-                <span>Downloads</span>
-              </div>
-              <Badge
-                size="sm"
-                variant="filled"
-                className={classes.mainLinkBadge}
-              >
-                {userReportData?.count || 0}
-              </Badge>
-            </UnstyledButton>
-          </div>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Label>Downloads</Menu.Label>
-          <Divider />
-          <>
-            {isUserReportDataLoading ? (
-              <Skeleton width={220} height={250} />
-            ) : (
-              <ScrollArea h={250} scrollbarSize={5} offsetScrollbars>
-                {userReportData && <UserReports reportData={userReportData} />}
-              </ScrollArea>
-            )}
-          </>
-          <Divider mb={2} mt={10} />
-          <Link
-            to="#"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginTop: "5px",
-            }}
-            className={headerClasses.link}
-          >
-            View all{" "}
-            <FontAwesomeIcon
-              icon={faArrowRight}
+    <Menu
+      position="right-start"
+      width={230}
+      opened={downloadMenuOpen}
+      onChange={(changeEvent) => {
+        useNavbarStore.set("downloadMenuOpen", changeEvent);
+      }}
+      withinPortal
+      withArrow
+      arrowSize={5}
+    >
+      <Menu.Target>
+        <div className={classes.mainLinks}>
+          <UnstyledButton className={classes.mainLink}>
+            <div className={classes.mainLinkInner}>
+              <FontAwesomeIcon
+                size="lg"
+                icon={faDownload}
+                className={classes.mainLinkIcon}
+              />
+              <span>Downloads</span>
+            </div>
+            <Badge
               size="sm"
-              style={{
-                marginLeft: "5px",
-                marginTop: "2px",
-              }}
-            />
-          </Link>
-        </Menu.Dropdown>
-      </Menu>
-    </>
+              variant="filled"
+              className={classes.mainLinkBadge}
+            >
+              {userReportData?.count || 0}
+            </Badge>
+          </UnstyledButton>
+        </div>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Downloads</Menu.Label>
+        <Divider />
+        <>
+          {isUserReportDataLoading ? (
+            <Skeleton width={220} height={250} />
+          ) : (
+            <ScrollArea h={250} scrollbarSize={5} offsetScrollbars>
+              {userReportData && <UserReports reportData={userReportData} />}
+            </ScrollArea>
+          )}
+        </>
+        <Divider mb={2} mt={10} />
+        <Link
+          to="#"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "5px",
+          }}
+          className={headerClasses.link}
+        >
+            View all{" "}
+          <FontAwesomeIcon
+            icon={faArrowRight}
+            size="sm"
+            style={{
+              marginLeft: "5px",
+              marginTop: "2px",
+            }}
+          />
+        </Link>
+      </Menu.Dropdown>
+    </Menu>
   );
 };

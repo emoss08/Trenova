@@ -17,8 +17,8 @@
 
 import { Modal, Skeleton, Stack } from "@mantine/core";
 import React from "react";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { useQuery, useQueryClient } from "react-query";
+import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import {
   getGLAccounts,
   getRevenueCodeDetail,
@@ -36,9 +36,7 @@ export const EditRCModal: React.FC = () => {
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showEditModal,
-    initialData: () => {
-      return queryClient.getQueryData("gl-account");
-    },
+    initialData: () => queryClient.getQueryData("gl-account"),
     staleTime: Infinity,
   });
 
@@ -58,9 +56,7 @@ export const EditRCModal: React.FC = () => {
         return getRevenueCodeDetail(revenueCode.id);
       },
       enabled: showEditModal,
-      initialData: () => {
-        return queryClient.getQueryData(["revenueCode", revenueCode?.id]);
-      },
+      initialData: () => queryClient.getQueryData(["revenueCode", revenueCode?.id]),
       staleTime: Infinity, // Never refetch
     });
 

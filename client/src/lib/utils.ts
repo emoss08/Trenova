@@ -42,9 +42,9 @@ export const getUserCSRFToken = (): string | undefined => {
 
   if (csrfCookie) {
     return csrfCookie.split("=")[1];
-  } else {
-    console.log("No CSRF token found");
-  }
+  } 
+  console.log("No CSRF token found");
+  
 };
 
 /**
@@ -99,7 +99,7 @@ export function clearAllCookies() {
   const cookies = document.cookie.split(";");
   cookies.forEach((cookie) => {
     const name = cookie.split("=")[0].trim();
-    document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    document.cookie = `${name  }=; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
   });
 }
 
@@ -128,7 +128,7 @@ export const yesAndNoChoices: TChoiceProps[] = [
  * @returns The truncated text.
  */
 export function truncateText(text: string, limit: number): string {
-  return text.length > limit ? text.substring(0, limit) + "..." : text;
+  return text.length > limit ? `${text.substring(0, limit)  }...` : text;
 }
 
 export function USDollarFormat(amount: number): string {

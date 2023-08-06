@@ -23,7 +23,7 @@ import { EditGLAccountModal } from "@/components/gl-accounts/table/EditGLAccount
 import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
 
-export const GLAccountTable = () => {
+export function GLAccountTable() {
   return (
     <MontaTable
       store={generalLedgerTableStore}
@@ -31,11 +31,11 @@ export const GLAccountTable = () => {
       columns={GLAccountTableColumns}
       TableEditModal={EditGLAccountModal}
       TableViewModal={ViewGLAccountModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateGLAccountModal}
       tableQueryKey="gl-account-table-data"
       exportModelName="GeneralLedgerAccount"
       name="GL Account"
     />
   );
-};
+}

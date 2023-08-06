@@ -16,12 +16,12 @@
  */
 
 import { ObjectSchema } from "yup";
+import * as Yup from "yup";
 import {
   AccessorialChargeFormValues,
   BillingControlFormValues,
   ChargeTypeFormValues,
 } from "@/types/apps/billing";
-import * as Yup from "yup";
 import {
   AutoBillingCriteriaChoicesProps,
   fuelMethodChoicesProps,

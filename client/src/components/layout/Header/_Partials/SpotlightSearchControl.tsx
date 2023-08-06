@@ -34,7 +34,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const SearchControl = ({ ...others }) => {
+export function SearchControl({ ...others }) {
   const { classes } = useStyles();
 
   return (
@@ -42,7 +42,7 @@ export const SearchControl = ({ ...others }) => {
       <Input
         placeholder="Search"
         size="xs"
-        icon={<FontAwesomeIcon size={"xs"} icon={faMagnifyingGlass} />}
+        icon={<FontAwesomeIcon size="xs" icon={faMagnifyingGlass} />}
         rightSectionWidth={70}
         rightSection={<Code className={classes.searchCode}>Ctrl + K</Code>}
         styles={{ rightSection: { pointerEvents: "none" } }}
@@ -51,4 +51,4 @@ export const SearchControl = ({ ...others }) => {
       />
     </UnstyledButton>
   );
-};
+}

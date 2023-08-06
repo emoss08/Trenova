@@ -23,7 +23,7 @@ import { CreateHMModal } from "@/components/hazardous-material/CreateHMModal";
 import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
 import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
 
-export const HazardousMaterialTable = () => {
+export function HazardousMaterialTable() {
   return (
     <MontaTable
       store={hazardousMaterialTableStore}
@@ -31,11 +31,11 @@ export const HazardousMaterialTable = () => {
       columns={HMTableColumns}
       TableEditModal={EditHMModal}
       TableViewModal={ViewHMModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateHMModal}
       tableQueryKey="hazardous-material-table-data"
       exportModelName="HazardousMaterial"
       name="Hazardous Material"
     />
   );
-};
+}

@@ -71,53 +71,51 @@ export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
   if (!selectedRecord) return null;
 
   return (
-    <>
-      <Modal.Root
-        opened={showDeleteRecordModal}
-        onClose={() => setShowDeleteRecordModal(false)}
-        centered
-      >
-        <Modal.Overlay />
-        <Modal.Content>
-          <Modal.Header>
+    <Modal.Root
+      opened={showDeleteRecordModal}
+      onClose={() => setShowDeleteRecordModal(false)}
+      centered
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
             Please confirm your action
-            <Modal.CloseButton />
-          </Modal.Header>
-          <Modal.Body>
-            <Text size="sm">
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          <Text size="sm">
               This action is irreversible and will permanently remove all data
               associated with this record. If you proceed, there will be no way
               to recover this records information. Are you sure you want to
               proceed?
-            </Text>
-            <Box
-              mt={10}
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-              }}
+          </Text>
+          <Box
+            mt={10}
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button
+              onClick={() => setShowDeleteRecordModal(false)}
+              variant="default"
+              mr={10}
             >
-              <Button
-                onClick={() => setShowDeleteRecordModal(false)}
-                variant="default"
-                mr={10}
-              >
                 No don't delete it
-              </Button>
-              <Button
-                type="submit"
-                color="red"
-                variant="filled"
-                ml={5}
-                loading={loading}
-                onClick={() => handleDelete()}
-              >
+            </Button>
+            <Button
+              type="submit"
+              color="red"
+              variant="filled"
+              ml={5}
+              loading={loading}
+              onClick={() => handleDelete()}
+            >
                 Delete Record
-              </Button>
-            </Box>
-          </Modal.Body>
-        </Modal.Content>
-      </Modal.Root>
-    </>
+            </Button>
+          </Box>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
   );
 };

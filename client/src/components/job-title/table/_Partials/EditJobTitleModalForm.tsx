@@ -17,17 +17,17 @@
 
 import React from "react";
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
-import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { useForm, yupResolver } from "@mantine/form";
 import { JobTitle, JobTitleFormValues } from "@/types/apps/accounts";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { jobFunctionChoices } from "@/utils/apps/accounts";
@@ -106,66 +106,64 @@ export const EditJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
   };
 
   return (
-    <>
-      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-        <Box className={classes.div}>
-          <Box>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                form={form}
-                data={statusChoices}
-                className={classes.fields}
-                name="status"
-                label="Status"
-                placeholder="Status"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("status", form.values.status);
-                }}
-                withAsterisk
-              />
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="name"
-                label="Name"
-                placeholder="Name"
-                variant="filled"
-                withAsterisk
-              />
-            </SimpleGrid>
-            <ValidatedTextArea
-              form={form}
-              className={classes.fields}
-              name="description"
-              label="Description"
-              placeholder="Description"
-              variant="filled"
-            />
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <SelectInput
               form={form}
-              data={jobFunctionChoices}
+              data={statusChoices}
               className={classes.fields}
-              name="job_function"
-              label="Job Function"
-              placeholder="Job Function"
+              name="status"
+              label="Status"
+              placeholder="Status"
               variant="filled"
-              clearable
+              onMouseLeave={() => {
+                form.setFieldValue("status", form.values.status);
+              }}
               withAsterisk
             />
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="name"
+              label="Name"
+              placeholder="Name"
+              variant="filled"
+              withAsterisk
+            />
+          </SimpleGrid>
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+          />
+          <SelectInput
+            form={form}
+            data={jobFunctionChoices}
+            className={classes.fields}
+            name="job_function"
+            label="Job Function"
+            placeholder="Job Function"
+            variant="filled"
+            clearable
+            withAsterisk
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
                 Submit
-              </Button>
-            </Group>
-          </Box>
+            </Button>
+          </Group>
         </Box>
-      </form>
-    </>
+      </Box>
+    </form>
   );
 };

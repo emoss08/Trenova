@@ -27,7 +27,7 @@ import {
 import React from "react";
 import { billingClientStore } from "@/stores/BillingStores";
 
-export const TransferConfirmModal = () => {
+export function TransferConfirmModal() {
   const [modalOpen, setModalOpen] = billingClientStore.use(
     "transferConfirmModalOpen"
   );
@@ -71,14 +71,12 @@ export const TransferConfirmModal = () => {
                 </tr>
               </thead>
               <tbody>
-                {invalidOrders.map((order) => {
-                  return (
-                    <tr key={order.original.pro_number}>
-                      <td>{order.original.pro_number}</td>
-                      <td>{order.original.missing_documents.join(", ")}</td>
-                    </tr>
-                  );
-                })}
+                {invalidOrders.map((order) => (
+                  <tr key={order.original.pro_number}>
+                    <td>{order.original.pro_number}</td>
+                    <td>{order.original.missing_documents.join(", ")}</td>
+                  </tr>
+                ))}
               </tbody>
             </Table>
           </ScrollArea>
@@ -93,4 +91,4 @@ export const TransferConfirmModal = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

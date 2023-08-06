@@ -16,13 +16,13 @@
  */
 
 import { useQuery, useQueryClient } from "react-query";
-import { getBillingControl } from "@/requests/OrganizationRequestFactory";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
+import React from "react";
+import { getBillingControl } from "@/requests/OrganizationRequestFactory";
 import { usePageStyles } from "@/styles/PageStyles";
 import { BillingControlForm } from "@/components/control-files/_partials/BillingControlForm";
-import React from "react";
 
-const BillingControlPage = () => {
+function BillingControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
@@ -30,9 +30,7 @@ const BillingControlPage = () => {
     useQuery({
       queryKey: ["billingControl"],
       queryFn: () => getBillingControl(),
-      initialData: () => {
-        return queryClient.getQueryData(["billingControl"]);
-      },
+      initialData: () => queryClient.getQueryData(["billingControl"]),
       staleTime: Infinity,
     });
 
@@ -42,7 +40,7 @@ const BillingControlPage = () => {
   return (
     <>
       {isBillingControlDataLoading ? (
-        <Skeleton height={400}></Skeleton>
+        <Skeleton height={400} />
       ) : (
         <Card className={classes.card} withBorder>
           <Text fz="xl" fw={700} className={classes.text}>
@@ -57,6 +55,6 @@ const BillingControlPage = () => {
       )}
     </>
   );
-};
+}
 
 export default BillingControlPage;

@@ -18,12 +18,12 @@
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import axios from "@/lib/AxiosConfig";
+import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 import { APIError } from "@/types/server";
 import { OrderControl, OrderControlFormValues } from "@/types/apps/order";
 import { orderControlSchema } from "@/utils/apps/order/schema";

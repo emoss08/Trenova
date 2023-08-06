@@ -16,16 +16,16 @@
  */
 
 import React, { useState } from "react";
-import { getUserId } from "@/lib/utils";
 import { animated, useSpring } from "@react-spring/web";
 import { useMutation, useQueryClient } from "react-query";
 import { useDrag } from "react-use-gesture";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { Button, Menu } from "@mantine/core";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import axios from "@/lib/AxiosConfig";
+import { getUserId } from "@/lib/utils";
 
 type SwippableMenuItemProps<T extends Record<string, any>> = {
   item: T;

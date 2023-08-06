@@ -16,7 +16,6 @@
  */
 
 import React, { useEffect } from "react";
-import { useNavbarStore } from "@/stores/HeaderStore";
 import {
   Badge,
   Button,
@@ -30,15 +29,16 @@ import {
 } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
-import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
 import { useQuery, useQueryClient } from "react-query";
-import { getUserNotifications } from "@/requests/UserRequestFactory";
-import { getUserId, WEB_SOCKET_URL, ENABLE_WEBSOCKETS } from "@/lib/utils";
 import axios from "axios";
 import { notifications } from "@mantine/notifications";
+import { Howl, Howler } from "howler";
+import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
+import { getUserNotifications } from "@/requests/UserRequestFactory";
+import { getUserId, WEB_SOCKET_URL, ENABLE_WEBSOCKETS } from "@/lib/utils";
 import { useAuthStore } from "@/stores/AuthStore";
 import { createWebsocketManager } from "@/utils/websockets";
-import { Howl, Howler } from "howler";
+import { useNavbarStore } from "@/stores/HeaderStore";
 
 import NotificationSound from "@/assets/audio/notification.webm";
 import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
@@ -199,9 +199,7 @@ export const UserNotifications: React.FC = () => {
         }
         return getUserNotifications();
       },
-      initialData: () => {
-        return queryClient.getQueryData(["userNotifications", userId]);
-      },
+      initialData: () => queryClient.getQueryData(["userNotifications", userId]),
     });
 
   const readAllNotifications = async () => {
@@ -221,110 +219,108 @@ export const UserNotifications: React.FC = () => {
   }
 
   return (
-    <>
-      <Popover
-        width={300}
-        position="right-start"
-        withArrow
-        shadow="md"
-        opened={notificationMenuOpen}
-        trapFocus
-        onClose={() => {
-          useNavbarStore.set("notificationsMenuOpen", false);
-        }}
-      >
-        <Popover.Target>
-          {notificationData && notificationData?.unread_count > 0 ? (
-            <div className={classes.mainLinks}>
-              <UnstyledButton
-                className={classes.mainLink}
-                onClick={() =>
-                  useNavbarStore.set("notificationsMenuOpen", true)
-                }
-              >
-                <div className={classes.mainLinkInner}>
-                  <FontAwesomeIcon
-                    size="lg"
-                    icon={faBell}
-                    className={classes.mainLinkIcon}
-                  />
-                  <span>Notifications</span>
-                </div>
-                <Indicator withBorder processing color="violet">
-                  <Badge
-                    size="sm"
-                    variant="filled"
-                    className={classes.mainLinkBadge}
-                  >
-                    {notificationData?.unread_count || 0}
-                  </Badge>
-                </Indicator>
-              </UnstyledButton>
-            </div>
-          ) : (
-            <div className={classes.mainLinks}>
-              <UnstyledButton
-                className={classes.mainLink}
-                onClick={() => {
-                  useNavbarStore.set(
-                    "notificationsMenuOpen",
-                    !notificationMenuOpen
-                  );
-                }}
-              >
-                <div className={classes.mainLinkInner}>
-                  <FontAwesomeIcon
-                    size="lg"
-                    icon={faBell}
-                    className={classes.mainLinkIcon}
-                  />
-                  <span>Notifications</span>
-                </div>
+    <Popover
+      width={300}
+      position="right-start"
+      withArrow
+      shadow="md"
+      opened={notificationMenuOpen}
+      trapFocus
+      onClose={() => {
+        useNavbarStore.set("notificationsMenuOpen", false);
+      }}
+    >
+      <Popover.Target>
+        {notificationData && notificationData?.unread_count > 0 ? (
+          <div className={classes.mainLinks}>
+            <UnstyledButton
+              className={classes.mainLink}
+              onClick={() =>
+                useNavbarStore.set("notificationsMenuOpen", true)
+              }
+            >
+              <div className={classes.mainLinkInner}>
+                <FontAwesomeIcon
+                  size="lg"
+                  icon={faBell}
+                  className={classes.mainLinkIcon}
+                />
+                <span>Notifications</span>
+              </div>
+              <Indicator withBorder processing color="violet">
                 <Badge
                   size="sm"
                   variant="filled"
                   className={classes.mainLinkBadge}
                 >
-                  0
+                  {notificationData?.unread_count || 0}
                 </Badge>
-              </UnstyledButton>
-            </div>
-          )}
-        </Popover.Target>
-        <Popover.Dropdown>
-          <ScrollArea h={250} scrollbarSize={4}>
-            <Notifications
-              notification={notificationData}
-              notificationLoading={isNotificationDataLoading}
-            />
-          </ScrollArea>
-          {notificationData && notificationData?.unread_count > 0 ? (
-            <>
-              <Divider mb={2} mt={10} />
-              <div
-                key={Math.random()}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginTop: "5px",
-                }}
-              >
-                <Button
-                  leftIcon={<FontAwesomeIcon icon={faCheck} />}
-                  variant="subtle"
-                  color="dark"
-                  size="sm"
-                  className={classes.button}
-                  onClick={readAllNotifications}
-                >
-                  Mark all as read
-                </Button>
+              </Indicator>
+            </UnstyledButton>
+          </div>
+        ) : (
+          <div className={classes.mainLinks}>
+            <UnstyledButton
+              className={classes.mainLink}
+              onClick={() => {
+                useNavbarStore.set(
+                  "notificationsMenuOpen",
+                  !notificationMenuOpen
+                );
+              }}
+            >
+              <div className={classes.mainLinkInner}>
+                <FontAwesomeIcon
+                  size="lg"
+                  icon={faBell}
+                  className={classes.mainLinkIcon}
+                />
+                <span>Notifications</span>
               </div>
-            </>
-          ) : null}
-        </Popover.Dropdown>
-      </Popover>
-    </>
+              <Badge
+                size="sm"
+                variant="filled"
+                className={classes.mainLinkBadge}
+              >
+                  0
+              </Badge>
+            </UnstyledButton>
+          </div>
+        )}
+      </Popover.Target>
+      <Popover.Dropdown>
+        <ScrollArea h={250} scrollbarSize={4}>
+          <Notifications
+            notification={notificationData}
+            notificationLoading={isNotificationDataLoading}
+          />
+        </ScrollArea>
+        {notificationData && notificationData?.unread_count > 0 ? (
+          <>
+            <Divider mb={2} mt={10} />
+            <div
+              key={Math.random()}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginTop: "5px",
+              }}
+            >
+              <Button
+                leftIcon={<FontAwesomeIcon icon={faCheck} />}
+                variant="subtle"
+                color="dark"
+                size="sm"
+                className={classes.button}
+                onClick={readAllNotifications}
+              >
+                  Mark all as read
+              </Button>
+            </div>
+          </>
+        ) : null}
+      </Popover.Dropdown>
+    </Popover>
   );
 };

@@ -28,12 +28,12 @@ import {
   Text,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
-import { exportModelTypes, TExportModelFormValue } from "@/types/forms";
-import { ExportModelSchema } from "@/utils/schema";
 import { notifications } from "@mantine/notifications";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery } from "react-query";
+import { ExportModelSchema } from "@/utils/schema";
+import { exportModelTypes, TExportModelFormValue } from "@/types/forms";
 import { getColumns } from "@/requests/ReportRequestFactory";
 import axios from "@/lib/AxiosConfig";
 
@@ -106,98 +106,94 @@ export const TableExportModal: React.FC<Props> = ({
   if (!setShowExportModal) return null;
 
   return (
-    <>
-      <Modal.Root
-        opened={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        centered
-        styles={{
-          inner: {
-            section: {
-              overflowY: "visible",
-            },
+    <Modal.Root
+      opened={showExportModal}
+      onClose={() => setShowExportModal(false)}
+      centered
+      styles={{
+        inner: {
+          section: {
+            overflowY: "visible",
           },
-        }}
-      >
-        <Modal.Overlay />
-        <Modal.Content>
-          <Modal.Header>
-            <Modal.Title>Export {name}s</Modal.Title>
-            <Modal.CloseButton />
-          </Modal.Header>
-          <Modal.Body>
-            {isColumnsLoading ? (
-              <Stack>
-                <Skeleton height={400} />
-              </Stack>
-            ) : (
-              <>
-                <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-                  <Box mb={10}>
-                    <MultiSelect
-                      data={columns}
-                      label="Select Columns"
-                      placeholder="Select columns"
-                      clearable
-                      searchable
-                      nothingFound="No columns available"
-                      maxDropdownHeight={160}
-                      limit={20}
-                      dropdownComponent="div"
-                      withAsterisk
-                      {...form.getInputProps("columns")}
-                    />
-                    <Text size="xs" color="dimmed" mt={5}>
+        },
+      }}
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Export {name}s</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          {isColumnsLoading ? (
+            <Stack>
+              <Skeleton height={400} />
+            </Stack>
+          ) : (
+            <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+              <Box mb={10}>
+                <MultiSelect
+                  data={columns}
+                  label="Select Columns"
+                  placeholder="Select columns"
+                  clearable
+                  searchable
+                  nothingFound="No columns available"
+                  maxDropdownHeight={160}
+                  limit={20}
+                  dropdownComponent="div"
+                  withAsterisk
+                  {...form.getInputProps("columns")}
+                />
+                <Text size="xs" color="dimmed" mt={5}>
                       Fields with underscores are related fields. For example,
                       'organization__name' is the 'name' field of the
                       organization of the record.
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Select
-                      label="Select Export Format"
-                      placeholder="Select a format"
-                      data={exportModelTypes}
-                      dropdownPosition="bottom"
-                      searchable
-                      nothingFound="No options"
-                      withAsterisk
-                      {...form.getInputProps("file_format")}
-                    />
-                    <Text size="xs" color="dimmed" mt={5}>
+                </Text>
+              </Box>
+              <Box>
+                <Select
+                  label="Select Export Format"
+                  placeholder="Select a format"
+                  data={exportModelTypes}
+                  dropdownPosition="bottom"
+                  searchable
+                  nothingFound="No options"
+                  withAsterisk
+                  {...form.getInputProps("file_format")}
+                />
+                <Text size="xs" color="dimmed" mt={5}>
                       Select a format to export (CSV, Excel, or PDF).
-                    </Text>
-                  </Box>
-                  <Divider mt={10} />
-                  <Box
-                    mt={10}
-                    style={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                    }}
-                  >
-                    <Button
-                      onClick={() => setShowExportModal(false)}
-                      variant="light"
-                    >
+                </Text>
+              </Box>
+              <Divider mt={10} />
+              <Box
+                mt={10}
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <Button
+                  onClick={() => setShowExportModal(false)}
+                  variant="light"
+                >
                       Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      ml={5}
-                      loading={loading}
-                      disabled={form.values.columns.length === 0}
-                    >
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  ml={5}
+                  loading={loading}
+                  disabled={form.values.columns.length === 0}
+                >
                       Export
-                    </Button>
-                  </Box>
-                </form>
-              </>
-            )}
-          </Modal.Body>
-        </Modal.Content>
-      </Modal.Root>
-    </>
+                </Button>
+              </Box>
+            </form>
+          )}
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
   );
 };

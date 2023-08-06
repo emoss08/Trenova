@@ -17,9 +17,9 @@
 
 import React from "react";
 import { Modal } from "@mantine/core";
+import { useQuery, useQueryClient } from "react-query";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { EditCommodityModalForm } from "@/components/commodities/_partials/EditCommodityModalForm";
-import { useQuery, useQueryClient } from "react-query";
 import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
 import { HazardousMaterial } from "@/types/apps/commodities";
 
@@ -33,9 +33,7 @@ export const EditCommodityModal: React.FC = () => {
     queryKey: "hazmat-data",
     queryFn: () => getHazardousMaterials(),
     enabled: showEditModal,
-    initialData: () => {
-      return queryClient.getQueryData("hazmat-data");
-    },
+    initialData: () => queryClient.getQueryData("hazmat-data"),
     staleTime: Infinity,
   });
 

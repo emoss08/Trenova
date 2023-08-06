@@ -32,9 +32,7 @@ export const CreateDCModal: React.FC = () => {
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showCreateModal,
-    initialData: () => {
-      return queryClient.getQueryData("gl-account");
-    },
+    initialData: () => queryClient.getQueryData("gl-account"),
     staleTime: Infinity,
   });
 

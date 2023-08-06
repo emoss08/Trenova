@@ -15,18 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { usePageStyles } from "@/styles/PageStyles";
 import { useQuery, useQueryClient } from "react-query";
+import { Card, Divider, Skeleton, Text } from "@mantine/core";
+import React from "react";
 import {
   getEmailControl,
   getEmailProfiles,
 } from "@/requests/OrganizationRequestFactory";
-import { Card, Divider, Skeleton, Text } from "@mantine/core";
-import React from "react";
+import { usePageStyles } from "@/styles/PageStyles";
 import { EmailControlForm } from "@/components/control-files/_partials/EmailControlForm";
 import { EmailProfile } from "@/types/apps/organization";
 
-const EmailControlPage = () => {
+function EmailControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
@@ -34,9 +34,7 @@ const EmailControlPage = () => {
     useQuery({
       queryKey: ["emailProfiles"],
       queryFn: () => getEmailProfiles(),
-      initialData: () => {
-        return queryClient.getQueryData(["emailProfiles"]);
-      },
+      initialData: () => queryClient.getQueryData(["emailProfiles"]),
       staleTime: Infinity,
     });
 
@@ -50,9 +48,7 @@ const EmailControlPage = () => {
     useQuery({
       queryKey: ["emailControl"],
       queryFn: () => getEmailControl(),
-      initialData: () => {
-        return queryClient.getQueryData(["emailControl"]);
-      },
+      initialData: () => queryClient.getQueryData(["emailControl"]),
       staleTime: Infinity,
     });
 
@@ -64,7 +60,7 @@ const EmailControlPage = () => {
   return (
     <>
       {isLoading ? (
-        <Skeleton height={400}></Skeleton>
+        <Skeleton height={400} />
       ) : (
         <Card className={classes.card} withBorder>
           <Text fz="xl" fw={700} className={classes.text}>
@@ -82,6 +78,6 @@ const EmailControlPage = () => {
       )}
     </>
   );
-};
+}
 
 export default EmailControlPage;

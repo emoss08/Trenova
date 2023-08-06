@@ -39,57 +39,55 @@ export const ViewJobTitleModalForm: React.FC<Props> = ({ jobTitle }) => {
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={statusChoices}
-              className={classes.fields}
-              readOnly
-              value={jobTitle.status}
-              label="Status"
-              variant="filled"
-            />
-            <TextInput
-              value={jobTitle.name}
-              readOnly
-              className={classes.fields}
-              label="Name"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Textarea
-            value={jobTitle.description || ""}
-            className={classes.fields}
-            label="Description"
-            readOnly
-            variant="filled"
-          />
+    <Box className={classes.div}>
+      <Box>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <Select
-            data={jobFunctionChoices}
-            value={jobTitle.job_function}
-            readOnly
-            label="Account Type"
+            data={statusChoices}
             className={classes.fields}
+            readOnly
+            value={jobTitle.status}
+            label="Status"
             variant="filled"
           />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              onClick={() => {
-                jobTitleTableStore.set("selectedRecord", jobTitle);
-                jobTitleTableStore.set("viewModalOpen", false);
-                jobTitleTableStore.set("editModalOpen", true);
-              }}
-              className={classes.control}
-            >
+          <TextInput
+            value={jobTitle.name}
+            readOnly
+            className={classes.fields}
+            label="Name"
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Textarea
+          value={jobTitle.description || ""}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <Select
+          data={jobFunctionChoices}
+          value={jobTitle.job_function}
+          readOnly
+          label="Account Type"
+          className={classes.fields}
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              jobTitleTableStore.set("selectedRecord", jobTitle);
+              jobTitleTableStore.set("viewModalOpen", false);
+              jobTitleTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
               Edit Job Title
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 };

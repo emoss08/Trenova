@@ -37,9 +37,7 @@ export const EditJobTitleModal: React.FC = () => {
       return getJobTitleDetails(jobTitle.id);
     },
     enabled: showEditModal,
-    initialData: () => {
-      return queryClient.getQueryData(["jobTitle", jobTitle?.id]);
-    },
+    initialData: () => queryClient.getQueryData(["jobTitle", jobTitle?.id]),
   });
 
   if (!showEditModal) return null;

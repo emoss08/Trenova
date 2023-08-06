@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { RevenueCode } from "@/types/apps/accounting";
 import React from "react";
 import {
   Box,
@@ -26,6 +25,7 @@ import {
   Button,
   Group,
 } from "@mantine/core";
+import { RevenueCode } from "@/types/apps/accounting";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/styles/FormStyles";
@@ -42,57 +42,55 @@ export const ViewRCModalForm: React.FC<Props> = ({
   const { classes } = useFormStyles();
 
   return (
-    <>
-      <Box className={classes.div}>
-        <Box>
-          <TextInput
-            value={revenueCode.code}
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          value={revenueCode.code}
+          readOnly
+          className={classes.fields}
+          label="Code"
+          variant="filled"
+        />
+        <Textarea
+          value={revenueCode.description}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={selectGlAccountData}
+            value={revenueCode.expense_account || ""}
             readOnly
+            label="AP Account"
             className={classes.fields}
-            label="Code"
             variant="filled"
           />
-          <Textarea
-            value={revenueCode.description}
-            className={classes.fields}
-            label="Description"
+          <Select
+            data={selectGlAccountData}
+            value={revenueCode.revenue_account || ""}
             readOnly
+            label="Cash Account"
+            className={classes.fields}
             variant="filled"
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <Select
-              data={selectGlAccountData}
-              value={revenueCode.expense_account || ""}
-              readOnly
-              label="AP Account"
-              className={classes.fields}
-              variant="filled"
-            />
-            <Select
-              data={selectGlAccountData}
-              value={revenueCode.revenue_account || ""}
-              readOnly
-              label="Cash Account"
-              className={classes.fields}
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              onClick={() => {
-                revenueCodeTableStore.set("selectedRecord", revenueCode);
-                revenueCodeTableStore.set("viewModalOpen", false);
-                revenueCodeTableStore.set("editModalOpen", true);
-              }}
-              className={classes.control}
-            >
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              revenueCodeTableStore.set("selectedRecord", revenueCode);
+              revenueCodeTableStore.set("viewModalOpen", false);
+              revenueCodeTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
               Edit Revenue Code
-            </Button>
-          </Group>
-        </Box>
+          </Button>
+        </Group>
       </Box>
-    </>
+    </Box>
   );
 };

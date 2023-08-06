@@ -31,7 +31,7 @@ export function CustomerTable() {
       columns={CustomerTableColumns}
       TableEditModal={EditCommodityModal}
       TableViewModal={ViewCommodityModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateCommodityModal}
       tableQueryKey="customer-table-data"
       exportModelName="Customer"

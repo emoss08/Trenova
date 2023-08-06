@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export interface ApiResponse<T> extends Record<string, any> {
+export interface ApiResponse<T> extends Record<string, unknown> {
   count: number;
   next?: string;
   previous?: string;

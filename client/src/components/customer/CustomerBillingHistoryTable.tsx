@@ -18,12 +18,12 @@
 import React from "react";
 import { MantineReactTable } from "mantine-react-table";
 import { useQuery } from "react-query";
+import { useMantineTheme } from "@mantine/core";
 import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { API_URL } from "@/lib/utils";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
 import { CustomerBillingHistoryTableColumns } from "@/components/customer/CustomerBillingHistoryTableColumns";
-import { useMantineTheme } from "@mantine/core";
 
 type Props = {
   id: string;
@@ -60,51 +60,47 @@ export function CustomerBillingHistoryTable({ id }: Props) {
   );
 
   return (
-    <>
-      <MantineReactTable
-        columns={CustomerBillingHistoryTableColumns()}
-        data={data?.results ?? []}
-        manualPagination
-        onPaginationChange={(newPagination) => {
-          paymentRecordsTableStore.set("pagination", newPagination);
-        }}
-        mantinePaperProps={{
-          shadow: "none",
-          withBorder: false,
-        }}
-        mantinePaginationProps={{
-          rowsPerPageOptions: ["5", "10"],
-        }}
-        enableTopToolbar={false}
-        enableRowSelection={false}
-        rowCount={data?.count ?? 0}
-        getRowId={(row) => row.id}
-        icons={montaTableIcons}
-        state={{
-          isLoading,
-          pagination: pagination,
-          showAlertBanner: isError,
-          showSkeletons: isFetching,
-          rowSelection,
-        }}
-        initialState={{
-          showGlobalFilter: true,
-          density: "xs",
-        }}
-        positionGlobalFilter="left"
-        enableGlobalFilterModes={false}
-        mantineTableBodyCellProps={() => {
-          return {
-            sx: {
-              backgroundColor:
+    <MantineReactTable
+      columns={CustomerBillingHistoryTableColumns()}
+      data={data?.results ?? []}
+      manualPagination
+      onPaginationChange={(newPagination) => {
+        paymentRecordsTableStore.set("pagination", newPagination);
+      }}
+      mantinePaperProps={{
+        shadow: "none",
+        withBorder: false,
+      }}
+      mantinePaginationProps={{
+        rowsPerPageOptions: ["5", "10"],
+      }}
+      enableTopToolbar={false}
+      enableRowSelection={false}
+      rowCount={data?.count ?? 0}
+      getRowId={(row) => row.id}
+      icons={montaTableIcons}
+      state={{
+        isLoading,
+        pagination,
+        showAlertBanner: isError,
+        showSkeletons: isFetching,
+        rowSelection,
+      }}
+      initialState={{
+        showGlobalFilter: true,
+        density: "xs",
+      }}
+      positionGlobalFilter="left"
+      enableGlobalFilterModes={false}
+      mantineTableBodyCellProps={() => ({
+        sx: {
+          backgroundColor:
                 theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
-            },
-          };
-        }}
-        onGlobalFilterChange={(filter: string) => {
-          setGlobalFilter(filter);
-        }}
-      />
-    </>
+        },
+      })}
+      onGlobalFilterChange={(filter: string) => {
+        setGlobalFilter(filter);
+      }}
+    />
   );
 }

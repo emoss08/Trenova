@@ -61,11 +61,11 @@ export function formatTimestamp(timestamp: string) {
 
   if (diffInSeconds < 60) {
     return `${diffInSeconds} sec${diffInSeconds === 1 ? "" : "s"} ago`;
-  } else if (diffInMinutes < 60) {
+  } if (diffInMinutes < 60) {
     return `${diffInMinutes} min${diffInMinutes === 1 ? "" : "s"} ago`;
-  } else if (diffInHours < 24) {
+  } if (diffInHours < 24) {
     return `${diffInHours} hr${diffInHours === 1 ? "" : "s"} ago`;
-  } else {
-    return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
-  }
+  } 
+  return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
+  
 }

@@ -15,23 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
+import { Box, Button, Group, SimpleGrid } from "@mantine/core";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import {
   GeneralLedgerAccount,
   GLAccountFormValues,
 } from "@/types/apps/accounting";
-import React from "react";
-import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import { SelectInput } from "@/components/ui/fields/SelectInput";
 import { statusChoices } from "@/lib/utils";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { useMutation, useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
-import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { APIError } from "@/types/server";
-import { useForm, yupResolver } from "@mantine/form";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import {
   accountClassificationChoices,
@@ -117,122 +117,120 @@ export const EditGLAccountModalForm: React.FC<Props> = ({ glAccount }) => {
   };
 
   return (
-    <>
-      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-        <Box className={classes.div}>
-          <Box>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                form={form}
-                data={statusChoices}
-                className={classes.fields}
-                name="status"
-                label="Status"
-                placeholder="Status"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("status", form.values.status);
-                }}
-                withAsterisk
-              />
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="account_number"
-                label="Account Number"
-                placeholder="Account Number"
-                variant="filled"
-                withAsterisk
-              />
-            </SimpleGrid>
-            <ValidatedTextArea
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={statusChoices}
+              className={classes.fields}
+              name="status"
+              label="Status"
+              placeholder="Status"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue("status", form.values.status);
+              }}
+              withAsterisk
+            />
+            <ValidatedTextInput
               form={form}
               className={classes.fields}
-              name="description"
-              label="Description"
-              placeholder="Description"
+              name="account_number"
+              label="Account Number"
+              placeholder="Account Number"
               variant="filled"
               withAsterisk
             />
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                form={form}
-                data={accountTypeChoices}
-                className={classes.fields}
-                name="account_type"
-                label="Account Type"
-                placeholder="AP Account"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue("account_type", form.values.account_type);
-                }}
-                clearable
-                withAsterisk
-              />
-              <SelectInput
-                form={form}
-                data={cashFlowTypeChoices}
-                className={classes.fields}
-                name="cash_flow_type"
-                label="Cash Flow Type"
-                placeholder="Cash Flow Type"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "cash_flow_type",
-                    form.values.cash_flow_type
-                  );
-                }}
-                clearable
-              />
-            </SimpleGrid>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                form={form}
-                data={accountSubTypeChoices}
-                className={classes.fields}
-                name="account_sub_type"
-                label="Account Sub Type"
-                placeholder="Account Sub Type"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "account_sub_type",
-                    form.values.account_sub_type
-                  );
-                }}
-                clearable
-              />
-              <SelectInput
-                form={form}
-                data={accountClassificationChoices}
-                className={classes.fields}
-                name="account_classification"
-                label="Account Classification"
-                placeholder="Account Classification"
-                variant="filled"
-                onMouseLeave={() => {
-                  form.setFieldValue(
-                    "account_classification",
-                    form.values.account_classification
-                  );
-                }}
-                clearable
-              />
-            </SimpleGrid>
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
+          </SimpleGrid>
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+            withAsterisk
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={accountTypeChoices}
+              className={classes.fields}
+              name="account_type"
+              label="Account Type"
+              placeholder="AP Account"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue("account_type", form.values.account_type);
+              }}
+              clearable
+              withAsterisk
+            />
+            <SelectInput
+              form={form}
+              data={cashFlowTypeChoices}
+              className={classes.fields}
+              name="cash_flow_type"
+              label="Cash Flow Type"
+              placeholder="Cash Flow Type"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue(
+                  "cash_flow_type",
+                  form.values.cash_flow_type
+                );
+              }}
+              clearable
+            />
+          </SimpleGrid>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={accountSubTypeChoices}
+              className={classes.fields}
+              name="account_sub_type"
+              label="Account Sub Type"
+              placeholder="Account Sub Type"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue(
+                  "account_sub_type",
+                  form.values.account_sub_type
+                );
+              }}
+              clearable
+            />
+            <SelectInput
+              form={form}
+              data={accountClassificationChoices}
+              className={classes.fields}
+              name="account_classification"
+              label="Account Classification"
+              placeholder="Account Classification"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue(
+                  "account_classification",
+                  form.values.account_classification
+                );
+              }}
+              clearable
+            />
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
                 Submit
-              </Button>
-            </Group>
-          </Box>
+            </Button>
+          </Group>
         </Box>
-      </form>
-    </>
+      </Box>
+    </form>
   );
 };

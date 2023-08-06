@@ -17,10 +17,10 @@
 
 import React from "react";
 import { useQuery, useQueryClient } from "react-query";
-import { getUserOrganizationId } from "@/lib/utils";
-import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
 import { Image, rem, Skeleton, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
+import { getUserOrganizationId } from "@/lib/utils";
+import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
 import { useHeaderStyles } from "@/styles/HeaderStyles";
 
 export function OrganizationLogo() {
@@ -38,9 +38,7 @@ export function OrganizationLogo() {
         }
         return getOrganizationDetails(organizationId);
       },
-      initialData: () => {
-        return queryClient.getQueryData(["organization", organizationId]);
-      },
+      initialData: () => queryClient.getQueryData(["organization", organizationId]),
       staleTime: Infinity, // never refetch
     });
 

@@ -16,10 +16,10 @@
  */
 
 import { Suspense } from "react";
-import { commodityTableStore } from "@/stores/CommodityStore";
 import { Modal, Skeleton } from "@mantine/core";
-import { ViewCommodityModalForm } from "@/components/commodities/_partials/ViewCommodityModalForm";
 import { useQuery, useQueryClient } from "react-query";
+import { commodityTableStore } from "@/stores/CommodityStore";
+import { ViewCommodityModalForm } from "@/components/commodities/_partials/ViewCommodityModalForm";
 import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
 import { HazardousMaterial } from "@/types/apps/commodities";
 
@@ -33,9 +33,7 @@ export function ViewCommodityModal() {
     queryKey: "hazmat-data",
     queryFn: () => getHazardousMaterials(),
     enabled: showViewModal,
-    initialData: () => {
-      return queryClient.getQueryData("hazmat-data");
-    },
+    initialData: () => queryClient.getQueryData("hazmat-data"),
     staleTime: Infinity,
   });
 

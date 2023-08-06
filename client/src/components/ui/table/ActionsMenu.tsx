@@ -25,10 +25,10 @@ interface ActionMenuProps<T> {
   data: T | null;
 }
 
-export const MontaTableActionMenu = <T extends Record<string, any>>({
+export function MontaTableActionMenu<T extends Record<string, any>>({
   store,
   data,
-}: ActionMenuProps<T>) => {
+}: ActionMenuProps<T>) {
   return (
     <Menu
       width="10%"
@@ -79,4 +79,4 @@ export const MontaTableActionMenu = <T extends Record<string, any>>({
       </Menu.Dropdown>
     </Menu>
   );
-};
+}

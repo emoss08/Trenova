@@ -17,8 +17,6 @@
 
 import React from "react";
 
-const Index: React.FC = () => {
-  return <div>Home</div>;
-};
+const Index: React.FC = () => <div>Home</div>;
 
 export default Index;

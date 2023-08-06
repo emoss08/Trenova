@@ -25,11 +25,11 @@ import {
   Text,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
+import React from "react";
 import {
   getDepartmentDetails,
   getOrganizationDetails,
 } from "@/requests/OrganizationRequestFactory";
-import React from "react";
 import { userTableStore } from "@/stores/UserTableStore";
 
 const useStyles = createStyles((theme) => {
@@ -71,9 +71,7 @@ export const ViewUserModal: React.FC = () => {
         return getOrganizationDetails(user.organization);
       },
       enabled: showViewUserModalOpen && !!user?.organization,
-      initialData: () => {
-        return queryClient.getQueryData(["organization", user?.organization]);
-      },
+      initialData: () => queryClient.getQueryData(["organization", user?.organization]),
       staleTime: Infinity, // never refetch
     });
 
@@ -87,9 +85,7 @@ export const ViewUserModal: React.FC = () => {
         return getDepartmentDetails(user.department);
       },
       enabled: showViewUserModalOpen && !!user?.department,
-      initialData: () => {
-        return queryClient.getQueryData(["department", user?.department]);
-      },
+      initialData: () => queryClient.getQueryData(["department", user?.department]),
       staleTime: Infinity, // never refetch
     }
   );
@@ -100,71 +96,69 @@ export const ViewUserModal: React.FC = () => {
   if (!showViewUserModalOpen) return null;
 
   return (
-    <>
-      <Modal.Root
-        opened={showViewUserModalOpen}
-        onClose={() => setViewUserModalOpen(false)}
-        size="lg"
-        centered
-      >
-        <Modal.Overlay />
-        <Modal.Content>
-          <Modal.Header>
-            <Modal.Title>View User</Modal.Title>
-            <Modal.CloseButton />
-          </Modal.Header>
-          <Modal.Body>
-            {isUserDataLoading ? (
-              <Stack>
-                <Skeleton height={300} />
-              </Stack>
-            ) : (
-              <>
-                <SimpleGrid cols={3} spacing="sm" verticalSpacing="sm">
-                  <Box>
-                    <Text className={classes.text}>Organization</Text>
-                    <Text color="dimmed" fz="sm">
-                      {organizationData?.name}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text className={classes.text}>Username</Text>
-                    <Text color="dimmed" fz="sm">
-                      {user?.username}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text className={classes.text}>Email</Text>
-                    <Text color="dimmed" fz="sm">
-                      {user?.email}
-                    </Text>
-                  </Box>
-                </SimpleGrid>
-                <SimpleGrid cols={3} spacing="sm" verticalSpacing="sm" mt={15}>
-                  <Box>
-                    <Text className={classes.text}>Department</Text>
-                    <Text color="dimmed" fz="sm">
-                      {departmentData?.name}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text className={classes.text}>Username</Text>
-                    <Text color="dimmed" fz="sm">
-                      {user?.username}
-                    </Text>
-                  </Box>
-                  <Box>
-                    <Text className={classes.text}>Email</Text>
-                    <Text color="dimmed" fz="sm">
-                      {user?.email}
-                    </Text>
-                  </Box>
-                </SimpleGrid>
-              </>
-            )}
-          </Modal.Body>
-        </Modal.Content>
-      </Modal.Root>
-    </>
+    <Modal.Root
+      opened={showViewUserModalOpen}
+      onClose={() => setViewUserModalOpen(false)}
+      size="lg"
+      centered
+    >
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>View User</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          {isUserDataLoading ? (
+            <Stack>
+              <Skeleton height={300} />
+            </Stack>
+          ) : (
+            <>
+              <SimpleGrid cols={3} spacing="sm" verticalSpacing="sm">
+                <Box>
+                  <Text className={classes.text}>Organization</Text>
+                  <Text color="dimmed" fz="sm">
+                    {organizationData?.name}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text className={classes.text}>Username</Text>
+                  <Text color="dimmed" fz="sm">
+                    {user?.username}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text className={classes.text}>Email</Text>
+                  <Text color="dimmed" fz="sm">
+                    {user?.email}
+                  </Text>
+                </Box>
+              </SimpleGrid>
+              <SimpleGrid cols={3} spacing="sm" verticalSpacing="sm" mt={15}>
+                <Box>
+                  <Text className={classes.text}>Department</Text>
+                  <Text color="dimmed" fz="sm">
+                    {departmentData?.name}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text className={classes.text}>Username</Text>
+                  <Text color="dimmed" fz="sm">
+                    {user?.username}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text className={classes.text}>Email</Text>
+                  <Text color="dimmed" fz="sm">
+                    {user?.email}
+                  </Text>
+                </Box>
+              </SimpleGrid>
+            </>
+          )}
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
   );
 };

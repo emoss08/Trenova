@@ -16,9 +16,9 @@
  */
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { routes } from "@/routing/AppRoutes";
 import { Text, Flex, Skeleton } from "@mantine/core";
 import { pathToRegexp } from "path-to-regexp";
+import { routes } from "@/routing/AppRoutes";
 import { usePageStyles } from "@/styles/PageStyles";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
 import { upperFirst } from "@/lib/utils";

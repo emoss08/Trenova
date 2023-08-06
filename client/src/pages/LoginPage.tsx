@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import React from "react";
 import {
   Anchor,
   Checkbox,
@@ -40,16 +40,18 @@ import { ValidatedPasswordInput } from "@/components/ui/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { getUserCSRFToken } from "@/lib/utils";
 
-interface LoginFormValues {
+type LoginFormValues = {
   username: string;
   password: string;
-}
+};
 
-const LoginPage: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
-    state.isAuthenticated,
-    state.setIsAuthenticated,
-  ]);
+const LoginPage = () => {
+  const [isAuthenticated, setIsAuthenticated] = useAuthStore(
+    (state: { isAuthenticated: any; setIsAuthenticated: any }) => [
+      state.isAuthenticated,
+      state.setIsAuthenticated,
+    ],
+  );
   const [loading, setLoading] = React.useState<boolean>(false);
 
   const form = useForm<LoginFormValues>({
@@ -82,24 +84,24 @@ const LoginPage: React.FC = () => {
             "X-CSRFToken": csrfToken,
           },
           withCredentials: true,
-        }
+        },
       );
 
       if (response.status === 200) {
         sessionStorage.setItem("mt_user_id", response.data.user_id as string);
         sessionStorage.setItem(
           "mt_organization_id",
-          response.data.organization_id as string
+          response.data.organization_id as string,
         );
 
         const userInfo = await getUserDetails(response.data.user_id as string);
         sessionStorage.setItem(
           "mt_user_permissions",
-          JSON.stringify(userInfo.user_permissions)
+          JSON.stringify(userInfo.user_permissions),
         );
         sessionStorage.setItem(
           "mt_user_groups",
-          JSON.stringify(userInfo.groups)
+          JSON.stringify(userInfo.groups),
         );
         sessionStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
         setIsAuthenticated(true);
@@ -140,56 +142,54 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <>
-      <Container size={450} my={50}>
-        <Title align="center">Welcome back!</Title>
-        <Text color="dimmed" size="sm" align="center" mt={5}>
-          Do not have an account yet?{" "}
-          <Anchor size="sm" component="button">
-            Create account
-          </Anchor>
-        </Text>
+    <Container size={450} my={50}>
+      <Title align="center">Welcome back!</Title>
+      <Text color="dimmed" size="sm" align="center" mt={5}>
+        Do not have an account yet?{" "}
+        <Anchor size="sm" component="button">
+          Create account
+        </Anchor>
+      </Text>
 
-        <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-          <form
-            onSubmit={form.onSubmit((values: LoginFormValues) => {
-              login(values);
-            })}
-          >
-            <ValidatedTextInput
-              form={form}
-              name="username"
-              label="Username"
-              placeholder="Your Username"
-              withAsterisk
-              variant="filled"
-              icon={<FontAwesomeIcon icon={faUser} />}
-            />
-            <ValidatedPasswordInput
-              form={form}
-              name="password"
-              label="Password"
-              placeholder="Your password"
-              mt="md"
-              withAsterisk
-              variant="filled"
-              icon={<FontAwesomeIcon icon={faLockKeyhole} />}
-            />
-            <Group position="apart" mt="lg">
-              <Checkbox label="Remember me" />
-              <Link to="/reset-password/">
-                <Anchor component="button" size="sm">
-                  Forgot password?
-                </Anchor>
-              </Link>
-            </Group>
-            <Button type="submit" fullWidth mt="xl" loading={loading}>
-              Sign in
-            </Button>
-          </form>
-        </Paper>
-      </Container>
-    </>
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        <form
+          onSubmit={form.onSubmit((values: LoginFormValues) => {
+            login(values);
+          })}
+        >
+          <ValidatedTextInput
+            form={form}
+            name="username"
+            label="Username"
+            placeholder="Your Username"
+            withAsterisk
+            variant="filled"
+            icon={<FontAwesomeIcon icon={faUser} />}
+          />
+          <ValidatedPasswordInput
+            form={form}
+            name="password"
+            label="Password"
+            placeholder="Your password"
+            mt="md"
+            withAsterisk
+            variant="filled"
+            icon={<FontAwesomeIcon icon={faLockKeyhole} />}
+          />
+          <Group position="apart" mt="lg">
+            <Checkbox label="Remember me" />
+            <Link to="/reset-password/">
+              <Anchor component="button" size="sm">
+                Forgot password?
+              </Anchor>
+            </Link>
+          </Group>
+          <Button type="submit" fullWidth mt="xl" loading={loading}>
+            Sign in
+          </Button>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 export default LoginPage;

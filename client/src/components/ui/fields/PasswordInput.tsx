@@ -22,33 +22,31 @@ import { createStyles } from "@mantine/styles";
 import { PasswordInputProps } from "@mantine/core/lib/PasswordInput/PasswordInput";
 import { UseFormReturnType } from "@mantine/form";
 
-const useStyles = createStyles((theme) => {
-  return {
-    fields: {
-      marginTop: rem(10),
-    },
-    invalid: {
-      backgroundColor:
+const useStyles = createStyles((theme) => ({
+  fields: {
+    marginTop: rem(10),
+  },
+  invalid: {
+    backgroundColor:
         theme.colorScheme === "dark"
           ? theme.fn.rgba(theme.colors.red[8], 0.15)
           : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
+  },
+  invalidIcon: {
+    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
+  },
+}));
 
 interface ValidatedPasswordInputProps<TFormValues>
   extends Omit<PasswordInputProps, "form"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
-export const ValidatedPasswordInput = <TFormValues extends object>({
+export function ValidatedPasswordInput<TFormValues extends object>({
   form,
   name,
   ...rest
-}: ValidatedPasswordInputProps<TFormValues>) => {
+}: ValidatedPasswordInputProps<TFormValues>) {
   const { classes } = useStyles();
   const error = form.errors[name as string];
 
@@ -72,4 +70,4 @@ export const ValidatedPasswordInput = <TFormValues extends object>({
       }
     />
   );
-};
+}

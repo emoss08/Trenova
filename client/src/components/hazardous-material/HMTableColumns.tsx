@@ -23,48 +23,46 @@ import { TChoiceProps } from "@/types";
 import { HazardousMaterial } from "@/types/apps/commodities";
 import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
 
-export const HMTableColumns = (): MRT_ColumnDef<HazardousMaterial>[] => {
-  return [
-    {
-      id: "status",
-      accessorKey: "status",
-      header: "Status",
-      filterFn: "equals",
-      Cell: ({ cell }) => (
-        <Badge
-          color={cell.getValue() === "A" ? "green" : "red"}
-          variant="filled"
-          radius="xs"
-        >
-          {cell.getValue() === "A" ? "Active" : "Inactive"}
-        </Badge>
-      ),
-      mantineFilterSelectProps: {
-        data: [
-          { value: "", label: "All" },
-          { value: "A", label: "Active" },
-          { value: "I", label: "Inactive" },
-        ] as TChoiceProps[],
-      },
-      filterVariant: "select",
+export const HMTableColumns = (): MRT_ColumnDef<HazardousMaterial>[] => [
+  {
+    id: "status",
+    accessorKey: "status",
+    header: "Status",
+    filterFn: "equals",
+    Cell: ({ cell }) => (
+      <Badge
+        color={cell.getValue() === "A" ? "green" : "red"}
+        variant="filled"
+        radius="xs"
+      >
+        {cell.getValue() === "A" ? "Active" : "Inactive"}
+      </Badge>
+    ),
+    mantineFilterSelectProps: {
+      data: [
+        { value: "", label: "All" },
+        { value: "A", label: "Active" },
+        { value: "I", label: "Inactive" },
+      ] as TChoiceProps[],
     },
-    {
-      accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={hazardousMaterialTableStore}
-          data={row.original}
-        />
-      ),
-    },
-  ];
-};
+    filterVariant: "select",
+  },
+  {
+    accessorKey: "name",
+    header: "Name",
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    Cell: ({ row }) => (
+      <MontaTableActionMenu
+        store={hazardousMaterialTableStore}
+        data={row.original}
+      />
+    ),
+  },
+];

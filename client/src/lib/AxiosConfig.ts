@@ -30,9 +30,7 @@ axios.interceptors.request.use(
     console.info(`Making request to ${req.url}`);
     return req;
   },
-  (error: any) => {
-    return Promise.reject(error);
-  }
+  (error: any) => Promise.reject(error)
 );
 
 /**
@@ -41,9 +39,7 @@ axios.interceptors.request.use(
  * Other errors are simply forwarded.
  */
 axios.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response.status === 401) {
       sessionStorage.removeItem(USER_ID_KEY);

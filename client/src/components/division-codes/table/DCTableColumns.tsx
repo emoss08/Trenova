@@ -17,54 +17,52 @@
 
 import React from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { DivisionCode } from "@/types/apps/accounting";
 import { Badge } from "@mantine/core";
+import { DivisionCode } from "@/types/apps/accounting";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 import { TChoiceProps } from "@/types";
 
-export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => {
-  return [
-    {
-      id: "status",
-      accessorKey: "status",
-      header: "Status",
-      filterFn: "equals",
-      Cell: ({ cell }) => (
-        <Badge
-          color={cell.getValue() === "A" ? "green" : "red"}
-          variant="filled"
-          radius="xs"
-        >
-          {cell.getValue() === "A" ? "Active" : "Inactive"}
-        </Badge>
-      ),
-      mantineFilterSelectProps: {
-        data: [
-          { value: "", label: "All" },
-          { value: "A", label: "Active" },
-          { value: "I", label: "Inactive" },
-        ] as TChoiceProps[],
-      },
-      filterVariant: "select",
+export const DCTableColumns = (): MRT_ColumnDef<DivisionCode>[] => [
+  {
+    id: "status",
+    accessorKey: "status",
+    header: "Status",
+    filterFn: "equals",
+    Cell: ({ cell }) => (
+      <Badge
+        color={cell.getValue() === "A" ? "green" : "red"}
+        variant="filled"
+        radius="xs"
+      >
+        {cell.getValue() === "A" ? "Active" : "Inactive"}
+      </Badge>
+    ),
+    mantineFilterSelectProps: {
+      data: [
+        { value: "", label: "All" },
+        { value: "A", label: "Active" },
+        { value: "I", label: "Inactive" },
+      ] as TChoiceProps[],
     },
-    {
-      accessorKey: "code", //access nested data with dot notation
-      header: "Code",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={divisionCodeTableStore}
-          data={row.original}
-        />
-      ),
-    },
-  ];
-};
+    filterVariant: "select",
+  },
+  {
+    accessorKey: "code", // access nested data with dot notation
+    header: "Code",
+  },
+  {
+    accessorKey: "description",
+    header: "Description",
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    Cell: ({ row }) => (
+      <MontaTableActionMenu
+        store={divisionCodeTableStore}
+        data={row.original}
+      />
+    ),
+  },
+];

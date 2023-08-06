@@ -17,9 +17,9 @@
 
 import { Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
+import { useQuery, useQueryClient } from "react-query";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { EditDCModalForm } from "@/components/division-codes/table/_Partials/EditDCModalForm";
-import { useQuery, useQueryClient } from "react-query";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
 
@@ -33,9 +33,7 @@ export const EditDCModal: React.FC = () => {
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showEditModal,
-    initialData: () => {
-      return queryClient.getQueryData("gl-account");
-    },
+    initialData: () => queryClient.getQueryData("gl-account"),
     staleTime: Infinity,
   });
 

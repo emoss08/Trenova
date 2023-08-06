@@ -17,11 +17,11 @@
 
 import React from "react";
 import { createStyles, Divider, rem, Skeleton } from "@mantine/core";
+import { useQuery, useQueryClient } from "react-query";
+import Typed from "typed.js";
 import { WebSocketManager } from "@/utils/websockets";
 import { OrdersReadyTable } from "@/components/billing/_partials/OrdersReadyTable";
-import { useQuery, useQueryClient } from "react-query";
 import { getOrdersReadyToBill } from "@/requests/BillingRequestFactory";
-import Typed from "typed.js";
 
 interface Props {
   websocketManager: WebSocketManager;
@@ -97,9 +97,7 @@ const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
     useQuery({
       queryKey: ["readyOrdersData"],
       queryFn: () => getOrdersReadyToBill(),
-      initialData: () => {
-        return queryClient.getQueryData(["readyOrdersData"]);
-      },
+      initialData: () => queryClient.getQueryData(["readyOrdersData"]),
     });
 
   return (
@@ -107,7 +105,7 @@ const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
       <span ref={el} className={classes.text} />
       <Divider my={10} />
       {isReadyOrdersDataLoading ? (
-        <Skeleton height={500}></Skeleton>
+        <Skeleton height={500} />
       ) : (
         readyOrdersData && (
           <OrdersReadyTable

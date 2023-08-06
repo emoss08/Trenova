@@ -39,87 +39,85 @@ export const TableTopToolbar: React.FC<TopToolbarProps> = ({
   const [showColumnFilters, setShowColumnFilters] = store.use("columnFilters");
 
   return (
-    <>
-      <Flex
-        sx={() => ({
-          borderRadius: "4px",
-          flexDirection: "row",
-          justifyContent: "space-between",
-          padding: "24px 16px",
-          "@media max-width: 768px": {
-            flexDirection: "column",
-          },
-        })}
+    <Flex
+      sx={() => ({
+        borderRadius: "4px",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        padding: "24px 16px",
+        "@media max-width: 768px": {
+          flexDirection: "column",
+        },
+      })}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          gap: "16px",
+          flexWrap: "wrap",
+          flex: 1,
+          justifyContent: "flex-start",
+        }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            gap: "16px",
-            flexWrap: "wrap",
-            flex: 1,
-            justifyContent: "flex-start",
-          }}
+        <MRT_GlobalFilterTextInput table={table} />
+      </Box>
+      <Flex
+        gap="xs"
+        align="center"
+        sx={{
+          flex: 1,
+          justifyContent: "flex-end",
+        }}
+      >
+        <Popover
+          width={300}
+          trapFocus
+          position="bottom"
+          withArrow
+          shadow="md"
         >
-          <MRT_GlobalFilterTextInput table={table} />
-        </Box>
-        <Flex
-          gap="xs"
-          align="center"
-          sx={{
-            flex: 1,
-            justifyContent: "flex-end",
-          }}
-        >
-          <Popover
-            width={300}
-            trapFocus
-            position="bottom"
-            withArrow
-            shadow="md"
-          >
-            <Popover.Target>
-              <Button
-                color="blue"
-                leftIcon={<FontAwesomeIcon icon={faFilters} />}
-              >
+          <Popover.Target>
+            <Button
+              color="blue"
+              leftIcon={<FontAwesomeIcon icon={faFilters} />}
+            >
                 Filter
-              </Button>
-            </Popover.Target>
-            <Popover.Dropdown
-              sx={(theme) => ({
-                background:
+            </Button>
+          </Popover.Target>
+          <Popover.Dropdown
+            sx={(theme) => ({
+              background:
                   theme.colorScheme === "dark"
                     ? theme.colors.dark[7]
                     : theme.white,
-              })}
-            >
-              <Checkbox
-                label="Show/Hide Column Filters"
-                onChange={(event) => {
-                  setShowColumnFilters(event.target.checked);
-                  table.setShowColumnFilters(event.target.checked);
-                }}
-                checked={showColumnFilters}
-                size="sm"
-              />
-            </Popover.Dropdown>
-          </Popover>
-          <Button
-            color="blue"
-            leftIcon={<FontAwesomeIcon icon={faFileExport} />}
-            onClick={() => store.set("exportModalOpen", true)}
+            })}
           >
+            <Checkbox
+              label="Show/Hide Column Filters"
+              onChange={(event) => {
+                setShowColumnFilters(event.target.checked);
+                table.setShowColumnFilters(event.target.checked);
+              }}
+              checked={showColumnFilters}
+              size="sm"
+            />
+          </Popover.Dropdown>
+        </Popover>
+        <Button
+          color="blue"
+          leftIcon={<FontAwesomeIcon icon={faFileExport} />}
+          onClick={() => store.set("exportModalOpen", true)}
+        >
             Export
-          </Button>
-          <Button
-            color="blue"
-            onClick={() => store.set("createModalOpen", true)}
-            leftIcon={<FontAwesomeIcon icon={faPlus} />}
-          >
+        </Button>
+        <Button
+          color="blue"
+          onClick={() => store.set("createModalOpen", true)}
+          leftIcon={<FontAwesomeIcon icon={faPlus} />}
+        >
             Add {name}
-          </Button>
-        </Flex>
+        </Button>
       </Flex>
-    </>
+    </Flex>
   );
 };

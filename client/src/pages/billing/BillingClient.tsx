@@ -17,6 +17,9 @@
 
 import React, { Suspense, useEffect } from "react";
 import { Card, Flex, Skeleton } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faX } from "@fortawesome/pro-duotone-svg-icons";
 import { usePageStyles } from "@/styles/PageStyles";
 import { WebSocketManager, WebsocketMessageProps } from "@/utils/websockets";
 import {
@@ -26,9 +29,6 @@ import {
   WEBSOCKET_RETRY_INTERVAL,
 } from "@/lib/utils";
 import { useAuthStore } from "@/stores/AuthStore";
-import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faX } from "@fortawesome/pro-duotone-svg-icons";
 import { billingClientStore } from "@/stores/BillingStores";
 import { BillingExceptionModal } from "@/components/billing/_partials/BillingExceptionModal";
 import { TransferConfirmModal } from "@/components/billing/_partials/TransferConfirmModal";
@@ -198,33 +198,33 @@ const BillingClient: React.FC = () => {
 
   const renderStep = () => {
     switch (step) {
-      case 0:
-        return (
-          <Suspense fallback={<Skeleton height={700} />}>
-            <GettingStartedPage websocketManager={webSocketManager} />
-          </Suspense>
-        );
-      case 1:
-        return (
-          <Suspense fallback={<Skeleton height={700} />}>
-            <OrdersReadyPage websocketManager={webSocketManager} />
-          </Suspense>
-        );
-      case 2:
-        return (
-          <Suspense fallback={<Skeleton height={700} />}>
-            <BillingQueuePage websocketManager={webSocketManager} />
-          </Suspense>
-        );
-      case 3:
-        return (
-          <Suspense fallback={<Skeleton height={700} />}>
-            <GoodJobPage websocketManager={webSocketManager} />
-          </Suspense>
-        );
+    case 0:
+      return (
+        <Suspense fallback={<Skeleton height={700} />}>
+          <GettingStartedPage websocketManager={webSocketManager} />
+        </Suspense>
+      );
+    case 1:
+      return (
+        <Suspense fallback={<Skeleton height={700} />}>
+          <OrdersReadyPage websocketManager={webSocketManager} />
+        </Suspense>
+      );
+    case 2:
+      return (
+        <Suspense fallback={<Skeleton height={700} />}>
+          <BillingQueuePage websocketManager={webSocketManager} />
+        </Suspense>
+      );
+    case 3:
+      return (
+        <Suspense fallback={<Skeleton height={700} />}>
+          <GoodJobPage websocketManager={webSocketManager} />
+        </Suspense>
+      );
       // Add more cases here for more steps...
-      default:
-        return null;
+    default:
+      return null;
     }
   };
   return (

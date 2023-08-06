@@ -16,16 +16,16 @@
  */
 
 import { Box, Button, Group, SimpleGrid } from "@mantine/core";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
 import React from "react";
 import { useMutation, useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
+import axios from "@/lib/AxiosConfig";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { TChoiceProps } from "@/types";
 import { RevenueCodeFormValues } from "@/types/apps/accounting";
@@ -42,7 +42,7 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: RevenueCodeFormValues) => axios.post(`/revenue_codes/`, values),
+    (values: RevenueCodeFormValues) => axios.post("/revenue_codes/", values),
     {
       onSuccess: () => {
         queryClient
@@ -101,63 +101,61 @@ export const CreateRCModalForm: React.FC<Props> = ({ selectGlAccountData }) => {
   };
 
   return (
-    <>
-      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-        <Box className={classes.div}>
-          <Box>
-            <ValidatedTextInput
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="code"
+            label="Code"
+            placeholder="Code"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+            withAsterisk
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
               form={form}
+              data={selectGlAccountData}
               className={classes.fields}
-              name="code"
-              label="Code"
-              placeholder="Code"
+              name="expense_account"
+              label="Expense Account"
+              placeholder="Expense Account"
               variant="filled"
-              withAsterisk
+              clearable
             />
-            <ValidatedTextArea
+            <SelectInput
               form={form}
+              data={selectGlAccountData}
               className={classes.fields}
-              name="description"
-              label="Description"
-              placeholder="Description"
+              name="revenue_account"
+              label="Revenue Account"
+              placeholder="Revenue Account"
               variant="filled"
-              withAsterisk
+              clearable
             />
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <SelectInput
-                form={form}
-                data={selectGlAccountData}
-                className={classes.fields}
-                name="expense_account"
-                label="Expense Account"
-                placeholder="Expense Account"
-                variant="filled"
-                clearable
-              />
-              <SelectInput
-                form={form}
-                data={selectGlAccountData}
-                className={classes.fields}
-                name="revenue_account"
-                label="Revenue Account"
-                placeholder="Revenue Account"
-                variant="filled"
-                clearable
-              />
-            </SimpleGrid>
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
                 Submit
-              </Button>
-            </Group>
-          </Box>
+            </Button>
+          </Group>
         </Box>
-      </form>
-    </>
+      </Box>
+    </form>
   );
 };

@@ -27,11 +27,11 @@ import {
 } from "@mantine/core";
 import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
-import axios from "@/lib/AxiosConfig";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useQueryClient } from "react-query";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "../ui/fields/TextInput";
 import { User } from "@/types/apps/accounts";
 
@@ -125,31 +125,29 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
     <>
       <div className={classes.div}>
         {!isEditing ? (
-          <>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <Text size="sm" className={classes.text} weight={700}>
+                  Email Address
+              </Text>
+              <Text color="dimmed">{user.email}</Text>
+            </div>
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                flexWrap: "wrap",
+                marginLeft: "auto",
               }}
             >
-              <div>
-                <Text size="sm" className={classes.text} weight={700}>
-                  Email Address
-                </Text>
-                <Text color="dimmed">{user.email}</Text>
-              </div>
-              <div
-                style={{
-                  marginLeft: "auto",
-                }}
-              >
-                <Button color="gray" variant="light" onClick={startEditing}>
+              <Button color="gray" variant="light" onClick={startEditing}>
                   Change Email
-                </Button>
-              </div>
+              </Button>
             </div>
-          </>
+          </div>
         ) : (
           <Grid>
             <Col w="auto">
@@ -159,14 +157,14 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
                     label="Enter New Email Address"
                     type="email"
                     variant="filled"
-                    name={"email"}
+                    name="email"
                     form={form}
                   />
                   <ValidatedTextInput
                     label="Enter Password"
                     type="password"
                     variant="filled"
-                    name={"current_password"}
+                    name="current_password"
                     form={form}
                   />
                 </SimpleGrid>

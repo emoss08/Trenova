@@ -15,12 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TChoiceProps } from "@/types";
 import {
   faBuildingColumns,
   faGrid2,
   faHandHoldingDollar,
 } from "@fortawesome/pro-duotone-svg-icons";
+import { TChoiceProps } from "@/types";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
 /** Type for fuel method choices */

@@ -37,9 +37,7 @@ export const ViewJobTitleModal: React.FC = () => {
       return getJobTitleDetails(jobTitle.id);
     },
     enabled: showViewModal,
-    initialData: () => {
-      return queryClient.getQueryData(["jobTitle", jobTitle?.id]);
-    },
+    initialData: () => queryClient.getQueryData(["jobTitle", jobTitle?.id]),
   });
 
   if (!showViewModal) return null;

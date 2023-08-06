@@ -21,8 +21,8 @@ import {
   MRT_ColumnDef,
   useMantineReactTable,
 } from "mantine-react-table";
-import { OrdersReadyProps } from "@/types/apps/billing";
 import { Badge, Button } from "@mantine/core";
+import { OrdersReadyProps } from "@/types/apps/billing";
 import { TChoiceProps } from "@/types";
 import { WebSocketManager } from "@/utils/websockets";
 import { billingClientStore } from "@/stores/BillingStores";
@@ -32,7 +32,7 @@ interface Props {
   websocketManager: WebSocketManager;
 }
 
-export const OrdersReadyTable = ({ data, websocketManager }: Props) => {
+export function OrdersReadyTable({ data, websocketManager }: Props) {
   const [, setStep] = billingClientStore.use("step");
   const [approveTransfer, setApproveTransfer] =
     billingClientStore.use("approveTransfer");
@@ -129,14 +129,14 @@ export const OrdersReadyTable = ({ data, websocketManager }: Props) => {
             borderRight: "1px solid rgba(224,224,224,1)",
           },
         };
-      } else {
-        return {
-          sx: {
-            backgroundColor: "rgba(98,235,52,0.25)",
-            borderRight: "1px solid rgba(224,224,224,1)",
-          },
-        };
-      }
+      } 
+      return {
+        sx: {
+          backgroundColor: "rgba(98,235,52,0.25)",
+          borderRight: "1px solid rgba(224,224,224,1)",
+        },
+      };
+      
     },
     initialState: {
       showColumnFilters: false,
@@ -211,4 +211,4 @@ export const OrdersReadyTable = ({ data, websocketManager }: Props) => {
   });
 
   return <MantineReactTable table={table} />;
-};
+}

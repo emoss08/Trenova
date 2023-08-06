@@ -16,11 +16,11 @@
  */
 
 import React, { Suspense } from "react";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { useQuery, useQueryClient } from "react-query";
+import { Modal, Skeleton } from "@mantine/core";
+import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { Modal, Skeleton } from "@mantine/core";
 import { ViewRCModalForm } from "./_Partials/ViewRCModalForm";
 
 export const ViewRCModal: React.FC = () => {
@@ -33,9 +33,7 @@ export const ViewRCModal: React.FC = () => {
     queryKey: "gl-account-data",
     queryFn: () => getGLAccounts(),
     enabled: showViewModal,
-    initialData: () => {
-      return queryClient.getQueryData("gl-account");
-    },
+    initialData: () => queryClient.getQueryData("gl-account"),
     staleTime: Infinity,
   });
 

@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { usePageStyles } from "@/styles/PageStyles";
 import { Card, Flex } from "@mantine/core";
 import React from "react";
+import { usePageStyles } from "@/styles/PageStyles";
 import { CommodityTable } from "@/components/commodities/CommodityTable";
 
 export default function Commodity() {

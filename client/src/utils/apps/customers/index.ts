@@ -17,19 +17,19 @@
 
 export function mapStatuses(status: string) {
   switch (status) {
-    case "N":
-      return "New";
-    case "P":
-      return "In Progress";
-    case "C":
-      return "Completed";
-    case "H":
-      return "Hold";
-    case "B":
-      return "Billed";
-    case "V":
-      return "Voided";
-    default:
-      return "Unknown";
+  case "N":
+    return "New";
+  case "P":
+    return "In Progress";
+  case "C":
+    return "Completed";
+  case "H":
+    return "Hold";
+  case "B":
+    return "Billed";
+  case "V":
+    return "Voided";
+  default:
+    return "Unknown";
   }
 }

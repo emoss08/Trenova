@@ -26,7 +26,7 @@ type Props = {
   notificationLoading: boolean;
 };
 
-export const Notifications = ({ notification, notificationLoading }: Props) => {
+export function Notifications({ notification, notificationLoading }: Props) {
   if (notificationLoading) {
     return <Skeleton width={300} height={250} />;
   }
@@ -54,23 +54,21 @@ export const Notifications = ({ notification, notificationLoading }: Props) => {
     (notification: Notification) => {
       const humanReadableTimestamp = formatTimestamp(notification.timestamp);
       return (
-        <>
-          <Group mt={5} mb={10} mr={10} key={notification.id}>
-            <FontAwesomeIcon icon={faEnvelope} />
-            <div style={{ flex: 1 }}>
-              <Text fw={700} size="xs">
-                {notification.verb}
-              </Text>
-              <Text size="xs">{notification.description}</Text>
-            </div>
-            <Badge size="xs" radius="xs" variant="filled" color="violet">
-              {humanReadableTimestamp}
-            </Badge>
-          </Group>
-        </>
+        <Group mt={5} mb={10} mr={10} key={notification.id}>
+          <FontAwesomeIcon icon={faEnvelope} />
+          <div style={{ flex: 1 }}>
+            <Text fw={700} size="xs">
+              {notification.verb}
+            </Text>
+            <Text size="xs">{notification.description}</Text>
+          </div>
+          <Badge size="xs" radius="xs" variant="filled" color="violet">
+            {humanReadableTimestamp}
+          </Badge>
+        </Group>
       );
     }
   );
 
   return <>{notificationItems}</>;
-};
+}

@@ -76,39 +76,37 @@ const ResetPasswordPage: React.FC = () => {
   };
 
   return (
-    <>
-      <Container size={450} my={50}>
-        <Title align="center">Reset Password ?</Title>
-        <Text color="dimmed" size="sm" align="center" mt={5}>
+    <Container size={450} my={50}>
+      <Title align="center">Reset Password ?</Title>
+      <Text color="dimmed" size="sm" align="center" mt={5}>
           Enter your email to reset your password.
-        </Text>
+      </Text>
 
-        <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-          <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-            <ValidatedTextInput
-              label="Email"
-              placeholder="Your email"
-              withAsterisk
-              form={form}
-              name="email"
-            />
-            <div style={{ textAlign: "center" }}>
-              <Button type="submit" loading={loading} my={10} mx={10}>
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+          <ValidatedTextInput
+            label="Email"
+            placeholder="Your email"
+            withAsterisk
+            form={form}
+            name="email"
+          />
+          <div style={{ textAlign: "center" }}>
+            <Button type="submit" loading={loading} my={10} mx={10}>
                 Submit
-              </Button>
-              <Button
-                type="button"
-                color="gray"
-                variant="light"
-                onClick={() => navigate("/login")}
-              >
+            </Button>
+            <Button
+              type="button"
+              color="gray"
+              variant="light"
+              onClick={() => navigate("/login")}
+            >
                 Cancel
-              </Button>
-            </div>
-          </form>
-        </Paper>
-      </Container>
-    </>
+            </Button>
+          </div>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 export default ResetPasswordPage;

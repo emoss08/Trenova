@@ -22,27 +22,25 @@ import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { truncateText } from "@/lib/utils";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
-export const RCTableColumns = (): MRT_ColumnDef<RevenueCode>[] => {
-  return [
-    {
-      accessorKey: "code", //access nested data with dot notation
-      header: "Code",
-    },
-    {
-      id: "description",
-      accessorKey: "description",
-      header: "Description",
-      Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      Cell: ({ row }) => (
-        <MontaTableActionMenu
-          store={revenueCodeTableStore}
-          data={row.original}
-        />
-      ),
-    },
-  ];
-};
+export const RCTableColumns = (): MRT_ColumnDef<RevenueCode>[] => [
+  {
+    accessorKey: "code", // access nested data with dot notation
+    header: "Code",
+  },
+  {
+    id: "description",
+    accessorKey: "description",
+    header: "Description",
+    Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    Cell: ({ row }) => (
+      <MontaTableActionMenu
+        store={revenueCodeTableStore}
+        data={row.original}
+      />
+    ),
+  },
+];

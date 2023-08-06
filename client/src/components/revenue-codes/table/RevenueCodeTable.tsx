@@ -23,7 +23,7 @@ import { ViewRCModal } from "@/components/revenue-codes/table/ViewRCModal";
 import { EditRCModal } from "@/components/revenue-codes/table/EditRCModal";
 import { CreateRCModal } from "./CreateRCModal";
 
-export const RevenueCodeTable = () => {
+export function RevenueCodeTable() {
   return (
     <MontaTable
       store={revenueCodeTableStore}
@@ -32,10 +32,10 @@ export const RevenueCodeTable = () => {
       name="Revenue Code"
       TableEditModal={EditRCModal}
       TableViewModal={ViewRCModal}
-      displayDeleteModal={true}
+      displayDeleteModal
       TableCreateDrawer={CreateRCModal}
       exportModelName="RevenueCode"
       tableQueryKey="revenue-code-table-data"
     />
   );
-};
+}
