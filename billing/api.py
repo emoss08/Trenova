@@ -23,7 +23,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from billing import models, selectors, serializers, services, tasks
+from billing import models, selectors, serializers, services, tasks, validation
 from core.permissions import CustomObjectPermissions
 
 
@@ -388,6 +388,12 @@ def bill_invoice_view(request: Request) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    if validation.invoice_billed(invoice_id=invoice_id):
+        return Response(
+            {"message": "Invoice already billed."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     tasks.bill_invoice_task.delay(user_id=str(request.user.id), invoice_id=invoice_id)
     return Response({"message": "Billing task started."}, status=status.HTTP_200_OK)
 
@@ -592,7 +598,9 @@ def untransfer_orders(request: Request) -> Response:
         billing_queues = models.BillingQueue.objects.filter(
             invoice_number__in=invoice_numbers_list
         )
-        services.untransfer_order_service(billing_queues)
+        services.untransfer_order_service(
+            invoices=billing_queues, task_id=request.user.id, user_id=request.user.id
+        )
         return Response(
             {"success": "Orders untransferred successfully."}, status=status.HTTP_200_OK
         )
