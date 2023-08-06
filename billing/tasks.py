@@ -145,8 +145,10 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
     """
 
     try:
-        if order := selectors.get_invoice_by_id(invoice_id=invoice_id):
-            services.bill_orders(invoices=order, user_id=user_id)
+        if invoice := selectors.get_invoice_by_id(invoice_id=invoice_id):
+            services.bill_orders(
+                invoices=invoice, user_id=user_id, task_id=self.request.id
+            )
         else:
             return None
     except ServiceException as exc:
