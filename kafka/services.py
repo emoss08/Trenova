@@ -19,28 +19,25 @@ from __future__ import annotations
 import concurrent
 import json
 import logging
-import os
 import signal
 import time
 import types
-from concurrent.futures import Future, ThreadPoolExecutor, wait
-from pathlib import Path
+import concurrent.futures
 from typing import Any
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
 from django.core.mail import send_mail
 from django.db.models import QuerySet
-from environ import environ
+from django.conf import settings
 
 from organization import models, selectors
 
-# Load environment variables
-env = environ.Env()
-ENV_DIR = Path(__file__).parent.parent
-environ.Env.read_env(os.path.join(ENV_DIR, ".env"))
-
 # Logging Configuration
 logger = logging.getLogger("kafka")
+
+
+POLL_TIMEOUT = 1.0
+NO_ALERTS_MSG = "No active table change alerts."
 
 
 class KafkaListener:
@@ -58,16 +55,7 @@ class KafkaListener:
         MAX_CONCURRENT_JOBS (int): The maximum number of jobs that this listener instance can process concurrently.
     """
 
-    KAFKA_HOST = env("KAFKA_HOST")
-    KAFKA_PORT = env("KAFKA_PORT")
-    KAFKA_GROUP_ID = env("KAFKA_GROUP_ID")
-    ALERT_UPDATE_TOPIC = "localhost.public.table_change_alert"
-    POLL_TIMEOUT = 1.0
-    NO_ALERTS_MSG = "No active table change alerts."
     running = True
-    MAX_CONCURRENT_JOBS = 100
-    THREAD_POOL_SIZE = env("THREAD_POOL_SIZE", default=10)
-
     # TODO(Wolfred): Replace all prints with SSE or websockets. Still haven't decided.
 
     def __repr__(self) -> str:
@@ -77,7 +65,7 @@ class KafkaListener:
             str: The string representation includes the host, port, and group id of the Kafka consumer.
         """
 
-        return f"KafkaListener({self.KAFKA_HOST}, {self.KAFKA_PORT}, {self.KAFKA_GROUP_ID})"
+        return f"KafkaListener({settings.KAFKA_HOST}, {settings.KAFKA_PORT}, {settings.KAFKA_GROUP_ID})"
 
     def __init__(self, thread_pool_size=10) -> None:
         self.thread_pool_size = thread_pool_size
@@ -108,12 +96,12 @@ class KafkaListener:
         """
 
         config = {
-            "bootstrap.servers": env("KAFKA_BOOTSTRAP_SERVERS"),
-            "group.id": env("KAFKA_GROUP_ID"),
-            "auto.offset.reset": "latest",
-            "enable.auto.commit": "False",
-            "fetch.min.bytes": 50000,
-            "auto.commit.interval.ms": 5000,
+            "bootstrap.servers": settings.KAFKA_BOOTSTRAP_SERVERS,
+            "group.id": settings.KAFKA_GROUP_ID,
+            "auto.offset.reset": settings.KAFKA_AUTO_OFFSET_RESET,
+            "enable.auto.commit": settings.KAFKA_AUTO_COMMIT,
+            "fetch.min.bytes": settings.KAFKA_AUTO_COMMIT_INTERVAL_MS,
+            "auto.commit.interval.ms": settings.KAFKA_AUTO_COMMIT_INTERVAL_MS,
         }
 
         while cls.running:
@@ -260,7 +248,7 @@ class KafkaListener:
 
     @classmethod
     def _process_message(
-        cls, *, data_message: Message, associated_table_change: models.TableChangeAlert
+        cls, data_message: Message, associated_table_change: models.TableChangeAlert
     ) -> None:
         """Processes an individual message from a Kafka topic. If the operation type matches the alert criteria,
         it sends an email to the designated recipients.
@@ -370,11 +358,13 @@ class KafkaListener:
         """
         table_changes = cls._get_topic_list()
         if not table_changes:
-            logger.info(cls.NO_ALERTS_MSG)
+            logger.info(NO_ALERTS_MSG)
             return
 
-        alert_update_consumer.subscribe([cls.ALERT_UPDATE_TOPIC])
-        logger.info(f"Subscribed to alert update topic: {cls.ALERT_UPDATE_TOPIC}")
+        alert_update_consumer.subscribe([settings.KAFKA_ALERT_UPDATE_TOPIC])
+        logger.info(
+            f"Subscribed to alert update topic: {settings.KAFKA_ALERT_UPDATE_TOPIC}"
+        )
         data_consumer.subscribe(
             [table_change.get_topic_display() for table_change in table_changes]
         )
@@ -396,10 +386,13 @@ class KafkaListener:
             None: This function does not return anything.
         """
         futures = set()
-        with ThreadPoolExecutor(max_workers=cls.THREAD_POOL_SIZE) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=settings.KAFKA_THREAD_POOL_SIZE,
+            thread_name_prefix="kafka_listener",
+        ) as executor:
             try:
                 while cls.running:
-                    if len(futures) < cls.MAX_CONCURRENT_JOBS:
+                    if len(futures) < settings.KAFKA_MAX_CONCURRENT_JOBS:
                         cls._handle_messages(
                             data_consumer=data_consumer,
                             alert_update_consumer=alert_update_consumer,
@@ -422,8 +415,8 @@ class KafkaListener:
         *,
         data_consumer: Consumer,
         alert_update_consumer: Consumer,
-        futures: set[Future],
-        executor: ThreadPoolExecutor,
+        futures: set[concurrent.futures.Future],
+        executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
         """Handle alert and data messages from Kafka.
 
@@ -457,7 +450,7 @@ class KafkaListener:
             None: This function does not return anything.
         """
         alert_message = cls._get_message(
-            consumer=alert_update_consumer, timeout=cls.POLL_TIMEOUT
+            consumer=alert_update_consumer, timeout=POLL_TIMEOUT
         )
 
         if alert_message is not None:
@@ -471,8 +464,8 @@ class KafkaListener:
         cls,
         *,
         data_consumer: Consumer,
-        futures: set[Future],
-        executor: ThreadPoolExecutor,
+        futures: set[concurrent.futures.Future],
+        executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
         """Handle data messages from Kafka and submit tasks for processing.
 
@@ -484,9 +477,7 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        data_messages = cls._get_messages(
-            consumer=data_consumer, timeout=cls.POLL_TIMEOUT
-        )
+        data_messages = cls._get_messages(consumer=data_consumer, timeout=POLL_TIMEOUT)
 
         for data_message in data_messages:
             cls._process_data_message(
@@ -498,8 +489,8 @@ class KafkaListener:
         cls,
         *,
         data_message: Message,
-        futures: set[Future],
-        executor: ThreadPoolExecutor,
+        futures: set[concurrent.futures.Future],
+        executor: concurrent.futures.ThreadPoolExecutor,
     ) -> None:
         """Process a single data message.
 
@@ -531,13 +522,15 @@ class KafkaListener:
                 logger.info(f"Table Change Alert found. {associated_table_change.name}")
                 future = executor.submit(
                     cls._process_message,
-                    data_message=data_message,
-                    associated_table_change=associated_table_change,
+                    data_message,
+                    associated_table_change,
                 )
                 futures.add(future)
 
     @classmethod
-    def _wait_for_futures_to_complete(cls, *, futures: set[Future]) -> None:
+    def _wait_for_futures_to_complete(
+        cls, *, futures: set[concurrent.futures.Future]
+    ) -> None:
         """Wait for tasks to complete, and if they raise any exceptions, log the error.
 
         Args:
@@ -546,8 +539,8 @@ class KafkaListener:
         Returns:
             None: This function does not return anything.
         """
-        if len(futures) >= cls.MAX_CONCURRENT_JOBS:
-            done, futures = wait(
+        if len(futures) >= settings.KAFKA_MAX_CONCURRENT_JOBS:
+            done, futures = concurrent.futures.wait(
                 futures, return_when=concurrent.futures.FIRST_COMPLETED
             )
 
