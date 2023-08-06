@@ -31,6 +31,7 @@ from django.utils import timezone
 from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from billing.exceptions import InvalidSessionKeyError
+from billing.models import BillingQueue
 from order.models import Order
 from utils.helpers import get_pk_value
 from utils.services.pdf import UUIDEncoder
@@ -107,8 +108,7 @@ def generate_invoice_number(
 def transfer_to_billing_queue_service(
     *, user_id: "ModelUUID", order_pros: list[str], task_id: str
 ) -> str:
-    """
-    Atomically transfers eligible orders to the billing queue, logs the transfer,
+    """Atomically transfers eligible orders to the billing queue, logs the transfer,
     and returns a success message. If any part of the operation fails, all changes are rolled back.
 
     Args:
@@ -147,9 +147,6 @@ def transfer_to_billing_queue_service(
     # Get the current time
     now = timezone.now()
 
-    # Create a list of BillingTransferLog objects
-    transfer_log = []
-
     # Create a list of BillingLogEntry objects
     log_entries = []
 
@@ -183,18 +180,6 @@ def transfer_to_billing_queue_service(
                 )
             )
 
-            # Create a BillingTransferLog object
-            transfer_log.append(
-                models.BillingTransferLog(
-                    order=order,
-                    organization=order.organization,
-                    business_unit=order.business_unit,
-                    task_id=task_id,
-                    transferred_at=now,
-                    transferred_by=user,
-                )
-            )
-
         except* ValidationError as val_error:
             utils.create_billing_exception(
                 user=user,
@@ -218,9 +203,6 @@ def transfer_to_billing_queue_service(
     # Bulk create log entry
     models.BillingLogEntry.objects.bulk_create(log_entries)
 
-    # Bulk create the transfer log
-    models.BillingTransferLog.objects.bulk_create(transfer_log)
-
     # Return a success message
     return f"Successfully transferred {len(orders)} orders to billing queue."
 
@@ -240,38 +222,39 @@ def mass_order_billing_service(
 
     user: User = get_object_or_404(User, id=user_id)
     orders = selectors.get_billing_queue(user=user, task_id=task_id)
-    bill_orders(user_id=user_id, invoices=orders)
+    bill_orders(user_id=user_id, invoices=orders, task_id=task_id)
 
-
+@transaction.atomic
 def bill_orders(
     *,
     user_id: "ModelUUID",
     invoices: QuerySet[models.BillingQueue] | models.BillingQueue,
+    task_id: str,
 ) -> BilledOrders:
-    """Bills the specified orders. If the organization enforces customer billing requirements,
-    checks these requirements before billing the order. If requirements are not met, a
-    BillingException is created.
+    """Bill given orders coming from the users and logs the operation into
+    the system. It performs various checks to ensure that the billing
+    requirements are met and then carries out the billing operation.
+
+    The function uses a declarative transactions that span the entire function.
+    Which means that within the function, the database transaction is tied to
+    the extension of the function itself, rather than the business transaction.
 
     Args:
-        user_id (ModelUUID): The ID of the user responsible for billing the orders.
-        invoices (QuerySet[models.BillingQueue] | models.BillingQueue): An iterable of BillingQueue instances
-            or a single BillingQueue instance representing the orders to be billed.
+        user_id (ModelUUID): The id of the user issuing the orders to be billed.
+        invoices (QuerySet[models.BillingQueue] or models.BillingQueue):
+            The invoices to be billed. Can be a queryset of multiple invoices
+            or a single invoice object.
+        task_id (str): The id of the task corresponding to this operation.
 
     Returns:
-        BilledOrders: A namedtuple containing the number of orders billed and the number of orders that
-            failed to bill.
+        BilledOrders (tuple): A tuple consisting of two lists.
+            The first list contains information about orders with missing
+            billing information if any. The second list contains the invoice
+            numbers of the billed orders.
 
-    Raises:
-        Http404: If the user with the given user_id does not exist.
-        exceptions.BillingException: If the customer billing requirements are not met.
-
-    Space Complexity: O(n), where n is the number of invoices. This is because a list of invoices
-        is created in memory when a single BillingQueue instance is provided. However, the function
-        does not create additional data structures that grow with the size of the input.
-
-    Time Complexity: O(n), where n is the number of invoices. The function performs operations (checking
-        billing requirements and calling 'order_billing_actions') for each invoice. The actual time complexity
-        might be affected by these operations and how they are implemented.
+    Note:
+        create_log_entry function is a nested helper function used to
+        create a log entry whenever an invoice is successfully billed.
     """
     user = get_object_or_404(User, id=user_id)
     billed_invoices = []
@@ -286,8 +269,28 @@ def bill_orders(
         organization=user.organization
     )
 
+    def _create_log_entry(*, entry: BillingQueue, user: User, task_id: str) -> None:
+        log_entries = []
+    
+        log_entry = models.BillingLogEntry(
+            content_type=ContentType.objects.get_for_model(entry),
+            task_id=task_id,
+            organization=entry.organization,
+            business_unit=entry.business_unit,
+            order=entry.order,
+            invoice_number=entry.invoice_number,
+            customer=entry.customer,
+            action="BILLED",
+            actor=user,
+            object_pk=get_pk_value,
+        )
+        log_entries.append(log_entry)
+    
+        models.BillingLogEntry.objects.bulk_create(log_entries)
+
     # Loop through the invoices and bill them
     for invoice in invoices:
+        bill_order = False
         if organization_enforces_billing:
             # If the organization enforces customer billing requirements, check the requirements
             _, missing_documents = utils.check_billing_requirements(
@@ -297,32 +300,71 @@ def bill_orders(
             if missing_documents:
                 order_missing_info.append(missing_documents)
             else:
-                # If the customer billing requirements are met, bill the order
-                utils.order_billing_actions(invoice=invoice, user=user)
-                billed_invoices.append(invoice.invoice_number)
+                bill_order = True
 
         else:
+            bill_order = True
+
+        if bill_order:
             # If the customer billing requirements are met or not enforced, bill the order
+            _create_log_entry(entry=invoice, user=user, task_id=task_id)
+
+            # Call the order_billing_actions function to bill the order
+            # Do not move create_log_entry below, as order_billing_actions
+            # deletes the order from the BillingQueue, causing it to not have a primary key
             utils.order_billing_actions(invoice=invoice, user=user)
             billed_invoices.append(invoice.invoice_number)
+
+
     return order_missing_info, billed_invoices
 
 
-def untransfer_order_service(invoice_numbers: QuerySet[models.BillingQueue]) -> None:
+def untransfer_order_service(
+    *,
+    invoices: QuerySet[models.BillingQueue],
+    task_id: str,
+    user_id: "ModelUUID",
+) -> None:
     """Untransfer the specified orders from the billing queue.
 
     Args:
-        invoice_numbers (QuerySet[models.BillingQueue]): QuerySet of BillingQueue objects to be untransferred.
+        invoices (QuerySet[models.BillingQueue]): QuerySet of BillingQueue objects to be untransferred.
+        task_id (str): The ID of the task that initiated the untransfer.
+        user_id (ModelUUID): The ID of the user initiating the untransfer.
 
     Returns:
         None: This function does not return anything.
     """
 
-    for invoice_number in invoice_numbers:
-        invoice_number.order.transferred_to_billing = False
-        invoice_number.order.billing_transfer_date = None
-        invoice_number.order.save()
-        invoice_number.delete()
+    # Get the user
+    user = get_object_or_404(User, id=user_id)
+
+    # Create a list of BillingLogEntry objects
+    log_entries = []
+
+    for invoice in invoices:
+        invoice.order.transferred_to_billing = False
+        invoice.order.billing_transfer_date = None
+        invoice.order.save()
+        invoice.delete()
+
+        # Create a BillingLogEntry object
+        log_entries.append(
+            models.BillingLogEntry(
+                content_type=ContentType.objects.get_for_model(invoice),
+                task_id=task_id,
+                organization=invoice.organization,
+                business_unit=invoice.business_unit,
+                order=invoice.order,
+                customer=invoice.customer,
+                action="BILLED",
+                actor=user,
+                object_pk=get_pk_value(instance=invoice),
+            )
+        )
+
+    # Bulk create log entries
+    models.BillingLogEntry.objects.bulk_create(log_entries)
 
 
 def ready_to_bill_service(order: QuerySet[Order]) -> None:
@@ -348,8 +390,7 @@ def ready_to_bill_service(order: QuerySet[Order]) -> None:
 
 
 class BillingClientSessionManager:
-    """
-    Manages client sessions for billing through a Redis datastore.
+    """Manages client sessions for billing through a Redis datastore.
 
     Attributes:
         client (redis.Redis): Redis client used for session management.
