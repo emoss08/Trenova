@@ -1,2 +1,5 @@
 
 *.rdb
+.idea/*
+*.iml
+.idea
