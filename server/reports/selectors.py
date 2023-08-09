@@ -40,6 +40,7 @@ def get_scheduled_report_by_id(report_id: "ModelUUID") -> models.ScheduledReport
 
     return models.ScheduledReport.objects.get(pk__exact=report_id)
 
+
 def get_audit_logs_by_model_name(
     *, model_name: str, organization_id: "ModelUUID", app_label: str
 ) -> "QuerySet[LogEntry]":
