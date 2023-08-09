@@ -224,6 +224,7 @@ def mass_order_billing_service(
     orders = selectors.get_billing_queue(user=user, task_id=task_id)
     bill_orders(user_id=user_id, invoices=orders, task_id=task_id)
 
+
 @transaction.atomic
 def bill_orders(
     *,
@@ -271,7 +272,7 @@ def bill_orders(
 
     def _create_log_entry(*, entry: BillingQueue, user: User, task_id: str) -> None:
         log_entries = []
-    
+
         log_entry = models.BillingLogEntry(
             content_type=ContentType.objects.get_for_model(entry),
             task_id=task_id,
@@ -285,7 +286,7 @@ def bill_orders(
             object_pk=get_pk_value,
         )
         log_entries.append(log_entry)
-    
+
         models.BillingLogEntry.objects.bulk_create(log_entries)
 
     # Loop through the invoices and bill them
@@ -314,7 +315,6 @@ def bill_orders(
             # deletes the order from the BillingQueue, causing it to not have a primary key
             utils.order_billing_actions(invoice=invoice, user=user)
             billed_invoices.append(invoice.invoice_number)
-
 
     return order_missing_info, billed_invoices
 
