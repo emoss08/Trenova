@@ -15,16 +15,14 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-# Register your models here.
-
 from django.contrib import admin
 
 from edi import models
-from utils.admin import GenericAdmin, GenericTabularInline
+from utils.admin import GenericAdmin, GenericStackedInline
 
 
 class EDISegmentFieldInline(
-    GenericTabularInline[models.EDISegmentField, models.EDISegment]
+    GenericStackedInline[models.EDISegmentField, models.EDISegment]
 ):
     """
     EDI Segment Field Inline
