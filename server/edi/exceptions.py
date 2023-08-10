@@ -24,5 +24,17 @@ class EDIParserError(EDIException):
     pass
 
 
-class FieldDoesNotExist(EDIException):
+class EDIFieldValidationError(EDIException):
+    """
+    Raised when a field fails validation.
+    """
+
+    pass
+
+
+class EDIInvalidFieldException(Exception):
+    """
+    Raised when a field is invalid.
+    """
+
     pass
