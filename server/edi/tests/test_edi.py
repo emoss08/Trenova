@@ -139,7 +139,7 @@ def test_get_nested_attr_exception(
         customer=order_1.customer,
     )
 
-    with pytest.raises(exceptions.FieldDoesNotExist) as excinfo:
+    with pytest.raises(exceptions.EDIInvalidFieldException) as excinfo:
         helpers.get_nested_attr(
             obj=billing_item,
             attr="order.customer.name1",
@@ -301,7 +301,7 @@ def test_generate_edi_content_parser_error(
 
     assert (
         excinfo.value.args[0]
-        == "Number of placeholders in parser does not match number of values for segment `B3`"
+        == "Number of placeholders in parser does not match number of fields for segment `B3`"
     )
 
 
@@ -353,3 +353,117 @@ def test_generate_edi_document(
 
     # Assert that BIG and N3 segments are in the document
     assert "N3*" in document
+
+
+def test_generate_edi_content_validation_regex(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test if EDI Segment field `validation_regex` is defined, validate the pattern against the value of the field.
+
+    If the field does not match the pattern, raise a EDIFieldValidationError.
+
+    Args:
+        organization (Organization): The organization instance.
+        business_unit (BusinessUnit): The business unit instance.
+
+    Returns:
+        None: This function does return anything.
+    """
+
+    order_1 = OrderFactory()
+    user = UserFactory()
+
+    order_movements = order_1.movements.all()
+    order_movements.update(status="C")
+
+    order_1.status = "C"
+    order_1.save()
+
+    billing_item = BillingQueue.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        order=order_1,
+        user=user,
+        customer=order_1.customer,
+    )
+
+    _, fields, edi_billing_profile = factories.EDISegmentFactory(
+        business_unit=business_unit,
+        organization=organization,
+    )
+
+    fields.update(validation_regex="^ORD")
+    fields.update(model_field="order.pieces")
+
+    with pytest.raises(exceptions.EDIFieldValidationError):
+        helpers.generate_edi_content(
+            billing_item=billing_item, edi_billing_profile=edi_billing_profile
+        )
+
+
+@pytest.mark.parametrize(
+    "data_type, model_field, expected",
+    [
+        ("CharField", "order.pro_number", True),
+        ("CharField", "order.pieces", False),
+        ("CharField", "invoice_number", True),
+        ("CharField", "pieces", False),
+    ],
+)
+def test_validate_data_type(data_type: str, model_field: str, expected: bool) -> None:
+    """Test to validate `validate_data_type` function returns `True` if data type matches the
+    django `model_field` data type.
+
+    Args:
+        data_type (str): The data type to validate.
+        model_field (str): The model field to validate.
+        expected (bool): The expected result.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    match, _ = helpers.validate_data_type(data_type=data_type, model_field=model_field)
+
+    # Validate `order.pro_number` is a `CharField`
+    assert match == expected
+
+
+def test_validate_data_type_with_invalid_field() -> None:
+    """Test to validate if an invalid field is passed in the `validate_data_type` function,
+    that an `EDIInvalidFieldException` is raised.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    with pytest.raises(exceptions.EDIInvalidFieldException) as excinfo:
+        _, _ = helpers.validate_data_type(
+            data_type="CharField", model_field="order.invalid_field"
+        )
+
+    assert (
+        excinfo.value.args[0]
+        == "Field 'invalid_field' does not exist on the Order model."
+    )
+
+
+@pytest.mark.parametrize(
+    "data_type, model_field, expected",
+    [
+        ("CharField", "revenue_code.revenue_account.status", True),
+        ("PositiveIntegerField", "revenue_code.revenue_account.status", False),
+        ("CharField", "order.customer.name", True),
+        ("IntegerField", "order.customer.name", False),
+    ],
+)
+def test_validate_data_type_deeply_nested(
+    data_type: str, model_field: str, expected: bool
+) -> None:
+    """Test `validate_data_type` function with a deeply nested model field returns the proper
+    data_type.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    match, _ = helpers.validate_data_type(data_type=data_type, model_field=model_field)
+    assert match == expected

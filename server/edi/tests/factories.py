@@ -67,6 +67,7 @@ class EDISegmentFactory(factory.django.DjangoModelFactory):
 
     organization = factory.SubFactory("organizations.factories.OrganizationFactory")
     business_unit = factory.SubFactory("organizations.factories.BusinessUnitFactory")
+    data_type = "PositiveIntegerField"
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
@@ -88,6 +89,7 @@ class EDISegmentFactory(factory.django.DjangoModelFactory):
                     models.EDISegmentField.objects.create(
                         business_unit=kwargs["business_unit"],
                         organization=kwargs["organization"],
+                        data_type=kwargs["data_type"],
                         edi_segment=segment,
                         model_field="order.pieces",
                         position=i,
