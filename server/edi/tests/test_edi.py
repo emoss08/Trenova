@@ -462,6 +462,11 @@ def test_validate_data_type_deeply_nested(
     """Test `validate_data_type` function with a deeply nested model field returns the proper
     data_type.
 
+    Args:
+        data_type (str): The data type to validate.
+        model_field (str): The model field to validate.
+        expected (bool): The expected result.
+
     Returns:
         None: This function does not return anything.
     """

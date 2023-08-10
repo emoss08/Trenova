@@ -254,6 +254,9 @@ class EDIBillingProfile(GenericModel):
 
     @final
     class EDIFormatChoices(models.TextChoices):
+        """
+        Choices for the EDI Format field
+        """
         X12 = "X12", _("X12")
         EDIFACT = "EDIFACT", _("EDIFACT")
 
