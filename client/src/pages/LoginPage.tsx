@@ -45,7 +45,7 @@ type LoginFormValues = {
   password: string;
 };
 
-const LoginPage = () => {
+function LoginPage() {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore(
     (state: { isAuthenticated: any; setIsAuthenticated: any }) => [
       state.isAuthenticated,
@@ -191,5 +191,5 @@ const LoginPage = () => {
       </Paper>
     </Container>
   );
-};
+}
 export default LoginPage;

@@ -50,7 +50,7 @@ export const EditCommodityModal: React.FC = () => {
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Edit Revenue Code</Modal.Title>
+          <Modal.Title>Edit Commodity</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
