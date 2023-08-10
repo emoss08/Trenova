@@ -19,6 +19,7 @@ import textwrap
 import uuid
 from typing import final
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -27,17 +28,49 @@ from utils.models import ChoiceField, GenericModel
 
 
 @final
-class DataTypeChoices(models.TextChoices):
+class DjangoFieldChoices(models.TextChoices):
     """
-    Choices for the DataType field
+    Choices for the Django Field type
     """
 
-    STRING = "str", _("String")
-    INTEGER = "int", _("Integer")
-    DATE = "date", _("Date")
-    DATETIME = "datetime", _("Datetime")
-    TIME = "time", _("Time")
-    BOOLEAN = "bool", _("Boolean")
+    AUTO_FIELD = "AutoField", _("Auto Field")
+    BLANK_CHOICE_DASH = "BLANK_CHOICE_DASH", _("Blank Choice Dash")
+    BIG_AUTO_FIELD = "BigAutoField", _("Big Auto Field")
+    BIG_INTEGER_FIELD = "BigIntegerField", _("Big Integer Field")
+    BINARY_FIELD = "BinaryField", _("Binary Field")
+    BOOLEAN_FIELD = "BooleanField", _("Boolean Field")
+    CHAR_FIELD = "CharField", _("Char Field")
+    COMMA_SEPARATED_INTEGER_FIELD = "CommaSeparatedIntegerField", _(
+        "Comma Separated Integer Field"
+    )
+    DATE_FIELD = "DateField", _("Date Field")
+    DATETIME_FIELD = "DateTimeField", _("Date Time Field")
+    DECIMAL_FIELD = "DecimalField", _("Decimal Field")
+    DURATION_FIELD = "DurationField", _("Duration Field")
+    EMAIL_FIELD = "EmailField", _("Email Field")
+    EMPTY = "Empty", _("Empty")
+    FIELD = "Field", _("Field")
+    FILE_PATH_FIELD = "FilePathField", _("File Path Field")
+    FLOAT_FIELD = "FloatField", _("Float Field")
+    GENERIC_IP_ADDRESS_FIELD = "GenericIPAddressField", _("Generic IP Address Field")
+    IP_ADDRESS_FIELD = "IPAddressField", _("IP Address Field")
+    INTEGER_FIELD = "IntegerField", _("Integer Field")
+    NOT_PROVIDED = "NOT_PROVIDED", _("Not Provided")
+    NULL_BOOLEAN_FIELD = "NullBooleanField", _("Null Boolean Field")
+    POSITIVE_BIG_INTEGER_FIELD = "PositiveBigIntegerField", _(
+        "Positive Big Integer Field"
+    )
+    POSITIVE_INTEGER_FIELD = "PositiveIntegerField", _("Positive Integer Field")
+    POSITIVE_SMALL_INTEGER_FIELD = "PositiveSmallIntegerField", _(
+        "Positive Small Integer Field"
+    )
+    SLUG_FIELD = "SlugField", _("Slug Field")
+    SMALL_AUTO_FIELD = "SmallAutoField", _("Small Auto Field")
+    SMALL_INTEGER_FIELD = "SmallIntegerField", _("Small Integer Field")
+    TEXT_FIELD = "TextField", _("Text Field")
+    TIME_FIELD = "TimeField", _("Time Field")
+    URL_FIELD = "URLField", _("URL Field")
+    UUID_FIELD = "UUIDField", _("UUID Field")
 
 
 class EDISegmentField(GenericModel):
@@ -70,11 +103,10 @@ class EDISegmentField(GenericModel):
             "The format of the data in this field (e.g. 'MMDDYYYY' for a date field)"
         ),
     )
-    data_type = models.CharField(
+    data_type = ChoiceField(
         _("Data Type"),
-        max_length=10,
-        choices=DataTypeChoices.choices,
-        default=DataTypeChoices.STRING,
+        choices=DjangoFieldChoices.choices,
+        default=DjangoFieldChoices.CHAR_FIELD,
         help_text=_("The data type of the data in this field"),
     )
     validation_regex = models.CharField(
@@ -113,6 +145,29 @@ class EDISegmentField(GenericModel):
             width=50,
             placeholder="...",
         )
+
+    def clean(self) -> None:
+        """Validates the EDI Segment Field
+
+        Raises:
+            ValidationError: If the data type does not match the model field
+        """
+        from edi.helpers import validate_data_type
+
+        super().clean()
+
+        match, internal_type = validate_data_type(
+            data_type=self.data_type, model_field=self.model_field
+        )
+
+        if not match:
+            raise ValidationError(
+                {
+                    "data_type": _(
+                        f"You selected {self.data_type} but the model field {self.model_field} is of type {internal_type}"
+                    )
+                }
+            )
 
 
 class EDISegment(GenericModel):
