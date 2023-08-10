@@ -17,18 +17,18 @@
 from __future__ import annotations
 
 import concurrent
+import concurrent.futures
 import json
 import logging
 import signal
 import time
 import types
-import concurrent.futures
 from typing import Any
 
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
+from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import QuerySet
-from django.conf import settings
 
 from organization import models, selectors
 
