@@ -17,31 +17,15 @@
 
 import React from "react";
 import { Modal } from "@mantine/core";
-import { useQuery, useQueryClient } from "react-query";
+import {  useQueryClient } from "react-query";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { EditCommodityModalForm } from "@/components/commodities/_partials/EditCommodityModalForm";
-import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
-import { HazardousMaterial } from "@/types/apps/commodities";
 
-export const EditCommodityModal: React.FC = () => {
+export function EditCommodityModal() {
+
   const [showEditModal, setShowEditModal] =
     commodityTableStore.use("editModalOpen");
   const [commodity] = commodityTableStore.use("selectedRecord");
-  const queryClient = useQueryClient();
-
-  const { data: hazmatData } = useQuery({
-    queryKey: "hazmat-data",
-    queryFn: () => getHazardousMaterials(),
-    enabled: showEditModal,
-    initialData: () => queryClient.getQueryData("hazmat-data"),
-    staleTime: Infinity,
-  });
-
-  const selectHazmatData =
-    hazmatData?.map((hazardousMaterial: HazardousMaterial) => ({
-      value: hazardousMaterial.id,
-      label: hazardousMaterial.name,
-    })) || [];
 
   if (!showEditModal) return null;
 

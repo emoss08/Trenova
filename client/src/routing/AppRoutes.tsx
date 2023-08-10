@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { lazy } from "react"
+import React, { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 
 const HomePage = lazy(() => import("../pages"));

@@ -15,74 +15,66 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "react-query";
-import { Box, Button, Card, Grid, Tabs, Text } from "@mantine/core";
-import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
-import { usePageStyles } from "@/styles/PageStyles";
-import { CustomerStats } from "@/components/customer/CustomerStats";
-import { CustomerBillingHistoryTable } from "@/components/customer/CustomerBillingHistoryTable";
-import { ViewCustomerNavbar } from "@/components/customer/ViewCustomerNavbar";
-import { MetricsSkeleton } from "@/components/customer/_partials/MetricsSkeleton";
-import { CustomerCreditBalance } from "@/components/customer/CustomerCreditBalance";
+import React from "react";
+import {useParams} from "react-router-dom";
+import {useQuery, useQueryClient} from "react-query";
+import {Box, Button, Card, Grid, Text} from "@mantine/core";
+import {getCustomerDetailsWithMetrics} from "@/requests/CustomerRequestFactory";
+import {usePageStyles} from "@/styles/PageStyles";
+import {CustomerStats} from "@/components/customer/CustomerStats";
+import {CustomerBillingHistoryTable} from "@/components/customer/CustomerBillingHistoryTable";
+import {ViewCustomerNavbar} from "@/components/customer/ViewCustomerNavbar";
+import {MetricsSkeleton} from "@/components/customer/_partials/MetricsSkeleton";
+import {CustomerCreditBalance} from "@/components/customer/CustomerCreditBalance";
 
 export default function ViewCustomer() {
-  const { classes } = usePageStyles();
-  const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
+    const {classes} = usePageStyles();
+    const {id} = useParams<{ id: string }>();
+    const queryClient = useQueryClient();
 
-  const { data: customerData, isLoading: isCustomerDataLoading } = useQuery({
-    queryKey: ["customer", id],
-    queryFn: () => {
-      if (!id) {
-        return Promise.resolve(null);
-      }
-      return getCustomerDetailsWithMetrics(id);
-    },
-    initialData: () => queryClient.getQueryData(["customerWithMetrics", id]),
-    staleTime: Infinity,
-  });
+    const {data: customerData, isLoading: isCustomerDataLoading} = useQuery({
+        queryKey: ["customer", id],
+        queryFn: () => {
+            if (!id) {
+                return Promise.resolve(null);
+            }
+            return getCustomerDetailsWithMetrics(id);
+        },
+        initialData: () => queryClient.getQueryData(["customerWithMetrics", id]),
+        staleTime: Infinity,
+    });
 
-  return isCustomerDataLoading ? (
-    <MetricsSkeleton />
-  ) : (
-    <Grid gutter="md">
-      <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
-        {customerData && <ViewCustomerNavbar customer={customerData} />}
-      </Grid.Col>
-      <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
-        <Tabs defaultValue="overview">
-          <Tabs.List grow mb={20}>
-            <Tabs.Tab value="overview">Overview</Tabs.Tab>
-            <Tabs.Tab value="second">Events & Logs</Tabs.Tab>
-            <Tabs.Tab value="third">Statements</Tabs.Tab>
-          </Tabs.List>
+    return isCustomerDataLoading ? (
+        <MetricsSkeleton/>
+    ) : (
+        <Grid gutter="md">
+            <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
+                {customerData && <ViewCustomerNavbar customer={customerData}/>}
+            </Grid.Col>
+            <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
 
-          {/** Overview Tab */}
-          <Tabs.Panel value="overview" pt="xs">
-            {customerData && <CustomerStats customer={customerData} />}
-            <Card className={classes.card} withBorder>
-              <Box
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-                my={20}
-              >
-                <Text className={classes.text} fw={600} fz={20}>
-                    Billing History
-                </Text>
-                <Button size="xs">View All</Button>
-              </Box>
-              {id && <CustomerBillingHistoryTable id={id} />}
-            </Card>
-            {customerData && (
-              <CustomerCreditBalance customer={customerData} />
-            )}
-          </Tabs.Panel>
-        </Tabs>
-      </Grid.Col>
-    </Grid>
-  );
+                {/** Overview Tab */}
+                {customerData && <CustomerStats customer={customerData}/>}
+                <Card className={classes.card} withBorder>
+                    <Box
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                        }}
+                        my={20}
+                    >
+                        <Text className={classes.text} fw={600} fz={20}>
+                            Billing History
+                        </Text>
+                        <Button size="xs">View All</Button>
+                    </Box>
+                    {id && <CustomerBillingHistoryTable id={id}/>}
+                </Card>
+                {customerData && (
+                    <CustomerCreditBalance customer={customerData}/>
+                )}
+            </Grid.Col>
+        </Grid>
+    );
 }
