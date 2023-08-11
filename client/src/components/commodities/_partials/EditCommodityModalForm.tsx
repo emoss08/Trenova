@@ -70,12 +70,12 @@ export function EditCommodityModalForm({ commodity, selectHazmatData }: Props) {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: any) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: any) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -88,7 +88,7 @@ export function EditCommodityModalForm({ commodity, selectHazmatData }: Props) {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<CommodityFormValues>({
@@ -196,7 +196,7 @@ export function EditCommodityModalForm({ commodity, selectHazmatData }: Props) {
               className={classes.control}
               loading={loading}
             >
-                Submit
+              Submit
             </Button>
           </Group>
         </Box>

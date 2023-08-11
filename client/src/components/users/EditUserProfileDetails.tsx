@@ -143,7 +143,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const submitForm = (values: UserDetailFormValues) => {
@@ -176,7 +176,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
       <Card className={classes.card} withBorder>
         <form onSubmit={form.onSubmit((values) => submitForm(values))}>
           <Text fz="xl" fw={700} className={classes.text}>
-              Profile Details
+            Profile Details
           </Text>
 
           <Divider my={10} />
@@ -240,6 +240,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                 searchable
                 form={form}
                 name="profile.state"
+                withAsterisk
               />
             </SimpleGrid>
             <ValidatedTextInput
@@ -266,7 +267,7 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
                 className={classes.control}
                 loading={loading}
               >
-                  Submit
+                Submit
               </Button>
             </Group>
           </div>

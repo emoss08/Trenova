@@ -34,7 +34,7 @@ export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> 
     name: Yup.string().required("Description is required"),
     description: Yup.string().notRequired(),
     hazard_class: Yup.string<HazardousClassChoiceProps>().required(
-      "Description is required"
+      "Description is required",
     ),
     packing_group: Yup.string<PackingGroupChoiceProps>().notRequired(),
     erg_number: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
