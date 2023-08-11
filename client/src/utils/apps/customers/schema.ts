@@ -15,10 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Customer } from "@/types/apps/customer";
+import { ObjectSchema } from "yup";
+import * as Yup from "yup";
+import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
+import { CustomerFormValues } from "@/types/apps/customer";
 
-type Props = {
-  customer: Customer;
-};
-
-export function CustomerAsideMenu(props: Props) {}
+export const customerSchema: ObjectSchema<CustomerFormValues> =
+  Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    code: Yup.string().required("Code is required"),
+    name: Yup.string().required("Name is required"),
+    address_line_1: Yup.string().notRequired(),
+    address_line_2: Yup.string().notRequired(),
+    city: Yup.string().notRequired(),
+    state: Yup.string().notRequired(),
+    zip_code: Yup.string().notRequired(),
+    has_customer_portal: Yup.string<YesNoChoiceProps>().required(
+      "Has Customer Portal is required",
+    ),
+    auto_mark_ready_to_bill: Yup.string<YesNoChoiceProps>().required(
+      "Auto Mark Ready to Bill is required",
+    ),
+  });
