@@ -17,15 +17,16 @@
 
 import React from "react";
 import { Modal } from "@mantine/core";
-import {  useQueryClient } from "react-query";
-import { commodityTableStore } from "@/stores/CommodityStore";
-import { EditCommodityModalForm } from "@/components/commodities/_partials/EditCommodityModalForm";
+import { customerStore as store } from "@/stores/CustomerStore";
+import { Customer } from "@/types/apps/customer";
+import { EditCustomerModalForm } from "@/components/customer/_partials/EditCustomerModalForm";
 
-export function EditCommodityModal() {
+type EditCustomerModalProps = {
+  customer: Customer;
+};
 
-  const [showEditModal, setShowEditModal] =
-    commodityTableStore.use("editModalOpen");
-  const [commodity] = commodityTableStore.use("selectedRecord");
+export function EditCustomerModal({ customer }: EditCustomerModalProps) {
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
 
   if (!showEditModal) return null;
 
@@ -34,18 +35,13 @@ export function EditCommodityModal() {
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Edit Revenue Code</Modal.Title>
+          <Modal.Title>Edit Customer</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {commodity && (
-            <EditCommodityModalForm
-              commodity={commodity}
-              selectHazmatData={selectHazmatData}
-            />
-          )}
+          {customer && <EditCustomerModalForm customer={customer} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

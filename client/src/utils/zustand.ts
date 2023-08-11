@@ -3,7 +3,10 @@ import { create } from "zustand";
 
 // Credits: Acorn1010 - https://gist.github.com/acorn1010/9f4621d3dfc33052ffd84f6c2a06d4d6.
 
-export type EqualityFn<T> = (left: T | null | undefined, right: T | null | undefined) => boolean;
+export type EqualityFn<T> = (
+  left: T | null | undefined,
+  right: T | null | undefined,
+) => boolean;
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 const isFunction = (fn: unknown): fn is Function => typeof fn === "function";
@@ -28,14 +31,20 @@ const isFunction = (fn: unknown): fn is Function => typeof fn === "function";
  *   ...
  * };
  */
-export const createGlobalStore = <State extends object>(initialState: State) => {
+export const createGlobalStore = <State extends object>(
+  initialState: State,
+) => {
   // NOTE: Not using structuredClone because browser support only goes about 2 years back.
   const store = create<State>(() => deepClone(initialState));
 
-  const setter = <T extends keyof State>(key: T, value: SetStateAction<State[T]>) => {
+  const setter = <T extends keyof State>(
+    key: T,
+    value: SetStateAction<State[T]>,
+  ) => {
     if (isFunction(value)) {
       store.setState(
-        (prevValue) => ({ [key]: value(prevValue[key]) }) as unknown as Partial<State>
+        (prevValue) =>
+          ({ [key]: value(prevValue[key]) }) as unknown as Partial<State>,
       );
     } else {
       store.setState({ [key]: value } as unknown as Partial<State>);
@@ -46,7 +55,7 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
     use<K extends keyof State>(
       key: K,
       defaultValue?: State[K],
-      equalityFn?: EqualityFn<State[K]>
+      equalityFn?: EqualityFn<State[K]>,
     ): [State[K], (value: SetStateAction<State[K]>) => void] {
       // If state isn't defined for a given defaultValue, set it.
       if (defaultValue !== undefined && !(key in store.getState())) {
@@ -54,7 +63,10 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
       }
       const result = store((state) => state[key], equalityFn);
       // eslint-disable-next-line react-hooks/rules-of-hooks
-      const keySetter = useCallback((value: SetStateAction<State[K]>) => setter(key, value), [key]);
+      const keySetter = useCallback(
+        (value: SetStateAction<State[K]>) => setter(key, value),
+        [key],
+      );
       return [result, keySetter];
     },
 
@@ -92,7 +104,7 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
     update: (state: Partial<State>) => store.setState(state, false),
 
     /** Resets the entire state back to its initial state when the store was created. */
-    reset: () => store.setState(deepClone(initialState), true)
+    reset: () => store.setState(deepClone(initialState), true),
   };
 };
 
@@ -100,14 +112,19 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
  * Returns a wrapped `store` that can't be modified. Useful when you want to
  * control who is able to write to a store.
  */
-export function createReadonlyStore<T extends ReturnType<typeof createGlobalStore>>(store: T) {
+export function createReadonlyStore<
+  T extends ReturnType<typeof createGlobalStore>,
+>(store: T) {
   type State = ReturnType<T["getAll"]>;
   return {
     get: store.get,
     getAll: store.getAll,
     use: <K extends keyof State>(key: K, equalityFn?: EqualityFn<State[K]>) =>
-      (store.use as any)(key, undefined, equalityFn)[0] as State[K] | undefined | null,
-    useAll: store.useAll
+      (store.use as any)(key, undefined, equalityFn)[0] as
+        | State[K]
+        | undefined
+        | null,
+    useAll: store.useAll,
   };
 }
 
@@ -119,16 +136,23 @@ function deepClone<T>(obj: T): T {
   let result = obj;
   const type = {}.toString.call(obj).slice(8, -1);
   if (type === "Set") {
-    return new Set([...(obj as Set<any>)].map((value) => deepClone(value))) as any;
+    return new Set(
+      [...(obj as Set<any>)].map((value) => deepClone(value)),
+    ) as any;
   }
   if (type === "Map") {
-    return new Map([...(obj as Set<any>)].map((kv) => [deepClone(kv[0]), deepClone(kv[1])])) as any;
+    return new Map(
+      [...(obj as Set<any>)].map((kv) => [deepClone(kv[0]), deepClone(kv[1])]),
+    ) as any;
   }
   if (type === "Date") {
     return new Date((obj as Date).getTime()) as any;
   }
   if (type === "RegExp") {
-    return RegExp((obj as RegExp).source as string, getRegExpFlags(obj as RegExp)) as any;
+    return RegExp(
+      (obj as RegExp).source as string,
+      getRegExpFlags(obj as RegExp),
+    ) as any;
   }
   if (type === "Array" || type === "Object") {
     result = Array.isArray(obj) ? [] : ({} as any);
@@ -144,13 +168,12 @@ function deepClone<T>(obj: T): T {
 function getRegExpFlags(regExp: RegExp): string {
   if ((typeof regExp.source as any).flags === "string") {
     return (regExp.source as any).flags;
-  } 
-    const flags = [];
-    regExp.global && flags.push("g");
-    regExp.ignoreCase && flags.push("i");
-    regExp.multiline && flags.push("m");
-    regExp.sticky && flags.push("y");
-    regExp.unicode && flags.push("u");
-    return flags.join("");
-  
+  }
+  const flags = [];
+  regExp.global && flags.push("g");
+  regExp.ignoreCase && flags.push("i");
+  regExp.multiline && flags.push("m");
+  regExp.sticky && flags.push("y");
+  regExp.unicode && flags.push("u");
+  return flags.join("");
 }

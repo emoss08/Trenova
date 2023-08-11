@@ -24,6 +24,7 @@ import {
   SimpleGrid,
   Skeleton,
 } from "@mantine/core";
+import React from "react";
 
 export function MetricsSkeleton() {
   return (
