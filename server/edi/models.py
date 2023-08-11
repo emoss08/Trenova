@@ -257,6 +257,7 @@ class EDIBillingProfile(GenericModel):
         """
         Choices for the EDI Format field
         """
+
         X12 = "X12", _("X12")
         EDIFACT = "EDIFACT", _("EDIFACT")
 
