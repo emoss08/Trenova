@@ -25,9 +25,9 @@ import { UseFormReturnType } from "@mantine/form";
 const useStyles = createStyles((theme) => ({
   invalid: {
     backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
+      theme.colorScheme === "dark"
+        ? theme.fn.rgba(theme.colors.red[8], 0.15)
+        : theme.colors.red[0],
   },
   invalidIcon: {
     color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
@@ -40,14 +40,14 @@ interface ValidatedSelectInputProps<TFormValues extends object>
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ label, value, ...others }: SelectItemProps, ref) => (
+  ({ label, ...others }: SelectItemProps, ref) => (
     <div ref={ref} {...others}>
       <Text size="sm">{label}</Text>
     </div>
-  )
+  ),
 );
 
-export function SelectInput<TFormValues extends object>({
+export function SelectInput<TFormValues extends Record<string, unknown>>({
   form,
   data,
   name,

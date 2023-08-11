@@ -73,7 +73,7 @@ export function MontaTable<T extends Record<string, any>>({
       refetchOnWindowFocus: false,
       keepPreviousData: true,
       staleTime: 1000 * 60 * 5, // 5 minutes
-    }
+    },
   );
 
   return (
@@ -135,7 +135,7 @@ export function MontaTable<T extends Record<string, any>>({
         mantineTableBodyCellProps={() => ({
           sx: {
             backgroundColor:
-                theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+              theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
           },
         })}
         renderTopToolbar={({ table }) => (

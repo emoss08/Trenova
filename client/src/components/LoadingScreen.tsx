@@ -27,7 +27,7 @@ const LoadingScreen: React.FC = () => (
   >
     <Card padding="xl" withBorder>
       <Text weight={500} size="lg">
-            Monta is loading. Please wait.
+        Monta is loading. Please wait.
       </Text>
       <Text mt="xs" color="dimmed" size="sm">
             If the operation exceeds a duration of 10 seconds, kindly verify the

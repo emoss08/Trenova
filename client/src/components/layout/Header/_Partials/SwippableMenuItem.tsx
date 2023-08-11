@@ -18,12 +18,12 @@
 import React, { useState } from "react";
 import { animated, useSpring } from "@react-spring/web";
 import { useMutation, useQueryClient } from "react-query";
-import { useDrag } from "react-use-gesture";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { Button, Menu } from "@mantine/core";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { useDrag } from "@use-gesture/react";
 import axios from "@/lib/AxiosConfig";
 import { getUserId } from "@/lib/utils";
 
@@ -57,7 +57,7 @@ export function SwippableMenuItem<T extends Record<string, any>>({
           autoClose: 10_000, // 10 seconds
         });
       },
-    }
+    },
   );
 
   const bind = useDrag(({ down, movement: [mx], cancel, last }) => {

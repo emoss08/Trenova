@@ -30,9 +30,9 @@ interface CityAutoCompleteFieldProps<TFormValues extends object>
 const useStyles = createStyles((theme) => ({
   invalid: {
     backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
+      theme.colorScheme === "dark"
+        ? theme.fn.rgba(theme.colors.red[8], 0.15)
+        : theme.colors.red[0],
   },
   invalidIcon: {
     color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
@@ -53,7 +53,7 @@ export function CityAutoCompleteField<TFormValues extends object>({
 
   const getCity = async () => {
     const selectedState = stateData.find(
-      (state) => state.value === stateSelection
+      (state) => state.value === stateSelection,
     );
     const stateLabel = selectedState ? selectedState.label : "";
     const response = await fetch(
@@ -67,9 +67,9 @@ export function CityAutoCompleteField<TFormValues extends object>({
           country: "United States",
           state: stateLabel,
         }),
-      }
+      },
     );
-    return await response.json();
+    return response.json();
   };
 
   const handleChange = (val: any) => {
