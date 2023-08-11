@@ -4,3 +4,4 @@
 *.iml
 .idea
 client/client.iml
+.vscode
