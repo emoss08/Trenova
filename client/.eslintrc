@@ -9,14 +9,28 @@
     "plugin:react-hooks/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
-    "plugin:import/typescript"
+    "plugin:import/typescript",
+    "plugin:prettier/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@typescript-eslint",
-    "react-hooks"
+    "react-hooks",
+    "prettier"
   ],
+  "globals": {
+    "document": true,
+    "window": true,
+    "process": true,
+    "sessionStorage": true,
+    "localStorage": true,
+    "fetch": true,
+    "Headers": true
+  },
   "rules": {
+    "prettier/prettier": "error",
+    "arrow-body-style": "off",
+    "prefer-arrow-callback": "off",
     "import/prefer-default-export": "off",
     "import/no-unresolved": "off",
     "import/extensions": 0,
