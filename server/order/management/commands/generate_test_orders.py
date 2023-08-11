@@ -249,7 +249,7 @@ class Command(BaseCommand):
         returns the existing customer instead.
         """
         defaults = {
-            "is_active": True,
+            "status": "A",
             "name": "Test Customer",
             "address_line_1": "123 Main St",
             "city": "New York",
