@@ -51,7 +51,7 @@ export default function ViewCustomer() {
       <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
         <Tabs defaultValue="overview">
           <Tabs.List grow mb={20}>
-            <Tabs.Tab value="overview">OverView</Tabs.Tab>
+            <Tabs.Tab value="overview">Overview</Tabs.Tab>
             <Tabs.Tab value="second">Profiles</Tabs.Tab>
             <Tabs.Tab value="third">Third Tab</Tabs.Tab>
           </Tabs.List>
