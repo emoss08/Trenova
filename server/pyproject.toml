@@ -20,5 +20,31 @@ exclude = '''
   | buck-out
   | build
   | dist
+  | migrations
 )/
 '''
+
+[tool.ruff]
+ignore = ["E501"]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "client",
+    "node_modules",
+    "venv",
+]
