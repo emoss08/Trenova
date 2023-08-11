@@ -21,7 +21,6 @@ import { useQuery, useQueryClient } from "react-query";
 import { Grid, Tabs } from "@mantine/core";
 import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
 import { ViewCustomerNavbar } from "@/components/customer/ViewCustomerNavbar";
-import { MetricsSkeleton } from "@/components/customer/_partials/MetricsSkeleton";
 import { CustomerOverviewTab } from "@/components/customer/_partials/CustomerOverviewTab";
 
 export default function ViewCustomer() {
@@ -40,12 +39,15 @@ export default function ViewCustomer() {
     staleTime: Infinity,
   });
 
-  return isCustomerDataLoading ? (
-    <MetricsSkeleton />
-  ) : (
+  return (
     <Grid gutter="md">
       <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
-        {customerData && <ViewCustomerNavbar customer={customerData} />}
+        {customerData && (
+          <ViewCustomerNavbar
+            customer={customerData}
+            isLoading={isCustomerDataLoading}
+          />
+        )}
       </Grid.Col>
 
       <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
@@ -59,7 +61,12 @@ export default function ViewCustomer() {
           {/** Overview Tab */}
           <Tabs.Panel value="overview" pt="xs">
             <Grid.Col span={12} sm={12} md={12} lg={12} xl={12}>
-              {customerData && <CustomerOverviewTab customer={customerData} />}
+              {customerData && (
+                <CustomerOverviewTab
+                  customer={customerData}
+                  isLoading={isCustomerDataLoading}
+                />
+              )}
             </Grid.Col>
           </Tabs.Panel>
         </Tabs>

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Card, Text } from "@mantine/core";
+import { Box, Button, Card, SimpleGrid, Skeleton, Text } from "@mantine/core";
 import React from "react";
 import { Customer } from "@/types/apps/customer";
 import { CustomerStats } from "@/components/customer/CustomerStats";
@@ -25,12 +25,36 @@ import { usePageStyles } from "@/styles/PageStyles";
 
 type CustomerOverviewTabProps = {
   customer: Customer;
+  isLoading: boolean;
 };
 
-export function CustomerOverviewTab({ customer }: CustomerOverviewTabProps) {
+export function CustomerOverviewTab({
+  customer,
+  isLoading,
+}: CustomerOverviewTabProps) {
   const { classes } = usePageStyles();
 
-  return (
+  return isLoading ? (
+    <>
+      <SimpleGrid
+        cols={4}
+        spacing="sm"
+        verticalSpacing="xl"
+        breakpoints={[
+          { maxWidth: "xl", cols: 2 },
+          { maxWidth: "lg", cols: 1 },
+          { maxWidth: "md", cols: 1 },
+          { maxWidth: "xs", cols: 1 },
+        ]}
+      >
+        <Skeleton height={150} />
+        <Skeleton height={150} />
+        <Skeleton height={150} />
+        <Skeleton height={150} />
+      </SimpleGrid>
+      <Skeleton height={560} mt={20} />
+    </>
+  ) : (
     <>
       {customer && <CustomerStats customer={customer} />}
       <Card className={classes.card} withBorder>

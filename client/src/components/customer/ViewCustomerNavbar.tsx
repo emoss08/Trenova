@@ -35,9 +35,13 @@ import { EditCustomerModal } from "@/components/customer/EditCustomerModal";
 
 type ViewCustomerNavbarProps = {
   customer: Customer;
+  isLoading: boolean;
 };
 
-export function ViewCustomerNavbar({ customer }: ViewCustomerNavbarProps) {
+export function ViewCustomerNavbar({
+  customer,
+  isLoading,
+}: ViewCustomerNavbarProps) {
   const { classes } = usePageStyles();
 
   const mapStatusToBadge = (status: string) => {
@@ -65,109 +69,116 @@ export function ViewCustomerNavbar({ customer }: ViewCustomerNavbarProps) {
   };
 
   return (
-    <>
-      <Flex>
-        <Card className={classes.card} withBorder>
-          <Box
-            style={{
-              textAlign: "center",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <Avatar
-              src={null}
-              alt={customer.name}
-              size="xl"
-              radius={50}
-              color="blue"
-              my={20}
+    <Flex>
+      {isLoading ? (
+        <Skeleton height={800} width={400} />
+      ) : (
+        <>
+          <Card className={classes.card} withBorder>
+            <Box
+              style={{
+                textAlign: "center",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
             >
-              {getFirstAndLastChar(customer.name as string)}
-            </Avatar>
-            <Text className={classes.text} fw={600}>
-              {upperFirst(customer.code as string)}
-            </Text>
-            <Text color="dimmed" size="sm">
-              {upperFirst(customer.name as string)}
-            </Text>
-          </Box>
-          <Box
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <Text className={classes.text} fw={600} size="lg" my={20}>
-              Details
-            </Text>
-            <Button onClick={() => store.set("editModalOpen", true)} size="xs">
-              Edit
-            </Button>
-          </Box>
-          <Divider mb={20} />
+              <Avatar
+                src={null}
+                alt={customer.name}
+                size="xl"
+                radius={50}
+                color="blue"
+                my={20}
+              >
+                {getFirstAndLastChar(customer.name as string)}
+              </Avatar>
+              <Text className={classes.text} fw={600}>
+                {upperFirst(customer.code as string)}
+              </Text>
+              <Text color="dimmed" size="sm">
+                {upperFirst(customer.name as string)}
+              </Text>
+            </Box>
+            <Box
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <Text className={classes.text} fw={600} size="lg" my={20}>
+                Details
+              </Text>
+              <Button
+                onClick={() => store.set("editModalOpen", true)}
+                size="xs"
+              >
+                Edit
+              </Button>
+            </Box>
+            <Divider mb={20} />
 
-          {mapStatusToBadge(customer.status as string)}
+            {mapStatusToBadge(customer.status as string)}
 
-          <Box>
-            <Text className={classes.text} fw={500} size="sm">
-              Code
-            </Text>
-            <Text color="dimmed">{customer.code}</Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              Name
-            </Text>
-            <Text color="dimmed">{customer.name}</Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              Address Line 1
-            </Text>
-            <Text color="dimmed">{customer.address_line_1}</Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              Address Line 2
-            </Text>
-            <Text color="dimmed">{customer.address_line_2}</Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              City
-            </Text>
-            <Text color="dimmed">{customer.city}</Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              Zip Code
-            </Text>
-            <Text color="dimmed">{customer.zip_code}</Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              Last Ship Date
-            </Text>
-            <Text color="dimmed">
-              {customer.customer_shipment_metrics.last_shipment_date || ""}
-            </Text>
-          </Box>
-          <Box my={10}>
-            <Text className={classes.text} fw={500} size="sm">
-              Last Bill Date
-            </Text>
-            <Text color="dimmed">
-              {customer.customer_shipment_metrics.last_bill_date || ""}
-            </Text>
-          </Box>
-        </Card>
-      </Flex>
-      <Suspense fallback={<Skeleton height={500} />}>
-        <EditCustomerModal customer={customer} />
-      </Suspense>
-    </>
+            <Box>
+              <Text className={classes.text} fw={500} size="sm">
+                Code
+              </Text>
+              <Text color="dimmed">{customer.code}</Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                Name
+              </Text>
+              <Text color="dimmed">{customer.name}</Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                Address Line 1
+              </Text>
+              <Text color="dimmed">{customer.address_line_1}</Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                Address Line 2
+              </Text>
+              <Text color="dimmed">{customer.address_line_2}</Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                City
+              </Text>
+              <Text color="dimmed">{customer.city}</Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                Zip Code
+              </Text>
+              <Text color="dimmed">{customer.zip_code}</Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                Last Ship Date
+              </Text>
+              <Text color="dimmed">
+                {customer.customer_shipment_metrics.last_shipment_date || ""}
+              </Text>
+            </Box>
+            <Box my={10}>
+              <Text className={classes.text} fw={500} size="sm">
+                Last Bill Date
+              </Text>
+              <Text color="dimmed">
+                {customer.customer_shipment_metrics.last_bill_date || ""}
+              </Text>
+            </Box>
+          </Card>
+          <Suspense fallback={<Skeleton height={500} />}>
+            <EditCustomerModal customer={customer} />
+          </Suspense>
+        </>
+      )}
+    </Flex>
   );
 }
