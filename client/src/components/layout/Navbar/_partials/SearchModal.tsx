@@ -39,7 +39,7 @@ import { SearchControl } from "@/components/layout/Header/_Partials/SpotlightSea
 import axios from "@/lib/AxiosConfig";
 import { allowedSearchModels } from "@/utils/apps/search";
 
-export const SearchModal: React.FC = () => {
+export function SearchModal() {
   const navigate = useNavigate();
   const [opened, { open, close }] = useDisclosure(false);
   const [input, setInput] = useState("");
@@ -50,10 +50,37 @@ export const SearchModal: React.FC = () => {
   const [, setPreviousPage] = useState<string | null>(null);
   const [count, setCount] = useState(0);
 
+  // Debounced search handler
+  const handleSearch = useDebouncedCallback(async (i: string, p: number) => {
+    try {
+      const response = await axios.get(
+        `search/?term=${encodeURIComponent(i)}&page=${p}`,
+      );
+      setCount(response.data.pages);
+      setResults(response.data.results);
+
+      if (response.data.next) {
+        setNextPage(response.data.next);
+      } else {
+        setNextPage(null);
+      }
+
+      if (response.data.previous) {
+        setPreviousPage(response.data.previous);
+      } else {
+        setPreviousPage(null);
+      }
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+    }
+  }, 500); // Debounce time in ms
+
   // Update search results when page changes
   React.useEffect(() => {
-    handleSearch(input, page);
-  }, [page]);
+    if (input) {
+      handleSearch(input, page);
+    }
+  }, [handleSearch, input, page]);
 
   // Update badge when input changes
   React.useEffect(() => {
@@ -64,34 +91,6 @@ export const SearchModal: React.FC = () => {
       setBadge(null);
     }
   }, [input]);
-
-  // Debounced search handler
-  const handleSearch = useDebouncedCallback(
-    async (input: string, page: number) => {
-      try {
-        const response = await axios.get(
-          `search/?term=${encodeURIComponent(input)}&page=${page}`
-        );
-        setCount(response.data.pages);
-        setResults(response.data.results);
-
-        if (response.data.next) {
-          setNextPage(response.data.next);
-        } else {
-          setNextPage(null);
-        }
-
-        if (response.data.previous) {
-          setPreviousPage(response.data.previous);
-        } else {
-          setPreviousPage(null);
-        }
-      } catch (error) {
-        console.error("Error fetching search results:", error);
-      }
-    },
-    500
-  ); // Debounce time in ms
 
   return (
     <>
@@ -162,16 +161,18 @@ export const SearchModal: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {results.map((result, index) => (
+                    {results.map((result) => (
                       <tr
-                        key={index}
+                        key={`search-result-${result.display}`}
                         style={{
                           marginBottom: "10px",
                           cursor: "pointer",
                         }}
                         onClick={() => {
-                          console.log("clicked", result.display);
-                          // navigate(result.path);
+                          if (result.path) {
+                            navigate(result.path);
+                            close();
+                          }
                         }}
                       >
                         <td>{result.model_name}</td>
@@ -232,4 +233,4 @@ export const SearchModal: React.FC = () => {
       </Modal.Root>
     </>
   );
-};
+}
