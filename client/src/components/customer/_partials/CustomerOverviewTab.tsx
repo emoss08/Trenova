@@ -22,6 +22,7 @@ import { CustomerStats } from "@/components/customer/CustomerStats";
 import { CustomerBillingHistoryTable } from "@/components/customer/CustomerBillingHistoryTable";
 import { CustomerCreditBalance } from "@/components/customer/CustomerCreditBalance";
 import { usePageStyles } from "@/styles/PageStyles";
+import { customerStore as store } from "@/stores/CustomerStore";
 
 type CustomerOverviewTabProps = {
   customer: Customer;
@@ -33,6 +34,9 @@ export function CustomerOverviewTab({
   isLoading,
 }: CustomerOverviewTabProps) {
   const { classes } = usePageStyles();
+
+  // If the active tab is not "overview", then we don't want to render anything.
+  if (store.get("activeTab") !== "overview") return null;
 
   return isLoading ? (
     <>

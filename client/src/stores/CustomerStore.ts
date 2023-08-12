@@ -15,57 +15,61 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {createGlobalStore} from "@/utils/zustand";
-import {TableStoreProps} from "@/types/tables";
-import {Customer} from "@/types/apps/customer";
-import {MRT_RowSelectionState} from "mantine-react-table";
-import {BillingHistory} from "@/types/apps/billing";
+import { MRT_RowSelectionState } from "mantine-react-table";
+import { createGlobalStore } from "@/utils/zustand";
+import { TableStoreProps } from "@/types/tables";
+import { Customer } from "@/types/apps/customer";
+import { BillingHistory } from "@/types/apps/billing";
 
 type customerStoreProps = {
-    editModalOpen: boolean;
+  editModalOpen: boolean;
+  activeTab: string | null;
 };
 
 type paymentRecordsTableStoreProps<T extends Record<string, unknown>> = {
-    pagination: {
-        pageIndex: number;
-        pageSize: number;
-    }
-    selectedRecord: T | null;
-    globalFilter: string,
-    columnFilters: boolean,
-    rowSelection: MRT_RowSelectionState,
-}
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  selectedRecord: T | null;
+  globalFilter: string;
+  columnFilters: boolean;
+  rowSelection: MRT_RowSelectionState;
+};
 
 export const customerTableStore = createGlobalStore<
-    Omit<TableStoreProps<Customer>, "drawerOpen">
+  Omit<TableStoreProps<Customer>, "drawerOpen">
 >({
-    pagination: {
-        pageIndex: 0,
-        pageSize: 10,
-    },
-    viewModalOpen: false,
-    editModalOpen: false,
-    selectedRecord: null,
-    globalFilter: "",
-    exportModalOpen: false,
-    deleteModalOpen: false,
-    createModalOpen: false,
-    columnFilters: false,
-    rowSelection: {},
-    errorCount: 0,
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
 });
 
-export const paymentRecordsTableStore = createGlobalStore<paymentRecordsTableStoreProps<BillingHistory>>({
-    pagination: {
-        pageIndex: 0,
-        pageSize: 10,
-    },
-    selectedRecord: null,
-    globalFilter: "",
-    columnFilters: false,
-    rowSelection: {},
+export const paymentRecordsTableStore = createGlobalStore<
+  paymentRecordsTableStoreProps<BillingHistory>
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  selectedRecord: null,
+  globalFilter: "",
+  columnFilters: false,
+  rowSelection: {},
 });
 
 export const customerStore = createGlobalStore<customerStoreProps>({
-    editModalOpen: false,
+  editModalOpen: false,
+  activeTab: "overview",
 });
