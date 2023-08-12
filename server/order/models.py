@@ -696,9 +696,9 @@ class Order(GenericModel):  # type:ignore
 
         # If none of the allowed slots match the desired time, raise a ValidationError.
         if not any(
-                slot.start_time <= start_time.time() <= slot.end_time
-                and slot.start_time <= end_time.time() <= slot.end_time
-                for slot in allowed_slots
+            slot.start_time <= start_time.time() <= slot.end_time
+            and slot.start_time <= end_time.time() <= slot.end_time
+            for slot in allowed_slots
         ):
             raise ValidationError(
                 {
