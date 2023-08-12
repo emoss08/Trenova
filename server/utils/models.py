@@ -193,3 +193,18 @@ class ChoiceField(CharField):
                 )
             ]
         return []
+
+
+@final
+class Weekdays(models.IntegerChoices):
+    """
+    The weekdays for a weekly scheduled report.
+    """
+
+    MONDAY = 0, _("Monday")
+    TUESDAY = 1, _("Tuesday")
+    WEDNESDAY = 2, _("Wednesday")
+    THURSDAY = 3, _("Thursday")
+    FRIDAY = 4, _("Friday")
+    SATURDAY = 5, _("Saturday")
+    SUNDAY = 6, _("Sunday")

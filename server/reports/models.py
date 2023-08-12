@@ -25,7 +25,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from organization.services.table_choices import TABLE_NAME_CHOICES
-from utils.models import GenericModel
+from utils.models import GenericModel, Weekdays
 
 
 @final
@@ -50,20 +50,6 @@ class Weekday(models.Model):
         __str__: String representation of the weekday.
         get_absolute_url: Returns the absolute URL for the weekday.
     """
-
-    @final
-    class Weekdays(models.IntegerChoices):
-        """
-        The weekdays for a weekly scheduled report.
-        """
-
-        MONDAY = 0, _("Monday")
-        TUESDAY = 1, _("Tuesday")
-        WEDNESDAY = 2, _("Wednesday")
-        THURSDAY = 3, _("Thursday")
-        FRIDAY = 4, _("Friday")
-        SATURDAY = 5, _("Saturday")
-        SUNDAY = 6, _("Sunday")
 
     name = models.PositiveIntegerField(_("Name"), choices=Weekdays.choices, unique=True)
 
