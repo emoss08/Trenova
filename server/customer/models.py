@@ -12,19 +12,6 @@
 #  and trademark, you must comply with the Licensor's covenants, which include specifying the
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
 #  Grant, and not modifying the license in any other way.
-#
-#  This file is part of Monta.
-#
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right
-#  to copy, modify, and redistribute the software, but only for non-production use or with a total
-#  of less than three server instances. Starting from the Change Date (November 16, 2026), the
-#  software will be made available under version 2 or later of the GNU General Public License.
-#  If you use the software in violation of this license, your rights under the license will be
-#  terminated automatically. The software is provided "as is," and the Licensor disclaims all
-#  warranties and conditions. If you use this license's text or the "Business Source License" name
-#  and trademark, you must comply with the Licensor's covenants, which include specifying the
-#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
-#  Grant, and not modifying the license in any other way.
 
 import textwrap
 import uuid
@@ -40,7 +27,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices, Weekdays
 
 
 @final
@@ -526,6 +513,7 @@ class CustomerContact(GenericModel):
         """
         Metaclass for CustomerContact
         """
+
         verbose_name = _("Customer Contact")
         verbose_name_plural = _("Customer Contacts")
         ordering = ["customer", "name"]
@@ -904,3 +892,66 @@ class CustomerFuelTableDetail(GenericModel):
             str: Customer fuel profile detail url
         """
         return reverse("billing:customer-fuel-profile-detail", kwargs={"pk": self.pk})
+
+
+class DeliverySlot(GenericModel):
+    """
+    Stores delivery slot information related to the :model:`billing.Customer` model.
+    """
+
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        help_text=_("Customer"),
+        verbose_name=_("Customer"),
+    )
+    day_of_week = models.PositiveSmallIntegerField(
+        _("Day of Week"), choices=Weekdays.choices, help_text=_("Day of Week")
+    )
+    start_time = models.TimeField(_("Start Time"), help_text=_("Start Time"))
+    end_time = models.TimeField(_("End Time"), help_text=_("End Time"))
+    location = models.ForeignKey(
+        "location.Location",
+        on_delete=models.CASCADE,
+        help_text=_("Location"),
+        verbose_name=_("Location"),
+    )
+
+    class Meta:
+        """
+        Metaclass for the Delivery Slot model.
+        """
+
+        verbose_name = _("Delivery Slot")
+        verbose_name_plural = _("Delivery Slots")
+        ordering = ["customer", "day_of_week", "start_time", "end_time"]
+        db_table = "delivery_slot"
+        unique_together = ["customer", "day_of_week", "start_time", "end_time"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "customer",
+                    "day_of_week",
+                    "start_time",
+                    "end_time",
+                    "location",
+                ],
+                name="unique_delivery_slot",
+            ),
+            models.CheckConstraint(
+                check=models.Q(start_time__lt=models.F("end_time")),
+                name="start_time_lt_end_time",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        """String representation of Delivery Slot
+
+        Returns:
+            str: Delivery Slot string representation
+        """
+        return textwrap.shorten(
+            f"Delivery Slot for {self.customer.name} on {self.get_day_of_week_display()} from {self.start_time} to {self.end_time}",
+            width=50,
+            placeholder="...",
+        )

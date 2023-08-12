@@ -143,3 +143,24 @@ class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
     customer = factory.SubFactory(CustomerFactory)
     email_profile = factory.SubFactory(CustomerEmailProfileFactory)
     rule_profile = factory.SubFactory(CustomerRuleProfileFactory)
+
+
+class DeliverySlotFactory(factory.django.DjangoModelFactory):
+    """
+    DeliverySlot factory
+    """
+
+    class Meta:
+        """
+        Metaclass for DeliverySlot
+        """
+
+        model = "customer.DeliverySlot"
+
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    customer = factory.SubFactory(CustomerFactory)
+    day_of_week = factory.Faker("pyint", min_value=0, max_value=6)
+    start_time = "00:00:00"
+    end_time = "23:59:59"
+    location = factory.SubFactory("location.factories.LocationFactory")

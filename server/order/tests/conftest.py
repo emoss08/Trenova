@@ -32,7 +32,7 @@ from billing.tests.factories import (
     AccessorialChargeFactory,
     DocumentClassificationFactory,
 )
-from customer.factories import CustomerFactory
+from customer.factories import CustomerFactory, DeliverySlotFactory
 from customer.models import Customer
 from dispatch.factories import CommentTypeFactory
 from dispatch.models import CommentType
@@ -305,3 +305,11 @@ def reason_code_api(
             "code_type": "VOIDED",
         },
     )
+
+
+@pytest.fixture
+def delivery_slot() -> Generator[Any, Any, None]:
+    """
+    Pytest Fixture for Delivery
+    """
+    yield DeliverySlotFactory()

@@ -112,6 +112,15 @@ class CustomerContactInline(
     fk_name = "customer"
 
 
+class DeliverySlotInline(GenericStackedInline[models.Customer, models.DeliverySlot]):
+    """
+    Delivery Slot
+    """
+
+    model = models.DeliverySlot
+    fk_name = "customer"
+
+
 @admin.register(models.Customer)
 class CustomerAdmin(GenericAdmin[models.Customer]):
     """
@@ -124,4 +133,4 @@ class CustomerAdmin(GenericAdmin[models.Customer]):
         "name",
     )
     search_fields = ("name",)
-    inlines = (CustomerContactInline,)
+    inlines = (CustomerContactInline, DeliverySlotInline)
