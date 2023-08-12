@@ -240,7 +240,9 @@ def generate_edi_document(
     return f"{envelope}\n{content}\n{trailers}"
 
 
-def _get_actual_field(*, model: type[Model], fields_chain: list[str]) -> Field:
+def _get_actual_field(
+    *, model: type[Model], fields_chain: list[str]
+) -> Field[Any, Any]:
     """Recursively retrieves the actual field in a model given a fields chain list.
 
     This function navigates through a model's fields using the fields_chain list.
@@ -276,7 +278,7 @@ def _get_actual_field(*, model: type[Model], fields_chain: list[str]) -> Field:
 
     # If this is the last field in the chain, or it's not a ForeignKey, return it
     if len(fields_chain) == 1 or not isinstance(current_field, ForeignKey):
-        return current_field
+        return current_field  # type: ignore
 
     # Otherwise, continue with the next model
     return _get_actual_field(
