@@ -23,7 +23,6 @@ import pytz
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-
 from organization.services.table_choices import TABLE_NAME_CHOICES
 from utils.models import GenericModel, Weekdays
 

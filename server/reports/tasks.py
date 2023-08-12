@@ -19,9 +19,8 @@ from typing import TYPE_CHECKING
 
 from celery import shared_task
 from celery_singleton import Singleton
-from django.core.mail import EmailMessage
-
 from core.exceptions import ServiceException
+from django.core.mail import EmailMessage
 from reports import selectors, services, utils
 from utils.types import ModelUUID
 

@@ -18,11 +18,10 @@
 import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from equipment import models
 from organization.models import Organization
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

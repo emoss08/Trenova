@@ -18,9 +18,8 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from drf_standardized_errors.handler import ExceptionHandler
-from drf_standardized_errors.handler import (
-    exception_handler as drf_standardized_exception_handler,
-)
+from drf_standardized_errors.handler import \
+    exception_handler as drf_standardized_exception_handler
 from rest_framework import exceptions
 from rest_framework.response import Response
 

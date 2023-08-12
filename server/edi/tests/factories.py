@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import factory
-
 from edi import models
 from edi.tests.data import test_edi_segments
 

@@ -18,9 +18,8 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from rest_framework.test import APIClient
-
 from commodities import factories
+from rest_framework.test import APIClient
 
 
 @pytest.fixture

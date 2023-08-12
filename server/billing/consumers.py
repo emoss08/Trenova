@@ -21,22 +21,14 @@ from asyncio import sleep
 from typing import Any
 
 from asgiref.sync import sync_to_async
+from billing.selectors import get_invoices_by_invoice_number
+from billing.services import (BillingClientSessionManager, bill_orders,
+                              transfer_to_billing_queue_service)
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.layers import get_channel_layer
-
-from billing.selectors import get_invoices_by_invoice_number
-from billing.services import (
-    BillingClientSessionManager,
-    bill_orders,
-    transfer_to_billing_queue_service,
-)
-from utils.types import (
-    BillingClientActions,
-    BillingClientResponse,
-    BillingClientSessionResponse,
-    BillingClientStatuses,
-)
+from utils.types import (BillingClientActions, BillingClientResponse,
+                         BillingClientSessionResponse, BillingClientStatuses)
 
 channel_layer = get_channel_layer()
 

@@ -18,7 +18,6 @@
 import pytest
 from django.core.management import call_command
 from django_celery_beat.models import IntervalSchedule
-
 from organization import models
 
 pytestmark = pytest.mark.django_db

@@ -17,10 +17,9 @@
 
 from typing import TYPE_CHECKING
 
-from django.core.management import call_command
-
 from backend.celery import app
 from core.exceptions import CommandCallException
+from django.core.management import call_command
 
 if TYPE_CHECKING:
     from celery.app.task import Task

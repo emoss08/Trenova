@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
-
 from movements import models
 
 

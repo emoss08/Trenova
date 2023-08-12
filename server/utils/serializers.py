@@ -17,12 +17,11 @@
 
 from typing import Any
 
+from accounts.models import Token
 from django.db.models import Model
 from django.utils.functional import cached_property
-from rest_framework import serializers
-
-from accounts.models import Token
 from organization.models import BusinessUnit, Organization
+from rest_framework import serializers
 
 
 class GenericSerializer(serializers.ModelSerializer):

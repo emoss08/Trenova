@@ -17,28 +17,20 @@
 from datetime import timedelta
 from typing import Any
 
+from accounts import models, serializers
+from accounts.permissions import ViewAllUsersPermission
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from core.permissions import CustomObjectPermissions
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
 from django.middleware import csrf
 from django.utils import timezone
-from rest_framework import (
-    exceptions,
-    generics,
-    permissions,
-    response,
-    status,
-    views,
-    viewsets,
-)
+from rest_framework import (exceptions, generics, permissions, response,
+                            status, views, viewsets)
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.request import Request
-
-from accounts import models, serializers
-from accounts.permissions import ViewAllUsersPermission
-from core.permissions import CustomObjectPermissions
 from utils.exceptions import InvalidTokenException
 from utils.types import AuthenticatedRequest
 

@@ -20,36 +20,29 @@ from datetime import timedelta
 from typing import Any
 
 import pytest
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from accounting.models import RevenueCode
 from accounting.tests.factories import RevenueCodeFactory
 from accounts.models import User
 from billing.models import AccessorialCharge, DocumentClassification
-from billing.tests.factories import (
-    AccessorialChargeFactory,
-    DocumentClassificationFactory,
-)
+from billing.tests.factories import (AccessorialChargeFactory,
+                                     DocumentClassificationFactory)
 from customer.factories import CustomerFactory, DeliverySlotFactory
 from customer.models import Customer
 from dispatch.factories import CommentTypeFactory
 from dispatch.models import CommentType
+from django.utils import timezone
 from equipment.models import EquipmentType
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
 from order.models import Order, OrderType
-from order.tests.factories import (
-    AdditionalChargeFactory,
-    OrderCommentFactory,
-    OrderDocumentationFactory,
-    OrderFactory,
-    OrderTypeFactory,
-    ReasonCodeFactory,
-)
+from order.tests.factories import (AdditionalChargeFactory,
+                                   OrderCommentFactory,
+                                   OrderDocumentationFactory, OrderFactory,
+                                   OrderTypeFactory, ReasonCodeFactory)
 from organization.models import Organization
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

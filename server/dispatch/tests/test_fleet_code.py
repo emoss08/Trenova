@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from dispatch.factories import FleetCodeFactory
 from dispatch.models import FleetCode
 

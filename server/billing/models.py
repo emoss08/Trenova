@@ -28,7 +28,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
-
 from order.models import Order
 from organization.models import BusinessUnit, Organization
 from utils.models import ChoiceField, GenericModel, StatusChoices

@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-
 from order import models
 from organization.models import Organization
 

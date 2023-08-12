@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import factory
-
 from organization.models import BusinessUnit, Organization
 
 

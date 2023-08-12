@@ -18,9 +18,8 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from django.core.exceptions import ValidationError
-
 from customer import factories, models
+from django.core.exceptions import ValidationError
 
 pytestmark = pytest.mark.django_db
 

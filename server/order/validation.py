@@ -18,7 +18,6 @@
 from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
-
 from order.models import Order
 from order.selectors import get_order_by_id
 from utils.models import RatingMethodChoices, StatusChoices

@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-
 from billing import models
 
 pytestmark = pytest.mark.django_db

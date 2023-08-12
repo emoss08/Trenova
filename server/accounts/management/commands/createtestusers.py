@@ -18,13 +18,12 @@ import random
 import string
 from typing import Any
 
+from accounts.models import JobTitle, UserProfile
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from rich.progress import Progress
-
-from accounts.models import JobTitle, UserProfile
 from organization.models import Organization
+from rich.progress import Progress
 
 
 class Command(BaseCommand):

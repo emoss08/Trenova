@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 import factory
-
 from equipment.models import EquipmentTypeDetail
 
 

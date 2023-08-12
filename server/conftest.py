@@ -19,11 +19,10 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from rest_framework.test import APIClient
-
 from accounts.models import Token
 from accounts.tests.factories import TokenFactory, UserFactory
 from organization.factories import BusinessUnitFactory, OrganizationFactory
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

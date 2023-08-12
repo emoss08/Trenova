@@ -18,7 +18,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from location import factories, models
 
 

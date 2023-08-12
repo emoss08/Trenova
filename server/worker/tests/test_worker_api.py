@@ -16,12 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from rest_framework.test import APIClient
-
 from accounts.models import User
 from dispatch.factories import FleetCodeFactory
 from dispatch.models import CommentType
 from organization.models import Organization
+from rest_framework.test import APIClient
 from worker import models
 
 pytestmark = pytest.mark.django_db
