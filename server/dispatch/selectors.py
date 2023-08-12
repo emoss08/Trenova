@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from dispatch import models
 from django.db.models import QuerySet
 from django.utils import timezone
+
+from dispatch import models
 
 
 def get_rate_billing_table_by_rate(

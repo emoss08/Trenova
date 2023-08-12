@@ -19,6 +19,7 @@ from typing import Any
 
 from django.core.management import BaseCommand
 from django.db import connection
+
 from kafka import services
 
 

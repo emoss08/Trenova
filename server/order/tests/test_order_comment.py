@@ -16,12 +16,13 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from rest_framework.response import Response
+from rest_framework.test import APIClient
+
 from accounts.models import User
 from dispatch.models import CommentType
 from order import models
 from organization.models import BusinessUnit, Organization
-from rest_framework.response import Response
-from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

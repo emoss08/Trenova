@@ -17,12 +17,13 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from accounts.models import User
 from celery.exceptions import Retry
-from core.exceptions import ServiceException
 from django.core.files.uploadedfile import SimpleUploadedFile
-from reports import models, tasks, utils
 from rest_framework.test import APIClient
+
+from accounts.models import User
+from core.exceptions import ServiceException
+from reports import models, tasks, utils
 
 pytestmark = pytest.mark.django_db
 

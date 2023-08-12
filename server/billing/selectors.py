@@ -18,9 +18,10 @@
 import uuid
 from typing import TYPE_CHECKING
 
-from billing import models
 from django.db.models import Q, QuerySet
 from notifications.signals import notify
+
+from billing import models
 from utils.models import StatusChoices
 
 if TYPE_CHECKING:

@@ -21,10 +21,12 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from accounts import services
 from auditlog.registry import auditlog
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
-                                        PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models
@@ -33,6 +35,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField, USZipCodeField
+
+from accounts import services
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 

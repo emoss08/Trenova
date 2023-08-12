@@ -19,8 +19,9 @@ import os
 from typing import Any
 
 from auditlog.models import LogEntry
-from reports import models
 from rest_framework import serializers
+
+from reports import models
 from utils.serializers import GenericSerializer
 
 

@@ -20,6 +20,7 @@ from typing import Any
 from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
+
 from utils.admin import GenericAdmin
 
 from .models import DivisionCode, GeneralLedgerAccount, RevenueCode

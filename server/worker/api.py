@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from core.permissions import CustomObjectPermissions
 from django.db.models import Prefetch, QuerySet
 from rest_framework import viewsets
+
+from core.permissions import CustomObjectPermissions
 from worker import models, serializers
 
 

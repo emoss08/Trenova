@@ -16,10 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from billing import models
 from django.core.exceptions import ValidationError
-from organization.models import BusinessUnit, Organization
 from rest_framework.test import APIClient
+
+from billing import models
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 

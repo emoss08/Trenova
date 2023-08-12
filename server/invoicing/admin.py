@@ -18,6 +18,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from django.contrib import admin
+
 from invoicing import models
 from utils.admin import GenericAdmin
 

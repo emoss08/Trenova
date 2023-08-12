@@ -19,11 +19,14 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from accounting.models import GeneralLedgerAccount
-from accounting.tests.factories import (DivisionCodeFactory,
-                                        GeneralLedgerAccountFactory,
-                                        RevenueCodeFactory)
 from django.urls import reverse
+
+from accounting.models import GeneralLedgerAccount
+from accounting.tests.factories import (
+    DivisionCodeFactory,
+    GeneralLedgerAccountFactory,
+    RevenueCodeFactory,
+)
 
 pytestmark = pytest.mark.django_db
 
