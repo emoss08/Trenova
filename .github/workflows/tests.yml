@@ -49,7 +49,7 @@ jobs:
           pip install tox tox-gh-actions
 
       - name: Test with tox
-        run: tox -vv
+        run: cd server && tox -vv
         env:
           SECRET_KEY: 69tgugtg%^fgJO&*&
           DB_NAME: postgres
