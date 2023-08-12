@@ -31,14 +31,14 @@ class CustomerDiffResponse(typing.TypedDict):
 
 
 class CustomerOnTimePerfResponse(typing.TypedDict):
-    this_month_on_time_percentage: int
-    last_month_on_time_percentage: int
+    this_month_on_time_percentage: float
+    last_month_on_time_percentage: float
     on_time_diff: float
-    this_month_early_percentage: int
-    last_month_early_percentage: int
+    this_month_early_percentage: float
+    last_month_early_percentage: float
     early_diff: float
-    this_month_late_percentage: int
-    last_month_late_percentage: int
+    this_month_late_percentage: float
+    last_month_late_percentage: float
     late_diff: float
 
 

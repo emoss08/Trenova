@@ -599,7 +599,7 @@ def untransfer_orders(request: Request) -> Response:
             invoice_number__in=invoice_numbers_list
         )
         services.untransfer_order_service(
-            invoices=billing_queues, task_id=request.user.id, user_id=request.user.id
+            invoices=billing_queues, task_id=str(request.user.id), user_id=request.user.id
         )
         return Response(
             {"success": "Orders untransferred successfully."}, status=status.HTTP_200_OK
@@ -608,10 +608,3 @@ def untransfer_orders(request: Request) -> Response:
         return Response(
             {"error": "Invoice numbers not found."}, status=status.HTTP_404_NOT_FOUND
         )
-
-
-class BillingClientManagerView(views.APIView):
-    def get(self, request: Request) -> Response:
-        pass
-        # r = redis.StrictRedis(host=)
-        # r.set("foo", "bar")

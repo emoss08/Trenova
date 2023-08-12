@@ -18,6 +18,7 @@ from typing import Any
 from django.apps import apps
 from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import cache
+from django.db.models import Model, CombinedExpression
 from rest_framework import pagination, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -30,7 +31,7 @@ class CustomPageNumberPagination(pagination.PageNumberPagination):
     def get_paginated_response(self, data):
         return Response(
             {
-                "pages": self.page.paginator.num_pages,
+                "pages": self.page.paginator.num_pages if self.page else 1,
                 "next": self.get_next_link(),
                 "previous": self.get_previous_link(),
                 "results": data,
@@ -49,19 +50,6 @@ class SearchView(APIView):
     """
 
     def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Handle GET request on the SearchView.
-
-        Args:
-            request (Request): The request from the client. Must include 'term'
-            in the query parameters.
-            *args (Any): Variable length argument list.
-            **kwargs (Any): Arbitrary keyword arguments.
-
-        Returns:
-            Response: The search results, paginated if applicable, or an error
-            message if the search term is not properly formatted or if the
-            model name is invalid.
-        """
         term = request.query_params.get("term", "")
         if not term or ":" not in term:
             return Response(
@@ -73,7 +61,6 @@ class SearchView(APIView):
         model_name = model_name.strip()
         search_term = search_term.strip()
 
-        # Get the model, serializer, search fields, and display function dynamically
         model_info = searchable_models.get(model_name)
         if not model_info:
             return Response(
@@ -81,27 +68,33 @@ class SearchView(APIView):
             )
 
         app_name, serializer, search_fields, display, path = model_info.values()
-        model = apps.get_model(app_name, model_name)
 
-        # Create a SearchVector for each specified field
+        # Assert types
+        assert isinstance(app_name, str)
+        assert isinstance(search_fields, list)
+        assert callable(display)
+        assert callable(path)
+
+        model: type[Model | Model] = apps.get_model(app_name, model_name)
+
         vectors = [SearchVector(field) for field in search_fields]
 
-        # Combine the vectors
-        vector = vectors.pop()
+        vector: SearchVector | CombinedExpression = vectors.pop()
         for item in vectors:
             vector += item
 
-        # Perform the search
         query = SearchQuery(search_term)
         cache_key = f"search:{model_name}:{search_term}"
         results = cache.get(cache_key)
         if results is None:
+            # Assert organization_id attribute
+            assert hasattr(request.user, "organization_id")
+
             results = model.objects.annotate(search=vector).filter(
-                search=query, organization_id=request.user.organization_id  # type: ignore
+                search=query, organization_id=request.user.organization_id
             )
             cache.set(cache_key, results, 60 * 5)  # Cache the results for 5 minutes
 
-        # Paginate the results
         paginator = CustomPageNumberPagination()
         page = paginator.paginate_queryset(results, request)
         if page is not None:
@@ -115,7 +108,6 @@ class SearchView(APIView):
             ]
             return paginator.get_paginated_response(data)
 
-        # Serialize the results
         data = [
             {
                 "path": path(result),

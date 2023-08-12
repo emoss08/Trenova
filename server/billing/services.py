@@ -200,13 +200,13 @@ def transfer_to_billing_queue_service(
 
 
 def mass_order_billing_service(
-    *, user_id: "ModelUUID", task_id: str | uuid.UUID
+    *, user_id: "ModelUUID", task_id: str
 ) -> None:
     """Process the billing for multiple orders.
 
     Args:
         user_id (ModelUUID): The ID of the user initiating the mass billing.
-        task_id (str | uuid.UUID): The ID of the task that initiated the mass billing.
+        task_id (str): The ID of the task that initiated the mass billing.
 
     Returns:
         None: This function does not return anything.

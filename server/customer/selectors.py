@@ -297,9 +297,9 @@ def get_customer_on_time_performance_diff(
 
         if total_stops == 0:
             stop_percentages[month] = {
-                "on_time_percentage": 0,
-                "early_percentage": 0,
-                "late_percentage": 0,
+                "on_time_percentage": 0.0,
+                "early_percentage": 0.0,
+                "late_percentage": 0.0,
             }
             continue
 
@@ -335,7 +335,7 @@ def get_customer_on_time_performance_diff(
         / last_month_data["on_time_percentage"]
         * 100
         if last_month_data["on_time_percentage"]
-        else 0,
+        else 0.0,
         "this_month_early_percentage": this_month_data["early_percentage"],
         "last_month_early_percentage": last_month_data["early_percentage"],
         "early_diff": (
@@ -344,7 +344,7 @@ def get_customer_on_time_performance_diff(
         / last_month_data["early_percentage"]
         * 100
         if last_month_data["early_percentage"]
-        else 0,
+        else 0.0,
         "this_month_late_percentage": this_month_data["late_percentage"],
         "last_month_late_percentage": last_month_data["late_percentage"],
         "late_diff": (
@@ -353,7 +353,7 @@ def get_customer_on_time_performance_diff(
         / last_month_data["late_percentage"]
         * 100
         if last_month_data["late_percentage"]
-        else 0,
+        else 0.0,
     }
 
 

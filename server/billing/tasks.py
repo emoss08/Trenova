@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+import uuid
 from typing import TYPE_CHECKING
 
 from celery import shared_task
@@ -68,7 +68,7 @@ def automate_mass_order_billing(self: "Task") -> str:
     for organization in organizations:
         try:
             services.mass_order_billing_service(
-                user_id=system_user.id, task_id=self.request.id
+                user_id=system_user.id, task_id=str(self.request.id)
             )
             results.append(
                 f"Automated Mass Billing Task for {organization.name} was successful."
@@ -113,7 +113,7 @@ def transfer_to_billing_task(
 
     try:
         services.transfer_to_billing_queue_service(
-            user_id=user_id, order_pros=order_pros, task_id=self.request.id
+            user_id=user_id, order_pros=order_pros, task_id=str(self.request.id)
         )
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
@@ -147,7 +147,7 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
     try:
         if invoice := selectors.get_invoice_by_id(invoice_id=invoice_id):
             services.bill_orders(
-                invoices=invoice, user_id=user_id, task_id=self.request.id
+                invoices=invoice, user_id=user_id, task_id=str(self.request.id)
             )
         else:
             return None
@@ -176,6 +176,6 @@ def mass_order_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
         ObjectDoesNotExist: If the Order does not exist in the database.
     """
     try:
-        services.mass_order_billing_service(user_id=user_id, task_id=self.request.id)
+        services.mass_order_billing_service(user_id=user_id, task_id=str(self.request.id))
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
