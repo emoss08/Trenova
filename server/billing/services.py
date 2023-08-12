@@ -147,9 +147,6 @@ def transfer_to_billing_queue_service(
     # Get the current time
     now = timezone.now()
 
-    # Create a list of BillingLogEntry objects
-    log_entries = []
-
     # Loop through the orders and create a BillingQueue object for each
     for order in orders:
         try:
@@ -166,18 +163,16 @@ def transfer_to_billing_queue_service(
             order.billing_transfer_date = now
 
             # Create a BillingLogEntry object
-            log_entries.append(
-                models.BillingLogEntry(
-                    content_type=ContentType.objects.get_for_model(order),
-                    task_id=task_id,
-                    organization=order.organization,
-                    business_unit=order.business_unit,
-                    order=order,
-                    customer=order.customer,
-                    action="TRANSFERRED",
-                    actor=user,
-                    object_pk=get_pk_value(instance=order),
-                )
+            models.BillingLogEntry.objects.create(
+                content_type=ContentType.objects.get_for_model(order),
+                task_id=task_id,
+                organization=order.organization,
+                business_unit=order.business_unit,
+                order=order,
+                customer=order.customer,
+                action="TRANSFERRED",
+                actor=user,
+                object_pk=get_pk_value(instance=order),
             )
 
         except* ValidationError as val_error:
@@ -199,9 +194,6 @@ def transfer_to_billing_queue_service(
     Order.objects.bulk_update(
         orders, ["transferred_to_billing", "billing_transfer_date"]
     )
-
-    # Bulk create log entry
-    models.BillingLogEntry.objects.bulk_create(log_entries)
 
     # Return a success message
     return f"Successfully transferred {len(orders)} orders to billing queue."
@@ -346,7 +338,6 @@ def untransfer_order_service(
         invoice.order.transferred_to_billing = False
         invoice.order.billing_transfer_date = None
         invoice.order.save()
-        invoice.delete()
 
         # Create a BillingLogEntry object
         log_entries.append(
@@ -362,6 +353,9 @@ def untransfer_order_service(
                 object_pk=get_pk_value(instance=invoice),
             )
         )
+
+        # Delete invoice after logging
+        invoice.delete()
 
     # Bulk create log entries
     models.BillingLogEntry.objects.bulk_create(log_entries)
