@@ -22,10 +22,13 @@ import { Grid, Tabs } from "@mantine/core";
 import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
 import { ViewCustomerNavbar } from "@/components/customer/ViewCustomerNavbar";
 import { CustomerOverviewTab } from "@/components/customer/_partials/CustomerOverviewTab";
+import { CustomerProfileTab } from "@/components/customer/_partials/CustomerProfileTab";
+import { customerStore as store } from "@/stores/CustomerStore";
 
 export default function ViewCustomer() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = store.use("activeTab");
 
   const { data: customerData, isLoading: isCustomerDataLoading } = useQuery({
     queryKey: ["customer", id],
@@ -51,10 +54,14 @@ export default function ViewCustomer() {
       </Grid.Col>
 
       <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
-        <Tabs defaultValue="overview">
+        <Tabs
+          value={activeTab}
+          onTabChange={setActiveTab}
+          defaultValue="overview"
+        >
           <Tabs.List grow mb={20}>
             <Tabs.Tab value="overview">Overview</Tabs.Tab>
-            <Tabs.Tab value="second">Profiles</Tabs.Tab>
+            <Tabs.Tab value="profile">Profile</Tabs.Tab>
             <Tabs.Tab value="third">Third Tab</Tabs.Tab>
           </Tabs.List>
 
@@ -67,6 +74,13 @@ export default function ViewCustomer() {
                   isLoading={isCustomerDataLoading}
                 />
               )}
+            </Grid.Col>
+          </Tabs.Panel>
+
+          {/** Profiles Tab */}
+          <Tabs.Panel value="profile" pt="xs">
+            <Grid.Col span={12} sm={12} md={12} lg={12} xl={12}>
+              {customerData && <CustomerProfileTab />}
             </Grid.Col>
           </Tabs.Panel>
         </Tabs>
