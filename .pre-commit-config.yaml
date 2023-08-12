@@ -26,8 +26,3 @@ repos:
     hooks:
       - id: pyupgrade
         args: [ --py311-plus ]
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.280'
-    hooks:
-      - id: ruff
-        args: [ --fix, --ignore=E501 ]
