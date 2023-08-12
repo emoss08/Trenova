@@ -18,7 +18,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import QuerySet
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import permissions, status, views, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -599,7 +599,9 @@ def untransfer_orders(request: Request) -> Response:
             invoice_number__in=invoice_numbers_list
         )
         services.untransfer_order_service(
-            invoices=billing_queues, task_id=str(request.user.id), user_id=request.user.id
+            invoices=billing_queues,
+            task_id=str(request.user.id),
+            user_id=request.user.id,
         )
         return Response(
             {"success": "Orders untransferred successfully."}, status=status.HTTP_200_OK

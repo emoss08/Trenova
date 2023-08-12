@@ -22,8 +22,7 @@ from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Field, Model
 from django.db.models.fields.related import ForeignKey
 from django.utils import timezone
-from django.db.models.fields.reverse_related import ForeignObjectRel
-from django.contrib.contenttypes.fields import GenericForeignKey
+
 from billing.models import BillingQueue
 from edi import exceptions, models
 

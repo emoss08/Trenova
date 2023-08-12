@@ -18,7 +18,7 @@ from typing import Any
 from django.apps import apps
 from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.core.cache import cache
-from django.db.models import Model, CombinedExpression
+from django.db.models import CombinedExpression, Model
 from rest_framework import pagination, status
 from rest_framework.request import Request
 from rest_framework.response import Response
