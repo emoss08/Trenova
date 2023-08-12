@@ -17,18 +17,21 @@
 
 from __future__ import annotations
 
+import datetime
 import decimal
 import textwrap
 import uuid
 from typing import Any, final
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
 
+from location.models import Location
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
@@ -645,7 +648,70 @@ class Order(GenericModel):  # type:ignore
         from order.validation import OrderValidation
 
         OrderValidation(order=self)
+
+        # The validate_delivery_slot method will now raise an error directly if the slots don't match.
+        self.validate_delivery_slot(
+            self.origin_appointment_window_start,
+            self.origin_appointment_window_end,
+            self.origin_location,
+        )
+
+        self.validate_delivery_slot(
+            self.destination_appointment_window_start,
+            self.destination_appointment_window_end,
+            self.destination_location,
+        )
+
         super().clean()
+
+    def validate_delivery_slot(
+        self, start_time: datetime, end_time: datetime, location: Location
+    ) -> None:
+        """
+        Validates if a delivery slot is available for a given time interval and location.
+
+        This method checks the existence of a delivery slot during a given timespan and location for a specific
+        customer.
+
+        The customer is attached to the object instance (self). In the absence of matching slots, it raises a
+        ValidationError, indicating that the selected appointment window doesn't match with the customer’s allowed
+        schedule.
+
+        Args:
+            start_time (datetime): The starting point of the time interval for the delivery slot.
+            end_time (datetime): The ending point of the time interval for the delivery slot.
+            location (Location): The location where the delivery should occur.
+
+        Raises:
+            ValidationError: If no delivery slots are found that align with the desired time interval or location.
+        """
+        from customer.models import DeliverySlot
+
+        day_of_week = start_time.weekday()
+        allowed_slots = DeliverySlot.objects.filter(
+            customer=self.customer, day_of_week=day_of_week, location=location
+        )
+
+        # If no slots exist for the customer, simply return without an error.
+        if not allowed_slots.exists():
+            return
+
+        # If none of the allowed slots match the desired time, raise a ValidationError.
+        if not any(
+            (
+                slot.start_time <= start_time.time() <= slot.end_time
+                and slot.start_time <= end_time.time() <= slot.end_time
+                for slot in allowed_slots
+            )
+        ):
+            raise ValidationError(
+                {
+                    "origin_appointment_window_start": _(
+                        "The chosen appointment window for the location is not allowed by the customer. Please try "
+                        "again."
+                    ),
+                }
+            )
 
     def calculate_total(self) -> Any | decimal.Decimal:
         """Calculate the sub_total for an order

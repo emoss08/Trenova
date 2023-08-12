@@ -229,7 +229,8 @@ class OrderValidation:
         ):
             pro_numbers = ", ".join([str(order.pro_number) for order in duplicates])
             self.errors["bol_number"] = _(
-                f"Duplicate BOL Number found in orders with PRO numbers: {pro_numbers}. If this is a new order, please change the BOL Number."
+                f"Duplicate BOL Number found in orders with PRO numbers: {pro_numbers}. If this is a new order, "
+                f"please change the BOL Number."
             )
 
     def validate_order_movements_completed(self) -> None:
@@ -263,7 +264,8 @@ class OrderValidation:
 
             if not in_progress_movements:
                 self.errors["status"] = _(
-                    "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please try again."
+                    "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please "
+                    "try again."
                 )
 
     def validate_location_information_cannot_change_once_order_completed(self) -> None:
