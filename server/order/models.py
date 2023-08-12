@@ -650,22 +650,27 @@ class Order(GenericModel):  # type:ignore
         OrderValidation(order=self)
 
         # The validate_delivery_slot method will now raise an error directly if the slots don't match.
-        self.validate_delivery_slot(
-            self.origin_appointment_window_start,
-            self.origin_appointment_window_end,
-            self.origin_location,
-        )
+        if self.origin_location:
+            self.validate_delivery_slot(
+                self.origin_appointment_window_start,
+                self.origin_appointment_window_end,
+                self.origin_location,
+            )
 
-        self.validate_delivery_slot(
-            self.destination_appointment_window_start,
-            self.destination_appointment_window_end,
-            self.destination_location,
-        )
+        elif self.destination_location:
+            self.validate_delivery_slot(
+                self.destination_appointment_window_start,
+                self.destination_appointment_window_end,
+                self.destination_location,
+            )
 
         super().clean()
 
     def validate_delivery_slot(
-        self, start_time: datetime, end_time: datetime, location: Location
+        self,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        location: Location,
     ) -> None:
         """
         Validates if a delivery slot is available for a given time interval and location.
