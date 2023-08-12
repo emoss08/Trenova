@@ -19,10 +19,13 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+
 from accounting.tests.factories import RevenueCodeFactory
-from billing.tests.factories import (AccessorialChargeFactory,
-                                     ChargeTypeFactory,
-                                     DocumentClassificationFactory)
+from billing.tests.factories import (
+    AccessorialChargeFactory,
+    ChargeTypeFactory,
+    DocumentClassificationFactory,
+)
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerBillingProfileFactory, CustomerFactory
 from order.tests.factories import OrderFactory, OrderTypeFactory

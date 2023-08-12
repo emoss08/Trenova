@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+
 from location import factories, models
 
 pytestmark = pytest.mark.django_db

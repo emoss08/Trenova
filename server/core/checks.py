@@ -21,14 +21,15 @@ import socket
 from timeit import default_timer as timer
 
 from celery.exceptions import TaskRevokedError, TimeoutError
-from core.tasks import add
 from django.conf import settings
 from django.core.cache import BaseCache, caches
 from django.core.files.base import ContentFile
 from django.core.files.storage import Storage, get_storage_class
 from django.db import DatabaseError, connections
-from kafka.managers import KafkaManager
 from redis import exceptions, from_url
+
+from core.tasks import add
+from kafka.managers import KafkaManager
 from utils.types import DiskUsage, HealthStatus, HealthStatusAndTime
 
 host = socket.gethostname()

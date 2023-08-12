@@ -18,10 +18,13 @@
 from datetime import timedelta
 
 import pytest
-from commodities.factories import CommodityFactory, HazardousMaterialFactory
-from dispatch.factories import FleetCodeFactory
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from rest_framework.response import Response
+from rest_framework.test import APIClient
+
+from commodities.factories import CommodityFactory, HazardousMaterialFactory
+from dispatch.factories import FleetCodeFactory
 from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements import models, services
@@ -29,8 +32,6 @@ from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
-from rest_framework.response import Response
-from rest_framework.test import APIClient
 from worker.factories import WorkerFactory
 from worker.models import Worker
 

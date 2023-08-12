@@ -17,6 +17,7 @@
 
 import pytest
 from django.core.exceptions import ValidationError
+
 from organization.models import Organization
 
 pytestmark = pytest.mark.django_db

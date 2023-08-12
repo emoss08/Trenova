@@ -26,6 +26,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
+
 from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices
 

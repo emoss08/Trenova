@@ -53,7 +53,7 @@ by checking out our roadmap at <https://github.com/Monta-Application/Monta/blob/
 
 ## Prerequisites
 
-- Python 3.10+ or latest
+- Python 3.11+ or latest
 - PostgreSQL 12+ (no plans to support other databases)
 - Kafka 3.4.0+ (optional, required for some features)
 - Zookeeper 3.7.1+ (required for Kafka)

@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from accounts import models
 from rest_framework import permissions, views
 from rest_framework.request import Request
+
+from accounts import models
 
 
 class ViewAllUsersPermission(permissions.BasePermission):
