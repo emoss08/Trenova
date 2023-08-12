@@ -667,7 +667,10 @@ class Order(GenericModel):  # type:ignore
         super().clean()
 
     def validate_delivery_slot(
-        self, start_time: datetime.datetime, end_time: datetime.datetime, location: Location
+        self,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        location: Location,
     ) -> None:
         """
         Validates if a delivery slot is available for a given time interval and location.

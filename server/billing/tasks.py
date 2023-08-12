@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import uuid
 from typing import TYPE_CHECKING
 
 from celery import shared_task
@@ -176,6 +175,8 @@ def mass_order_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
         ObjectDoesNotExist: If the Order does not exist in the database.
     """
     try:
-        services.mass_order_billing_service(user_id=user_id, task_id=str(self.request.id))
+        services.mass_order_billing_service(
+            user_id=user_id, task_id=str(self.request.id)
+        )
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc

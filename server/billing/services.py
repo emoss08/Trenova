@@ -199,9 +199,7 @@ def transfer_to_billing_queue_service(
     return f"Successfully transferred {len(orders)} orders to billing queue."
 
 
-def mass_order_billing_service(
-    *, user_id: "ModelUUID", task_id: str
-) -> None:
+def mass_order_billing_service(*, user_id: "ModelUUID", task_id: str) -> None:
     """Process the billing for multiple orders.
 
     Args:
