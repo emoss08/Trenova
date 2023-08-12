@@ -16,10 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 
 
-from accounts import models
 from django.utils import timezone
 from rest_framework import HTTP_HEADER_ENCODING, authentication, exceptions
 from rest_framework.request import Request
+
+from accounts import models
 
 
 def get_authorization_header(request: Request) -> bytes:

@@ -19,9 +19,11 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from django.utils import timezone
+from rest_framework.test import APIClient
+
 from accounting.tests.factories import RevenueCodeFactory
 from customer.factories import CustomerFactory
-from django.utils import timezone
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
@@ -29,7 +31,6 @@ from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.tests.factories import OrderFactory, OrderTypeFactory
 from organization.models import Organization
-from rest_framework.test import APIClient
 from stops import models
 from stops.tests.factories import StopFactory
 

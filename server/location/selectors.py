@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 
 from django.db.models import Avg, ExpressionWrapper, F, QuerySet
 from django.db.models.fields import DurationField
+
 from location import models
 
 if TYPE_CHECKING:

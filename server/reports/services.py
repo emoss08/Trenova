@@ -24,6 +24,7 @@ from django.utils import timezone
 from django_celery_beat.models import PeriodicTask
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
+
 from reports import exceptions, models, utils
 
 

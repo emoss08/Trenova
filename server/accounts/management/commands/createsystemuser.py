@@ -18,10 +18,11 @@
 import re
 from typing import Any
 
-from accounts.models import JobTitle, User, UserProfile
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 from django.db.transaction import atomic
+
+from accounts.models import JobTitle, User, UserProfile
 from organization.models import BusinessUnit, Organization
 from utils.helpers import get_or_create_business_unit
 

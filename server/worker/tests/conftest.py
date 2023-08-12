@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
 from accounts.models import User
 from dispatch.factories import CommentTypeFactory, FleetCodeFactory
 from organization.models import Organization

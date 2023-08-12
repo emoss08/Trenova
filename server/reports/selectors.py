@@ -19,10 +19,12 @@ from typing import TYPE_CHECKING
 
 from auditlog.models import LogEntry
 from django.db.models import Q
+
 from reports import models
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
+
     from utils.types import ModelUUID
 
 

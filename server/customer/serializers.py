@@ -18,12 +18,14 @@
 from typing import Any
 
 from customer import models
-from customer.selectors import (calculate_customer_total_miles,
-                                get_customer_credit_balance,
-                                get_customer_on_time_performance_diff,
-                                get_customer_order_diff,
-                                get_customer_revenue_diff,
-                                get_customer_shipment_metrics)
+from customer.selectors import (
+    calculate_customer_total_miles,
+    get_customer_credit_balance,
+    get_customer_on_time_performance_diff,
+    get_customer_order_diff,
+    get_customer_revenue_diff,
+    get_customer_shipment_metrics,
+)
 from utils.serializers import GenericSerializer
 
 

@@ -18,11 +18,12 @@ import re
 from functools import reduce
 from typing import Any
 
-from billing.models import BillingQueue
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Field, Model
 from django.db.models.fields.related import ForeignKey
 from django.utils import timezone
+
+from billing.models import BillingQueue
 from edi import exceptions, models
 
 

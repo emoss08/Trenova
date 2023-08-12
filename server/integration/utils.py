@@ -20,6 +20,7 @@ along with Monta.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Any
 
 from django.db.models.base import ModelBase
+
 from integration.models import Integration
 
 

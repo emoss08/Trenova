@@ -30,9 +30,9 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
+
 from location.models import Location
-from utils.models import (ChoiceField, GenericModel, RatingMethodChoices,
-                          StatusChoices)
+from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
 
 User = settings.AUTH_USER_MODEL
 
@@ -592,8 +592,10 @@ class Order(GenericModel):  # type:ignore
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         from dispatch.services import transfer_rate_details
-        from stops.selectors import (get_total_piece_count_by_order,
-                                     get_total_weight_by_order)
+        from stops.selectors import (
+            get_total_piece_count_by_order,
+            get_total_weight_by_order,
+        )
 
         if self.auto_rate:
             transfer_rate_details(order=self)

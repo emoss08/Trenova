@@ -18,13 +18,14 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from rest_framework.test import APIClient
+
 from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements.tests.factories import MovementFactory
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import Organization
-from rest_framework.test import APIClient
 from worker.factories import WorkerFactory
 from worker.models import Worker
 

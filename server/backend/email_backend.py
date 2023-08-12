@@ -21,6 +21,7 @@ from smtplib import SMTPException
 from django.core.mail.backends.base import BaseEmailBackend
 from django.core.mail.message import EmailMessage
 from django.db import transaction
+
 from organization.models import EmailLog
 
 

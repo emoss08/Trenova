@@ -19,6 +19,7 @@ from unittest.mock import patch
 
 import pytest
 from celery.exceptions import Retry
+
 from core.tasks import delete_audit_log_records
 
 

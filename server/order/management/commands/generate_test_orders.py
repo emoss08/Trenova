@@ -19,17 +19,18 @@ import string
 from datetime import timedelta
 from typing import Any
 
-from accounts.models import JobTitle, User
-from customer.models import Customer
 from django.core.management import BaseCommand
 from django.core.management.base import CommandParser
 from django.db import transaction
 from django.utils import timezone
+from rich.progress import Progress
+
+from accounts.models import JobTitle, User
+from customer.models import Customer
 from equipment.models import EquipmentType
 from location.models import Location
 from order.models import Order, OrderType
 from organization.models import Organization
-from rich.progress import Progress
 from utils.helpers import get_or_create_business_unit
 
 DESCRIPTION = "GENERATED FROM CREATE TEST ORDERS COMMAND"

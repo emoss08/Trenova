@@ -14,8 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from billing import consumers
 from django.urls import re_path
+
+from billing import consumers
 from organization.consumers import KeepAliveConsumer, LogoutConsumer
 from reports.consumers import NotificationConsumer
 

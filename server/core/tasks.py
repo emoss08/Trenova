@@ -18,11 +18,12 @@
 import datetime
 from typing import TYPE_CHECKING
 
-from backend.celery import app
 from celery import shared_task
-from core.exceptions import CommandCallException
 from django.core.management import call_command
 from django.utils import timezone
+
+from backend.celery import app
+from core.exceptions import CommandCallException
 
 if TYPE_CHECKING:
     from celery.app.task import Task
