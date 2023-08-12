@@ -137,7 +137,7 @@ export const ThemeSwitcher: React.FC = () => {
           className={classes.mainLinkIcon}
         />
       );
-    } 
+    }
     return (
       <FontAwesomeIcon
         size="lg"
@@ -145,7 +145,7 @@ export const ThemeSwitcher: React.FC = () => {
         className={classes.mainLinkIcon}
       />
     );
-    
+
   };
 
   return (

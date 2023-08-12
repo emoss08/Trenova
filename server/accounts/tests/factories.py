@@ -17,7 +17,6 @@
 import secrets
 
 import factory
-
 from accounts.models import Token, User
 from organization.models import BusinessUnit, Organization
 

@@ -67,9 +67,14 @@ by checking out our roadmap at <https://github.com/Monta-Application/Monta/blob/
 
 ### Frontend
 
+#### If you like any of these project feel free to give them a star or sponsor them on GitHub
+
 - [React](https://reactjs.org/)
 - [Mantine](https://mantine.dev/)
+- [Mantine React Table](https://www.mantine-react-table.com/)
 - [React Query](https://react-query.tanstack.com/)
+- [React Router](https://reactrouter.com/)
+- [Font Awesome](https://fontawesome.com/)
 
 ### Backend
 
@@ -79,6 +84,7 @@ by checking out our roadmap at <https://github.com/Monta-Application/Monta/blob/
 - [PostgreSQL](https://www.postgresql.org/)
 - [Kafka](https://kafka.apache.org/)
 - [Zookeeper](https://zookeeper.apache.org/)
+- [Debezium](https://debezium.io/)
 - [Redis](https://redis.io/)
 - [Celery](https://docs.celeryq.dev/en/stable/getting-started/introduction.html)
 

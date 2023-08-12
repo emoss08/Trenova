@@ -19,19 +19,18 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from django.urls import reverse
-from django.utils import timezone
-from rest_framework.test import APIClient
-
 from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories
 from dispatch.models import Rate
+from django.urls import reverse
+from django.utils import timezone
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from order.tests.factories import OrderTypeFactory
 from organization.models import Organization
+from rest_framework.test import APIClient
 from utils.models import RatingMethodChoices
 
 pytestmark = pytest.mark.django_db

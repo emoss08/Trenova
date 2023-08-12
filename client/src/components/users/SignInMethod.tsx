@@ -70,7 +70,7 @@ export const SignInMethod: React.FC<Props> = ({ user }) => {
           color="blue"
           icon={faShieldCheck}
           title="Secure your account"
-          message={`Two-factor authentication adds an extra layer of security to your account. 
+          message={`Two-factor authentication adds an extra layer of security to your account.
             To log in, in addition you'll need to provide a 6 digit code`}
           buttonText="Enable"
           withButton

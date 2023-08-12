@@ -16,12 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 
 from organization.models import TableChangeAlert
-from organization.services.psql_triggers import (
-    check_trigger_exists,
-    create_insert_trigger,
-    create_update_trigger,
-    drop_trigger_and_function,
-)
+from organization.services.psql_triggers import (check_trigger_exists,
+                                                 create_insert_trigger,
+                                                 create_update_trigger,
+                                                 drop_trigger_and_function)
 from utils.types import ModelUUID
 
 ACTION_NAMES = {

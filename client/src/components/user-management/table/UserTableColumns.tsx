@@ -88,9 +88,9 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => [
     accessorFn: (row) => {
       if (row.date_joined) {
         return formatDateToHumanReadable(row.date_joined);
-      } 
+      }
       return null;
-        
+
     },
     Cell: ({ row }) => {
       if (!row.original.date_joined) {
@@ -106,9 +106,9 @@ export const UserTableColumns = (): MRT_ColumnDef<User>[] => [
     accessorFn: (row) => {
       if (row.last_login) {
         return formatDateToHumanReadable(row.last_login);
-      } 
+      }
       return null;
-        
+
     },
     Cell: ({ renderedCellValue, row }) => {
       if (!row.original.last_login) {

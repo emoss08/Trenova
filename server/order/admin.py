@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
-
 from order import models
 from utils.admin import GenericAdmin, GenericStackedInline
 

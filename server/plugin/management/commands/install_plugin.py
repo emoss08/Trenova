@@ -20,11 +20,10 @@ import typing
 import zipfile
 from urllib.request import urlretrieve
 
-from django.core.management.base import BaseCommand, CommandParser
-from rich.progress import Progress
-
 from backend.settings import BASE_DIR, INSTALLED_APPS
+from django.core.management.base import BaseCommand, CommandParser
 from plugin.models import Plugin
+from rich.progress import Progress
 
 
 class Command(BaseCommand):

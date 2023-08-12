@@ -16,12 +16,11 @@
 # --------------------------------------------------------------------------------------------------
 from typing import LiteralString
 
-from django.core.mail import send_mail
-from django.utils import timezone
-
 from accounts.models import User
 from billing import exceptions, models
 from customer.models import Customer, CustomerBillingProfile, CustomerContact
+from django.core.mail import send_mail
+from django.utils import timezone
 from movements.models import Movement
 from order.models import Order
 from organization.models import Organization

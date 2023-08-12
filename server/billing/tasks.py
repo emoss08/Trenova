@@ -17,14 +17,13 @@
 
 from typing import TYPE_CHECKING
 
-from celery import shared_task
-from celery_singleton import Singleton
-from django.db.models import QuerySet
-
 from accounts.models import User
 from backend.celery import app
 from billing import selectors, services
+from celery import shared_task
+from celery_singleton import Singleton
 from core.exceptions import ServiceException
+from django.db.models import QuerySet
 from organization.models import Organization
 from utils.types import ModelUUID
 

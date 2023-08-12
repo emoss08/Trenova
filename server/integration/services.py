@@ -17,7 +17,6 @@
 from typing import Any
 
 import googlemaps
-
 from integration import selectors
 from location.models import Location
 from organization.models import Organization

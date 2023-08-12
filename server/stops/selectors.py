@@ -17,7 +17,6 @@
 import decimal
 
 from django.db.models import Sum
-
 from order.models import Order
 from stops.models import Stop
 

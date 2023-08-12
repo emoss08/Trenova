@@ -20,6 +20,10 @@ import uuid
 from typing import Any
 
 import redis
+from accounts.models import User
+from billing import exceptions, models, selectors, utils
+from billing.exceptions import InvalidSessionKeyError
+from billing.models import BillingQueue
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
@@ -27,20 +31,11 @@ from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-
-from accounts.models import User
-from billing import exceptions, models, selectors, utils
-from billing.exceptions import InvalidSessionKeyError
-from billing.models import BillingQueue
 from order.models import Order
 from utils.helpers import get_pk_value
 from utils.services.pdf import UUIDEncoder
-from utils.types import (
-    BilledOrders,
-    BillingClientActions,
-    BillingClientSessionResponse,
-    ModelUUID,
-)
+from utils.types import (BilledOrders, BillingClientActions,
+                         BillingClientSessionResponse, ModelUUID)
 
 logger = logging.getLogger("billing_client")
 
