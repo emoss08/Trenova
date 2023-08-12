@@ -560,6 +560,8 @@ def test_transfer_order_to_billing_queue(
     Test an order is transferred to the billing queue.
     """
 
+    # TODO(Wolfred): Figure out why this test is failing. The transfer item is being created.
+
     # set the order_transfer_criteria on the organization's billing_control
     organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
     organization.billing_control.save()
@@ -583,10 +585,12 @@ def test_transfer_order_to_billing_queue(
         task_id=str(uuid.uuid4()),
     )
 
-    billing_queue = models.BillingQueue.objects.get(order=order)
-    billing_transfer_log = models.BillingTransferLog.objects.get(order=order)
-
     order.refresh_from_db()
+    billing_queue = models.BillingQueue.objects.get(order=order)
+    billing_queue.refresh_from_db()
+
+    billing_log_entry = models.BillingLogEntry.objects.get(order=order)
+    billing_log_entry.refresh_from_db()
 
     assert order.transferred_to_billing
     assert order.billing_transfer_date is not None
@@ -599,8 +603,8 @@ def test_transfer_order_to_billing_queue(
     assert billing_queue.customer == order.customer
     assert billing_queue.bill_type == "INVOICE"
 
-    # Check that the billing_transfer_log was created
-    assert billing_transfer_log
+    # Check that the Billing Log Entry was created
+    assert billing_log_entry.order == order
 
 
 def test_bill_orders(
@@ -643,7 +647,7 @@ def test_bill_orders(
 
     # Bill all the orders, in the billing queue.
     invoices = models.BillingQueue.objects.all()
-    services.bill_orders(user_id=user.id, invoices=invoices)
+    services.bill_orders(user_id=user.id, invoices=invoices, task_id=str(uuid.uuid4()))
 
     # Query the billing history to make sure it was created.
     billing_history = models.BillingHistory.objects.get(order=order)
@@ -712,7 +716,7 @@ def test_single_order_billing_service(
 
     # Bill all the orders, in the billing queue.
     invoice = models.BillingQueue.objects.get(order=order)
-    services.bill_orders(user_id=user.id, invoices=invoice)
+    services.bill_orders(user_id=user.id, invoices=invoice, task_id=str(uuid.uuid4()))
 
     # Query the billing history to make sure it was created.
     billing_history = models.BillingHistory.objects.get(order=order)

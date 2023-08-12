@@ -59,7 +59,7 @@ def test_commodity_is_hazmat_if_hazmat_class(commodity: models.Commodity) -> Non
     """
     Test commodity hazardous material creation
     """
-    assert commodity.is_hazmat is True
+    assert commodity.is_hazmat == "Y"
 
 
 def test_get_commodities(api_client: APIClient) -> None:
