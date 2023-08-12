@@ -18,6 +18,7 @@
 from typing import Any, TypeAlias
 
 from geopy.distance import geodesic
+
 from integration.services import google_distance_matrix_service
 from order.models import Order
 from route import models

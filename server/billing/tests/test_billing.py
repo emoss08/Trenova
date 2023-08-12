@@ -18,6 +18,11 @@
 import uuid
 
 import pytest
+from django.core import mail
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from rest_framework.test import APIClient
+
 from accounts.models import User
 from accounts.tests.factories import UserFactory
 from billing import models, selectors, services
@@ -25,13 +30,9 @@ from billing.services import generate_invoice_number
 from billing.tests.factories import BillingQueueFactory
 from customer.factories import CustomerFactory
 from customer.models import Customer
-from django.core import mail
-from django.core.exceptions import ValidationError
-from django.urls import reverse
 from order.models import Order
 from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
-from rest_framework.test import APIClient
 from utils.models import StatusChoices
 from worker.models import Worker
 

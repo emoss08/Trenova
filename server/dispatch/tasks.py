@@ -18,9 +18,10 @@ from typing import TYPE_CHECKING
 
 from celery import shared_task
 from celery_singleton import Singleton
+from django.core.mail import EmailMessage
+
 from core.exceptions import ServiceException
 from dispatch import selectors
-from django.core.mail import EmailMessage
 from organization.models import NotificationSetting, NotificationType
 from organization.utils import send_email_using_profile
 

@@ -24,6 +24,7 @@ from pathlib import Path
 
 from confluent_kafka import KafkaException, admin
 from environ import environ
+
 from kafka.types import ConsumerGroupMetadata
 
 logger = logging.getLogger(__name__)

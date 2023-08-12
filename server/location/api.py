@@ -17,12 +17,13 @@
 
 from typing import Any
 
-from core.permissions import CustomObjectPermissions
 from django.db.models import Prefetch, QuerySet
-from location import models, selectors, serializers
 from rest_framework import viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
+
+from core.permissions import CustomObjectPermissions
+from location import models, selectors, serializers
 
 
 class LocationCategoryViewSet(viewsets.ModelViewSet):

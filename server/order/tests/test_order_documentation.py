@@ -20,12 +20,13 @@ import shutil
 from pathlib import Path
 
 import pytest
-from billing.models import DocumentClassification
 from django.core.files.uploadedfile import SimpleUploadedFile
-from order import models
-from organization.models import BusinessUnit, Organization
 from rest_framework.response import Response
 from rest_framework.test import APIClient
+
+from billing.models import DocumentClassification
+from order import models
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 

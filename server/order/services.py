@@ -17,12 +17,13 @@
 
 from typing import TYPE_CHECKING
 
-from billing.models import DocumentClassification
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
+from pypdf import PdfMerger
+
+from billing.models import DocumentClassification
 from movements.models import Movement
 from order import models
-from pypdf import PdfMerger
 
 if TYPE_CHECKING:
     from organization.models import Organization

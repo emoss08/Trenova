@@ -14,10 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from core.permissions import CustomObjectPermissions
 from django.db.models import Prefetch, QuerySet
-from equipment import models, serializers
 from rest_framework import viewsets
+
+from core.permissions import CustomObjectPermissions
+from equipment import models, serializers
 
 
 class EquipmentTypeViewSet(viewsets.ModelViewSet):

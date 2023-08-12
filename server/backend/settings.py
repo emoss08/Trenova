@@ -344,60 +344,60 @@ CACHEOPS_DEFAULTS = {
 }
 
 # Logging Configurations
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
-        "verbose": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]"
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-        "file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/billing_client/billing_client.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "kafka_file": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/kafka/listener.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "WARNING",
-    },
-    "loggers": {
-        "billing_client": {
-            "handlers": ["file"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "kafka": {
-            "handlers": ["kafka_file"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": True,
-        },
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+#         "verbose": {
+#             "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]"
+#         },
+#     },
+#     "handlers": {
+#         "console": {
+#             "class": "logging.StreamHandler",
+#         },
+#         "file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/billing_client/billing_client.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "kafka_file": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/kafka/listener.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#     },
+#     "root": {
+#         "handlers": ["console"],
+#         "level": "WARNING",
+#     },
+#     "loggers": {
+#         "billing_client": {
+#             "handlers": ["file"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "kafka": {
+#             "handlers": ["kafka_file"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "django": {
+#             "handlers": ["console"],
+#             "level": "INFO",
+#             "propagate": True,
+#         },
+#     },
+# }
 
 CACHEOPS = {
     "order.ordercontrol": {"ops": "all"},

@@ -18,6 +18,7 @@
 
 from django.contrib import admin
 from django.http import HttpRequest
+
 from organization import models
 from utils.admin import GenericAdmin, GenericStackedInline
 

@@ -17,8 +17,9 @@
 
 from typing import TYPE_CHECKING
 
-from dispatch import models, selectors
 from django.utils import timezone
+
+from dispatch import models, selectors
 from order.models import AdditionalCharge, Order
 from order.selectors import sum_order_additional_charges
 

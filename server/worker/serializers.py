@@ -19,6 +19,7 @@ from typing import Any
 
 from django.db import transaction
 from rest_framework import serializers
+
 from utils.serializers import GenericSerializer
 from worker import models
 

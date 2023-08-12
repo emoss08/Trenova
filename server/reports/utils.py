@@ -17,7 +17,6 @@
 from io import BytesIO
 
 import pandas as pd
-from accounts.models import User
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.apps import apps
@@ -26,13 +25,14 @@ from django.db.models import Model
 from django.shortcuts import get_object_or_404
 from django_celery_beat.models import CrontabSchedule
 from notifications.signals import notify
-from organization.models import Organization
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import (Image, SimpleDocTemplate, Spacer, Table,
-                                TableStyle)
+from reportlab.platypus import Image, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.platypus.para import Paragraph
+
+from accounts.models import User
+from organization.models import Organization
 from reports import exceptions, models
 from reports.helpers import ALLOWED_MODELS
 from utils.types import ModelUUID

@@ -17,6 +17,7 @@
 from typing import TYPE_CHECKING
 
 from django.db import IntegrityError
+
 from movements import models
 from stops.models import Stop
 from utils.models import StopChoices
