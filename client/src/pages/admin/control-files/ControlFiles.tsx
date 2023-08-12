@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React, { Suspense, useEffect, useState } from "react";
 import { Grid, Skeleton } from "@mantine/core";
-import { Suspense, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { controlFileData, NavBar } from "@/components/control-files/NavBar";
 
@@ -26,7 +26,7 @@ function ControlFiles() {
   const initialTabLabel = location.hash.substring(1).replace(/-/g, " ");
   const initialTab =
     controlFileData.find(
-      (tab) => tab.label.toLowerCase() === initialTabLabel
+      (tab) => tab.label.toLowerCase() === initialTabLabel,
     ) || controlFileData[0];
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -35,7 +35,7 @@ function ControlFiles() {
   useEffect(() => {
     const newTabLabel = location.hash.substring(1).replace(/-/g, " ");
     const newTab = controlFileData.find(
-      (tab) => tab.label.toLowerCase() === newTabLabel
+      (tab) => tab.label.toLowerCase() === newTabLabel,
     );
 
     if (newTab) {

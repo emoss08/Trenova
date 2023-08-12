@@ -15,4 +15,4 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export const allowedSearchModels = ["Order", "DivisionCode"]; // List of models
+export const allowedSearchModels = ["Order", "DivisionCode", "Customer"]; // List of models
