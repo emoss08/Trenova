@@ -18,10 +18,9 @@
 from datetime import datetime, timedelta
 
 import pytest
-from django.utils import timezone
-
 from dispatch import models, utils
 from dispatch.factories import FleetCodeFactory
+from django.utils import timezone
 from equipment.tests.factories import TractorFactory
 from order.selectors import get_order_movements, get_order_stops
 from order.tests.factories import OrderFactory

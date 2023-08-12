@@ -135,7 +135,7 @@ export function LinksGroup({
 
   const { userHasPermission } = useUserPermissions();
 
-  const linkItems = useMemo(() => 
+  const linkItems = useMemo(() =>
     links
       ?.map((link) => {
         if (link.subLinks) {

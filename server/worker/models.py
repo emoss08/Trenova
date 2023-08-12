@@ -31,7 +31,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from encrypted_model_fields.fields import EncryptedCharField
 from localflavor.us.models import USStateField, USZipCodeField
-
 from organization.models import Depot
 from utils.models import ChoiceField, GenericModel
 
@@ -391,9 +390,8 @@ class WorkerProfile(GenericModel):
         Raises:
             ValidationError: If the worker profile is not valid.
         """
-        from dispatch.validators.regulatory import (
-            validate_worker_regulatory_information,
-        )
+        from dispatch.validators.regulatory import \
+            validate_worker_regulatory_information
 
         super().clean()
 

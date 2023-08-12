@@ -15,20 +15,12 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from billing.models import (AccessorialCharge, BillingControl,
+                            BillingException, BillingHistory, BillingLogEntry,
+                            BillingQueue, BillingTransferLog, ChargeType,
+                            DocumentClassification)
 from django.contrib import admin
 from django.http import HttpRequest
-
-from billing.models import (
-    AccessorialCharge,
-    BillingControl,
-    BillingException,
-    BillingHistory,
-    BillingLogEntry,
-    BillingQueue,
-    BillingTransferLog,
-    ChargeType,
-    DocumentClassification,
-)
 from utils.admin import GenericAdmin
 
 

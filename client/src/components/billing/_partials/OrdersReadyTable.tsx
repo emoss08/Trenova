@@ -129,14 +129,14 @@ export function OrdersReadyTable({ data, websocketManager }: Props) {
             borderRight: "1px solid rgba(224,224,224,1)",
           },
         };
-      } 
+      }
       return {
         sx: {
           backgroundColor: "rgba(98,235,52,0.25)",
           borderRight: "1px solid rgba(224,224,224,1)",
         },
       };
-      
+
     },
     initialState: {
       showColumnFilters: false,

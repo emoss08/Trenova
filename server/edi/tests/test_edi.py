@@ -16,10 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from django.utils import timezone
-
 from accounts.tests.factories import UserFactory
 from billing.models import BillingQueue
+from django.utils import timezone
 from edi import exceptions, helpers
 from edi.tests import factories
 from order.tests.factories import OrderFactory

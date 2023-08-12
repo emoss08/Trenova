@@ -19,10 +19,9 @@ import json
 from typing import Any
 
 import requests
+from accounts.selectors import get_user_auth_token_from_request
 from django.contrib import admin
 from django.http import HttpRequest, HttpResponse
-
-from accounts.selectors import get_user_auth_token_from_request
 from reports import forms, models
 from utils.admin import GenericAdmin, GenericTabularInline
 

@@ -17,14 +17,13 @@
 
 from typing import Any
 
+from accounts import models
 from django.contrib.auth import authenticate, password_validation
 from django.contrib.auth.models import Group, Permission
 from django.core.mail import send_mail
 from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
-from rest_framework import serializers
-
-from accounts import models
 from organization.models import Organization
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 

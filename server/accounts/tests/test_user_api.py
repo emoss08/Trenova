@@ -17,15 +17,14 @@
 from uuid import UUID
 
 import pytest
-from django.core import mail
-from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from accounts.models import User
 from accounts.serializers import UserSerializer
 from accounts.tests.factories import JobTitleFactory, UserFactory
+from django.core import mail
 from organization.models import BusinessUnit, Organization
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

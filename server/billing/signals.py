@@ -17,11 +17,10 @@
 
 from typing import Any
 
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-
 from billing import models, services, utils
 from billing.selectors import get_billing_queue_information
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 def prevent_delete_on_rate_con_doc_class(

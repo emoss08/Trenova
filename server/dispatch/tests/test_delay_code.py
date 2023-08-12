@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from dispatch import factories, models
 
 pytestmark = pytest.mark.django_db

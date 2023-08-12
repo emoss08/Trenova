@@ -20,7 +20,6 @@ import factory
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from factory.fuzzy import FuzzyDecimal
-
 from utils.models import RatingMethodChoices
 
 

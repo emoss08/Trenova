@@ -19,7 +19,6 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
 from stops import models, services
 from utils.models import StatusChoices
 

@@ -20,7 +20,6 @@ from typing import Any
 
 import pytest
 from django.urls import reverse
-
 from equipment.tests.factories import EquipmentTypeFactory
 
 pytestmark = pytest.mark.django_db

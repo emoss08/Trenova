@@ -15,10 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import viewsets
-
 from core.permissions import CustomObjectPermissions
 from integration import models, serializers
+from rest_framework import viewsets
 
 
 class IntegrationVendorViewSet(viewsets.ModelViewSet):

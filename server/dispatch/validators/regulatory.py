@@ -15,10 +15,9 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+from dispatch.models import DispatchControl
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-
-from dispatch.models import DispatchControl
 from worker.models import WorkerProfile
 
 

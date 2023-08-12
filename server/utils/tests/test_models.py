@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.core.checks import Error
-
 from utils import models
 
 

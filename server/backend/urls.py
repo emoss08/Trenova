@@ -15,17 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.conf import settings
-from django.conf.urls.static import static
-from django.contrib import admin
-from django.urls import include, path
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-)
-from rest_framework_nested import routers
-
 from accounting import api as accounting_api
 from accounts import api as accounts_api
 from billing import api as billing_api
@@ -33,6 +22,12 @@ from commodities import api as commodities_api
 from core import api as core_api
 from customer import api as customer_api
 from dispatch import api as dispatch_api
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+from drf_spectacular.views import (SpectacularAPIView, SpectacularRedocView,
+                                   SpectacularSwaggerView)
 from equipment import api as equipment_api
 from integration import api as integration_api
 from invoicing import api as invoicing_api
@@ -43,6 +38,7 @@ from organization import api as org_api
 from plugin import api as plugin_api
 from reports import api as reports_api
 from reports import views as reports_views
+from rest_framework_nested import routers
 from route import api as route_api
 from stops import api as stops_api
 from worker import api as worker_api

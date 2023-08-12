@@ -15,11 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db.models import QuerySet
-from rest_framework import viewsets
-
 from commodities import models, serializers
 from core.permissions import CustomObjectPermissions
+from django.db.models import QuerySet
+from rest_framework import viewsets
 
 
 class HazardousMaterialViewSet(viewsets.ModelViewSet):

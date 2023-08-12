@@ -16,10 +16,9 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-from rest_framework.test import APIClient
-
 from accounts import models
 from organization.models import BusinessUnit, Organization
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

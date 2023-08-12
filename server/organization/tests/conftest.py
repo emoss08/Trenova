@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from organization.factories import DepotFactory, TableChangeAlertFactory
 
 

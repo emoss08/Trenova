@@ -29,7 +29,6 @@ from confluent_kafka import Consumer, KafkaError, KafkaException, Message
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import QuerySet
-
 from organization import models, selectors
 
 # Logging Configuration

@@ -21,15 +21,11 @@ class BillingException(Exception):
     Base Billing Exception
     """
 
-    pass
-
 
 class BillingClientSessionDoesNotExist(Exception):
     """
     Raised when a billing client session does not exist.
     """
-
-    pass
 
 
 class BillingClientException(Exception):
@@ -37,20 +33,14 @@ class BillingClientException(Exception):
     Billing Client Exception.
     """
 
-    pass
-
 
 class InvalidSessionKeyError(BillingClientException):
     """
     Raised when a billing client session does not exist.
     """
 
-    pass
-
 
 class DuplicateSessionKeyError(BillingClientException):
     """
     Raised when two billing client session keys are the same.
     """
-
-    pass
