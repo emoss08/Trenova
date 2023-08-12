@@ -15,9 +15,8 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from rest_framework import serializers
-
 from location import models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 

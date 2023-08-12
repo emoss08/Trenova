@@ -21,7 +21,6 @@ from django.contrib.sessions.models import Session
 from django.db import connection
 from django.db.models import Q, QuerySet
 from django.utils import timezone
-
 from organization import models
 
 

@@ -20,7 +20,6 @@ import logging
 from typing import Any
 
 from django_celery_beat.models import PeriodicTask
-
 from reports import models, services
 
 logger = logging.getLogger(__name__)

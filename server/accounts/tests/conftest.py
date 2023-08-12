@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-
 from accounts.tests.factories import JobTitleFactory
 
 pytestmark = pytest.mark.django_db

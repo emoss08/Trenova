@@ -21,10 +21,9 @@ from enum import Enum
 from typing import Any, TypeAlias, TypedDict, Union
 from uuid import UUID
 
+from accounts.models import User
 from django.db.models import UUIDField
 from rest_framework.request import Request
-
-from accounts.models import User
 
 ModelUUID: TypeAlias = Union[UUIDField[Union[str, UUID, None], UUID], Any]
 HealthStatus: TypeAlias = Union[dict[str, Union[str, int, int, int]]]

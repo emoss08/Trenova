@@ -18,18 +18,17 @@
 from typing import TYPE_CHECKING
 
 from auditlog.models import LogEntry
+from core.permissions import CustomObjectPermissions
 from django.apps import apps
 from notifications.helpers import get_notification_list
-from rest_framework import exceptions, generics, status, viewsets
-from rest_framework.decorators import api_view
-from rest_framework.request import Request
-from rest_framework.response import Response
-
-from core.permissions import CustomObjectPermissions
 from reports import models, serializers, tasks
 from reports.exceptions import DisallowedModelException
 from reports.helpers import ALLOWED_MODELS
 from reports.selectors import get_audit_logs_by_model_name
+from rest_framework import exceptions, generics, status, viewsets
+from rest_framework.decorators import api_view
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet

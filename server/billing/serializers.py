@@ -16,11 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any
 
-from djmoney.contrib.django_rest_framework import MoneyField
-from rest_framework import serializers
-
 from billing import models
+from djmoney.contrib.django_rest_framework import MoneyField
 from order.models import Order
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 

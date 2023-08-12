@@ -24,7 +24,6 @@ from worker.models import Worker, WorkerHOS
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
-
     from organization.models import Organization
 
 

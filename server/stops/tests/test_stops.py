@@ -18,17 +18,14 @@ import datetime
 from datetime import timedelta
 
 import pytest
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-from django.utils import timezone
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from accounting.models import RevenueCode
 from accounts.models import User
 from customer.models import Customer
 from dispatch.factories import FleetCodeFactory
 from dispatch.models import DispatchControl
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils import timezone
 from equipment.models import EquipmentType
 from equipment.tests.factories import TractorFactory
 from location.models import Location
@@ -36,6 +33,8 @@ from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from order.models import Order, OrderType
 from organization.models import BusinessUnit, Organization
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 from stops import models
 from stops.models import ServiceIncident
 from stops.tests.factories import StopFactory

@@ -14,10 +14,9 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from rest_framework import serializers
-
 from movements.models import Movement
 from order import models
+from rest_framework import serializers
 from utils.serializers import GenericSerializer
 
 

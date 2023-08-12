@@ -22,7 +22,6 @@ from pathlib import Path
 
 import psycopg2
 from environ import environ
-
 from organization.selectors import get_active_table_alerts
 
 # Logging Configuration

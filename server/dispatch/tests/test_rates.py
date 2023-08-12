@@ -19,22 +19,21 @@ import datetime
 import uuid
 
 import pytest
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-from django.utils import timezone
-from pydantic import BaseModel
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.test import APIClient
-
 from billing.tests.factories import AccessorialChargeFactory
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from django.utils import timezone
 from equipment.tests.factories import EquipmentTypeFactory
 from order.tests.factories import OrderTypeFactory
 from organization.models import BusinessUnit, Organization
+from pydantic import BaseModel
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.test import APIClient
 
 pytestmark = pytest.mark.django_db
 

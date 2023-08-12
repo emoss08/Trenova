@@ -17,29 +17,26 @@
 
 from typing import Any
 
+from accounts import models
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.options import IS_POPUP_VAR, csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.admin import sensitive_post_parameters_m
-from django.contrib.auth.forms import (
-    AdminPasswordChangeForm,
-    UserChangeForm,
-    UserCreationForm,
-)
+from django.contrib.auth.forms import (AdminPasswordChangeForm, UserChangeForm,
+                                       UserCreationForm)
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.db.models import QuerySet
 from django.forms.models import ModelForm
-from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import (Http404, HttpRequest, HttpResponse,
+                         HttpResponseRedirect)
 from django.template.response import TemplateResponse
 from django.urls import URLPattern, path, reverse
 from django.utils.html import escape
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-
-from accounts import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 

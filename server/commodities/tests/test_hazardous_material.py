@@ -16,11 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
+from commodities import models
 from django.core.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.test import APIClient
-
-from commodities import models
 
 pytestmark = pytest.mark.django_db
 

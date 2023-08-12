@@ -16,17 +16,12 @@
 # --------------------------------------------------------------------------------------------------
 import uuid
 
+from billing.models import BillingHistory
+from customer.types import (CustomerDiffResponse, CustomerMileageResponse,
+                            CustomerOnTimePerfResponse, OrderDiffResponse)
 from django.db.models import Case, F, FloatField, Max, Q, When
 from django.db.models.aggregates import Sum
 from django.utils import timezone
-
-from billing.models import BillingHistory
-from customer.types import (
-    CustomerDiffResponse,
-    CustomerMileageResponse,
-    CustomerOnTimePerfResponse,
-    OrderDiffResponse,
-)
 from order.models import Order
 from stops.models import Stop
 from utils.models import StatusChoices

@@ -65,7 +65,7 @@ export function formatTimestamp(timestamp: string) {
     return `${diffInMinutes} min${diffInMinutes === 1 ? "" : "s"} ago`;
   } if (diffInHours < 24) {
     return `${diffInHours} hr${diffInHours === 1 ? "" : "s"} ago`;
-  } 
+  }
   return `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`;
-  
+
 }

@@ -16,9 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 from http.cookies import SimpleCookie
 
-from channels.db import database_sync_to_async
-
 from accounts.authentication import BearerTokenAuthentication
+from channels.db import database_sync_to_async
 
 
 class TokenAuthMiddleware:

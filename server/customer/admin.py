@@ -17,9 +17,8 @@
 #  along with Monta.  If not, see <https://www.gnu.org/licenses/>.                                 -
 # --------------------------------------------------------------------------------------------------
 
-from django.contrib import admin
-
 from customer import models
+from django.contrib import admin
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
