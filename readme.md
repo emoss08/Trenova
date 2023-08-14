@@ -62,7 +62,7 @@ by checking out our roadmap at <https://github.com/Monta-Application/Monta/blob/
 - Zookeeper 3.7.1+ (required for Kafka)
 - Debezium 2.3.0+ (required in conjunction with Kafka)
 - Redis 6.0+
-- Node.js (version 14+ or latest)
+- Node.js (version 20+ or latest)
 - npm (Node.js package manager)
 - React 18 (installation instructions can be found in the React documentation)
 
