@@ -22,8 +22,10 @@ from django.db.models.fields import DurationField
 
 from location import models
 
+if TYPE_CHECKING:
+    from utils.types import ModelUUID
 
-def get_location_by_pk(*, location_id: str) -> models.Location | None:
+def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
     try:
         return models.Location.objects.get(pk=location_id)
     except models.Location.DoesNotExist:
