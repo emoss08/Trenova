@@ -526,18 +526,6 @@ class Rate(GenericModel):  # type:ignore
             verbose_name (str): "Rate".
             verbose_name_plural (str): "Rates".
             ordering (list): Orders the Rate instances by the rate_number field.
-
-    Typical Usage:
-    >>> rate = Rate.objects.create(
-        ...     customer=customer,
-        ...     effective_date=timezone.now(),
-        ...     expiration_date=timezone.now() + timedelta(days=30),
-        ...     commodity=commodity,
-        ...     order_type=order_type,
-        ...     equipment_type=equipment_type,
-        ... )
-        >>> rate
-        <Rate: R00001>
     """
 
     id = models.UUIDField(
@@ -678,8 +666,19 @@ class Rate(GenericModel):  # type:ignore
         return reverse("rates-detail", kwargs={"pk": self.pk})
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        """Save method for Rate model.
+
+        Args:
+            *args(Any): Variable length argument list.
+            **kwargs(Any): Arbitrary keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
+        """
         if not self.rate_number:
             self.rate_number = self.generate_rate_number()
+
+        super().save(*args, **kwargs)
 
     def clean(self) -> None:
         """
@@ -707,8 +706,8 @@ class Rate(GenericModel):  # type:ignore
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        code = f"R{Rate.objects.count() + 1:05d}"
-        return "R00001" if Rate.objects.filter(rate_number=code).exists() else code
+        code = f"R{self.__class__.objects.count() + 1:05d}"
+        return "R00001" if self.__class__.objects.filter(rate_number=code).exists() else code
 
 
 class RateBillingTable(GenericModel):  # type:ignore
