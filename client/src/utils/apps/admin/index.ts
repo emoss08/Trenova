@@ -15,8 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  faUserCrown,
+  faBox,
+  faBuildingColumns,
+  faFileInvoiceDollar,
+  faInbox,
+  faTruckFast,
+} from "@fortawesome/pro-duotone-svg-icons";
+import { lazy } from "react";
+import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
+import { NavLinks } from "@/components/ui/NavBar";
 
 /** Links for System Health Navigation Menu */
 export const adminNavLinks = [
@@ -101,3 +111,62 @@ export const adminNavLinks = [
     ],
   },
 ] as LinksGroupProps[];
+
+const BillingControlContent = lazy(
+  () => import("../../../components/control-files/BillingControl"),
+);
+const DispatchControlContent = lazy(
+  () => import("../../../components/control-files/DispatchControl"),
+);
+const InvoiceControlContent = lazy(
+  () => import("../../../components/control-files/InvoiceControl"),
+);
+const OrderControlContent = lazy(
+  () => import("../../../components/control-files/BillingControl"),
+);
+const EmailControlContent = lazy(
+  () => import("../../../components/control-files/EmailControl"),
+);
+const RouteControlContent = lazy(
+  () => import("../../../components/control-files/RouteControl"),
+);
+
+// TODO(Wolfred): Add permissions to control files to restrict access to certain users
+export const controlFileData: NavLinks[] = [
+  {
+    icon: faBuildingColumns,
+    label: "Billing Controls",
+    description: "Control and Monitor Billing Processes",
+    component: BillingControlContent,
+  },
+  {
+    icon: faTruckFast,
+    label: "Dispatch Controls",
+    description: "Manage and Oversee Dispatch Operations",
+    component: DispatchControlContent,
+  },
+  {
+    icon: faFileInvoiceDollar,
+    label: "Invoice Controls",
+    description: "Handle Invoicing and Payment Methods",
+    component: InvoiceControlContent,
+  },
+  {
+    icon: faBox,
+    label: "Order Controls",
+    description: "Administer and Manage Order Procedures",
+    component: OrderControlContent,
+  },
+  {
+    icon: faInbox,
+    label: "Email Controls",
+    description: "Supervise and Modify Email Settings",
+    component: EmailControlContent,
+  },
+  {
+    icon: faRoad,
+    label: "Route Controls",
+    description: "Manage and Optimize Delivery Routes",
+    component: RouteControlContent,
+  },
+];
