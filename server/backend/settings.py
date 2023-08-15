@@ -326,11 +326,11 @@ FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 SPECTACULAR_SETTINGS = {
     "TITLE": "Monta API",
     "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
-    "VERSION": "1.0.0",
+    "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    "ENUM_NAME_OVERRIDES": {
-        "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
-    },
+    # "ENUM_NAME_OVERRIDES": {
+    #     "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
+    # },
 }
 
 # Django Email Backend
