@@ -18,7 +18,6 @@ from multiprocessing import Process
 from typing import Any
 
 from django.core.management import BaseCommand
-from django.db import connection
 
 from kafka import services
 
@@ -28,9 +27,8 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         # Close the existing database connections
-        connection.close()
-
         listener = services.KafkaListener()
+        listener._close_old_connections()
         listener.listen()
         p = Process(target=listener.listen)
         p.start()
