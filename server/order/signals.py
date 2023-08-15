@@ -17,7 +17,6 @@
 
 from typing import Any
 
-
 from movements.models import Movement
 from order import models, services
 from route.services import get_order_mileage
