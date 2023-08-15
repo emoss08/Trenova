@@ -49,20 +49,25 @@ export function AsideMenu() {
   });
 
   return (
-    <Navbar height="100%" width={{ sm: 300 }} p="md" className={classes.navbar}>
+    <Navbar
+      hiddenBreakpoint="sm"
+      height="100%"
+      width={{ sm: 300 }}
+      p="md"
+      zIndex={10}
+      className={classes.navbar}
+    >
       <Group className={classes.header} position="apart">
         <OrganizationLogo />
         <Code sx={{ fontWeight: 700 }}>v0.0.1</Code>
       </Group>
 
       <Navbar.Section className={classes.section}>
-        <>
-          {isUserDataLoading ? (
-            <Skeleton width={rem(300)} height={rem(70)} />
-          ) : (
-            userData && <HeaderUserMenu user={userData} />
-          )}
-        </>
+        {isUserDataLoading ? (
+          <Skeleton width={rem(300)} height={rem(70)} />
+        ) : (
+          userData && <HeaderUserMenu user={userData} />
+        )}
       </Navbar.Section>
 
       <SearchModal />
