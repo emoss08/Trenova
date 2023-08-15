@@ -7,6 +7,9 @@ Welcome to Monta, a comprehensive suite of applications tailored specifically fo
 Click on <a href="#"><strong>Explore the docs »</strong></a> to commence your journey with us.
 </p>
 
+![image](https://github.com/Monta-Application/Monta/assets/66630775/df3bbf5c-aaf9-4771-ae54-bc51557b08df)
+
+
 ## Introduction
 
 Monta presents a robust backend software solution meticulously designed to meet the exigencies of modern-day
@@ -59,7 +62,7 @@ by checking out our roadmap at <https://github.com/Monta-Application/Monta/blob/
 - Zookeeper 3.7.1+ (required for Kafka)
 - Debezium 2.3.0+ (required in conjunction with Kafka)
 - Redis 6.0+
-- Node.js (version 14+ or latest)
+- Node.js (version 20+ or latest)
 - npm (Node.js package manager)
 - React 18 (installation instructions can be found in the React documentation)
 
