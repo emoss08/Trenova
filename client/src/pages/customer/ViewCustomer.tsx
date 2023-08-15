@@ -20,9 +20,9 @@ import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "react-query";
 import { Grid, Tabs } from "@mantine/core";
 import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
-import { ViewCustomerNavbar } from "@/components/customer/ViewCustomerNavbar";
-import { CustomerOverviewTab } from "@/components/customer/_partials/CustomerOverviewTab";
-import { CustomerProfileTab } from "@/components/customer/_partials/CustomerProfileTab";
+import { ViewCustomerNavbar } from "@/components/customer/view/_partials/ViewCustomerNavbar";
+import { CustomerOverviewTab } from "@/components/customer/view/_partials/CustomerOverviewTab";
+import { CustomerProfileTab } from "@/components/customer/view/_partials/CustomerProfileTab";
 import { customerStore as store } from "@/stores/CustomerStore";
 
 export default function ViewCustomer() {
@@ -52,7 +52,6 @@ export default function ViewCustomer() {
           />
         )}
       </Grid.Col>
-
       <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
         <Tabs
           value={activeTab}
@@ -61,8 +60,8 @@ export default function ViewCustomer() {
         >
           <Tabs.List grow mb={20}>
             <Tabs.Tab value="overview">Overview</Tabs.Tab>
-            <Tabs.Tab value="profile">Profile</Tabs.Tab>
-            <Tabs.Tab value="third">Third Tab</Tabs.Tab>
+            <Tabs.Tab value="profile">Profiles</Tabs.Tab>
+            <Tabs.Tab value="third">Analytics</Tabs.Tab>
           </Tabs.List>
 
           {/** Overview Tab */}
@@ -80,7 +79,9 @@ export default function ViewCustomer() {
           {/** Profiles Tab */}
           <Tabs.Panel value="profile" pt="xs">
             <Grid.Col span={12} sm={12} md={12} lg={12} xl={12}>
-              {customerData && <CustomerProfileTab />}
+              {customerData && (
+                <CustomerProfileTab customerId={customerData.id} />
+              )}
             </Grid.Col>
           </Tabs.Panel>
         </Tabs>

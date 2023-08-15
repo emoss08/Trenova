@@ -22,8 +22,10 @@ export interface ApiResponse<T> extends Record<string, unknown> {
   results: T[];
 }
 
+type APIAttrs = "non_field_errors" | "validation_error" | "__all__" | "";
+
 export type APIError = {
   code: string;
   detail: string;
-  attr: string;
+  attr: APIAttrs;
 };

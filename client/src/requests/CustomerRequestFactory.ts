@@ -16,7 +16,13 @@
  */
 
 import axios from "@/lib/AxiosConfig";
-import { Customer } from "@/types/apps/customer";
+import {
+  Customer,
+  CustomerBillingProfile,
+  CustomerBillingProfileFormValues,
+  CustomerEmailProfile,
+  CustomerRuleProfile,
+} from "@/types/apps/customer";
 
 /**
  * Fetches the details of the customer with the specified ID.
@@ -34,8 +40,44 @@ export async function getCustomerDetails(id: string): Promise<Customer> {
  * @returns A promise that resolves to a customer details.
  */
 export async function getCustomerDetailsWithMetrics(
-  id: string
+  id: string,
 ): Promise<Customer> {
   const response = await axios.get(`customers/${id}/?expand_metrics=True`);
   return response.data;
+}
+
+/**
+ * Fetches the details of the customer with the specified ID.
+ * @param id
+ * @returns A promise that resolves to a customer details.
+ */
+export async function getCustomerBillingProfile(
+  id: string,
+): Promise<CustomerBillingProfile> {
+  const response = await axios.get(
+    `customer_billing_profiles/customer_billing_profile_details/?customer_id=${id}`,
+  );
+  return response.data;
+}
+
+/**
+ * Fetches the customer rule profiles from the server.
+ * @returns A promise that resolves to a list of customer rule profiles.
+ */
+export async function getCustomerRuleProfiles(): Promise<
+  CustomerRuleProfile[]
+> {
+  const response = await axios.get("customer_rule_profiles/");
+  return response.data.results;
+}
+
+/**
+ * Fetches the customer email profiles from the server.
+ * @returns A promise that resolves to a list of customer email profiles.
+ */
+export async function getCustomerEmailProfiles(): Promise<
+  CustomerEmailProfile[]
+> {
+  const response = await axios.get("customer_email_profiles/");
+  return response.data.results;
 }

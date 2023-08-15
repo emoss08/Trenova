@@ -18,7 +18,10 @@
 import { ObjectSchema } from "yup";
 import * as Yup from "yup";
 import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
-import { CustomerFormValues } from "@/types/apps/customer";
+import {
+  CustomerBillingProfileFormValues,
+  CustomerFormValues,
+} from "@/types/apps/customer";
 
 export const customerSchema: ObjectSchema<CustomerFormValues> =
   Yup.object().shape({
@@ -36,4 +39,11 @@ export const customerSchema: ObjectSchema<CustomerFormValues> =
     auto_mark_ready_to_bill: Yup.string<YesNoChoiceProps>().required(
       "Auto Mark Ready to Bill is required",
     ),
+  });
+
+export const customerBillingProfileSchema: ObjectSchema<CustomerBillingProfileFormValues> =
+  Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    email_profile: Yup.string().notRequired(),
+    rule_profile: Yup.string().notRequired(),
   });
