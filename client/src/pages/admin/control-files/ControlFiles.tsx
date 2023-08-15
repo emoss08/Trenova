@@ -18,7 +18,8 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { Grid, Skeleton } from "@mantine/core";
 import { useLocation, useNavigate } from "react-router-dom";
-import { controlFileData, NavBar } from "@/components/control-files/NavBar";
+import { NavBar } from "@/components/ui/NavBar";
+import { controlFileData } from "@/utils/apps/admin";
 
 function ControlFiles() {
   const location = useLocation();
@@ -50,6 +51,7 @@ function ControlFiles() {
       <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
         <Suspense fallback={<Skeleton height={400} />}>
           <NavBar
+            data={controlFileData}
             setActiveTab={setActiveTab}
             activeTab={activeTab}
             navigate={navigate}
