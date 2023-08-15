@@ -114,9 +114,14 @@ def test_initial_stop_creation_hook(
     assert movement.stops.count() == 2
 
 
-def test_movement_ref_num_hook(movement: models.Movement) -> None:
-    """
-    Test that a movement reference number is created when a movement is created.
+def test_generate_reference_number(movement: models.Movement) -> None:
+    """Test that a movement reference number is created when a movement is created.
+
+    Args:
+        movement (models.Movement): Movement instance
+
+    Returns:
+        None: This function does not return anything.
     """
     assert movement.ref_num is not None
 
@@ -601,4 +606,26 @@ def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress(
 
     assert excinfo.value.message_dict["status"] == [
         "Cannot change status to `COMPLETED` if any of the stops are in progress or new. Please try again."
+    ]
+
+
+def test_cannot_delete_movement_if_org_disallows(movement: models.Movement) -> None:
+    """Test ValidationError is thrown if a movement is deleted and the organization,
+    does not allow it.
+
+    Args:
+        movement(models.Movement): Movement instance
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    movement.organization.order_control.remove_orders = False
+    movement.organization.order_control.save()
+
+    with pytest.raises(ValidationError) as excinfo:
+        movement.delete()
+
+    assert excinfo.value.message_dict["ref_num"] == [
+        "Organization does not allow Movement removal. Please contact your administrator."
     ]

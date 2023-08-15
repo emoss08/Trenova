@@ -16,29 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_delete, post_save, pre_save
-
-from core.signals import invalidate_cache
 
 
 class DispatchConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "dispatch"
-
-    def ready(self) -> None:
-        from dispatch import signals
-
-        pre_save.connect(
-            signals.set_rate_number,
-            sender="dispatch.Rate",
-            dispatch_uid="set_rate_number",
-        )
-        pre_save.connect(
-            signals.set_charge_amount_on_billing_table,
-            sender="dispatch.RateBillingTable",
-            dispatch_uid="set_charge_amount_on_billing_table",
-        )
-
-        # Dispatch Control cache invalidations
-        post_save.connect(invalidate_cache, sender="dispatch.DispatchControl")
-        post_delete.connect(invalidate_cache, sender="dispatch.DispatchControl")

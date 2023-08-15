@@ -591,11 +591,43 @@ class Order(GenericModel):  # type:ignore
         return textwrap.wrap(self.pro_number, 10)[0]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
+        """Overrides the default Django save method to provide custom save behavior for the Order model.
+
+        Before saving the instance, if the 'pro_number' field is empty, it generates a pro number using the
+        'generate_pro_number' method.
+
+        If 'auto_rate' is true, it retrieves and sets the transfer rate details for this order.
+
+        If the order's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
+        piece count and weight for this order.
+
+        If the 'ready_to_bill' flag is present and 'auto_order_total' setting from the organization order control
+        is set to True, the sub_total is automatically calculated.
+
+        If 'origin_location' or 'destination_location' exists but the corresponding addresses do not, it sets
+        the address using the location's combined address details.
+
+        If the order has a commodity set and the commodity has a minimum and maximum temperature specification,
+        these values will be assigned to the 'temperature_min' and 'temperature_max' fields of the order.
+
+        If the commodity is classified as a hazardous material, the 'hazmat' field of the order is set to True.
+
+        It recalculates the sub_total and other charges before calling super().save() method.
+
+        Note:
+            This function alters the current instance 'self' and saves the changes into the database.
+
+        Returns:
+            None: This function does not return anything.
+        """
         from dispatch.services import transfer_rate_details
         from stops.selectors import (
             get_total_piece_count_by_order,
             get_total_weight_by_order,
         )
+
+        if not self.pro_number:
+            self.pro_number = self.generate_pro_number()
 
         if self.auto_rate:
             transfer_rate_details(order=self)
@@ -640,7 +672,7 @@ class Order(GenericModel):  # type:ignore
         """Order clean method
 
         Returns:
-            None
+            None: This function does not return anyhting.
 
         Raises:
             ValidationError: If the Order is not valid
@@ -657,7 +689,7 @@ class Order(GenericModel):  # type:ignore
                 self.origin_location,
             )
 
-        elif self.destination_location:
+        if self.destination_location:
             self.validate_delivery_slot(
                 self.destination_appointment_window_start,
                 self.destination_appointment_window_end,
@@ -665,6 +697,16 @@ class Order(GenericModel):  # type:ignore
             )
 
         super().clean()
+
+    def generate_pro_number(self) -> str:
+        code = f"ORD{self.__class__.objects.count() + 1:06d}"
+        return (
+            "ORD000001"
+            if self.__class__.objects.filter(
+                pro_number=code, organization=self.organization
+            ).exists()
+            else code
+        )
 
     def validate_delivery_slot(
         self,

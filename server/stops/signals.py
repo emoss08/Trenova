@@ -17,9 +17,6 @@
 
 from typing import Any
 
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-
 from stops import models, services
 from utils.models import StatusChoices
 
@@ -48,33 +45,6 @@ def update_movement_status(instance: models.Stop, **kwargs: Any) -> None:
 
     instance.movement.status = new_status
     instance.movement.save()
-
-
-def check_stop_removal_policy(
-    instance: models.Stop,
-    **kwargs: Any,
-) -> None:
-    """Check if the organization allows order removal.
-
-    If the organization does not allow order removal, throw a ValidationError.
-
-    Args:
-        instance (models.Stop): The instance of the Stop model being saved.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    if instance.organization.order_control.remove_orders is False:
-        raise ValidationError(
-            {
-                "ref_num": _(
-                    "Organization does not allow Stop removal. Please contact your administrator."
-                )
-            },
-            code="invalid",
-        )
 
 
 def create_service_incident(instance: models.Stop, **kwargs: Any) -> None:

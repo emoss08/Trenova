@@ -19,11 +19,13 @@ import textwrap
 import uuid
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from utils.models import ChoiceField, GenericModel, StatusChoices
+from utils.types import ModelDelete
 
 
 class Movement(GenericModel):
@@ -126,6 +128,8 @@ class Movement(GenericModel):
             None: This function does return anything.
         """
         self.set_tractor_and_workers()
+        if not self.ref_num:
+            self.ref_num = self.set_reference_number()
 
         super().save(*args, **kwargs)
 
@@ -138,7 +142,7 @@ class Movement(GenericModel):
         return reverse("movement-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
-        """Stop clean method
+        """Movement clean method
 
         Returns:
             None
@@ -148,7 +152,65 @@ class Movement(GenericModel):
         MovementValidation(movement=self)
         super().clean()
 
+    def delete(self, *args: Any, **kwargs: Any) -> ModelDelete:
+        """Delete method for the Movement
+
+        Args:
+            *args(Any): Arguments
+            **kwargs(Any): Keyword Arguments
+
+        Returns:
+            ModelDelete: tuple[int, dict[str, int]]
+        """
+        if self.organization.order_control.remove_orders is False:
+            raise ValidationError(
+                {
+                    "ref_num": _(
+                        "Organization does not allow Movement removal. Please contact your administrator."
+                    ),
+                },
+                code="invalid",
+            )
+        return super().delete(*args, **kwargs)
+
+    def set_reference_number(self) -> str:
+        """Generate a unique reference number for a Movement instance.
+
+        This function constructs a reference number by appending to the string 'MOV' a zero-padded
+        sequence number determined by the current count of Movement objects plus one.
+
+        This ensures uniqueness in the reference number as it only assigns it if it doesn't exist,
+        otherwise it assigns the default reference number "MOV000001".
+
+        Note:
+            It's highly recommended to run this inside a transaction where the new Movement instance
+            gets created to ensure the count correctly reflects the current total number of instances.
+
+        Returns:
+            str: The unique reference number for the new Movement instance.
+        """
+        code = f"MOV{self.__class__.objects.count() + 1:06d}"
+        return (
+            "MOV000001"
+            if self.__class__.objects.filter(ref_num=code).exists()
+            else code
+        )
+
     def set_tractor_and_workers(self) -> None:
+        """
+        Sets tractor and worker assignments based on certain conditions.
+        This function checks the following:
+        - If a tractor is assigned, it sets the primary and secondary workers of the tractor to the Movement instance,
+        provided that these fields are not already set.
+        - If a primary worker is assigned but not a tractor, it sets the primary tractor of the worker to the Movement instance.
+        This ensures that each Movement instance gets assigned the right tractor and workers.
+
+        Note:
+            This function alters the current instance 'self' and might need to save the instance depending on how it's used.
+
+        Returns:
+            None: This function does not return anything.
+        """
         if self.tractor:
             if self.tractor.primary_worker and not self.primary_worker:
                 self.primary_worker = self.tractor.primary_worker

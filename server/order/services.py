@@ -15,7 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
@@ -24,25 +23,6 @@ from pypdf import PdfMerger
 from billing.models import DocumentClassification
 from movements.models import Movement
 from order import models
-
-if TYPE_CHECKING:
-    from organization.models import Organization
-
-
-def set_pro_number(*, organization: "Organization") -> str:
-    """Generate a unique pro number for an order.
-
-    Returns:
-        str: The pro number for the order.
-    """
-    code = f"ORD{models.Order.objects.count() + 1:06d}"
-    return (
-        "ORD000001"
-        if models.Order.objects.filter(
-            pro_number=code, organization=organization
-        ).exists()
-        else code
-    )
 
 
 def create_initial_movement(*, order: models.Order) -> None:

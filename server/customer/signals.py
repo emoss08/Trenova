@@ -17,28 +17,8 @@
 
 from typing import Any
 
-from customer import models, services
+from customer import models
 from utils.models import PrimaryStatusChoices
-
-
-def generate_customer_code(instance: models.Customer, **kwargs: Any) -> None:
-    """
-    Generate a unique customer code for a new or existing customer instance.
-
-    This function is designed to be used as a Django signal receiver. It will
-    generate a customer code using the CustomerGenerationService and assign it
-    to the instance if it does not already have one.
-
-    Args:
-        instance (models.Customer): The instance of the Customer model for which
-            the code is being generated.
-        **kwargs (Any): Additional keyword arguments passed by the signal.
-
-    Returns:
-        None
-    """
-    if not instance.code:
-        instance.code = services.generate_customer_code(instance=instance)
 
 
 def create_customer_billing_profile(

@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 
 
 class CustomerConfig(AppConfig):
@@ -26,11 +26,6 @@ class CustomerConfig(AppConfig):
     def ready(self) -> None:
         from customer import signals
 
-        pre_save.connect(
-            signals.generate_customer_code,
-            sender="customer.Customer",
-            dispatch_uid="generate_customer_code",
-        )
         post_save.connect(
             signals.create_customer_billing_profile,
             sender="customer.Customer",

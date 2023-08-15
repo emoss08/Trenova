@@ -17,9 +17,6 @@
 
 from typing import Any
 
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-
 from movements import models, services
 from utils.models import StatusChoices
 
@@ -46,16 +43,6 @@ def generate_initial_stops(
         services.create_initial_stops(movement=instance, order=instance.order)
 
 
-def generate_ref_number(instance: models.Movement, **kwargs: Any) -> None:
-    """Generate the ref_num before saving the Movement
-
-    Returns:
-        None
-    """
-    if not instance.ref_num:
-        instance.ref_num = services.set_ref_number()
-
-
 def update_order_status(instance: models.Movement, **kwargs: Any) -> None:
     movements = instance.order.movements.all()
     completed_movements = movements.filter(status=StatusChoices.COMPLETED)
@@ -70,30 +57,3 @@ def update_order_status(instance: models.Movement, **kwargs: Any) -> None:
 
     instance.order.status = new_status
     instance.order.save()
-
-
-def check_movement_removal_policy(
-    instance: models.Movement,
-    **kwargs: Any,
-) -> None:
-    """Check if the organization allows order removal.
-
-    If the organization does not allow order removal throw a ValidationError.
-
-    Args:
-        instance (models.Movement): The instance of the Movement model being saved.
-        **kwargs: Additional keyword arguments.
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    if instance.organization.order_control.remove_orders is False:
-        raise ValidationError(
-            {
-                "ref_num": _(
-                    "Organization does not allow Movement removal. Please contact your administrator."
-                )
-            },
-            code="invalid",
-        )

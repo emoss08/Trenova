@@ -16,16 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_delete, post_save
-
-from core.signals import invalidate_cache
 
 
 class InvoicingConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "invoicing"
-
-    def ready(self) -> None:
-        # Invoice Control cache invalidations
-        post_save.connect(invalidate_cache, sender="invoicing.InvoiceControl")
-        post_delete.connect(invalidate_cache, sender="invoicing.InvoiceControl")

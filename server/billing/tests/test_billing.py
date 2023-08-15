@@ -468,8 +468,8 @@ def test_cannot_delete_billing_history(
     with pytest.raises(ValidationError) as excinfo:
         billing_history.delete()
 
-    assert excinfo.value.message_dict["organization"] == [
-        "Billing history cannot be deleted. Please try again."
+    assert excinfo.value.message_dict["order"] == [
+        "Your Organization disallows the deletion of billing history. Please try again."
     ]
 
 

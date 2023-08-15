@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db import connection, transaction
+from django.db.backends.utils import truncate_name
 
 from utils.types import ModelUUID
 
@@ -43,7 +44,12 @@ def create_insert_field_string(*, fields: list[str]) -> str:
     """
     excluded_fields: list[str] = ["id", "created", "modified", "organization_id"]
     field_strings: list[str] = [
-        f"'{field}', new.{field}" for field in fields if field not in excluded_fields
+        (
+            f"'{truncate_name(field, connection.ops.max_name_length())}',"
+            f" new.{truncate_name(field, connection.ops.max_name_length())}"
+        )
+        for field in fields
+        if field not in excluded_fields
     ]
     return (
         ", ".join(field_strings[:-1])
@@ -160,8 +166,36 @@ def create_insert_trigger(
 
 
 def create_update_field_string(*, fields: list[str]) -> str:
+    """Creates a SQL comparison string that compares the old and new values of specified fields.
+
+    This function receives a list of field names, removes the excluded ones, and for each resulting field
+    creates a SQL comparison that checks if the old value is distinct from the new value.
+
+    The result is a SQL condition formatted as:
+    "(OLD.<field1> IS DISTINCT FROM NEW.<field1> OR OLD.<field2> IS DISTINCT FROM NEW.<field2> ...)"
+
+    Excluded fields: `id`, `created`, `modified`, `organization_id`.
+
+    IMPORTANT NOTE: Be careful with SQL injection risks. Although the truncate_name function is used to sanitize
+                    field names, the list of fields should not directly come from user input or should be thoroughly
+                    reviewed and sanitized.
+
+    Args:
+        fields (list[str]): A list of the names of the fields to be checked for differences.
+
+    Returns:
+        str: A string of SQL comparisons for distinct old and new values of provided fields, separated by OR.
+    """
     excluded: set[str] = {"id", "created", "modified", "organization_id"}
-    return f"({' OR '.join(f'OLD.{f} IS DISTINCT FROM NEW.{f}' for f in fields if f not in excluded)})"
+    comparisons: list[str] = [
+        (
+            f"OLD.{truncate_name(field, connection.ops.max_name_length())} IS DISTINCT FROM "
+            f"NEW.{truncate_name(field, connection.ops.max_name_length())}"
+        )
+        for field in fields
+        if field not in excluded
+    ]
+    return f"({' OR '.join(comparisons)})"
 
 
 @transaction.atomic
@@ -172,19 +206,61 @@ def create_update_function(
     fields: list[str],
     organization_id: ModelUUID,
 ) -> None:
+    """Creates or replaces a PostgreSQL function that can be executed whenever specific trigger events occur.
+
+    This function is specifically designed to be executed by a trigger after an update operation on a table.
+
+    When the function is executed, it sends a JSON object as a PostgreSQL NOTIFY payload. The object contains the
+    field names and their corresponding new values.
+
+    It creates a string representation of database fields for a SQL insert statement and a string representation
+    of a SQL conditional check to be used in the function's comparison clause `IF (TG_OP = 'UPDATE'...)`.
+
+    To ensure data safety and avoid SQL injections, we use Django's `truncate_name` function which truncates
+    the provided name to the max allowed length (depending on your database settings) and adds quotation marks
+    around it.
+
+    IMPORTANT NOTE: fields_string and comparison_string should be constructed in a way that they are safe
+                    from SQL injection. If they are based on user input, they should be thoroughly reviewed and
+                    sanitized.
+
+    This function should be called in a database transaction context.
+
+    Args:
+        listener_name (str): The name of the listener that the function will notify when executed.
+        function_name (str): The name of the function to be created or replaced.
+        fields (list[str]): A list of the names of the fields that the function will include in the notification payload.
+        organization_id (ModelUUID): The UUID of the organization associated with the function.
+
+    Returns:
+        None: This function does not return anything.
+    """
     fields_string: str = create_insert_field_string(fields=fields)
     comparison_string: str = create_update_field_string(fields=fields)
+
+    # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
+    # and is safely quoted.
+    quoted_function_name = truncate_name(
+        function_name, connection.ops.max_name_length()
+    )
+    quoted_listener_name = truncate_name(
+        listener_name, connection.ops.max_name_length()
+    )
+
+    # Note: fields_string and comparison_string should be constructed in a way that they are safe
+    # from SQL injection. If they are based on user input, they should be carefully reviewed and sanitized.
+
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
-                 CREATE or REPLACE FUNCTION {function_name}()
+                 CREATE or REPLACE FUNCTION {quoted_function_name}()
                  RETURNS trigger
                  LANGUAGE 'plpgsql'
                  as $BODY$
                  declare
                  begin
-                     IF (TG_OP = 'UPDATE' AND {comparison_string} AND NEW.organization_id = '{organization_id}') THEN
-                         PERFORM pg_notify('{listener_name}',
+                     IF (TG_OP = 'UPDATE' AND {comparison_string} AND NEW.organization_id = %s) THEN
+                         PERFORM pg_notify(%s,
                          json_build_object(
                              {fields_string}
                          )::text);
@@ -192,7 +268,8 @@ def create_update_function(
                      RETURN NULL;
                  END
                  $BODY$;
-                 """
+                 """,
+            [str(organization_id), quoted_listener_name],
         )
 
 
@@ -205,6 +282,32 @@ def create_update_trigger(
     listener_name: str,
     organization_id: ModelUUID,
 ) -> None:
+    """Creates or replaces a trigger in a PostgreSQL table that executes a specific function whenever an update happens.
+
+    This function uses Django's database and transaction management to:
+
+    1. First call a helper method to get the column names of the table.
+    2. Then create or replace a specified database function with the given column names.
+    3. Afterwards, this will create or replace a trigger on the specified table.
+
+    The trigger will be set up to run `AFTER UPDATE` for every row in the table. Whenever an update event occurs,
+    the trigger runs the specified function.
+
+    To ensure the data safety and avoid SQL injections, we use Django's `truncate_name` which truncates the name
+    to the max allowed length (depending on your database settings) and adds the required quotation marks around it.
+
+    This function must be called in a database transaction context.
+
+    Args:
+        trigger_name (str): The name of the trigger to be created or replaced.
+        table_name (str): The name of the table where the trigger will be placed.
+        function_name (str): The name of the function to be executed when the trigger activates.
+        listener_name (str): The name of the listener associated with the trigger.
+        organization_id (ModelUUID): The UUID of the organization associated with the trigger.
+
+    Returns:
+        None: This function does not return anything.
+    """
     fields: list[str] = table_service.get_column_names(table_name=table_name)
 
     create_update_function(
@@ -214,13 +317,21 @@ def create_update_trigger(
         organization_id=organization_id,
     )
 
+    # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
+    # and is safely quoted.
+    quoted_trigger_name = truncate_name(trigger_name, connection.ops.max_name_length())
+    quoted_table_name = truncate_name(table_name, connection.ops.max_name_length())
+    quoted_function_name = truncate_name(
+        function_name, connection.ops.max_name_length()
+    )
+
     with connection.cursor() as cursor:
         cursor.execute(
             f"""
-            CREATE or REPLACE TRIGGER {trigger_name}
-            AFTER UPDATE ON public.{table_name}
+            CREATE or REPLACE TRIGGER {quoted_trigger_name}
+            AFTER UPDATE ON public.{quoted_table_name}
             FOR EACH ROW
-            EXECUTE PROCEDURE {function_name}();
+            EXECUTE PROCEDURE {quoted_function_name}();
             """
         )
 
@@ -248,17 +359,25 @@ def drop_trigger_and_function(
     trigger = check_trigger_exists(table_name=table_name, trigger_name=trigger_name)
     function = check_function_exists(function_name=function_name)
 
-    if trigger and function:
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""
-            DROP TRIGGER IF EXISTS {trigger_name} ON public.{table_name};
-            DROP FUNCTION IF EXISTS {function_name}();
-            """
-            )
-    else:
+    if not trigger or not function:
         raise ValueError(
             f"Trigger {trigger_name} or function {function_name} does not exist."
+        )
+
+    # Use Django's truncate_name to ensure the name doesn't exceed the database's max name length
+    # and is safely quoted.
+    quoted_trigger_name = truncate_name(trigger_name, connection.ops.max_name_length())
+    quoted_table_name = truncate_name(table_name, connection.ops.max_name_length())
+    quoted_function_name = truncate_name(
+        function_name, connection.ops.max_name_length()
+    )
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"""
+                DROP TRIGGER IF EXISTS {quoted_trigger_name} ON public.{quoted_table_name};
+                DROP FUNCTION IF EXISTS {quoted_function_name}();
+                """
         )
 
 
@@ -278,8 +397,7 @@ def check_trigger_exists(*, table_name: str, trigger_name: str) -> bool:
     """
 
     with connection.cursor() as cursor:
-        query = """
-                    SELECT EXISTS(
+        query = """SELECT EXISTS(
             SELECT 1 FROM information_schema.triggers
             WHERE event_object_table = %s
             AND trigger_name = %s)
@@ -303,11 +421,6 @@ def check_function_exists(*, function_name: str) -> bool:
     """
 
     with connection.cursor() as cursor:
-        query = """
-            SELECT EXISTS (
-                SELECT 1 FROM pg_proc
-                WHERE proname = %s
-            )
-        """
+        query = "SELECT EXISTS (SELECT 1 FROM pg_proc WHERE proname = %s)"
         cursor.execute(query, [function_name])
         return bool(cursor.fetchone()[0])
