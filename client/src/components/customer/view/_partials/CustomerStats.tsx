@@ -15,12 +15,26 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createStyles, SimpleGrid, rem } from "@mantine/core";
-import { OrdersMetric } from "@/components/customer/view/_partials/OrdersMetric";
+import React from "react";
+import {
+  createStyles,
+  SimpleGrid,
+  rem,
+  Paper,
+  Group,
+  Text,
+  Tooltip,
+} from "@mantine/core";
+import {
+  IconArrowDownRight,
+  IconArrowUpRight,
+  IconBox,
+  IconClock,
+  IconCurrencyDollar,
+  IconTruckDelivery,
+} from "@tabler/icons-react";
 import { Customer } from "@/types/apps/customer";
-import { RevenueMetric } from "@/components/customer/view/_partials/RevenueMetric";
-import { PerformanceMetric } from "@/components/customer/view/_partials/PerformanceMetric";
-import { MileageMetric } from "@/components/customer/view/_partials/MileageMetric";
+import { truncateText, USDollarFormat } from "@/lib/utils";
 
 export type CustomerMetricProps = {
   customer: Customer;
@@ -56,6 +70,237 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
+const useStatStyle = createStyles((theme) => ({
+  root: {
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+  },
+
+  value: {
+    fontSize: rem(24),
+    fontWeight: 700,
+    lineHeight: 1,
+    color: theme.colorScheme === "dark" ? "white" : "black",
+  },
+
+  diff: {
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+  },
+
+  icon: {
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[3]
+        : theme.colors.gray[4],
+  },
+
+  title: {
+    fontWeight: 700,
+    textTransform: "uppercase",
+  },
+}));
+
+function RevenueMetric({ customer }: CustomerMetricProps) {
+  const { classes } = useStyles();
+
+  const DiffIcon =
+    customer?.total_revenue_metrics.last_month_diff >
+    customer.total_revenue_metrics.month_before_last_diff
+      ? IconArrowUpRight
+      : IconArrowDownRight;
+
+  return (
+    <Paper withBorder p="md" radius="md" className={classes.root}>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" className={classes.title}>
+          Total Revenue
+        </Text>
+        <IconCurrencyDollar
+          className={classes.icon}
+          size="1.4rem"
+          stroke={1.5}
+        />
+      </Group>
+
+      <Group align="flex-end" spacing="xs" mt={25}>
+        <Tooltip
+          withArrow
+          label={USDollarFormat(customer?.total_revenue_metrics.total_revenue)}
+        >
+          <Text className={classes.value}>
+            {truncateText(
+              USDollarFormat(customer?.total_revenue_metrics.total_revenue),
+              9,
+            )}
+          </Text>
+        </Tooltip>
+
+        <Text
+          color={
+            customer?.total_revenue_metrics.last_month_diff >
+            customer.total_revenue_metrics.month_before_last_diff
+              ? "teal"
+              : "red"
+          }
+          fz="sm"
+          fw={500}
+          className={classes.diff}
+        >
+          <span>{customer?.total_revenue_metrics.last_month_diff}%</span>
+          <DiffIcon size="1rem" stroke={1.5} />
+        </Text>
+      </Group>
+
+      <Text fz="xs" c="dimmed" mt={7}>
+        Compared to previous month
+      </Text>
+    </Paper>
+  );
+}
+
+function PerformanceMetric({ customer }: CustomerMetricProps) {
+  const { classes } = useStatStyle();
+
+  const DiffIcon =
+    customer?.on_time_performance.this_month_on_time_percentage >
+    customer.on_time_performance.last_month_on_time_percentage
+      ? IconArrowUpRight
+      : IconArrowDownRight;
+
+  return (
+    <Paper withBorder p="md" radius="md" className={classes.root}>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" className={classes.title}>
+          On-Time Performance
+        </Text>
+        <IconClock className={classes.icon} size="1.4rem" stroke={1.5} />
+      </Group>
+
+      <Group align="flex-end" spacing="xs" mt={25}>
+        <Text className={classes.value}>
+          {customer.on_time_performance.this_month_on_time_percentage}%
+        </Text>
+
+        <Text
+          color={
+            customer?.on_time_performance.this_month_on_time_percentage >
+            customer.on_time_performance.last_month_on_time_percentage
+              ? "teal"
+              : "red"
+          }
+          fz="sm"
+          fw={500}
+          className={classes.diff}
+        >
+          <span>{customer?.on_time_performance.on_time_diff}%</span>
+          <DiffIcon size="1rem" stroke={1.5} />
+        </Text>
+      </Group>
+
+      <Text fz="xs" c="dimmed" mt={7}>
+        Compared to previous month
+      </Text>
+    </Paper>
+  );
+}
+
+function OrdersMetric({ customer }: CustomerMetricProps) {
+  const { classes } = useStatStyle();
+
+  const DiffIcon =
+    customer?.total_order_metrics.last_month_diff >
+    customer.total_order_metrics.month_before_last_diff
+      ? IconArrowUpRight
+      : IconArrowDownRight;
+
+  return (
+    <Paper withBorder p="md" radius="md" className={classes.root}>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" className={classes.title}>
+          Total Orders
+        </Text>
+        <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
+      </Group>
+
+      <Group align="flex-end" spacing="xs" mt={25}>
+        <Text className={classes.value}>
+          {customer?.total_order_metrics.total_orders}
+        </Text>
+        <Text
+          color={
+            customer?.total_order_metrics.last_month_diff >
+            customer.total_order_metrics.month_before_last_diff
+              ? "teal"
+              : "red"
+          }
+          fz="sm"
+          fw={500}
+          className={classes.diff}
+        >
+          <span>{customer?.total_order_metrics.last_month_diff}%</span>
+          <DiffIcon size="1rem" stroke={1.5} />
+        </Text>
+      </Group>
+
+      <Text fz="xs" c="dimmed" mt={7}>
+        Compared to previous month
+      </Text>
+    </Paper>
+  );
+}
+
+function MileageMetric({ customer }: CustomerMetricProps) {
+  const { classes } = useStatStyle();
+
+  const DiffIcon =
+    customer?.total_mileage_metrics.this_month_miles >
+    customer.total_mileage_metrics.last_month_miles
+      ? IconArrowUpRight
+      : IconArrowDownRight;
+
+  return (
+    <Paper withBorder p="md" radius="md" className={classes.root}>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" className={classes.title}>
+          Total Mileage
+        </Text>
+        <IconTruckDelivery
+          className={classes.icon}
+          size="1.4rem"
+          stroke={1.5}
+        />
+      </Group>
+
+      <Group align="flex-end" spacing="xs" mt={25}>
+        <Text className={classes.value}>
+          {customer.total_mileage_metrics.this_month_miles}
+        </Text>
+
+        <Text
+          color={
+            customer.total_mileage_metrics.this_month_miles >
+            customer.total_mileage_metrics.last_month_miles
+              ? "teal"
+              : "red"
+          }
+          fz="sm"
+          fw={500}
+          className={classes.diff}
+        >
+          <span>{customer.total_mileage_metrics.mileage_diff}%</span>
+          <DiffIcon size="1rem" stroke={1.5} />
+        </Text>
+      </Group>
+
+      <Text fz="xs" c="dimmed" mt={7}>
+        Compared to previous month
+      </Text>
+    </Paper>
+  );
+}
+
 type CustomerStatsProps = {
   customer: Customer;
 };
@@ -72,12 +317,10 @@ export function CustomerStats({ customer }: CustomerStatsProps) {
           { maxWidth: "xs", cols: 1 },
         ]}
       >
-        <>
-          <OrdersMetric customer={customer} />
-          <RevenueMetric customer={customer} />
-          <PerformanceMetric customer={customer} />
-          <MileageMetric customer={customer} />
-        </>
+        <OrdersMetric customer={customer} />
+        <RevenueMetric customer={customer} />
+        <PerformanceMetric customer={customer} />
+        <MileageMetric customer={customer} />
       </SimpleGrid>
     </div>
   );
