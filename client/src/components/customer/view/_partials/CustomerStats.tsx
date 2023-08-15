@@ -16,11 +16,11 @@
  */
 
 import { createStyles, SimpleGrid, rem } from "@mantine/core";
-import { OrdersMetric } from "@/components/customer/_partials/OrdersMetric";
+import { OrdersMetric } from "@/components/customer/view/_partials/OrdersMetric";
 import { Customer } from "@/types/apps/customer";
-import { RevenueMetric } from "@/components/customer/_partials/RevenueMetric";
-import { PerformanceMetric } from "@/components/customer/_partials/PerformanceMetric";
-import { MileageMetric } from "@/components/customer/_partials/MileageMetric";
+import { RevenueMetric } from "@/components/customer/view/_partials/RevenueMetric";
+import { PerformanceMetric } from "@/components/customer/view/_partials/PerformanceMetric";
+import { MileageMetric } from "@/components/customer/view/_partials/MileageMetric";
 
 export type CustomerMetricProps = {
   customer: Customer;

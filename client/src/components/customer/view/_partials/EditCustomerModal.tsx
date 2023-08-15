@@ -16,15 +16,32 @@
  */
 
 import React from "react";
+import { Modal } from "@mantine/core";
 import { customerStore as store } from "@/stores/CustomerStore";
+import { Customer } from "@/types/apps/customer";
+import { EditCustomerModalForm } from "@/components/customer/view/_partials/EditCustomerModalForm";
 
-export function CustomerProfileTab() {
-  // If the active tab is not "profile", then we don't want to render anything.
-  if (store.get("activeTab") !== "profile") return null;
+type EditCustomerModalProps = {
+  customer: Customer;
+};
+
+export function EditCustomerModal({ customer }: EditCustomerModalProps) {
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+
+  if (!showEditModal) return null;
 
   return (
-    <div>
-      <h1>Customer Profile Tab</h1>
-    </div>
+    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
+      <Modal.Overlay />
+      <Modal.Content>
+        <Modal.Header>
+          <Modal.Title>Edit Customer</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body>
+          {customer && <EditCustomerModalForm customer={customer} />}
+        </Modal.Body>
+      </Modal.Content>
+    </Modal.Root>
   );
 }

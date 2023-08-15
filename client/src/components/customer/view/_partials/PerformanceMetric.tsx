@@ -19,9 +19,9 @@ import { createStyles, Group, Paper, rem, Text } from "@mantine/core";
 import {
   IconArrowDownRight,
   IconArrowUpRight,
-  IconTruckDelivery,
+  IconClock,
 } from "@tabler/icons-react";
-import { CustomerMetricProps } from "@/components/customer/CustomerStats";
+import { CustomerMetricProps } from "@/components/customer/view/_partials/CustomerStats";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -55,12 +55,12 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export function MileageMetric({ customer }: CustomerMetricProps) {
+export function PerformanceMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStyles();
 
   const DiffIcon =
-    customer?.total_mileage_metrics.this_month_miles >
-    customer.total_mileage_metrics.last_month_miles
+    customer?.on_time_performance.this_month_on_time_percentage >
+    customer.on_time_performance.last_month_on_time_percentage
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -68,24 +68,20 @@ export function MileageMetric({ customer }: CustomerMetricProps) {
     <Paper withBorder p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
-            Total Mileage
+          On-Time Performance
         </Text>
-        <IconTruckDelivery
-          className={classes.icon}
-          size="1.4rem"
-          stroke={1.5}
-        />
+        <IconClock className={classes.icon} size="1.4rem" stroke={1.5} />
       </Group>
 
       <Group align="flex-end" spacing="xs" mt={25}>
         <Text className={classes.value}>
-          {customer.total_mileage_metrics.this_month_miles}
+          {customer.on_time_performance.this_month_on_time_percentage}%
         </Text>
 
         <Text
           color={
-            customer.total_mileage_metrics.this_month_miles >
-              customer.total_mileage_metrics.last_month_miles
+            customer?.on_time_performance.this_month_on_time_percentage >
+            customer.on_time_performance.last_month_on_time_percentage
               ? "teal"
               : "red"
           }
@@ -93,13 +89,13 @@ export function MileageMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer.total_mileage_metrics.mileage_diff}%</span>
+          <span>{customer?.on_time_performance.on_time_diff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>
 
       <Text fz="xs" c="dimmed" mt={7}>
-          Compared to previous month
+        Compared to previous month
       </Text>
     </Paper>
   );

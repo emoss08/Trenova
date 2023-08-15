@@ -15,13 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createStyles, Group, Paper, rem, Text } from "@mantine/core";
+import { createStyles, Group, Paper, rem, Text, Tooltip } from "@mantine/core";
 import {
   IconArrowDownRight,
   IconArrowUpRight,
-  IconClock,
+  IconCurrencyDollar,
 } from "@tabler/icons-react";
-import { CustomerMetricProps } from "@/components/customer/CustomerStats";
+import { CustomerMetricProps } from "@/components/customer/view/_partials/CustomerStats";
+import { truncateText, USDollarFormat } from "@/lib/utils";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -55,12 +56,12 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export function PerformanceMetric({ customer }: CustomerMetricProps) {
+export function RevenueMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStyles();
 
   const DiffIcon =
-    customer?.on_time_performance.this_month_on_time_percentage >
-    customer.on_time_performance.last_month_on_time_percentage
+    customer?.total_revenue_metrics.last_month_diff >
+    customer.total_revenue_metrics.month_before_last_diff
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -68,20 +69,32 @@ export function PerformanceMetric({ customer }: CustomerMetricProps) {
     <Paper withBorder p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
-            On-Time Performance
+          Total Revenue
         </Text>
-        <IconClock className={classes.icon} size="1.4rem" stroke={1.5} />
+        <IconCurrencyDollar
+          className={classes.icon}
+          size="1.4rem"
+          stroke={1.5}
+        />
       </Group>
 
       <Group align="flex-end" spacing="xs" mt={25}>
-        <Text className={classes.value}>
-          {customer.on_time_performance.this_month_on_time_percentage}%
-        </Text>
+        <Tooltip
+          withArrow
+          label={USDollarFormat(customer?.total_revenue_metrics.total_revenue)}
+        >
+          <Text className={classes.value}>
+            {truncateText(
+              USDollarFormat(customer?.total_revenue_metrics.total_revenue),
+              9,
+            )}
+          </Text>
+        </Tooltip>
 
         <Text
           color={
-            customer?.on_time_performance.this_month_on_time_percentage >
-              customer.on_time_performance.last_month_on_time_percentage
+            customer?.total_revenue_metrics.last_month_diff >
+            customer.total_revenue_metrics.month_before_last_diff
               ? "teal"
               : "red"
           }
@@ -89,13 +102,13 @@ export function PerformanceMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer?.on_time_performance.on_time_diff}%</span>
+          <span>{customer?.total_revenue_metrics.last_month_diff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>
 
       <Text fz="xs" c="dimmed" mt={7}>
-          Compared to previous month
+        Compared to previous month
       </Text>
     </Paper>
   );

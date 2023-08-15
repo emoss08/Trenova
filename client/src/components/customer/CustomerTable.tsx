@@ -20,7 +20,7 @@ import { MontaTable } from "@/components/MontaTable";
 import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
 import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
-import { CustomerTableColumns } from "@/components/customer/CustomerTableColumns";
+import { CustomerTableColumns } from "@/components/customer/_partials/CustomerTableColumns";
 import { customerTableStore } from "@/stores/CustomerStore";
 
 export function CustomerTable() {
