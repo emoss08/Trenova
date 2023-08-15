@@ -689,7 +689,7 @@ class Order(GenericModel):  # type:ignore
                 self.origin_location,
             )
 
-        elif self.destination_location:
+        if self.destination_location:
             self.validate_delivery_slot(
                 self.destination_appointment_window_start,
                 self.destination_appointment_window_end,
