@@ -16,18 +16,45 @@
  */
 
 import React from "react";
-import { MantineReactTable } from "mantine-react-table";
+import { MantineReactTable, MRT_ColumnDef } from "mantine-react-table";
 import { useQuery } from "react-query";
 import { useMantineTheme } from "@mantine/core";
 import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
-import { API_URL } from "@/lib/utils";
+import { API_URL, USDollarFormat } from "@/lib/utils";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
-import { CustomerBillingHistoryTableColumns } from "@/components/customer/view/_partials/CustomerBillingHistoryTableColumns";
+import { BillingHistory } from "@/types/apps/billing";
 
 type Props = {
   id: string;
 };
+
+function CustomerBillingHistoryTableColumns(): MRT_ColumnDef<BillingHistory>[] {
+  return [
+    {
+      accessorKey: "invoice_number",
+      header: "Invoice #",
+    },
+    {
+      accessorKey: "bol_number",
+      header: "BOL #",
+    },
+    {
+      accessorKey: "mileage",
+      header: "Mileage",
+    },
+    {
+      accessorKey: "bill_date",
+      header: "Bill Date",
+    },
+    {
+      id: "total_amount",
+      accessorKey: "total_amount",
+      header: "Total Amount",
+      Cell: ({ cell }) => USDollarFormat(Math.round(cell.getValue() as number)),
+    },
+  ];
+}
 
 export function CustomerBillingHistoryTable({ id }: Props) {
   const theme = useMantineTheme();
