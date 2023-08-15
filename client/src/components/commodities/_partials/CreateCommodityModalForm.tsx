@@ -93,7 +93,7 @@ export function CreateCommodityModalForm({ selectHazmatData }: Props) {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<CommodityFormValues>({
@@ -192,7 +192,7 @@ export function CreateCommodityModalForm({ selectHazmatData }: Props) {
               className={classes.control}
               loading={loading}
             >
-                Submit
+              Submit
             </Button>
           </Group>
         </Box>

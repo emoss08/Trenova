@@ -43,7 +43,6 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
-  console.log(routeControl);
   const mutation = useMutation(
     (values: RouteControlFormValues) =>
       axios.put(`/route_control/${routeControl.id}/`, values),
@@ -84,7 +83,7 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<RouteControlFormValues>({
