@@ -26,18 +26,6 @@ if TYPE_CHECKING:
     from order.models import Order
 
 
-def set_ref_number() -> str:
-    """Generate a unique movement reference number.
-
-    Returns:
-        str: The generated reference number.
-    """
-    code = f"MOV{models.Movement.objects.count() + 1:06d}"
-    return (
-        "MOV000001" if models.Movement.objects.filter(ref_num=code).exists() else code
-    )
-
-
 def create_initial_stops(
     *, movement: models.Movement, order: "Order"
 ) -> tuple[Stop, Stop]:
