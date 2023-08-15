@@ -22,11 +22,13 @@ import uuid
 from typing import Any
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from utils.models import ChoiceField, GenericModel, StatusChoices, StopChoices
+from utils.types import ModelDelete
 
 User = settings.AUTH_USER_MODEL
 
@@ -189,6 +191,39 @@ class Stop(GenericModel):
             width=50,
             placeholder="...",
         )
+
+    def delete(self, *args: Any, **kwargs: Any) -> ModelDelete:
+        """Override default Django delete behaviour by checking if the removal of orders is allowed by the organization.
+
+        Before the stop instance is deleted, this delete function checks if the organization associated with it
+        allows the removal of orders.
+
+        If the removal is not allowed, it raises a ValidationError. Error messages are marked for translation allowing
+        the support of multiple languages and regional dialects.
+
+        If removal is allowed, it proceeds to call super().delete(), which calls the built-in delete method from Django's
+        Model class, and thus, deletes the stop instance.
+
+        Note:
+            It's important to clearly communicate to the user about any deletion operation as it typically
+            cannot be undone.
+
+        Raises:
+            ValidationError: If the stop organization's order control configuration disallows order removal.
+
+        Returns:
+            ModelDelete: The result from the super class delete operation.
+        """
+        if self.organization.order_control.remove_orders is False:
+            raise ValidationError(
+                {
+                    "ref_num": _(
+                        "Organization does not allow Stop removal. Please contact your administrator."
+                    ),
+                },
+                code="invalid",
+            )
+        return super().delete(*args, **kwargs)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Save the stop object

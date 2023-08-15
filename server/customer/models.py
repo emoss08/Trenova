@@ -1,4 +1,19 @@
-#  COPYRIGHT(c) 2023 MONTA
+# --------------------------------------------------------------------------------------------------
+#  COPYRIGHT(c) 2023 MONTA                                                                         -
+#                                                                                                  -
+#  This file is part of Monta.                                                                     -
+#                                                                                                  -
+#  The Monta software is licensed under the Business Source License 1.1. You are granted the right -
+#  to copy, modify, and redistribute the software, but only for non-production use or with a total -
+#  of less than three server instances. Starting from the Change Date (November 16, 2026), the     -
+#  software will be made available under version 2 or later of the GNU General Public License.     -
+#  If you use the software in violation of this license, your rights under the license will be     -
+#  terminated automatically. The software is provided "as is," and the Licensor disclaims all      -
+#  warranties and conditions. If you use this license's text or the "Business Source License" name -
+#  and trademark, you must comply with the Licensor's covenants, which include specifying the      -
+#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
+#  Grant, and not modifying the license in any other way.                                          -
+# --------------------------------------------------------------------------------------------------
 #
 #  This file is part of Monta.
 #
@@ -166,9 +181,8 @@ class Customer(GenericModel):  # type: ignore
             None: This function does return anything.
         """
 
-        # Uppercase the code for the customer if it not already.
-        if self.code and not self.code.isupper():
-            self.code = self.code.upper()
+        if not self.code:
+            self.code = self.generate_customer_code()
 
         super().save(*args, **kwargs)
 
@@ -179,6 +193,27 @@ class Customer(GenericModel):  # type: ignore
             str: Customer url
         """
         return reverse("customer:customer-detail", kwargs={"pk": self.pk})
+
+    def generate_customer_code(self) -> str:
+        """Generate a unique code for a customer instance.
+
+        This function uses the first three characters of the customer's name to form a base for the code.
+        It then appends a zero-padded sequence number derived from the current count of customer objects plus one.
+
+        If the newly formulated code already exists in the database, the base code itself is returned making this function
+        provide a fallback.
+
+        IMPORTANT NOTE:
+            It's highly recommended to run this inside a transaction where the new customer instance gets created
+            to ensure the count correctly reflects the current total number of instances.
+
+        Returns:
+            str: A unique or quasi-unique customer code.
+        """
+        code = self.name[:3].upper()
+        new_code = f"{code}{self.__class__.objects.count() + 1:04d}"
+
+        return new_code if self.__class__.objects.filter(code=code).exists() else code
 
     @cached_property
     def get_address_combination(self) -> str:
@@ -948,6 +983,9 @@ class DeliverySlot(GenericModel):
                 ],
                 name="unique_delivery_slot",
             ),
+
+            # TODO(wolfred): Write test for this check constraint.
+            # Check if start_time is less than end_time
             models.CheckConstraint(
                 check=models.Q(start_time__lt=models.F("end_time")),
                 name="start_time_lt_end_time",

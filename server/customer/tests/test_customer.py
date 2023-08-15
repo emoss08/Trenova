@@ -23,6 +23,8 @@ from customer.factories import CustomerFactory
 
 pytestmark = pytest.mark.django_db
 
+# TODO(Wolfred): I didn't realize I had literally no tests for this.... Let's do that add some point.
+
 
 @pytest.fixture
 def customer() -> Generator[Any, Any, None]:
@@ -52,5 +54,4 @@ def test_customer_code_exists(customer) -> None:
     """
     Test customer code is added from set_code_before_create BEFORE_CREATE hook
     """
-
     assert customer.code is not None

@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save
 
 
 class StopsConfig(AppConfig):
@@ -26,11 +26,6 @@ class StopsConfig(AppConfig):
     def ready(self):
         from stops import signals
 
-        pre_delete.connect(
-            signals.check_stop_removal_policy,
-            sender="stops.Stop",
-            dispatch_uid="check_stop_removal_policy",
-        )
         post_save.connect(
             signals.update_movement_status,
             sender="stops.Stop",

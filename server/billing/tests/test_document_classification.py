@@ -156,7 +156,7 @@ def test_delete(api_client: APIClient, organization) -> None:
     assert response.data is None
 
 
-def test_cannot_delete_con_hook(
+def test_cannot_delete_rate_con_doc_class(
     document_classification: models.DocumentClassification,
 ) -> None:
     """

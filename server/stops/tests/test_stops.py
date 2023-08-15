@@ -503,3 +503,25 @@ def test_first_stop_sets_ship_date(
 
     # Assert: Order has ship date set
     assert order.ship_date == stop_1.arrival_time.date()
+
+
+def test_cannot_delete_stop_if_org_disallows(stop: models.Stop) -> None:
+    """Test ValidationError is thrown if organization `order_control` does
+    not allow order removal.
+
+    Args:
+        stop(Stop): Stop object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    stop.organization.order_control.remove_orders = False
+    stop.organization.order_control.save()
+
+    with pytest.raises(ValidationError) as excinfo:
+        stop.delete()
+
+    assert excinfo.value.message_dict["ref_num"] == [
+        "Organization does not allow Stop removal. Please contact your administrator."
+    ]

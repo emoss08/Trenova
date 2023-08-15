@@ -86,7 +86,7 @@ def test_create_schema() -> None:
         equipment_type_id=uuid.uuid4(),
     )
 
-    rate = rate_create.dict()
+    rate = rate_create.model_dump()
     assert rate is not None
     assert rate["organization_id"] is not None
     assert rate["rate_number"] == "R00001"
@@ -114,7 +114,7 @@ def test_update_schema() -> None:
         equipment_type_id=uuid.uuid4(),
     )
 
-    rate = rate_update.dict()
+    rate = rate_update.model_dump()
     assert rate is not None
     assert rate["id"] is not None
     assert rate["organization_id"] is not None
@@ -262,6 +262,7 @@ def test_rate_api_create(api_client: APIClient, organization: Organization) -> N
     }
 
     response = api_client.post(reverse("rates-list"), data=data)
+
     assert response.status_code == status.HTTP_201_CREATED
     assert models.Rate.objects.count() == 1
     assert models.Rate.objects.get().customer.id == data["customer"]

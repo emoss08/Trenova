@@ -16,22 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_delete, post_save
-
-from core.signals import invalidate_cache
 
 
 class AccountingConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "accounting"
-
-    def ready(self) -> None:
-        # General Ledger Account cache invalidations
-        post_save.connect(
-            invalidate_cache,
-            sender="accounting.GeneralLedgerAccount",
-        )
-        post_delete.connect(
-            invalidate_cache,
-            sender="accounting.GeneralLedgerAccount",
-        )

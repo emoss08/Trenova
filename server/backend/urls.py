@@ -287,7 +287,6 @@ router.register(r"user_reports", reports_api.UserReportViewSet, basename="user_r
 router.register(r"log_entries", reports_api.LogEntryViewSet, basename="log_entries")
 
 urlpatterns = [
-    path("__debug__/", include("debug_toolbar.urls")),
     path("admin/doc/", include("django.contrib.admindocs.urls")),
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
