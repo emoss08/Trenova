@@ -25,6 +25,7 @@ from location import models
 if TYPE_CHECKING:
     from utils.types import ModelUUID
 
+
 def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
     try:
         return models.Location.objects.get(pk=location_id)
