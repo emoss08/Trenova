@@ -229,6 +229,9 @@ class CustomerSerializer(GenericSerializer):
 
         data = super().to_representation(instance)
         data["full_address"] = instance.get_address_combination
+        data["advocate_full_name"] = (
+            instance.advocate.profile.get_full_name if instance.advocate else None
+        )
 
         if self.context["request"].query_params.get("expand_metrics", False):
             data["total_order_metrics"] = get_customer_order_diff(
