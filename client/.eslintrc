@@ -25,7 +25,8 @@
     "sessionStorage": true,
     "localStorage": true,
     "fetch": true,
-    "Headers": true
+    "Headers": true,
+    "navigator": true
   },
   "rules": {
     "prettier/prettier": "error",
