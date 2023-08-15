@@ -25,7 +25,7 @@ export default function Customer() {
 
   return (
     <Flex>
-      <Card className={classes.card}>
+      <Card className={classes.card} withBorder>
         <CustomerTable />
       </Card>
     </Flex>

@@ -76,6 +76,8 @@ export type Customer = {
   on_time_performance: PerformanceMetricType;
   total_mileage_metrics: TotalMileageMetricsType;
   credit_balance: number;
+  advocate?: string | null;
+  advocate_full_name?: string | null;
 };
 
 /** Customer Form Values Type */
@@ -91,4 +93,38 @@ export type CustomerFormValues = Omit<
   | "on_time_performance"
   | "total_mileage_metrics"
   | "credit_balance"
+  | "advocate"
+  | "advocate_full_name"
 >;
+
+/** Customer Billing Profile Type */
+export type CustomerBillingProfile = {
+  id: string;
+  customer: string;
+  status: StatusChoiceProps;
+  email_profile?: string | null;
+  rule_profile?: string | null;
+};
+
+export interface CustomerBillingProfileFormValues
+  extends Omit<CustomerBillingProfile, "id" | "customer"> {}
+
+/** Customer Rule Profile Type */
+export type CustomerRuleProfile = {
+  id: string;
+  name: string;
+  document_class: string[];
+};
+
+/** Customer Email Profile Type */
+export type CustomerEmailProfile = {
+  id: string;
+  name: string;
+  subject: string;
+  comment: string;
+  from_address: string;
+  blind_copy: string;
+  read_receipt: boolean;
+  read_receipt_to: string;
+  attachment_name: string;
+};
