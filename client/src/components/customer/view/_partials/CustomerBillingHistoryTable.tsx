@@ -23,7 +23,7 @@ import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { API_URL } from "@/lib/utils";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
-import { CustomerBillingHistoryTableColumns } from "@/components/customer/CustomerBillingHistoryTableColumns";
+import { CustomerBillingHistoryTableColumns } from "@/components/customer/view/_partials/CustomerBillingHistoryTableColumns";
 
 type Props = {
   id: string;
@@ -95,7 +95,7 @@ export function CustomerBillingHistoryTable({ id }: Props) {
       mantineTableBodyCellProps={() => ({
         sx: {
           backgroundColor:
-                theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+            theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
         },
       })}
       onGlobalFilterChange={(filter: string) => {

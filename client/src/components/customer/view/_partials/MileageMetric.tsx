@@ -19,9 +19,9 @@ import { createStyles, Group, Paper, rem, Text } from "@mantine/core";
 import {
   IconArrowDownRight,
   IconArrowUpRight,
-  IconBox,
+  IconTruckDelivery,
 } from "@tabler/icons-react";
-import { CustomerMetricProps } from "@/components/customer/CustomerStats";
+import { CustomerMetricProps } from "@/components/customer/view/_partials/CustomerStats";
 
 const useStyles = createStyles((theme) => ({
   root: {
@@ -55,12 +55,12 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export function OrdersMetric({ customer }: CustomerMetricProps) {
+export function MileageMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStyles();
 
   const DiffIcon =
-    customer?.total_order_metrics.last_month_diff >
-    customer.total_order_metrics.month_before_last_diff
+    customer?.total_mileage_metrics.this_month_miles >
+    customer.total_mileage_metrics.last_month_miles
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -68,19 +68,24 @@ export function OrdersMetric({ customer }: CustomerMetricProps) {
     <Paper withBorder p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
-            Total Orders
+          Total Mileage
         </Text>
-        <IconBox className={classes.icon} size="1.4rem" stroke={1.5} />
+        <IconTruckDelivery
+          className={classes.icon}
+          size="1.4rem"
+          stroke={1.5}
+        />
       </Group>
 
       <Group align="flex-end" spacing="xs" mt={25}>
         <Text className={classes.value}>
-          {customer?.total_order_metrics.total_orders}
+          {customer.total_mileage_metrics.this_month_miles}
         </Text>
+
         <Text
           color={
-            customer?.total_order_metrics.last_month_diff >
-              customer.total_order_metrics.month_before_last_diff
+            customer.total_mileage_metrics.this_month_miles >
+            customer.total_mileage_metrics.last_month_miles
               ? "teal"
               : "red"
           }
@@ -88,13 +93,13 @@ export function OrdersMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer?.total_order_metrics.last_month_diff}%</span>
+          <span>{customer.total_mileage_metrics.mileage_diff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>
 
       <Text fz="xs" c="dimmed" mt={7}>
-          Compared to previous month
+        Compared to previous month
       </Text>
     </Paper>
   );
