@@ -15,18 +15,15 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from django.db.models import Avg, ExpressionWrapper, F, QuerySet
 from django.db.models.fields import DurationField
 
 from location import models
 
-if TYPE_CHECKING:
-    from utils.types import ModelUUID
 
-
-def get_location_by_pk(*, location_id: "ModelUUID") -> models.Location | None:
+def get_location_by_pk(*, location_id: str) -> models.Location | None:
     try:
         return models.Location.objects.get(pk=location_id)
     except models.Location.DoesNotExist:
