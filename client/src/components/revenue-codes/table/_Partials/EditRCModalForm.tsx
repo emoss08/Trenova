@@ -51,22 +51,25 @@ export const EditRCModalForm: React.FC<Props> = ({
       axios.put(`/revenue_codes/${revenueCode.id}/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["revenue-code-table-data"],
-        });
         queryClient
           .invalidateQueries({
-            queryKey: ["revenueCode", revenueCode?.id],
+            queryKey: ["revenue-code-table-data"],
           })
           .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Revenue Code updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            revenueCodeTableStore.set("editModalOpen", false);
+            queryClient
+              .invalidateQueries({
+                queryKey: ["revenueCode", revenueCode?.id],
+              })
+              .then(() => {
+                notifications.show({
+                  title: "Success",
+                  message: "Revenue Code updated successfully",
+                  color: "green",
+                  withCloseButton: true,
+                  icon: <FontAwesomeIcon icon={faCheck} />,
+                });
+                revenueCodeTableStore.set("editModalOpen", false);
+              });
           });
       },
       onError: (error: any) => {
@@ -90,7 +93,7 @@ export const EditRCModalForm: React.FC<Props> = ({
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<RevenueCodeFormValues>({
@@ -142,7 +145,7 @@ export const EditRCModalForm: React.FC<Props> = ({
               onMouseLeave={() => {
                 form.setFieldValue(
                   "expense_account",
-                  form.values.expense_account
+                  form.values.expense_account,
                 );
               }}
               clearable
@@ -158,7 +161,7 @@ export const EditRCModalForm: React.FC<Props> = ({
               onMouseLeave={() => {
                 form.setFieldValue(
                   "revenue_account",
-                  form.values.revenue_account
+                  form.values.revenue_account,
                 );
               }}
               clearable
@@ -171,7 +174,7 @@ export const EditRCModalForm: React.FC<Props> = ({
               className={classes.control}
               loading={loading}
             >
-                Submit
+              Submit
             </Button>
           </Group>
         </Box>
