@@ -17,11 +17,11 @@
 
 import React from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
-import Layout from "@/components/layout/Layout";
+import { Layout } from "@/components/layout/Layout";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 
-export const ProtectedRoutes: React.FC = () => {
+export function ProtectedRoutes(): React.ReactElement {
   const { isAuthenticated, userHasPermission } = useUserPermissions();
 
   return (
@@ -57,4 +57,4 @@ export const ProtectedRoutes: React.FC = () => {
       })}
     </Routes>
   );
-};
+}
