@@ -85,6 +85,7 @@ def transfer_rate_details(order: Order) -> None:
 
         order.other_charge_amount = sum_order_additional_charges(order=order)
 
+
 def feasibility_tool(
     *,
     drive_time: int,

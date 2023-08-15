@@ -681,8 +681,6 @@ class Rate(GenericModel):  # type:ignore
         if not self.rate_number:
             self.rate_number = self.generate_rate_number()
 
-
-
     def clean(self) -> None:
         """
         Clean the Rate instance.
@@ -711,6 +709,7 @@ class Rate(GenericModel):  # type:ignore
         """
         code = f"R{Rate.objects.count() + 1:05d}"
         return "R00001" if Rate.objects.filter(rate_number=code).exists() else code
+
 
 class RateBillingTable(GenericModel):  # type:ignore
     """Django model representing a RateBillingTable. This model stores Billing Table information for a
