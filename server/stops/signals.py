@@ -17,7 +17,6 @@
 
 from typing import Any
 
-
 from stops import models, services
 from utils.models import StatusChoices
 
