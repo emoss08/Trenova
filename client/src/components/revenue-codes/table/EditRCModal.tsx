@@ -56,8 +56,9 @@ export const EditRCModal: React.FC = () => {
         return getRevenueCodeDetail(revenueCode.id);
       },
       enabled: showEditModal,
-      initialData: () => queryClient.getQueryData(["revenueCode", revenueCode?.id]),
-      staleTime: Infinity, // Never refetch
+      initialData: () =>
+        queryClient.getQueryData(["revenueCode", revenueCode?.id]),
+      staleTime: Infinity,
     });
 
   if (!showEditModal) return null;
