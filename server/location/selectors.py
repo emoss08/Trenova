@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from django.db.models import Avg, ExpressionWrapper, F, QuerySet
 from django.db.models.fields import DurationField
