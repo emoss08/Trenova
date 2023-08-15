@@ -18,8 +18,8 @@
 from __future__ import annotations
 
 import textwrap
+import typing
 import uuid
-from typing import Any, final
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -32,9 +32,10 @@ from djmoney.models.fields import MoneyField
 from order.models import Order
 from organization.models import BusinessUnit, Organization
 from utils.models import ChoiceField, GenericModel, StatusChoices
+from utils.types import ModelDelete
 
 
-@final
+@typing.final
 class FuelMethodChoices(models.TextChoices):
     """
     A class representing the possible fuel method choices.
@@ -50,7 +51,7 @@ class FuelMethodChoices(models.TextChoices):
     PERCENTAGE = "P", _("Percentage")
 
 
-@final
+@typing.final
 class BillingExceptionChoices(models.TextChoices):
     """
     A class representing the possible billing exception choices.
@@ -87,7 +88,7 @@ class BillingControl(GenericModel):
             Help text is "Whether users can remove records from billing history.".
     """
 
-    @final
+    @typing.final
     class AutoBillingCriteriaChoices(models.TextChoices):
         """
         A class representing the possible auto billing choices.
@@ -108,7 +109,7 @@ class BillingControl(GenericModel):
             "Auto Bill when order is marked ready to bill in Billing Queue"
         )
 
-    @final
+    @typing.final
     class OrderTransferCriteriaChoices(models.TextChoices):
         """
         A class representing the possible order transfer choices.
@@ -453,6 +454,18 @@ class DocumentClassification(GenericModel):
         """
         return reverse("billing:document-classification-detail", kwargs={"pk": self.pk})
 
+    def delete(self, *args: typing.Any, **kwargs: typing.Any) -> ModelDelete:
+        if self.name == "CON":
+            raise ValidationError(
+                {
+                    "name": _(
+                        "Document classification with this name cannot be deleted. Please try again."
+                    )
+                },
+                code="invalid",
+            )
+        return super().delete(*args, **kwargs)
+
     def clean(self) -> None:
         """DocumentClassification Clean Method
 
@@ -474,7 +487,7 @@ class DocumentClassification(GenericModel):
                 },
             )
 
-    def update_doc_class(self, **kwargs: Any) -> None:
+    def update_doc_class(self, **kwargs: typing.Any) -> None:
         """
         Updates the document classification with the given kwargs
         """
@@ -512,7 +525,7 @@ class BillingQueue(GenericModel):  # type:ignore
         total_amount (models.DecimalField): total amount for the order.
     """
 
-    @final
+    @typing.final
     class BillTypeChoices(models.TextChoices):
         """
         Status choices for Order model
@@ -894,7 +907,7 @@ class BillingTransferLog(GenericModel):
         return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
-@final
+@typing.final
 class ActionChoices(models.TextChoices):
     """
     Class for storing choices for the `action` field.
@@ -1204,6 +1217,18 @@ class BillingHistory(GenericModel):  # type:ignore
             `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
         """
         return reverse("billing-history-detail", kwargs={"pk": self.pk})
+
+    def delete(self, *args: typing.Any, **kwargs: typing.Any) -> ModelDelete:
+        if self.organization.billing_control.remove_billing_history is False:
+            raise ValidationError(
+                {
+                    "order": _(
+                        "Your Organization disallows the deletion of billing history. Please try again."
+                    ),
+                },
+                code="invalid",
+            )
+        return super().delete(*args, **kwargs)
 
     def clean(self) -> None:
         """Clean method for the BillingHistory model.

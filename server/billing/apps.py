@@ -16,9 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
-
-from core.signals import invalidate_cache
+from django.db.models.signals import pre_save
 
 
 class BillingConfig(AppConfig):
@@ -27,13 +25,6 @@ class BillingConfig(AppConfig):
 
     def ready(self) -> None:
         from billing import signals
-
-        # Document Classification
-        pre_delete.connect(
-            signals.prevent_delete_on_rate_con_doc_class,
-            sender="billing.DocumentClassification",
-            dispatch_uid="prevent_delete_on_rate_con_doc_class",
-        )
 
         # Billing Queue
         pre_save.connect(
@@ -58,12 +49,3 @@ class BillingConfig(AppConfig):
             sender="billing.BillingHistory",
             dispatch_uid="transfer_order_details_billing_history",
         )
-        pre_delete.connect(
-            signals.check_billing_history,
-            sender="billing.BillingHistory",
-            dispatch_uid="check_billing_history",
-        )
-
-        # Billing Control Cache Invalidations
-        post_save.connect(invalidate_cache, sender="billing.BillingControl")
-        post_delete.connect(invalidate_cache, sender="billing.BillingControl")

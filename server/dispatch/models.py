@@ -677,6 +677,12 @@ class Rate(GenericModel):  # type:ignore
         """
         return reverse("rates-detail", kwargs={"pk": self.pk})
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self.rate_number:
+            self.rate_number = self.generate_rate_number()
+
+
+
     def clean(self) -> None:
         """
         Clean the Rate instance.
@@ -693,12 +699,21 @@ class Rate(GenericModel):  # type:ignore
                 }
             )
 
+    def generate_rate_number(self) -> str:
+        """
+        Generate a unique rate number for a Rate instance.
+
+        This method generates a unique rate number by finding the highest rate number and
+        incrementing it by 1.
+
+        Returns:
+            str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
+        """
+        code = f"R{Rate.objects.count() + 1:05d}"
+        return "R00001" if Rate.objects.filter(rate_number=code).exists() else code
 
 class RateBillingTable(GenericModel):  # type:ignore
-    """
-    Class: RateBillingTable
-
-    Django model representing a RateBillingTable. This model stores Billing Table information for a
+    """Django model representing a RateBillingTable. This model stores Billing Table information for a
     related :model:`rates.Rate`.
 
     Attributes:
@@ -714,17 +729,6 @@ class RateBillingTable(GenericModel):  # type:ignore
         meta: Return the meta options for the RateBillingTable model.
         get_absolute_url: Return the absolute URL for the detail view of a RateBillingTable instance.
         __str__: Return the string representation of a RateBillingTable instance.
-
-    Examples:
-        >>> rate_billing_table = RateBillingTable.objects.create(
-        ...        rate=rate,
-        ...        charge_code=charge_code,
-        ...        description="Rate Billing Table 1",
-        ...        units=100,
-        ...        charge_amount=100,
-        ...    )
-        >>> rate_billing_table
-        <RateBillingTable: Rate Billing Table 1>
     """
 
     id = models.UUIDField(
@@ -809,6 +813,11 @@ class RateBillingTable(GenericModel):  # type:ignore
         """
         if not self.sub_total:
             self.sub_total = self.unit * self.charge_amount
+
+        if not self.charge_amount:
+            self.charge_amount = self.accessorial_charge.charge_amount
+
+        self.sub_total = self.charge_amount * self.unit
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:

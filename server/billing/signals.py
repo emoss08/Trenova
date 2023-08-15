@@ -17,64 +17,8 @@
 
 from typing import Any
 
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-
 from billing import models, services, utils
 from billing.selectors import get_billing_queue_information
-
-
-def prevent_delete_on_rate_con_doc_class(
-    instance: models.DocumentClassification,
-    **kwargs: Any,
-) -> None:
-    """
-    Prevents the deletion of the Document Classification with name "CON"
-
-    Args:
-        instance (models.DocumentClassification): Document Classification instance
-        **kwargs (Any): Any additional arguments
-
-    Returns:
-        None: This function does not return anything
-    """
-    if instance.name == "CON":
-        raise ValidationError(
-            {
-                "name": _(
-                    "Document classification with this name cannot be deleted. Please try again."
-                ),
-            },
-            code="invalid",
-        )
-
-
-def check_billing_history(
-    instance: models.BillingHistory,
-    **kwargs: Any,
-) -> None:
-    """
-    Prevents the deletion of the Billing History if the organization has the remove_billing_history
-
-    Args:
-        instance (models.BillingHistory): Billing History instance
-        **kwargs (Any): Any additional arguments
-
-    Returns:
-        None: This function does not return anything
-
-    Raises:
-        ValidationError: If the organization has the remove_billing_history set to False
-    """
-    if instance.organization.billing_control.remove_billing_history is False:
-        raise ValidationError(
-            {
-                "organization": _(
-                    "Billing history cannot be deleted. Please try again."
-                ),
-            },
-            code="invalid",
-        )
 
 
 def save_invoice_number_on_billing_history(
@@ -111,9 +55,11 @@ def transfer_order_details_to_billing_history(
 def generate_invoice_number_on_billing_queue(
     instance: models.BillingQueue, **kwargs: Any
 ) -> None:
-    is_credit_memo = instance.bill_type == models.BillingQueue.BillTypeChoices.CREDIT
-
     if not instance.invoice_number:
+        is_credit_memo = (
+            instance.bill_type == models.BillingQueue.BillTypeChoices.CREDIT
+        )
+
         services.generate_invoice_number(
             instance=instance, is_credit_memo=is_credit_memo
         )

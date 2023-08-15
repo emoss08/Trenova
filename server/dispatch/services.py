@@ -85,21 +85,6 @@ def transfer_rate_details(order: Order) -> None:
 
         order.other_charge_amount = sum_order_additional_charges(order=order)
 
-
-def generate_rate_number() -> str:
-    """
-    Generate a unique rate number for a Rate instance.
-
-    This method generates a unique rate number by finding the highest rate number and
-    incrementing it by 1.
-
-    Returns:
-        str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
-    """
-    code = f"R{models.Rate.objects.count() + 1:05d}"
-    return "R00001" if models.Rate.objects.filter(rate_number=code).exists() else code
-
-
 def feasibility_tool(
     *,
     drive_time: int,

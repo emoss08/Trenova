@@ -34,6 +34,7 @@ HealthStatusAndTime: TypeAlias = Union[
 DiskUsage: TypeAlias = tuple[int, int, int]
 BilledOrders: TypeAlias = tuple[list[Any | list[dict[str, str | list[str]]]], list[Any]]
 EDIEnvelope: TypeAlias = tuple[str, str, str, str, str, str]
+ModelDelete: TypeAlias = tuple[int, dict[str, int]]
 
 
 class BillingClientActions(Enum):
