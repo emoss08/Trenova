@@ -28,12 +28,15 @@ from typing import Any
 from confluent_kafka import Consumer, KafkaError, KafkaException, Message
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import connections
 from django.db.models import QuerySet
 
 from organization import models, selectors
 
 # Logging Configuration
 logger = logging.getLogger("kafka")
+
+debug, error = logger.debug, logger.error
 
 
 POLL_TIMEOUT = 1.0
@@ -57,6 +60,19 @@ class KafkaListener:
 
     running = True
     # TODO(Wolfred): Replace all prints with SSE or websockets. Still haven't decided.
+
+    @classmethod
+    def _close_old_connections(cls, **kwargs: Any) -> None:
+        """A method that closes all old database connections.
+
+        Args:
+            **kwargs (Any): Any additional keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        for conn in connections.all(initialized_only=True):
+            conn.close_if_unusable_or_obsolete()
 
     def __repr__(self) -> str:
         """A built-in function that provides a string representation of the KafkaListener instance.
@@ -83,7 +99,7 @@ class KafkaListener:
             None: This function does not return anything.
         """
 
-        logger.info("Received termination signal. Stopping listener...")
+        debug("Received termination signal. Stopping listener...")
         cls.running = False
 
     @classmethod
@@ -111,9 +127,9 @@ class KafkaListener:
                 return consumer, Consumer(config)
             except KafkaError as e:
                 if e.args[0].code() != KafkaError._ALL_BROKERS_DOWN:
-                    logger.error(f"KafkaError: {e}")
+                    error(f"KafkaError: {e}")
                     raise e
-                logger.info("All brokers are down. Retrying connection...")
+                debug("All brokers are down. Retrying connection...")
                 time.sleep(5)
         return None
 
@@ -149,7 +165,7 @@ class KafkaListener:
             if message is None:
                 continue
             elif message.error():
-                logger.error(f"Consumer error: {message.error()}")
+                error(f"Consumer error: {message.error()}")
                 continue
             valid_messages.append(message)
         return valid_messages
@@ -170,12 +186,12 @@ class KafkaListener:
         try:
             data = json.loads(message_value)
         except json.JSONDecodeError:
-            logger.error("Error decoding message value as JSON.")
+            error("Error decoding message value as JSON.")
             return None
         return data.get("payload", {})
 
     @classmethod
-    def _get_message(cls, *, consumer: Consumer, timeout: float) -> Message:
+    def _get_message(cls, *, consumer: Consumer, timeout: float) -> Message | None:
         """Fetches a single message from the Kafka topic within the specified timeout.
 
         Args:
@@ -190,7 +206,7 @@ class KafkaListener:
         if message is None:
             return None
         elif message.error():
-            logger.error(f"Consumer error: {message.error()}")
+            error(f"Consumer error: {message.error()}")
             return None
         return message
 
@@ -220,13 +236,13 @@ class KafkaListener:
             table_change.get_topic_display() for table_change in table_changes
         }
         if added_alerts := new_table_changes.difference(old_table_changes):
-            logger.info(f"New alerts added: {', '.join(added_alerts)}")
+            debug(f"New alerts added: {', '.join(added_alerts)}")
         data_consumer.unsubscribe()
         if table_changes:
             data_consumer.subscribe(
                 [table_change.get_topic_display() for table_change in table_changes]
             )
-            logger.info(
+            debug(
                 f"Subscribed to topics: {', '.join([table_change.get_topic_display() for table_change in table_changes])}"
             )
 
@@ -293,7 +309,7 @@ class KafkaListener:
             associated_table_change.custom_subject
             or f"Table Change Alert: {data_message.topic()}"
         )
-        logger.info(
+        debug(
             f"Sending email to {recipient_list} with subject {subject} for message {data_message}"
         )
         send_mail(
@@ -316,7 +332,7 @@ class KafkaListener:
         consumers = cls._connect()
 
         if consumers is None:
-            logger.error("Failed to connect, exiting...")
+            error("Failed to connect, exiting...")
             return
 
         data_consumer, alert_update_consumer = consumers
@@ -330,7 +346,7 @@ class KafkaListener:
 
         alert_update_consumer.close()
         data_consumer.close()
-        logger.info("Consumers closed.")
+        debug("Consumers closed.")
 
     @classmethod
     def register_signals(cls) -> None:
@@ -358,17 +374,15 @@ class KafkaListener:
         """
         table_changes = cls._get_topic_list()
         if not table_changes:
-            logger.info(NO_ALERTS_MSG)
+            debug(NO_ALERTS_MSG)
             return
 
         alert_update_consumer.subscribe([settings.KAFKA_ALERT_UPDATE_TOPIC])
-        logger.info(
-            f"Subscribed to alert update topic: {settings.KAFKA_ALERT_UPDATE_TOPIC}"
-        )
+        debug(f"Subscribed to alert update topic: {settings.KAFKA_ALERT_UPDATE_TOPIC}")
         data_consumer.subscribe(
             [table_change.get_topic_display() for table_change in table_changes]
         )
-        logger.info(
+        debug(
             f"Subscribed to topics: {[table_change.get_topic_display() for table_change in table_changes]}"
         )
 
@@ -454,7 +468,7 @@ class KafkaListener:
         )
 
         if alert_message is not None:
-            logger.info(f"Received alert update: {alert_message.value()}")
+            debug(f"Received alert update: {alert_message.value()}")
             cls._update_subscriptions(
                 data_consumer=data_consumer, table_changes=cls._get_topic_list()
             )
@@ -507,7 +521,7 @@ class KafkaListener:
             and not data_message.error()
             and data_message.value() is not None
         ):
-            logger.info(
+            debug(
                 f"Received data: {data_message.value().decode('utf-8')} from topic: {data_message.topic()}"
             )
 
@@ -519,7 +533,7 @@ class KafkaListener:
                 ),
                 None,
             ):
-                logger.info(f"Table Change Alert found. {associated_table_change.name}")
+                debug(f"Table Change Alert found. {associated_table_change.name}")
                 future = executor.submit(
                     cls._process_message,
                     data_message,
@@ -552,7 +566,7 @@ class KafkaListener:
             try:
                 future.result()
             except Exception as e:
-                logger.error(f"Error processing message: {e}", exc_info=True)
+                error(f"Error processing message: {e}", exc_info=True)
 
         futures = {f for f in futures if not f.done()}
 
@@ -579,10 +593,8 @@ class KafkaListener:
             isinstance(e, KafkaException)
             and e.args[0].code() == KafkaError._ALL_BROKERS_DOWN
         ):
-            logger.error(
-                "All brokers are down. Attempting to reconnect...", exc_info=True
-            )
+            error("All brokers are down. Attempting to reconnect...", exc_info=True)
             data_consumer, alert_update_consumer = cls._connect()
         else:
-            logging.error("An unexpected error occurred: ", exc_info=True)
+            error("An unexpected error occurred: ", exc_info=True)
             raise e
