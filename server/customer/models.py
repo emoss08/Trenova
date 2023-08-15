@@ -118,6 +118,16 @@ class Customer(GenericModel):  # type: ignore
         max_length=1,
         default="N",
     )
+    advocate = models.ForeignKey(
+        to="accounts.User",
+        on_delete=models.CASCADE,
+        related_name="customers",
+        related_query_name="customer",
+        help_text=_("Customer Advocate assigned to this customer."),
+        verbose_name=_("Customer Advocate"),
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         """
@@ -951,7 +961,8 @@ class DeliverySlot(GenericModel):
             str: Delivery Slot string representation
         """
         return textwrap.shorten(
-            f"Delivery Slot for {self.customer.name} on {self.get_day_of_week_display()} from {self.start_time} to {self.end_time}",
+            f"Delivery Slot for {self.customer.name} on {self.get_day_of_week_display()} from {self.start_time} to"
+            f" {self.end_time}",
             width=50,
             placeholder="...",
         )
