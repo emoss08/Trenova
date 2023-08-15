@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save, pre_delete, pre_save
+from django.db.models.signals import post_save
 
 
 class OrderConfig(AppConfig):
@@ -26,20 +26,10 @@ class OrderConfig(AppConfig):
     def ready(self) -> None:
         from order import signals
 
-        pre_save.connect(
-            signals.set_order_pro_number,
-            sender="order.Order",
-            dispatch_uid="set_order_pro_number",
-        )
         post_save.connect(
             signals.create_order_initial_movement,
             sender="order.Order",
             dispatch_uid="create_order_initial_movement",
-        )
-        pre_delete.connect(
-            signals.check_order_removal_policy,
-            sender="order.Order",
-            dispatch_uid="check_order_removal_policy",
         )
         post_save.connect(
             signals.set_order_mileage_and_create_route,
