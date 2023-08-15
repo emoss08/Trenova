@@ -156,6 +156,11 @@ router.register(
     basename="customer-fuel-tables",
 )
 router.register(
+    r"customer_email_profiles",
+    customer_api.CustomerEmailProfileViewSet,
+    basename="customer-email-profiles",
+)
+router.register(
     r"customer_rule_profiles",
     customer_api.CustomerRuleProfileViewSet,
     basename="customer-rule-profiles",
@@ -287,7 +292,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
     path("api/", include(organization_router.urls)),
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/schema/", SpectacularAPIView.as_view(api_version="0.1.0"), name="schema"),
     path(
         "api/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
