@@ -17,16 +17,66 @@
 
 import { Box, Button, Card, SimpleGrid, Skeleton, Text } from "@mantine/core";
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPencil } from "@fortawesome/pro-duotone-svg-icons";
 import { Customer } from "@/types/apps/customer";
 import { CustomerStats } from "@/components/customer/view/_partials/CustomerStats";
 import { CustomerBillingHistoryTable } from "@/components/customer/view/_partials/CustomerBillingHistoryTable";
-import { CustomerCreditBalance } from "@/components/customer/view/_partials/CustomerCreditBalance";
 import { usePageStyles } from "@/styles/PageStyles";
+import { USDollarFormat } from "@/lib/utils";
 
 type CustomerOverviewTabProps = {
   customer: Customer;
   isLoading: boolean;
 };
+
+type CustomerCreditBalanceProps = {
+  customer: Customer;
+};
+
+function CustomerCreditBalance({ customer }: CustomerCreditBalanceProps) {
+  const { classes } = usePageStyles();
+
+  return (
+    <Card className={classes.card} mt={20}>
+      <Box
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+        my={20}
+      >
+        <Text className={classes.text} fw={600} fz={20}>
+          Credit Balance
+        </Text>
+        <Button
+          size="xs"
+          leftIcon={<FontAwesomeIcon icon={faPencil} size="lg" />}
+        >
+          Adjust Balance
+        </Button>
+      </Box>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <Text className={classes.text} mr="0.5%" fw={600} fz={20}>
+          {USDollarFormat(customer.credit_balance)}
+        </Text>
+
+        <Text color="dimmed" fw={600} fz={15}>
+          USD
+        </Text>
+      </div>
+      <Text fz="xs" c="dimmed" mt={7}>
+        Balance will increase the amount due on the customer&apos;s next
+        invoice.
+      </Text>
+    </Card>
+  );
+}
 
 export function CustomerOverviewTab({
   customer,
@@ -57,7 +107,7 @@ export function CustomerOverviewTab({
   ) : (
     <>
       {customer && <CustomerStats customer={customer} />}
-      <Card className={classes.card} withBorder>
+      <Card className={classes.card}>
         <Box
           style={{
             display: "flex",
