@@ -16,15 +16,7 @@
  */
 
 import React from "react";
-import {
-  Card,
-  Container,
-  createStyles,
-  Flex,
-  Grid,
-  SimpleGrid,
-  Text,
-} from "@mantine/core";
+import { Card, Container, Flex, Grid, SimpleGrid, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCircleUser,
@@ -33,49 +25,22 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import { JobTitle, User } from "@/types/apps/accounts";
 import AvatarInput from "../ui/fields/AvatarInput";
+import { usePageStyles } from "@/styles/PageStyles";
 
-type Props = {
+type ViewUserProfileDetailsProps = {
   user: User;
   jobTitle: JobTitle;
 };
 
-const useStyles = createStyles((theme) => ({
-  card: {
-    width: "100%",
-    maxWidth: "100%",
-    height: "auto",
-    "@media (max-width: 576px)": {
-      height: "auto",
-      maxHeight: "none",
-    },
-  },
-  text: {
-    color: theme.colorScheme === "dark" ? "white" : "black",
-  },
-  icon: {
-    marginRight: "5px",
-    marginTop: "5px",
-  },
-  div: {
-    display: "flex",
-    "&:hover": {
-      "& *": {
-        color: theme.colors.blue[6],
-      },
-    },
-  },
-  grid: {
-    display: "flex",
-    maxWidth: "100%",
-  },
-}));
-
-export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
-  const { classes } = useStyles();
+export function ViewUserProfileDetails({
+  user,
+  jobTitle,
+}: ViewUserProfileDetailsProps) {
+  const { classes } = usePageStyles();
 
   return (
     <Flex>
-      <Card className={classes.card} withBorder>
+      <Card className={classes.card}>
         <Container mx="xs" my="xs">
           <SimpleGrid cols={3} className={classes.grid}>
             <AvatarInput
@@ -107,8 +72,10 @@ export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
                           className={classes.icon}
                         />
                         <Text className={classes.text}>
-                          {user.profile?.address_line_1} {user.profile?.address_line_2 ?? ""} {user.profile?.city}{" "}
-                          {user.profile?.state} {user.profile?.zip_code}
+                          {user.profile?.address_line_1}{" "}
+                          {user.profile?.address_line_2 ?? ""}{" "}
+                          {user.profile?.city} {user.profile?.state}{" "}
+                          {user.profile?.zip_code}
                         </Text>
                       </div>
                     </Grid.Col>
@@ -122,9 +89,7 @@ export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
                       </div>
                     </Grid.Col>
                   </Grid>
-                  <Text mt={20}>
-                      TODO: Add Analytics based on job function
-                  </Text>
+                  <Text mt={20}>TODO: Add Analytics based on job function</Text>
                 </Flex>
               </Grid.Col>
             </Grid>
@@ -133,4 +98,4 @@ export const ViewUserProfileDetails: React.FC<Props> = ({ user, jobTitle }) => {
       </Card>
     </Flex>
   );
-};
+}
