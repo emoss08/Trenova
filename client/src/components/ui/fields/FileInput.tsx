@@ -18,11 +18,10 @@
 import React from "react";
 import { Center, FileInput, FileInputProps, Group, rem } from "@mantine/core";
 import { IconAlertTriangle, IconPhoto } from "@tabler/icons-react";
-import { createStyles } from "@mantine/styles";
 import { UseFormReturnType } from "@mantine/form";
+import { useFormStyles } from "@/styles/FormStyles";
 
 function Value({ file }: { file: File }) {
-  console.log(file);
   return (
     <Center
       inline
@@ -64,18 +63,6 @@ const ValueComponent: FileInputProps["valueComponent"] = ({ value }) => {
   return value && <Value file={value} />;
 };
 
-const useStyles = createStyles((theme) => ({
-  invalid: {
-    backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-  },
-  invalidIcon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
-
 interface ValidatedFileInputProps<TFormValues>
   extends Omit<FileInputProps, "form"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
@@ -86,7 +73,7 @@ export function ValidatedFileInput<TFormValues extends object>({
   name,
   ...rest
 }: ValidatedFileInputProps<TFormValues>) {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const error = form.errors[name as string];
 
   return (
@@ -94,9 +81,7 @@ export function ValidatedFileInput<TFormValues extends object>({
       {...rest}
       {...form.getInputProps(name as string)}
       error={error}
-      classNames={{
-        input: error ? classes.invalid : "",
-      }}
+      className={classes.fields}
       rightSection={
         error && (
           <IconAlertTriangle
