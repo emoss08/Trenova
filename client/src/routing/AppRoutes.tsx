@@ -23,10 +23,10 @@ const LoginPage = lazy(() => import("../pages/LoginPage"));
 const ErrorPage = lazy(() => import("../pages/ErrorPage"));
 const LogoutPage = lazy(() => import("../pages/LogoutPage"));
 const UserManagementPage = lazy(
-  () => import("../pages/admin/users/UserManagement")
+  () => import("../pages/admin/users/UserManagement"),
 );
 const DivisionCodesPage = lazy(
-  () => import("../pages/accounting/DivisionCodes")
+  () => import("../pages/accounting/DivisionCodes"),
 );
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
@@ -34,16 +34,16 @@ const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ControlFilesPage = lazy(
-  () => import("../pages/admin/control-files/ControlFiles")
+  () => import("../pages/admin/control-files/ControlFiles"),
 );
 const ChargeTypePage = lazy(() => import("../pages/billing/ChargeTypes"));
 const AccessorialChargePage = lazy(
-  () => import("../pages/billing/AccessorialCharges")
+  () => import("../pages/billing/AccessorialCharges"),
 );
 const BillingClientPage = lazy(() => import("../pages/billing/BillingClient"));
 
 const HazardousMaterialPage = lazy(
-  () => import("../pages/commodities/HazardousMaterial")
+  () => import("../pages/commodities/HazardousMaterial"),
 );
 const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
 const CustomerPage = lazy(() => import("../pages/customer/Customer"));
@@ -112,7 +112,7 @@ export const routes: RouteObjectWithPermission[] = [
   {
     title: "User Settings",
     group: "user",
-    path: "/account/settings/:userId",
+    path: "/account/settings/:id",
     element: <UserSettingsPage />,
     excludeFromMenu: true,
   },
