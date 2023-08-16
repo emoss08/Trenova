@@ -97,17 +97,16 @@ def get_customer_order_diff(*, customer_id: uuid.UUID) -> OrderDiffResponse:
         created__year=month_before_last_year,
     ).count()
 
-    # Calculate differences
     last_month_diff = (
-        (this_month_orders_count - last_month_orders_count)
-        / last_month_orders_count
+        abs(last_month_orders_count - this_month_orders_count)
+        / ((last_month_orders_count + this_month_orders_count) / 2)
         * 100
-        if last_month_orders_count > 0
+        if this_month_orders_count > 0
         else 0
     )
 
     month_before_last_diff = (
-        (last_month_orders_count - month_before_last_orders_count)
+        abs(last_month_orders_count - month_before_last_orders_count)
         / month_before_last_orders_count
         * 100
         if month_before_last_orders_count > 0
@@ -194,15 +193,18 @@ def get_customer_revenue_diff(*, customer_id: uuid.UUID) -> CustomerDiffResponse
     )
 
     last_month_diff = (
-        (this_month_revenue - last_month_revenue) / last_month_revenue * 100
-        if last_month_revenue
+        abs(this_month_revenue - last_month_revenue)
+        / ((last_month_revenue + this_month_revenue) / 2)
+        * 100
+        if this_month_revenue > 0
         else 0
     )
+
     month_before_last_diff = (
-        (last_month_revenue - month_before_last_revenue)
-        / month_before_last_revenue
+        abs(last_month_revenue - month_before_last_revenue)
+        / ((last_month_revenue + month_before_last_revenue) / 2)
         * 100
-        if month_before_last_revenue
+        if month_before_last_revenue > 0
         else 0
     )
 
@@ -254,22 +256,6 @@ def get_customer_on_time_performance_diff(
         - The function also does not handle cases where the last month does not have any on-time, early
         or late stops. In such cases, the difference will be 0.
 
-    Example:
-        >>> get_customer_on_time_performance_diff(customer_id=uuid.UUID("123"))
-        >>> {
-          >>> "this_month_on_time_percentage": 75.0,
-          >>> "last_month_on_time_percentage": 80.0,
-          >>> "on_time_diff": -6.25,
-          >>> "this_month_early_percentage": 15.0,
-          >>> "last_month_early_percentage": 10.0,
-          >>> "early_diff": 50.0,
-          >>> "this_month_late_percentage": 10.0,
-          >>> "last_month_late_percentage": 10.0,
-          >>> "late_diff": 0.0,
-        >>> }
-
-        The response signifies that customer 123 had an on-time performance of 75% in the current month,
-        down 6.25% from 80% in the previous month.
     """
 
     now = timezone.now()
