@@ -16,15 +16,7 @@
  */
 
 import React, { useState } from "react";
-import {
-  Text,
-  Col,
-  Button,
-  Grid,
-  SimpleGrid,
-  Divider,
-  createStyles,
-} from "@mantine/core";
+import { Text, Col, Button, Grid, SimpleGrid, Divider } from "@mantine/core";
 import * as Yup from "yup";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -34,33 +26,16 @@ import { useQueryClient } from "react-query";
 import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "../ui/fields/TextInput";
 import { User } from "@/types/apps/accounts";
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface EmailChangeFormProps {
   user: User;
 }
 
-const useStyles = createStyles((theme) => ({
-  text: {
-    color: theme.colorScheme === "dark" ? "white" : "black",
-  },
-  div: {
-    padding: "5px 0px 5px 0px",
-  },
-  invalid: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.rgba(theme.colors.red[8], 0.15)
-        : theme.colors.red[0],
-  },
-  icon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
-
-export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
+export function EmailChangeForm({ user }: EmailChangeFormProps) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const queryClient = useQueryClient();
 
   const startEditing = () => setIsEditing(true);
@@ -109,12 +84,10 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
     } catch (error: any) {
       if (error.response) {
         const { data } = error.response;
-        for (const field in data) {
-          if (data.hasOwnProperty(field)) {
-            const message = data[field].join(" ");
-            form.setFieldError(field, message);
-          }
-        }
+        Object.keys(data).forEach((field) => {
+          const message = data[field].join(" ");
+          form.setFieldError(field, message);
+        });
       }
     } finally {
       setLoading(false);
@@ -134,7 +107,7 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
           >
             <div>
               <Text size="sm" className={classes.text} weight={700}>
-                  Email Address
+                Email Address
               </Text>
               <Text color="dimmed">{user.email}</Text>
             </div>
@@ -144,7 +117,7 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
               }}
             >
               <Button color="gray" variant="light" onClick={startEditing}>
-                  Change Email
+                Change Email
               </Button>
             </div>
           </div>
@@ -159,6 +132,7 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
                     variant="filled"
                     name="email"
                     form={form}
+                    withAsterisk
                   />
                   <ValidatedTextInput
                     label="Enter Password"
@@ -166,12 +140,18 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
                     variant="filled"
                     name="current_password"
                     form={form}
+                    withAsterisk
                   />
                 </SimpleGrid>
                 <Button type="submit" color="blue" mx="xs" loading={loading}>
                   Update Email
                 </Button>
-                <Button type="button" onClick={stopEditing}>
+                <Button
+                  type="button"
+                  color="gray"
+                  variant="light"
+                  onClick={stopEditing}
+                >
                   Cancel
                 </Button>
               </form>
@@ -182,4 +162,4 @@ export const EmailChangeForm: React.FC<EmailChangeFormProps> = ({ user }) => {
       <Divider my="sm" variant="dashed" />
     </>
   );
-};
+}
