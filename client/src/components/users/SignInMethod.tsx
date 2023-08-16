@@ -22,44 +22,20 @@ import { Alert } from "@/components/ui/Alert";
 import { User } from "@/types/apps/accounts";
 import { PasswordChangeForm } from "./PasswordChange";
 import { EmailChangeForm } from "./EmailChange";
+import { usePageStyles } from "@/styles/PageStyles";
 
 type Props = {
   user: User;
 };
 
-const useStyles = createStyles((theme) => ({
-  card: {
-    width: "100%",
-    maxWidth: "100%",
-    height: "auto",
-    "@media (max-width: 576px)": {
-      height: "auto",
-      maxHeight: "none",
-    },
-  },
-  text: {
-    color: theme.colorScheme === "dark" ? "white" : "black",
-  },
-  icon: {
-    marginRight: "5px",
-    marginTop: "5px",
-  },
-  div: {
-    display: "flex",
-  },
-  grid: {
-    display: "flex",
-  },
-}));
-
 export const SignInMethod: React.FC<Props> = ({ user }) => {
-  const { classes } = useStyles();
+  const { classes } = usePageStyles();
 
   return (
     <Flex>
-      <Card className={classes.card} withBorder>
+      <Card className={classes.card}>
         <Text fz="xl" fw={700} className={classes.text}>
-            Sign-In Method
+          Sign-In Method
         </Text>
 
         <Divider my={10} />

@@ -15,24 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createStyles } from "@mantine/styles";
 import { Select, SelectItemProps, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import React, { forwardRef } from "react";
 import { SelectProps } from "@mantine/core/lib/Select/Select";
 import { UseFormReturnType } from "@mantine/form";
-
-const useStyles = createStyles((theme) => ({
-  invalid: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.rgba(theme.colors.red[8], 0.15)
-        : theme.colors.red[0],
-  },
-  invalidIcon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface ValidatedSelectInputProps<TFormValues extends object>
   extends Omit<SelectProps, "form"> {
@@ -53,7 +41,7 @@ export function SelectInput<TFormValues extends Record<string, unknown>>({
   name,
   ...rest
 }: ValidatedSelectInputProps<TFormValues>) {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const error = form.errors[name as string];
 
   return (
@@ -64,6 +52,7 @@ export function SelectInput<TFormValues extends Record<string, unknown>>({
       error={error}
       maxDropdownHeight={200}
       nothingFound="Nothing found"
+      className={classes.fields}
       itemComponent={SelectItem}
       classNames={{
         input: error ? classes.invalid : "",

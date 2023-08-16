@@ -15,20 +15,70 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/MontaTable";
 import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
-import { HMTableColumns } from "@/components/hazardous-material/HMTableColumns";
 import { CreateHMModal } from "@/components/hazardous-material/CreateHMModal";
 import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
 import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
+import { HazardousMaterial } from "@/types/apps/commodities";
+import { TChoiceProps } from "@/types";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function HazardousMaterialTable() {
+  const columns = useMemo<MRT_ColumnDef<HazardousMaterial>[]>(
+    () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] as TChoiceProps[],
+        },
+        filterVariant: "select",
+      },
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={hazardousMaterialTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
   return (
     <MontaTable
       store={hazardousMaterialTableStore}
       link="/hazardous_materials"
-      columns={HMTableColumns}
+      columns={columns}
       TableEditModal={EditHMModal}
       TableViewModal={ViewHMModal}
       displayDeleteModal

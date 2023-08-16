@@ -62,7 +62,7 @@ function EmailControlPage() {
       {isLoading ? (
         <Skeleton height={400} />
       ) : (
-        <Card className={classes.card} withBorder>
+        <Card className={classes.card}>
           <Text fz="xl" fw={700} className={classes.text}>
             Email Controls
           </Text>

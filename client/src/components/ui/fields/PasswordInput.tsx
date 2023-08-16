@@ -16,26 +16,10 @@
  */
 
 import React from "react";
-import { PasswordInput, rem } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
-import { createStyles } from "@mantine/styles";
+import { PasswordInput } from "@mantine/core";
 import { PasswordInputProps } from "@mantine/core/lib/PasswordInput/PasswordInput";
 import { UseFormReturnType } from "@mantine/form";
-
-const useStyles = createStyles((theme) => ({
-  fields: {
-    marginTop: rem(10),
-  },
-  invalid: {
-    backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-  },
-  invalidIcon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface ValidatedPasswordInputProps<TFormValues>
   extends Omit<PasswordInputProps, "form"> {
@@ -47,7 +31,7 @@ export function ValidatedPasswordInput<TFormValues extends object>({
   name,
   ...rest
 }: ValidatedPasswordInputProps<TFormValues>) {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const error = form.errors[name as string];
 
   return (
@@ -56,18 +40,6 @@ export function ValidatedPasswordInput<TFormValues extends object>({
       {...form.getInputProps(name as string)}
       error={error}
       className={classes.fields}
-      classNames={{
-        input: error ? classes.invalid : "",
-      }}
-      rightSection={
-        error && (
-          <IconAlertTriangle
-            stroke={1.5}
-            size="1.1rem"
-            className={classes.invalidIcon}
-          />
-        )
-      }
     />
   );
 }

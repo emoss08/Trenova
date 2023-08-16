@@ -16,7 +16,14 @@
  */
 
 import React from "react";
-import { Navbar, Code, Group, rem, Skeleton } from "@mantine/core";
+import {
+  Navbar,
+  Code,
+  Group,
+  rem,
+  Skeleton,
+  createStyles,
+} from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import { getUserId } from "@/lib/utils";
@@ -24,12 +31,142 @@ import { getUserDetails } from "@/requests/UserRequestFactory";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
 import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
 import { ThemeSwitcher } from "@/components/layout/Header/_Partials/ThemeSwitcher";
-import { useNavbarStyles } from "@/styles/NavbarStyles";
 import { navbarScroll } from "@/components/layout/Navbar/_partials/NavbarScroll";
 import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks";
 import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
 import { SearchModal } from "@/components/layout/Navbar/_partials/SearchModal";
+
+const useNavbarStyles = createStyles((theme) => ({
+  navbar: {
+    paddingTop: 0,
+  },
+
+  section: {
+    marginLeft: `calc(${theme.spacing.md} * -1)`,
+    marginRight: `calc(${theme.spacing.md} * -1)`,
+    marginBottom: theme.spacing.md,
+
+    "&:not(:last-of-type)": {
+      borderBottom: `${rem(1)} solid ${
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[4]
+          : theme.colors.gray[3]
+      }`,
+    },
+  },
+
+  searchCode: {
+    fontWeight: 700,
+    fontSize: rem(10),
+    backgroundColor:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[7]
+        : theme.colors.gray[0],
+    border: `${rem(1)} solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[2]
+    }`,
+  },
+
+  header: {
+    paddingBottom: theme.spacing.md,
+    borderBottom: `${rem(1)} solid ${
+      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.colors.gray[2]
+    }`,
+  },
+
+  mainLinks: {
+    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
+    paddingBottom: theme.spacing.md,
+  },
+
+  mainLink: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    fontSize: theme.fontSizes.xs,
+    padding: `${rem(8)} ${theme.spacing.xs}`,
+    borderRadius: theme.radius.sm,
+    fontWeight: 500,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7],
+
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[6]
+          : theme.colors.gray[0],
+      color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+  },
+
+  mainLinkInner: {
+    display: "flex",
+    alignItems: "center",
+    flex: 1,
+  },
+
+  mainLinkIcon: {
+    marginRight: theme.spacing.sm,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[2]
+        : theme.colors.gray[6],
+  },
+
+  mainLinkBadge: {
+    padding: 0,
+    width: rem(20),
+    height: rem(20),
+    pointerEvents: "none",
+  },
+
+  collections: {
+    paddingLeft: `calc(${theme.spacing.md} - ${rem(6)})`,
+    paddingRight: `calc(${theme.spacing.md} - ${rem(6)})`,
+    paddingBottom: theme.spacing.md,
+  },
+
+  collectionsHeader: {
+    paddingLeft: `calc(${theme.spacing.md} + ${rem(2)})`,
+    paddingRight: theme.spacing.md,
+    marginBottom: rem(5),
+  },
+
+  collectionLink: {
+    display: "block",
+    padding: `${rem(8)} ${theme.spacing.xs}`,
+    textDecoration: "none",
+    borderRadius: theme.radius.sm,
+    fontSize: theme.fontSizes.xs,
+    color:
+      theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7],
+    lineHeight: 1,
+    fontWeight: 500,
+
+    "&:hover": {
+      backgroundColor:
+        theme.colorScheme === "dark"
+          ? theme.colors.dark[6]
+          : theme.colors.gray[0],
+      color: theme.colorScheme === "dark" ? theme.white : theme.black,
+    },
+  },
+
+  links: {
+    marginLeft: `calc(${theme.spacing.md} * -1)`,
+    marginRight: `calc(${theme.spacing.md} * -1)`,
+  },
+
+  linksInner: {
+    paddingBottom: theme.spacing.xl,
+  },
+}));
 
 export function AsideMenu() {
   const { classes } = useNavbarStyles();

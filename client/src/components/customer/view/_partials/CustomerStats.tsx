@@ -112,7 +112,7 @@ function RevenueMetric({ customer }: CustomerMetricProps) {
       : IconArrowDownRight;
 
   return (
-    <Paper withBorder p="md" radius="md" className={classes.root}>
+    <Paper p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
           Total Revenue
@@ -170,7 +170,7 @@ function PerformanceMetric({ customer }: CustomerMetricProps) {
       : IconArrowDownRight;
 
   return (
-    <Paper withBorder p="md" radius="md" className={classes.root}>
+    <Paper p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
           On-Time Performance
@@ -216,7 +216,7 @@ function OrdersMetric({ customer }: CustomerMetricProps) {
       : IconArrowDownRight;
 
   return (
-    <Paper withBorder p="md" radius="md" className={classes.root}>
+    <Paper p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
           Total Orders
@@ -261,7 +261,7 @@ function MileageMetric({ customer }: CustomerMetricProps) {
       : IconArrowDownRight;
 
   return (
-    <Paper withBorder p="md" radius="md" className={classes.root}>
+    <Paper p="md" radius="md" className={classes.root}>
       <Group position="apart">
         <Text size="xs" color="dimmed" className={classes.title}>
           Total Mileage

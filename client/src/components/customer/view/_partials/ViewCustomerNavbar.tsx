@@ -74,7 +74,7 @@ export function ViewCustomerNavbar({
         <Skeleton height={800} width={400} />
       ) : (
         <>
-          <Card className={classes.card} withBorder>
+          <Card className={classes.card}>
             <Box
               style={{
                 textAlign: "center",

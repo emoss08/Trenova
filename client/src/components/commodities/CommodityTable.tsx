@@ -15,20 +15,90 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge, Text } from "@mantine/core";
 import { MontaTable } from "@/components/MontaTable";
 import { commodityTableStore } from "@/stores/CommodityStore";
-import { CommodityTableColumns } from "@/components/commodities/CommodityTableColumns";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
 import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
 import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
+import { Commodity } from "@/types/apps/commodities";
+import { truncateText } from "@/lib/utils";
+import { TChoiceProps } from "@/types";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function CommodityTable() {
+  const columns = useMemo<MRT_ColumnDef<Commodity>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        header: "Description",
+        Cell: ({ cell }) => {
+          if (cell.getValue()) {
+            return truncateText(cell.getValue() as string, 50);
+          }
+          return <Text>No Description</Text>;
+        },
+      },
+      {
+        id: "temp_range",
+        accessorFn: (row) => `${row.min_temp} - ${row.max_temp}`,
+        header: "Temperature Range",
+        Cell: ({ cell }) => {
+          if (cell.getValue() === "null - null") {
+            return <Text>No Temp Range</Text>;
+          }
+          return <Text>{cell.getValue() as string}</Text>;
+        },
+      },
+      {
+        id: "is_hazmat",
+        header: "Is Hazmat",
+        accessorKey: "is_hazmat",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "N" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "Y" ? "Yes" : "No"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "Y", label: "Yes" },
+            { value: "N", label: "No" },
+          ] as ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={commodityTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <MontaTable
       store={commodityTableStore}
       link="/commodities"
-      columns={CommodityTableColumns}
+      columns={columns}
       TableEditModal={EditCommodityModal}
       TableViewModal={ViewCommodityModal}
       displayDeleteModal

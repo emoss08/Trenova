@@ -15,29 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 import React, { useRef, useState } from "react";
-import { createStyles } from "@mantine/styles";
 import { Autocomplete, Loader } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { AutocompleteProps } from "@mantine/core/lib/Autocomplete/Autocomplete";
+import { UseFormReturnType } from "@mantine/form";
 import { stateData } from "./StateSelect";
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface CityAutoCompleteFieldProps<TFormValues extends object>
-  extends Omit<AutocompleteProps, "data"> {
-  form: any;
+  extends Omit<AutocompleteProps, "data" | "form"> {
+  form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   stateSelection: string;
 }
-
-const useStyles = createStyles((theme) => ({
-  invalid: {
-    backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.rgba(theme.colors.red[8], 0.15)
-        : theme.colors.red[0],
-  },
-  invalidIcon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
 
 export function CityAutoCompleteField<TFormValues extends object>({
   form,
@@ -45,7 +34,7 @@ export function CityAutoCompleteField<TFormValues extends object>({
   name,
   ...rest
 }: CityAutoCompleteFieldProps<TFormValues>) {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const error = form.errors[name as string];
   const timeoutRef = useRef<number>(-1);
   const [loading, setLoading] = useState<boolean>(false);
@@ -96,9 +85,7 @@ export function CityAutoCompleteField<TFormValues extends object>({
       {...form.getInputProps(name as string)}
       data={data ?? []}
       error={error}
-      classNames={{
-        input: error ? classes.invalid : "",
-      }}
+      className={classes.fields}
       onChange={handleChange}
       rightSection={
         loading ? (

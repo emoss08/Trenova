@@ -17,9 +17,7 @@
 import React from "react";
 import {
   Card,
-  createStyles,
   Flex,
-  rem,
   Text,
   SimpleGrid,
   Button,
@@ -37,6 +35,8 @@ import { StateSelect } from "../ui/fields/StateSelect";
 import { CityAutoCompleteField } from "../ui/fields/CityAutoCompleteField";
 import { UserSchema } from "@/utils/schema";
 import { User } from "@/types/apps/accounts";
+import { usePageStyles } from "@/styles/PageStyles";
+import { useFormStyles } from "@/styles/FormStyles";
 
 type Props = {
   user: User;
@@ -59,62 +59,8 @@ interface UserDetailFormValues {
   };
 }
 
-const useStyles = createStyles((theme) => {
-  const BREAKPOINT = theme.fn.smallerThan("sm");
-
-  return {
-    card: {
-      width: "100%",
-      maxWidth: "100%",
-      height: "auto",
-      "@media (max-width: 576px)": {
-        height: "auto",
-        maxHeight: "none",
-      },
-    },
-    title: {
-      marginBottom: `calc(${theme.spacing.xl} * 1.5)`,
-      fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-
-      [BREAKPOINT]: {
-        marginBottom: theme.spacing.xl,
-      },
-    },
-    fields: {
-      marginTop: rem(10),
-    },
-    icon: {
-      marginRight: "5px",
-      marginTop: "5px",
-    },
-    div: {
-      display: "flex",
-    },
-    text: {
-      color: theme.colorScheme === "dark" ? "white" : "black",
-    },
-    grid: {
-      display: "flex",
-    },
-    control: {
-      [BREAKPOINT]: {
-        flex: 1,
-      },
-    },
-    invalid: {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-    },
-    invalidIcon: {
-      color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-    },
-  };
-});
-
-const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
-  const { classes } = useStyles();
+function EditUserProfileDetailsForm({ user }: Props) {
+  const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
@@ -135,8 +81,8 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: any) => {
-            form.setFieldError(error.attr, error.detail);
+          data.errors.forEach((e: any) => {
+            form.setFieldError(e.attr, e.detail);
           });
         }
       },
@@ -172,109 +118,113 @@ const EditUserProfileDetails: React.FC<Props> = ({ user }) => {
   });
 
   return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Profile Details
+      </Text>
+
+      <Divider my={10} />
+
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <ValidatedTextInput
+          form={form}
+          className={classes.fields}
+          name="profile.first_name"
+          label="First Name"
+          placeholder="First Name"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput
+          form={form}
+          className={classes.fields}
+          name="profile.last_name"
+          label="Last Name"
+          placeholder="Last Name"
+          variant="filled"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <ValidatedTextInput
+          form={form}
+          className={classes.fields}
+          name="profile.address_line_1"
+          label="Address Line 1"
+          placeholder="Address Line 1"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput
+          form={form}
+          className={classes.fields}
+          name="profile.address_line_2"
+          label="Address Line 2"
+          placeholder="Address Line 2"
+          variant="filled"
+        />
+      </SimpleGrid>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <CityAutoCompleteField
+          form={form}
+          stateSelection={form.values.profile.state}
+          className={classes.fields}
+          name="profile.city"
+          label="City"
+          placeholder="City"
+          variant="filled"
+          withAsterisk
+        />
+        <StateSelect
+          label="State"
+          className={classes.fields}
+          placeholder="State"
+          variant="filled"
+          searchable
+          form={form}
+          name="profile.state"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextInput
+        form={form}
+        className={classes.fields}
+        name="profile.zip_code"
+        label="Zip Code"
+        placeholder="Zip Code"
+        variant="filled"
+        withAsterisk
+      />
+      <ValidatedTextInput
+        form={form}
+        className={classes.fields}
+        name="profile.phone_number"
+        label="Phone Number"
+        placeholder="Phone Number"
+        variant="filled"
+      />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
+    </form>
+  );
+}
+
+export function EditUserProfileDetails({ user }: Props) {
+  const { classes } = usePageStyles();
+
+  return (
     <Flex>
-      <Card className={classes.card} withBorder>
-        <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Profile Details
-          </Text>
-
-          <Divider my={10} />
-
-          <div className={classes.fields}>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="profile.first_name"
-                label="First Name"
-                placeholder="First Name"
-                variant="filled"
-                withAsterisk
-              />
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="profile.last_name"
-                label="Last Name"
-                placeholder="Last Name"
-                variant="filled"
-                withAsterisk
-              />
-            </SimpleGrid>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="profile.address_line_1"
-                label="Address Line 1"
-                placeholder="Address Line 1"
-                variant="filled"
-                withAsterisk
-              />
-              <ValidatedTextInput
-                form={form}
-                className={classes.fields}
-                name="profile.address_line_2"
-                label="Address Line 2"
-                placeholder="Address Line 2"
-                variant="filled"
-              />
-            </SimpleGrid>
-            <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-              <CityAutoCompleteField
-                form={form}
-                stateSelection={form.values.profile.state}
-                className={classes.fields}
-                name="profile.city"
-                label="City"
-                placeholder="City"
-                variant="filled"
-                withAsterisk
-              />
-              <StateSelect
-                label="State"
-                className={classes.fields}
-                placeholder="State"
-                variant="filled"
-                searchable
-                form={form}
-                name="profile.state"
-                withAsterisk
-              />
-            </SimpleGrid>
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="profile.zip_code"
-              label="Zip Code"
-              placeholder="Zip Code"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="profile.phone_number"
-              label="Phone Number"
-              placeholder="Phone Number"
-              variant="filled"
-            />
-            <Group position="right" mt="md">
-              <Button
-                color="white"
-                type="submit"
-                className={classes.control}
-                loading={loading}
-              >
-                Submit
-              </Button>
-            </Group>
-          </div>
-        </form>
+      <Card className={classes.card}>
+        <EditUserProfileDetailsForm user={user} />
       </Card>
     </Flex>
   );
-};
-
-export default EditUserProfileDetails;
+}

@@ -79,10 +79,10 @@ const ResetPasswordPage: React.FC = () => {
     <Container size={450} my={50}>
       <Title align="center">Reset Password ?</Title>
       <Text color="dimmed" size="sm" align="center" mt={5}>
-          Enter your email to reset your password.
+        Enter your email to reset your password.
       </Text>
 
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+      <Paper shadow="md" p={30} mt={30} radius="md">
         <form onSubmit={form.onSubmit((values) => submitForm(values))}>
           <ValidatedTextInput
             label="Email"
@@ -93,7 +93,7 @@ const ResetPasswordPage: React.FC = () => {
           />
           <div style={{ textAlign: "center" }}>
             <Button type="submit" loading={loading} my={10} mx={10}>
-                Submit
+              Submit
             </Button>
             <Button
               type="button"
@@ -101,7 +101,7 @@ const ResetPasswordPage: React.FC = () => {
               variant="light"
               onClick={() => navigate("/login")}
             >
-                Cancel
+              Cancel
             </Button>
           </div>
         </form>

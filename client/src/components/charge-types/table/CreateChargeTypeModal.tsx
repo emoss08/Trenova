@@ -15,16 +15,123 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { CreateChargeTypeModalForm } from "@/components/charge-types/table/_partials/CreateChargeTypeModalForm";
+import { useFormStyles } from "@/styles/FormStyles";
+import { ChargeTypeFormValues } from "@/types/apps/billing";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
+import { chargeTypeSchema } from "@/utils/apps/billing/schema";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 
-export const CreateChargeTypeModal: React.FC = () => {
+function CreateChargeTypeModalForm() {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: ChargeTypeFormValues) => axios.post("/charge_types/", values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["charge-type-table-data"],
+          })
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "Charge Type created successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+            chargeTypeTableStore.set("createModalOpen", false);
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<ChargeTypeFormValues>({
+    validate: yupResolver(chargeTypeSchema),
+    initialValues: {
+      name: "",
+      description: "",
+    },
+  });
+
+  const submitForm = (values: ChargeTypeFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="name"
+            label="Name"
+            placeholder="Name"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function CreateChargeTypeModal(): React.ReactElement {
   const [showCreateModal, setShowCreateModal] =
     chargeTypeTableStore.use("createModalOpen");
-
-  if (!showCreateModal) return null;
 
   return (
     <Modal.Root
@@ -45,4 +152,4 @@ export const CreateChargeTypeModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

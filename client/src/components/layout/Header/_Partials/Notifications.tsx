@@ -51,23 +51,23 @@ export function Notifications({ notification, notificationLoading }: Props) {
   }
 
   const notificationItems = notification?.unread_list.map(
-    (notification: Notification) => {
-      const humanReadableTimestamp = formatTimestamp(notification.timestamp);
+    (notif: Notification) => {
+      const humanReadableTimestamp = formatTimestamp(notif.timestamp);
       return (
-        <Group mt={5} mb={10} mr={10} key={notification.id}>
+        <Group mt={5} mb={10} mr={10} key={notif.id}>
           <FontAwesomeIcon icon={faEnvelope} />
           <div style={{ flex: 1 }}>
             <Text fw={700} size="xs">
-              {notification.verb}
+              {notif.verb}
             </Text>
-            <Text size="xs">{notification.description}</Text>
+            <Text size="xs">{notif.description}</Text>
           </div>
           <Badge size="xs" radius="xs" variant="filled" color="violet">
             {humanReadableTimestamp}
           </Badge>
         </Group>
       );
-    }
+    },
   );
 
   return <>{notificationItems}</>;

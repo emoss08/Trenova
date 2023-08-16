@@ -15,20 +15,46 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
 import { MontaTable } from "@/components/MontaTable";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { CreateChargeTypeModal } from "@/components/charge-types/table/CreateChargeTypeModal";
 import { EditChargeTypeModal } from "@/components/charge-types/table/EditChargeTypeModal";
-import { ChargeTypeTableColumns } from "@/components/charge-types/table/ChargeTypeTableColumns";
 import { ViewChargeTypeModal } from "@/components/charge-types/table/ViewChargeTypeModal";
+import { ChargeType } from "@/types/apps/billing";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function ChargeTypeTable() {
+  const columns = useMemo<MRT_ColumnDef<ChargeType>[]>(
+    () => [
+      {
+        accessorKey: "name", // access nested data with dot notation
+        header: "Name",
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={chargeTypeTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <MontaTable
       store={chargeTypeTableStore}
       link="/charge_types"
-      columns={ChargeTypeTableColumns}
+      columns={columns}
       TableEditModal={EditChargeTypeModal}
       TableViewModal={ViewChargeTypeModal}
       displayDeleteModal

@@ -15,20 +15,75 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/MontaTable";
-import { JobTitleTableColumns } from "@/components/job-title/table/JobTitleTableColumns";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { EditJobTitleModal } from "@/components/job-title/table/EditJobTitleModal";
 import { ViewJobTitleModal } from "@/components/job-title/table/ViewJobTitleModal";
 import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
+import { JobTitle } from "@/types/apps/accounts";
+import { TChoiceProps } from "@/types";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function JobTitleTable() {
+  const columns = useMemo<MRT_ColumnDef<JobTitle>[]>(
+    () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] satisfies ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
+      {
+        accessorKey: "name", // access nested data with dot notation
+        header: "Name",
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+      },
+      {
+        accessorKey: "job_function",
+        header: "Job Function",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={jobTitleTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <MontaTable
       store={jobTitleTableStore}
       link="/job_titles"
-      columns={JobTitleTableColumns}
+      columns={columns}
       TableEditModal={EditJobTitleModal}
       TableViewModal={ViewJobTitleModal}
       displayDeleteModal

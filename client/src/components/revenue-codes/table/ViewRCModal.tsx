@@ -17,13 +17,89 @@
 
 import React, { Suspense } from "react";
 import { useQuery, useQueryClient } from "react-query";
-import { Modal, Skeleton } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Group,
+  Modal,
+  Select,
+  SimpleGrid,
+  Skeleton,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { ViewRCModalForm } from "./_Partials/ViewRCModalForm";
+import { GeneralLedgerAccount, RevenueCode } from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
 
-export const ViewRCModal: React.FC = () => {
+type ViewRCModalFormProps = {
+  revenueCode: RevenueCode;
+  selectGlAccountData: TChoiceProps[];
+};
+
+export function ViewRCModalForm({
+  revenueCode,
+  selectGlAccountData,
+}: ViewRCModalFormProps) {
+  const { classes } = useFormStyles();
+
+  return (
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          value={revenueCode.code}
+          readOnly
+          className={classes.fields}
+          label="Code"
+          variant="filled"
+        />
+        <Textarea
+          value={revenueCode.description}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={selectGlAccountData}
+            value={revenueCode.expense_account || ""}
+            readOnly
+            label="AP Account"
+            className={classes.fields}
+            variant="filled"
+          />
+          <Select
+            data={selectGlAccountData}
+            value={revenueCode.revenue_account || ""}
+            readOnly
+            label="Cash Account"
+            className={classes.fields}
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              revenueCodeTableStore.set("selectedRecord", revenueCode);
+              revenueCodeTableStore.set("viewModalOpen", false);
+              revenueCodeTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
+            Edit Revenue Code
+          </Button>
+        </Group>
+      </Box>
+    </Box>
+  );
+}
+
+export function ViewRCModal(): React.ReactElement {
   const [showViewModal, setShowViewModal] =
     revenueCodeTableStore.use("viewModalOpen");
   const [revenueCode] = revenueCodeTableStore.use("selectedRecord");
@@ -42,8 +118,6 @@ export const ViewRCModal: React.FC = () => {
       value: glAccount.id,
       label: glAccount.account_number,
     })) || [];
-
-  if (!showViewModal) return null;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -66,4 +140,4 @@ export const ViewRCModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

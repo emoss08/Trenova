@@ -20,7 +20,7 @@ import React from "react";
 import { usePageStyles } from "@/styles/PageStyles";
 import { CommodityTable } from "@/components/commodities/CommodityTable";
 
-export default function Commodity() {
+export default function CommodityPage() {
   const { classes } = usePageStyles();
 
   return (

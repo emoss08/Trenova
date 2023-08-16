@@ -119,7 +119,7 @@ const reconnect = () => {
     `${WEB_SOCKET_URL}/notifications/`,
     {
       onOpen: () => console.info("Connected to notifications websocket"),
-    }
+    },
   );
 };
 
@@ -164,12 +164,12 @@ export const UserNotifications: React.FC = () => {
           onClose: (event: CloseEvent) => {
             if (event.wasClean) {
               console.info(
-                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}, will reconnect in 1 second`
+                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}, will reconnect in 1 second`,
               );
               reconnect();
             } else {
               console.info(
-                "[close] Connection died. Reconnect will be attempted in 1 second."
+                "[close] Connection died. Reconnect will be attempted in 1 second.",
               );
               reconnect();
             }
@@ -177,7 +177,7 @@ export const UserNotifications: React.FC = () => {
           onError: (error: Event) => {
             console.log(`[error] ${error}`);
           },
-        }
+        },
       );
     } else if (isAuthenticated && !userId) {
       webSocketManager.disconnect("notifications");
@@ -199,7 +199,8 @@ export const UserNotifications: React.FC = () => {
         }
         return getUserNotifications();
       },
-      initialData: () => queryClient.getQueryData(["userNotifications", userId]),
+      initialData: () =>
+        queryClient.getQueryData(["userNotifications", userId]),
     });
 
   const readAllNotifications = async () => {
@@ -235,9 +236,7 @@ export const UserNotifications: React.FC = () => {
           <div className={classes.mainLinks}>
             <UnstyledButton
               className={classes.mainLink}
-              onClick={() =>
-                useNavbarStore.set("notificationsMenuOpen", true)
-              }
+              onClick={() => useNavbarStore.set("notificationsMenuOpen", true)}
             >
               <div className={classes.mainLinkInner}>
                 <FontAwesomeIcon
@@ -247,7 +246,7 @@ export const UserNotifications: React.FC = () => {
                 />
                 <span>Notifications</span>
               </div>
-              <Indicator withBorder processing color="violet">
+              <Indicator processing color="violet">
                 <Badge
                   size="sm"
                   variant="filled"
@@ -265,7 +264,7 @@ export const UserNotifications: React.FC = () => {
               onClick={() => {
                 useNavbarStore.set(
                   "notificationsMenuOpen",
-                  !notificationMenuOpen
+                  !notificationMenuOpen,
                 );
               }}
             >
@@ -282,7 +281,7 @@ export const UserNotifications: React.FC = () => {
                 variant="filled"
                 className={classes.mainLinkBadge}
               >
-                  0
+                0
               </Badge>
             </UnstyledButton>
           </div>
@@ -315,7 +314,7 @@ export const UserNotifications: React.FC = () => {
                 className={classes.button}
                 onClick={readAllNotifications}
               >
-                  Mark all as read
+                Mark all as read
               </Button>
             </div>
           </>

@@ -15,20 +15,71 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/MontaTable";
-import { DCTableColumns } from "@/components/division-codes/table/DCTableColumns";
 import { CreateDCModal } from "@/components/division-codes/table/CreateDCModal";
 import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
 import { ViewDCModal } from "@/components/division-codes/table/ViewDCModal";
+import { DivisionCode } from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function DivisionCodeTable() {
+  const columns = useMemo<MRT_ColumnDef<DivisionCode>[]>(
+    () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] as TChoiceProps[],
+        },
+        filterVariant: "select",
+      },
+      {
+        accessorKey: "code", // access nested data with dot notation
+        header: "Code",
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={divisionCodeTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <MontaTable
       store={divisionCodeTableStore}
       link="/division_codes"
-      columns={DCTableColumns}
+      columns={columns}
       TableEditModal={EditDCModal}
       TableViewModal={ViewDCModal}
       displayDeleteModal

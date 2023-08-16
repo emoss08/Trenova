@@ -22,7 +22,31 @@ export const useFormStyles = createStyles((theme) => {
 
   return {
     fields: {
-      marginTop: rem(10),
+      marginTop: rem(10), // 160px
+      "& input": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.colors.dark[6]
+            : theme.colors.gray[1],
+      },
+      "& textarea": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.colors.dark[6]
+            : theme.colors.gray[1],
+      },
+      "& input[aria-invalid=true]": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.fn.rgba(theme.colors.red[8], 0.15)
+            : theme.colors.red[0],
+      },
+      "& textarea[data-invalid=true]": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.fn.rgba(theme.colors.red[8], 0.15)
+            : theme.colors.red[0],
+      },
     },
     control: {
       [BREAKPOINT]: {

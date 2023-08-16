@@ -30,7 +30,7 @@ import { TableExportModal } from "./table/TableExportModal";
 interface MontaTableProps<T extends Record<string, any>> {
   store: any;
   link: string;
-  columns: () => MRT_ColumnDef<T>[];
+  columns: MRT_ColumnDef<T>[];
   displayDeleteModal?: boolean;
   TableCreateDrawer?: React.ComponentType;
   TableDeleteModal?: React.ComponentType;
@@ -39,6 +39,10 @@ interface MontaTableProps<T extends Record<string, any>> {
   exportModelName: string;
   name: string;
   tableQueryKey: string;
+}
+
+export interface MontaColumnProps<T extends Record<string, unknown>> {
+  columns: MRT_ColumnDef<T>[];
 }
 
 export function MontaTable<T extends Record<string, any>>({
@@ -79,7 +83,7 @@ export function MontaTable<T extends Record<string, any>>({
   return (
     <>
       <MantineReactTable
-        columns={columns()}
+        columns={columns}
         data={data?.results ?? []}
         manualPagination
         onPaginationChange={(newPagination) => {

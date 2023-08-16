@@ -62,9 +62,7 @@ export function NavBar({
   ));
   return (
     <Flex>
-      <Card className={classes.card} withBorder>
-        {items}
-      </Card>
+      <Card className={classes.card}>{items}</Card>
     </Flex>
   );
 }
