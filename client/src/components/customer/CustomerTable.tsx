@@ -15,20 +15,117 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge, Button, Menu } from "@mantine/core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 import { MontaTable } from "@/components/MontaTable";
 import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
 import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
-import { CustomerTableColumns } from "@/components/customer/_partials/CustomerTableColumns";
 import { customerTableStore } from "@/stores/CustomerStore";
+import { Customer } from "@/types/apps/customer";
+import { TChoiceProps } from "@/types";
 
 export function CustomerTable() {
+  const navigate = useNavigate();
+  const columns = useMemo<MRT_ColumnDef<Customer>[]>(
+    () => [
+      {
+        id: "status",
+        header: "Status",
+        accessorKey: "status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] satisfies ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
+      {
+        accessorKey: "code",
+        header: "Code",
+      },
+      {
+        accessorKey: "name",
+        header: "Name",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <Menu
+            width="10%"
+            shadow="md"
+            withArrow
+            offset={5}
+            transitionProps={{
+              transition: "pop",
+              duration: 150,
+            }}
+          >
+            <Menu.Target>
+              <Button
+                variant="light"
+                color="gray"
+                size="xs"
+                rightIcon={<FontAwesomeIcon icon={faChevronDown} size="sm" />}
+              >
+                Actions
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                onClick={() => {
+                  navigate(`/billing/customers/view/${row.original.id}`);
+                }}
+              >
+                View
+              </Menu.Item>
+              <Menu.Item
+                onClick={() => {
+                  customerTableStore.set("selectedRecord", row.original);
+                  customerTableStore.set("editModalOpen", true);
+                }}
+              >
+                Edit
+              </Menu.Item>
+              <Menu.Item
+                color="red"
+                onClick={() => {
+                  customerTableStore.set("selectedRecord", row.original);
+                  customerTableStore.set("deleteModalOpen", true);
+                }}
+              >
+                Delete
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        ),
+      },
+    ],
+    [navigate],
+  );
+
   return (
     <MontaTable
       store={customerTableStore}
       link="/customers"
-      columns={CustomerTableColumns}
+      columns={columns}
       TableEditModal={EditCommodityModal}
       TableViewModal={ViewCommodityModal}
       displayDeleteModal
