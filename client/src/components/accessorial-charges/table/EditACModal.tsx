@@ -15,12 +15,171 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
-import { EditACModalForm } from "@/components/accessorial-charges/table/_partials/EditACModalForm";
+import {
+  AccessorialCharge,
+  AccessorialChargeFormValues,
+} from "@/types/apps/billing";
+import { useFormStyles } from "@/styles/FormStyles";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
+import { accessorialChargeSchema } from "@/utils/apps/billing/schema";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { fuelMethodChoices } from "@/utils/apps/billing";
+import { SwitchInput } from "@/components/ui/fields/SwitchInput";
 
-export const EditACModal: React.FC = () => {
+type EditACModalFormProps = {
+  accessorialCharge: AccessorialCharge;
+};
+
+export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: AccessorialChargeFormValues) =>
+      axios.put(`/accessorial_charges/${accessorialCharge.id}/`, values),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["accessorial-charges-table-data"],
+        });
+        queryClient
+          .invalidateQueries({
+            queryKey: ["accessorialCharge", accessorialCharge.id],
+          })
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "Accessorial Charge updated successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+            accessorialChargeTableStore.set("editModalOpen", false);
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<AccessorialChargeFormValues>({
+    validate: yupResolver(accessorialChargeSchema),
+    initialValues: {
+      code: accessorialCharge.code,
+      description: accessorialCharge.description || "",
+      is_detention: accessorialCharge.is_detention,
+      charge_amount: accessorialCharge.charge_amount,
+      method: accessorialCharge.method,
+    },
+  });
+
+  const submitForm = (values: AccessorialChargeFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="code"
+            label="Code"
+            description="Code for the accessorial charge."
+            placeholder="Code"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            description="Description of the accessorial charge."
+            placeholder="Description"
+            variant="filled"
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="charge_amount"
+              label="Charge Amount"
+              placeholder="Charge Amount"
+              description="Charge amount for the accessorial charge."
+              variant="filled"
+              withAsterisk
+            />
+            <SelectInput
+              form={form}
+              data={fuelMethodChoices}
+              className={classes.fields}
+              name="method"
+              label="Fuel Method"
+              description="Method for calculating the other charge."
+              placeholder="Fuel Method"
+              variant="filled"
+            />
+            <SwitchInput
+              form={form}
+              className={classes.fields}
+              name="is_detention"
+              label="Detention"
+              description="Is detention charge?"
+              placeholder="Detention"
+              variant="filled"
+            />
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function EditACModal(): React.ReactElement | null {
   const [showEditModal, setShowEditModal] =
     accessorialChargeTableStore.use("editModalOpen");
   const [accessorialCharge] = accessorialChargeTableStore.use("selectedRecord");
@@ -36,15 +195,13 @@ export const EditACModal: React.FC = () => {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <>
-            <Suspense fallback={<Skeleton height={200} />}>
-              {accessorialCharge && (
-                <EditACModalForm accessorialCharge={accessorialCharge} />
-              )}
-            </Suspense>
-          </>
+          <Suspense fallback={<Skeleton height={200} />}>
+            {accessorialCharge && (
+              <EditACModalForm accessorialCharge={accessorialCharge} />
+            )}
+          </Suspense>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

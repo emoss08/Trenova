@@ -14,26 +14,91 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
 import React from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/MontaTable";
-import { ACTableColumns } from "@/components/accessorial-charges/table/ACTableColumns";
 import { CreateACModal } from "@/components/accessorial-charges/table/CreateACModal";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
 import { ViewACModal } from "@/components/accessorial-charges/table/ViewACModal";
+import { AccessorialCharge } from "@/types/apps/billing";
+import { truncateText, USDollarFormat } from "@/lib/utils";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { TChoiceProps } from "@/types";
 
-export const ACChargeTable: () => React.JSX.Element = () => (
-  <MontaTable
-    store={accessorialChargeTableStore}
-    link="/accessorial_charges"
-    columns={ACTableColumns}
-    TableEditModal={EditACModal}
-    TableViewModal={ViewACModal}
-    displayDeleteModal
-    TableCreateDrawer={CreateACModal}
-    tableQueryKey="accessorial-charges-table-data"
-    exportModelName="AccessorialCharge"
-    name="Accessorial Charge"
-  />
-);
+export function ACChargeTable() {
+  const columns = React.useMemo<MRT_ColumnDef<AccessorialCharge>[]>(
+    () => [
+      {
+        accessorKey: "code",
+        header: "Code",
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        header: "Description",
+        Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
+      },
+      {
+        id: "is_detention",
+        accessorFn: (originalRow) =>
+          originalRow.is_detention ? "true" : "false",
+        header: "Is Detention",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "true" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "true" ? "Yes" : "No"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "true", label: "Active" },
+            { value: "false", label: "Inactive" },
+          ] satisfies ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
+      {
+        id: "charge_amount",
+        accessorKey: "charge_amount",
+        header: "Charge Amount",
+        filterVariant: "text",
+        sortingFn: "text",
+        Cell: ({ cell }) =>
+          USDollarFormat(Math.round(cell.getValue() as number)),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={accessorialChargeTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
+  return (
+    <MontaTable
+      store={accessorialChargeTableStore}
+      link="/accessorial_charges"
+      columns={columns}
+      TableEditModal={EditACModal}
+      TableViewModal={ViewACModal}
+      displayDeleteModal
+      TableCreateDrawer={CreateACModal}
+      tableQueryKey="accessorial-charges-table-data"
+      exportModelName="AccessorialCharge"
+      name="Accessorial Charge"
+    />
+  );
+}

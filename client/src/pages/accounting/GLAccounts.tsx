@@ -20,7 +20,7 @@ import React from "react";
 import { usePageStyles } from "@/styles/PageStyles";
 import { GLAccountTable } from "@/components/gl-accounts/table/GLAccountTable";
 
-const GLAccounts: React.FC = () => {
+function GLAccounts(): React.ReactElement {
   const { classes } = usePageStyles();
 
   return (
@@ -30,6 +30,6 @@ const GLAccounts: React.FC = () => {
       </Card>
     </Flex>
   );
-};
+}
 
 export default GLAccounts;

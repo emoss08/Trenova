@@ -232,7 +232,7 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
       {isBillingProfileLoading ? (
         <Skeleton height={200} />
       ) : (
-        <Card className={classes.card} withBorder>
+        <Card className={classes.card}>
           {billingProfile && (
             <CustomerBillingProfileForm billingProfile={billingProfile} />
           )}

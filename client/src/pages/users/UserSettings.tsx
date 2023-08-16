@@ -21,29 +21,25 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Skeleton, Stack } from "@mantine/core";
 import { getUserDetails } from "@/requests/UserRequestFactory";
 import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
-import EditUserProfileDetails from "@/components/users/EditUserProfileDetails";
+import { EditUserProfileDetails } from "@/components/users/EditUserProfileDetails";
 import { ViewUserProfileDetails } from "@/components/users/ViewUserProfileDetails";
 import { SignInMethod } from "@/components/users/SignInMethod";
 
-const UserSettings: React.FC = () => {
-  const { userId } = useParams<{ userId: string }>();
+export default function UserSettings() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  if (!userId) {
-    throw new Error("No user ID provided");
-  }
-
   const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery({
-    queryKey: ["user", userId],
+    queryKey: ["user", id],
     queryFn: () => {
-      if (!userId) {
+      if (!id) {
         return Promise.resolve(null);
       }
-      return getUserDetails(userId);
+      return getUserDetails(id);
     },
     onError: () => navigate("/error"),
-    initialData: () => queryClient.getQueryData(["user", userId]),
+    initialData: () => queryClient.getQueryData(["user", id]),
   });
 
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery({
@@ -55,10 +51,8 @@ const UserSettings: React.FC = () => {
       return getJobTitleDetails(userDetails?.profile?.job_title);
     },
     enabled: !!userDetails,
-    initialData: () => queryClient.getQueryData([
-      "jobTitle",
-      userDetails?.profile?.job_title,
-    ]),
+    initialData: () =>
+      queryClient.getQueryData(["jobTitle", userDetails?.profile?.job_title]),
   });
 
   const isLoading = isUserDetailsLoading || isJobTitlesLoading;
@@ -85,6 +79,4 @@ const UserSettings: React.FC = () => {
       )}
     </>
   );
-};
-
-export default UserSettings;
+}

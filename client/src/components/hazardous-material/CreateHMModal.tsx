@@ -15,15 +15,183 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal } from "@mantine/core";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
-import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
-import { CreateHMModalForm } from "@/components/hazardous-material/_partials/CreateHMModalForm";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
+import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
+import { useFormStyles } from "@/styles/FormStyles";
+import { HazardousMaterialFormValues } from "@/types/apps/commodities";
+import axios from "@/lib/AxiosConfig";
+import { hazardousMaterialSchema } from "@/utils/apps/commodities/schema";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { statusChoices } from "@/lib/utils";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import {
+  hazardousClassChoices,
+  packingGroupChoices,
+} from "@/utils/apps/commodities";
 
-export const CreateHMModal: React.FC = () => {
-  const [showCreateModal, setShowCreateModal] =
-    hazardousMaterialTableStore.use("createModalOpen");
-  if (!showCreateModal) return null;
+export function CreateHMModalForm() {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: HazardousMaterialFormValues) =>
+      axios.post("/hazardous_materials/", values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["hazardous-material-table-data"],
+          })
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "Hazardous Material created successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+            store.set("createModalOpen", false);
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: any) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<HazardousMaterialFormValues>({
+    validate: yupResolver(hazardousMaterialSchema),
+    initialValues: {
+      status: "A",
+      name: "",
+      description: "",
+      hazard_class: "1.3",
+      packing_group: "I",
+      erg_number: "",
+      proper_shipping_name: "",
+    },
+  });
+
+  const submitForm = (values: HazardousMaterialFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={statusChoices}
+              className={classes.fields}
+              name="status"
+              label="Status"
+              placeholder="Status"
+              variant="filled"
+              withAsterisk
+            />
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="name"
+              label="Name"
+              placeholder="Name"
+              variant="filled"
+              withAsterisk
+            />
+          </SimpleGrid>
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={hazardousClassChoices}
+              className={classes.fields}
+              name="hazard_class"
+              label="Hazard Class"
+              placeholder="Hazard Class"
+              variant="filled"
+              withAsterisk
+            />
+            <SelectInput
+              form={form}
+              data={packingGroupChoices}
+              className={classes.fields}
+              name="packing_group"
+              label="Packing Group"
+              placeholder="Packing Group"
+              variant="filled"
+              clearable
+            />
+          </SimpleGrid>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="erg_number"
+            label="ERG Number"
+            placeholder="ERG Number"
+            variant="filled"
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="proper_shipping_name"
+            label="Proper Shipping Name"
+            placeholder="Proper Shipping Name"
+            variant="filled"
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function CreateHMModal(): React.ReactElement {
+  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
   return (
     <Modal.Root
@@ -42,4 +210,4 @@ export const CreateHMModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

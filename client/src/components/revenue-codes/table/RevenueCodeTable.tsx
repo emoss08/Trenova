@@ -15,20 +15,49 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
 import { MontaTable } from "@/components/MontaTable";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { RCTableColumns } from "@/components/revenue-codes/table/RCTableColumns";
 import { ViewRCModal } from "@/components/revenue-codes/table/ViewRCModal";
 import { EditRCModal } from "@/components/revenue-codes/table/EditRCModal";
 import { CreateRCModal } from "./CreateRCModal";
+import { RevenueCode } from "@/types/apps/accounting";
+import { truncateText } from "@/lib/utils";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function RevenueCodeTable() {
+  const columns = useMemo<MRT_ColumnDef<RevenueCode>[]>(
+    () => [
+      {
+        accessorKey: "code", // access nested data with dot notation
+        header: "Code",
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        header: "Description",
+        Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={revenueCodeTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <MontaTable
       store={revenueCodeTableStore}
       link="/revenue_codes"
-      columns={RCTableColumns}
+      columns={columns}
       name="Revenue Code"
       TableEditModal={EditRCModal}
       TableViewModal={ViewRCModal}

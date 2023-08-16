@@ -75,7 +75,7 @@ export const PasswordChangeForm: React.FC = () => {
     confirm_password: Yup.string()
       .oneOf(
         [Yup.ref("new_password"), undefined],
-        "The password and its confirm are not the same"
+        "The password and its confirm are not the same",
       )
       .required("Confirm Password is required"),
   });
@@ -107,12 +107,12 @@ export const PasswordChangeForm: React.FC = () => {
       if (error.response) {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: any) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: any) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -139,7 +139,7 @@ export const PasswordChangeForm: React.FC = () => {
           >
             <div>
               <Text size="sm" className={classes.text} weight={700}>
-                  Password
+                Password
               </Text>
               <Text color="dimmed">************</Text>
             </div>
@@ -149,7 +149,7 @@ export const PasswordChangeForm: React.FC = () => {
               }}
             >
               <Button color="gray" variant="light" onClick={startEditing}>
-                  Reset Password
+                Reset Password
               </Button>
             </div>
           </div>
@@ -164,6 +164,7 @@ export const PasswordChangeForm: React.FC = () => {
                     variant="filled"
                     form={form}
                     name="old_password"
+                    withAsterisk
                   />
                   <ValidatedTextInput
                     label="New Password"
@@ -171,6 +172,7 @@ export const PasswordChangeForm: React.FC = () => {
                     variant="filled"
                     form={form}
                     name="new_password"
+                    withAsterisk
                   />
                   <ValidatedTextInput
                     label="Confirm New Password"
@@ -178,12 +180,21 @@ export const PasswordChangeForm: React.FC = () => {
                     variant="filled"
                     form={form}
                     name="confirm_password"
+                    withAsterisk
                   />
                 </SimpleGrid>
+                <Text color="dimmed" size="xs" mb={15}>
+                  Password must be at least 8 character and contain symbols
+                </Text>
                 <Button type="submit" color="blue" mx="xs" loading={loading}>
                   Update Password
                 </Button>
-                <Button type="button" onClick={stopEditing}>
+                <Button
+                  type="button"
+                  color="gray"
+                  variant="light"
+                  onClick={stopEditing}
+                >
                   Cancel
                 </Button>
               </form>

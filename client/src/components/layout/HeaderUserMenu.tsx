@@ -51,7 +51,7 @@ const pageStyles = createStyles((theme) => ({
     "&:hover": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.dark[8]
+          ? theme.colors.dark[7]
           : theme.colors.gray[0],
     },
   },
@@ -66,7 +66,7 @@ type Props = {
   user: User;
 };
 
-export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
+export function HeaderUserMenu({ user }: Props) {
   const { classes, theme } = pageStyles();
   const [userMenuOpen] = useNavbarStore.use("userMenuOpen");
 
@@ -85,11 +85,19 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
 
       <Menu
         width={260}
+        styles={{
+          dropdown: {
+            backgroundColor:
+              theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+          },
+        }}
         position="right-start"
         transitionProps={{ transition: "pop-top-right" }}
         onClose={() => useNavbarStore.set("userMenuOpen", false)}
         onOpen={() => useNavbarStore.set("userMenuOpen", true)}
         withinPortal
+        withArrow
+        arrowOffset={30}
       >
         <Menu.Target>
           <UnstyledButton className={classes.user}>
@@ -116,8 +124,6 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
                   </Avatar>
                 )}
               </Indicator>
-              {/* <Avatar src={user.profile?.profile_picture} radius="xl" /> */}
-
               <div style={{ flex: 1 }}>
                 <Text size="sm" weight={500}>
                   {user.profile?.first_name} {user.profile?.last_name}
@@ -210,4 +216,4 @@ export const HeaderUserMenu: React.FC<Props> = ({ user }) => {
       </Menu>
     </Group>
   );
-};
+}

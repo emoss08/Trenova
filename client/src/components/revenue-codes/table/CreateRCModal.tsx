@@ -15,15 +15,158 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { CreateRCModalForm } from "@/components/revenue-codes/table/_Partials/CreateRCModalForm";
+import {
+  GeneralLedgerAccount,
+  RevenueCodeFormValues,
+} from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
+import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 
-export const CreateRCModal: React.FC = () => {
+type CreateRCModalFormProps = {
+  selectGlAccountData: TChoiceProps[];
+};
+
+export function CreateRCModalForm({
+  selectGlAccountData,
+}: CreateRCModalFormProps) {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: RevenueCodeFormValues) => axios.post("/revenue_codes/", values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["revenue-code-table-data"],
+          })
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "Revenue Code created successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+            revenueCodeTableStore.set("createModalOpen", false);
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<RevenueCodeFormValues>({
+    validate: yupResolver(revenueCodeSchema),
+    initialValues: {
+      code: "",
+      description: "",
+      expense_account: "",
+      revenue_account: "",
+    },
+  });
+
+  const submitForm = (values: RevenueCodeFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="code"
+            label="Code"
+            placeholder="Code"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+            withAsterisk
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={selectGlAccountData}
+              className={classes.fields}
+              name="expense_account"
+              label="Expense Account"
+              placeholder="Expense Account"
+              variant="filled"
+              clearable
+            />
+            <SelectInput
+              form={form}
+              data={selectGlAccountData}
+              className={classes.fields}
+              name="revenue_account"
+              label="Revenue Account"
+              placeholder="Revenue Account"
+              variant="filled"
+              clearable
+            />
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function CreateRCModal(): React.ReactElement {
   const [showCreateModal, setShowCreateModal] =
     revenueCodeTableStore.use("createModalOpen");
   const queryClient = useQueryClient();
@@ -41,8 +184,6 @@ export const CreateRCModal: React.FC = () => {
       value: glAccount.id,
       label: glAccount.account_number,
     })) || [];
-
-  if (!showCreateModal) return null;
 
   return (
     <Modal.Root
@@ -63,4 +204,4 @@ export const CreateRCModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

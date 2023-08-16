@@ -55,7 +55,7 @@ import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { StateSelect } from "@/components/ui/fields/StateSelect";
 import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
 import { userTableStore } from "@/stores/UserTableStore";
-import { Organization , Department } from "@/types/apps/organization";
+import { Organization, Department } from "@/types/apps/organization";
 import { useFormStyles } from "@/styles/FormStyles";
 
 const initialValues: TransferListData = [
@@ -112,7 +112,7 @@ export const CreateUserDrawer: React.FC = () => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const CreateUserSchema = Yup.object().shape({
@@ -142,7 +142,7 @@ export const CreateUserDrawer: React.FC = () => {
             } // if the string is null or undefined, skip the test
             const regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
             return regex.test(value); // apply the regex test if string exists
-          }
+          },
         ),
     }),
   });
@@ -217,7 +217,7 @@ export const CreateUserDrawer: React.FC = () => {
     })) || [];
 
   const organizationLabel = selectOrganizationData.find(
-    (item) => item.value === form.values.organization
+    (item) => item.value === form.values.organization,
   )?.label;
 
   // Department Data mapping
@@ -228,7 +228,7 @@ export const CreateUserDrawer: React.FC = () => {
     })) || [];
 
   const departmentLabel = selectDepartmentData.find(
-    (item) => item.value === form.values.department
+    (item) => item.value === form.values.department,
   )?.label;
 
   // Job Title Data mapping
@@ -239,7 +239,7 @@ export const CreateUserDrawer: React.FC = () => {
     })) || [];
 
   const jobTitleLabel = selectJobTitleData.find(
-    (item) => item.value === form.values.profile.job_title
+    (item) => item.value === form.values.profile.job_title,
   )?.label;
 
   const onClose = () => {
@@ -285,13 +285,13 @@ export const CreateUserDrawer: React.FC = () => {
                 )
               }
             >
-                  User Information
+              User Information
             </Tabs.Tab>
             <Tabs.Tab
               icon={<FontAwesomeIcon icon={faUserShield} size="sm" />}
               value="permissions"
             >
-                  Permissions
+              Permissions
             </Tabs.Tab>
           </Tabs.List>
           <form
@@ -318,32 +318,29 @@ export const CreateUserDrawer: React.FC = () => {
                       onMouseLeave={() => {
                         form.setFieldValue(
                           "profile.organization",
-                          form.values.organization
+                          form.values.organization,
                         );
                       }}
                       withAsterisk
                       onContextMenu={
                         form.values.organization
                           ? showContextMenu([
-                            {
-                              key: "copy",
-                              icon: <IconCopy size={16} />,
-                              title: "Copy to clipboard",
-                              onClick: () => {
-                                clipboard.copy(organizationLabel);
+                              {
+                                key: "copy",
+                                icon: <IconCopy size={16} />,
+                                title: "Copy to clipboard",
+                                onClick: () => {
+                                  clipboard.copy(organizationLabel);
+                                },
                               },
-                            },
-                            {
-                              key: "view-organization",
-                              icon: <IconNote size={16} />,
-                              title: `View Organization: ${organizationLabel}`,
-                              onClick: () =>
-                                console.log(
-                                  "ID ",
-                                  form.values.organization
-                                ),
-                            },
-                          ])
+                              {
+                                key: "view-organization",
+                                icon: <IconNote size={16} />,
+                                title: `View Organization: ${organizationLabel}`,
+                                onClick: () =>
+                                  console.log("ID ", form.values.organization),
+                              },
+                            ])
                           : undefined
                       }
                     />
@@ -382,25 +379,22 @@ export const CreateUserDrawer: React.FC = () => {
                       onContextMenu={
                         form.values.department
                           ? showContextMenu([
-                            {
-                              key: "copy",
-                              icon: <IconCopy size={16} />,
-                              title: "Copy to clipboard",
-                              onClick: () => {
-                                clipboard.copy(form.values.department);
+                              {
+                                key: "copy",
+                                icon: <IconCopy size={16} />,
+                                title: "Copy to clipboard",
+                                onClick: () => {
+                                  clipboard.copy(form.values.department);
+                                },
                               },
-                            },
-                            {
-                              key: "view-department",
-                              icon: <IconNote size={16} />,
-                              title: `View Department: ${departmentLabel}`,
-                              onClick: () =>
-                                console.log(
-                                  "ID ",
-                                  form.values.organization
-                                ),
-                            },
-                          ])
+                              {
+                                key: "view-department",
+                                icon: <IconNote size={16} />,
+                                title: `View Department: ${departmentLabel}`,
+                                onClick: () =>
+                                  console.log("ID ", form.values.organization),
+                              },
+                            ])
                           : undefined
                       }
                     />
@@ -455,25 +449,25 @@ export const CreateUserDrawer: React.FC = () => {
                     onContextMenu={
                       form.values.profile.job_title
                         ? showContextMenu([
-                          {
-                            key: "copy",
-                            icon: <IconCopy size={16} />,
-                            title: "Copy to clipboard",
-                            onClick: () => {
-                              clipboard.copy(jobTitleLabel);
+                            {
+                              key: "copy",
+                              icon: <IconCopy size={16} />,
+                              title: "Copy to clipboard",
+                              onClick: () => {
+                                clipboard.copy(jobTitleLabel);
+                              },
                             },
-                          },
-                          {
-                            key: "view-job-title",
-                            icon: <IconNote size={16} />,
-                            title: `View Job Title: ${jobTitleLabel}`,
-                            onClick: () =>
-                              console.log(
-                                "ID ",
-                                form.values.profile.job_title
-                              ),
-                          },
-                        ])
+                            {
+                              key: "view-job-title",
+                              icon: <IconNote size={16} />,
+                              title: `View Job Title: ${jobTitleLabel}`,
+                              onClick: () =>
+                                console.log(
+                                  "ID ",
+                                  form.values.profile.job_title,
+                                ),
+                            },
+                          ])
                         : undefined
                     }
                   />
@@ -581,7 +575,7 @@ export const CreateUserDrawer: React.FC = () => {
                 className={classes.control}
                 loading={loading}
               >
-                    Submit
+                Submit
               </Button>
             </Group>
           </form>

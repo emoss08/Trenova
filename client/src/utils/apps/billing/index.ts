@@ -141,6 +141,11 @@ export const billingNavLinks = [
             permission: "view_revenuecode",
           },
           {
+            label: "Accessorial Charges",
+            link: "/billing/accessorial-charges/",
+            permission: "view_accessorialcharge",
+          },
+          {
             label: "Customers",
             link: "/billing/customers/",
             permission: "view_customer",

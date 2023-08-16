@@ -15,18 +15,191 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton, Stack } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Group,
+  Modal,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+} from "@mantine/core";
 import React from "react";
-import { useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import {
   getGLAccounts,
   getRevenueCodeDetail,
 } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { EditRCModalForm } from "@/components/revenue-codes/table/_Partials/EditRCModalForm";
+import {
+  GeneralLedgerAccount,
+  RevenueCode,
+  RevenueCodeFormValues,
+} from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
+import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
 
-export const EditRCModal: React.FC = () => {
+type EditRCModalFormProps = {
+  revenueCode: RevenueCode;
+  selectGlAccountData: TChoiceProps[];
+};
+
+export function EditRCModalForm({
+  revenueCode,
+  selectGlAccountData,
+}: EditRCModalFormProps) {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: RevenueCodeFormValues) =>
+      axios.put(`/revenue_codes/${revenueCode.id}/`, values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["revenue-code-table-data"],
+          })
+          .then(() => {
+            queryClient
+              .invalidateQueries({
+                queryKey: ["revenueCode", revenueCode?.id],
+              })
+              .then(() => {
+                notifications.show({
+                  title: "Success",
+                  message: "Revenue Code updated successfully",
+                  color: "green",
+                  withCloseButton: true,
+                  icon: <FontAwesomeIcon icon={faCheck} />,
+                });
+                revenueCodeTableStore.set("editModalOpen", false);
+              });
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<RevenueCodeFormValues>({
+    validate: yupResolver(revenueCodeSchema),
+    initialValues: {
+      code: revenueCode.code,
+      description: revenueCode.description,
+      expense_account: revenueCode.expense_account || "",
+      revenue_account: revenueCode.revenue_account || "",
+    },
+  });
+
+  const submitForm = (values: RevenueCodeFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <ValidatedTextInput
+            form={form}
+            className={classes.fields}
+            name="code"
+            label="Code"
+            placeholder="Code"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+            withAsterisk
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={selectGlAccountData}
+              className={classes.fields}
+              name="expense_account"
+              label="Expense Account"
+              placeholder="Expense Account"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue(
+                  "expense_account",
+                  form.values.expense_account,
+                );
+              }}
+              clearable
+            />
+            <SelectInput
+              form={form}
+              data={selectGlAccountData}
+              className={classes.fields}
+              name="revenue_account"
+              label="Revenue Account"
+              placeholder="Revenue Account"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue(
+                  "revenue_account",
+                  form.values.revenue_account,
+                );
+              }}
+              clearable
+            />
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function EditRCModal(): React.ReactElement {
   const [showEditModal, setShowEditModal] =
     revenueCodeTableStore.use("editModalOpen");
   const [revenueCode] = revenueCodeTableStore.use("selectedRecord");
@@ -61,8 +234,6 @@ export const EditRCModal: React.FC = () => {
       staleTime: Infinity,
     });
 
-  if (!showEditModal) return null;
-
   const isDataLoading = isRevenueCodeDataLoading || isGLAccountDataLoading;
 
   return (
@@ -92,4 +263,4 @@ export const EditRCModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

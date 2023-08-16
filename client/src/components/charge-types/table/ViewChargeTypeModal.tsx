@@ -15,17 +15,67 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Group,
+  Modal,
+  Skeleton,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
 import React, { Suspense } from "react";
-import { ViewChargeTypeModalForm } from "@/components/charge-types/table/_partials/ViewChargeTypeModalForm";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
+import { ChargeType } from "@/types/apps/billing";
+import { useFormStyles } from "@/styles/FormStyles";
 
-export const ViewChargeTypeModal: React.FC = () => {
+type ViewChargeTypeModalFormProps = {
+  chargeType: ChargeType;
+};
+
+function ViewChargeTypeModalForm({ chargeType }: ViewChargeTypeModalFormProps) {
+  const { classes } = useFormStyles();
+
+  return (
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          value={chargeType.name}
+          readOnly
+          className={classes.fields}
+          label="Name"
+          variant="filled"
+        />
+        <Textarea
+          value={chargeType.description || ""}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              chargeTypeTableStore.set("selectedRecord", chargeType);
+              chargeTypeTableStore.set("viewModalOpen", false);
+              chargeTypeTableStore.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
+            Edit Charge Type
+          </Button>
+        </Group>
+      </Box>
+    </Box>
+  );
+}
+
+export function ViewChargeTypeModal(): React.ReactElement {
   const [showViewModal, setShowViewModal] =
     chargeTypeTableStore.use("viewModalOpen");
   const [chargeType] = chargeTypeTableStore.use("selectedRecord");
-
-  if (!showViewModal) return null;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -43,4 +93,4 @@ export const ViewChargeTypeModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

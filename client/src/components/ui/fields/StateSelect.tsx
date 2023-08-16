@@ -15,16 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 import React, { forwardRef } from "react";
-import { Text, Select, SelectProps, createStyles } from "@mantine/core";
+import { Text, Select, SelectProps } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { UseFormReturnType } from "@mantine/form";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
 
-interface StateProp {
-  label: string;
-  value: string;
-}
-
-export const stateData: StateProp[] = [
+export const stateData = [
   { label: "Alabama", value: "AL" },
   { label: "Alaska", value: "AK" },
   { label: "Arizona", value: "AZ" },
@@ -75,18 +72,7 @@ export const stateData: StateProp[] = [
   { label: "West Virginia", value: "WV" },
   { label: "Wisconsin", value: "WI" },
   { label: "Wyoming", value: "WY" },
-];
-const useStyles = createStyles((theme) => ({
-  invalid: {
-    backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-  },
-  invalidIcon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
+] satisfies ReadonlyArray<TChoiceProps>;
 
 interface StateSelectProps<TFormValues extends object>
   extends Omit<SelectProps, "data" | "form"> {
@@ -102,11 +88,11 @@ interface ItemProps extends React.ComponentPropsWithoutRef<"div"> {
 }
 
 const SelectItem = forwardRef<HTMLDivElement, ItemProps>(
-  ({ label, value, image, ...others }: ItemProps, ref) => (
+  ({ label, ...others }: ItemProps, ref) => (
     <div ref={ref} {...others}>
       <Text size="sm">{label}</Text>
     </div>
-  )
+  ),
 );
 
 export function StateSelect<StateFormValues extends object>({
@@ -115,7 +101,7 @@ export function StateSelect<StateFormValues extends object>({
   searchable,
   ...rest
 }: StateSelectProps<StateFormValues>) {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const error = form.errors[name as string];
 
   return (
@@ -131,9 +117,7 @@ export function StateSelect<StateFormValues extends object>({
       {...form.getInputProps(name)}
       error={error}
       searchable={searchable}
-      classNames={{
-        input: error ? classes.invalid : "",
-      }}
+      className={classes.fields}
       rightSection={
         error && (
           <IconAlertTriangle

@@ -398,6 +398,7 @@ CACHEOPS_DEFAULTS = {
 #         },
 #     },
 # }
+#
 
 CACHEOPS = {
     "order.ordercontrol": {"ops": "all"},
@@ -410,9 +411,10 @@ CACHEOPS = {
     "organization.department": {"ops": "all"},
     # "accounts.user": {"ops": "all"},
     # "accounts.userprofile": {"ops": "all"},
-    "accounts.jobtitle": {"ops": "all"},
+    # "accounts.jobtitle": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
 }
+
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # Billing Client Configurations

@@ -25,7 +25,7 @@ const AccessorialCharges: React.FC = () => {
 
   return (
     <Flex>
-      <Card className={classes.card} withBorder>
+      <Card className={classes.card}>
         <ACChargeTable />
       </Card>
     </Flex>

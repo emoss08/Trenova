@@ -15,20 +15,75 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/MontaTable";
-import { GLAccountTableColumns } from "@/components/gl-accounts/table/GLAccountTableColumns";
 import { EditGLAccountModal } from "@/components/gl-accounts/table/EditGLAccountModal";
 import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
+import { GeneralLedgerAccount } from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
 
 export function GLAccountTable() {
+  const columns = useMemo<MRT_ColumnDef<GeneralLedgerAccount>[]>(
+    () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] as ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
+      {
+        accessorKey: "account_number", // access nested data with dot notation
+        header: "Account Number",
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+      },
+      {
+        accessorKey: "account_type",
+        header: "Account Type",
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        Cell: ({ row }) => (
+          <MontaTableActionMenu
+            store={generalLedgerTableStore}
+            data={row.original}
+          />
+        ),
+      },
+    ],
+    [],
+  );
+
   return (
     <MontaTable
       store={generalLedgerTableStore}
       link="/gl_accounts"
-      columns={GLAccountTableColumns}
+      columns={columns}
       TableEditModal={EditGLAccountModal}
       TableViewModal={ViewGLAccountModal}
       displayDeleteModal

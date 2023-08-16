@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import React from "react";
 import { Switch, SwitchProps } from "@mantine/core";
 import { UseFormReturnType } from "@mantine/form";
 
@@ -23,7 +24,9 @@ interface ValidatedSwitchInputProps<TFormValues extends object>
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
 }
 
-export function SwitchInput<TFormValues extends object>(props: ValidatedSwitchInputProps<TFormValues>) {
+export function SwitchInput<TFormValues extends object>(
+  props: ValidatedSwitchInputProps<TFormValues>,
+) {
   const { form, name, ...rest } = props;
 
   return (

@@ -21,18 +21,7 @@ import { createStyles } from "@mantine/styles";
 import { Textarea } from "@mantine/core";
 import { TextareaProps } from "@mantine/core/lib/Textarea/Textarea";
 import { UseFormReturnType } from "@mantine/form";
-
-const useStyles = createStyles((theme) => ({
-  invalid: {
-    backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.red[8], 0.15)
-          : theme.colors.red[0],
-  },
-  invalidIcon: {
-    color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
-  },
-}));
+import { useFormStyles } from "@/styles/FormStyles";
 
 interface ValidatedTextInputProps<TFormValues>
   extends Omit<TextareaProps, "form"> {
@@ -44,7 +33,7 @@ export function ValidatedTextArea<TFormValues extends object>({
   name,
   ...rest
 }: Omit<ValidatedTextInputProps<TFormValues>, "onContextMenu">) {
-  const { classes } = useStyles();
+  const { classes } = useFormStyles();
   const error = form.errors[name as string];
 
   return (
@@ -52,9 +41,7 @@ export function ValidatedTextArea<TFormValues extends object>({
       {...rest}
       {...form.getInputProps(name as string)}
       error={error}
-      classNames={{
-        input: error ? classes.invalid : "",
-      }}
+      className={classes.fields}
       autosize
       minRows={2}
       rightSection={

@@ -51,8 +51,6 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
           },
           withCredentials: true,
         });
-      } catch (error) {
-        console.error(error);
       } finally {
         queryClient.invalidateQueries(["user", user.id]).then(() => {
           notifications.show({
@@ -75,14 +73,12 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
     formData.append("profile.profile_picture", ""); // empty string will remove the picture
 
     try {
-      const response = await axios.patch(`/users/${user.id}/`, formData, {
+      await axios.patch(`/users/${user.id}/`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(response.data);
     } catch (error) {
-      console.error(error);
     } finally {
       queryClient.invalidateQueries("user").then(() => {
         notifications.show({
