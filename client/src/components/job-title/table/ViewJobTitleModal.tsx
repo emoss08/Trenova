@@ -16,16 +16,92 @@
  */
 
 import { useQuery, useQueryClient } from "react-query";
-import { Modal, Skeleton, Stack } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Group,
+  Modal,
+  Select,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
 import React from "react";
-import { jobTitleTableStore } from "@/stores/UserTableStore";
+import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
-import { ViewJobTitleModalForm } from "@/components/job-title/table/_Partials/ViewJobTitleModalForm";
+import { JobTitle } from "@/types/apps/accounts";
+import { useFormStyles } from "@/styles/FormStyles";
+import { statusChoices } from "@/lib/utils";
+import { jobFunctionChoices } from "@/utils/apps/accounts";
 
-export const ViewJobTitleModal: React.FC = () => {
-  const [showViewModal, setShowViewModal] =
-    jobTitleTableStore.use("viewModalOpen");
-  const [jobTitle] = jobTitleTableStore.use("selectedRecord");
+type ViewJobTitleModalFormProps = {
+  jobTitle: JobTitle;
+};
+
+export function ViewJobTitleModalForm({
+  jobTitle,
+}: ViewJobTitleModalFormProps) {
+  const { classes } = useFormStyles();
+
+  return (
+    <Box className={classes.div}>
+      <Box>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={statusChoices}
+            className={classes.fields}
+            readOnly
+            value={jobTitle.status}
+            label="Status"
+            variant="filled"
+          />
+          <TextInput
+            value={jobTitle.name}
+            readOnly
+            className={classes.fields}
+            label="Name"
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Textarea
+          value={jobTitle.description || ""}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <Select
+          data={jobFunctionChoices}
+          value={jobTitle.job_function}
+          readOnly
+          label="Account Type"
+          className={classes.fields}
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            onClick={() => {
+              store.set("selectedRecord", jobTitle);
+              store.set("viewModalOpen", false);
+              store.set("editModalOpen", true);
+            }}
+            className={classes.control}
+          >
+            Edit Job Title
+          </Button>
+        </Group>
+      </Box>
+    </Box>
+  );
+}
+
+export function ViewJobTitleModal(): React.ReactElement {
+  const [showViewModal, setShowViewModal] = store.use("viewModalOpen");
+  const [jobTitle] = store.use("selectedRecord");
   const queryClient = useQueryClient();
 
   const { data: jobTitleData, isLoading: isJobTitleDataLoading } = useQuery({
@@ -39,8 +115,6 @@ export const ViewJobTitleModal: React.FC = () => {
     enabled: showViewModal,
     initialData: () => queryClient.getQueryData(["jobTitle", jobTitle?.id]),
   });
-
-  if (!showViewModal) return null;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -66,4 +140,4 @@ export const ViewJobTitleModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

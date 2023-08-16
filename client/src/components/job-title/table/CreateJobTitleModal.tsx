@@ -15,16 +15,150 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { jobTitleTableStore } from "@/stores/UserTableStore";
-import { CreateJobTitleModalForm } from "@/components/job-title/table/_Partials/CreateJobTitleModalForm";
+import { useMutation, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
+import { jobTitleTableStore as store } from "@/stores/UserTableStore";
+import { useFormStyles } from "@/styles/FormStyles";
+import { JobTitleFormValues } from "@/types/apps/accounts";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
+import { jobTitleSchema } from "@/utils/apps/accounts/schema";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { statusChoices } from "@/lib/utils";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { jobFunctionChoices } from "@/utils/apps/accounts";
 
-export const CreateJobTitleModal: React.FC = () => {
-  const [showCreateModal, setShowCreateModal] =
-    jobTitleTableStore.use("createModalOpen");
+export function CreateJobTitleModalForm(): React.ReactElement {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
 
-  if (!showCreateModal) return null;
+  const mutation = useMutation(
+    (values: JobTitleFormValues) => axios.post("/job_titles/", values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["job-title-table-data"],
+          })
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "Job Title created successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+            store.set("createModalOpen", false);
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<JobTitleFormValues>({
+    validate: yupResolver(jobTitleSchema),
+    initialValues: {
+      status: "A",
+      name: "",
+      description: "",
+      job_function: "",
+    },
+  });
+
+  const submitForm = (values: JobTitleFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={statusChoices}
+              className={classes.fields}
+              name="status"
+              label="Status"
+              placeholder="Status"
+              variant="filled"
+              withAsterisk
+            />
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="name"
+              label="Name"
+              placeholder="Name"
+              variant="filled"
+              withAsterisk
+            />
+          </SimpleGrid>
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+          />
+          <SelectInput
+            form={form}
+            data={jobFunctionChoices}
+            className={classes.fields}
+            name="job_function"
+            label="Job Function"
+            placeholder="Job Function"
+            variant="filled"
+            clearable
+            withAsterisk
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function CreateJobTitleModal(): React.ReactElement {
+  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
   return (
     <Modal.Root
@@ -45,4 +179,4 @@ export const CreateJobTitleModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}
