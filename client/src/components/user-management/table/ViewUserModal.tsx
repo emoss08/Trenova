@@ -71,7 +71,8 @@ export const ViewUserModal: React.FC = () => {
         return getOrganizationDetails(user.organization);
       },
       enabled: showViewUserModalOpen && !!user?.organization,
-      initialData: () => queryClient.getQueryData(["organization", user?.organization]),
+      initialData: () =>
+        queryClient.getQueryData(["organization", user?.organization]),
       staleTime: Infinity, // never refetch
     });
 
@@ -85,9 +86,10 @@ export const ViewUserModal: React.FC = () => {
         return getDepartmentDetails(user.department);
       },
       enabled: showViewUserModalOpen && !!user?.department,
-      initialData: () => queryClient.getQueryData(["department", user?.department]),
+      initialData: () =>
+        queryClient.getQueryData(["department", user?.department]),
       staleTime: Infinity, // never refetch
-    }
+    },
   );
 
   const isUserDataLoading =
