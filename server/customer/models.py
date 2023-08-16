@@ -983,7 +983,6 @@ class DeliverySlot(GenericModel):
                 ],
                 name="unique_delivery_slot",
             ),
-
             # TODO(wolfred): Write test for this check constraint.
             # Check if start_time is less than end_time
             models.CheckConstraint(

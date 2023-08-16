@@ -707,7 +707,11 @@ class Rate(GenericModel):  # type:ignore
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
         code = f"R{self.__class__.objects.count() + 1:05d}"
-        return "R00001" if self.__class__.objects.filter(rate_number=code).exists() else code
+        return (
+            "R00001"
+            if self.__class__.objects.filter(rate_number=code).exists()
+            else code
+        )
 
 
 class RateBillingTable(GenericModel):  # type:ignore
