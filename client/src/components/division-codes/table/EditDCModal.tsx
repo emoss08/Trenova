@@ -15,15 +15,201 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Modal, Skeleton } from "@mantine/core";
+import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { EditDCModalForm } from "@/components/division-codes/table/_Partials/EditDCModalForm";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
+import {
+  DivisionCode,
+  DivisionCodeFormValues,
+  GeneralLedgerAccount,
+} from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
+import axios from "@/lib/AxiosConfig";
+import { APIError } from "@/types/server";
+import { divisionCodeSchema } from "@/utils/apps/accounting/schema";
+import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { statusChoices } from "@/lib/utils";
+import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
+import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 
-export const EditDCModal: React.FC = () => {
+type EditDCModalFormProps = {
+  divisionCode: DivisionCode;
+  selectGlAccountData: TChoiceProps[];
+};
+
+export function EditDCModalForm({
+  divisionCode,
+  selectGlAccountData,
+}: EditDCModalFormProps) {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: DivisionCodeFormValues) =>
+      axios.put(`/division_codes/${divisionCode.id}/`, values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["division-code-table-data"],
+          })
+          .then(() => {
+            queryClient
+              .invalidateQueries({
+                queryKey: ["divisionCode", divisionCode?.id],
+              })
+              .then(() => {
+                notifications.show({
+                  title: "Success",
+                  message: "Division Code updated successfully",
+                  color: "green",
+                  withCloseButton: true,
+                  icon: <FontAwesomeIcon icon={faCheck} />,
+                });
+              });
+            divisionCodeTableStore.set("editModalOpen", false);
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<DivisionCodeFormValues>({
+    validate: yupResolver(divisionCodeSchema),
+    initialValues: {
+      status: divisionCode.status,
+      code: divisionCode.code,
+      description: divisionCode.description,
+      ap_account: divisionCode.ap_account || "",
+      cash_account: divisionCode.cash_account || "",
+      expense_account: divisionCode.expense_account || "",
+    },
+  });
+
+  const submitForm = (values: DivisionCodeFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={statusChoices}
+              className={classes.fields}
+              name="status"
+              label="Status"
+              placeholder="Status"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue("status", form.values.status);
+              }}
+            />
+            <ValidatedTextInput
+              form={form}
+              className={classes.fields}
+              name="code"
+              label="Code"
+              placeholder="Code"
+              variant="filled"
+              withAsterisk
+            />
+          </SimpleGrid>
+          <ValidatedTextArea
+            form={form}
+            className={classes.fields}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            variant="filled"
+            withAsterisk
+          />
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput
+              form={form}
+              data={selectGlAccountData}
+              className={classes.fields}
+              name="ap_account"
+              label="AP Account"
+              placeholder="AP Account"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue("ap_account", form.values.ap_account);
+              }}
+              clearable
+            />
+            <SelectInput
+              form={form}
+              data={selectGlAccountData}
+              className={classes.fields}
+              name="cash_account"
+              label="Cash Account"
+              placeholder="Cash Account"
+              variant="filled"
+              onMouseLeave={() => {
+                form.setFieldValue("cash_account", form.values.cash_account);
+              }}
+              clearable
+            />
+          </SimpleGrid>
+          <SelectInput
+            form={form}
+            data={selectGlAccountData}
+            className={classes.fields}
+            name="expense_account"
+            label="Expense Account"
+            placeholder="Expense Account"
+            variant="filled"
+            clearable
+          />
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export function EditDCModal(): React.ReactElement {
   const [showEditModal, setShowEditModal] =
     divisionCodeTableStore.use("editModalOpen");
   const [divisionCode] = divisionCodeTableStore.use("selectedRecord");
@@ -42,8 +228,6 @@ export const EditDCModal: React.FC = () => {
       value: glAccount.id,
       label: glAccount.account_number,
     })) || [];
-
-  if (!showEditModal) return null;
 
   return (
     <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
@@ -66,4 +250,4 @@ export const EditDCModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

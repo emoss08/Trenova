@@ -16,14 +16,109 @@
  */
 
 import { useQuery, useQueryClient } from "react-query";
-import { Modal, Skeleton } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Group,
+  Modal,
+  Select,
+  SimpleGrid,
+  Skeleton,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
 import React, { Suspense } from "react";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { ViewDCModalForm } from "@/components/division-codes/table/_Partials/ViewDCModalForm";
+import { DivisionCode, GeneralLedgerAccount } from "@/types/apps/accounting";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/styles/FormStyles";
+import { statusChoices } from "@/lib/utils";
 
-export const ViewDCModal: React.FC = () => {
+type ViewDCModalFormProps = {
+  divisionCode: DivisionCode;
+  selectGlAccountData: TChoiceProps[];
+};
+
+export function ViewDCModalForm({
+  divisionCode,
+  selectGlAccountData,
+}: ViewDCModalFormProps) {
+  const { classes } = useFormStyles();
+
+  return (
+    <Box className={classes.div}>
+      <Box>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={statusChoices}
+            className={classes.fields}
+            readOnly
+            value={divisionCode.status}
+            label="Status"
+            variant="filled"
+          />
+          <TextInput
+            value={divisionCode.code}
+            readOnly
+            className={classes.fields}
+            label="Code"
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Textarea
+          value={divisionCode.description}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <Select
+            data={selectGlAccountData}
+            value={divisionCode.ap_account || ""}
+            readOnly
+            label="AP Account"
+            className={classes.fields}
+            variant="filled"
+          />
+          <Select
+            data={selectGlAccountData}
+            value={divisionCode.cash_account || ""}
+            readOnly
+            label="Cash Account"
+            className={classes.fields}
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Select
+          data={selectGlAccountData}
+          value={divisionCode.expense_account || ""}
+          readOnly
+          label="Expense Account"
+          className={classes.fields}
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            onClick={() => {
+              divisionCodeTableStore.set("selectedRecord", divisionCode);
+              divisionCodeTableStore.set("viewModalOpen", false);
+              divisionCodeTableStore.set("editModalOpen", true);
+            }}
+          >
+            Edit Division Code
+          </Button>
+        </Group>
+      </Box>
+    </Box>
+  );
+}
+
+export function ViewDCModal(): React.ReactElement {
   const [showViewModal, setShowViewModal] =
     divisionCodeTableStore.use("viewModalOpen");
   const [divisionCode] = divisionCodeTableStore.use("selectedRecord");
@@ -42,8 +137,6 @@ export const ViewDCModal: React.FC = () => {
       value: glAccount.id,
       label: glAccount.account_number,
     })) || [];
-
-  if (!showViewModal) return null;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -66,4 +159,4 @@ export const ViewDCModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}
