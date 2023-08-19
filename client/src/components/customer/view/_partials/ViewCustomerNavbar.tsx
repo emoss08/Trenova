@@ -33,8 +33,12 @@ import { upperFirst } from "@/lib/utils";
 import { customerStore as store } from "@/stores/CustomerStore";
 import { EditCustomerModal } from "@/components/customer/view/_partials/EditCustomerModal";
 
+ViewCustomerNavbar.defaultProps = {
+  customer: null,
+};
+
 type ViewCustomerNavbarProps = {
-  customer: Customer;
+  customer?: Customer | null;
   isLoading: boolean;
 };
 
@@ -59,6 +63,11 @@ export function ViewCustomerNavbar({
           </Badge>
         );
       default:
+        return (
+          <Badge radius="xs" variant="filled" my={10} color="yellow">
+            Unknown
+          </Badge>
+        );
     }
   };
 
@@ -85,19 +94,19 @@ export function ViewCustomerNavbar({
             >
               <Avatar
                 src={null}
-                alt={customer.name}
+                alt={customer?.name}
                 size="xl"
                 radius={50}
                 color="blue"
                 my={20}
               >
-                {getFirstAndLastChar(customer.name as string)}
+                {getFirstAndLastChar(customer?.name as string)}
               </Avatar>
               <Text className={classes.text} fw={600}>
-                {upperFirst(customer.code as string)}
+                {upperFirst(customer?.code as string)}
               </Text>
               <Text color="dimmed" size="sm">
-                {upperFirst(customer.name as string)}
+                {upperFirst(customer?.name as string)}
               </Text>
             </Box>
             <Box
@@ -119,56 +128,56 @@ export function ViewCustomerNavbar({
             </Box>
             <Divider mb={20} />
 
-            {mapStatusToBadge(customer.status as string)}
+            {mapStatusToBadge(customer?.status as string)}
 
             <Box>
               <Text className={classes.text} fw={500} size="sm">
                 Code
               </Text>
-              <Text color="dimmed">{customer.code}</Text>
+              <Text color="dimmed">{customer?.code}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Name
               </Text>
-              <Text color="dimmed">{customer.name}</Text>
+              <Text color="dimmed">{customer?.name}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Address Line 1
               </Text>
-              <Text color="dimmed">{customer.address_line_1}</Text>
+              <Text color="dimmed">{customer?.address_line_1}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Address Line 2
               </Text>
-              <Text color="dimmed">{customer.address_line_2}</Text>
+              <Text color="dimmed">{customer?.address_line_2}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 City
               </Text>
-              <Text color="dimmed">{customer.city}</Text>
+              <Text color="dimmed">{customer?.city}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Zip Code
               </Text>
-              <Text color="dimmed">{customer.zip_code}</Text>
+              <Text color="dimmed">{customer?.zip_code}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Customer Advocate
               </Text>
-              <Text color="dimmed">{customer.advocate_full_name || ""}</Text>
+              <Text color="dimmed">{customer?.advocate_full_name || ""}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Last Ship Date
               </Text>
               <Text color="dimmed">
-                {customer.customer_shipment_metrics.last_shipment_date || ""}
+                {customer?.customer_shipment_metrics.last_shipment_date || ""}
               </Text>
             </Box>
             <Box my={10}>
@@ -176,7 +185,7 @@ export function ViewCustomerNavbar({
                 Last Bill Date
               </Text>
               <Text color="dimmed">
-                {customer.customer_shipment_metrics.last_bill_date || ""}
+                {customer?.customer_shipment_metrics.last_bill_date || ""}
               </Text>
             </Box>
           </Card>

@@ -33,15 +33,19 @@ import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
 import { StateSelect } from "@/components/ui/fields/StateSelect";
 
+EditCustomerModalForm.defaultProps = {
+  customer: null,
+};
+
+EditCustomerModal.defaultProps = {
+  customer: null,
+};
+
 type EditCustomerModalProps = {
-  customer: Customer;
+  customer?: Customer | null;
 };
 
-type EditCustomerModalFormProps = {
-  customer: Customer;
-};
-
-function EditCustomerModalForm({ customer }: EditCustomerModalFormProps) {
+function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
   const { classes } = useFormStyles();
   const [showEditModal, setShowEditModal] = store.use("editModalOpen");
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -49,12 +53,12 @@ function EditCustomerModalForm({ customer }: EditCustomerModalFormProps) {
 
   const mutation = useMutation(
     (values: CustomerFormValues) =>
-      axios.put(`/customers/${customer.id}/`, values),
+      axios.put(`/customers/${customer?.id}/`, values),
     {
       onSuccess: () => {
         queryClient
           .invalidateQueries({
-            queryKey: ["customer", customer.id],
+            queryKey: ["customer", customer?.id],
           })
           .then(() => {
             notifications.show({
@@ -94,16 +98,16 @@ function EditCustomerModalForm({ customer }: EditCustomerModalFormProps) {
   const form = useForm<CustomerFormValues>({
     validate: yupResolver(customerSchema),
     initialValues: {
-      name: customer.name,
-      status: customer.status,
-      has_customer_portal: customer.has_customer_portal,
-      code: customer.code,
+      name: customer?.name || "",
+      status: customer?.status || "A",
+      has_customer_portal: customer?.has_customer_portal || "",
+      code: customer?.code || "",
       city: customer?.city || "",
       state: customer?.state || "",
       address_line_1: customer?.address_line_1 || "",
       address_line_2: customer?.address_line_2 || "",
       zip_code: customer?.zip_code || "",
-      auto_mark_ready_to_bill: customer.auto_mark_ready_to_bill,
+      auto_mark_ready_to_bill: customer?.auto_mark_ready_to_bill || "",
     },
   });
 

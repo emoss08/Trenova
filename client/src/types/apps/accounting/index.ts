@@ -64,7 +64,11 @@ export type RevenueCode = {
   description: string;
   expense_account?: string | null;
   revenue_account?: string | null;
+  rev_account_num?: string | null;
+  exp_account_num?: string | null;
 };
 
-export interface RevenueCodeFormValues
-  extends Omit<RevenueCode, "id" | "organization"> {}
+export type RevenueCodeFormValues = Omit<
+  RevenueCode,
+  "id" | "organization" | "rev_account_num" | "exp_account_num"
+>;

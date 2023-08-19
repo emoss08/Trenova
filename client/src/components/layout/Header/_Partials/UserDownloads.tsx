@@ -94,7 +94,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const UserDownloads: React.FC = () => {
+export function UserDownloads(): React.ReactElement {
   const [downloadMenuOpen] = useNavbarStore.use("downloadMenuOpen");
   const { classes } = useStyles();
   const { classes: headerClasses } = useHeaderStyles();
@@ -107,7 +107,7 @@ export const UserDownloads: React.FC = () => {
       queryKey: ["userReport", userId],
       queryFn: () => getUserReports(),
       initialData: () => queryClient.getQueryData(["userReport", userId]),
-    }
+    },
   );
 
   return (
@@ -133,11 +133,7 @@ export const UserDownloads: React.FC = () => {
               />
               <span>Downloads</span>
             </div>
-            <Badge
-              size="sm"
-              variant="filled"
-              className={classes.mainLinkBadge}
-            >
+            <Badge size="sm" variant="filled" className={classes.mainLinkBadge}>
               {userReportData?.count || 0}
             </Badge>
           </UnstyledButton>
@@ -146,15 +142,13 @@ export const UserDownloads: React.FC = () => {
       <Menu.Dropdown>
         <Menu.Label>Downloads</Menu.Label>
         <Divider />
-        <>
-          {isUserReportDataLoading ? (
-            <Skeleton width={220} height={250} />
-          ) : (
-            <ScrollArea h={250} scrollbarSize={5} offsetScrollbars>
-              {userReportData && <UserReports reportData={userReportData} />}
-            </ScrollArea>
-          )}
-        </>
+        {isUserReportDataLoading ? (
+          <Skeleton width={220} height={250} />
+        ) : (
+          <ScrollArea h={250} scrollbarSize={5} offsetScrollbars>
+            {userReportData && <UserReports reportData={userReportData} />}
+          </ScrollArea>
+        )}
         <Divider mb={2} mt={10} />
         <Link
           to="#"
@@ -166,7 +160,7 @@ export const UserDownloads: React.FC = () => {
           }}
           className={headerClasses.link}
         >
-            View all{" "}
+          View all{" "}
           <FontAwesomeIcon
             icon={faArrowRight}
             size="sm"
@@ -179,4 +173,4 @@ export const UserDownloads: React.FC = () => {
       </Menu.Dropdown>
     </Menu>
   );
-};
+}

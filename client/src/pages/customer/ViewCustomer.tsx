@@ -45,12 +45,10 @@ export default function ViewCustomer() {
   return (
     <Grid gutter="md">
       <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
-        {customerData && (
-          <ViewCustomerNavbar
-            customer={customerData}
-            isLoading={isCustomerDataLoading}
-          />
-        )}
+        <ViewCustomerNavbar
+          customer={customerData}
+          isLoading={isCustomerDataLoading}
+        />
       </Grid.Col>
       <Grid.Col span={12} sm={6} md={8} lg={9} xl={9}>
         <Tabs
@@ -60,19 +58,17 @@ export default function ViewCustomer() {
         >
           <Tabs.List grow mb={20}>
             <Tabs.Tab value="overview">Overview</Tabs.Tab>
-            <Tabs.Tab value="profile">Profiles</Tabs.Tab>
-            <Tabs.Tab value="third">Analytics</Tabs.Tab>
+            <Tabs.Tab value="profile">Profiles & Settings</Tabs.Tab>
+            <Tabs.Tab value="third">Events & Logs</Tabs.Tab>
           </Tabs.List>
 
           {/** Overview Tab */}
           <Tabs.Panel value="overview" pt="xs">
             <Grid.Col span={12} sm={12} md={12} lg={12} xl={12}>
-              {customerData && (
-                <CustomerOverviewTab
-                  customer={customerData}
-                  isLoading={isCustomerDataLoading}
-                />
-              )}
+              <CustomerOverviewTab
+                customer={customerData}
+                isLoading={isCustomerDataLoading}
+              />
             </Grid.Col>
           </Tabs.Panel>
 

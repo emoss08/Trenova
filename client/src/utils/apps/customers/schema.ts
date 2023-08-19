@@ -19,10 +19,11 @@ import { ObjectSchema } from "yup";
 import * as Yup from "yup";
 import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
 import {
-  CustomerBillingProfileFormValues,
+  CustomerEmailProfileFormValues,
   CustomerFormValues,
 } from "@/types/apps/customer";
 
+/** Customer Schema */
 export const customerSchema: ObjectSchema<CustomerFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
@@ -41,9 +42,18 @@ export const customerSchema: ObjectSchema<CustomerFormValues> =
     ),
   });
 
-export const customerBillingProfileSchema: ObjectSchema<CustomerBillingProfileFormValues> =
+/** Customer Email Profile Schema */
+export const CustomerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormValues> =
   Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    email_profile: Yup.string().notRequired(),
-    rule_profile: Yup.string().notRequired(),
+    subject: Yup.string().notRequired().max(100),
+    comment: Yup.string().notRequired().max(100),
+    from_address: Yup.string().notRequired(),
+    blind_copy: Yup.string().notRequired(),
+    read_receipt: Yup.boolean().required(),
+    read_receipt_to: Yup.string().when("read_receipt", {
+      is: true,
+      then: (schema) => schema.required("Read Receipt To is required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+    attachment_name: Yup.string().notRequired(),
   });
