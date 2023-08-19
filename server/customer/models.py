@@ -192,7 +192,7 @@ class Customer(GenericModel):  # type: ignore
         Returns:
             str: Customer url
         """
-        return reverse("customer:customer-detail", kwargs={"pk": self.pk})
+        return reverse("customer-detail", kwargs={"pk": self.pk})
 
     def generate_customer_code(self) -> str:
         """Generate a unique code for a customer instance.
@@ -250,80 +250,6 @@ class Customer(GenericModel):  # type: ignore
         self.save()
 
 
-class CustomerBillingProfile(GenericModel):
-    """
-    Stores Billing Criteria related to the :model:`billing.Customer`. model.
-    """
-
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-    )
-    customer = models.OneToOneField(
-        Customer,
-        on_delete=models.CASCADE,
-        related_name="billing_profile",
-        help_text=_("Customer"),
-        verbose_name=_("Customer"),
-    )
-    status = ChoiceField(
-        _("Status"),
-        choices=PrimaryStatusChoices.choices,
-        help_text=_("Status of the Customer Billing Profile."),
-        default=PrimaryStatusChoices.ACTIVE,
-    )
-    email_profile = models.ForeignKey(
-        "CustomerEmailProfile",
-        on_delete=models.CASCADE,
-        related_name="billing_profile",
-        help_text=_("Customer Email Profile"),
-        verbose_name=_("Customer Email Profile"),
-        null=True,
-        blank=True,
-    )
-    rule_profile = models.ForeignKey(
-        "CustomerRuleProfile",
-        on_delete=models.CASCADE,
-        related_name="billing_profile",
-        help_text=_("Rule Profile"),
-        verbose_name=_("Rule Profile"),
-        null=True,
-        blank=True,
-    )
-
-    class Meta:
-        """
-        Metaclass for CustomerBillingProfile
-        """
-
-        verbose_name = _("Customer Billing Profile")
-        verbose_name_plural = _("Customer Billing Profiles")
-        ordering = ["customer"]
-        db_table = "customer_billing_profile"
-
-    def __str__(self) -> str:
-        """Customer Billing Profile string representation
-
-        Returns:
-            str: Customer Billing Profile string representation
-        """
-        return textwrap.shorten(
-            f"Customer Billing Profile for {self.customer.name}",
-            width=50,
-            placeholder="...",
-        )
-
-    def get_absolute_url(self) -> str:
-        """Returns the url to access a particular customer billing profile instance
-
-        Returns:
-            str: Customer Billing Profile url
-        """
-        return reverse("customer-billing-profile-detail", kwargs={"pk": self.pk})
-
-
 class CustomerEmailProfile(GenericModel):
     """
     Stores Customer Email Profile related to the :model:`customer.Customer`. model.
@@ -335,10 +261,14 @@ class CustomerEmailProfile(GenericModel):
         editable=False,
         unique=True,
     )
-    name = models.CharField(
-        _("Name"),
-        max_length=50,
-        help_text=_("Name"),
+    customer = models.OneToOneField(
+        to=Customer,
+        on_delete=models.CASCADE,
+        related_name="email_profile",
+        help_text=_("Customer assigned to Email Profile"),
+        verbose_name=_("Customer"),
+        blank=True,
+        null=True,
     )
     subject = models.CharField(
         _("Subject"),
@@ -361,7 +291,7 @@ class CustomerEmailProfile(GenericModel):
     blind_copy = models.CharField(
         _("Blind Copy"),
         max_length=255,
-        help_text=_("Blind Copy"),
+        help_text=_("Comma separated list of email addresses"),
         blank=True,
     )
     read_receipt = models.BooleanField(
@@ -389,14 +319,7 @@ class CustomerEmailProfile(GenericModel):
 
         verbose_name = _("Customer Email Profile")
         verbose_name_plural = _("Customer Email Profiles")
-        ordering = ["-name"]
         db_table = "customer_email_profile"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["name", "organization"],
-                name="unique_customer_email_profile_organization",
-            )
-        ]
 
     def __str__(self) -> str:
         """CustomerEmailProfile string representation
@@ -405,7 +328,9 @@ class CustomerEmailProfile(GenericModel):
             str: Customer Email Profile string representation
         """
         return textwrap.shorten(
-            f"Customer Email Profile {self.name}", width=40, placeholder="..."
+            f"Customer Email Profile {self.customer.name}",
+            width=60,
+            placeholder="...",
         )
 
     def get_absolute_url(self) -> str:
@@ -414,7 +339,7 @@ class CustomerEmailProfile(GenericModel):
         Returns:
             str: Customer email profile url
         """
-        return reverse("billing:customer-email-profile", kwargs={"pk": self.pk})
+        return reverse("customer-email-profile-detail", kwargs={"pk": self.pk})
 
     def update_customer_email_profile(self, **kwargs: Any) -> None:
         """Updates customer email profile information
@@ -429,7 +354,7 @@ class CustomerEmailProfile(GenericModel):
 
 class CustomerRuleProfile(GenericModel):
     """
-    Stores Customer FTP Profile information related to :model:`customer.Customer`. model.
+    Stores Customer Rule Profile information related to :model:`customer.Customer`. model.
     """
 
     id = models.UUIDField(
@@ -442,6 +367,15 @@ class CustomerRuleProfile(GenericModel):
         _("Name"),
         max_length=50,
         help_text=_("Name"),
+    )
+    customer = models.OneToOneField(
+        to=Customer,
+        on_delete=models.CASCADE,
+        related_name="rule_profile",
+        help_text=_("Customer assigned to Rule Profile"),
+        verbose_name=_("Customer"),
+        blank=True,
+        null=True,
     )
     document_class = models.ManyToManyField(
         DocumentClassification,
@@ -473,7 +407,9 @@ class CustomerRuleProfile(GenericModel):
             str: Customer Rule Profile string representation
         """
         return textwrap.shorten(
-            f"Customer Rule profile {self.name}", width=40, placeholder="..."
+            f"Customer Rule profile {self.name}",
+            width=40,
+            placeholder="...",
         )
 
     def get_absolute_url(self) -> str:
@@ -482,7 +418,7 @@ class CustomerRuleProfile(GenericModel):
         Returns:
             str: Customer rule profile url
         """
-        return reverse("customer-rule-profile", kwargs={"pk": self.pk})
+        return reverse("customer-rule-profile-detail", kwargs={"pk": self.pk})
 
     @atomic
     def update_customer_rule_profile(self, **kwargs: Any) -> None:

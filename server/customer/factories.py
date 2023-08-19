@@ -126,25 +126,6 @@ class CustomerRuleProfileFactory(factory.django.DjangoModelFactory):
                 self.document_class.add(document_class)
 
 
-class CustomerBillingProfileFactory(factory.django.DjangoModelFactory):
-    """
-    Customer Billing Profile factory
-    """
-
-    class Meta:
-        """
-        Metaclass for CustomerBillingFactory
-        """
-
-        model = "customer.CustomerBillingProfile"
-
-    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    customer = factory.SubFactory(CustomerFactory)
-    email_profile = factory.SubFactory(CustomerEmailProfileFactory)
-    rule_profile = factory.SubFactory(CustomerRuleProfileFactory)
-
-
 class DeliverySlotFactory(factory.django.DjangoModelFactory):
     """
     DeliverySlot factory

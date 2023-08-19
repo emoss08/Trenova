@@ -61,12 +61,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
                         organization_id=self.request.user.organization_id  # type: ignore
                     ).only("id", "customer_id"),
                 ),
-                Prefetch(
-                    lookup="billing_profile",
-                    queryset=models.CustomerBillingProfile.objects.filter(
-                        organization_id=self.request.user.organization_id  # type: ignore
-                    ).only("id", "customer_id"),
-                ),
             )
             .only(
                 "id",
@@ -83,81 +77,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
             )
         )
 
-        return queryset
-
-
-class CustomerBillingProfileViewSet(viewsets.ModelViewSet):
-    """A viewset for managing Customer Billing Profile records.
-
-    This viewset handles HTTP requests to perform CRUD operations on the customer billing profile model. Authenticated
-    users can perform operations to create, update, view, list or delete the customer billing profiles. It also support
-    filtering on 'status', 'customer', and 'rule_profile' fields.
-
-    Attributes:
-        queryset (QuerySet): QuerySet of CustomerBillingProfile model instances.
-        serializer_class ('CustomerBillingProfileSerializer'): The serializer to handle the conversion to/from JSON for CustomerBillingProfile.
-        filterset_fields (tuple): Fields on which the queryset can be filtered.
-        permission_classes (list): The class-based views to be applied to the viewset.
-
-    Methods:
-        customer_billing_profile_details: Handle GET requests and return the customer billing details for a given customer ID.
-        get_queryset: Custom method to get the queryset.
-
-    """
-
-    queryset = models.CustomerBillingProfile.objects.all()
-    serializer_class = serializers.CustomerBillingProfileSerializer
-    filterset_fields = ("status", "customer", "rule_profile")
-    permission_classes = [CustomObjectPermissions]
-
-    @action(detail=False, methods=["get"])
-    def customer_billing_profile_details(
-        self, request: Request, *args: typing.Any, **kwargs: typing.Any
-    ) -> Response:
-        """Handle GET requests and return the customer billing details for a given customer ID.
-
-        Args:
-            request (Request): Django Request object.
-            *args: Variable length argument list.
-            **kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            Response: The Django Rest Framework Response object, containing the serialized details
-                      of the customer billing profile or a validation error message.
-
-        Raises:
-            ValidationError: If 'customer_id' parameter is not found in the request.
-
-        """
-        customer_id = request.query_params.get("customer_id")
-
-        if not customer_id:
-            raise ValidationError("Query parameter 'customer_id' is required.")
-
-        queryset = models.CustomerBillingProfile.objects.get(
-            customer_id=customer_id, organization_id=self.request.user.organization_id  # type: ignore
-        )
-        serializer = serializers.CustomerBillingProfileSerializer(queryset)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
-
-    def get_queryset(self) -> QuerySet[models.CustomerBillingProfile]:
-        """Custom method to get the queryset. Filters the queryset based on organization
-        that the authenticated user is part of and selects only selected fields.
-
-        Returns:
-            QuerySet: A QuerySet containing the customer billing profiles for the organization
-                      that authenticated user is part of.
-        """
-        queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "status",
-            "rule_profile_id",
-            "email_profile_id",
-            "customer_id",
-            "organization_id",
-        )
         return queryset
 
 
@@ -281,13 +200,11 @@ class CustomerEmailProfileViewSet(viewsets.ModelViewSet):
     Attributes:
         queryset (object): A Django Queryset that fetches all CustomerEmailProfile objects from the database.
         serializer_class (class): The serializer class used for the serialization of this model's data.
-        filterset_fields (tuple): A tuple containing the fields on which users can filter.
         permission_classes (list): Permissions that must be fulfilled to access or modify the data.
     """
 
     queryset = models.CustomerEmailProfile.objects.all()
     serializer_class = serializers.CustomerEmailProfileSerializer
-    filterset_fields = ("name",)
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.CustomerEmailProfile]:
@@ -306,3 +223,30 @@ class CustomerEmailProfileViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         )
         return queryset
+
+    @action(detail=False, methods=["GET"], name="Get Customer Email Profile by Customer ID")
+
+    def get_by_customer_id(self, request: Request) -> Response:
+        """Get Customer Email Profile by Customer ID.
+
+        Args:
+            request: The HTTP request object.
+
+        Returns:
+            A Response object containing the serialized CustomerEmailProfile.
+
+        Raises:
+            ValidationError: If the `customer_id` query parameter is missing.
+
+        Example:
+            An example of how to call the API to get the Customer Email Profile by Customer ID:
+
+                GET /api/customer-email-profiles/get-by-customer-id?customer_id=123456
+        """
+        customer_id = request.query_params.get("customer_id")
+        if not customer_id:
+            raise ValidationError("Query param `customer_id` is required.")
+
+        customer = models.CustomerEmailProfile.objects.get(customer_id=customer_id)
+        serializer = serializers.CustomerEmailProfileSerializer(customer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
