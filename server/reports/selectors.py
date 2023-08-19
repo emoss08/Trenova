@@ -24,6 +24,7 @@ from reports import models
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
+
     from utils.types import ModelUUID
 
 

@@ -174,28 +174,6 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         model = models.CustomerRuleProfile
 
 
-class CustomerBillingProfileSerializer(GenericSerializer):
-    """A serializer for the CustomerBillingProfile model.
-
-    The serializer provides default operations for creating, updating, and deleting
-    customer billing profiles, as well as listing and retrieving customer billing
-    profiles.
-    It uses the `CustomerBillingProfile` model to convert the customer billing profile
-    instances to and from JSON-formatted data.
-
-    Only authenticated users are allowed to access the views provided by this serializer.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
-    """
-
-    class Meta:
-        """
-        A class representing the metadata for the `CustomerBillingProfileSerializer` class.
-        """
-
-        model = models.CustomerBillingProfile
-
-
 class CustomerSerializer(GenericSerializer):
     """A serializer for the `Customer` model.
 
