@@ -97,18 +97,6 @@ export type CustomerFormValues = Omit<
   | "advocate_full_name"
 >;
 
-/** Customer Billing Profile Type */
-export type CustomerBillingProfile = {
-  id: string;
-  customer: string;
-  status: StatusChoiceProps;
-  email_profile?: string | null;
-  rule_profile?: string | null;
-};
-
-export interface CustomerBillingProfileFormValues
-  extends Omit<CustomerBillingProfile, "id" | "customer"> {}
-
 /** Customer Rule Profile Type */
 export type CustomerRuleProfile = {
   id: string;
@@ -119,12 +107,17 @@ export type CustomerRuleProfile = {
 /** Customer Email Profile Type */
 export type CustomerEmailProfile = {
   id: string;
-  name: string;
-  subject: string;
-  comment: string;
-  from_address: string;
-  blind_copy: string;
+  subject?: string | null;
+  comment?: string | null;
+  customer: string;
+  from_address?: string | null;
+  blind_copy?: string | null;
   read_receipt: boolean;
-  read_receipt_to: string;
-  attachment_name: string;
+  read_receipt_to?: string | null;
+  attachment_name?: string | null;
 };
+
+export type CustomerEmailProfileFormValues = Omit<
+  CustomerEmailProfile,
+  "id" | "customer"
+>;

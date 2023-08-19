@@ -25,8 +25,12 @@ import { CustomerBillingHistoryTable } from "@/components/customer/view/_partial
 import { usePageStyles } from "@/styles/PageStyles";
 import { USDollarFormat } from "@/lib/utils";
 
+CustomerOverviewTab.defaultProps = {
+  customer: null,
+};
+
 type CustomerOverviewTabProps = {
-  customer: Customer;
+  customer?: Customer | null;
   isLoading: boolean;
 };
 
@@ -121,7 +125,7 @@ export function CustomerOverviewTab({
           </Text>
           <Button size="xs">View All</Button>
         </Box>
-        {customer.id && <CustomerBillingHistoryTable id={customer.id} />}
+        {customer?.id && <CustomerBillingHistoryTable id={customer.id} />}
       </Card>
       {customer && <CustomerCreditBalance customer={customer} />}
     </>
