@@ -196,22 +196,41 @@ class OrdersReadySerializer(serializers.Serializer):
     )
 
     def find_missing_documents(self, instance: Order) -> tuple[list[str], bool]:
+        """Determines missing documents for an order based on the rule_profile of the customer of the order.
+        Uses the document class list in each rule_profile to find courses that require its students to
+        submit documents. It will then return a list of missing document names and a boolean flag
+        indicating if any documents are missing.
+
+        Args:
+            instance (Order): Order object for which to find missing documents.
+
+        Returns:
+            tuple[list[str], bool]: A tuple containing list of names of missing documents
+                                    and a boolean indicating if any documents are missing.
+
+        Note:
+            This function will perform a database query for each document_class in the
+            rule_profile of the customer.
+
+        Raises:
+            AttributeError: An error occurred when the order instance has no customer
+                            or the customer has no rule_profile.
+        """
         missing_documents = []
         is_missing_documents = False
 
-        if billing_profile := instance.customer.billing_profile:  # type: ignore
-            if rule_profile := billing_profile.rule_profile:
-                # Get the name of each document_class required in CustomerRuleProfile
-                required_documents = rule_profile.document_class.all()
+        if rule_profile := instance.customer.rule_profile.exists():
+            # Get the name of each document_class required in CustomerRuleProfile
+            required_documents = rule_profile.document_class.all()
 
-                # Query the OrderDocumentation for each document_class
-                for required_document in required_documents:
-                    order_document = instance.order_documentation.filter(
-                        document_class=required_document
-                    ).first()
-                    if not order_document:
-                        missing_documents.append(required_document.name)
-                        is_missing_documents = True
+            # Query the OrderDocumentation for each document_class
+            for required_document in required_documents:
+                order_document = instance.order_documentation.filter(
+                    document_class=required_document
+                ).first()
+                if not order_document:
+                    missing_documents.append(required_document.name)
+                    is_missing_documents = True
 
         return missing_documents, is_missing_documents
 
