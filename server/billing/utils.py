@@ -21,7 +21,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from billing import exceptions, models
-from customer.models import Customer, CustomerBillingProfile, CustomerContact
+from customer.models import Customer, CustomerContact, CustomerRuleProfile
 from movements.models import Movement
 from order.models import Order
 from organization.models import Organization
@@ -242,17 +242,10 @@ def set_billing_requirements(*, customer: Customer) -> bool | list[str]:
     customer_billing_requirements = []
 
     try:
-        if not customer.billing_profile.rule_profile:
-            return False
-
         customer_billing_requirements.extend(
-            [
-                doc.name
-                for doc in customer.billing_profile.rule_profile.document_class.all()
-                if doc.name
-            ]
+            [doc.name for doc in customer.rule_profile.document_class.all() if doc.name]
         )
-    except CustomerBillingProfile.DoesNotExist:
+    except CustomerRuleProfile.DoesNotExist:
         return False
 
     return customer_billing_requirements
@@ -287,7 +280,7 @@ def check_billing_requirements(
             invoice=invoice,
             exception_message=f"Customer: {invoice.customer.name} does not have a billing profile",
         )
-        return False
+        return False, missing_documents
 
     order_document_ids = set_order_documents(invoice=invoice)
 
