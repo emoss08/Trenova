@@ -18,7 +18,6 @@
 import axios from "@/lib/AxiosConfig";
 import {
   Customer,
-  CustomerBillingProfile,
   CustomerEmailProfile,
   CustomerRuleProfile,
 } from "@/types/apps/customer";
@@ -46,20 +45,6 @@ export async function getCustomerDetailsWithMetrics(
 }
 
 /**
- * Fetches the details of the customer with the specified ID.
- * @param id
- * @returns A promise that resolves to a customer details.
- */
-export async function getCustomerBillingProfile(
-  id: string,
-): Promise<CustomerBillingProfile> {
-  const response = await axios.get(
-    `customer_billing_profiles/customer_billing_profile_details/?customer_id=${id}`,
-  );
-  return response.data;
-}
-
-/**
  * Fetches the customer rule profiles from the server.
  * @returns A promise that resolves to a list of customer rule profiles.
  */
@@ -79,6 +64,15 @@ export async function getCustomerEmailProfile(
 ): Promise<CustomerEmailProfile> {
   const response = await axios.get(
     `customer_email_profiles/get_by_customer_id/?customer_id=${id}`,
+  );
+  return response.data;
+}
+
+export async function getCustomerRuleProfile(
+  id: string,
+): Promise<CustomerRuleProfile> {
+  const response = await axios.get(
+    `customer_rule_profiles/get_by_customer_id/?customer_id=${id}`,
   );
   return response.data;
 }

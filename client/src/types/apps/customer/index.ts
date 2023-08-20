@@ -101,8 +101,11 @@ export type CustomerFormValues = Omit<
 export type CustomerRuleProfile = {
   id: string;
   name: string;
+  customer: string;
   document_class: string[];
 };
+
+export type CustomerRuleProfileFormValues = Omit<CustomerRuleProfile, "id">;
 
 /** Customer Email Profile Type */
 export type CustomerEmailProfile = {

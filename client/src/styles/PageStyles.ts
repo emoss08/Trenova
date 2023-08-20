@@ -50,4 +50,8 @@ export const usePageStyles = createStyles((theme) => ({
   cardBody: {
     overflow: "visible",
   },
+  contextMenu: {
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+  },
 }));

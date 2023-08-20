@@ -150,40 +150,62 @@ export function CustomerEmailProfileForm({
                   Comment for the email
                 </Text>
               </Box>
-              <ValidatedTextInput
-                label="From Address"
-                placeholder="From Address"
-                form={form}
-                name="from_address"
-                variant="filled"
-              />
-              <ValidatedTextInput
-                label="Blind Copy"
-                placeholder="Blind Copy"
-                form={form}
-                name="blind_copy"
-                variant="filled"
-              />
+              <Box>
+                <ValidatedTextInput
+                  label="From Address"
+                  placeholder="From Address"
+                  form={form}
+                  name="from_address"
+                  variant="filled"
+                />
+                <Text size="xs" color="dimmed">
+                  From Address for the email
+                </Text>
+              </Box>
+              <Box>
+                <ValidatedTextInput
+                  label="Blind Copy"
+                  placeholder="Blind Copy"
+                  form={form}
+                  name="blind_copy"
+                  variant="filled"
+                />
+                <Text size="xs" color="dimmed">
+                  Comma separated list of email addresses to send blind copy to
+                </Text>
+              </Box>
+              <Box>
+                <ValidatedTextInput
+                  label="Read Recept To"
+                  placeholder="Read Recept To"
+                  form={form}
+                  name="read_receipt_to"
+                  variant="filled"
+                />
+                <Text size="xs" color="dimmed">
+                  Comma separated list of email addresses to send read receipt
+                  to
+                </Text>
+              </Box>
+              <Box>
+                <ValidatedTextInput
+                  label="Attachment Name"
+                  placeholder="Attachment Name"
+                  form={form}
+                  name="attachment_name"
+                  variant="filled"
+                />
+                <Text size="xs" color="dimmed">
+                  Attachment Name for the email
+                </Text>
+              </Box>
               <SwitchInput
                 form={form}
                 name="read_receipt"
                 label="Read Receipt"
+                description="Request a read receipt for the email"
                 variant="filled"
                 mt="xl"
-              />
-              <ValidatedTextInput
-                label="Read Recept To"
-                placeholder="Read Recept To"
-                form={form}
-                name="read_receipt_to"
-                variant="filled"
-              />
-              <ValidatedTextInput
-                label="Attachment Name"
-                placeholder="Attachment Name"
-                form={form}
-                name="attachment_name"
-                variant="filled"
               />
             </SimpleGrid>
             <Group position="right" mt="md">

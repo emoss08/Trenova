@@ -57,26 +57,19 @@ export default function UserSettings() {
 
   const isLoading = isUserDetailsLoading || isJobTitlesLoading;
 
-  return (
-    <>
-      {isLoading ? (
-        <Stack>
-          <Skeleton height={250} />
-          <Skeleton height={500} />
-          <Skeleton height={100} />
-        </Stack>
-      ) : (
-        <Stack>
-          {userDetails && jobTitleData && (
-            <ViewUserProfileDetails
-              user={userDetails}
-              jobTitle={jobTitleData}
-            />
-          )}
-          {userDetails && <EditUserProfileDetails user={userDetails} />}
-          {userDetails && <SignInMethod user={userDetails} />}
-        </Stack>
+  return isLoading ? (
+    <Stack>
+      <Skeleton height={250} />
+      <Skeleton height={500} />
+      <Skeleton height={100} />
+    </Stack>
+  ) : (
+    <Stack>
+      {userDetails && jobTitleData && (
+        <ViewUserProfileDetails user={userDetails} jobTitle={jobTitleData} />
       )}
-    </>
+      {userDetails && <EditUserProfileDetails user={userDetails} />}
+      {userDetails && <SignInMethod user={userDetails} />}
+    </Stack>
   );
 }

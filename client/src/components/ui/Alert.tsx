@@ -20,8 +20,6 @@ import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 
-type Colors<T> = T | (string & {});
-
 interface Props {
   title: React.ReactNode;
   message: string;
@@ -33,7 +31,7 @@ interface Props {
   color: Colors<"blue" | "red" | "yellow" | "green" | "gray" | "dark">;
 }
 
-export const Alert: React.FC<Props> = ({
+export function Alert({
   title,
   message,
   withIcon,
@@ -42,7 +40,7 @@ export const Alert: React.FC<Props> = ({
   buttonText,
   onClick,
   color,
-}) => {
+}: Props) {
   const theme = useMantineTheme();
   const borderColorValue: Record<string, string> = {
     blue: "#007BFF",
@@ -126,4 +124,4 @@ export const Alert: React.FC<Props> = ({
       </Grid>
     </Paper>
   );
-};
+}

@@ -74,11 +74,9 @@ export default function ViewCustomer() {
 
           {/** Profiles Tab */}
           <Tabs.Panel value="profile" pt="xs">
-            <Grid.Col span={12} sm={12} md={12} lg={12} xl={12}>
-              {customerData && (
-                <CustomerProfileTab customerId={customerData.id} />
-              )}
-            </Grid.Col>
+            {customerData && (
+              <CustomerProfileTab customerId={customerData.id} />
+            )}
           </Tabs.Panel>
         </Tabs>
       </Grid.Col>

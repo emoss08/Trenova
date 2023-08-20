@@ -20,6 +20,7 @@ import {
   AccessorialCharge,
   BillingQueue,
   ChargeType,
+  DocumentClassification,
   OrdersReadyProps,
 } from "@/types/apps/billing";
 
@@ -48,7 +49,7 @@ export async function getAccessorialCharges(): Promise<AccessorialCharge[]> {
  * @returns A promise that resolves to the accessorial charge's details.
  */
 export async function getAccessorialChargeDetails(
-  id: string
+  id: string,
 ): Promise<AccessorialCharge> {
   const response = await axios.get(`/accessorial_charges/${id}/`);
   return response.data;
@@ -69,5 +70,12 @@ export async function getOrdersReadyToBill(): Promise<OrdersReadyProps[]> {
  */
 export async function getBillingQueue(): Promise<BillingQueue[]> {
   const response = await axios.get("/billing_queue/");
+  return response.data.results;
+}
+
+export async function getDocumentClassifications(): Promise<
+  DocumentClassification[]
+> {
+  const response = await axios.get("/document_classifications/");
   return response.data.results;
 }

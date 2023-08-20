@@ -16,6 +16,7 @@
  */
 
 import { MRT_RowSelectionState } from "mantine-react-table";
+import { faLampStreet } from "@fortawesome/pro-solid-svg-icons";
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
 import { Customer } from "@/types/apps/customer";
@@ -24,6 +25,7 @@ import { BillingHistory } from "@/types/apps/billing";
 type customerStoreProps = {
   editModalOpen: boolean;
   activeTab: string | null;
+  createRuleProfileModalOpen: boolean;
 };
 
 type paymentRecordsTableStoreProps<T extends Record<string, unknown>> = {
@@ -71,5 +73,6 @@ export const paymentRecordsTableStore = createGlobalStore<
 
 export const customerStore = createGlobalStore<customerStoreProps>({
   editModalOpen: false,
+  createRuleProfileModalOpen: false,
   activeTab: "overview",
 });
