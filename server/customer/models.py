@@ -328,7 +328,7 @@ class CustomerEmailProfile(GenericModel):
             str: Customer Email Profile string representation
         """
         return textwrap.shorten(
-            f"Customer Email Profile {self.customer.name}",
+            f"Customer Email Profile for Customer {self.customer.name if self.customer else 'None'}",
             width=60,
             placeholder="...",
         )
@@ -718,7 +718,7 @@ class CustomerFuelProfile(GenericModel):
         Returns:
             str: Customer fuel profile url
         """
-        return reverse("billing:customer-fuel-profile", kwargs={"pk": self.pk})
+        return reverse("customer-fuel-profile-details", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """CustomerFuelProfile clean method

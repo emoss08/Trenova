@@ -158,6 +158,42 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
     filterset_fields = ("name",)
     permission_classes = [CustomObjectPermissions]
 
+    @action(
+        detail=False, methods=["GET"], name="Get Customer Rule Profile by Customer ID"
+    )
+    def get_by_customer_id(self, request: Request) -> Response:
+        """Get Customer Rule Profile by Customer ID.
+
+        Args:
+            request: The HTTP request object.
+
+        Returns:
+            A Response object containing the serialized CustomerRuleProfile.
+
+        Raises:
+            ValidationError: If the `customer_id` query parameter is missing.
+
+        Example:
+            An example of how to call the API to get the Customer Rule Profile by Customer ID:
+
+                GET /api/customer-rule-profiles/get-by-customer-id?customer_id=123456
+        """
+        customer_id = request.query_params.get("customer_id")
+        if not customer_id:
+            raise ValidationError("Query param `customer_id` is required.")
+
+        try:
+            customer = models.CustomerRuleProfile.objects.get(customer_id=customer_id)
+            serializer = serializers.CustomerRuleProfileSerializer(customer)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except models.CustomerRuleProfile.DoesNotExist:
+            return Response(
+                {
+                    "message": "Customer Rule Profile does not exist for the given customer ID.",
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
     def get_queryset(self) -> QuerySet[models.CustomerRuleProfile]:
         """Get the queryset for the viewset.
 
@@ -224,8 +260,9 @@ class CustomerEmailProfileViewSet(viewsets.ModelViewSet):
         )
         return queryset
 
-    @action(detail=False, methods=["GET"], name="Get Customer Email Profile by Customer ID")
-
+    @action(
+        detail=False, methods=["GET"], name="Get Customer Email Profile by Customer ID"
+    )
     def get_by_customer_id(self, request: Request) -> Response:
         """Get Customer Email Profile by Customer ID.
 
