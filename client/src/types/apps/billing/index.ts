@@ -138,3 +138,9 @@ export type BillingHistory = {
   created: string;
   modified: string;
 };
+/** Types for Document Classification */
+export type DocumentClassification = {
+  id: string;
+  name: string;
+  description: string;
+};

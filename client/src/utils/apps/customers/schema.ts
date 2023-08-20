@@ -21,6 +21,7 @@ import { StatusChoiceProps, YesNoChoiceProps } from "@/types";
 import {
   CustomerEmailProfileFormValues,
   CustomerFormValues,
+  CustomerRuleProfileFormValues,
 } from "@/types/apps/customer";
 
 /** Customer Schema */
@@ -56,4 +57,14 @@ export const CustomerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormVa
       otherwise: (schema) => schema.notRequired(),
     }),
     attachment_name: Yup.string().notRequired(),
+  });
+
+export const CustomerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
+  Yup.object().shape({
+    name: Yup.string().required("Name is required"),
+    customer: Yup.string().required("Customer is required"),
+    document_class: Yup.array()
+      .of(Yup.string().required())
+      .min(1, "At Least one document class is required.")
+      .required("Document Class is required"),
   });

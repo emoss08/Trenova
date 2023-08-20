@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Card, createStyles, Divider, Flex, Text } from "@mantine/core";
+import { Card, Divider, Flex, Text } from "@mantine/core";
 import { faShieldCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { Alert } from "@/components/ui/Alert";
 import { User } from "@/types/apps/accounts";
@@ -28,7 +28,7 @@ type Props = {
   user: User;
 };
 
-export const SignInMethod: React.FC<Props> = ({ user }) => {
+export function SignInMethod({ user }: Props) {
   const { classes } = usePageStyles();
 
   return (
@@ -55,4 +55,4 @@ export const SignInMethod: React.FC<Props> = ({ user }) => {
       </Card>
     </Flex>
   );
-};
+}

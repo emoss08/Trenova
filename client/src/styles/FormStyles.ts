@@ -41,11 +41,23 @@ export const useFormStyles = createStyles((theme) => {
             ? theme.fn.rgba(theme.colors.red[8], 0.15)
             : theme.colors.red[0],
       },
+      "& input[data-invalid=true]": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.fn.rgba(theme.colors.red[8], 0.15)
+            : theme.colors.red[0],
+      },
       "& textarea[data-invalid=true]": {
         backgroundColor:
           theme.colorScheme === "dark"
             ? theme.fn.rgba(theme.colors.red[8], 0.15)
             : theme.colors.red[0],
+      },
+      "& .mantine-MultiSelect-wrapper": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.colors.dark[6]
+            : theme.colors.gray[1],
       },
     },
     control: {

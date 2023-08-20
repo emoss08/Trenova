@@ -14,57 +14,69 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
+import React from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { useForm, yupResolver } from "@mantine/form";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import {
-  GeneralLedgerAccount,
-  RevenueCodeFormValues,
-} from "@/types/apps/accounting";
-import { TChoiceProps } from "@/types";
+import { useForm } from "@mantine/form";
+import { useContextMenu } from "mantine-contextmenu";
+import { IconCopy } from "@tabler/icons-react";
 import { useFormStyles } from "@/styles/FormStyles";
+import { customerStore as store } from "@/stores/CustomerStore";
 import axios from "@/lib/AxiosConfig";
+import { CustomerRuleProfileFormValues } from "@/types/apps/customer";
 import { APIError } from "@/types/server";
-import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
 import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { ValidatedMultiSelect } from "@/components/ui/fields/MultiSelect";
+import { getDocumentClassifications } from "@/requests/BillingRequestFactory";
+import { DocumentClassification } from "@/types/apps/billing";
 
-type CreateRCModalFormProps = {
-  selectGlAccountData: TChoiceProps[];
+type Props = {
+  customerId: string;
 };
 
-export function CreateRCModalForm({
-  selectGlAccountData,
-}: CreateRCModalFormProps) {
+function CreateRuleProfileModalForm({ customerId }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
+  const showContextMenu = useContextMenu();
+
+  const { data: documentClasses, isLoading } = useQuery({
+    queryKey: ["documentClassifications"],
+    queryFn: async () => getDocumentClassifications(),
+    enabled: store.get("activeTab") === "profile",
+    initialData: () => queryClient.getQueryData("documentClassifications"),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const selectDocumentClassData =
+    documentClasses?.map((item: DocumentClassification) => ({
+      value: item.id,
+      label: item.name,
+    })) || [];
 
   const mutation = useMutation(
-    (values: RevenueCodeFormValues) => axios.post("/revenue_codes/", values),
+    (values: CustomerRuleProfileFormValues) =>
+      axios.post("/customer_rule_profiles/", values),
     {
       onSuccess: () => {
         queryClient
           .invalidateQueries({
-            queryKey: ["revenue-code-table-data"],
+            queryKey: ["customerRuleProfile", customerId],
           })
           .then(() => {
             notifications.show({
               title: "Success",
-              message: "Revenue Code created successfully",
+              message: "Customer Rule Profile created successfully",
               color: "green",
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
             });
-            revenueCodeTableStore.set("createModalOpen", false);
+            store.set("createRuleProfileModalOpen", false);
           });
       },
       onError: (error: any) => {
@@ -91,17 +103,18 @@ export function CreateRCModalForm({
     },
   );
 
-  const form = useForm<RevenueCodeFormValues>({
-    validate: yupResolver(revenueCodeSchema),
+  const form = useForm<CustomerRuleProfileFormValues>({
+    validateInputOnChange: true,
     initialValues: {
-      code: "",
-      description: "",
-      expense_account: "",
-      revenue_account: "",
+      name: "",
+      customer: customerId,
+      document_class: [""],
     },
   });
 
-  const submitForm = (values: RevenueCodeFormValues) => {
+  const submitForm: (values: CustomerRuleProfileFormValues) => void = (
+    values: CustomerRuleProfileFormValues,
+  ) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -111,77 +124,63 @@ export function CreateRCModalForm({
       <Box className={classes.div}>
         <ValidatedTextInput
           form={form}
-          className={classes.fields}
-          name="code"
-          label="Code"
-          placeholder="Code"
+          name="name"
+          label="Name"
+          placeholder="Enter name"
           variant="filled"
           withAsterisk
         />
-        <ValidatedTextArea
+        <ValidatedMultiSelect
           form={form}
-          className={classes.fields}
-          name="description"
-          label="Description"
-          placeholder="Description"
+          name="document_class"
+          data={selectDocumentClassData}
+          placeholder="Select document class"
+          label="Document Class"
+          isLoading={isLoading}
           variant="filled"
           withAsterisk
+          onContextMenu={showContextMenu(
+            [
+              {
+                key: "copy",
+                icon: <IconCopy size={16} />,
+                title: "Copy to clipboard",
+                onClick: () => {
+                  navigator.clipboard.writeText(
+                    form.values.document_class.join(","),
+                  );
+                },
+              },
+            ],
+            {
+              sx: (theme) => ({
+                backgroundColor:
+                  theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+              }),
+            },
+          )}
         />
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput
-            form={form}
-            data={selectGlAccountData}
-            className={classes.fields}
-            name="expense_account"
-            label="Expense Account"
-            placeholder="Expense Account"
-            variant="filled"
-            clearable
-          />
-          <SelectInput
-            form={form}
-            data={selectGlAccountData}
-            className={classes.fields}
-            name="revenue_account"
-            label="Revenue Account"
-            placeholder="Revenue Account"
-            variant="filled"
-            clearable
-          />
-        </SimpleGrid>
-        <Group position="right" mt="md">
-          <Button
-            color="white"
-            type="submit"
-            className={classes.control}
-            loading={loading}
-          >
-            Submit
-          </Button>
-        </Group>
       </Box>
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }
 
-export function CreateRCModal(): React.ReactElement {
-  const [showCreateModal, setShowCreateModal] =
-    revenueCodeTableStore.use("createModalOpen");
-  const queryClient = useQueryClient();
-
-  const { data: glAccountData } = useQuery({
-    queryKey: "gl-account-data",
-    queryFn: () => getGLAccounts(),
-    enabled: showCreateModal,
-    initialData: () => queryClient.getQueryData("gl-account-data"),
-    staleTime: Infinity,
-  });
-
-  const selectGlAccountData =
-    glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
-      value: glAccount.id,
-      label: glAccount.account_number,
-    })) || [];
+export function CreateRuleProfileModal({
+  customerId,
+}: Props): React.ReactElement {
+  const [showCreateModal, setShowCreateModal] = store.use(
+    "createRuleProfileModalOpen",
+  );
 
   return (
     <Modal.Root
@@ -191,13 +190,11 @@ export function CreateRCModal(): React.ReactElement {
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Create Revenue Code</Modal.Title>
+          <Modal.Title>Create Customer Rule Profile</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateRCModalForm selectGlAccountData={selectGlAccountData} />
-          </Suspense>
+          <CreateRuleProfileModalForm customerId={customerId} />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

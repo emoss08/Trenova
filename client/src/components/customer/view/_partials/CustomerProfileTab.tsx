@@ -16,42 +16,83 @@
  */
 
 import React from "react";
-import { Card, Flex, Skeleton } from "@mantine/core";
+import { Card, Skeleton } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
-import { usePageStyles } from "@/styles/PageStyles";
-import { getCustomerEmailProfile } from "@/requests/CustomerRequestFactory";
+import { faShieldCheck } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  getCustomerEmailProfile,
+  getCustomerRuleProfile,
+} from "@/requests/CustomerRequestFactory";
 import { customerStore as store } from "@/stores/CustomerStore";
 import { CustomerEmailProfileForm } from "./profile_forms/CustomerEmailProfileForm";
+import { CustomerRuleProfileForm } from "./profile_forms/CustomerRuleProfileForm";
+import {
+  CustomerEmailProfile,
+  CustomerRuleProfile,
+} from "@/types/apps/customer";
+import { usePageStyles } from "@/styles/PageStyles";
+import { Alert } from "@/components/ui/Alert";
+import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
 
 type CustomerProfileTabProps = {
   customerId: string;
 };
 
 export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
-  const { classes } = usePageStyles();
   const queryClient = useQueryClient();
+  const { classes } = usePageStyles();
 
   const { data: emailProfile, isLoading: isEmailProfileLoading } = useQuery({
     queryKey: ["customerEmailProfile", customerId],
-    queryFn: () => getCustomerEmailProfile(customerId),
+    queryFn: (): Promise<CustomerEmailProfile> =>
+      getCustomerEmailProfile(customerId),
     enabled: store.get("activeTab") === "profile",
     initialData: () => queryClient.getQueryData("customerEmailProfiles"),
     staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
-  const isLoading = isEmailProfileLoading;
+  const { data: ruleProfile, isLoading: isRuleProfileLoading } = useQuery({
+    queryKey: ["customerRuleProfile", customerId],
+    queryFn: (): Promise<CustomerRuleProfile> =>
+      getCustomerRuleProfile(customerId),
+    enabled: store.get("activeTab") === "profile",
+    initialData: () => queryClient.getQueryData("customerRuleProfile"),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
 
-  return (
-    <Flex>
-      {isLoading ? (
-        <Skeleton height={200} />
+  const isLoading: boolean = isEmailProfileLoading || isRuleProfileLoading;
+
+  return isLoading ? (
+    <>
+      <Skeleton height={400} />
+      <Skeleton height={300} mt={20} />
+    </>
+  ) : (
+    <>
+      {emailProfile && <CustomerEmailProfileForm emailProfile={emailProfile} />}
+      {ruleProfile ? (
+        <CustomerRuleProfileForm ruleProfile={ruleProfile} />
       ) : (
-        <Card className={classes.card}>
-          {emailProfile && (
-            <CustomerEmailProfileForm emailProfile={emailProfile} />
-          )}
+        <Card className={classes.card} mt={20}>
+          <Alert
+            color="yellow"
+            icon={faShieldCheck}
+            title="No Rule Profile Found"
+            message="Rule Profiles are used to define the rules that will be applied to the billing of the customer. Create a rule profile to start billing the customer."
+            buttonText="Create"
+            withButton
+            onClick={() => {
+              store.set("createRuleProfileModalOpen", true);
+            }}
+            withIcon
+          />
         </Card>
       )}
-    </Flex>
+      <CreateRuleProfileModal customerId={customerId} />
+    </>
   );
 }
