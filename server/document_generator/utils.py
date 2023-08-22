@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -15,26 +14,47 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-import os
-import sys
-
-import pretty_errors  # noqa: F401
+from accounts.models import User
+from document_generator import models
 
 
-def main():
-    """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
-    execute_from_command_line(sys.argv)
+def save_template_version(
+    template: models.DocumentTemplate,
+    new_content: str,
+    user: User,
+    change_reason: str | None = None,
+):
+    """Saves a new version of a DocumentTemplate. The function first determines the next version number,
+    then creates a new DocumentTemplateVersion with the specified arguments.
+    Afterward, updates the template's current version to the newly created version and save the template.
 
+    Args:
+        template (models.DocumentTemplate): The DocumentTemplate instance that the new version belongs to.
+        new_content (str): The content of the new version.
+        user (User): The user who creates this new version.
+        change_reason (str, optional): The reason why this change is made, if not given, assumed to be None.
 
-if __name__ == "__main__":
-    main()
+    Returns:
+        None
+
+    Raises:
+        Any exceptions raised by models.DocumentTemplateVersion.objects.create() or template.save()
+        will be propagated further.
+    """
+    if latest_version := template.current_version:
+        next_version_number = latest_version.version_number + 1
+    else:
+        next_version_number = 1
+
+    # Create the new version
+    new_version = models.DocumentTemplateVersion.objects.create(
+        template=template,
+        version_number=next_version_number,
+        content=new_content,
+        created_by=user,
+        change_reason=change_reason,
+    )
+
+    # Update the template's current version
+    template.current_version = new_version
+    template.save()

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -15,26 +14,36 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import typing
 
-import os
-import sys
-
-import pretty_errors  # noqa: F401
+from document_generator import models, utils
 
 
-def main():
-    """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
-    execute_from_command_line(sys.argv)
+def version_document(
+    instance: models.DocumentTemplate, created: bool, **kwargs: typing.Any
+) -> None:
+    """Creates a new template version on the `DocumentTemplate` instance if it has been freshly created or its content
+    has been modified.
 
+    The function will only trigger the creation of a new template version when:
+    a) the DocumentTemplate instance has been newly created (i.e., not updated), or
+    b) content of the DocumentTemplate instance has been updated (i.e., no instance's content matches the current version's content).
 
-if __name__ == "__main__":
-    main()
+    Args:
+        instance (models.DocumentTemplate): instance of the DocumentTemplate model being saved.
+        created (bool): boolean flag indicating if instance is being created (True) or updated (False).
+        **kwargs (typing.Any): extra arguments.
+
+    Returns:
+        None: This function does not return anything.
+
+    Raises:
+        Any exceptions raised by utils.save_template_version() function will be propagated further.
+    """
+    if not created and instance.content != instance.current_version.content:
+        utils.save_template_version(instance, instance.content, instance.user_id)
+
+    # Set as 1.0.0 if it's a new template
+    if created:
+        instance.version = "1.0.0"
+        instance.save()

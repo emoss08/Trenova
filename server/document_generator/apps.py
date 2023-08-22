@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # --------------------------------------------------------------------------------------------------
 #  COPYRIGHT(c) 2023 MONTA                                                                         -
 #                                                                                                  -
@@ -16,25 +15,19 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-import os
-import sys
-
-import pretty_errors  # noqa: F401
+from django.apps import AppConfig
+from django.db.models.signals import post_save
 
 
-def main():
-    """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
-    try:
-        from django.core.management import execute_from_command_line
-    except ImportError as exc:
-        raise ImportError(
-            "Couldn't import Django. Are you sure it's installed and "
-            "available on your PYTHONPATH environment variable? Did you "
-            "forget to activate a virtual environment?"
-        ) from exc
-    execute_from_command_line(sys.argv)
+class DocumentGeneratorConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "document_generator"
 
-
-if __name__ == "__main__":
-    main()
+    def ready(self) -> None:
+        from document_generator import signals
+        #
+        # post_save.connect(
+        #     signals.version_document,
+        #     sender="document_generator.DocumentTemplate",
+        #     dispatch_uid="version_document",
+        # )
