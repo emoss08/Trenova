@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "reports",
     "plugin",
     "edi",
+    "document_generator",
 ]
 
 # Middleware configurations
