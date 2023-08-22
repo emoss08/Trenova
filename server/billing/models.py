@@ -614,10 +614,10 @@ class BillingQueue(GenericModel):  # type:ignore
         _("Total Mileage"),
         max_digits=10,
         decimal_places=2,
-        default=0,
         help_text=_("Total Mileage"),
         blank=True,
         null=True,
+        default=0,
     )
     worker = models.ForeignKey(
         "worker.Worker",
@@ -700,6 +700,15 @@ class BillingQueue(GenericModel):  # type:ignore
         related_name="billing_queue",
         help_text=_("Assigned user to the billing queue"),
         verbose_name=_("User"),
+        blank=True,
+        null=True,
+    )
+    document_class = models.ForeignKey(
+        "billing.DocumentClassification",
+        on_delete=models.RESTRICT,
+        related_name="billing_queue",
+        help_text=_("Assigned document classification to the billing queue"),
+        verbose_name=_("Document Classification"),
         blank=True,
         null=True,
     )
@@ -1101,7 +1110,6 @@ class BillingHistory(GenericModel):  # type:ignore
         _("Total Mileage"),
         max_digits=10,
         decimal_places=2,
-        default=0,
         help_text=_("Total Mileage"),
         blank=True,
         null=True,
