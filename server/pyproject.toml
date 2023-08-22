@@ -50,7 +50,6 @@ exclude = [
 ]
 
 [tool.mypy]
-mypy_path = "/Home/Documents/GitHub/Monta/Server/venv/bin/mypy"
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 enable_error_code = ["truthy-bool", "redundant-expr", "unused-awaitable"]
 allow_redefinition = true
