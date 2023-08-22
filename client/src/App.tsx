@@ -28,6 +28,7 @@ import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { Notifications } from "@mantine/notifications";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { ContextMenuProvider } from "mantine-contextmenu";
+import { ModalsProvider } from "@mantine/modals";
 import { useAuthStore } from "./stores/AuthStore";
 import LoadingScreen from "./components/LoadingScreen";
 import { ProtectedRoutes } from "./routing/ProtectedRoutes";
@@ -82,17 +83,19 @@ function App() {
         withNormalizeCSS
         withCSSVariables
       >
-        <ContextMenuProvider>
-          <Notifications limit={3} position="top-right" zIndex={2077} />
-          <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
-              <Suspense fallback={<LoadingScreen />}>
-                <ProtectedRoutes />
-              </Suspense>
-            </BrowserRouter>
-            <ReactQueryDevtools initialIsOpen={false} />
-          </QueryClientProvider>
-        </ContextMenuProvider>
+        <ModalsProvider>
+          <ContextMenuProvider zIndex={1000} shadow="md" borderRadius="md">
+            <Notifications limit={3} position="top-right" zIndex={2077} />
+            <QueryClientProvider client={queryClient}>
+              <BrowserRouter>
+                <Suspense fallback={<LoadingScreen />}>
+                  <ProtectedRoutes />
+                </Suspense>
+              </BrowserRouter>
+              <ReactQueryDevtools initialIsOpen={false} />
+            </QueryClientProvider>
+          </ContextMenuProvider>
+        </ModalsProvider>
       </MantineProvider>
     </ColorSchemeProvider>
   );

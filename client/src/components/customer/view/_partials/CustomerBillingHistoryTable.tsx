@@ -18,7 +18,9 @@
 import React from "react";
 import { MantineReactTable, MRT_ColumnDef } from "mantine-react-table";
 import { useQuery } from "react-query";
-import { useMantineTheme } from "@mantine/core";
+import { SimpleGrid, TextInput, useMantineTheme } from "@mantine/core";
+import { modals } from "@mantine/modals";
+import { useContextMenu } from "mantine-contextmenu";
 import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/ui/table/Icons";
 import { API_URL, USDollarFormat } from "@/lib/utils";
@@ -62,6 +64,7 @@ export function CustomerBillingHistoryTable({ id }: Props) {
   const [globalFilter, setGlobalFilter] =
     paymentRecordsTableStore.use("globalFilter");
   const [rowSelection] = paymentRecordsTableStore.use("rowSelection");
+  const showContextMenu = useContextMenu();
 
   const { data, isError, isFetching, isLoading } = useQuery(
     [
@@ -123,6 +126,74 @@ export function CustomerBillingHistoryTable({ id }: Props) {
         sx: {
           backgroundColor:
             theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+        },
+      })}
+      mantineTableBodyRowProps={({ row }) => ({
+        onClick: () => {
+          modals.open({
+            title: "View Billing History",
+            children: (
+              <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+                <TextInput
+                  label="Invoice #"
+                  value={row.original.invoice_number}
+                  readOnly
+                />
+                <TextInput
+                  label="Bol Number"
+                  value={row.original.bol_number}
+                  readOnly
+                />
+                <TextInput
+                  label="Mileage"
+                  value={row.original.mileage}
+                  readOnly
+                />
+                <TextInput
+                  label="Bill Date"
+                  value={row.original.bill_date}
+                  readOnly
+                />
+                <TextInput
+                  label="Consignee Ref Number"
+                  value={row.original.consignee_ref_number}
+                  readOnly
+                />
+                <TextInput
+                  label="Other Charge Total"
+                  value={USDollarFormat(
+                    Math.round(row.original.other_charge_total as number),
+                  )}
+                  readOnly
+                />
+                <TextInput
+                  label="Freight Charge Amount"
+                  value={USDollarFormat(
+                    Math.round(row.original.freight_charge_amount as number),
+                  )}
+                  readOnly
+                />
+                <TextInput
+                  label="Total Amount"
+                  value={USDollarFormat(
+                    Math.round(row.original.total_amount as number),
+                  )}
+                  readOnly
+                />
+              </SimpleGrid>
+            ),
+            size: "md",
+          });
+        },
+        onContextMenu: showContextMenu([
+          {
+            key: "view",
+            title: `View ${row.original.invoice_number}`,
+            onClick: () => console.info(`View ${row.original.id}`),
+          },
+        ]),
+        sx: {
+          cursor: "pointer",
         },
       })}
       onGlobalFilterChange={(filter: string) => {
