@@ -16,7 +16,6 @@
  */
 
 import { MRT_RowSelectionState } from "mantine-react-table";
-import { faLampStreet } from "@fortawesome/pro-solid-svg-icons";
 import { createGlobalStore } from "@/utils/zustand";
 import { TableStoreProps } from "@/types/tables";
 import { Customer } from "@/types/apps/customer";

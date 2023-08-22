@@ -43,7 +43,7 @@
       "error",
       "always"
     ],
-    "camelcase": "warn",
+    "camelcase": "off",
     "react/jsx-props-no-spreading": "off",
     "react/prop-types": "off",
     "react/jsx-filename-extension": [

@@ -15,6 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 import React from "react";
+import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -139,26 +140,53 @@ function CreateRuleProfileModalForm({ customerId }: Props) {
           isLoading={isLoading}
           variant="filled"
           withAsterisk
-          onContextMenu={showContextMenu(
-            [
-              {
-                key: "copy",
-                icon: <IconCopy size={16} />,
-                title: "Copy to clipboard",
-                onClick: () => {
-                  navigator.clipboard.writeText(
-                    form.values.document_class.join(","),
-                  );
-                },
-              },
-            ],
-            {
-              sx: (theme) => ({
-                backgroundColor:
-                  theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
-              }),
-            },
-          )}
+          creatable
+          getCreateLabel={(query) => `+ Create ${query}`}
+          onCreate={(query) => {
+            // This is a reference to the object that will be updated asynchronously.
+            const item = {
+              value: "", // or some default value
+              label: "", // or some default value
+            };
+
+            axios
+              .post("/document_classifications/", { name: query })
+              .then(async (response) => {
+                if (response.status === 201) {
+                  await queryClient.invalidateQueries({
+                    queryKey: ["documentClassifications"],
+                  });
+
+                  notifications.show({
+                    title: "Success",
+                    message: "Document Classification created successfully",
+                    color: "green",
+                    withCloseButton: true,
+                    icon: <FontAwesomeIcon icon={faCheck} />,
+                  });
+
+                  // Update the properties of the item reference
+                  item.value = response.data.id;
+                  item.label = response.data.name;
+                }
+              })
+              .catch((error) => {
+                const { data } = error.response;
+                if (data.type === "validation_error") {
+                  data.errors.forEach((e: APIError) => {
+                    notifications.show({
+                      title: "Error",
+                      message: e.detail,
+                      color: "red",
+                      withCloseButton: true,
+                      icon: <FontAwesomeIcon icon={faXmark} />,
+                      autoClose: 10_000, // 10 seconds
+                    });
+                  });
+                }
+              });
+            return item;
+          }}
         />
       </Box>
       <Group position="right" mt="md">
@@ -186,6 +214,14 @@ export function CreateRuleProfileModal({
     <Modal.Root
       opened={showCreateModal}
       onClose={() => setShowCreateModal(false)}
+      styles={{
+        // section is causing the overflow issue
+        inner: {
+          section: {
+            overflow: "visible",
+          },
+        },
+      }}
     >
       <Modal.Overlay />
       <Modal.Content>
