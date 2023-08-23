@@ -65,10 +65,10 @@ class BusinessUnit(TimeStampedModel):
         blank=True,
         help_text=_("The date until which the business unit is paid."),
     )
-    free_trail = models.BooleanField(
-        _("Free Trail"),
+    free_trial = models.BooleanField(
+        _("Free trial"),
         default=False,
-        help_text=_("Whether the business unit is on free trail."),
+        help_text=_("Whether the business unit is on free trial."),
     )
 
     class Meta:
