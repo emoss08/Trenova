@@ -9,6 +9,6 @@ pytest-django==4.5.2
 pytest-html==3.2.0
 pytest-sugar==0.9.7
 pyupgrade==3.10.1
-tox==4.9.0
-types-redis==4.6.0.4
+tox==4.10.0
+types-redis==4.6.0.5
 pretty_errors==1.2.25

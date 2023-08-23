@@ -52,3 +52,4 @@ weasyprint==59.0
 whitenoise==6.5.0
 xhtml2pdf==0.2.11
 cssutils==2.7.1
+django-model-utils==4.3.1
