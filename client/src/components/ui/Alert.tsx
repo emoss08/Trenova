@@ -15,12 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Button, Col, Grid, Paper, Text, useMantineTheme } from "@mantine/core";
+import {
+  Button,
+  Col,
+  Grid,
+  Paper,
+  PaperProps,
+  Text,
+  useMantineTheme,
+} from "@mantine/core";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 
-interface Props {
+Alert.defaultProps = {
+  withIcon: false,
+  icon: undefined,
+  withButton: false,
+  buttonText: undefined,
+  onClick: undefined,
+};
+
+type Colors = "blue" | "red" | "yellow" | "green" | "gray" | "dark";
+
+interface Props extends PaperProps {
   title: React.ReactNode;
   message: string;
   withIcon?: boolean;
@@ -28,7 +46,7 @@ interface Props {
   withButton?: boolean;
   buttonText?: React.ReactNode;
   onClick?: () => void;
-  color: Colors<"blue" | "red" | "yellow" | "green" | "gray" | "dark">;
+  color: Colors;
 }
 
 export function Alert({
@@ -40,6 +58,7 @@ export function Alert({
   buttonText,
   onClick,
   color,
+  ...rest
 }: Props) {
   const theme = useMantineTheme();
   const borderColorValue: Record<string, string> = {
@@ -65,6 +84,7 @@ export function Alert({
     dark:
       theme.colorScheme === "dark" ? "rgb(33, 33, 33)" : "rgb(241, 241, 241)",
   };
+
   const borderColorChoice = borderColorValue[color];
   const backgroundColorChoice = backgroundColorValue[color];
   const iconColorChoice = borderColorValue[color];
@@ -83,6 +103,7 @@ export function Alert({
         backgroundColor: backgroundColorChoice,
         borderWidth: "1px",
       }}
+      {...rest}
     >
       <Grid>
         <Col
