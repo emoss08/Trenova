@@ -15,15 +15,12 @@
  * Grant, and not modifying the license in any other way.
  */
 import React from "react";
-import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm } from "@mantine/form";
-import { useContextMenu } from "mantine-contextmenu";
-import { IconCopy } from "@tabler/icons-react";
 import { useFormStyles } from "@/styles/FormStyles";
 import { customerStore as store } from "@/stores/CustomerStore";
 import axios from "@/lib/AxiosConfig";
@@ -42,7 +39,6 @@ function CreateRuleProfileModalForm({ customerId }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
-  const showContextMenu = useContextMenu();
 
   const { data: documentClasses, isLoading } = useQuery({
     queryKey: ["documentClassifications"],
