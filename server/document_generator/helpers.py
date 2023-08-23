@@ -254,7 +254,4 @@ def clone_template(*, template_id: str) -> models.DocumentTemplate:
         binding.template = original
         binding.save()
 
-    # If there are other related fields or many-to-many relationships
-    # (like customizations, versioning, etc.), clone them similarly here.
-
     return original
