@@ -16,9 +16,19 @@
  */
 
 import React from "react";
-import { Card, Skeleton } from "@mantine/core";
+import {
+  Skeleton,
+  createStyles,
+  rem,
+  Image,
+  Title,
+  Text,
+  Card,
+  Divider,
+  Button,
+} from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
-import { faShieldCheck } from "@fortawesome/pro-duotone-svg-icons";
+import image from "../../../../assets/images/notfound.png";
 import {
   getCustomerEmailProfile,
   getCustomerRuleProfile,
@@ -30,7 +40,6 @@ import {
   CustomerEmailProfile,
   CustomerRuleProfile,
 } from "@/types/apps/customer";
-import { usePageStyles } from "@/styles/PageStyles";
 import { Alert } from "@/components/ui/Alert";
 import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
 
@@ -38,9 +47,54 @@ type CustomerProfileTabProps = {
   customerId: string;
 };
 
+const useStyles = createStyles((theme) => ({
+  card: {
+    width: "100%",
+    // maxWidth: "100%",
+    // height: "auto",
+    "@media (max-width: 576px)": {
+      height: "auto",
+      maxHeight: "none",
+    },
+  },
+  root: {
+    paddingTop: rem(80),
+    paddingBottom: rem(80),
+  },
+
+  title: {
+    fontWeight: 900,
+    fontSize: rem(34),
+    marginBottom: theme.spacing.md,
+    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
+
+    [theme.fn.smallerThan("sm")]: {
+      fontSize: rem(32),
+    },
+  },
+
+  control: {
+    [theme.fn.smallerThan("sm")]: {
+      width: "100%",
+    },
+  },
+
+  mobileImage: {
+    [theme.fn.largerThan("sm")]: {
+      display: "none",
+    },
+  },
+
+  desktopImage: {
+    [theme.fn.smallerThan("sm")]: {
+      display: "none",
+    },
+  },
+}));
+
 export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
   const queryClient = useQueryClient();
-  const { classes } = usePageStyles();
+  const { classes } = useStyles();
 
   const { data: emailProfile, isLoading: isEmailProfileLoading } = useQuery({
     queryKey: ["customerEmailProfile", customerId],
@@ -64,7 +118,7 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
     retry: false,
   });
 
-  const isLoading: boolean = isEmailProfileLoading || isRuleProfileLoading;
+  const isLoading = isEmailProfileLoading || isRuleProfileLoading;
 
   return isLoading ? (
     <>
@@ -73,24 +127,90 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
     </>
   ) : (
     <>
-      {emailProfile && <CustomerEmailProfileForm emailProfile={emailProfile} />}
+      {emailProfile ? (
+        <CustomerEmailProfileForm emailProfile={emailProfile} />
+      ) : (
+        <Card>
+          <div
+            style={{
+              textAlign: "center",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+            }}
+          >
+            <Title size="x-large"> No Email Profile Found</Title>
+            <Text variant="dimmed" size="sm">
+              Email Profile is used to define configurations that will be
+              applied to the billing of the customer. Create a email profile to
+              start billing the customer.
+            </Text>
+            <Image maw={240} src={image} className={classes.desktopImage} />
+            {/* <Text> */}
+            {/*   Email Profile is used to define the email rules that will be */}
+            {/*   applied to the billing of the customer. Create a email profile to */}
+            {/*   start billing the customer. */}
+            {/* </Text> */}
+            <Button
+              size="md"
+              color="yellow"
+              mt="xl"
+              className={classes.control}
+              onClick={() => {
+                store.set("createRuleProfileModalOpen", true);
+              }}
+            >
+              Create Email Profile
+            </Button>
+          </div>
+        </Card>
+        // <Container className={classes.root}>
+        //   <SimpleGrid
+        //     spacing={80}
+        //     cols={2}
+        //     breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
+        //   >
+        //     <Image src={image} className={classes.mobileImage} />
+        //     <div>
+        //       <Title className={classes.title}>
+        //         🚀 Introducing the Monta Billing Client
+        //       </Title>
+        //
+        //       <Text color="dimmed" size="lg">
+        //         Email Profile is used to define the email rules that will be
+        //         applied to the billing of the customer. Create a email profile
+        //         to start billing the customer.
+        //       </Text>
+        //     </div>
+        //     <Image src={image} className={classes.desktopImage} />
+        //   </SimpleGrid>
+        // </Container>
+        // <Alert
+        //   color="yellow"
+        //   title="No Email Profile Found"
+        //   message="Email Profile is used to define the email rules that will be applied to the billing of the customer. Create a email profile to start billing the customer."
+        //   buttonText="Create"
+        //   withButton
+        //   mb={20}
+        //   onClick={() => {
+        //     store.set("createRuleProfileModalOpen", true);
+        //   }}
+        // />
+      )}
       {ruleProfile ? (
         <CustomerRuleProfileForm ruleProfile={ruleProfile} />
       ) : (
-        <Card className={classes.card} mt={20}>
-          <Alert
-            color="yellow"
-            icon={faShieldCheck}
-            title="No Rule Profile Found"
-            message="Rule Profiles are used to define the rules that will be applied to the billing of the customer. Create a rule profile to start billing the customer."
-            buttonText="Create"
-            withButton
-            onClick={() => {
-              store.set("createRuleProfileModalOpen", true);
-            }}
-            withIcon
-          />
-        </Card>
+        <Alert
+          color="yellow"
+          title="No Rule Profile Found"
+          message="Rule Profiles are used to define the rules that will be applied to the billing of the customer. Create a rule profile to start billing the customer."
+          buttonText="Create"
+          withButton
+          onClick={() => {
+            store.set("createRuleProfileModalOpen", true);
+          }}
+        />
       )}
       <CreateRuleProfileModal customerId={customerId} />
     </>
