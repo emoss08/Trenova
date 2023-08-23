@@ -16,18 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.apps import AppConfig
-from django.db.models.signals import post_save
 
 
 class DocumentGeneratorConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "document_generator"
-
-    def ready(self) -> None:
-        from document_generator import signals
-        #
-        # post_save.connect(
-        #     signals.version_document,
-        #     sender="document_generator.DocumentTemplate",
-        #     dispatch_uid="version_document",
-        # )

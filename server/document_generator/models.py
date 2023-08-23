@@ -43,6 +43,7 @@ class DocumentTemplate(GenericModel):
     """
     Stores Template field information related to a :model:`billing.DocumentClassification`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -95,7 +96,7 @@ class DocumentTemplate(GenericModel):
         to="self",
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
     )
 
     class Meta:
@@ -135,6 +136,7 @@ class DocumentTemplateVersion(models.Model):
     """
     Stores Template version information related to a :model:`document_generator.DocumentTemplate`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -214,6 +216,7 @@ class TemplateField(GenericModel):
     """
     Stores Template field information related to a :model:`document_generator.DocumentTemplate`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -268,6 +271,7 @@ class DocumentTheme(GenericModel):
     """
     Stores Document Theme information.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -348,6 +352,7 @@ class DocTemplateCustomization(GenericModel):
     Stores Document Template Customization information related to a
     :model:`document_generator.DocumentTemplate`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -413,6 +418,7 @@ class DocumentDataBinding(GenericModel):
     """
     Stores Document Data binding information related to a :model:`document_generator.DocumentTemplate`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -531,6 +537,7 @@ class DocumentTableColumnBinding(GenericModel):
     """
     Stores Data Table Column Binding information for a :model:`document_generator.DocumentDataBinding`.
     """
+
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
