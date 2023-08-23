@@ -16,9 +16,9 @@
  */
 
 body.light-theme {
-    background-image: url('../assets/images/background_white.png');
+    background-image: url('../assets/images/background_white.webp');
 }
 
 body.dark-theme {
-    background-image: url('../assets/images/background_dark.png');
+    background-image: url('../assets/images/background_dark.webp');
 }
