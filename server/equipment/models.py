@@ -52,6 +52,9 @@ class EquipmentType(GenericModel):  # type:ignore
         blank=True,
         help_text=_("Description of the equipment type."),
     )
+    cost_per_mile = models.DecimalField(
+        verbose_name=_("Cost Per Mile"), max_digits=10, decimal_places=2, default=0.00
+    )
 
     class Meta:
         """
