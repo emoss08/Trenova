@@ -55,7 +55,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
             super()
             .get_queryset(request)
             .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization_id=request.user.organization_id)  # type: ignore
+            .filter(organization_id=request.user.organization_id)
         )
 
     def save_model(
@@ -76,8 +76,8 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         Returns:
             None
         """
-        obj.organization = request.user.organization  # type: ignore
-        obj.business_unit = request.user.organization.business_unit  # type: ignore
+        obj.organization = request.user.organization
+        obj.business_unit = request.user.organization.business_unit
         super().save_model(request, obj, form, change)
 
     def save_formset(
@@ -96,8 +96,8 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         """
         instances = formset.save(commit=False)
         for instance in instances:
-            instance.organization = request.user.organization  # type: ignore
-            instance.business_unit = request.user.organization.business_unit  # type: ignore
+            instance.organization = request.user.organization
+            instance.business_unit = request.user.organization.business_unit
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
@@ -123,10 +123,12 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields:
             if field == "organization":
-                form.base_fields[field].initial = request.user.organization  # type: ignore
+                form.base_fields[field].initial = request.user.organization
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             elif field == "business_unit":
-                form.base_fields[field].initial = request.user.organization.business_unit  # type: ignore
+                form.base_fields[
+                    field
+                ].initial = request.user.organization.business_unit
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             form.base_fields[field].widget.attrs["placeholder"] = field.title()
         return form
@@ -173,7 +175,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
             super()
             .get_queryset(request)
             .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization_id=request.user.organization_id)  # type: ignore
+            .filter(organization_id=request.user.organization_id)
         )
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
