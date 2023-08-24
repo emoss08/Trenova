@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   createStyles,
   Image,
@@ -27,7 +27,6 @@ import {
   SimpleGrid,
   rem,
   Flex,
-  Card,
 } from "@mantine/core";
 
 import image from "../assets/images/404.svg";
@@ -77,7 +76,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const ErrorPage: React.FC = () => {
+function ErrorPage(): React.ReactElement {
   const { classes } = useStyles();
   const navigate = useNavigate();
 
@@ -116,5 +115,5 @@ const ErrorPage: React.FC = () => {
       </Container>
     </Flex>
   );
-};
+}
 export default ErrorPage;
