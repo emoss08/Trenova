@@ -211,7 +211,7 @@ class Customer(GenericModel):  # type: ignore
             str: A unique or quasi-unique customer code.
         """
         code = self.name[:3].upper()
-        new_code = f"{code}{self.__class__.objects.count() + 1:04d}"
+        new_code = f"{code}{self.__class__.objects.count() + 1:04d}".upper()
 
         return new_code if self.__class__.objects.filter(code=code).exists() else code
 
@@ -238,16 +238,6 @@ class Customer(GenericModel):  # type: ignore
             str: String representation of the customer address.
         """
         return f"{self.city}, {self.state} {self.zip_code}"
-
-    def update_customer(self, **kwargs: Any) -> None:
-        """Updates customer information
-
-        Args:
-            **kwargs (Any): Customer information to update
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
 
 class CustomerEmailProfile(GenericModel):
