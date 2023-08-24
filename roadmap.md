@@ -61,6 +61,7 @@ Our third release will include the following features:
 - Equipment Maintenance Module
 - Recurring Orders Module
 - Exchange Rates
+- Rate Formula
 
 ### 0.4.0 (February 1st, 2024)
 
