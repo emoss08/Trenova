@@ -52,7 +52,6 @@ Our second release will include the following features:
 - EDI Module
 - Credit Memo Generation
 - Export reports to Excel, CSV, PDF
-- GraphQL API
 
 ### 0.3.0 (November 1st, 2023)
 
@@ -67,14 +66,11 @@ Our third release will include the following features:
 
 Our fourth release will include the following features:
 
-- ELD Integration
-- PCMiler Integration
-- Fuel Card Integration
+- Fuel Card Integration (EFS/Wex)
 - Safety OS&D Module
 - Driver Scorecards
 - Trailer Integration
 - Customer Portal
-- Beam (Artificial Intelligence Chatbot)
 
 ### 0.5.0 (May 1st, 2024)
 
@@ -83,6 +79,7 @@ Our fifth release will include the following features:
 - Color Scheme Customization
 - Document Generator
 - Workflow Module
+- Beam (Artificial Intelligence Chatbot)
 
 ### 0.6.0 (August 1st, 2024)
 
