@@ -61,6 +61,7 @@ Our third release will include the following features:
 - Fuel Tax Module
 - Equipment Maintenance Module
 - Recurring Orders Module
+- Exchange Rates
 
 ### 0.4.0 (February 1st, 2024)
 
