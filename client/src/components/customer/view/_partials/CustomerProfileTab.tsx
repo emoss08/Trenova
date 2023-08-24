@@ -24,8 +24,8 @@ import {
   Title,
   Text,
   Card,
-  Divider,
   Button,
+  Box,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import image from "../../../../assets/images/notfound.png";
@@ -42,6 +42,7 @@ import {
 } from "@/types/apps/customer";
 import { Alert } from "@/components/ui/Alert";
 import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
+import { usePageStyles } from "@/styles/PageStyles";
 
 type CustomerProfileTabProps = {
   customerId: string;
@@ -50,8 +51,6 @@ type CustomerProfileTabProps = {
 const useStyles = createStyles((theme) => ({
   card: {
     width: "100%",
-    // maxWidth: "100%",
-    // height: "auto",
     "@media (max-width: 576px)": {
       height: "auto",
       maxHeight: "none",
@@ -94,7 +93,7 @@ const useStyles = createStyles((theme) => ({
 
 export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
   const queryClient = useQueryClient();
-  const { classes } = useStyles();
+  const { classes } = usePageStyles();
 
   const { data: emailProfile, isLoading: isEmailProfileLoading } = useQuery({
     queryKey: ["customerEmailProfile", customerId],
@@ -130,8 +129,8 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
       {emailProfile ? (
         <CustomerEmailProfileForm emailProfile={emailProfile} />
       ) : (
-        <Card>
-          <div
+        <Card mb={20} className={classes.card}>
+          <Box
             style={{
               textAlign: "center",
               display: "flex",
@@ -146,71 +145,52 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
               applied to the billing of the customer. Create a email profile to
               start billing the customer.
             </Text>
-            <Image maw={240} src={image} className={classes.desktopImage} />
-            {/* <Text> */}
-            {/*   Email Profile is used to define the email rules that will be */}
-            {/*   applied to the billing of the customer. Create a email profile to */}
-            {/*   start billing the customer. */}
-            {/* </Text> */}
             <Button
-              size="md"
-              color="yellow"
+              size="sm"
+              color="blue"
               mt="xl"
-              className={classes.control}
               onClick={() => {
                 store.set("createRuleProfileModalOpen", true);
               }}
             >
               Create Email Profile
             </Button>
-          </div>
+            {/* <Image maw={200} src={image} className={classes.desktopImage} /> */}
+          </Box>
         </Card>
-        // <Container className={classes.root}>
-        //   <SimpleGrid
-        //     spacing={80}
-        //     cols={2}
-        //     breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
-        //   >
-        //     <Image src={image} className={classes.mobileImage} />
-        //     <div>
-        //       <Title className={classes.title}>
-        //         🚀 Introducing the Monta Billing Client
-        //       </Title>
-        //
-        //       <Text color="dimmed" size="lg">
-        //         Email Profile is used to define the email rules that will be
-        //         applied to the billing of the customer. Create a email profile
-        //         to start billing the customer.
-        //       </Text>
-        //     </div>
-        //     <Image src={image} className={classes.desktopImage} />
-        //   </SimpleGrid>
-        // </Container>
-        // <Alert
-        //   color="yellow"
-        //   title="No Email Profile Found"
-        //   message="Email Profile is used to define the email rules that will be applied to the billing of the customer. Create a email profile to start billing the customer."
-        //   buttonText="Create"
-        //   withButton
-        //   mb={20}
-        //   onClick={() => {
-        //     store.set("createRuleProfileModalOpen", true);
-        //   }}
-        // />
       )}
       {ruleProfile ? (
         <CustomerRuleProfileForm ruleProfile={ruleProfile} />
       ) : (
-        <Alert
-          color="yellow"
-          title="No Rule Profile Found"
-          message="Rule Profiles are used to define the rules that will be applied to the billing of the customer. Create a rule profile to start billing the customer."
-          buttonText="Create"
-          withButton
-          onClick={() => {
-            store.set("createRuleProfileModalOpen", true);
-          }}
-        />
+        <Card mb={20} className={classes.card}>
+          <Box
+            style={{
+              textAlign: "center",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexDirection: "column",
+            }}
+          >
+            <Title size="x-large">No Rule Profile Found</Title>
+            <Text variant="dimmed" size="sm">
+              Rule Profiles are used to define the rules that will be applied to
+              the billing of the customer. Create a rule profile to start
+              billing the customer.
+            </Text>
+            <Button
+              size="sm"
+              color="blue"
+              mt="xl"
+              onClick={() => {
+                store.set("createRuleProfileModalOpen", true);
+              }}
+            >
+              Create Rule Profile
+            </Button>
+            {/* <Image maw={200} src={image} className={classes.desktopImage} /> */}
+          </Box>
+        </Card>
       )}
       <CreateRuleProfileModal customerId={customerId} />
     </>
