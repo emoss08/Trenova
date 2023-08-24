@@ -28,6 +28,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from djmoney.models.fields import MoneyField
+from encrypted_model_fields.fields import EncryptedCharField
 
 from order.models import Order
 from organization.models import BusinessUnit, Organization
@@ -184,6 +185,13 @@ class BillingControl(GenericModel):
         help_text=_(
             "Define if customer billing requirements will be enforced when billing."
         ),
+    )
+    open_exchange_rates_app_id = EncryptedCharField(
+        verbose_name=_("Open Exchange Rates App ID"),
+        help_text=_("Key from openexchangerates.org to use for currency conversion."),
+        max_length=255,
+        blank=True,
+        null=True,
     )
 
     class Meta:
