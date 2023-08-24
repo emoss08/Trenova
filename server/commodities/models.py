@@ -131,6 +131,9 @@ class HazardousMaterial(GenericModel):  # type: ignore
         help_text=_("Proper Shipping Name of the Hazardous Material"),
         blank=True,
     )
+    additional_cost = models.DecimalField(
+        verbose_name=_("Additional Cost"), max_digits=10, decimal_places=2, default=0.00
+    )
 
     class Meta:
         verbose_name = _("Hazardous Material")
