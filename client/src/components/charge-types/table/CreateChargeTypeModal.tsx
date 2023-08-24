@@ -20,7 +20,14 @@ import React, { Suspense } from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faBookmark,
+  faCheck,
+  faEdit,
+  faSignature,
+  faTag,
+  faXmark,
+} from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { useFormStyles } from "@/styles/FormStyles";
@@ -104,6 +111,7 @@ function CreateChargeTypeModalForm() {
             placeholder="Name"
             variant="filled"
             withAsterisk
+            icon={<FontAwesomeIcon icon={faSignature} />}
           />
           <ValidatedTextArea
             form={form}

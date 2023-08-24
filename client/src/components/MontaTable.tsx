@@ -16,7 +16,12 @@
  */
 
 import React from "react";
-import { MantineReactTable, MRT_ColumnDef } from "mantine-react-table";
+import {
+  MantineReactTable,
+  MRT_ColumnDef,
+  MRT_TableInstance,
+  MRT_TableOptions,
+} from "mantine-react-table";
 import { useQuery } from "react-query";
 import { useMantineTheme } from "@mantine/core";
 import axios from "@/lib/AxiosConfig";
@@ -26,11 +31,22 @@ import { DeleteRecordModal } from "@/components/DeleteRecordModal";
 import { API_URL } from "@/lib/utils";
 import { TableTopToolbar } from "@/components/table/TableTopToolbar";
 import { TableExportModal } from "./table/TableExportModal";
+import { Store } from "@/utils/zustand";
 
-interface MontaTableProps<T extends Record<string, any>> {
+MontaTable.defaultProps = {
+  displayDeleteModal: true,
+  TableCreateDrawer: undefined,
+  TableDeleteModal: undefined,
+  TableEditModal: undefined,
+  TableViewModal: undefined,
+};
+
+type Props<T extends Record<string, any>> = MRT_TableInstance<T> &
+  MRT_TableOptions<T>;
+
+type MontaTableProps<T extends Record<string, any>> = {
   store: any;
   link: string;
-  columns: MRT_ColumnDef<T>[];
   displayDeleteModal?: boolean;
   TableCreateDrawer?: React.ComponentType;
   TableDeleteModal?: React.ComponentType;
@@ -39,16 +55,12 @@ interface MontaTableProps<T extends Record<string, any>> {
   exportModelName: string;
   name: string;
   tableQueryKey: string;
-}
-
-export interface MontaColumnProps<T extends Record<string, unknown>> {
   columns: MRT_ColumnDef<T>[];
-}
+} & Pick<Props<T>, "mantineBottomToolbarProps" | "mantineTableBodyRowProps">;
 
 export function MontaTable<T extends Record<string, any>>({
   store,
   link,
-  columns,
   TableCreateDrawer,
   TableEditModal,
   TableDeleteModal,
@@ -57,6 +69,7 @@ export function MontaTable<T extends Record<string, any>>({
   exportModelName,
   displayDeleteModal,
   name,
+  columns,
 }: MontaTableProps<T>) {
   const theme = useMantineTheme();
   const [pagination] = store.use("pagination");

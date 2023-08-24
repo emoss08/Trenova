@@ -15,12 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import React from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faCheck,
+  faDollar,
+  faGasPump,
+  faSignature,
+  faXmark,
+} from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { useFormStyles } from "@/styles/FormStyles";
@@ -108,17 +114,18 @@ export function CreateACModalForm() {
             className={classes.fields}
             name="code"
             label="Code"
-            description="Code for the accessorial charge."
+            description="Code for the accessorial charge"
             placeholder="Code"
             variant="filled"
             withAsterisk
+            icon={<FontAwesomeIcon icon={faSignature} />}
           />
           <ValidatedTextArea
             form={form}
             className={classes.fields}
             name="description"
             label="Description"
-            description="Description of the accessorial charge."
+            description="Description of the accessorial charge"
             placeholder="Description"
             variant="filled"
           />
@@ -129,9 +136,10 @@ export function CreateACModalForm() {
               name="charge_amount"
               label="Charge Amount"
               placeholder="Charge Amount"
-              description="Charge amount for the accessorial charge."
+              description="Charge amount for the accessorial charge"
               variant="filled"
               withAsterisk
+              icon={<FontAwesomeIcon icon={faDollar} />}
             />
             <SelectInput
               form={form}
@@ -139,8 +147,9 @@ export function CreateACModalForm() {
               className={classes.fields}
               name="method"
               label="Fuel Method"
-              description="Method for calculating the other charge."
+              description="Method for calculating the accessorial charge"
               placeholder="Fuel Method"
+              icon={<FontAwesomeIcon icon={faGasPump} />}
               variant="filled"
               withAsterisk
             />
@@ -149,7 +158,7 @@ export function CreateACModalForm() {
               className={classes.fields}
               name="is_detention"
               label="Detention"
-              description="Is detention charge?"
+              description="Is this a detention charge?"
               placeholder="Detention"
               variant="filled"
             />
@@ -189,9 +198,7 @@ export function CreateACModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateACModalForm />
-          </Suspense>
+          <CreateACModalForm />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
