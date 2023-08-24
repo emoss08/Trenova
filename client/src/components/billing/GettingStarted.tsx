@@ -107,17 +107,17 @@ const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
         <Image src={image} className={classes.mobileImage} />
         <div>
           <Title className={classes.title}>
-              🚀 Introducing the Monta Billing Client
+            🚀 Introducing the Monta Billing Client
           </Title>
 
           <Text color="dimmed" size="lg">
             {websocketMessage.action === "get_started" &&
-              websocketMessage.step === 0 &&
-              websocketMessage.status === "SUCCESS"
+            websocketMessage.step === 0 &&
+            websocketMessage.status === "SUCCESS"
               ? (websocketMessage.message as string)
               : "The Monta Billing Client is your efficient partner for end-to-end billing management." +
-                  " This ingenious software client for interacting with the billing API offers a streamlined" +
-                  " approach for handling your financial transactions."}
+                " This ingenious software client for interacting with the billing API offers a streamlined" +
+                " approach for handling your financial transactions."}
           </Text>
 
           {!websocketMessage?.message && (
@@ -128,7 +128,7 @@ const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
               className={classes.control}
               onClick={getStarted}
             >
-                Get Started
+              Get Started
             </Button>
           )}
         </div>
