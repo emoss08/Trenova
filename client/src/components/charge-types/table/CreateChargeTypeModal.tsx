@@ -20,14 +20,7 @@ import React, { Suspense } from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBookmark,
-  faCheck,
-  faEdit,
-  faSignature,
-  faTag,
-  faXmark,
-} from "@fortawesome/pro-solid-svg-icons";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { useFormStyles } from "@/styles/FormStyles";
@@ -76,7 +69,12 @@ function CreateChargeTypeModalForm() {
                 icon: <FontAwesomeIcon icon={faXmark} />,
                 autoClose: 10_000, // 10 seconds
               });
-            }
+            } else if (
+              e.attr === "__all__" &&
+              e.detail ===
+                "Charge Type with this Name and Organization already exists."
+            )
+              form.setFieldError("name", e.detail);
           });
         }
       },
@@ -102,36 +100,33 @@ function CreateChargeTypeModalForm() {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
-          <ValidatedTextInput
-            form={form}
-            className={classes.fields}
-            name="name"
-            label="Name"
-            placeholder="Name"
-            variant="filled"
-            withAsterisk
-            icon={<FontAwesomeIcon icon={faSignature} />}
-          />
-          <ValidatedTextArea
-            form={form}
-            className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
-            variant="filled"
-          />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+        <ValidatedTextInput
+          form={form}
+          className={classes.fields}
+          name="name"
+          label="Name"
+          placeholder="Name"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextArea
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );
