@@ -23,7 +23,6 @@ import uuid
 from typing import Any, final
 
 from auditlog.models import AuditlogHistoryField
-from auditlog.registry import auditlog
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
