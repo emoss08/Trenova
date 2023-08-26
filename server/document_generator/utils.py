@@ -16,13 +16,17 @@
 # --------------------------------------------------------------------------------------------------
 from accounts.models import User
 from document_generator import models
+from organization.models import Organization, BusinessUnit
 
 
 def save_template_version(
+    *,
     template: models.DocumentTemplate,
     new_content: str,
     user: User,
     change_reason: str | None = None,
+    organization: Organization,
+    business_unit: BusinessUnit,
 ):
     """Saves a new version of a DocumentTemplate. The function first determines the next version number,
     then creates a new DocumentTemplateVersion with the specified arguments.
@@ -33,9 +37,11 @@ def save_template_version(
         new_content (str): The content of the new version.
         user (User): The user who creates this new version.
         change_reason (str, optional): The reason why this change is made, if not given, assumed to be None.
+        organization (Organization): The organization that the template belongs to.
+        business_unit (BusinessUnit): The business unit that the template belongs to.
 
     Returns:
-        None
+        None: This function does not return anything.
 
     Raises:
         Any exceptions raised by models.DocumentTemplateVersion.objects.create() or template.save()
@@ -53,6 +59,8 @@ def save_template_version(
         content=new_content,
         created_by=user,
         change_reason=change_reason,
+        organization=organization,
+        business_unit=business_unit,
     )
 
     # Update the template's current version

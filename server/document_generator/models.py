@@ -61,7 +61,7 @@ class DocumentTemplate(GenericModel):
         verbose_name=_("Content"),
         help_text="The template content with custom syntax (e.g., {invoice.order.pro_number}).",
     )
-    document_classification = models.ForeignKey(
+    document_classification = models.OneToOneField(
         to="billing.DocumentClassification",
         on_delete=models.CASCADE,
         related_name="document_templates",
@@ -107,13 +107,6 @@ class DocumentTemplate(GenericModel):
         verbose_name = _("Document Template")
         verbose_name_plural = _("Document Templates")
         db_table = "document_template"
-        constraints = [
-            # Make the name, document classification and organization unique together
-            models.UniqueConstraint(
-                fields=["name", "document_classification", "organization"],
-                name="unique_document_template",
-            ),
-        ]
 
     def __str__(self) -> str:
         """String representation of the document template.
@@ -122,6 +115,34 @@ class DocumentTemplate(GenericModel):
             str: A shortened version of the template name.
         """
         return textwrap.shorten(self.name, width=50, placeholder="...")
+
+    def save(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """
+        Saves the DocumentTemplate object. If this is a new template or if the content has changed,
+        a new version will be created.
+
+        Args:
+            *args (typing.Any): Any positional arguments.
+            **kwargs (typing.Any): Any keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
+
+        """
+        super().save(*args, **kwargs)
+
+        # Check if this is a new template or if the content has changed
+        if not self.current_version or self.content != self.current_version.content:
+            from document_generator.utils import save_template_version
+
+            save_template_version(
+                template=self,
+                new_content=self.content,
+                user=self.user_id,
+                change_reason=None,
+                organization=self.organization,
+                business_unit=self.business_unit,
+            )
 
     def get_absolute_url(self) -> str:
         """Get the absolute URL of the DocumentTemplate object.
@@ -132,7 +153,7 @@ class DocumentTemplate(GenericModel):
         return reverse("document-template-detail", kwargs={"pk": self.pk})
 
 
-class DocumentTemplateVersion(models.Model):
+class DocumentTemplateVersion(GenericModel):
     """
     Stores Template version information related to a :model:`document_generator.DocumentTemplate`.
     """

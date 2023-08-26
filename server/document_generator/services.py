@@ -17,6 +17,7 @@
 
 import logging
 
+from django.core.exceptions import ValidationError
 from django.db.models import Model
 from django.template import Context, Template
 from django.template.exceptions import TemplateSyntaxError
@@ -53,16 +54,12 @@ def render_document(*, template: models.DocumentTemplate, instance: Model) -> st
         django_template = Template(template.content)
         rendered_content = django_template.render(Context(data))
     except TemplateSyntaxError as e:
-        # TODO(Wolfred): Probably will want to raise a ValidationError here that will send back to the user.
-        logger.error(f"Failed to render template due to: {e}")
-        return "Error in template rendering."
+        raise ValidationError(f"Template syntax error: {e}")
 
     if theme := getattr(template, "theme", None):
         stylesheet = helpers.get_parsed_stylesheet(theme=theme)
         helpers.apply_template_customizations(stylesheet=stylesheet, template=template)
         customized_css = helpers.serialize_stylesheet(stylesheet=stylesheet)
-
-        # TODO(Wolfred): Add validation check to ensure the CSS is VALID.
 
         rendered_content = f"<style>{customized_css}</style>\n{rendered_content}"
 
