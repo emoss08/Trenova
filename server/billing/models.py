@@ -27,7 +27,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from djmoney.models.fields import MoneyField
 from encrypted_model_fields.fields import EncryptedCharField
 
 from order.models import Order
@@ -366,13 +365,12 @@ class AccessorialCharge(GenericModel):  # type: ignore
         default=FuelMethodChoices.DISTANCE,
         help_text=_("Method for calculating the other charge."),
     )
-    charge_amount = MoneyField(
+    charge_amount = models.DecimalField(
         _("Additional Charge Amount"),
         max_digits=19,
         decimal_places=4,
         default=0,
         help_text=_("Additional Charge Amount"),
-        default_currency="USD",
     )
 
     class Meta:
@@ -656,7 +654,7 @@ class BillingQueue(GenericModel):  # type:ignore
         blank=True,
         help_text=_("Consignee Reference Number"),
     )
-    other_charge_total = MoneyField(
+    other_charge_total = models.DecimalField(
         _("Other Charge Total"),
         max_digits=19,
         decimal_places=4,
@@ -664,9 +662,8 @@ class BillingQueue(GenericModel):  # type:ignore
         help_text=_("Other charge total for Order"),
         blank=True,
         null=True,
-        default_currency="USD",
     )
-    freight_charge_amount = MoneyField(
+    freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
         max_digits=19,
         decimal_places=4,
@@ -674,9 +671,8 @@ class BillingQueue(GenericModel):  # type:ignore
         help_text=_("Freight Charge Amount"),
         blank=True,
         null=True,
-        default_currency="USD",
     )
-    total_amount = MoneyField(
+    total_amount = models.DecimalField(
         _("Total Amount"),
         max_digits=19,
         decimal_places=4,
@@ -684,7 +680,6 @@ class BillingQueue(GenericModel):  # type:ignore
         help_text=_("Total amount for Order"),
         blank=True,
         null=True,
-        default_currency="USD",
     )
     is_summary = models.BooleanField(
         _("Is Summary"),
@@ -1151,7 +1146,7 @@ class BillingHistory(GenericModel):  # type:ignore
         blank=True,
         help_text=_("Consignee Reference Number"),
     )
-    other_charge_total = MoneyField(
+    other_charge_total = models.DecimalField(
         _("Other Charge Total"),
         max_digits=19,
         decimal_places=4,
@@ -1159,9 +1154,8 @@ class BillingHistory(GenericModel):  # type:ignore
         help_text=_("Other charge total for Order"),
         blank=True,
         null=True,
-        default_currency="USD",
     )
-    freight_charge_amount = MoneyField(
+    freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
         max_digits=19,
         decimal_places=4,
@@ -1169,9 +1163,8 @@ class BillingHistory(GenericModel):  # type:ignore
         help_text=_("Freight Charge Amount"),
         blank=True,
         null=True,
-        default_currency="USD",
     )
-    total_amount = MoneyField(
+    total_amount = models.DecimalField(
         _("Total Amount"),
         max_digits=19,
         decimal_places=4,
@@ -1179,7 +1172,6 @@ class BillingHistory(GenericModel):  # type:ignore
         help_text=_("Total amount for Order"),
         blank=True,
         null=True,
-        default_currency="USD",
     )
     is_summary = models.BooleanField(
         _("Is Summary"),

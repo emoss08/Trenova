@@ -18,18 +18,18 @@
 from __future__ import annotations
 
 import datetime
-import decimal
 import textwrap
 import uuid
 from typing import Any, final
 
+from auditlog.models import AuditlogHistoryField
+from auditlog.registry import auditlog
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from djmoney.models.fields import MoneyField
 
 from location.models import Location
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusChoices
@@ -373,6 +373,11 @@ class Order(GenericModel):  # type:ignore
     )
 
     # Billing Information for the order
+    rating_units = models.PositiveIntegerField(
+        _("Rating Units"),
+        default=1,
+        help_text=_("Number of units to be rated."),
+    )
     rate = models.ForeignKey(
         "dispatch.Rate",
         on_delete=models.RESTRICT,
@@ -390,21 +395,19 @@ class Order(GenericModel):  # type:ignore
         blank=True,
         null=True,
     )
-    other_charge_amount = MoneyField(
+    other_charge_amount = models.DecimalField(
         _("Additional Charge Amount"),
         max_digits=19,
         decimal_places=4,
         default=0,
         help_text=_("Additional Charge Amount"),
-        default_currency="USD",
     )
-    freight_charge_amount = MoneyField(
+    freight_charge_amount = models.DecimalField(
         _("Freight Charge Amount"),
         max_digits=19,
         decimal_places=4,
         default=0,
         help_text=_("Freight Charge Amount"),
-        default_currency="USD",
         blank=True,
         null=True,
     )
@@ -468,13 +471,12 @@ class Order(GenericModel):  # type:ignore
         blank=True,
         help_text=_("Billing Transfer Date"),
     )
-    sub_total = MoneyField(
+    sub_total = models.DecimalField(
         _("Sub Total Amount"),
         max_digits=19,
         decimal_places=4,
         default=0,
         help_text=_("Sub Total Amount"),
-        default_currency="USD",
     )
 
     # Dispatch Information
@@ -565,6 +567,14 @@ class Order(GenericModel):  # type:ignore
         help_text=_("Current suffix for order in the BillingQueue."),
         blank=True,
     )
+    formula_template = models.ForeignKey(
+        "FormulaTemplate",
+        on_delete=models.RESTRICT,
+        related_name="orders",
+        null=True,
+        blank=True,
+        help_text=_("Selected formula template for this order."),
+    )
 
     class Meta:
         """
@@ -621,6 +631,7 @@ class Order(GenericModel):  # type:ignore
             None: This function does not return anything.
         """
         from dispatch.services import transfer_rate_details
+        from order.services import calculate_total
         from stops.selectors import (
             get_total_piece_count_by_order,
             get_total_weight_by_order,
@@ -640,8 +651,8 @@ class Order(GenericModel):  # type:ignore
             self.weight = get_total_weight_by_order(order=self)
             self.pieces = get_total_piece_count_by_order(order=self)
 
-        if self.ready_to_bill and self.organization.order_control.auto_order_total:
-            self.sub_total = self.calculate_total()
+        if self.organization.order_control.auto_order_total:
+            self.sub_total = calculate_total(order=self)
 
         if self.origin_location and not self.origin_address:
             self.origin_address = self.origin_location.get_address_combination
@@ -656,7 +667,6 @@ class Order(GenericModel):  # type:ignore
         if self.commodity and self.commodity.hazmat:
             self.hazmat = self.commodity.hazmat
 
-        self.sub_total = self.calculate_total()
         self.calculate_other_charge_amount()
         super().save(*args, **kwargs)
 
@@ -672,7 +682,7 @@ class Order(GenericModel):  # type:ignore
         """Order clean method
 
         Returns:
-            None: This function does not return anyhting.
+            None: This function does not return anything.
 
         Raises:
             ValidationError: If the Order is not valid
@@ -758,31 +768,6 @@ class Order(GenericModel):  # type:ignore
                 }
             )
 
-    def calculate_total(self) -> Any | decimal.Decimal:
-        """Calculate the sub_total for an order
-
-        Calculate the sub_total for the order if the organization 'OrderControl'
-        has auto_total_order as True. If not, this method will be skipped in the
-        save method.
-
-        Returns:
-            decimal.Decimal: The total for the order
-        """
-
-        # Handle the flat fee rate calculation
-        if self.freight_charge_amount and self.rate_method == RatingMethodChoices.FLAT:
-            return self.freight_charge_amount + self.other_charge_amount
-
-        # Handle the mileage rate calculation
-        if (
-            self.freight_charge_amount
-            and self.mileage
-            and self.rate_method
-            and self.rate_method == RatingMethodChoices.PER_MILE
-        ):
-            return self.freight_charge_amount * self.mileage + self.other_charge_amount
-        return self.freight_charge_amount
-
     def calculate_other_charge_amount(self):
         if other_charges := self.additional_charges.all():
             self.other_charge_amount = sum(
@@ -790,6 +775,12 @@ class Order(GenericModel):  # type:ignore
             )
         else:
             self.other_charge_amount = 0
+
+    @property
+    def temperature_differential(self) -> int:
+        if self.temperature_min and self.temperature_max:
+            return int(self.temperature_max - self.temperature_min)
+        return 0
 
 
 class OrderDocumentation(GenericModel):
@@ -950,11 +941,10 @@ class AdditionalCharge(GenericModel):  # type: ignore
         help_text=_("Description of the charge"),
         blank=True,
     )
-    charge_amount = MoneyField(
+    charge_amount = models.DecimalField(
         _("Charge Amount"),
         max_digits=19,
         decimal_places=4,
-        default_currency="USD",
         help_text=_("Charge Amount"),
         null=True,
         blank=True,
@@ -964,11 +954,10 @@ class AdditionalCharge(GenericModel):  # type: ignore
         default=1,
         help_text=_("Number of units to be charged"),
     )
-    sub_total = MoneyField(
+    sub_total = models.DecimalField(
         _("Sub Total"),
         max_digits=19,
         decimal_places=4,
-        default_currency="USD",
         help_text=_("Sub Total"),
         null=True,
         blank=True,
@@ -1091,3 +1080,132 @@ class ReasonCode(GenericModel):
             str: Reason Code Absolute URL
         """
         return reverse("reason-codes-detail", kwargs={"pk": self.pk})
+
+
+@final
+class TemplateTypeChoices(models.TextChoices):
+    """
+    Template Type choices for Formula Template model
+    """
+
+    REFRIGERATED = "REFRIGERATED", _("Refrigerated Shipments")
+    HAZMAT = "HAZMAT", _("Hazardous Material Shipments")
+
+
+class FormulaTemplate(GenericModel):
+    """
+    Stores formula template information for a related :model:`organization.Organization`.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=255,
+        help_text=_("Name of the formula template"),
+    )
+    formula_text = models.TextField(
+        verbose_name=_("Formula Text"), help_text=_("Formula text")
+    )
+    description = models.TextField(
+        verbose_name=_("Description"),
+        blank=True,
+        help_text=_("Description or notes about the formula"),
+    )
+    template_type = models.CharField(
+        verbose_name=_("Template Type"),
+        max_length=50,
+        choices=TemplateTypeChoices.choices,
+        help_text=_("Type of the formula template"),
+    )
+    customer = models.ForeignKey(
+        "customer.Customer",
+        on_delete=models.RESTRICT,
+        related_name="formula_templates",
+        verbose_name=_("Customer"),
+        help_text=_("Customer of the formula template"),
+        blank=True,
+        null=True,
+    )
+    order_type = models.ForeignKey(
+        OrderType,
+        on_delete=models.RESTRICT,
+        related_name="formula_templates",
+        verbose_name=_("Order Type"),
+        help_text=_("Order Type of the formula template"),
+        blank=True,
+        null=True,
+    )
+    auto_apply = models.BooleanField(
+        verbose_name=_("Auto Apply"),
+        default=False,
+        help_text=_(
+            "Auto apply formula template to orders, based on customer, order_type, and template_type."
+        ),
+    )
+    history = AuditlogHistoryField()
+
+    class Meta:
+        """
+        Meta class for FormulaTemplate model
+        """
+
+        verbose_name = _("Formula Template")
+        verbose_name_plural = _("Formula Templates")
+        ordering = ["name"]
+        db_table = "formula_template"
+
+    def __str__(self) -> str:
+        """String representation of the FormulaTemplate
+
+        Returns:
+            str: Formula Template Name
+        """
+        return textwrap.shorten(self.name, 50, placeholder="...")
+
+    def get_absolute_url(self) -> str:
+        """Formula Template Absolute URL
+
+        Returns:
+            str: Formula Template Absolute URL
+        """
+        return reverse("formula-template-detail", kwargs={"pk": self.pk})
+
+    def clean(self) -> None:
+        """Clean method for FormulaTemplate model.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        from order import helpers
+
+        if self.formula_text:
+            # Get the list of variables in the formula.
+            formula_variables = helpers.extract_variable_from_formula(
+                formula=self.formula_text
+            )
+
+            # Get the list of variables that are not allowed in the formula.
+            invalid_variables = [
+                var
+                for var in formula_variables
+                if var not in helpers.FORMULA_ALLOWED_VARIABLES
+            ]
+
+            # If there are invalid variables, raise a validation error.
+            if invalid_variables:
+                raise ValidationError(
+                    {
+                        "formula_text": _(
+                            f"Formula template contains invalid variables: {', '.join(invalid_variables)}. Please try "
+                            "again."
+                        )
+                    },
+                    code="invalid",
+                )
+
+        super().clean()

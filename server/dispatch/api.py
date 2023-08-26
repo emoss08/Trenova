@@ -164,9 +164,7 @@ class RateViewSet(viewsets.ModelViewSet):
                     "description",
                     "unit",
                     "charge_amount",
-                    "charge_amount_currency",
                     "sub_total",
-                    "sub_total_currency",
                 ),
             )
         ).only(
@@ -181,7 +179,6 @@ class RateViewSet(viewsets.ModelViewSet):
             "destination_location_id",
             "rate_method",
             "rate_amount",
-            "rate_amount_currency",
             "equipment_type_id",
             "organization_id",
             "distance_override",
@@ -219,8 +216,6 @@ class RateBillingTableViewSet(viewsets.ModelViewSet):
             "description",
             "unit",
             "charge_amount",
-            "charge_amount_currency",
             "sub_total",
-            "sub_total_currency",
         )
         return queryset

@@ -25,7 +25,6 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from djmoney.models.fields import MoneyField
 
 from organization.models import Organization
 from utils.models import ChoiceField, GenericModel, RatingMethodChoices
@@ -608,13 +607,12 @@ class Rate(GenericModel):  # type:ignore
         default=RatingMethodChoices.FLAT,
         help_text=_("Rate Method for Rate"),
     )
-    rate_amount = MoneyField(
+    rate_amount = models.DecimalField(
         _("Rate Amount"),
         max_digits=19,
         decimal_places=4,
         default=0,
         help_text=_("Rate Amount for Rate"),
-        default_currency="USD",
     )
     distance_override = models.PositiveIntegerField(
         _("Distance Override"),
@@ -763,20 +761,18 @@ class RateBillingTable(GenericModel):  # type:ignore
         _("Unit"),
         help_text=_("Unit for Rate Billing Table"),
     )
-    charge_amount = MoneyField(
+    charge_amount = models.DecimalField(
         _("Charge Amount"),
         max_digits=19,
         decimal_places=4,
         default=0,
-        default_currency="USD",
         help_text=_("Charge Amount for Rate Billing Table"),
     )
-    sub_total = MoneyField(
+    sub_total = models.DecimalField(
         _("Total"),
         max_digits=19,
         decimal_places=4,
         default=0,
-        default_currency="USD",
         help_text=_("Total for Rate Billing Table"),
     )
 

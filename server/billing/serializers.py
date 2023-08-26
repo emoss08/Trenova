@@ -16,7 +16,6 @@
 # --------------------------------------------------------------------------------------------------
 from typing import Any
 
-from djmoney.contrib.django_rest_framework import MoneyField
 from rest_framework import serializers
 
 from billing import models
@@ -173,21 +172,21 @@ class OrdersReadySerializer(serializers.Serializer):
         label="Total Mileage",
         required=False,
     )
-    other_charge_amount = MoneyField(
+    other_charge_amount = serializers.DecimalField(
         decimal_places=4,
         help_text="Additional Charge Amount",
         label="Additional Charge Amount",
         max_digits=19,
         required=False,
     )
-    freight_charge_amount = MoneyField(
+    freight_charge_amount = serializers.DecimalField(
         decimal_places=4,
         help_text="Freight Charge Amount",
         label="Freight Charge Amount",
         max_digits=19,
         required=False,
     )
-    sub_total = MoneyField(
+    sub_total = serializers.DecimalField(
         decimal_places=4,
         help_text="Sub Total",
         label="Sub Total",
