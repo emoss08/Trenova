@@ -26,7 +26,6 @@ django-redis==5.3.0
 django-silk==5.0.3
 django-stubs==4.2.3
 django-stubs-ext==4.2.2
-django-tenants==3.5.0
 djangorestframework~=3.14.0
 drf-nested-routers==0.93.4
 drf-spectacular==0.26.4
@@ -53,3 +52,4 @@ whitenoise==6.5.0
 xhtml2pdf==0.2.11
 cssutils==2.7.1
 django-model-utils==4.3.1
+sympy==1.12
