@@ -606,9 +606,3 @@ class Token(models.Model):
         """
 
         return self.expires is not None and timezone.now() >= self.expires
-
-
-# Audit Log Registration
-auditlog.register(User, exclude_fields=["online", "password"])
-auditlog.register(UserProfile)
-auditlog.register(JobTitle)

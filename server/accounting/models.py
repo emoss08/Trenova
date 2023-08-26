@@ -480,9 +480,3 @@ class DivisionCode(GenericModel):
 
         if errors:
             raise ValidationError(errors)
-
-
-# Audit Log Registration
-auditlog.register(GeneralLedgerAccount, exclude_fields=["organization"])
-auditlog.register(RevenueCode, exclude_fields=["organization"])
-auditlog.register(DivisionCode, exclude_fields=["organization"])

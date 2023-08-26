@@ -415,7 +415,6 @@ CACHEOPS = {
     # "accounts.jobtitle": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
 }
-
 CACHEOPS_DEGRADE_ON_FAILURE = True
 
 # Billing Client Configurations
@@ -423,6 +422,43 @@ BILLING_CLIENT_PASSWORD = env("BILLING_CLIENT_REDIS_PASSWORD")
 BILLING_CLIENT_HOST = env("BILLING_CLIENT_REDIS_HOST")
 BILLING_CLIENT_PORT = env("BILLING_CLIENT_REDIS_PORT")
 BILLING_CLIENT_DB = env("BILLING_CLIENT_REDIS_DB")
+
+# Audit Log Configurations
+AUDITLOG_EXCLUDE_TRACKING_FIELDS = ("organization", "business_unit")
+AUDITLOG_INCLUDE_TRACKING_MODELS = (
+    "accounts.User",
+    "accounts.UserProfile",
+    "accounts.JobTitle",
+    "accounts.Token",
+    "accounting.GeneralLedgerAccount",
+    "accounting.RevenueCode",
+    "accounting.DivisionCode",
+    "billing.BillingControl",
+    "billing.ChargeType",
+    "billing.AccessorialCharge",
+    "billing.DocumentClassification",
+    "billing.BillingQueue",
+    "billing.BillingLogEntry",
+    "billing.BillingHistory",
+    "billing.BillingException",
+    "customer.Customer",
+    "customer.CustomerEmailProfile",
+    "customer.CustomerRuleProfile",
+    "customer.CustomerContact",
+    "customer.CustomerFuelProfile",
+    "customer.CustomerFuelTable",
+    "customer.CustomerFuelTableDetail",
+    "customer.DeliverySlot",
+    "order.OrderControl",
+    "order.OrderType",
+    "order.Order",
+    "order.OrderDocumentation",
+    "order.OrderComment",
+    "order.AdditionalCharge",
+    "order.ReasonCode",
+    "order.FormulaTemplate",
+)
+
 
 # Kafka Configurations
 KAFKA_BOOTSTRAP_SERVERS = env("KAFKA_BOOTSTRAP_SERVERS")
