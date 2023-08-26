@@ -189,7 +189,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             .only(
                 "pro_number",
                 "hazmat_id",
-                "sub_total_currency",
                 "id",
                 "destination_address",
                 "billing_transfer_date",
@@ -203,13 +202,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "revenue_code_id",
                 "temperature_min",
                 "mileage",
-                "other_charge_amount_currency",
                 "auto_rate",
                 "origin_appointment_window_start",
                 "origin_appointment_window_end",
                 "status",
                 "freight_charge_amount",
-                "freight_charge_amount_currency",
                 "bill_date",
                 "pieces",
                 "destination_appointment_window_end",
@@ -342,7 +339,5 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
             "unit",
             "entered_by_id",
             "sub_total",
-            "charge_amount_currency",
-            "sub_total_currency",
         )
         return queryset

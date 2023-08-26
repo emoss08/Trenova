@@ -121,11 +121,8 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
-            "freight_charge_amount_currency",
             "commodity_id",
             "bol_number",
-            "total_amount_currency",
-            "other_charge_total_currency",
             "commodity_descr",
             "consignee_ref_number",
             "mileage",
@@ -192,11 +189,8 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
-            "freight_charge_amount_currency",
             "commodity_id",
             "bol_number",
-            "total_amount_currency",
-            "other_charge_total_currency",
             "commodity_descr",
             "consignee_ref_number",
             "mileage",
@@ -301,7 +295,6 @@ class AccessorialChargeViewSet(viewsets.ModelViewSet):
             "description",
             "method",
             "organization_id",
-            "charge_amount_currency",
         )
 
         return queryset

@@ -929,3 +929,11 @@ class DeliverySlot(GenericModel):
             width=50,
             placeholder="...",
         )
+
+    def get_absolute_url(self) -> str:
+        """Returns the url to access a particular delivery slot instance
+
+        Returns:
+            str: Delivery slot url
+        """
+        return reverse("billing:delivery-slot-detail", kwargs={"pk": self.pk})

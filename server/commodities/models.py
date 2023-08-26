@@ -349,8 +349,3 @@ class Commodity(GenericModel):  # type: ignore
         for key, value in kwargs.items():
             setattr(self, key, value)
         self.save()
-
-
-# Audit Log Registration
-auditlog.register(HazardousMaterial)
-auditlog.register(Commodity)
