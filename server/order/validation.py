@@ -58,6 +58,8 @@ class OrderValidation:
         self.validate_order_movements_completed()
         # self.validate_location_information_cannot_change_once_order_completed()
         self.validate_appointment_windows()
+        self.validate_per_weight_rating_method()
+        self.validate_formula_template()
         if self.errors:
             raise ValidationError(self.errors)
 
@@ -329,4 +331,22 @@ class OrderValidation:
         ):
             self.errors["destination_appointment_window_end"] = _(
                 "Destination appointment window end cannot be before the start. Please try again."
+            )
+
+    def validate_per_weight_rating_method(self) -> None:
+        if (
+            self.order.rate_method == RatingMethodChoices.POUNDS
+            and self.order.weight < 1
+        ):
+            self.errors["rate_method"] = _(
+                "Weight cannot be 0, and rating method is per weight. Please try again."
+            )
+
+    def validate_formula_template(self) -> None:
+        if (
+            self.order.formula_template
+            and not self.order.rate_method == RatingMethodChoices.OTHER
+        ):
+            self.errors["formula_template"] = _(
+                "Formula template can only be used with rating method 'OTHER'. Please try again."
             )

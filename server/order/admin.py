@@ -134,6 +134,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
             "Billing Details",
             {
                 "fields": (
+                    "rating_units",
                     "rate",
                     "mileage",
                     "other_charge_amount",
@@ -150,6 +151,7 @@ class OrderAdmin(GenericAdmin[models.Order]):
                     "transferred_to_billing",
                     "billing_transfer_date",
                     "auto_rate",
+                    "formula_template",
                 ),
             },
         ),
@@ -175,3 +177,16 @@ class OrderAdmin(GenericAdmin[models.Order]):
         OrderCommentInline,
         AdditionalChargeInline,
     )
+
+
+@admin.register(models.FormulaTemplate)
+class FormulaTemplateAdmin(GenericAdmin[models.FormulaTemplate]):
+    """
+    Formula Template Admin
+    """
+
+    list_display = (
+        "name",
+        "description",
+    )
+    search_fields = ("name", "description")

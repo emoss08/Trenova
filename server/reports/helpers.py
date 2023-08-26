@@ -161,7 +161,6 @@ ALLOWED_MODELS = {
             {"value": "description", "label": "Description"},
             {"value": "is_detention", "label": "Is Detention"},
             {"value": "charge_amount", "label": "Charge Amount"},
-            {"value": "charge_amount_currency", "label": "Charge Amount Currency"},
             {"value": "method", "label": "Method"},
         ],
     },

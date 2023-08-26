@@ -15,6 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import datetime
+import decimal
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -601,4 +602,229 @@ def test_validate_appointment_window_against_customer_delivery_slots(
 
     assert excinfo.value.message_dict["origin_appointment_window_start"] == [
         "The chosen appointment window for the location is not allowed by the customer. Please try again."
+    ]
+
+
+def test_calculate_order_per_pound_total(order: models.Order) -> None:
+    """Test calculate order per pound calculation.
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order.weight = 43000  # 43,000 lbs
+    order.rate_method = "PP"
+    order.freight_charge_amount = 0.5  # $0.50 per pound
+    order.save()
+    order.refresh_from_db()
+
+    assert order.sub_total == 21500.0000
+
+
+def test_calculate_order_per_pound_exception(order: models.Order) -> None:
+    """Test ValidationError thrown when weight on order is less than 1.
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: this function does not return anything.
+    """
+    order.weight = 0
+    order.rate_method = "PP"
+
+    with pytest.raises(ValidationError) as excinfo:
+        order.save()
+
+    assert excinfo.value.message_dict["rate_method"] == [
+        "Weight cannot be 0, and rating method is per weight. Please try again."
+    ]
+
+
+def test_calculate_order_flat_total(order: models.Order) -> None:
+    """Test calculate order ``flat`` fee calculation
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: this function does not return anything.
+    """
+
+    order.rate_method = "F"
+    order.freight_charge_amount = 1000.00
+
+    order.save()
+
+    assert order.sub_total == 1000.00
+
+
+def test_calculate_order_per_mile_total(order: models.Order) -> None:
+    """Test calculate order ``PER_MILE`` rate method calculation.
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    order.rate_method = "PM"
+    order.mileage = 100
+    order.freight_charge_amount = 10.00
+
+    order.save()
+
+    assert order.sub_total == 1000.00
+
+
+def test_calculate_order_per_stop_total(order: models.Order) -> None:
+    """Test calculate order ``PER_STOP`` rate method calculation.
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    order.freight_charge_amount = 100.00
+    order.rate_method = "PS"
+    order.save()
+
+    assert order.sub_total == 200.00
+
+
+def test_calculate_order_other_total_with_formula(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test calculate order total using formula template.
+
+    Args:
+        organization(Organization): Organization object.
+        business_unit(BusinessUnit): BusinessUnit object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    formula_template = models.FormulaTemplate.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        name="Refrigerated Shipment Formula",
+        formula_text="freight_charge * rating_units",
+        description="Basic Rate calculation for refrigerated shipments",
+        template_type="REFRIGERATED",
+    )
+
+    order = OrderFactory(
+        rate_method="O",
+        formula_template=formula_template,
+        freight_charge_amount=100.00,
+        rating_units=5,
+    )
+
+    assert order.sub_total == decimal.Decimal("500.00")
+
+
+def test_calculate_order_other_total(order: models.Order) -> None:
+    """Test calculate order total without using formula template
+
+    Defaults to order.freight_charge_amount * order.rating_units + order.other_charge_amount
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    order.rate_method = "O"
+    order.freight_charge_amount = 100.00
+    order.rating_units = 5
+    order.other_charge_amount = 100.00
+
+    order.save()
+
+    assert order.sub_total == decimal.Decimal("600.00")
+
+
+def test_temperature_differential(order: models.Order) -> None:
+    """Test calculate order ``temperature_differential`` function.
+
+    Args:
+        order(models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    order.temperature_min = 10
+    order.temperature_max = 60
+    order.save()
+
+    assert order.temperature_differential == 50
+
+
+def test_formula_template_validation(
+    organization: Organization, business_unit: BusinessUnit, order: models.Order
+) -> None:
+    """Test ValidationError is thrown when formula_template is populated ,but
+    rate_method is not set to OTHER.
+
+    Args:
+        organization (models.Organization): Organization object.
+        business_unit (models.BusinessUnit): BusinessUnit object.
+        order (models.Order): Order object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    formula_template = models.FormulaTemplate.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        name="Refrigerated Shipment Formula",
+        formula_text="(freight_charge + other_charge + temperature_differential * equipment_cost_per_mile) * mileage",
+        description="Formula for refrigerated shipments considering temperature differential",
+        template_type="REFRIGERATED",
+    )
+
+    order.rate_method = "F"
+    order.formula_template = formula_template
+
+    with pytest.raises(ValidationError) as excinfo:
+        order.clean()
+
+    assert excinfo.value.message_dict["formula_template"] == [
+        "Formula template can only be used with rating method 'OTHER'. Please try again."
+    ]
+
+
+def test_validate_formula_variables(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test ValidationError is thrown when invalid variables are used in ``formula_text``
+
+    Args:
+        organization(Organization): Organization object.
+        business_unit(BusinessUnit): BusinessUnit object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    with pytest.raises(ValidationError) as excinfo:
+        models.FormulaTemplate.objects.create(
+            organization=organization,
+            business_unit=business_unit,
+            name="Refrigerated Shipment Formula",
+            formula_text="(bad + equipment_cost + temperature_differential * temp_factor) * mileage",
+            description="Formula for refrigerated shipments considering temperature differential",
+            template_type="REFRIGERATED",
+        )
+
+    assert excinfo.value.message_dict["formula_text"] == [
+        "Formula template contains invalid variables: bad, equipment_cost, temp_factor. Please try again."
     ]
