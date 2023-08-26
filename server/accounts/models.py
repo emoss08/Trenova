@@ -21,7 +21,6 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from auditlog.registry import auditlog
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,

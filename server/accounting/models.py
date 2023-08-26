@@ -19,7 +19,6 @@ import textwrap
 import uuid
 from typing import Any, final
 
-from auditlog.registry import auditlog
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.db import models
