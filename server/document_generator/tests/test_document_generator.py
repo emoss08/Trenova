@@ -27,6 +27,7 @@ from billing.tests.factories import (
 from document_generator import models
 from document_generator.services import render_document
 from order.tests.factories import AdditionalChargeFactory, OrderFactory
+from organization.models import Organization, BusinessUnit
 
 pytestmark = pytest.mark.django_db
 
@@ -494,3 +495,33 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
     )
 
     print(render_document(template=doc_template, instance=invoice))
+
+
+def test_save_template_version(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test saving new template version signal.
+
+    Args:
+        organization(Organization): Organization object.
+        business_unit(BusinessUnit): Business Unit object.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    doc_class = DocumentClassificationFactory()
+    template = models.DocumentTemplate.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        name="Invoice Template",
+        content="""
+        Invoice Number: {{ invoice_invoice_number }}
+        Total Amount: {{ invoice_total_amount }}
+        Date: {{ invoice_bill_date }}
+        """,
+        document_classification=doc_class,
+    )
+
+    print(template)
+
+    print(template.current_version)
