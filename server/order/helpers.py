@@ -76,11 +76,34 @@ def validate_formula(*, formula: str) -> bool:
 
 
 def evaluate_formula(*, formula: str, **kwargs: typing.Any) -> float:
+    """Evaluate a given mathematical formula with the provided variables.
+
+    This function takes a mathematical formula as a string and a variable number of
+    keyword arguments representing the symbols in the formula and their corresponding
+    values. The formula is then evaluated by first converting it into a sympy expression
+    using sympify. A check is performed to ensure that all the symbols in the expression
+    are among the keys provided as keyword arguments. If the check passes, the symbols
+    in the expression are then substituted with their corresponding values and the
+    resultant float value of the expression is returned. If the check fails, a ValueError
+    is raised.
+
+    Args:
+        formula (str): A string representing a mathematical formula to be evaluated.
+        **kwargs (typing.Any): Arbitrary keyword arguments. The keys represent the symbols
+            (variables) in the formula, the values are used to substitute these symbols in the expression.
+
+    Returns:
+        float: The resultant float value after evaluating the expression.
+
+    Raises:
+        ValueError: If there are any symbols in the formula that are not provided as keyword arguments.
+    """
     expression = sympify(formula)
 
     # Ensure only allowed symbols are in the formula
     allowed_symbols = set(kwargs.keys())
-    if not set(expression.free_symbols).issubset(allowed_symbols):
+    formula_symbols = {str(symbol) for symbol in expression.free_symbols}
+    if not formula_symbols.issubset(allowed_symbols):
         raise ValueError("Invalid formula")
 
     return float(expression.subs(kwargs))

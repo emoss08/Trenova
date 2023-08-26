@@ -68,6 +68,7 @@ class RatingMethodChoices(models.TextChoices):
     PER_MILE = "PM", _("Per Mile")
     PER_STOP = "PS", _("Per Stop")
     POUNDS = "PP", _("Per Pound")
+    OTHER = "O", _("Other")
 
 
 @final
