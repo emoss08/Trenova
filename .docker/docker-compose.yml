@@ -1,29 +1,29 @@
 version: '4'
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.3.0
-    container_name: zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    restart: on-failure
-
-  broker:
-    image: confluentinc/cp-kafka:7.3.0
-    container_name: broker
-    ports:
-      - "9092:9092"
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    depends_on:
-      - zookeeper
-    restart: on-failure
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.3.0
+#    container_name: zookeeper
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    restart: on-failure
+#
+#  broker:
+#    image: confluentinc/cp-kafka:7.3.0
+#    container_name: broker
+#    ports:
+#      - "9092:9092"
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#    depends_on:
+#      - zookeeper
+#    restart: on-failure
 
   db:
     image: postgres:latest
@@ -40,20 +40,30 @@ services:
       - "wal_level=logical"
     restart: always
 
-  connect:
-    image: debezium/connect:1.7
-    container_name: connect
-    ports:
-      - "8083:8083"
-    environment:
-      BOOTSTRAP_SERVERS: broker:29092
-      GROUP_ID: 1
-      CONFIG_STORAGE_TOPIC: my_connect_configs
-      OFFSET_STORAGE_TOPIC: my_connect_offsets
-      STATUS_STORAGE_TOPIC: my_connect_statuses
-    depends_on:
-      - broker
-    restart: on-failure
+#  connect:
+#    image: debezium/connect:latest
+#    container_name: connect
+#    ports:
+#      - "8083:8083"
+#    environment:
+#      BOOTSTRAP_SERVERS: broker:29092
+#      GROUP_ID: 1
+#      CONFIG_STORAGE_TOPIC: my_connect_configs
+#      OFFSET_STORAGE_TOPIC: my_connect_offsets
+#      STATUS_STORAGE_TOPIC: my_connect_statuses
+#      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+#      CONNECT_REST_PORT: 8083
+#      CONNECT_REST_ADVERTISED_HOST_NAME: 127.0.0.1
+#      CONNECT_REST_ADVERTISED_PORT: 8083
+#      CONNECT_TASKS_MAX: 1
+#      CONNECT_OFFSET_STORAGE_FILE_FILENAME: /tmp/connect.offsets
+#      #... [Other environment variables as needed]...
+#    depends_on:
+#      - broker
+#    restart: on-failure
 
 
   pgadmin:

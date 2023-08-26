@@ -1,3 +1,4 @@
+# Stage 1: Set up the Django application
 FROM python:3.11-slim-buster
 
 LABEL maintainer="montadev@dev.io"
