@@ -26,7 +26,12 @@
     "localStorage": true,
     "fetch": true,
     "Headers": true,
-    "navigator": true
+    "navigator": true,
+    "CloseEvent": true,
+    "HTMLButtonElement": true,
+    "WebSocket": true,
+    "HTMLInputElement": true,
+
   },
   "rules": {
     "prettier/prettier": "error",
