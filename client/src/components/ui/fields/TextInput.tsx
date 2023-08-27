@@ -23,10 +23,29 @@ import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/styles/FormStyles";
 
 interface ValidatedTextInputProps<TFormValues>
-  extends Omit<TextInputProps, "form"> {
+  extends Omit<TextInputProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: keyof TFormValues;
 }
 
+/**
+ * A validated text input field that can be used with Mantine's form hooks.
+ * @param form - The form hook to use.
+ * @param name - The name of the field in the form.
+ * @param rest - Any other props that can be passed to Mantine's TextInput component.
+ * @example
+ * <ValidatedTextInput<AccessorialChargeFormValues>
+ *    form={form}
+ *    className={classes.fields}
+ *    name="code"
+ *    label="Code"
+ *    description="Code for the accessorial charge"
+ *    placeholder="Code"
+ *    variant="filled"
+ *    withAsterisk
+ *    icon={<FontAwesomeIcon icon={faSignature} />}
+ * />
+ */
 export function ValidatedTextInput<TFormValues extends object>({
   form,
   name,
