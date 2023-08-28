@@ -19,10 +19,12 @@ from typing import Any, TypeVar
 
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Model, QuerySet
-from django.forms import BaseModelForm
-from django.forms.models import ModelForm
+from django.db.models import QuerySet
+from django import forms
 from django.http import HttpRequest
+from django.db.models.base import Model
+
+from utils.types import AuthenticatedHttpRequest
 
 # Model Generic Type
 _M = TypeVar("_M", bound=Model)
@@ -42,7 +44,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     autocomplete: bool = True
     # exclude: tuple[str, ...] = ("organization", "business_unit")
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
+    def get_queryset(self, request: AuthenticatedHttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
 
         Args:
@@ -60,9 +62,9 @@ class GenericAdmin(admin.ModelAdmin[_M]):
 
     def save_model(
         self,
-        request: HttpRequest,
+        request: AuthenticatedHttpRequest,
         obj: _M,
-        form: type[BaseModelForm],
+        form: type[forms.BaseModelForm],
         change: bool,
     ) -> None:
         """Save Model Instance
@@ -81,7 +83,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         super().save_model(request, obj, form, change)
 
     def save_formset(
-        self, request: HttpRequest, form: Any, formset: Any, change: Any
+        self, request: AuthenticatedHttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
 
@@ -104,21 +106,21 @@ class GenericAdmin(admin.ModelAdmin[_M]):
 
     def get_form(
         self,
-        request: HttpRequest,
+        request: AuthenticatedHttpRequest,
         obj: _M | None = None,
         change: bool = False,
         **kwargs: Any,
-    ) -> type[ModelForm[_M]]:
+    ) -> type[forms.ModelForm[_M]]:
         """Get Form for Model
 
         Args:
             change (bool): If the model is being changed
-            request (HttpRequest): Request Object
+            request (AuthenticatedHttpRequest): Authenticated Request Object
             obj (Optional[_M]): Model Object
             **kwargs (Any): Keyword Arguments
 
         Returns:
-            Type[ModelForm[Any]]: Form Class
+            Type[ModelForm[_M]]: Form Class
         """
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields:
@@ -131,9 +133,12 @@ class GenericAdmin(admin.ModelAdmin[_M]):
                 ].initial = request.user.organization.business_unit
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             form.base_fields[field].widget.attrs["placeholder"] = field.title()
+
         return form
 
-    def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
+    def get_autocomplete_fields(
+        self, request: AuthenticatedHttpRequest
+    ) -> Sequence[str]:
         """Get Autocomplete Fields
 
         Args:
@@ -164,7 +169,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
 
     extra = 0
 
-    def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
+    def get_queryset(self, request: AuthenticatedHttpRequest) -> QuerySet[_C]:
         """Get Queryset
         Args:
             request (HttpRequest): Request Object

@@ -22,6 +22,7 @@ from typing import Any, TypeAlias, TypedDict, Union
 from uuid import UUID
 
 from django.db.models import UUIDField
+from django.http import HttpRequest
 from rest_framework.request import Request
 
 from accounts.models import User
@@ -85,6 +86,10 @@ class AuthenticatedRequest(Request):
         user: The user that made the request.
     """
 
+    user: User
+
+
+class AuthenticatedHttpRequest(HttpRequest):
     user: User
 
 

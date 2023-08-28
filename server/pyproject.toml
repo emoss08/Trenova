@@ -73,6 +73,11 @@ warn_unused_configs = true
 warn_unreachable = true
 warn_no_return = true
 exclude = "venv"
+strict = true
+python_version = 3.11
+
+[mypy-tests.'*']
+ignore_errors = true
 
 [tool.django-stubs]
 django_settings_module = "backend.settings"

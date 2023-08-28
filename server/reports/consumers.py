@@ -72,7 +72,7 @@ class NotificationConsumer(AsyncJsonWebsocketConsumer):
         """
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-    async def send_notification(self, event: dict):
+    async def send_notification(self, event: dict) -> None:
         """Sends the notification data to the client as JSON.
 
         The event dict should follow the format {type: x, value: y}, where 'type' is the type of
