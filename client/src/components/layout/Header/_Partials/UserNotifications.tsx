@@ -118,7 +118,14 @@ const reconnect = () => {
     "notificaitons",
     `${WEB_SOCKET_URL}/notifications/`,
     {
-      onOpen: () => console.info("Connected to notifications websocket"),
+      onOpen: () =>
+        notifications.update({
+          id: "connection-closed",
+          title: "Connection re-established",
+          message: "Websocket connection re-established.",
+          color: "green",
+          icon: <FontAwesomeIcon icon={faCheck} />,
+        }),
     },
   );
 };
@@ -167,15 +174,26 @@ export function UserNotifications(): React.ReactElement | null {
           },
           onClose: (event: CloseEvent) => {
             if (event.wasClean) {
-              console.info(
-                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}, will reconnect in 1 second`,
-              );
-              reconnect();
+              notifications.show({
+                title: "Connection closed",
+                message: "Websocket connection closed.",
+                color: "green",
+                icon: <FontAwesomeIcon icon={faCheck} />,
+              });
             } else {
-              console.warn(
-                "[close] Connection died. Reconnect will be attempted in 1 second.",
-              );
-              reconnect();
+              notifications.show({
+                id: "connection-closed",
+                title: "Connection closed",
+                message:
+                  "Websocket connection died. Reconnect will be attempted in 5 second.",
+                color: "blue",
+                loading: true,
+                autoClose: false,
+                withCloseButton: false,
+              });
+              setInterval(() => {
+                reconnect();
+              }, 5000);
             }
           },
           onError: (error: Event) => {
