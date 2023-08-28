@@ -182,7 +182,7 @@ class Customer(GenericModel):  # type: ignore
         """
 
         if not self.code:
-            self.code = self.generate_customer_code()
+            self.code = self.generate_customer_code().upper()
 
         super().save(*args, **kwargs)
 
@@ -200,8 +200,8 @@ class Customer(GenericModel):  # type: ignore
         This function uses the first three characters of the customer's name to form a base for the code.
         It then appends a zero-padded sequence number derived from the current count of customer objects plus one.
 
-        If the newly formulated code already exists in the database, the base code itself is returned making this function
-        provide a fallback.
+        If the newly formulated code already exists in the database, the base code itself is returned making this
+        function provide a fallback.
 
         IMPORTANT NOTE:
             It's highly recommended to run this inside a transaction where the new customer instance gets created
@@ -210,8 +210,8 @@ class Customer(GenericModel):  # type: ignore
         Returns:
             str: A unique or quasi-unique customer code.
         """
-        code = self.name[:3].upper()
-        new_code = f"{code}{self.__class__.objects.count() + 1:04d}".upper()
+        code = self.name[:3]
+        new_code = f"{code}{self.__class__.objects.count() + 1:04d}"
 
         return new_code if self.__class__.objects.filter(code=code).exists() else code
 
