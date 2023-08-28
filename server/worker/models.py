@@ -38,7 +38,7 @@ from utils.models import ChoiceField, GenericModel
 User = settings.AUTH_USER_MODEL
 
 
-class Worker(GenericModel):  # type:ignore
+class Worker(GenericModel):
     """
     Stores the equipment information that can be used later to
     assign an order to a movement.
