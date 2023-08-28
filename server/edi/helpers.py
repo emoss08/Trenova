@@ -264,10 +264,6 @@ def _get_actual_field(
 
     Notes:
         There is no reason to use this function outside of this module. It is only used by the 'get_actual_field' function.
-
-    Examples:
-        >>> from accounts.models import User
-        >>> actual_field = _get_actual_field(User, ['user_profile', 'date_of_birth'])
     """
     try:
         current_field = model._meta.get_field(fields_chain[0])
@@ -302,9 +298,6 @@ def validate_data_type(*, data_type: str, model_field: str) -> tuple[bool, str]:
     Returns:
         bool: True if the internal type of the field is equal to the provided 'data_type';
               otherwise, False.
-
-    Examples:
-        >>> is_valid = validate_data_type('CharField', 'customer.name')
     """
 
     # Split the fields chain into a list
