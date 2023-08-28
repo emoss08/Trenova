@@ -111,31 +111,35 @@ def calculate_total(*, order: models.Order) -> decimal.Decimal:
     if order.freight_charge_amount:
         # Calculate `FLAT` rating method
         if order.rate_method == models.RatingMethodChoices.FLAT:
-            return decimal.Decimal(order.freight_charge_amount) + order.other_charge_amount
+            return (
+                decimal.Decimal(order.freight_charge_amount) + order.other_charge_amount
+            )
 
         # Calculate `PER_MILE` rating method
         if (
-                order.mileage
-                and order.rate_method
-                and order.rate_method == models.RatingMethodChoices.PER_MILE
+            order.mileage
+            and order.rate_method
+            and order.rate_method == models.RatingMethodChoices.PER_MILE
         ):
             return (
-                    decimal.Decimal(order.freight_charge_amount) * decimal.Decimal(
-                order.mileage) + order.other_charge_amount
+                decimal.Decimal(order.freight_charge_amount)
+                * decimal.Decimal(order.mileage)
+                + order.other_charge_amount
             )
 
         # Calculate `PER_STOP` rating method
         if order.rate_method == models.RatingMethodChoices.PER_STOP:
             order_stops_count = selectors.get_order_stops(order=order).count()
             return (
-                    decimal.Decimal(order.freight_charge_amount * order_stops_count)
-                    + order.other_charge_amount
+                decimal.Decimal(order.freight_charge_amount * order_stops_count)
+                + order.other_charge_amount
             )
 
         # Calculate `PER_POUND` rating method
         if order.rate_method == models.RatingMethodChoices.POUNDS and order.weight > 0:
             return (
-                    decimal.Decimal(order.freight_charge_amount * order.weight) + order.other_charge_amount
+                decimal.Decimal(order.freight_charge_amount * order.weight)
+                + order.other_charge_amount
             )
 
         # Calculate `OTHER` rating method
@@ -149,8 +153,8 @@ def calculate_total(*, order: models.Order) -> decimal.Decimal:
                     )
             else:
                 return (
-                        order.freight_charge_amount * order.rating_units
-                        + order.other_charge_amount
+                    order.freight_charge_amount * order.rating_units
+                    + order.other_charge_amount
                 )
 
         return order.freight_charge_amount
