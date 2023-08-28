@@ -17,12 +17,12 @@
 from collections.abc import Sequence
 from typing import Any, TypeVar
 
+from django import forms
 from django.contrib import admin
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import QuerySet
-from django import forms
-from django.http import HttpRequest
 from django.db.models.base import Model
+from django.http import HttpRequest
 
 from utils.types import AuthenticatedHttpRequest
 

@@ -246,7 +246,8 @@ def test_cannot_save_if_kafka_offline(organization: models.Organization) -> None
         alert.clean()
 
     assert excinfo.value.message_dict["source"] == [
-        f"Unable to connect to Kafka at {manager.kafka_host}:{manager.kafka_port}. Please check your connection and try again."
+        f"Unable to connect to Kafka at {manager.kafka_host}:{manager.kafka_port}."
+        " Please check your connection and try again."
     ]
 
 

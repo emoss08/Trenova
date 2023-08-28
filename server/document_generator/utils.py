@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 from accounts.models import User
 from document_generator import models
-from organization.models import Organization, BusinessUnit
+from organization.models import BusinessUnit, Organization
 
 
 def save_template_version(
