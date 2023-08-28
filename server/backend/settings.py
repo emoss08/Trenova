@@ -22,13 +22,14 @@ from pathlib import Path
 import django_stubs_ext
 import environ
 
+django_stubs_ext.monkeypatch()
+
 # Check if running on pypy. If so, monkey patch psycopg2cffiq
 if sys.implementation.name == "pypy":
     from psycopg2cffi import compat
 
     compat.register()
 
-django_stubs_ext.monkeypatch()
 
 env = environ.Env(DEBUG=(bool, False))
 
@@ -287,6 +288,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_RENDERER_CLASSES": [
+        "djangorestframework_camel_case.render.CamelCaseJSONRenderer",
+        "djangorestframework_camel_case.render.CamelCaseBrowsableAPIRenderer",
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
         "rest_framework.renderers.AdminRenderer",
@@ -304,6 +307,11 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
+    "DEFAULT_PARSER_CLASSES": (
+        "djangorestframework_camel_case.parser.CamelCaseFormParser",
+        "djangorestframework_camel_case.parser.CamelCaseMultiPartParser",
+        "djangorestframework_camel_case.parser.CamelCaseJSONParser",
+    ),
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
 }
@@ -329,9 +337,9 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Transportation & Logistics Application backend written in Django! ",
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    # "ENUM_NAME_OVERRIDES": {
-    #     "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
-    # },
+    "ENUM_NAME_OVERRIDES": {
+        "LicenseStateEnum": "localflavor.us.us_states.STATE_CHOICES",
+    },
 }
 
 # Django Email Backend
