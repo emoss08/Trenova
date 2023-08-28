@@ -195,25 +195,42 @@ class Customer(GenericModel):  # type: ignore
         return reverse("customer-detail", kwargs={"pk": self.pk})
 
     def generate_customer_code(self) -> str:
-        """Generate a unique code for a customer instance.
+        """Generates a unique customer code.
 
-        This function uses the first three characters of the customer's name to form a base for the code.
-        It then appends a zero-padded sequence number derived from the current count of customer objects plus one.
+        The customer code is created by using the first 5 characters of the customer's
+        name and concatenating it with a generated 4-digit numeric sequence. This sequence
+        is incremented by 1 with each new code generated.
 
-        If the newly formulated code already exists in the database, the base code itself is returned making this
-        function provide a fallback.
+        In the event a customer name is less than 5 characters, the name is used in its entirety
+        for the base code.
 
-        IMPORTANT NOTE:
-            It's highly recommended to run this inside a transaction where the new customer instance gets created
-            to ensure the count correctly reflects the current total number of instances.
+        If the created customer code already exists in the database, the sequence is incremented
+        and used to create a new code. If the length of the new code surpasses 10 characters,
+        the last character of the base code is removed and the sequence is reset to 1 to
+        continue the code generation process.
+
+        This process continues until a unique code, not present in the database, is created.
 
         Returns:
-            str: A unique or quasi-unique customer code.
-        """
-        code = self.name[:3]
-        new_code = f"{code}{self.__class__.objects.count() + 1:04d}"
+            str: A unique customer code.
 
-        return new_code if self.__class__.objects.filter(code=code).exists() else code
+        Note:
+            This function assumes that a Django ORM is being used given the use of
+            `self.__class__.objects.filter(code=new_code).exists()`. The design of the
+            code implies a Django model instance will call this function.
+        """
+        base_code = self.name[:5].upper()
+        sequence = 1
+
+        while True:
+            new_code = f"{base_code}{sequence:04d}"
+            if not self.__class__.objects.filter(code=new_code).exists():
+                return new_code
+            sequence += 1
+            if len(f"{base_code}{sequence:04d}") > 10:
+                # If we've reached the max length, reset the base code and sequence
+                base_code = base_code[:-1]
+                sequence = 1
 
     @cached_property
     def get_address_combination(self) -> str:

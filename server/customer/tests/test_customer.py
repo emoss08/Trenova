@@ -19,7 +19,8 @@ from typing import Any
 
 import pytest
 
-from customer.factories import CustomerFactory
+from customer import factories, models
+from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
 
@@ -31,7 +32,7 @@ def customer() -> Generator[Any, Any, None]:
     """
     Customer fixture
     """
-    yield CustomerFactory()
+    yield factories.CustomerFactory()
 
 
 def test_customer_creation(customer) -> None:
@@ -50,8 +51,22 @@ def test_customer_update(customer) -> None:
     assert customer.name == "New name"
 
 
-def test_customer_code_exists(customer) -> None:
+def test_generate_customer_code(
+    organization: Organization, business_unit: BusinessUnit
+) -> None:
+    """Test when inserting a customer, that a code is generated for them.
+
+    Args:
+        organization(Organization): Organization Object.
+        business_unit(BusinessUnit): Business Unit Object.
+
+    Returns:
+        None: This function does not return anything.
     """
-    Test customer code is added from set_code_before_create BEFORE_CREATE hook
-    """
-    assert customer.code is not None
+    customer = models.Customer.objects.create(
+        organization=organization,
+        business_unit=business_unit,
+        name="Intel Corporation",
+    )
+
+    assert customer.code == "INTEL0001"
