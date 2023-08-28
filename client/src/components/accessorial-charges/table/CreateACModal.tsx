@@ -20,13 +20,7 @@ import React from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCheck,
-  faDollar,
-  faGasPump,
-  faSignature,
-  faXmark,
-} from "@fortawesome/pro-solid-svg-icons";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { useFormStyles } from "@/styles/FormStyles";
@@ -95,7 +89,7 @@ export function CreateACModalForm() {
       code: "",
       description: "",
       isDetention: false,
-      chargeAmount: 0,
+      chargeAmount: undefined,
       method: "D",
     },
   });
@@ -118,9 +112,8 @@ export function CreateACModalForm() {
             placeholder="Code"
             variant="filled"
             withAsterisk
-            icon={<FontAwesomeIcon icon={faSignature} />}
           />
-          <ValidatedTextArea
+          <ValidatedTextArea<AccessorialChargeFormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -130,7 +123,7 @@ export function CreateACModalForm() {
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput
+            <ValidatedTextInput<AccessorialChargeFormValues>
               form={form}
               className={classes.fields}
               name="chargeAmount"
@@ -139,9 +132,8 @@ export function CreateACModalForm() {
               description="Charge amount for the accessorial charge"
               variant="filled"
               withAsterisk
-              icon={<FontAwesomeIcon icon={faDollar} />}
             />
-            <SelectInput
+            <SelectInput<AccessorialChargeFormValues>
               form={form}
               data={fuelMethodChoices}
               className={classes.fields}
@@ -149,11 +141,10 @@ export function CreateACModalForm() {
               label="Fuel Method"
               description="Method for calculating the accessorial charge"
               placeholder="Fuel Method"
-              icon={<FontAwesomeIcon icon={faGasPump} />}
               variant="filled"
               withAsterisk
             />
-            <SwitchInput
+            <SwitchInput<AccessorialChargeFormValues>
               form={form}
               className={classes.fields}
               name="isDetention"
