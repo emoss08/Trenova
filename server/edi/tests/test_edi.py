@@ -437,7 +437,7 @@ def test_validate_data_type_with_invalid_field() -> None:
     """
 
     with pytest.raises(exceptions.EDIInvalidFieldException) as excinfo:
-        _, _ = helpers.validate_data_type(
+        helpers.validate_data_type(
             data_type="CharField", model_field="order.invalid_field"
         )
 
