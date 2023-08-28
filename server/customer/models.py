@@ -219,7 +219,7 @@ class Customer(GenericModel):  # type: ignore
             `self.__class__.objects.filter(code=new_code).exists()`. The design of the
             code implies a Django model instance will call this function.
         """
-        base_code = self.name[:5].upper()
+        base_code = self.name.replace(" ", "")[:5].upper()
         sequence = 1
 
         while True:
