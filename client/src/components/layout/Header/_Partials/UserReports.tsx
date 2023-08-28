@@ -31,7 +31,7 @@ type Props = {
   reportData: UserReportResponse;
 };
 
-export const UserReports: React.FC<Props> = ({ reportData }) => {
+export function UserReports({ reportData }: Props): React.ReactElement {
   if (!reportData || reportData.results.length === 0) {
     return (
       <div
@@ -54,9 +54,9 @@ export const UserReports: React.FC<Props> = ({ reportData }) => {
   const menuItems = reportData.results.map((item) => {
     let icon;
 
-    if (item.file_name) {
+    if (item.fileName) {
       const fileExtension = (
-        item.file_name.split(".").pop() || ""
+        item.fileName.split(".").pop() || ""
       ).toLowerCase();
 
       switch (fileExtension) {
@@ -81,4 +81,4 @@ export const UserReports: React.FC<Props> = ({ reportData }) => {
   });
 
   return <>{menuItems}</>;
-};
+}

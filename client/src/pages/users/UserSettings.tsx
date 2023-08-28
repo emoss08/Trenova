@@ -43,16 +43,16 @@ export default function UserSettings() {
   });
 
   const { data: jobTitleData, isLoading: isJobTitlesLoading } = useQuery({
-    queryKey: ["jobTitle", userDetails?.profile?.job_title],
+    queryKey: ["jobTitle", userDetails?.profile?.jobTitle],
     queryFn: () => {
       if (!userDetails || !userDetails.profile) {
         return Promise.resolve(null);
       }
-      return getJobTitleDetails(userDetails?.profile?.job_title);
+      return getJobTitleDetails(userDetails?.profile?.jobTitle);
     },
     enabled: !!userDetails,
     initialData: () =>
-      queryClient.getQueryData(["jobTitle", userDetails?.profile?.job_title]),
+      queryClient.getQueryData(["jobTitle", userDetails?.profile?.jobTitle]),
   });
 
   const isLoading = isUserDetailsLoading || isJobTitlesLoading;

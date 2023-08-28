@@ -66,7 +66,7 @@ export function ViewRCModalForm({
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <Select
             data={selectGlAccountData}
-            value={revenueCode.expense_account || ""}
+            value={revenueCode.expenseAccount || ""}
             readOnly
             label="AP Account"
             className={classes.fields}
@@ -74,7 +74,7 @@ export function ViewRCModalForm({
           />
           <Select
             data={selectGlAccountData}
-            value={revenueCode.revenue_account || ""}
+            value={revenueCode.revenueAccount || ""}
             readOnly
             label="Cash Account"
             className={classes.fields}
@@ -117,7 +117,7 @@ export function ViewRCModal(): React.ReactElement {
   const selectGlAccountData =
     glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
       value: glAccount.id,
-      label: glAccount.account_number,
+      label: glAccount.accountNumber,
     })) || [];
 
   return (

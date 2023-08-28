@@ -25,11 +25,11 @@ import {
 
 export const routeControlSchema: ObjectSchema<RouteControlFormValues> =
   Yup.object().shape({
-    distance_method: Yup.string<DistanceMethodChoiceProps>().required(
-      "Distance method is required"
+    distanceMethod: Yup.string<DistanceMethodChoiceProps>().required(
+      "Distance method is required",
     ),
-    mileage_unit: Yup.string<RouteModelChoiceProps>().required(
-      "Mileage unit is required"
+    mileageUnit: Yup.string<RouteModelChoiceProps>().required(
+      "Mileage unit is required",
     ),
-    generate_routes: Yup.boolean().required("Generate routes is required"),
+    generateRoutes: Yup.boolean().required("Generate routes is required"),
   });

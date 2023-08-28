@@ -21,6 +21,6 @@ import { EmailControlFormValues } from "@/types/apps/organization";
 
 export const emailControlSchema: ObjectSchema<EmailControlFormValues> =
   Yup.object().shape({
-    billing_email_profile: Yup.string().notRequired(),
-    rate_expiration_email_profile: Yup.string().notRequired(),
+    billingEmailProfile: Yup.string().notRequired(),
+    rateExpirationEmailProfile: Yup.string().notRequired(),
   });

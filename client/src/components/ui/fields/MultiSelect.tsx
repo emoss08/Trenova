@@ -31,9 +31,10 @@ ValidatedMultiSelect.defaultProps = {
 };
 
 interface ValidatedMultiSelectProps<TFormValues>
-  extends Omit<MultiSelectProps, "form"> {
+  extends Omit<MultiSelectProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   isLoading?: boolean;
+  name: keyof TFormValues;
 }
 
 export function ValidatedMultiSelect<TFormValues extends object>({

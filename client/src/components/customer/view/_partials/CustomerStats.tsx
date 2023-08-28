@@ -106,8 +106,8 @@ function RevenueMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStyles();
 
   const DiffIcon =
-    customer?.total_revenue_metrics.last_month_diff >
-    customer.total_revenue_metrics.month_before_last_diff
+    customer?.totalRevenueMetrics.lastMonthDiff >
+    customer.totalRevenueMetrics.monthBeforeLastDiff
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -127,11 +127,11 @@ function RevenueMetric({ customer }: CustomerMetricProps) {
       <Group align="flex-end" spacing="xs" mt={25}>
         <Tooltip
           withArrow
-          label={USDollarFormat(customer?.total_revenue_metrics.total_revenue)}
+          label={USDollarFormat(customer?.totalRevenueMetrics.totalRevenue)}
         >
           <Text className={classes.value}>
             {truncateText(
-              USDollarFormat(customer?.total_revenue_metrics.total_revenue),
+              USDollarFormat(customer?.totalRevenueMetrics.totalRevenue),
               9,
             )}
           </Text>
@@ -139,8 +139,8 @@ function RevenueMetric({ customer }: CustomerMetricProps) {
 
         <Text
           color={
-            customer?.total_revenue_metrics.last_month_diff >
-            customer.total_revenue_metrics.month_before_last_diff
+            customer?.totalRevenueMetrics.lastMonthDiff >
+            customer.totalRevenueMetrics.monthBeforeLastDiff
               ? "teal"
               : "red"
           }
@@ -148,7 +148,7 @@ function RevenueMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer?.total_revenue_metrics.last_month_diff}%</span>
+          <span>{customer?.totalRevenueMetrics.lastMonthDiff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>
@@ -164,8 +164,8 @@ function PerformanceMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStatStyle();
 
   const DiffIcon =
-    customer?.on_time_performance.this_month_on_time_percentage >
-    customer.on_time_performance.last_month_on_time_percentage
+    customer?.onTimePerformance.thisMonthOnTimePercentage >
+    customer.onTimePerformance.lastMonthOnTimePercentage
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -180,13 +180,13 @@ function PerformanceMetric({ customer }: CustomerMetricProps) {
 
       <Group align="flex-end" spacing="xs" mt={25}>
         <Text className={classes.value}>
-          {customer.on_time_performance.this_month_on_time_percentage}%
+          {customer.onTimePerformance.thisMonthOnTimePercentage}%
         </Text>
 
         <Text
           color={
-            customer?.on_time_performance.this_month_on_time_percentage >
-            customer.on_time_performance.last_month_on_time_percentage
+            customer?.onTimePerformance.thisMonthOnTimePercentage >
+            customer.onTimePerformance.lastMonthOnTimePercentage
               ? "teal"
               : "red"
           }
@@ -194,7 +194,7 @@ function PerformanceMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer?.on_time_performance.on_time_diff}%</span>
+          <span>{customer?.onTimePerformance.onTimeDiff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>
@@ -210,8 +210,8 @@ function OrdersMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStatStyle();
 
   const DiffIcon =
-    customer?.total_order_metrics.last_month_diff >
-    customer.total_order_metrics.month_before_last_diff
+    customer?.totalOrderMetrics.lastMonthDiff >
+    customer.totalOrderMetrics.monthBeforeLastDiff
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -226,12 +226,12 @@ function OrdersMetric({ customer }: CustomerMetricProps) {
 
       <Group align="flex-end" spacing="xs" mt={25}>
         <Text className={classes.value}>
-          {customer?.total_order_metrics.total_orders}
+          {customer?.totalOrderMetrics.totalOrders}
         </Text>
         <Text
           color={
-            customer?.total_order_metrics.last_month_diff >
-            customer.total_order_metrics.month_before_last_diff
+            customer?.totalOrderMetrics.lastMonthDiff >
+            customer.totalOrderMetrics.monthBeforeLastDiff
               ? "teal"
               : "red"
           }
@@ -239,7 +239,7 @@ function OrdersMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer?.total_order_metrics.last_month_diff}%</span>
+          <span>{customer?.totalOrderMetrics.lastMonthDiff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>
@@ -255,8 +255,8 @@ function MileageMetric({ customer }: CustomerMetricProps) {
   const { classes } = useStatStyle();
 
   const DiffIcon =
-    customer?.total_mileage_metrics.this_month_miles >
-    customer.total_mileage_metrics.last_month_miles
+    customer?.totalMileageMetrics.thisMonthMiles >
+    customer.totalMileageMetrics.lastMonthMiles
       ? IconArrowUpRight
       : IconArrowDownRight;
 
@@ -275,13 +275,13 @@ function MileageMetric({ customer }: CustomerMetricProps) {
 
       <Group align="flex-end" spacing="xs" mt={25}>
         <Text className={classes.value}>
-          {customer.total_mileage_metrics.this_month_miles}
+          {customer.totalMileageMetrics.thisMonthMiles}
         </Text>
 
         <Text
           color={
-            customer.total_mileage_metrics.this_month_miles >
-            customer.total_mileage_metrics.last_month_miles
+            customer.totalMileageMetrics.thisMonthMiles >
+            customer.totalMileageMetrics.lastMonthMiles
               ? "teal"
               : "red"
           }
@@ -289,7 +289,7 @@ function MileageMetric({ customer }: CustomerMetricProps) {
           fw={500}
           className={classes.diff}
         >
-          <span>{customer.total_mileage_metrics.mileage_diff}%</span>
+          <span>{customer.totalMileageMetrics.mileageDiff}%</span>
           <DiffIcon size="1rem" stroke={1.5} />
         </Text>
       </Group>

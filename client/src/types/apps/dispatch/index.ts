@@ -18,27 +18,19 @@
 export type DispatchControl = {
   id: string;
   organization: string;
-  record_service_incident: string;
-  grace_period: number;
-  deadhead_target: number;
-  driver_assign: boolean;
-  trailer_continuity: boolean;
-  dupe_trailer_check: boolean;
-  regulatory_check: boolean;
-  prev_orders_on_hold: boolean;
-  driver_time_away_restriction: boolean;
-  tractor_worker_fleet_constraint: boolean;
+  recordServiceIncident: string;
+  gracePeriod: number;
+  deadheadTarget: number;
+  driverAssign: boolean;
+  trailerContinuity: boolean;
+  dupeTrailerCheck: boolean;
+  regulatoryCheck: boolean;
+  prevOrdersOnHold: boolean;
+  driverTimeAwayRestriction: boolean;
+  tractorWorkerFleetConstraint: boolean;
 };
 
-export type DispatchControlFormValues = {
-  record_service_incident: string;
-  grace_period: number;
-  deadhead_target: number;
-  driver_assign: boolean;
-  trailer_continuity: boolean;
-  dupe_trailer_check: boolean;
-  regulatory_check: boolean;
-  prev_orders_on_hold: boolean;
-  driver_time_away_restriction: boolean;
-  tractor_worker_fleet_constraint: boolean;
-};
+export type DispatchControlFormValues = Omit<
+  DispatchControl,
+  "id" | "organization"
+>;

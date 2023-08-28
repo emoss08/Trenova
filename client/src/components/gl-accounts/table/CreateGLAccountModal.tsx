@@ -91,12 +91,12 @@ function CreateGLAccountModalForm(): React.ReactElement {
     validate: yupResolver(glAccountSchema),
     initialValues: {
       status: "A",
-      account_number: "0000-0000-0000-0000",
+      accountNumber: "0000-0000-0000-0000",
       description: "",
-      account_type: "",
-      cash_flow_type: "",
-      account_sub_type: "",
-      account_classification: "",
+      accountType: "",
+      cashFlowType: "",
+      accountSubType: "",
+      accountClassification: "",
     },
   });
 
@@ -108,93 +108,91 @@ function CreateGLAccountModalForm(): React.ReactElement {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={statusChoices}
-              className={classes.fields}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="account_number"
-              label="Account Number"
-              placeholder="Account Number"
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <ValidatedTextArea
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<GLAccountFormValues>
             form={form}
+            data={statusChoices}
             className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
+            name="status"
+            label="Status"
+            placeholder="Status"
             variant="filled"
             withAsterisk
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={accountTypeChoices}
-              className={classes.fields}
-              name="account_type"
-              label="Account Type"
-              placeholder="AP Account"
-              variant="filled"
-              withAsterisk
-              clearable
-            />
-            <SelectInput
-              form={form}
-              data={cashFlowTypeChoices}
-              className={classes.fields}
-              name="cash_flow_type"
-              label="Cash Flow Type"
-              placeholder="Cash Flow Type"
-              variant="filled"
-              clearable
-            />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={accountSubTypeChoices}
-              className={classes.fields}
-              name="account_sub_type"
-              label="Account Sub Type"
-              placeholder="Account Sub Type"
-              variant="filled"
-              clearable
-            />
-            <SelectInput
-              form={form}
-              data={accountClassificationChoices}
-              className={classes.fields}
-              name="account_classification"
-              label="Account Classification"
-              placeholder="Account Classification"
-              variant="filled"
-              clearable
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+          <ValidatedTextInput<GLAccountFormValues>
+            form={form}
+            className={classes.fields}
+            name="accountNumber"
+            label="Account Number"
+            placeholder="Account Number"
+            variant="filled"
+            withAsterisk
+          />
+        </SimpleGrid>
+        <ValidatedTextArea<GLAccountFormValues>
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          variant="filled"
+          withAsterisk
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={accountTypeChoices}
+            className={classes.fields}
+            name="accountType"
+            label="Account Type"
+            placeholder="AP Account"
+            variant="filled"
+            withAsterisk
+            clearable
+          />
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={cashFlowTypeChoices}
+            className={classes.fields}
+            name="cashFlowType"
+            label="Cash Flow Type"
+            placeholder="Cash Flow Type"
+            variant="filled"
+            clearable
+          />
+        </SimpleGrid>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={accountSubTypeChoices}
+            className={classes.fields}
+            name="accountSubType"
+            label="Account Sub Type"
+            placeholder="Account Sub Type"
+            variant="filled"
+            clearable
+          />
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={accountClassificationChoices}
+            className={classes.fields}
+            name="accountClassification"
+            label="Account Classification"
+            placeholder="Account Classification"
+            variant="filled"
+            clearable
+          />
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );

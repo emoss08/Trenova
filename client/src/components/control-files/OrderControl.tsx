@@ -37,23 +37,19 @@ function OrderControlPage() {
   // Store first element of orderControlData in variable
   const orderControlDataArray = orderControlData?.[0];
 
-  return (
-    <>
-      {isOrderControlDataLoading ? (
-        <Skeleton height={400} />
-      ) : (
-        <Card className={classes.card}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Order Controls
-          </Text>
+  return isOrderControlDataLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Order Controls
+      </Text>
 
-          <Divider my={10} />
-          {orderControlDataArray && (
-            <OrderControlForm orderControl={orderControlDataArray} />
-          )}
-        </Card>
+      <Divider my={10} />
+      {orderControlDataArray && (
+        <OrderControlForm orderControl={orderControlDataArray} />
       )}
-    </>
+    </Card>
   );
 }
 

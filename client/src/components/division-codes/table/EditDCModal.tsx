@@ -108,9 +108,9 @@ export function EditDCModalForm({
       status: divisionCode.status,
       code: divisionCode.code,
       description: divisionCode.description,
-      ap_account: divisionCode.ap_account || "",
-      cash_account: divisionCode.cash_account || "",
-      expense_account: divisionCode.expense_account || "",
+      apAccount: divisionCode.apAccount || "",
+      cashAccount: divisionCode.cashAccount || "",
+      expenseAccount: divisionCode.expenseAccount || "",
     },
   });
 
@@ -124,7 +124,7 @@ export function EditDCModalForm({
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<DivisionCodeFormValues>
               form={form}
               data={statusChoices}
               className={classes.fields}
@@ -136,7 +136,7 @@ export function EditDCModalForm({
                 form.setFieldValue("status", form.values.status);
               }}
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<DivisionCodeFormValues>
               form={form}
               className={classes.fields}
               name="code"
@@ -146,7 +146,7 @@ export function EditDCModalForm({
               withAsterisk
             />
           </SimpleGrid>
-          <ValidatedTextArea
+          <ValidatedTextArea<DivisionCodeFormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -156,38 +156,32 @@ export function EditDCModalForm({
             withAsterisk
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<DivisionCodeFormValues>
               form={form}
               data={selectGlAccountData}
               className={classes.fields}
-              name="ap_account"
+              name="apAccount"
               label="AP Account"
               placeholder="AP Account"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("ap_account", form.values.ap_account);
-              }}
               clearable
             />
-            <SelectInput
+            <SelectInput<DivisionCodeFormValues>
               form={form}
               data={selectGlAccountData}
               className={classes.fields}
-              name="cash_account"
+              name="cashAccount"
               label="Cash Account"
               placeholder="Cash Account"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("cash_account", form.values.cash_account);
-              }}
               clearable
             />
           </SimpleGrid>
-          <SelectInput
+          <SelectInput<DivisionCodeFormValues>
             form={form}
             data={selectGlAccountData}
             className={classes.fields}
-            name="expense_account"
+            name="expenseAccount"
             label="Expense Account"
             placeholder="Expense Account"
             variant="filled"
@@ -226,7 +220,7 @@ export function EditDCModal(): React.ReactElement {
   const selectGlAccountData =
     glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
       value: glAccount.id,
-      label: glAccount.account_number,
+      label: glAccount.accountNumber,
     })) || [];
 
   return (

@@ -123,7 +123,7 @@ const reconnect = () => {
   );
 };
 
-export const UserNotifications: React.FC = () => {
+export function UserNotifications(): React.ReactElement | null {
   const [notificationMenuOpen] = useNavbarStore.use("notificationsMenuOpen");
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = getUserId() || "";
@@ -154,7 +154,11 @@ export const UserNotifications: React.FC = () => {
                 });
 
                 if (data.attr === "report") {
-                  queryClient.invalidateQueries(["userReport", userId]);
+                  queryClient
+                    .invalidateQueries(["userReport", userId])
+                    .then(() => {
+                      console.info("Report query invalidated");
+                    });
                 }
 
                 sound.play();
@@ -168,14 +172,14 @@ export const UserNotifications: React.FC = () => {
               );
               reconnect();
             } else {
-              console.info(
+              console.warn(
                 "[close] Connection died. Reconnect will be attempted in 1 second.",
               );
               reconnect();
             }
           },
           onError: (error: Event) => {
-            console.log(`[error] ${error}`);
+            console.error(`[error] ${error}`);
           },
         },
       );
@@ -188,7 +192,7 @@ export const UserNotifications: React.FC = () => {
         webSocketManager.disconnect("notifications");
       }
     };
-  }, [isAuthenticated, userId]); // add dependencies here if necessary
+  }, [isAuthenticated, userId, queryClient]);
 
   const { data: notificationData, isLoading: isNotificationDataLoading } =
     useQuery({
@@ -232,7 +236,7 @@ export const UserNotifications: React.FC = () => {
       }}
     >
       <Popover.Target>
-        {notificationData && notificationData?.unread_count > 0 ? (
+        {notificationData && notificationData?.unreadCount > 0 ? (
           <div className={classes.mainLinks}>
             <UnstyledButton
               className={classes.mainLink}
@@ -252,7 +256,7 @@ export const UserNotifications: React.FC = () => {
                   variant="filled"
                   className={classes.mainLinkBadge}
                 >
-                  {notificationData?.unread_count || 0}
+                  {notificationData?.unreadCount || 0}
                 </Badge>
               </Indicator>
             </UnstyledButton>
@@ -289,12 +293,14 @@ export const UserNotifications: React.FC = () => {
       </Popover.Target>
       <Popover.Dropdown>
         <ScrollArea h={250} scrollbarSize={4}>
-          <Notifications
-            notification={notificationData}
-            notificationLoading={isNotificationDataLoading}
-          />
+          {notificationData && (
+            <Notifications
+              notification={notificationData}
+              notificationLoading={isNotificationDataLoading}
+            />
+          )}
         </ScrollArea>
-        {notificationData && notificationData?.unread_count > 0 ? (
+        {notificationData && notificationData?.unreadCount > 0 ? (
           <>
             <Divider mb={2} mt={10} />
             <div
@@ -322,4 +328,4 @@ export const UserNotifications: React.FC = () => {
       </Popover.Dropdown>
     </Popover>
   );
-};
+}

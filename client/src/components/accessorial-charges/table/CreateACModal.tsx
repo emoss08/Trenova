@@ -94,8 +94,8 @@ export function CreateACModalForm() {
     initialValues: {
       code: "",
       description: "",
-      is_detention: false,
-      charge_amount: 0,
+      isDetention: false,
+      chargeAmount: 0,
       method: "D",
     },
   });
@@ -109,7 +109,7 @@ export function CreateACModalForm() {
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <Box>
-          <ValidatedTextInput
+          <ValidatedTextInput<AccessorialChargeFormValues>
             form={form}
             className={classes.fields}
             name="code"
@@ -133,7 +133,7 @@ export function CreateACModalForm() {
             <ValidatedTextInput
               form={form}
               className={classes.fields}
-              name="charge_amount"
+              name="chargeAmount"
               label="Charge Amount"
               placeholder="Charge Amount"
               description="Charge amount for the accessorial charge"
@@ -156,7 +156,7 @@ export function CreateACModalForm() {
             <SwitchInput
               form={form}
               className={classes.fields}
-              name="is_detention"
+              name="isDetention"
               label="Detention"
               description="Is this a detention charge?"
               placeholder="Detention"

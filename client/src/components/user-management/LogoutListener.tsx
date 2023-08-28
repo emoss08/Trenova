@@ -42,7 +42,7 @@ export function LogoutListener({ userId }: LogoutListenerProps) {
         onMessage: (message) => {
           const data = JSON.parse(message.data);
           console.log(data);
-          if (data.user_id === userId) {
+          if (data.userId === userId) {
             sessionStorage.clear();
             setIsAuthenticated(false);
             navigate("/login");
@@ -50,7 +50,7 @@ export function LogoutListener({ userId }: LogoutListenerProps) {
             console.info("Logged out");
           }
         },
-      }
+      },
     );
     // Close the connection when the component unmounts.
     return () => {

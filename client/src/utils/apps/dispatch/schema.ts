@@ -21,26 +21,22 @@ import { DispatchControlFormValues } from "@/types/apps/dispatch";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
-    record_service_incident: Yup.string().required(
-      "Record Service Incident is required"
+    recordServiceIncident: Yup.string().required(
+      "Record Service Incident is required",
     ),
-    grace_period: Yup.number().required("Grace Period is required"),
-    deadhead_target: Yup.number().required("Deadhead Target is required"),
-    driver_assign: Yup.boolean().required("Driver Assign is required"),
-    trailer_continuity: Yup.boolean().required(
-      "Trailer Continuity is required"
+    gracePeriod: Yup.number().required("Grace Period is required"),
+    deadheadTarget: Yup.number().required("Deadhead Target is required"),
+    driverAssign: Yup.boolean().required("Driver Assign is required"),
+    trailerContinuity: Yup.boolean().required("Trailer Continuity is required"),
+    dupeTrailerCheck: Yup.boolean().required("Dupe Trailer Check is required"),
+    regulatoryCheck: Yup.boolean().required("Regulatory Check is required"),
+    prevOrdersOnHold: Yup.boolean().required(
+      "Previous Orders on Hold is required",
     ),
-    dupe_trailer_check: Yup.boolean().required(
-      "Dupe Trailer Check is required"
+    driverTimeAwayRestriction: Yup.boolean().required(
+      "Driver Time Away Restriction is required",
     ),
-    regulatory_check: Yup.boolean().required("Regulatory Check is required"),
-    prev_orders_on_hold: Yup.boolean().required(
-      "Previous Orders on Hold is required"
-    ),
-    driver_time_away_restriction: Yup.boolean().required(
-      "Driver Time Away Restriction is required"
-    ),
-    tractor_worker_fleet_constraint: Yup.boolean().required(
-      "Tractor Worker Fleet Constraint is required"
+    tractorWorkerFleetConstraint: Yup.boolean().required(
+      "Tractor Worker Fleet Constraint is required",
     ),
   });

@@ -37,23 +37,19 @@ function InvoiceControlPage() {
   // Store first element of invoiceControlData in variable
   const invoiceControlDataArray = invoiceControlData?.[0];
 
-  return (
-    <>
-      {isInvoiceControlDataLoading ? (
-        <Skeleton height={400} />
-      ) : (
-        <Card className={classes.card}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Invoice Controls
-          </Text>
+  return isInvoiceControlDataLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Invoice Controls
+      </Text>
 
-          <Divider my={10} />
-          {invoiceControlDataArray && (
-            <InvoiceControlForm invoiceControl={invoiceControlDataArray} />
-          )}
-        </Card>
+      <Divider my={10} />
+      {invoiceControlDataArray && (
+        <InvoiceControlForm invoiceControl={invoiceControlDataArray} />
       )}
-    </>
+    </Card>
   );
 }
 

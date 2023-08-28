@@ -40,16 +40,16 @@ export function RevenueCodeTable() {
         Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
       },
       {
-        id: "rev_account_num",
-        accessorKey: "rev_account_num",
+        id: "revAccountNum",
+        accessorKey: "revAccountNum",
         header: "Revenue Account",
         Cell: ({ cell }) => {
           return cell.getValue() ? cell.getValue() : "No Revenue Account";
         },
       },
       {
-        id: "exp_account_num",
-        accessorKey: "exp_account_num",
+        id: "expAccountNum",
+        accessorKey: "expAccountNum",
         header: "Expense Account",
         Cell: ({ cell }) => {
           return cell.getValue() ? cell.getValue() : "No Expense Account";

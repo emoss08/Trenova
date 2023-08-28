@@ -26,7 +26,7 @@ export const jobTitleSchema: ObjectSchema<JobTitleFormValues> =
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string().required("Name is required"),
     description: Yup.string().notRequired(),
-    job_function: Yup.string<JobFunctionChoiceProps>().required(
-      "Job Function is required"
+    jobFunction: Yup.string<JobFunctionChoiceProps>().required(
+      "Job Function is required",
     ),
   });

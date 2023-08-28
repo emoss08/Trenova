@@ -67,7 +67,7 @@ function CustomerCreditBalance({ customer }: CustomerCreditBalanceProps) {
         }}
       >
         <Text className={classes.text} mr="0.5%" fw={600} fz={20}>
-          {USDollarFormat(customer.credit_balance)}
+          {USDollarFormat(customer.creditBalance)}
         </Text>
 
         <Text color="dimmed" fw={600} fz={15}>

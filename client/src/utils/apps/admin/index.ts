@@ -122,7 +122,7 @@ const InvoiceControlContent = lazy(
   () => import("../../../components/control-files/InvoiceControl"),
 );
 const OrderControlContent = lazy(
-  () => import("../../../components/control-files/BillingControl"),
+  () => import("../../../components/control-files/OrderControl"),
 );
 const EmailControlContent = lazy(
   () => import("../../../components/control-files/EmailControl"),

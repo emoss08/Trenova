@@ -48,7 +48,7 @@ type EditGLAccountModalFormProps = {
 
 export function EditGLAccountModalForm({
   glAccount,
-}: EditGLAccountModalFormProps) {
+}: EditGLAccountModalFormProps): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -58,22 +58,25 @@ export function EditGLAccountModalForm({
       axios.put(`/gl_accounts/${glAccount.id}/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["gl-account-table-data"],
-        });
         queryClient
           .invalidateQueries({
-            queryKey: ["glAccount", glAccount.id],
+            queryKey: ["gl-account-table-data"],
           })
           .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "GL Account updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("editModalOpen", false);
+            queryClient
+              .invalidateQueries({
+                queryKey: ["glAccount", glAccount.id],
+              })
+              .finally(() => {
+                notifications.show({
+                  title: "Success",
+                  message: "GL Account updated successfully",
+                  color: "green",
+                  withCloseButton: true,
+                  icon: <FontAwesomeIcon icon={faCheck} />,
+                });
+                store.set("editModalOpen", false);
+              });
           });
       },
       onError: (error: any) => {
@@ -104,12 +107,12 @@ export function EditGLAccountModalForm({
     validate: yupResolver(glAccountSchema),
     initialValues: {
       status: glAccount.status,
-      account_number: glAccount.account_number,
+      accountNumber: glAccount.accountNumber,
       description: glAccount.description,
-      account_type: glAccount.account_type,
-      cash_flow_type: glAccount?.cash_flow_type,
-      account_sub_type: glAccount?.account_sub_type,
-      account_classification: glAccount?.account_classification,
+      accountType: glAccount.accountType,
+      cashFlowType: glAccount?.cashFlowType,
+      accountSubType: glAccount?.accountSubType,
+      accountClassification: glAccount?.accountClassification,
     },
   });
 
@@ -121,117 +124,97 @@ export function EditGLAccountModalForm({
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={statusChoices}
-              className={classes.fields}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("status", form.values.status);
-              }}
-              withAsterisk
-            />
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="account_number"
-              label="Account Number"
-              placeholder="Account Number"
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <ValidatedTextArea
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={statusChoices}
+            className={classes.fields}
+            name="status"
+            label="Status"
+            placeholder="Status"
+            variant="filled"
+            onMouseLeave={() => {
+              form.setFieldValue("status", form.values.status);
+            }}
+            withAsterisk
+          />
+          <ValidatedTextInput<GLAccountFormValues>
             form={form}
             className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
+            name="accountNumber"
+            label="Account Number"
+            placeholder="Account Number"
             variant="filled"
             withAsterisk
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={accountTypeChoices}
-              className={classes.fields}
-              name="account_type"
-              label="Account Type"
-              placeholder="AP Account"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("account_type", form.values.account_type);
-              }}
-              clearable
-              withAsterisk
-            />
-            <SelectInput
-              form={form}
-              data={cashFlowTypeChoices}
-              className={classes.fields}
-              name="cash_flow_type"
-              label="Cash Flow Type"
-              placeholder="Cash Flow Type"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue(
-                  "cash_flow_type",
-                  form.values.cash_flow_type,
-                );
-              }}
-              clearable
-            />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={accountSubTypeChoices}
-              className={classes.fields}
-              name="account_sub_type"
-              label="Account Sub Type"
-              placeholder="Account Sub Type"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue(
-                  "account_sub_type",
-                  form.values.account_sub_type,
-                );
-              }}
-              clearable
-            />
-            <SelectInput
-              form={form}
-              data={accountClassificationChoices}
-              className={classes.fields}
-              name="account_classification"
-              label="Account Classification"
-              placeholder="Account Classification"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue(
-                  "account_classification",
-                  form.values.account_classification,
-                );
-              }}
-              clearable
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+        </SimpleGrid>
+        <ValidatedTextArea<GLAccountFormValues>
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          variant="filled"
+          withAsterisk
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={accountTypeChoices}
+            className={classes.fields}
+            name="accountType"
+            label="Account Type"
+            placeholder="AP Account"
+            variant="filled"
+            onMouseLeave={() => {
+              form.setFieldValue("accountType", form.values.accountType);
+            }}
+            clearable
+            withAsterisk
+          />
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={cashFlowTypeChoices}
+            className={classes.fields}
+            name="cashFlowType"
+            label="Cash Flow Type"
+            placeholder="Cash Flow Type"
+            variant="filled"
+            clearable
+          />
+        </SimpleGrid>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={accountSubTypeChoices}
+            className={classes.fields}
+            name="accountSubType"
+            label="Account Sub Type"
+            placeholder="Account Sub Type"
+            variant="filled"
+            clearable
+          />
+          <SelectInput<GLAccountFormValues>
+            form={form}
+            data={accountClassificationChoices}
+            className={classes.fields}
+            name="accountClassification"
+            label="Account Classification"
+            placeholder="Account Classification"
+            variant="filled"
+            clearable
+          />
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );

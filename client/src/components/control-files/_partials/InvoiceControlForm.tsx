@@ -15,14 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  Box,
-  Button,
-  createStyles,
-  Group,
-  rem,
-  SimpleGrid,
-} from "@mantine/core";
+import { Box, Button, Group, SimpleGrid } from "@mantine/core";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQueryClient } from "react-query";
@@ -49,7 +42,9 @@ interface Props {
   invoiceControl: InvoiceControl;
 }
 
-export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
+export function InvoiceControlForm({
+  invoiceControl,
+}: Props): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -80,12 +75,12 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -98,42 +93,39 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<InvoiceControlFormValues>({
     validate: yupResolver(invoiceControlSchema),
     initialValues: {
-      invoice_number_prefix: invoiceControl.invoice_number_prefix,
-      credit_memo_number_prefix: invoiceControl.credit_memo_number_prefix,
-      invoice_due_after_days: invoiceControl.invoice_due_after_days,
-      invoice_terms: invoiceControl.invoice_terms || "",
-      invoice_footer: invoiceControl.invoice_footer || "",
-      invoice_logo: invoiceControl.invoice_logo || "",
-      invoice_logo_width: invoiceControl.invoice_logo_width,
-      show_invoice_due_date: invoiceControl.show_invoice_due_date,
-      invoice_date_format: invoiceControl.invoice_date_format,
-      show_amount_due: invoiceControl.show_amount_due,
-      attach_pdf: invoiceControl.attach_pdf,
+      invoiceNumberPrefix: invoiceControl.invoiceNumberPrefix,
+      creditMemoNumberPrefix: invoiceControl.creditMemoNumberPrefix,
+      invoiceDueAfterDays: invoiceControl.invoiceDueAfterDays,
+      invoiceTerms: invoiceControl.invoiceTerms || "",
+      invoiceFooter: invoiceControl.invoiceFooter || "",
+      invoiceLogo: invoiceControl.invoiceLogo || "",
+      invoiceLogoWidth: invoiceControl.invoiceLogoWidth,
+      showInvoiceDueDate: invoiceControl.showInvoiceDueDate,
+      invoiceDateFormat: invoiceControl.invoiceDateFormat,
+      showAmountDue: invoiceControl.showAmountDue,
+      attachPdf: invoiceControl.attachPdf,
     },
   });
 
   const handleSubmit = (values: InvoiceControlFormValues) => {
     setLoading(true);
     const formData = new FormData();
-    for (const key in values) {
-      if (Object.prototype.hasOwnProperty.call(values, key)) {
-        const element = values[key as keyof InvoiceControlFormValues];
-        if (element instanceof File || typeof element === "string") {
-          formData.append(key, element);
-        } else if (
-          typeof element === "boolean" ||
-          typeof element === "number"
-        ) {
-          formData.append(key, element.toString());
-        }
+
+    Object.keys(values).forEach((key) => {
+      const element = values[key as keyof InvoiceControlFormValues];
+      if (element instanceof File || typeof element === "string") {
+        formData.append(key, element);
+      } else if (typeof element === "boolean" || typeof element === "number") {
+        formData.append(key, element.toString());
       }
-    }
+    });
+
     mutation.mutate(formData);
   };
 
@@ -142,30 +134,30 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput
+            <ValidatedTextInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="invoice_number_prefix"
+              name="invoiceNumberPrefix"
               label="Invoice Number Prefix"
               placeholder="Invoice Number Prefix"
               variant="filled"
               description="Define a prefix for invoice numbers."
               withAsterisk
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="credit_memo_number_prefix"
+              name="creditMemoNumberPrefix"
               label="Credit Memo Number Prefix"
               placeholder="Credit Memo Number Prefix"
               description="Define a prefix for credit note numbers."
               variant="filled"
               withAsterisk
             />
-            <ValidatedNumberInput
+            <ValidatedNumberInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="invoice_due_after_days"
+              name="invoiceDueAfterDays"
               label="Invoice Due After Days"
               placeholder="Invoice Due After Days"
               description="Define the number of days after which an invoice is due."
@@ -173,76 +165,76 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
               withAsterisk
             />
           </SimpleGrid>
-          <ValidatedTextArea
+          <ValidatedTextArea<InvoiceControlFormValues>
             form={form}
             className={classes.fields}
-            name="invoice_terms"
+            name="invoiceTerms"
             label="Invoice Terms"
             placeholder="Invoice Terms"
             description="Define the terms and conditions for invoices."
             variant="filled"
           />
-          <ValidatedTextArea
+          <ValidatedTextArea<InvoiceControlFormValues>
             form={form}
             className={classes.fields}
-            name="invoice_footer"
+            name="invoiceFooter"
             label="Invoice Footer"
             description="Define the footer for invoices."
             placeholder="Invoice Footer"
             variant="filled"
           />
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<InvoiceControlFormValues>
               form={form}
               data={dateFormatChoices}
               className={classes.fields}
-              name="invoice_date_format"
+              name="invoiceDateFormat"
               label="Invoice Date Format"
               placeholder="Invoice Date Format"
               description="Define the date format for invoices."
               variant="filled"
               withAsterisk
             />
-            <ValidatedNumberInput
+            <ValidatedNumberInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="invoice_logo_width"
+              name="invoiceLogoWidth"
               label="Invoice Logo Width"
               placeholder="Invoice Logo Width"
               description="Define the width of the invoice logo."
               variant="filled"
               withAsterisk
             />
-            <ValidatedFileInput
+            <ValidatedFileInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="invoice_logo"
+              name="invoiceLogo"
               label="Invoice Logo"
               placeholder="Invoice Logo"
               description="Define the logo for invoices."
               variant="filled"
-              value={form.values.invoice_logo}
+              value={form.values.invoiceLogo}
               accept="image/png,image/jpeg"
             />
-            <SwitchInput
+            <SwitchInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="show_invoice_due_date"
+              name="showInvoiceDueDate"
               label="Show Invoice Due Date"
               description="Show the invoice due date on the invoice."
             />
-            <SwitchInput
+            <SwitchInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="show_amount_due"
+              name="showAmountDue"
               label="Show Amount Due"
               description="Show the amount due on the invoice."
             />
-            <SwitchInput
+            <SwitchInput<InvoiceControlFormValues>
               form={form}
               className={classes.fields}
-              name="show_amount_due"
-              label="Show Amount Due"
+              name="attachPdf"
+              label="Attach PDF"
               description="Attach the invoice PDF to the invoice email."
             />
           </SimpleGrid>
@@ -260,4 +252,4 @@ export const InvoiceControlForm: React.FC<Props> = ({ invoiceControl }) => {
       </Box>
     </form>
   );
-};
+}

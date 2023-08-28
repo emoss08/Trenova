@@ -71,7 +71,7 @@ const initialValues: TransferListData = [
   [],
 ];
 
-export const CreateUserDrawer: React.FC = () => {
+export function CreateUserDrawer(): React.ReactElement | null {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const [checked, setChecked] = React.useState(false);
@@ -104,8 +104,8 @@ export const CreateUserDrawer: React.FC = () => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: any) => {
-            form.setFieldError(error.attr, error.detail);
+          data.errors.forEach((e: any) => {
+            form.setFieldError(e.attr, e.detail);
           });
         }
       },
@@ -123,15 +123,15 @@ export const CreateUserDrawer: React.FC = () => {
       .required("Email is required"),
     department: Yup.string(),
     profile: Yup.object().shape({
-      first_name: Yup.string().required("First name is required"),
-      last_name: Yup.string().required("Last name is required"),
-      address_line_1: Yup.string().required("Address Line 1 is required"),
-      address_line_2: Yup.string(),
+      firstName: Yup.string().required("First name is required"),
+      lastName: Yup.string().required("Last name is required"),
+      addressLine1: Yup.string().required("Address Line 1 is required"),
+      addressLine2: Yup.string(),
       city: Yup.string().required("City is required"),
       state: Yup.string().required("State is required"),
-      zip_code: Yup.string().required("Zip Code is required"),
-      job_title: Yup.string().required("Job Title is required"),
-      phone_number: Yup.string()
+      zipCode: Yup.string().required("Zip Code is required"),
+      jobTitle: Yup.string().required("Job Title is required"),
+      phoneNumber: Yup.string()
         .nullable()
         .test(
           "phone_number_format",
@@ -155,16 +155,16 @@ export const CreateUserDrawer: React.FC = () => {
       email: "",
       department: "",
       profile: {
-        job_title: "",
+        jobTitle: "",
         organization: "",
-        first_name: "",
-        last_name: "",
-        address_line_1: "",
-        address_line_2: "",
+        firstName: "",
+        lastName: "",
+        addressLine1: "",
+        addressLine2: "",
         city: "",
         state: "",
-        zip_code: "",
-        phone_number: "",
+        zipCode: "",
+        phoneNumber: "",
       },
     },
   });
@@ -239,7 +239,7 @@ export const CreateUserDrawer: React.FC = () => {
     })) || [];
 
   const jobTitleLabel = selectJobTitleData.find(
-    (item) => item.value === form.values.profile.job_title,
+    (item) => item.value === form.values.profile.jobTitle,
   )?.label;
 
   const onClose = () => {
@@ -307,7 +307,7 @@ export const CreateUserDrawer: React.FC = () => {
                     cols={2}
                     breakpoints={[{ maxWidth: "sm", cols: 1 }]}
                   >
-                    <SelectInput
+                    <SelectInput<UserFormValues>
                       form={form}
                       data={selectOrganizationData}
                       className={classes.fields}
@@ -344,7 +344,7 @@ export const CreateUserDrawer: React.FC = () => {
                           : undefined
                       }
                     />
-                    <ValidatedTextInput
+                    <ValidatedTextInput<UserFormValues>
                       form={form}
                       className={classes.fields}
                       name="username"
@@ -359,7 +359,7 @@ export const CreateUserDrawer: React.FC = () => {
                     breakpoints={[{ maxWidth: "sm", cols: 1 }]}
                     my={5}
                   >
-                    <ValidatedTextInput
+                    <ValidatedTextInput<UserFormValues>
                       form={form}
                       className={classes.fields}
                       name="email"
@@ -368,7 +368,7 @@ export const CreateUserDrawer: React.FC = () => {
                       variant="filled"
                       withAsterisk
                     />
-                    <SelectInput
+                    <SelectInput<UserFormValues>
                       form={form}
                       data={selectDepartmentData}
                       className={classes.fields}
@@ -399,14 +399,14 @@ export const CreateUserDrawer: React.FC = () => {
                       }
                     />
                   </SimpleGrid>
-                  <SwitchInput
+                  <SwitchInput<UserFormValues>
                     form={form}
                     size="md"
                     onChange={(event: any) =>
                       setChecked(event.currentTarget.checked)
                     }
                     checked={checked}
-                    name="is_staff"
+                    name="isSuperuser"
                     label="Is User Super Admin?"
                     description="Enabling this will give the user super admin privileges."
                   />
@@ -447,7 +447,7 @@ export const CreateUserDrawer: React.FC = () => {
                     variant="filled"
                     withAsterisk
                     onContextMenu={
-                      form.values.profile.job_title
+                      form.values.profile.jobTitle
                         ? showContextMenu([
                             {
                               key: "copy",
@@ -464,7 +464,7 @@ export const CreateUserDrawer: React.FC = () => {
                               onClick: () =>
                                 console.log(
                                   "ID ",
-                                  form.values.profile.job_title,
+                                  form.values.profile.jobTitle,
                                 ),
                             },
                           ])
@@ -583,4 +583,4 @@ export const CreateUserDrawer: React.FC = () => {
       )}
     </Drawer>
   );
-};
+}

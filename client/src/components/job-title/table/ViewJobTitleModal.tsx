@@ -42,59 +42,57 @@ type ViewJobTitleModalFormProps = {
 
 export function ViewJobTitleModalForm({
   jobTitle,
-}: ViewJobTitleModalFormProps) {
+}: ViewJobTitleModalFormProps): React.ReactElement {
   const { classes } = useFormStyles();
 
   return (
     <Box className={classes.div}>
-      <Box>
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <Select
-            data={statusChoices}
-            className={classes.fields}
-            readOnly
-            value={jobTitle.status}
-            label="Status"
-            variant="filled"
-          />
-          <TextInput
-            value={jobTitle.name}
-            readOnly
-            className={classes.fields}
-            label="Name"
-            variant="filled"
-          />
-        </SimpleGrid>
-        <Textarea
-          value={jobTitle.description || ""}
-          className={classes.fields}
-          label="Description"
-          readOnly
-          variant="filled"
-        />
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
         <Select
-          data={jobFunctionChoices}
-          value={jobTitle.job_function}
-          readOnly
-          label="Account Type"
+          data={statusChoices}
           className={classes.fields}
+          readOnly
+          value={jobTitle.status}
+          label="Status"
           variant="filled"
         />
-        <Group position="right" mt="md">
-          <Button
-            color="white"
-            type="submit"
-            onClick={() => {
-              store.set("selectedRecord", jobTitle);
-              store.set("viewModalOpen", false);
-              store.set("editModalOpen", true);
-            }}
-            className={classes.control}
-          >
-            Edit Job Title
-          </Button>
-        </Group>
-      </Box>
+        <TextInput
+          value={jobTitle.name}
+          readOnly
+          className={classes.fields}
+          label="Name"
+          variant="filled"
+        />
+      </SimpleGrid>
+      <Textarea
+        value={jobTitle.description || ""}
+        className={classes.fields}
+        label="Description"
+        readOnly
+        variant="filled"
+      />
+      <Select
+        data={jobFunctionChoices}
+        value={jobTitle.jobFunction}
+        readOnly
+        label="Job Function"
+        className={classes.fields}
+        variant="filled"
+      />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          onClick={() => {
+            store.set("selectedRecord", jobTitle);
+            store.set("viewModalOpen", false);
+            store.set("editModalOpen", true);
+          }}
+          className={classes.control}
+        >
+          Edit Job Title
+        </Button>
+      </Group>
     </Box>
   );
 }
@@ -130,11 +128,7 @@ export function ViewJobTitleModal(): React.ReactElement {
               <Skeleton height={400} />
             </Stack>
           ) : (
-            <>
-              {jobTitleData && (
-                <ViewJobTitleModalForm jobTitle={jobTitleData} />
-              )}
-            </>
+            jobTitleData && <ViewJobTitleModalForm jobTitle={jobTitleData} />
           )}
         </Modal.Body>
       </Modal.Content>

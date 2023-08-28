@@ -91,10 +91,10 @@ export function CreateHMModalForm() {
       status: "A",
       name: "",
       description: "",
-      hazard_class: "1.3",
-      packing_group: "I",
-      erg_number: "",
-      proper_shipping_name: "",
+      hazardClass: "1.3",
+      packingGroup: "I",
+      ergNumber: "",
+      properShippingName: "",
     },
   });
 
@@ -108,7 +108,7 @@ export function CreateHMModalForm() {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<HazardousMaterialFormValues>
               form={form}
               data={statusChoices}
               className={classes.fields}
@@ -118,7 +118,7 @@ export function CreateHMModalForm() {
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<HazardousMaterialFormValues>
               form={form}
               className={classes.fields}
               name="name"
@@ -128,7 +128,7 @@ export function CreateHMModalForm() {
               withAsterisk
             />
           </SimpleGrid>
-          <ValidatedTextArea
+          <ValidatedTextArea<HazardousMaterialFormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -137,39 +137,39 @@ export function CreateHMModalForm() {
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<HazardousMaterialFormValues>
               form={form}
               data={hazardousClassChoices}
               className={classes.fields}
-              name="hazard_class"
+              name="hazardClass"
               label="Hazard Class"
               placeholder="Hazard Class"
               variant="filled"
               withAsterisk
             />
-            <SelectInput
+            <SelectInput<HazardousMaterialFormValues>
               form={form}
               data={packingGroupChoices}
               className={classes.fields}
-              name="packing_group"
+              name="packingGroup"
               label="Packing Group"
               placeholder="Packing Group"
               variant="filled"
               clearable
             />
           </SimpleGrid>
-          <ValidatedTextInput
+          <ValidatedTextInput<HazardousMaterialFormValues>
             form={form}
             className={classes.fields}
-            name="erg_number"
+            name="ergNumber"
             label="ERG Number"
             placeholder="ERG Number"
             variant="filled"
           />
-          <ValidatedTextArea
+          <ValidatedTextArea<HazardousMaterialFormValues>
             form={form}
             className={classes.fields}
-            name="proper_shipping_name"
+            name="properShippingName"
             label="Proper Shipping Name"
             placeholder="Proper Shipping Name"
             variant="filled"

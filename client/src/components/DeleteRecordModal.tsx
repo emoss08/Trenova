@@ -24,17 +24,17 @@ import { notifications } from "@mantine/notifications";
 import { Box, Button, Modal, Text } from "@mantine/core";
 import { API_URL } from "@/lib/utils";
 
-export interface DeleteRecordModalProps<T extends { id: string }> {
+export interface DeleteRecordModalProps {
   link: string;
   queryKey: string;
   store: any;
 }
 
-export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
+export function DeleteRecordModal({
   link,
   queryKey,
   store,
-}) => {
+}: DeleteRecordModalProps): React.ReactElement | null {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [showDeleteRecordModal, setShowDeleteRecordModal] =
     store.use("deleteModalOpen");
@@ -47,7 +47,7 @@ export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
     setLoading(true);
     try {
       const response = await axios.delete(
-        `${API_URL}${link}/${selectedRecord.id}`
+        `${API_URL}${link}/${selectedRecord.id}`,
       );
       if (response.status === 204) {
         queryClient.invalidateQueries([queryKey]).then(() => {
@@ -79,15 +79,14 @@ export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-            Please confirm your action
+          Please confirm your action
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
           <Text size="sm">
-              This action is irreversible and will permanently remove all data
-              associated with this record. If you proceed, there will be no way
-              to recover this records information. Are you sure you want to
-              proceed?
+            This action is irreversible and will permanently remove all data
+            associated with this record. If you proceed, there will be no way to
+            recover this records information. Are you sure you want to proceed?
           </Text>
           <Box
             mt={10}
@@ -101,7 +100,7 @@ export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
               variant="default"
               mr={10}
             >
-                No don't delete it
+              No don&apos;t delete it
             </Button>
             <Button
               type="submit"
@@ -111,11 +110,11 @@ export const DeleteRecordModal: React.FC<DeleteRecordModalProps<any>> = ({
               loading={loading}
               onClick={() => handleDelete()}
             >
-                Delete Record
+              Delete Record
             </Button>
           </Box>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

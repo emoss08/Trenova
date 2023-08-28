@@ -21,25 +21,23 @@ import { OrderControlFormValues } from "@/types/apps/order";
 
 export const orderControlSchema: ObjectSchema<OrderControlFormValues> =
   Yup.object().shape({
-    auto_rate_orders: Yup.boolean().required("Auto Rate Orders is required"),
-    calculate_distance: Yup.boolean().required(
-      "Calculate Distance is required"
+    autoRateOrders: Yup.boolean().required("Auto Rate Orders is required"),
+    calculateDistance: Yup.boolean().required("Calculate Distance is required"),
+    enforceRevCode: Yup.boolean().required("Enforce Rev Code is required"),
+    enforceVoidedComm: Yup.boolean().required(
+      "Enforce Voided Comm is required",
     ),
-    enforce_rev_code: Yup.boolean().required("Enforce Rev Code is required"),
-    enforce_voided_comm: Yup.boolean().required(
-      "Enforce Voided Comm is required"
+    generateRoutes: Yup.boolean().required("Generate Routes is required"),
+    enforceCommodity: Yup.boolean().required("Enforce Commodity is required"),
+    autoSequenceStops: Yup.boolean().required(
+      "Auto Sequence Stops is required",
     ),
-    generate_routes: Yup.boolean().required("Generate Routes is required"),
-    enforce_commodity: Yup.boolean().required("Enforce Commodity is required"),
-    auto_sequence_stops: Yup.boolean().required(
-      "Auto Sequence Stops is required"
+    autoOrderTotal: Yup.boolean().required("Auto Order Total is required"),
+    enforceOriginDestination: Yup.boolean().required(
+      "Enforce Origin Destination is required",
     ),
-    auto_order_total: Yup.boolean().required("Auto Order Total is required"),
-    enforce_origin_destination: Yup.boolean().required(
-      "Enforce Origin Destination is required"
+    checkForDuplicateBol: Yup.boolean().required(
+      "Check for Duplicate BOL is required",
     ),
-    check_for_duplicate_bol: Yup.boolean().required(
-      "Check for Duplicate BOL is required"
-    ),
-    remove_orders: Yup.boolean().required("Remove Orders is required"),
+    removeOrders: Yup.boolean().required("Remove Orders is required"),
   });

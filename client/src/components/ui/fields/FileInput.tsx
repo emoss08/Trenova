@@ -55,7 +55,9 @@ const ValueComponent: FileInputProps["valueComponent"] = ({ value }) => {
   if (Array.isArray(value)) {
     return (
       <Group spacing="sm" py="xs">
-        {value.map((file, index) => file && <Value file={file} key={index} />)}
+        {value.map(
+          (file, _) => file && <Value file={file} key={`input-file-${file}`} />,
+        )}
       </Group>
     );
   }
@@ -64,8 +66,9 @@ const ValueComponent: FileInputProps["valueComponent"] = ({ value }) => {
 };
 
 interface ValidatedFileInputProps<TFormValues>
-  extends Omit<FileInputProps, "form"> {
+  extends Omit<FileInputProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: keyof TFormValues;
 }
 
 export function ValidatedFileInput<TFormValues extends object>({

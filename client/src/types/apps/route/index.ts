@@ -23,13 +23,8 @@ import {
 export type RouteControl = {
   id: string;
   organization: string;
-  distance_method: DistanceMethodChoiceProps;
-  mileage_unit: RouteModelChoiceProps;
-  generate_routes: boolean;
+  distanceMethod: DistanceMethodChoiceProps;
+  mileageUnit: RouteModelChoiceProps;
+  generateRoutes: boolean;
 };
-
-export type RouteControlFormValues = {
-  distance_method: DistanceMethodChoiceProps;
-  mileage_unit: RouteModelChoiceProps;
-  generate_routes: boolean;
-};
+export type RouteControlFormValues = Omit<RouteControl, "id" | "organization">;

@@ -21,18 +21,18 @@ import { StatusChoiceProps } from "@/types";
 export type UserProfile = {
   id: string;
   organization: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   user: string;
-  job_title: string;
-  address_line_1: string;
-  address_line_2?: string;
+  jobTitle: string;
+  addressLine1: string;
+  addressLine2?: string;
   city: string;
   state: string;
-  zip_code: string;
-  phone_number?: string;
-  profile_picture: string;
-  is_phone_verified: boolean;
+  zipCode: string;
+  phoneNumber?: string;
+  profilePicture: string;
+  isPhoneVerified: boolean;
 };
 
 export type User = {
@@ -41,14 +41,14 @@ export type User = {
   organization: string;
   email: string;
   department?: string;
-  date_joined: string;
-  is_superuser: boolean;
-  is_staff: boolean;
-  is_active: boolean;
+  dateJoined: string;
+  isSuperuser: boolean;
+  isStaff: boolean;
+  isActive: boolean;
   groups: string[];
-  user_permissions: string[];
+  userPermissions: string[];
   online: boolean;
-  last_login: string;
+  lastLogin: string;
   profile?: UserProfile;
 };
 
@@ -57,17 +57,18 @@ export type UserFormValues = {
   username: string;
   department?: string;
   email: string;
+  isSuperuser: boolean;
   profile: {
-    job_title: string;
+    jobTitle: string;
     organization: string;
-    first_name: string;
-    last_name: string;
-    address_line_1: string;
-    address_line_2?: string;
+    firstName: string;
+    lastName: string;
+    addressLine1: string;
+    addressLine2?: string;
     city: string;
     state: string;
-    zip_code: string;
-    phone_number?: string;
+    zipCode: string;
+    phoneNumber?: string;
   };
 };
 
@@ -77,18 +78,17 @@ export type JobTitle = {
   name: string;
   description?: string | null;
   status: StatusChoiceProps;
-  job_function: JobFunctionChoiceProps | "";
+  jobFunction: JobFunctionChoiceProps | "";
 };
 
-export interface JobTitleFormValues
-  extends Omit<JobTitle, "id" | "organization"> {}
+export type JobTitleFormValues = Omit<JobTitle, "id" | "organization">;
 
 export type UserReport = {
   id: string;
   user: string;
   report: string;
   created: string;
-  file_name: string;
+  fileName: string;
   modified: string;
 };
 
@@ -104,14 +104,15 @@ export type Notification = {
   level: string;
   recipient: string;
   unread: boolean;
-  actor_content_type: number;
-  actor_object_id: string;
+  actorContentType: number;
+  actorObjectId: string;
   verb: string;
   description: string;
-  target_content_type: number;
+  targetContentType: number;
+  targetObjectId: string;
   target_object_id: string;
-  action_object_content_type: number;
-  action_object_object_id: string;
+  actionObjectContentType: number;
+  actionObjectObjectId: string;
   timestamp: string;
   public: boolean;
   deleted: boolean;
@@ -119,12 +120,12 @@ export type Notification = {
   data: string;
   slug: number;
   actor: string;
-  action_object: string;
+  actionObject: string;
 };
 
 export type UserNotification = {
-  unread_count: number;
-  unread_list: Notification[];
+  unreadCount: number;
+  unreadList: Notification[];
 };
 
 export type GroupType = {

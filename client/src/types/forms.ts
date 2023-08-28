@@ -25,6 +25,6 @@ export const exportModelTypes: TChoiceProps[] = [
 ];
 
 export type TExportModelFormValue = {
-  file_format: string;
+  fileFormat: string;
   columns: string[];
 };

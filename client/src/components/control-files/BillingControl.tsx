@@ -37,23 +37,19 @@ function BillingControlPage() {
   // Store first element of BillingControlData in variable
   const billingControlDataArray = billingControlData?.[0];
 
-  return (
-    <>
-      {isBillingControlDataLoading ? (
-        <Skeleton height={400} />
-      ) : (
-        <Card className={classes.card}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Billing Controls
-          </Text>
+  return isBillingControlDataLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Billing Controls
+      </Text>
 
-          <Divider my={10} />
-          {billingControlDataArray && (
-            <BillingControlForm billingControl={billingControlDataArray} />
-          )}
-        </Card>
+      <Divider my={10} />
+      {billingControlDataArray && (
+        <BillingControlForm billingControl={billingControlDataArray} />
       )}
-    </>
+    </Card>
   );
 }
 

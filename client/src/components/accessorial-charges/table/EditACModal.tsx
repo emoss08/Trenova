@@ -98,8 +98,8 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
     initialValues: {
       code: accessorialCharge.code,
       description: accessorialCharge.description || "",
-      is_detention: accessorialCharge.is_detention,
-      charge_amount: accessorialCharge.charge_amount,
+      isDetention: accessorialCharge.isDetention,
+      chargeAmount: accessorialCharge.chargeAmount,
       method: accessorialCharge.method,
     },
   });
@@ -136,7 +136,7 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
             <ValidatedTextInput
               form={form}
               className={classes.fields}
-              name="charge_amount"
+              name="chargeAmount"
               label="Charge Amount"
               placeholder="Charge Amount"
               description="Charge amount for the accessorial charge."
@@ -156,7 +156,7 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
             <SwitchInput
               form={form}
               className={classes.fields}
-              name="is_detention"
+              name="isDetention"
               label="Detention"
               description="Is detention charge?"
               placeholder="Detention"

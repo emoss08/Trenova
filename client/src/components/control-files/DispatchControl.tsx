@@ -37,23 +37,19 @@ function DispatchControlPage() {
   // Store first element of dispatchControlData in variable
   const dispatchControlDataArray = dispatchControlData?.[0];
 
-  return (
-    <>
-      {isDispatchControlDataLoading ? (
-        <Skeleton height={400} />
-      ) : (
-        <Card className={classes.card}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Dispatch Controls
-          </Text>
+  return isDispatchControlDataLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Dispatch Controls
+      </Text>
 
-          <Divider my={10} />
-          {dispatchControlDataArray && (
-            <DispatchControlForm dispatchControl={dispatchControlDataArray} />
-          )}
-        </Card>
+      <Divider my={10} />
+      {dispatchControlDataArray && (
+        <DispatchControlForm dispatchControl={dispatchControlDataArray} />
       )}
-    </>
+    </Card>
   );
 }
 

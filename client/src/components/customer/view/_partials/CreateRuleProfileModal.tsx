@@ -105,7 +105,7 @@ function CreateRuleProfileModalForm({ customerId }: Props) {
     initialValues: {
       name: "",
       customer: customerId,
-      document_class: [""],
+      documentClass: [""],
     },
   });
 
@@ -119,7 +119,7 @@ function CreateRuleProfileModalForm({ customerId }: Props) {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput
+        <ValidatedTextInput<CustomerRuleProfileFormValues>
           form={form}
           name="name"
           label="Name"
@@ -127,7 +127,7 @@ function CreateRuleProfileModalForm({ customerId }: Props) {
           variant="filled"
           withAsterisk
         />
-        <ValidatedMultiSelect
+        <ValidatedMultiSelect<CustomerRuleProfileFormValues>
           form={form}
           name="document_class"
           data={selectDocumentClassData}

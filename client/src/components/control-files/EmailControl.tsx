@@ -57,26 +57,22 @@ function EmailControlPage() {
 
   const isLoading = isEmailControlDataLoading || isEmailProfilesLoading;
 
-  return (
-    <>
-      {isLoading ? (
-        <Skeleton height={400} />
-      ) : (
-        <Card className={classes.card}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Email Controls
-          </Text>
+  return isLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Email Controls
+      </Text>
 
-          <Divider my={10} />
-          {emailControlDataArray && (
-            <EmailControlForm
-              emailControl={emailControlDataArray}
-              selectEmailProfileData={selectEmailProfileData}
-            />
-          )}
-        </Card>
+      <Divider my={10} />
+      {emailControlDataArray && (
+        <EmailControlForm
+          emailControl={emailControlDataArray}
+          selectEmailProfileData={selectEmailProfileData}
+        />
       )}
-    </>
+    </Card>
   );
 }
 

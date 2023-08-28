@@ -110,9 +110,9 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
       status: "A",
       code: "",
       description: "",
-      ap_account: "",
-      cash_account: "",
-      expense_account: "",
+      apAccount: "",
+      cashAccount: "",
+      expenseAccount: "",
     },
   });
 
@@ -126,7 +126,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<DivisionCodeFormValues>
               form={form}
               data={statusChoices}
               name="status"
@@ -135,7 +135,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<DivisionCodeFormValues>
               form={form}
               name="code"
               label="Code"
@@ -145,7 +145,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
               maxLength={4}
             />
           </SimpleGrid>
-          <ValidatedTextArea
+          <ValidatedTextArea<DivisionCodeFormValues>
             form={form}
             name="description"
             label="Description"
@@ -154,29 +154,29 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
             withAsterisk
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<DivisionCodeFormValues>
               form={form}
               data={selectGlAccountData}
-              name="ap_account"
+              name="apAccount"
               label="AP Account"
               placeholder="AP Account"
               variant="filled"
               clearable
             />
-            <SelectInput
+            <SelectInput<DivisionCodeFormValues>
               form={form}
               data={selectGlAccountData}
-              name="cash_account"
+              name="cashAccount"
               label="Cash Account"
               placeholder="Cash Account"
               variant="filled"
               clearable
             />
           </SimpleGrid>
-          <SelectInput
+          <SelectInput<DivisionCodeFormValues>
             form={form}
             data={selectGlAccountData}
-            name="expense_account"
+            name="expenseAccount"
             label="Expense Account"
             placeholder="Expense Account"
             variant="filled"
@@ -213,7 +213,7 @@ export function CreateDCModal(): React.ReactElement {
   const selectGlAccountData =
     glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
       value: glAccount.id,
-      label: glAccount.account_number,
+      label: glAccount.accountNumber,
     })) || [];
 
   return (

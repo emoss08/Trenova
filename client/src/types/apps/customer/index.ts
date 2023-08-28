@@ -19,39 +19,39 @@ import { StatusChoiceProps } from "@/types";
 
 /** Customer Order Metric Type */
 type TotalOrderMetricsType = {
-  total_orders: number;
-  last_month_diff: number;
-  month_before_last_diff: number;
+  totalOrders: number;
+  lastMonthDiff: number;
+  monthBeforeLastDiff: number;
 };
 
 type TotalRevenueMetricsType = {
-  total_revenue: number;
-  last_month_diff: number;
-  month_before_last_diff: number;
+  totalRevenue: number;
+  lastMonthDiff: number;
+  monthBeforeLastDiff: number;
 };
 
 type PerformanceMetricType = {
-  this_month_on_time_percentage: number;
-  last_month_on_time_percentage: number;
-  on_time_diff: number;
-  this_month_early_percentage: number;
-  last_month_early_percentage: number;
-  early_diff: number;
-  this_month_late_percentage: number;
-  last_month_late_percentage: number;
-  late_diff: number;
+  thisMonthOnTimePercentage: number;
+  lastMonthOnTimePercentage: number;
+  onTimeDiff: number;
+  thisMonthEarlyPercentage: number;
+  lastMonthEarlyPercentage: number;
+  earlyDiff: number;
+  thisMonthLatePercentage: number;
+  lastMonthLatePercentage: number;
+  lateDiff: number;
 };
 
 type TotalMileageMetricsType = {
-  this_month_miles: number;
-  last_month_miles: number;
-  mileage_diff: number;
+  thisMonthMiles: number;
+  lastMonthMiles: number;
+  mileageDiff: number;
 };
 
 /** Customer Shipment Metric Type */
 type CustomerShipmentMetrics = {
-  last_bill_date?: string | null;
-  last_shipment_date?: string | null;
+  lastBillDate?: string | null;
+  lastShipmentDate?: string | null;
 };
 
 /** Customer Type */
@@ -61,23 +61,23 @@ export type Customer = {
   status: StatusChoiceProps;
   code: string;
   name: string;
-  address_line_1?: string | null;
-  address_line_2?: string | null;
+  addressLine1?: string | null;
+  addressLine2?: string | null;
   city?: string | null;
-  zip_code?: string | null;
+  zipCode?: string | null;
   state?: string | null;
-  has_customer_portal: string;
-  auto_mark_ready_to_bill: string;
+  hasCustomerPortal: string;
+  autoMarkReadyToBill: string;
   created: string;
   modified: string;
-  customer_shipment_metrics: CustomerShipmentMetrics;
-  total_order_metrics: TotalOrderMetricsType;
-  total_revenue_metrics: TotalRevenueMetricsType;
-  on_time_performance: PerformanceMetricType;
-  total_mileage_metrics: TotalMileageMetricsType;
-  credit_balance: number;
+  customerShipmentMetrics: CustomerShipmentMetrics;
+  totalOrderMetrics: TotalOrderMetricsType;
+  totalRevenueMetrics: TotalRevenueMetricsType;
+  onTimePerformance: PerformanceMetricType;
+  totalMileageMetrics: TotalMileageMetricsType;
+  creditBalance: number;
   advocate?: string | null;
-  advocate_full_name?: string | null;
+  advocateFullName?: string | null;
 };
 
 /** Customer Form Values Type */
@@ -87,14 +87,14 @@ export type CustomerFormValues = Omit<
   | "organization"
   | "created"
   | "modified"
-  | "customer_shipment_metrics"
-  | "total_revenue_metrics"
-  | "total_order_metrics"
-  | "on_time_performance"
-  | "total_mileage_metrics"
-  | "credit_balance"
+  | "customerShipmentMetrics"
+  | "totalRevenueMetrics"
+  | "totalOrderMetrics"
+  | "onTimePerformance"
+  | "totalMileageMetrics"
+  | "creditBalance"
   | "advocate"
-  | "advocate_full_name"
+  | "advocateFullName"
 >;
 
 /** Customer Rule Profile Type */
@@ -102,7 +102,7 @@ export type CustomerRuleProfile = {
   id: string;
   name: string;
   customer: string;
-  document_class: string[];
+  documentClass: string[];
 };
 
 export type CustomerRuleProfileFormValues = Omit<CustomerRuleProfile, "id">;
@@ -113,11 +113,11 @@ export type CustomerEmailProfile = {
   subject?: string | null;
   comment?: string | null;
   customer: string;
-  from_address?: string | null;
-  blind_copy?: string | null;
-  read_receipt: boolean;
-  read_receipt_to?: string | null;
-  attachment_name?: string | null;
+  fromAddress?: string | null;
+  blindCopy?: string | null;
+  readReceipt: boolean;
+  readReceiptTo?: string | null;
+  attachmentName?: string | null;
 };
 
 export type CustomerEmailProfileFormValues = Omit<

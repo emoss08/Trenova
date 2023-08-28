@@ -110,7 +110,7 @@ export function EditJobTitleModalForm({
       status: jobTitle.status,
       name: jobTitle.name,
       description: jobTitle.description || "",
-      job_function: jobTitle.job_function,
+      jobFunction: jobTitle.jobFunction,
     },
   });
 
@@ -122,61 +122,56 @@ export function EditJobTitleModalForm({
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={statusChoices}
-              className={classes.fields}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("status", form.values.status);
-              }}
-              withAsterisk
-            />
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="name"
-              label="Name"
-              placeholder="Name"
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <ValidatedTextArea
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<JobTitleFormValues>
             form={form}
+            data={statusChoices}
             className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
+            name="status"
+            label="Status"
+            placeholder="Status"
             variant="filled"
-          />
-          <SelectInput
-            form={form}
-            data={jobFunctionChoices}
-            className={classes.fields}
-            name="job_function"
-            label="Job Function"
-            placeholder="Job Function"
-            variant="filled"
-            clearable
             withAsterisk
           />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+          <ValidatedTextInput<JobTitleFormValues>
+            form={form}
+            className={classes.fields}
+            name="name"
+            label="Name"
+            placeholder="Name"
+            variant="filled"
+            withAsterisk
+          />
+        </SimpleGrid>
+        <ValidatedTextArea<JobTitleFormValues>
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          variant="filled"
+        />
+        <SelectInput<JobTitleFormValues>
+          form={form}
+          data={jobFunctionChoices}
+          className={classes.fields}
+          name="jobFunction"
+          label="Job Function"
+          placeholder="Job Function"
+          variant="filled"
+          clearable
+          withAsterisk
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );

@@ -117,8 +117,8 @@ export function EditRCModalForm({
     initialValues: {
       code: revenueCode.code,
       description: revenueCode.description,
-      expense_account: revenueCode.expense_account || "",
-      revenue_account: revenueCode.revenue_account || "",
+      expenseAccount: revenueCode.expenseAccount || "",
+      revenueAccount: revenueCode.revenueAccount || "",
     },
   });
 
@@ -131,7 +131,7 @@ export function EditRCModalForm({
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <Box>
-          <ValidatedTextInput
+          <ValidatedTextInput<RevenueCodeFormValues>
             form={form}
             className={classes.fields}
             name="code"
@@ -140,7 +140,7 @@ export function EditRCModalForm({
             variant="filled"
             withAsterisk
           />
-          <ValidatedTextArea
+          <ValidatedTextArea<RevenueCodeFormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -150,36 +150,24 @@ export function EditRCModalForm({
             withAsterisk
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<RevenueCodeFormValues>
               form={form}
               data={selectGlAccountData}
               className={classes.fields}
-              name="expense_account"
+              name="expenseAccount"
               label="Expense Account"
               placeholder="Expense Account"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue(
-                  "expense_account",
-                  form.values.expense_account,
-                );
-              }}
               clearable
             />
-            <SelectInput
+            <SelectInput<RevenueCodeFormValues>
               form={form}
               data={selectGlAccountData}
               className={classes.fields}
-              name="revenue_account"
+              name="revenueAccount"
               label="Revenue Account"
               placeholder="Revenue Account"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue(
-                  "revenue_account",
-                  form.values.revenue_account,
-                );
-              }}
               clearable
             />
           </SimpleGrid>
@@ -216,7 +204,7 @@ export function EditRCModal(): React.ReactElement {
   const selectGlAccountData =
     glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
       value: glAccount.id,
-      label: glAccount.account_number,
+      label: glAccount.accountNumber,
     })) || [];
 
   const { data: revenueCodeData, isLoading: isRevenueCodeDataLoading } =

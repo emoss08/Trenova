@@ -41,9 +41,9 @@ export function ACChargeTable() {
         Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
       },
       {
-        id: "is_detention",
+        id: "isDetention",
         accessorFn: (originalRow) =>
-          originalRow.is_detention ? "true" : "false",
+          originalRow.isDetention ? "true" : "false",
         header: "Is Detention",
         filterFn: "equals",
         Cell: ({ cell }) => (
@@ -66,7 +66,7 @@ export function ACChargeTable() {
       },
       {
         id: "charge_amount",
-        accessorKey: "charge_amount",
+        accessorKey: "chargeAmount",
         header: "Charge Amount",
         filterVariant: "text",
         sortingFn: "text",

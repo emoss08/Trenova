@@ -33,22 +33,22 @@ export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> 
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string().required("Description is required"),
     description: Yup.string().notRequired(),
-    hazard_class: Yup.string<HazardousClassChoiceProps>().required(
-      "Description is required",
+    hazardClass: Yup.string<HazardousClassChoiceProps>().required(
+      "Hazardous Class is required",
     ),
-    packing_group: Yup.string<PackingGroupChoiceProps>().notRequired(),
-    erg_number: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
-    proper_shipping_name: Yup.string().notRequired(),
+    packingGroup: Yup.string<PackingGroupChoiceProps>().notRequired(),
+    ergNumber: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
+    properShippingName: Yup.string().notRequired(),
   });
 
 export const commoditySchema: ObjectSchema<CommodityFormValues> =
   Yup.object().shape({
     name: Yup.string().required("Name is required"),
     description: Yup.string().notRequired(),
-    min_temp: Yup.number().notRequired(),
-    max_temp: Yup.number().notRequired(),
-    set_point_temp: Yup.number().notRequired(),
-    unit_of_measure: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
+    minTemp: Yup.number().notRequired(),
+    maxTemp: Yup.number().notRequired(),
+    setPointTemp: Yup.number().notRequired(),
+    unitOfMeasure: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
     hazmat: Yup.string().notRequired(),
-    is_hazmat: Yup.string<YesNoChoiceProps>().required("Is Hazmat is required"),
+    isHazmat: Yup.string<YesNoChoiceProps>().required("Is Hazmat is required"),
   });

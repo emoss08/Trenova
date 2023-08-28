@@ -44,7 +44,7 @@ export async function getOrganizations(): Promise<Organization[]> {
  * @returns A promise that resolves to the organization's details.
  */
 export async function getOrganizationDetails(
-  id: string
+  id: string,
 ): Promise<Organization> {
   const response = await axios.get(`/organizations/${id}/`);
   return response.data;

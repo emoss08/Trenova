@@ -18,11 +18,11 @@ import React from "react";
 import { Badge, Group, Skeleton, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faEnvelopeOpen } from "@fortawesome/pro-duotone-svg-icons";
-import { Notification } from "@/types/apps/accounts";
+import { Notification, UserNotification } from "@/types/apps/accounts";
 import { formatTimestamp } from "@/utils/date";
 
 type Props = {
-  notification: any;
+  notification: UserNotification;
   notificationLoading: boolean;
 };
 
@@ -31,7 +31,7 @@ export function Notifications({ notification, notificationLoading }: Props) {
     return <Skeleton width={300} height={250} />;
   }
 
-  if (!notification || notification?.unread_list.length === 0) {
+  if (!notification || notification?.unreadList.length === 0) {
     return (
       <div
         style={{
@@ -50,7 +50,7 @@ export function Notifications({ notification, notificationLoading }: Props) {
     );
   }
 
-  const notificationItems = notification?.unread_list.map(
+  const notificationItems = notification?.unreadList.map(
     (notif: Notification) => {
       const humanReadableTimestamp = formatTimestamp(notif.timestamp);
       return (

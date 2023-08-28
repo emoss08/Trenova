@@ -14,8 +14,9 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
+import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
 import { Text, Flex, Skeleton } from "@mantine/core";
 import { pathToRegexp } from "path-to-regexp";
 import { routes } from "@/routing/AppRoutes";
@@ -31,12 +32,12 @@ export function Breadcrumb() {
 
   useEffect(() => {
     useBreadcrumbStore.set("loading", true);
-    const route = routes.find((route) => {
-      if (route.path === "*") {
+    const route = routes.find((r) => {
+      if (r.path === "*") {
         return false;
       }
 
-      const re = pathToRegexp(route.path);
+      const re = pathToRegexp(r.path);
       return re.test(location.pathname);
     });
 

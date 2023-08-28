@@ -30,7 +30,7 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import { ContextMenuProvider } from "mantine-contextmenu";
 import { ModalsProvider } from "@mantine/modals";
 import { useAuthStore } from "./stores/AuthStore";
-import LoadingScreen from "./components/LoadingScreen";
+import { LoadingScreen } from "./components/LoadingScreen";
 import { ProtectedRoutes } from "./routing/ProtectedRoutes";
 import { useVerifyToken } from "./hooks/withTokenVerification";
 

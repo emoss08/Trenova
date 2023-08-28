@@ -48,7 +48,7 @@ export function CommodityTable() {
       },
       {
         id: "temp_range",
-        accessorFn: (row) => `${row.min_temp} - ${row.max_temp}`,
+        accessorFn: (row) => `${row.minTemp} - ${row.maxTemp}`,
         header: "Temperature Range",
         Cell: ({ cell }) => {
           if (cell.getValue() === "null - null") {
@@ -58,9 +58,9 @@ export function CommodityTable() {
         },
       },
       {
-        id: "is_hazmat",
+        id: "isHazmat",
         header: "Is Hazmat",
-        accessorKey: "is_hazmat",
+        accessorKey: "isHazmat",
         filterFn: "equals",
         Cell: ({ cell }) => (
           <Badge

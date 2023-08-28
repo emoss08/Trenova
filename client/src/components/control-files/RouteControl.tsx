@@ -37,23 +37,19 @@ function RouteControlPage() {
   // Store first element of dispatchControlData in variable
   const routeControlDataArray = routeControlData?.[0];
 
-  return (
-    <>
-      {isRouteControlDataLoading ? (
-        <Skeleton height={400} />
-      ) : (
-        <Card className={classes.card}>
-          <Text fz="xl" fw={700} className={classes.text}>
-            Route Controls
-          </Text>
+  return isRouteControlDataLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Route Controls
+      </Text>
 
-          <Divider my={10} />
-          {routeControlDataArray && (
-            <RouteControlForm routeControl={routeControlDataArray} />
-          )}
-        </Card>
+      <Divider my={10} />
+      {routeControlDataArray && (
+        <RouteControlForm routeControl={routeControlDataArray} />
       )}
-    </>
+    </Card>
   );
 }
 

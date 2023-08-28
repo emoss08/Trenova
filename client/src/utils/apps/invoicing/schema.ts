@@ -35,18 +35,18 @@ function isValidFileType(fileName: any, fileType: any) {
 
 export const invoiceControlSchema: ObjectSchema<InvoiceControlFormValues> =
   Yup.object().shape({
-    invoice_number_prefix: Yup.string().required(
-      "Invoice Number Prefix is required"
+    invoiceNumberPrefix: Yup.string().required(
+      "Invoice Number Prefix is required",
     ),
-    credit_memo_number_prefix: Yup.string().required(
-      "Credit Memo Number Prefix is required"
+    creditMemoNumberPrefix: Yup.string().required(
+      "Credit Memo Number Prefix is required",
     ),
-    invoice_due_after_days: Yup.number().required(
-      "Invoice Due After Days is required"
+    invoiceDueAfterDays: Yup.number().required(
+      "Invoice Due After Days is required",
     ),
-    invoice_terms: Yup.string().notRequired(),
-    invoice_footer: Yup.string().notRequired(),
-    invoice_logo: Yup.mixed()
+    invoiceTerms: Yup.string().notRequired(),
+    invoiceFooter: Yup.string().notRequired(),
+    invoiceLogo: Yup.mixed()
       .test("is-valid-type", "Not a valid image type", (value: any) => {
         if (!value) return true;
         return isValidFileType(value && value.name.toLowerCase(), "image");
@@ -56,13 +56,13 @@ export const invoiceControlSchema: ObjectSchema<InvoiceControlFormValues> =
         return value && value.size <= MAX_FILE_SIZE;
       })
       .notRequired(), // File Upload field
-    invoice_logo_width: Yup.number().required("Invoice Logo Width is required"),
-    show_invoice_due_date: Yup.boolean().required(
-      "Show Invoice Due Date is required"
+    invoiceLogoWidth: Yup.number().required("Invoice Logo Width is required"),
+    showInvoiceDueDate: Yup.boolean().required(
+      "Show Invoice Due Date is required",
     ),
-    invoice_date_format: Yup.string<DateFormatChoiceProps>().required(
-      "Invoice Date Format is required"
+    invoiceDateFormat: Yup.string<DateFormatChoiceProps>().required(
+      "Invoice Date Format is required",
     ),
-    show_amount_due: Yup.boolean().required("Show Amount Due is required"),
-    attach_pdf: Yup.boolean().required("Attach PDF is required"),
+    showAmountDue: Yup.boolean().required("Show Amount Due is required"),
+    attachPdf: Yup.boolean().required("Attach PDF is required"),
   });

@@ -104,22 +104,22 @@ export function CreateCommodityModalForm({
     initialValues: {
       name: "",
       description: "",
-      min_temp: undefined,
-      max_temp: undefined,
-      set_point_temp: undefined,
-      unit_of_measure: undefined,
+      minTemp: undefined,
+      maxTemp: undefined,
+      setPointTemp: undefined,
+      unitOfMeasure: undefined,
       hazmat: "",
-      is_hazmat: "N",
+      isHazmat: "N",
     },
   });
 
   React.useEffect(() => {
     if (form.values.hazmat) {
-      form.setFieldValue("is_hazmat", "Y");
+      form.setFieldValue("isHazmat", "Y");
     } else {
-      form.setFieldValue("is_hazmat", "N");
+      form.setFieldValue("isHazmat", "N");
     }
-  }, [form.values.hazmat]);
+  }, [form.values.hazmat, form]);
   const submitForm = (values: CommodityFormValues) => {
     setLoading(true);
     mutation.mutate(values);
@@ -147,25 +147,25 @@ export function CreateCommodityModalForm({
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput
+            <ValidatedTextInput<CommodityFormValues>
               form={form}
               className={classes.fields}
-              name="min_temp"
+              name="minTemp"
               label="Min Temp"
               placeholder="Min Temp"
               variant="filled"
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<CommodityFormValues>
               form={form}
               className={classes.fields}
-              name="max_temp"
+              name="maxTemp"
               label="Max Temp"
               placeholder="Max Temp"
               variant="filled"
             />
           </SimpleGrid>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<CommodityFormValues>
               className={classes.fields}
               data={selectHazmatData || []}
               name="hazmat"
@@ -175,10 +175,10 @@ export function CreateCommodityModalForm({
               variant="filled"
               clearable
             />
-            <SelectInput
+            <SelectInput<CommodityFormValues>
               className={classes.fields}
               data={yesAndNoChoices}
-              name="is_hazmat"
+              name="isHazmat"
               label="Is Hazmat"
               placeholder="Is Hazmat"
               form={form}
@@ -186,10 +186,10 @@ export function CreateCommodityModalForm({
               withAsterisk
             />
           </SimpleGrid>
-          <SelectInput
+          <SelectInput<CommodityFormValues>
             className={classes.fields}
             data={unitOfMeasureChoices}
-            name="unit_of_measure"
+            name="unitOfMeasure"
             placeholder="Unit of Measure"
             label="Unit of Measure"
             form={form}

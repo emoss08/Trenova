@@ -62,7 +62,7 @@ export function JobTitleTable() {
         header: "Description",
       },
       {
-        accessorKey: "job_function",
+        accessorKey: "jobFunction",
         header: "Job Function",
       },
       {

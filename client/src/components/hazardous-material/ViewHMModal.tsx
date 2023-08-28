@@ -40,7 +40,7 @@ type ViewHMModalFormProps = {
   hazardousMaterial: HazardousMaterial;
 };
 
-export function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
+function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
   const { classes } = useFormStyles();
 
   return (
@@ -80,7 +80,7 @@ export function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
           <Select
             data={hazardousClassChoices}
             className={classes.fields}
-            value={hazardousMaterial.hazard_class}
+            value={hazardousMaterial.hazardClass}
             name="hazard_class"
             label="Hazard Class"
             placeholder="Hazard Class"
@@ -90,7 +90,7 @@ export function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
           <Select
             data={packingGroupChoices}
             className={classes.fields}
-            value={hazardousMaterial.packing_group || ""}
+            value={hazardousMaterial.packingGroup || ""}
             name="packing_group"
             label="Packing Group"
             placeholder="Packing Group"
@@ -100,7 +100,7 @@ export function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
         </SimpleGrid>
         <TextInput
           className={classes.fields}
-          value={hazardousMaterial.erg_number || ""}
+          value={hazardousMaterial.ergNumber || ""}
           name="erg_number"
           label="ERG Number"
           placeholder="ERG Number"
@@ -109,7 +109,7 @@ export function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
         />
         <TextInput
           className={classes.fields}
-          value={hazardousMaterial.proper_shipping_name || ""}
+          value={hazardousMaterial.properShippingName || ""}
           name="proper_shipping_name"
           label="Proper Shipping Name"
           placeholder="Proper Shipping Name"

@@ -40,7 +40,9 @@ interface Props {
   dispatchControl: DispatchControl;
 }
 
-export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
+export function DispatchControlForm({
+  dispatchControl,
+}: Props): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -67,12 +69,12 @@ export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -85,24 +87,23 @@ export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<DispatchControlFormValues>({
     validate: yupResolver(dispatchControlSchema),
     initialValues: {
-      record_service_incident: dispatchControl.record_service_incident,
-      grace_period: dispatchControl.grace_period,
-      deadhead_target: dispatchControl.deadhead_target,
-      driver_assign: dispatchControl.driver_assign,
-      trailer_continuity: dispatchControl.trailer_continuity,
-      dupe_trailer_check: dispatchControl.dupe_trailer_check,
-      regulatory_check: dispatchControl.regulatory_check,
-      prev_orders_on_hold: dispatchControl.prev_orders_on_hold,
-      driver_time_away_restriction:
-        dispatchControl.driver_time_away_restriction,
-      tractor_worker_fleet_constraint:
-        dispatchControl.tractor_worker_fleet_constraint,
+      recordServiceIncident: dispatchControl.recordServiceIncident,
+      gracePeriod: dispatchControl.gracePeriod,
+      deadheadTarget: dispatchControl.deadheadTarget,
+      driverAssign: dispatchControl.driverAssign,
+      trailerContinuity: dispatchControl.trailerContinuity,
+      dupeTrailerCheck: dispatchControl.dupeTrailerCheck,
+      regulatoryCheck: dispatchControl.regulatoryCheck,
+      prevOrdersOnHold: dispatchControl.prevOrdersOnHold,
+      driverTimeAwayRestriction: dispatchControl.driverTimeAwayRestriction,
+      tractorWorkerFleetConstraint:
+        dispatchControl.tractorWorkerFleetConstraint,
     },
   });
 
@@ -116,83 +117,83 @@ export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<DispatchControlFormValues>
               form={form}
               data={serviceIncidentControlChoices}
               className={classes.fields}
-              name="record_service_incident"
+              name="recordServiceIncident"
               label="Record Service Incident"
               placeholder="Record Service Incident"
               description="Record service incident for the company."
               variant="filled"
               withAsterisk
             />
-            <ValidatedNumberInput
+            <ValidatedNumberInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="grace_period"
+              name="gracePeriod"
               label="Grace Period"
               placeholder="Grace Period"
               description="Grace period for the service incident in minutes."
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="deadhead_target"
+              name="deadheadTarget"
               label="Deadhead Target"
               placeholder="Deadhead Target"
               description="Deadhead target for the company."
               variant="filled"
               withAsterisk
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="driver_assign"
+              name="driverAssign"
               label="Driver Assign"
               description="Enforce driver assign to orders for the company."
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="trailer_continuity"
+              name="trailerContinuity"
               label="Trailer Continuity"
               description="Enforce trailer continuity for the company."
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="dupe_trailer_check"
+              name="dupeTrailerCheck"
               label="Dupe Trailer Check"
               description="Enforce duplicate trailer check for the company."
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="regulatory_check"
+              name="regulatoryCheck"
               label="Regulatory Check"
               description="Enforce regulatory check for the company."
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="prev_orders_on_hold"
+              name="prevOrdersOnHold"
               label="Previous Orders on Hold"
               description="Prevent dispatch of orders on hold for the company."
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="driver_time_away_restriction"
+              name="driverTimeAwayRestriction"
               label="Driver Time Away Restriction"
               description="Disallow assignments if the driver is on Time Away."
             />
-            <SwitchInput
+            <SwitchInput<DispatchControlFormValues>
               form={form}
               className={classes.fields}
-              name="tractor_worker_fleet_constraint"
+              name="tractorWorkerFleetConstraint"
               label="Tractor Worker Fleet Constraint"
               description="Enforce Worker and Tractor must be in the same fleet to be assigned to a dispatch."
             />
@@ -211,4 +212,4 @@ export const DispatchControlForm: React.FC<Props> = ({ dispatchControl }) => {
       </Box>
     </form>
   );
-};
+}
