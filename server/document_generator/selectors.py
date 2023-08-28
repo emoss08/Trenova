@@ -14,11 +14,14 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from django_stubs_ext import WithAnnotations
+
 from document_generator import models
 
 
 def get_template_content(
-    template: models.DocumentTemplate, version_number: int | None = None
+    template: WithAnnotations[models.DocumentTemplate],
+    version_number: int | None = None,
 ) -> str:
     """Retrieves the template's content from DocumentTemplateVersion for given version number.
 
