@@ -53,7 +53,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-export const ViewUserModal: React.FC = () => {
+export function ViewUserModal(): React.ReactElement | null {
   const { classes } = useStyles();
   const [showViewUserModalOpen, setViewUserModalOpen] =
     userTableStore.use("viewModalOpen");
@@ -163,4 +163,4 @@ export const ViewUserModal: React.FC = () => {
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

@@ -39,22 +39,22 @@ export const useVerifyToken = () => {
       try {
         setLoading(true);
         const response = await axios.post("verify_token/");
-        sessionStorage.setItem("mt_user_id", response.data.user_id as string);
+        sessionStorage.setItem("mt_user_id", response.data.userId as string);
         sessionStorage.setItem(
           "mt_organization_id",
-          response.data.organization_id as string
+          response.data.organizationId as string,
         );
 
-        const userInfo = await getUserDetails(response.data.user_id as string);
+        const userInfo = await getUserDetails(response.data.userId as string);
         sessionStorage.setItem(
           "mt_user_permissions",
-          JSON.stringify(userInfo.user_permissions)
+          JSON.stringify(userInfo.userPermissions),
         );
         sessionStorage.setItem(
           "mt_user_groups",
-          JSON.stringify(userInfo.groups)
+          JSON.stringify(userInfo.groups),
         );
-        sessionStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
+        sessionStorage.setItem("mt_is_admin", userInfo.isStaff.toString());
 
         setIsAuthenticated(true);
       } catch (error) {

@@ -36,14 +36,14 @@ export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
       .max(4, "Code cannot be longer than 4 characters.")
       .required("Code is required"),
     description: Yup.string().required("Description is required"),
-    expense_account: Yup.string().notRequired(),
-    revenue_account: Yup.string().notRequired(),
+    expenseAccount: Yup.string().notRequired(),
+    revenueAccount: Yup.string().notRequired(),
   });
 
 export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
   Yup.object().shape({
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    account_number: Yup.string()
+    accountNumber: Yup.string()
       .required("Code is required")
       .test(
         "account_number_format",
@@ -52,17 +52,17 @@ export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
           if (!value) return false;
           const regex = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/;
           return regex.test(value);
-        }
+        },
       ),
     description: Yup.string()
       .max(100, "Description cannot be longer than 100 characters")
       .required("Description is required"),
-    account_type: Yup.string<AccountTypeChoiceProps>().required(
-      "Account type is required"
+    accountType: Yup.string<AccountTypeChoiceProps>().required(
+      "Account type is required",
     ),
-    cash_flow_type: Yup.string<CashFlowTypeChoiceProps>().notRequired(),
-    account_sub_type: Yup.string<AccountSubTypeChoiceProps>().notRequired(),
-    account_classification:
+    cashFlowType: Yup.string<CashFlowTypeChoiceProps>().notRequired(),
+    accountSubType: Yup.string<AccountSubTypeChoiceProps>().notRequired(),
+    accountClassification:
       Yup.string<AccountClassificationChoiceProps>().notRequired(),
   });
 
@@ -75,7 +75,7 @@ export const divisionCodeSchema: ObjectSchema<DivisionCodeFormValues> =
     description: Yup.string()
       .max(100, "Description cannot be longer than 100 characters")
       .required("Description is required"),
-    ap_account: Yup.string().notRequired(),
-    cash_account: Yup.string().notRequired(),
-    expense_account: Yup.string().notRequired(),
+    apAccount: Yup.string().notRequired(),
+    cashAccount: Yup.string().notRequired(),
+    expenseAccount: Yup.string().notRequired(),
   });

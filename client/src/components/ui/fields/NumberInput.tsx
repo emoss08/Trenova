@@ -22,8 +22,9 @@ import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/styles/FormStyles";
 
 interface ValidatedNumberInputProps<TFormValues>
-  extends Omit<NumberInputProps, "form"> {
+  extends Omit<NumberInputProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: keyof TFormValues;
 }
 
 export function ValidatedNumberInput<TFormValues extends object>({

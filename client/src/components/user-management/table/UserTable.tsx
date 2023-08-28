@@ -31,7 +31,7 @@ export function UsersAdminTable() {
     () => [
       {
         id: "status",
-        accessorFn: (originalRow) => (originalRow.is_active ? "true" : "false"),
+        accessorFn: (originalRow) => (originalRow.isActive ? "true" : "false"),
         header: "Status",
         filterFn: "equals",
         Cell: ({ cell }) => (
@@ -54,7 +54,7 @@ export function UsersAdminTable() {
       },
       {
         accessorFn: (row) =>
-          `${row.profile?.first_name} ${row.profile?.last_name}`,
+          `${row.profile?.firstName} ${row.profile?.lastName}`,
         id: "name",
         header: "Name",
         size: 250,
@@ -66,17 +66,17 @@ export function UsersAdminTable() {
               gap: "16px",
             }}
           >
-            {row.original.profile?.profile_picture ? (
+            {row.original.profile?.profilePicture ? (
               <Avatar
-                src={row.original.profile?.profile_picture}
+                src={row.original.profile?.profilePicture}
                 alt="Test"
                 radius="xl"
                 size={30}
               />
             ) : (
               <Avatar color="blue" radius="xl" size={30}>
-                {row.original.profile?.first_name.charAt(0)}
-                {row.original.profile?.last_name.charAt(0)}
+                {row.original.profile?.firstName.charAt(0)}
+                {row.original.profile?.lastName.charAt(0)}
               </Avatar>
             )}
             <span>{renderedCellValue}</span>
@@ -91,33 +91,33 @@ export function UsersAdminTable() {
         id: "date_joined",
         header: "Date Joined",
         accessorFn: (row) => {
-          if (row.date_joined) {
-            return formatDateToHumanReadable(row.date_joined);
+          if (row.dateJoined) {
+            return formatDateToHumanReadable(row.dateJoined);
           }
           return null;
         },
         Cell: ({ row }) => {
-          if (!row.original.date_joined) {
+          if (!row.original.dateJoined) {
             return <Text>Never</Text>;
           }
 
-          return formatDate(row.original.date_joined);
+          return formatDate(row.original.dateJoined);
         },
       },
       {
         id: "last_login",
         header: "Last Login",
         accessorFn: (row) => {
-          if (row.last_login) {
-            return formatDateToHumanReadable(row.last_login);
+          if (row.lastLogin) {
+            return formatDateToHumanReadable(row.lastLogin);
           }
           return null;
         },
         Cell: ({ renderedCellValue, row }) => {
-          if (!row.original.last_login) {
+          if (!row.original.lastLogin) {
             return <Text>Never</Text>;
           }
-          const tooltipDate = formatDate(row.original.last_login);
+          const tooltipDate = formatDate(row.original.lastLogin);
           const ref = useRef<HTMLDivElement>(null);
 
           return (

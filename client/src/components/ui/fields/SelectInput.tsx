@@ -22,9 +22,10 @@ import { SelectProps } from "@mantine/core/lib/Select/Select";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/styles/FormStyles";
 
-interface ValidatedSelectInputProps<TFormValues extends object>
-  extends Omit<SelectProps, "form"> {
+interface ValidatedSelectInputProps<TFormValues>
+  extends Omit<SelectProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: keyof TFormValues;
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(

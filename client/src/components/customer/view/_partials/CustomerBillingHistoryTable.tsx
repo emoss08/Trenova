@@ -34,11 +34,11 @@ type Props = {
 function CustomerBillingHistoryTableColumns(): MRT_ColumnDef<BillingHistory>[] {
   return [
     {
-      accessorKey: "invoice_number",
+      accessorKey: "invoiceNumber",
       header: "Invoice #",
     },
     {
-      accessorKey: "bol_number",
+      accessorKey: "bolNumber",
       header: "BOL #",
     },
     {
@@ -46,12 +46,12 @@ function CustomerBillingHistoryTableColumns(): MRT_ColumnDef<BillingHistory>[] {
       header: "Mileage",
     },
     {
-      accessorKey: "bill_date",
+      accessorKey: "billDate",
       header: "Bill Date",
     },
     {
       id: "total_amount",
-      accessorKey: "total_amount",
+      accessorKey: "totalAmount",
       header: "Total Amount",
       Cell: ({ cell }) => USDollarFormat(Math.round(cell.getValue() as number)),
     },
@@ -136,12 +136,12 @@ export function CustomerBillingHistoryTable({ id }: Props) {
               <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
                 <TextInput
                   label="Invoice #"
-                  value={row.original.invoice_number}
+                  value={row.original.invoiceNumber}
                   readOnly
                 />
                 <TextInput
                   label="Bol Number"
-                  value={row.original.bol_number}
+                  value={row.original.bolNumber}
                   readOnly
                 />
                 <TextInput
@@ -151,32 +151,32 @@ export function CustomerBillingHistoryTable({ id }: Props) {
                 />
                 <TextInput
                   label="Bill Date"
-                  value={row.original.bill_date}
+                  value={row.original.billDate}
                   readOnly
                 />
                 <TextInput
                   label="Consignee Ref Number"
-                  value={row.original.consignee_ref_number}
+                  value={row.original.consigneeRefNumber}
                   readOnly
                 />
                 <TextInput
                   label="Other Charge Total"
                   value={USDollarFormat(
-                    Math.round(row.original.other_charge_total as number),
+                    Math.round(row.original.otherChargeTotal as number),
                   )}
                   readOnly
                 />
                 <TextInput
                   label="Freight Charge Amount"
                   value={USDollarFormat(
-                    Math.round(row.original.freight_charge_amount as number),
+                    Math.round(row.original.freightChargeAmount as number),
                   )}
                   readOnly
                 />
                 <TextInput
                   label="Total Amount"
                   value={USDollarFormat(
-                    Math.round(row.original.total_amount as number),
+                    Math.round(row.original.totalAmount as number),
                   )}
                   readOnly
                 />
@@ -188,7 +188,7 @@ export function CustomerBillingHistoryTable({ id }: Props) {
         onContextMenu: showContextMenu([
           {
             key: "view",
-            title: `View ${row.original.invoice_number}`,
+            title: `View ${row.original.invoiceNumber}`,
             onClick: () => console.info(`View ${row.original.id}`),
           },
         ]),

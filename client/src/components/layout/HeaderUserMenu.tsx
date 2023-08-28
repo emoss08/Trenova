@@ -111,22 +111,22 @@ export function HeaderUserMenu({ user }: Props) {
                 position="bottom-end"
                 color="green"
               >
-                {user.profile?.profile_picture ? (
+                {user.profile?.profilePicture ? (
                   <Avatar
-                    src={user.profile?.profile_picture}
+                    src={user.profile?.profilePicture}
                     alt="Test"
                     radius="xl"
                   />
                 ) : (
                   <Avatar color="blue" radius="xl">
-                    {user.profile?.first_name.charAt(0)}
-                    {user.profile?.last_name.charAt(0)}
+                    {user.profile?.firstName.charAt(0)}
+                    {user.profile?.lastName.charAt(0)}
                   </Avatar>
                 )}
               </Indicator>
               <div style={{ flex: 1 }}>
                 <Text size="sm" weight={500}>
-                  {user.profile?.first_name} {user.profile?.last_name}
+                  {user.profile?.firstName} {user.profile?.lastName}
                 </Text>
 
                 <Text color="dimmed" size="xs">

@@ -25,24 +25,19 @@ import {
 export type BillingControl = {
   id: string;
   organization: string;
-  remove_billing_history: boolean;
-  auto_bill_orders: boolean;
-  auto_mark_ready_to_bill: boolean;
-  validate_customer_rates: boolean;
-  auto_bill_criteria: AutoBillingCriteriaChoicesProps;
-  order_transfer_criteria: OrderTransferCriteriaChoicesProps;
-  enforce_customer_billing: boolean;
+  removeBillingHistory: boolean;
+  autoBillOrders: boolean;
+  autoMarkReadyToBill: boolean;
+  validateCustomerRates: boolean;
+  autoBillCriteria: AutoBillingCriteriaChoicesProps;
+  orderTransferCriteria: OrderTransferCriteriaChoicesProps;
+  enforceCustomerBilling: boolean;
 };
 
-export type BillingControlFormValues = {
-  remove_billing_history: boolean;
-  auto_bill_orders: boolean;
-  auto_mark_ready_to_bill: boolean;
-  validate_customer_rates: boolean;
-  auto_bill_criteria: AutoBillingCriteriaChoicesProps;
-  order_transfer_criteria: OrderTransferCriteriaChoicesProps;
-  enforce_customer_billing: boolean;
-};
+export type BillingControlFormValues = Omit<
+  BillingControl,
+  "id" | "organization"
+>;
 
 /** Types for Division Codes */
 export type ChargeType = {
@@ -52,22 +47,19 @@ export type ChargeType = {
   description?: string | null;
 };
 
-export interface ChargeTypeFormValues
-  extends Omit<ChargeType, "id" | "organization"> {}
+export type ChargeTypeFormValues = Omit<ChargeType, "id" | "organization">;
 
 /** Types for Accessorial Charge */
 export type AccessorialCharge = {
   id: string;
   code: string;
   description?: string | null;
-  is_detention: boolean;
-  charge_amount: number;
-  charge_amount_currency: string;
+  isDetention: boolean;
+  chargeAmount: number;
   method: fuelMethodChoicesProps;
 };
 
-export interface AccessorialChargeFormValues
-  extends Omit<AccessorialCharge, "id" | "charge_amount_currency"> {}
+export type AccessorialChargeFormValues = Omit<AccessorialCharge, "id">;
 
 /** Types for Orders Ready to Bill */
 export type OrdersReadyProps = {
@@ -113,31 +105,32 @@ export type BillingQueue = {
 export type BillingHistory = {
   id: string;
   organization: string;
-  order_type: string;
+  orderType: string;
   order: string;
-  revenue_code: string;
+  revenueCode: string;
   customer: string;
-  invoice_number: string;
+  invoiceNumber: string;
   pieces: number;
   weight: number;
-  bill_type: string;
-  bill_date: string;
+  billType: string;
+  billDate: string;
   mileage: number;
   worker: string;
   commodity: string;
-  commodity_descr: string;
-  consignee_ref_number: string;
-  other_charge_total: number;
-  freight_charge_amount: number;
-  total_amount: number;
-  total_amount_currency: string;
-  is_summary: boolean;
-  is_cancelled: boolean;
-  bol_number: string;
+  commodityDescr: string;
+  consigneeRefNumber: string;
+  otherChargeTotal: number;
+  freightChargeAmount: number;
+  totalAmount: number;
+  totalAmountCurrency: string;
+  isSummary: boolean;
+  isCancelled: boolean;
+  bolNumber: string;
   user: string;
   created: string;
   modified: string;
 };
+
 /** Types for Document Classification */
 export type DocumentClassification = {
   id: string;

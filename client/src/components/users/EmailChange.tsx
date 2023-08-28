@@ -46,21 +46,21 @@ export function EmailChangeForm({ user }: EmailChangeFormProps) {
 
   interface FormValues {
     email: string;
-    current_password: string;
+    currentPassword: string;
   }
 
   const schema = Yup.object().shape({
     email: Yup.string()
       .email("Invalid email address")
       .required("Email is required"),
-    current_password: Yup.string().required("Password is required"),
+    currentPassword: Yup.string().required("Password is required"),
   });
 
   const form = useForm<FormValues>({
     validate: yupResolver(schema),
     initialValues: {
       email: user.email,
-      current_password: "",
+      currentPassword: "",
     },
   });
 
@@ -138,7 +138,7 @@ export function EmailChangeForm({ user }: EmailChangeFormProps) {
                     label="Enter Password"
                     type="password"
                     variant="filled"
-                    name="current_password"
+                    name="currentPassword"
                     form={form}
                     withAsterisk
                   />

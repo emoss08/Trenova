@@ -101,11 +101,11 @@ export function CustomerEmailProfileForm({
     initialValues: {
       subject: emailProfile?.subject || "",
       comment: emailProfile?.comment || "",
-      from_address: emailProfile?.from_address || "",
-      blind_copy: emailProfile?.blind_copy || "",
-      read_receipt_to: emailProfile?.read_receipt_to || "",
-      read_receipt: emailProfile?.read_receipt || false,
-      attachment_name: emailProfile?.attachment_name || "",
+      fromAddress: emailProfile?.fromAddress || "",
+      blindCopy: emailProfile?.blindCopy || "",
+      readReceipt: emailProfile?.readReceipt || false,
+      readReceiptTo: emailProfile?.readReceiptTo || "",
+      attachmentName: emailProfile?.attachmentName || "",
     },
   });
 
@@ -125,7 +125,7 @@ export function CustomerEmailProfileForm({
             <Divider my={10} />
             <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
               <Box>
-                <ValidatedTextInput
+                <ValidatedTextInput<CustomerEmailProfileFormValues>
                   label="Subject"
                   placeholder="Subject"
                   form={form}
@@ -138,7 +138,7 @@ export function CustomerEmailProfileForm({
                 </Text>
               </Box>
               <Box>
-                <ValidatedTextInput
+                <ValidatedTextInput<CustomerEmailProfileFormValues>
                   label="Comment"
                   placeholder="Comment"
                   form={form}
@@ -151,11 +151,11 @@ export function CustomerEmailProfileForm({
                 </Text>
               </Box>
               <Box>
-                <ValidatedTextInput
+                <ValidatedTextInput<CustomerEmailProfileFormValues>
                   label="From Address"
                   placeholder="From Address"
                   form={form}
-                  name="from_address"
+                  name="fromAddress"
                   variant="filled"
                 />
                 <Text size="xs" color="dimmed">
@@ -163,11 +163,11 @@ export function CustomerEmailProfileForm({
                 </Text>
               </Box>
               <Box>
-                <ValidatedTextInput
+                <ValidatedTextInput<CustomerEmailProfileFormValues>
                   label="Blind Copy"
                   placeholder="Blind Copy"
                   form={form}
-                  name="blind_copy"
+                  name="blindCopy"
                   variant="filled"
                 />
                 <Text size="xs" color="dimmed">
@@ -175,11 +175,11 @@ export function CustomerEmailProfileForm({
                 </Text>
               </Box>
               <Box>
-                <ValidatedTextInput
+                <ValidatedTextInput<CustomerEmailProfileFormValues>
                   label="Read Recept To"
                   placeholder="Read Recept To"
                   form={form}
-                  name="read_receipt_to"
+                  name="readReceiptTo"
                   variant="filled"
                 />
                 <Text size="xs" color="dimmed">
@@ -188,20 +188,20 @@ export function CustomerEmailProfileForm({
                 </Text>
               </Box>
               <Box>
-                <ValidatedTextInput
+                <ValidatedTextInput<CustomerEmailProfileFormValues>
                   label="Attachment Name"
                   placeholder="Attachment Name"
                   form={form}
-                  name="attachment_name"
+                  name="attachmentName"
                   variant="filled"
                 />
                 <Text size="xs" color="dimmed">
                   Attachment Name for the email
                 </Text>
               </Box>
-              <SwitchInput
+              <SwitchInput<CustomerEmailProfileFormValues>
                 form={form}
-                name="read_receipt"
+                name="readReceipt"
                 label="Read Receipt"
                 description="Request a read receipt for the email"
                 variant="filled"

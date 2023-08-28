@@ -18,23 +18,23 @@
 export type Organization = {
   id: string;
   name: string;
-  scac_code: string;
-  dot_number: number;
-  address_line_1?: string;
-  address_line_2?: string;
+  scacCode: string;
+  dotNumber: number;
+  addressLine1?: string;
+  addressLine2?: string;
   city?: string;
   state?: string;
-  zip_code?: string;
-  phone_number?: string;
+  zipCode?: string;
+  phoneNumber?: string;
   website?: string;
-  org_type: string;
+  orgType: string;
   timezone: string;
   language: string;
   currency: string;
-  date_format: string;
-  time_format: string;
+  dateFormat: string;
+  timeFormat: string;
   logo: string;
-  token_expiration_days: number;
+  tokenExpirationDays: number;
 };
 
 export type EmailProfile = {
@@ -61,11 +61,11 @@ export type Department = {
 export type EmailControl = {
   id: string;
   organization: string;
-  billing_email_profile?: string | null;
-  rate_expiration_email_profile?: string | null;
+  billingEmailProfile?: string | null;
+  rateExpirationEmailProfile?: string | null;
 };
 
 export type EmailControlFormValues = {
-  billing_email_profile?: string | null;
-  rate_expiration_email_profile?: string | null;
+  billingEmailProfile?: string | null;
+  rateExpirationEmailProfile?: string | null;
 };

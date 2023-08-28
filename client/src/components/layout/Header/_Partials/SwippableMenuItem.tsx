@@ -45,7 +45,7 @@ export function SwippableMenuItem<T extends Record<string, any>>({
     (id: string) => axios.delete(`/user_reports/${id}/`),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(["userReport", userId]);
+        queryClient.invalidateQueries(["userReport", userId]).then(() => {});
       },
       onError: () => {
         notifications.show({
@@ -92,7 +92,7 @@ export function SwippableMenuItem<T extends Record<string, any>>({
   return status === "deleted" ? null : (
     <animated.div
       {...bind()}
-      style={{ transform: x.interpolate((x) => `translateX(${x}px)`) }}
+      style={{ transform: x.interpolate((ex) => `translateX(${ex}px)`) }}
       onContextMenu={handleContextMenu}
     >
       <div style={{ display: status === "swiped" ? "none" : "block" }}>

@@ -32,7 +32,8 @@ export function useUserPermissions() {
   const isAdmin = getSessionItem("mt_is_admin");
   const permissions = getSessionItem("mt_user_permissions") || [];
 
-  const userHasPermission = (permission: string) => isAdmin || permissions.includes(permission);
+  const userHasPermission = (permission: string) =>
+    isAdmin || permissions.includes(permission);
 
   return {
     isAuthenticated,

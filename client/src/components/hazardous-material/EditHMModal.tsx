@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -44,7 +44,7 @@ type Props = {
   hazardousMaterial: HazardousMaterial;
 };
 
-export function EditHMModalForm({ hazardousMaterial }: Props) {
+function EditHMModalForm({ hazardousMaterial }: Props): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -54,14 +54,16 @@ export function EditHMModalForm({ hazardousMaterial }: Props) {
       axios.put(`/hazardous_materials/${hazardousMaterial.id}/`, values),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["hazardous-material-table-data"],
-        });
         queryClient
           .invalidateQueries({
-            queryKey: ["hazardousMaterial", hazardousMaterial.id],
+            queryKey: ["hazardous-material-table-data"],
           })
-          .then(() => {
+          .then(() =>
+            queryClient.invalidateQueries({
+              queryKey: ["hazardousMaterial", hazardousMaterial.id],
+            }),
+          )
+          .finally(() => {
             notifications.show({
               title: "Success",
               message: "Hazardous Material updated successfully",
@@ -102,10 +104,10 @@ export function EditHMModalForm({ hazardousMaterial }: Props) {
       status: hazardousMaterial.status,
       name: hazardousMaterial.name,
       description: hazardousMaterial.description,
-      hazard_class: hazardousMaterial.hazard_class,
-      packing_group: hazardousMaterial.packing_group,
-      erg_number: hazardousMaterial.erg_number,
-      proper_shipping_name: hazardousMaterial.proper_shipping_name,
+      hazardClass: hazardousMaterial.hazardClass,
+      packingGroup: hazardousMaterial.packingGroup,
+      ergNumber: hazardousMaterial.ergNumber,
+      properShippingName: hazardousMaterial.properShippingName,
     },
   });
 
@@ -117,85 +119,83 @@ export function EditHMModalForm({ hazardousMaterial }: Props) {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={statusChoices}
-              className={classes.fields}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="name"
-              label="Name"
-              placeholder="Name"
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <ValidatedTextArea
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<HazardousMaterialFormValues>
+            form={form}
+            data={statusChoices}
+            className={classes.fields}
+            name="status"
+            label="Status"
+            placeholder="Status"
+            variant="filled"
+            withAsterisk
+          />
+          <ValidatedTextInput<HazardousMaterialFormValues>
             form={form}
             className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
+            name="name"
+            label="Name"
+            placeholder="Name"
             variant="filled"
+            withAsterisk
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
-              form={form}
-              data={hazardousClassChoices}
-              className={classes.fields}
-              name="hazard_class"
-              label="Hazard Class"
-              placeholder="Hazard Class"
-              variant="filled"
-              withAsterisk
-            />
-            <SelectInput
-              form={form}
-              data={packingGroupChoices}
-              className={classes.fields}
-              name="packing_group"
-              label="Packing Group"
-              placeholder="Packing Group"
-              variant="filled"
-              clearable
-            />
-          </SimpleGrid>
-          <ValidatedTextInput
+        </SimpleGrid>
+        <ValidatedTextArea<HazardousMaterialFormValues>
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <SelectInput<HazardousMaterialFormValues>
             form={form}
+            data={hazardousClassChoices}
             className={classes.fields}
-            name="erg_number"
-            label="ERG Number"
-            placeholder="ERG Number"
+            name="hazardClass"
+            label="Hazard Class"
+            placeholder="Hazard Class"
             variant="filled"
+            withAsterisk
           />
-          <ValidatedTextArea
+          <SelectInput<HazardousMaterialFormValues>
             form={form}
+            data={packingGroupChoices}
             className={classes.fields}
-            name="proper_shipping_name"
-            label="Proper Shipping Name"
-            placeholder="Proper Shipping Name"
+            name="packingGroup"
+            label="Packing Group"
+            placeholder="Packing Group"
             variant="filled"
+            clearable
           />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+        </SimpleGrid>
+        <ValidatedTextInput<HazardousMaterialFormValues>
+          form={form}
+          className={classes.fields}
+          name="ergNumber"
+          label="ERG Number"
+          placeholder="ERG Number"
+          variant="filled"
+        />
+        <ValidatedTextArea<HazardousMaterialFormValues>
+          form={form}
+          className={classes.fields}
+          name="properShippingName"
+          label="Proper Shipping Name"
+          placeholder="Proper Shipping Name"
+          variant="filled"
+        />
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );

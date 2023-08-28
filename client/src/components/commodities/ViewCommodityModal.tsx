@@ -72,21 +72,21 @@ function ViewCommodityModalForm({
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <TextInput
             className={classes.fields}
-            name="min_temp"
+            name="minTemp"
             label="Min Temp"
             placeholder="Min Temp"
             readOnly
             variant="filled"
-            value={commodity.min_temp || ""}
+            value={commodity.minTemp || ""}
           />
           <TextInput
             className={classes.fields}
-            name="max_temp"
+            name="maxTemp"
             label="Max Temp"
             placeholder="Max Temp"
             readOnly
             variant="filled"
-            value={commodity.max_temp || ""}
+            value={commodity.maxTemp || ""}
           />
         </SimpleGrid>
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
@@ -104,11 +104,11 @@ function ViewCommodityModalForm({
           <Select
             className={classes.fields}
             data={yesAndNoChoices}
-            name="is_hazmat"
+            name="isHazmat"
             label="Is Hazmat"
             placeholder="Is Hazmat"
             variant="filled"
-            value={commodity.is_hazmat || ""}
+            value={commodity.isHazmat || ""}
             readOnly
             withAsterisk
           />
@@ -116,10 +116,10 @@ function ViewCommodityModalForm({
         <Select
           className={classes.fields}
           data={unitOfMeasureChoices}
-          name="unit_of_measure"
+          name="unitOfMeasure"
           placeholder="Unit of Measure"
           label="Unit of Measure"
-          value={commodity.is_hazmat || ""}
+          value={commodity.unitOfMeasure || ""}
           readOnly
           variant="filled"
         />

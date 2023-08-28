@@ -18,25 +18,25 @@
 import React from "react";
 import { Card, Flex, Text } from "@mantine/core";
 
-const LoadingScreen: React.FC = () => (
-  <Flex
-    direction={{ base: "column", sm: "row" }}
-    justify={{ sm: "center" }}
-    align={{ sm: "center" }}
-    style={{ height: "90vh" }}
-  >
-    <Card padding="xl">
-      <Text weight={500} size="lg">
-        Monta is loading. Please wait.
-      </Text>
-      <Text mt="xs" color="dimmed" size="sm">
-        If the operation exceeds a duration of 10 seconds, kindly verify the
-        status of your internet connectivity. <br />
-        In case of persistent difficulty, please get in touch with your
-        designated system administrator.
-      </Text>
-    </Card>
-  </Flex>
-);
-
-export default LoadingScreen;
+export function LoadingScreen(): React.ReactElement {
+  return (
+    <Flex
+      direction={{ base: "column", sm: "row" }}
+      justify={{ sm: "center" }}
+      align={{ sm: "center" }}
+      style={{ height: "90vh" }}
+    >
+      <Card padding="xl">
+        <Text weight={500} size="lg">
+          Monta is loading. Please wait.
+        </Text>
+        <Text mt="xs" color="dimmed" size="sm">
+          If the operation exceeds a duration of 10 seconds, kindly verify the
+          status of your internet connectivity. <br />
+          In case of persistent difficulty, please get in touch with your
+          designated system administrator.
+        </Text>
+      </Card>
+    </Flex>
+  );
+}

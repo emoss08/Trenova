@@ -38,7 +38,8 @@ export function OrganizationLogo() {
         }
         return getOrganizationDetails(organizationId);
       },
-      initialData: () => queryClient.getQueryData(["organization", organizationId]),
+      initialData: () =>
+        queryClient.getQueryData(["organization", organizationId]),
       staleTime: Infinity, // never refetch
     });
 

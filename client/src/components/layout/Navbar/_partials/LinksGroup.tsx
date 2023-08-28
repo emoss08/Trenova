@@ -49,14 +49,6 @@ const useStyles = createStyles((theme) => ({
     },
     color:
       theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
-
-    // "&:hover": {
-    //   backgroundColor:
-    //     theme.colorScheme === "dark"
-    //       ? theme.colors.dark[6]
-    //       : theme.colors.gray[0],
-    //   color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    // },
     "&:hover svg": {
       color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
     },
@@ -105,6 +97,13 @@ export interface LinkItem {
   subLinks?: SubLink[];
 }
 
+LinksGroup.defaultProps = {
+  initiallyOpened: false,
+  links: [],
+  permission: undefined,
+  link: undefined,
+};
+
 export interface LinksGroupProps {
   icon: IconProp;
   label: string;
@@ -130,53 +129,56 @@ export function LinksGroup({
 
   const ChevronIcon = useMemo(
     () => (theme.dir === "ltr" ? IconChevronRight : IconChevronLeft),
-    [theme.dir]
+    [theme.dir],
   );
 
   const { userHasPermission } = useUserPermissions();
 
-  const linkItems = useMemo(() =>
-    links
-      ?.map((link) => {
-        if (link.subLinks) {
-          return (
-            <SubLinksGroup
-              key={link.label}
-              label={link.label}
-              subLinks={link.subLinks}
-            />
-          );
-        }
+  const linkItems = useMemo(
+    () =>
+      links
+        ?.map((lk) => {
+          if (lk.subLinks) {
+            return (
+              <SubLinksGroup
+                key={lk.label}
+                label={lk.label}
+                subLinks={lk.subLinks}
+              />
+            );
+          }
 
-        if (link.permission && userHasPermission(link.permission)) {
-          return (
-            <Link
-              to={link.link}
-              style={{
-                textDecoration: "none",
-              }}
-              key={link.label}
-            >
-              <Text className={classes.link}>{link.label}</Text>
-            </Link>
-          );
-        } if (!link.permission) {
-          return (
-            <Link
-              to={link.link}
-              style={{
-                textDecoration: "none",
-              }}
-              key={link.label}
-            >
-              <Text className={classes.link}>{link.label}</Text>
-            </Link>
-          );
-        }
-        return null;
-      })
-      .filter(Boolean) // remove null items
-  , [links, userHasPermission]);
+          if (lk.permission && userHasPermission(lk.permission)) {
+            return (
+              <Link
+                to={lk.link}
+                style={{
+                  textDecoration: "none",
+                }}
+                key={lk.label}
+              >
+                <Text className={classes.link}>{lk.label}</Text>
+              </Link>
+            );
+          }
+          if (!lk.permission) {
+            return (
+              <Link
+                to={lk.link}
+                style={{
+                  textDecoration: "none",
+                }}
+                key={lk.label}
+              >
+                <Text className={classes.link}>{lk.label}</Text>
+              </Link>
+            );
+          }
+          return null;
+        })
+        .filter(Boolean), // remove null items
+    [links, userHasPermission],
+  );
 
   // If the `LinksGroup` doesn't have permission, and doesn't have any visible link items, and there's no direct link, don't render it.
   if (

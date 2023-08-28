@@ -37,7 +37,7 @@ export function GLAccountTable() {
         filterFn: "equals",
         Cell: ({ cell }) => (
           <Badge
-            color={cell.getValue() === "A" ? "green" : "red"}
+            color={cell.getValue() === "N" ? "green" : "red"}
             variant="filled"
             radius="xs"
           >
@@ -54,7 +54,7 @@ export function GLAccountTable() {
         filterVariant: "select",
       },
       {
-        accessorKey: "account_number", // access nested data with dot notation
+        accessorKey: "accountNumber", // access nested data with dot notation
         header: "Account Number",
       },
       {
@@ -62,7 +62,7 @@ export function GLAccountTable() {
         header: "Description",
       },
       {
-        accessorKey: "account_type",
+        accessorKey: "accountType",
         header: "Account Type",
       },
       {

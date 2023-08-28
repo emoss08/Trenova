@@ -38,7 +38,9 @@ interface Props {
   billingControl: BillingControl;
 }
 
-export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
+export function BillingControlForm({
+  billingControl,
+}: Props): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -65,12 +67,12 @@ export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -83,19 +85,19 @@ export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<BillingControlFormValues>({
     validate: yupResolver(billingControlSchema),
     initialValues: {
-      remove_billing_history: billingControl.remove_billing_history,
-      auto_bill_orders: billingControl.auto_bill_orders,
-      auto_mark_ready_to_bill: billingControl.auto_mark_ready_to_bill,
-      validate_customer_rates: billingControl.validate_customer_rates,
-      auto_bill_criteria: billingControl.auto_bill_criteria,
-      order_transfer_criteria: billingControl.order_transfer_criteria,
-      enforce_customer_billing: billingControl.enforce_customer_billing,
+      removeBillingHistory: billingControl.removeBillingHistory,
+      autoBillOrders: billingControl.autoBillOrders,
+      autoMarkReadyToBill: billingControl.autoMarkReadyToBill,
+      validateCustomerRates: billingControl.validateCustomerRates,
+      autoBillCriteria: billingControl.autoBillCriteria,
+      orderTransferCriteria: billingControl.orderTransferCriteria,
+      enforceCustomerBilling: billingControl.enforceCustomerBilling,
     },
   });
 
@@ -109,59 +111,59 @@ export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SwitchInput
+            <SwitchInput<BillingControlFormValues>
               form={form}
               className={classes.fields}
-              name="remove_billing_history"
+              name="removeBillingHistory"
               label="Remove Billing History"
               description="Whether users can remove records from billing history."
             />
-            <SwitchInput
+            <SwitchInput<BillingControlFormValues>
               form={form}
               className={classes.fields}
-              name="auto_bill_orders"
+              name="autoBillOrders"
               label="Auto Bill Orders"
               description="Whether to automatically bill orders directly to customer."
             />
-            <SwitchInput
+            <SwitchInput<BillingControlFormValues>
               form={form}
               className={classes.fields}
-              name="auto_mark_ready_to_bill"
+              name="autoMarkReadyToBill"
               label="Auto Mark Ready to Bill"
               description="Marks orders as ready to bill when they are delivered and meet customer billing requirements."
             />
-            <SwitchInput
+            <SwitchInput<BillingControlFormValues>
               form={form}
               className={classes.fields}
-              name="validate_customer_rates"
+              name="validateCustomerRates"
               label="Validate Customer Rates"
               description="Validate rates match the customer contract in the billing queue before allowing billing."
             />
-            <SelectInput
+            <SelectInput<BillingControlFormValues>
               form={form}
               data={autoBillingCriteriaChoices}
               className={classes.fields}
-              name="auto_bill_criteria"
+              name="autoBillCriteria"
               label="Auto Bill Criteria"
               placeholder="Auto Bill Criteria"
               description="Define a criteria on when auto billing is to occur."
               variant="filled"
               clearable
             />
-            <SelectInput
+            <SelectInput<BillingControlFormValues>
               form={form}
               data={orderTransferCriteriaChoices}
               className={classes.fields}
-              name="order_transfer_criteria"
+              name="orderTransferCriteria"
               label="Order Transfer Criteria"
               placeholder="Order Transfer Criteria"
               description="Define a criteria on when orders are to be transferred."
               variant="filled"
             />
-            <SwitchInput
+            <SwitchInput<BillingControlFormValues>
               form={form}
               className={classes.fields}
-              name="enforce_customer_billing"
+              name="enforceCustomerBilling"
               label="Enforce Customer Billing"
               description="Define if customer billing requirements will be enforced when billing."
             />
@@ -180,4 +182,4 @@ export const BillingControlForm: React.FC<Props> = ({ billingControl }) => {
       </Box>
     </form>
   );
-};
+}

@@ -33,7 +33,7 @@ interface Props {
   orderControl: OrderControl;
 }
 
-export const OrderControlForm: React.FC<Props> = ({ orderControl }) => {
+export function OrderControlForm({ orderControl }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -60,12 +60,12 @@ export const OrderControlForm: React.FC<Props> = ({ orderControl }) => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -78,23 +78,23 @@ export const OrderControlForm: React.FC<Props> = ({ orderControl }) => {
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<OrderControlFormValues>({
     validate: yupResolver(orderControlSchema),
     initialValues: {
-      auto_rate_orders: orderControl.auto_rate_orders,
-      calculate_distance: orderControl.calculate_distance,
-      enforce_rev_code: orderControl.enforce_rev_code,
-      enforce_voided_comm: orderControl.enforce_voided_comm,
-      generate_routes: orderControl.generate_routes,
-      enforce_commodity: orderControl.enforce_commodity,
-      auto_sequence_stops: orderControl.auto_sequence_stops,
-      auto_order_total: orderControl.auto_order_total,
-      enforce_origin_destination: orderControl.enforce_origin_destination,
-      check_for_duplicate_bol: orderControl.check_for_duplicate_bol,
-      remove_orders: orderControl.remove_orders,
+      autoRateOrders: orderControl.autoRateOrders,
+      calculateDistance: orderControl.calculateDistance,
+      enforceRevCode: orderControl.enforceRevCode,
+      enforceVoidedComm: orderControl.enforceVoidedComm,
+      generateRoutes: orderControl.generateRoutes,
+      enforceCommodity: orderControl.enforceCommodity,
+      autoSequenceStops: orderControl.autoSequenceStops,
+      autoOrderTotal: orderControl.autoOrderTotal,
+      enforceOriginDestination: orderControl.enforceOriginDestination,
+      checkForDuplicateBol: orderControl.checkForDuplicateBol,
+      removeOrders: orderControl.removeOrders,
     },
   });
 
@@ -108,73 +108,73 @@ export const OrderControlForm: React.FC<Props> = ({ orderControl }) => {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="auto_rate_orders"
+              name="autoRateOrders"
               label="Auto Rate Orders"
               description="Automatically rate orders when they are created"
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="calculate_distance"
+              name="calculateDistance"
               label="Auto Calculate Distance"
               description="Automatically Calculate distance between stops"
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="enforce_rev_code"
+              name="enforceRevCode"
               label="Enforce Rev Code"
               description="Enforce rev code code when entering an order."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="generate_routes"
+              name="generateRoutes"
               label="Auto Generate Routes"
               description="Automatically generate routing information for the order."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="enforce_commodity"
+              name="enforceCommodity"
               label="Enforce Commodity"
               description="Enforce the commodity input on the entry of an order."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="auto_sequence_stops"
+              name="autoSequenceStops"
               label="Auto Sequence Stops"
               description="Auto Sequence stops for the order and movements."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="auto_order_total"
+              name="autoOrderTotal"
               label="Auto Total Orders"
               description="Automate the order total amount calculation."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="enforce_origin_destination"
+              name="enforceOriginDestination"
               label="Enforce Origin Destination"
               description="Compare and validate that origin and destination are not the same."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="check_for_duplicate_bol"
+              name="checkForDuplicateBol"
               label="Check for Duplicate BOL"
               description="Check for duplicate BOL numbers when entering an order."
             />
-            <SwitchInput
+            <SwitchInput<OrderControlFormValues>
               form={form}
               className={classes.fields}
-              name="remove_orders"
+              name="removeOrders"
               label="Allow Order Removal"
               description="Ability to remove orders from system. This will disallow the removal of Orders, Movements and Stops."
             />
@@ -193,4 +193,4 @@ export const OrderControlForm: React.FC<Props> = ({ orderControl }) => {
       </Box>
     </form>
   );
-};
+}

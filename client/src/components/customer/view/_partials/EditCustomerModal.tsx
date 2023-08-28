@@ -100,14 +100,14 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
     initialValues: {
       name: customer?.name || "",
       status: customer?.status || "A",
-      has_customer_portal: customer?.has_customer_portal || "",
       code: customer?.code || "",
       city: customer?.city || "",
       state: customer?.state || "",
-      address_line_1: customer?.address_line_1 || "",
-      address_line_2: customer?.address_line_2 || "",
-      zip_code: customer?.zip_code || "",
-      auto_mark_ready_to_bill: customer?.auto_mark_ready_to_bill || "",
+      addressLine1: customer?.addressLine1 || "",
+      addressLine2: customer?.addressLine2 || "",
+      zipCode: customer?.zipCode || "",
+      hasCustomerPortal: customer?.hasCustomerPortal || "",
+      autoMarkReadyToBill: customer?.autoMarkReadyToBill || "",
     },
   });
 
@@ -121,7 +121,7 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <SelectInput
+        <SelectInput<CustomerFormValues>
           className={classes.fields}
           data={statusChoices}
           name="status"
@@ -133,7 +133,7 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
           withAsterisk
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ValidatedTextInput
+          <ValidatedTextInput<CustomerFormValues>
             form={form}
             className={classes.fields}
             name="code"
@@ -144,7 +144,7 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
             withAsterisk
             readOnly
           />
-          <ValidatedTextInput
+          <ValidatedTextInput<CustomerFormValues>
             form={form}
             className={classes.fields}
             name="name"
@@ -155,26 +155,26 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
             withAsterisk
           />
         </SimpleGrid>
-        <ValidatedTextInput
+        <ValidatedTextInput<CustomerFormValues>
           form={form}
           className={classes.fields}
-          name="address_line_1"
+          name="addressLine1"
           description="Address Line 1 of the customer"
           label="Address Line 1"
           placeholder="Address Line 1"
           variant="filled"
         />
-        <ValidatedTextInput
+        <ValidatedTextInput<CustomerFormValues>
           form={form}
           className={classes.fields}
           description="Address Line 2 of the customer"
-          name="address_line_2"
+          name="addressLine2"
           label="Address Line 2"
           placeholder="Address Line 2"
           variant="filled"
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <CityAutoCompleteField
+          <CityAutoCompleteField<CustomerFormValues>
             form={form}
             stateSelection={form.values.city || ""}
             className={classes.fields}
@@ -184,7 +184,7 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
             placeholder="City"
             variant="filled"
           />
-          <StateSelect
+          <StateSelect<CustomerFormValues>
             label="State"
             className={classes.fields}
             placeholder="State"
@@ -195,20 +195,20 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
             name="state"
           />
         </SimpleGrid>
-        <ValidatedTextInput
+        <ValidatedTextInput<CustomerFormValues>
           form={form}
           className={classes.fields}
-          name="zip_code"
+          name="zipCode"
           label="Zip Code"
           description="Zip Code of the customer"
           placeholder="Zip Code"
           variant="filled"
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput
+          <SelectInput<CustomerFormValues>
             className={classes.fields}
             data={yesAndNoChoices}
-            name="has_customer_portal"
+            name="hasCustomerPortal"
             placeholder="Has Customer Portal"
             label="Has Customer Portal"
             description="Customer has Customer Portal?"
@@ -216,10 +216,10 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
             variant="filled"
             withAsterisk
           />
-          <SelectInput
+          <SelectInput<CustomerFormValues>
             className={classes.fields}
             data={yesAndNoChoices}
-            name="auto_mark_ready_to_bill"
+            name="autoMarkReadyToBill"
             placeholder="Auto Mark Ready to Bill"
             label="Auto Mark Ready to Bill"
             description="Auto Mark Ready to Bill?"

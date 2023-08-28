@@ -30,7 +30,10 @@ interface AvatarInputProps {
   user: User;
 }
 
-const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
+export function AvatarInput({
+  defaultAvatar,
+  user,
+}: AvatarInputProps): React.ReactElement {
   const [avatar, setAvatar] = useState<string | null>(defaultAvatar ?? null);
   const [, setShowRemove] = useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -79,6 +82,7 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
         },
       });
     } catch (error) {
+      console.error(`Error removing avatar: ${error}`);
     } finally {
       queryClient.invalidateQueries("user").then(() => {
         notifications.show({
@@ -97,8 +101,8 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
         <Avatar src={avatar} size={200} />
       ) : (
         <Avatar color="cyan" size={200}>
-          {user.profile?.first_name.charAt(0)}
-          {user.profile?.last_name.charAt(0)}
+          {user.profile?.firstName.charAt(0)}
+          {user.profile?.lastName.charAt(0)}
         </Avatar>
       )}
 
@@ -139,6 +143,8 @@ const AvatarInput: React.FC<AvatarInputProps> = ({ defaultAvatar, user }) => {
       </label>
     </div>
   );
-};
+}
 
-export default AvatarInput;
+AvatarInput.defaultProps = {
+  defaultAvatar: undefined,
+};

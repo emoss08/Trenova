@@ -24,7 +24,7 @@ import {
   faMapPin,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { JobTitle, User } from "@/types/apps/accounts";
-import AvatarInput from "../ui/fields/AvatarInput";
+import { AvatarInput } from "../ui/fields/AvatarInput";
 import { usePageStyles } from "@/styles/PageStyles";
 
 type ViewUserProfileDetailsProps = {
@@ -44,14 +44,14 @@ export function ViewUserProfileDetails({
         <Container mx="xs" my="xs">
           <SimpleGrid cols={3} className={classes.grid}>
             <AvatarInput
-              defaultAvatar={user.profile?.profile_picture}
+              defaultAvatar={user.profile?.profilePicture}
               user={user}
             />
-            <Grid className={classes.grid}>
+            <Grid grow className={classes.grid}>
               <Grid.Col>
                 <Flex direction="column" justify="start">
                   <Text className={classes.text} fz="35px" fw={650}>
-                    {user.profile?.first_name} {user.profile?.last_name}
+                    {user.profile?.firstName} {user.profile?.lastName}
                   </Text>
                   <Grid grow gutter={30} align="flex-start">
                     <Grid.Col span={1}>
@@ -72,10 +72,10 @@ export function ViewUserProfileDetails({
                           className={classes.icon}
                         />
                         <Text className={classes.text}>
-                          {user.profile?.address_line_1}{" "}
-                          {user.profile?.address_line_2 ?? ""}{" "}
+                          {user.profile?.addressLine1}{" "}
+                          {user.profile?.addressLine2 ?? ""}{" "}
                           {user.profile?.city} {user.profile?.state}{" "}
-                          {user.profile?.zip_code}
+                          {user.profile?.zipCode}
                         </Text>
                       </div>
                     </Grid.Col>

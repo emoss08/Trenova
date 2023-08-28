@@ -44,18 +44,16 @@ type Props = {
 
 interface UserDetailFormValues {
   id: string;
-  username: string;
-  email: string;
   profile: {
     organization: string;
-    first_name: string;
-    last_name: string;
-    address_line_1: string;
-    address_line_2: string;
+    firstName: string;
+    lastName: string;
+    addressLine1: string;
+    addressLine2: string;
     city: string;
     state: string;
-    zip_code: string;
-    phone_number: string;
+    zipCode: string;
+    phoneNumber: string;
   };
 }
 
@@ -65,7 +63,8 @@ function EditUserProfileDetailsForm({ user }: Props) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: UserDetailFormValues) => axios.put(`/users/${values.id}/`, values),
+    (values: UserDetailFormValues) =>
+      axios.patch(`/users/${values.id}/`, values),
     {
       onSuccess: () => {
         queryClient.invalidateQueries("user").then(() => {
@@ -101,21 +100,21 @@ function EditUserProfileDetailsForm({ user }: Props) {
     validate: yupResolver(UserSchema),
     initialValues: {
       id: user.id,
-      username: user.username,
-      email: user.email,
       profile: {
         organization: user.profile?.organization || "",
-        first_name: user.profile?.first_name || "",
-        last_name: user.profile?.last_name || "",
-        address_line_1: user.profile?.address_line_1 || "",
-        address_line_2: user.profile?.address_line_2 || "",
+        firstName: user.profile?.firstName || "",
+        lastName: user.profile?.lastName || "",
+        addressLine1: user.profile?.addressLine1 || "",
+        addressLine2: user.profile?.addressLine2 || "",
         city: user.profile?.city || "",
         state: user.profile?.state || "",
-        zip_code: user.profile?.zip_code || "",
-        phone_number: user.profile?.phone_number || "",
+        zipCode: user.profile?.zipCode || "",
+        phoneNumber: user.profile?.phoneNumber || "",
       },
     },
   });
+
+  console.info("form values", form.values);
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
@@ -129,7 +128,7 @@ function EditUserProfileDetailsForm({ user }: Props) {
         <ValidatedTextInput
           form={form}
           className={classes.fields}
-          name="profile.first_name"
+          name="profile.firstName"
           label="First Name"
           placeholder="First Name"
           variant="filled"
@@ -138,7 +137,7 @@ function EditUserProfileDetailsForm({ user }: Props) {
         <ValidatedTextInput
           form={form}
           className={classes.fields}
-          name="profile.last_name"
+          name="profile.lastName"
           label="Last Name"
           placeholder="Last Name"
           variant="filled"
@@ -149,7 +148,7 @@ function EditUserProfileDetailsForm({ user }: Props) {
         <ValidatedTextInput
           form={form}
           className={classes.fields}
-          name="profile.address_line_1"
+          name="profile.addressLine1"
           label="Address Line 1"
           placeholder="Address Line 1"
           variant="filled"
@@ -158,7 +157,7 @@ function EditUserProfileDetailsForm({ user }: Props) {
         <ValidatedTextInput
           form={form}
           className={classes.fields}
-          name="profile.address_line_2"
+          name="profile.addressLine2"
           label="Address Line 2"
           placeholder="Address Line 2"
           variant="filled"
@@ -189,7 +188,7 @@ function EditUserProfileDetailsForm({ user }: Props) {
       <ValidatedTextInput
         form={form}
         className={classes.fields}
-        name="profile.zip_code"
+        name="profile.zipCode"
         label="Zip Code"
         placeholder="Zip Code"
         variant="filled"
@@ -198,7 +197,7 @@ function EditUserProfileDetailsForm({ user }: Props) {
       <ValidatedTextInput
         form={form}
         className={classes.fields}
-        name="profile.phone_number"
+        name="profile.phoneNumber"
         label="Phone Number"
         placeholder="Phone Number"
         variant="filled"

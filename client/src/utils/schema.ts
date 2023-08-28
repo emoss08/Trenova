@@ -34,13 +34,13 @@ export const LoginSchema = Yup.object().shape({
  */
 export const UserSchema = Yup.object().shape({
   profile: Yup.object().shape({
-    first_name: Yup.string().required("First name is required"),
-    last_name: Yup.string().required("Last name is required"),
-    address_line_1: Yup.string().required("Address Line 1 is required"),
+    firstName: Yup.string().required("First name is required"),
+    lastName: Yup.string().required("Last name is required"),
+    addressLine1: Yup.string().required("Address Line 1 is required"),
     city: Yup.string().required("City is required"),
     state: Yup.string().required("State is required"),
-    zip_code: Yup.string().required("Zip Code is required"),
-    phone_number: Yup.string()
+    zipCode: Yup.string().required("Zip Code is required"),
+    phoneNumber: Yup.string()
       .nullable()
       .test(
         "phone_number_format",
@@ -51,7 +51,7 @@ export const UserSchema = Yup.object().shape({
           } // if the string is null or undefined, skip the test
           const regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
           return regex.test(value); // apply the regex test if string exists
-        }
+        },
       ),
   }),
 });
@@ -62,6 +62,6 @@ export const UserSchema = Yup.object().shape({
  * @property columns - A required array of strings.
  */
 export const ExportModelSchema = Yup.object().shape({
-  file_format: Yup.string().required("File format is required"),
+  fileFormat: Yup.string().required("File format is required"),
   columns: Yup.array().of(Yup.string()).required("Columns are required"),
 });

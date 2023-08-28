@@ -32,9 +32,9 @@ export type DivisionCode = {
   status: StatusChoiceProps;
   code: string;
   description: string;
-  ap_account?: string | null;
-  cash_account?: string | null;
-  expense_account?: string | null;
+  apAccount?: string | null;
+  cashAccount?: string | null;
+  expenseAccount?: string | null;
 };
 
 export interface DivisionCodeFormValues
@@ -45,12 +45,12 @@ export type GeneralLedgerAccount = {
   id: string;
   organization: string;
   status: StatusChoiceProps;
-  account_number: string;
+  accountNumber: string;
   description: string;
-  account_type: AccountTypeChoiceProps | "";
-  cash_flow_type?: CashFlowTypeChoiceProps | "" | null;
-  account_sub_type?: AccountSubTypeChoiceProps | "" | null;
-  account_classification?: AccountClassificationChoiceProps | "" | null;
+  accountType: AccountTypeChoiceProps | "";
+  cashFlowType?: CashFlowTypeChoiceProps | "" | null;
+  accountSubType?: AccountSubTypeChoiceProps | "" | null;
+  accountClassification?: AccountClassificationChoiceProps | "" | null;
 };
 
 export interface GLAccountFormValues
@@ -62,13 +62,13 @@ export type RevenueCode = {
   organization: string;
   code: string;
   description: string;
-  expense_account?: string | null;
-  revenue_account?: string | null;
-  rev_account_num?: string | null;
-  exp_account_num?: string | null;
+  expenseAccount?: string | null;
+  revenueAccount?: string | null;
+  revAccountNum?: string | null;
+  expAccountNum?: string | null;
 };
 
 export type RevenueCodeFormValues = Omit<
   RevenueCode,
-  "id" | "organization" | "rev_account_num" | "exp_account_num"
+  "id" | "organization" | "revAccountNum" | "expAccountNum"
 >;

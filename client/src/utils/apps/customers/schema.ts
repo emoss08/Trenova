@@ -30,15 +30,15 @@ export const customerSchema: ObjectSchema<CustomerFormValues> =
     status: Yup.string<StatusChoiceProps>().required("Status is required"),
     code: Yup.string().required("Code is required"),
     name: Yup.string().required("Name is required"),
-    address_line_1: Yup.string().notRequired(),
-    address_line_2: Yup.string().notRequired(),
+    addressLine1: Yup.string().notRequired(),
+    addressLine2: Yup.string().notRequired(),
     city: Yup.string().notRequired(),
     state: Yup.string().notRequired(),
-    zip_code: Yup.string().notRequired(),
-    has_customer_portal: Yup.string<YesNoChoiceProps>().required(
+    zipCode: Yup.string().notRequired(),
+    hasCustomerPortal: Yup.string<YesNoChoiceProps>().required(
       "Has Customer Portal is required",
     ),
-    auto_mark_ready_to_bill: Yup.string<YesNoChoiceProps>().required(
+    autoMarkReadyToBill: Yup.string<YesNoChoiceProps>().required(
       "Auto Mark Ready to Bill is required",
     ),
   });
@@ -48,22 +48,22 @@ export const CustomerEmailProfileSchema: ObjectSchema<CustomerEmailProfileFormVa
   Yup.object().shape({
     subject: Yup.string().notRequired().max(100),
     comment: Yup.string().notRequired().max(100),
-    from_address: Yup.string().notRequired(),
-    blind_copy: Yup.string().notRequired(),
-    read_receipt: Yup.boolean().required(),
-    read_receipt_to: Yup.string().when("read_receipt", {
+    fromAddress: Yup.string().notRequired(),
+    blindCopy: Yup.string().notRequired(),
+    readReceipt: Yup.boolean().required(),
+    readReceiptTo: Yup.string().when("read_receipt", {
       is: true,
       then: (schema) => schema.required("Read Receipt To is required"),
       otherwise: (schema) => schema.notRequired(),
     }),
-    attachment_name: Yup.string().notRequired(),
+    attachmentName: Yup.string().notRequired(),
   });
 
 export const CustomerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValues> =
   Yup.object().shape({
     name: Yup.string().required("Name is required"),
     customer: Yup.string().required("Customer is required"),
-    document_class: Yup.array()
+    documentClass: Yup.array()
       .of(Yup.string().required())
       .min(1, "At Least one document class is required.")
       .required("Document Class is required"),

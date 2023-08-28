@@ -76,7 +76,7 @@ export function ViewDCModalForm({
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <Select
             data={selectGlAccountData}
-            value={divisionCode.ap_account || ""}
+            value={divisionCode.apAccount || ""}
             readOnly
             label="AP Account"
             className={classes.fields}
@@ -84,7 +84,7 @@ export function ViewDCModalForm({
           />
           <Select
             data={selectGlAccountData}
-            value={divisionCode.cash_account || ""}
+            value={divisionCode.cashAccount || ""}
             readOnly
             label="Cash Account"
             className={classes.fields}
@@ -93,7 +93,7 @@ export function ViewDCModalForm({
         </SimpleGrid>
         <Select
           data={selectGlAccountData}
-          value={divisionCode.expense_account || ""}
+          value={divisionCode.expenseAccount || ""}
           readOnly
           label="Expense Account"
           className={classes.fields}
@@ -135,7 +135,7 @@ export function ViewDCModal(): React.ReactElement {
   const selectGlAccountData =
     glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
       value: glAccount.id,
-      label: glAccount.account_number,
+      label: glAccount.accountNumber,
     })) || [];
 
   return (

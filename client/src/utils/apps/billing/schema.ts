@@ -32,8 +32,8 @@ export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> 
   Yup.object().shape({
     code: Yup.string().required("Code is required"),
     description: Yup.string().notRequired(),
-    is_detention: Yup.boolean().required("Detention is required"),
-    charge_amount: Yup.number()
+    isDetention: Yup.boolean().required("Detention is required"),
+    chargeAmount: Yup.number()
       .min(1, "Charge Amount must be greater than zero.")
       .required("Charge amount is required"),
     method: Yup.string<fuelMethodChoicesProps>().required("Method is required"),
@@ -47,24 +47,24 @@ export const chargeTypeSchema: ObjectSchema<ChargeTypeFormValues> =
 
 export const billingControlSchema: ObjectSchema<BillingControlFormValues> =
   Yup.object().shape({
-    remove_billing_history: Yup.boolean().required(
-      "Remove billing history is required"
+    removeBillingHistory: Yup.boolean().required(
+      "Remove billing history is required",
     ),
-    auto_bill_orders: Yup.boolean().required("Auto bill orders is required"),
-    auto_mark_ready_to_bill: Yup.boolean().required(
-      "Auto mark ready to bill is required"
+    autoBillOrders: Yup.boolean().required("Auto bill orders is required"),
+    autoMarkReadyToBill: Yup.boolean().required(
+      "Auto mark ready to bill is required",
     ),
-    validate_customer_rates: Yup.boolean().required(
-      "Validate customer rates is required"
+    validateCustomerRates: Yup.boolean().required(
+      "Validate customer rates is required",
     ),
-    auto_bill_criteria: Yup.string<AutoBillingCriteriaChoicesProps>().required(
-      "Auto bill criteria is required"
+    autoBillCriteria: Yup.string<AutoBillingCriteriaChoicesProps>().required(
+      "Auto bill criteria is required",
     ),
-    order_transfer_criteria:
+    orderTransferCriteria:
       Yup.string<OrderTransferCriteriaChoicesProps>().required(
-        "Order transfer criteria is required"
+        "Order transfer criteria is required",
       ),
-    enforce_customer_billing: Yup.boolean().required(
-      "Enforce customer billing is required"
+    enforceCustomerBilling: Yup.boolean().required(
+      "Enforce customer billing is required",
     ),
   });

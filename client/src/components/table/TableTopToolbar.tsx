@@ -31,11 +31,7 @@ interface TopToolbarProps {
   name: string;
 }
 
-export const TableTopToolbar: React.FC<TopToolbarProps> = ({
-  table,
-  store,
-  name,
-}) => {
+export function TableTopToolbar({ table, store, name }: TopToolbarProps) {
   const [showColumnFilters, setShowColumnFilters] = store.use("columnFilters");
 
   return (
@@ -69,27 +65,21 @@ export const TableTopToolbar: React.FC<TopToolbarProps> = ({
           justifyContent: "flex-end",
         }}
       >
-        <Popover
-          width={300}
-          trapFocus
-          position="bottom"
-          withArrow
-          shadow="md"
-        >
+        <Popover width={300} trapFocus position="bottom" withArrow shadow="md">
           <Popover.Target>
             <Button
               color="blue"
               leftIcon={<FontAwesomeIcon icon={faFilters} />}
             >
-                Filter
+              Filter
             </Button>
           </Popover.Target>
           <Popover.Dropdown
             sx={(theme) => ({
               background:
-                  theme.colorScheme === "dark"
-                    ? theme.colors.dark[7]
-                    : theme.white,
+                theme.colorScheme === "dark"
+                  ? theme.colors.dark[7]
+                  : theme.white,
             })}
           >
             <Checkbox
@@ -108,16 +98,16 @@ export const TableTopToolbar: React.FC<TopToolbarProps> = ({
           leftIcon={<FontAwesomeIcon icon={faFileExport} />}
           onClick={() => store.set("exportModalOpen", true)}
         >
-            Export
+          Export
         </Button>
         <Button
           color="blue"
           onClick={() => store.set("createModalOpen", true)}
           leftIcon={<FontAwesomeIcon icon={faPlus} />}
         >
-            Add {name}
+          Add {name}
         </Button>
       </Flex>
     </Flex>
   );
-};
+}

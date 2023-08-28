@@ -17,15 +17,15 @@
 
 import React from "react";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { createStyles } from "@mantine/styles";
 import { Textarea } from "@mantine/core";
 import { TextareaProps } from "@mantine/core/lib/Textarea/Textarea";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/styles/FormStyles";
 
 interface ValidatedTextInputProps<TFormValues>
-  extends Omit<TextareaProps, "form"> {
+  extends Omit<TextareaProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
+  name: keyof TFormValues;
 }
 
 export function ValidatedTextArea<TFormValues extends object>({

@@ -38,7 +38,7 @@ interface Props {
   routeControl: RouteControl;
 }
 
-export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
+export function RouteControlForm({ routeControl }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -65,12 +65,12 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -89,9 +89,9 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
   const form = useForm<RouteControlFormValues>({
     validate: yupResolver(routeControlSchema),
     initialValues: {
-      distance_method: routeControl.distance_method,
-      mileage_unit: routeControl.mileage_unit,
-      generate_routes: routeControl.generate_routes,
+      distanceMethod: routeControl.distanceMethod,
+      mileageUnit: routeControl.mileageUnit,
+      generateRoutes: routeControl.generateRoutes,
     },
   });
 
@@ -105,32 +105,32 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<RouteControlFormValues>
               form={form}
               data={distanceMethodChoices}
               className={classes.fields}
-              name="distance_method"
+              name="distanceMethod"
               label="Distance Method"
               placeholder="Distance Method"
               description="Distance method for the company."
               variant="filled"
               withAsterisk
             />
-            <SelectInput
+            <SelectInput<RouteControlFormValues>
               form={form}
               data={routeDistanceUnitChoices}
               className={classes.fields}
-              name="mileage_unit"
+              name="mileageUnit"
               label="Mileage Unit"
               placeholder="Mileage Unit"
               description="The mileage unit that the organization uses."
               variant="filled"
               withAsterisk
             />
-            <SwitchInput
+            <SwitchInput<RouteControlFormValues>
               form={form}
               className={classes.fields}
-              name="generate_routes"
+              name="generateRoutes"
               label="Auto Generate Routes"
               description="Automatically generate routes for the company."
               variant="filled"
@@ -150,4 +150,4 @@ export const RouteControlForm: React.FC<Props> = ({ routeControl }) => {
       </Box>
     </form>
   );
-};
+}

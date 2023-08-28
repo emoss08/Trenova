@@ -22,12 +22,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { MontaTable } from "@/components/MontaTable";
-import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
-import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
-import { customerTableStore } from "@/stores/CustomerStore";
+import { customerTableStore as store } from "@/stores/CustomerStore";
 import { Customer } from "@/types/apps/customer";
 import { TChoiceProps } from "@/types";
+import { EditCustomerModal } from "@/components/customer/view/_partials/EditCustomerModal";
 
 export function CustomerTable() {
   const navigate = useNavigate();
@@ -98,8 +97,8 @@ export function CustomerTable() {
               </Menu.Item>
               <Menu.Item
                 onClick={() => {
-                  customerTableStore.set("selectedRecord", row.original);
-                  customerTableStore.set("editModalOpen", true);
+                  store.set("selectedRecord", row.original);
+                  store.set("editModalOpen", true);
                 }}
               >
                 Edit
@@ -107,8 +106,8 @@ export function CustomerTable() {
               <Menu.Item
                 color="red"
                 onClick={() => {
-                  customerTableStore.set("selectedRecord", row.original);
-                  customerTableStore.set("deleteModalOpen", true);
+                  store.set("selectedRecord", row.original);
+                  store.set("deleteModalOpen", true);
                 }}
               >
                 Delete
@@ -123,11 +122,10 @@ export function CustomerTable() {
 
   return (
     <MontaTable<Customer>
-      store={customerTableStore}
+      store={store}
       link="/customers"
       columns={columns}
-      TableEditModal={EditCommodityModal}
-      TableViewModal={ViewCommodityModal}
+      TableEditModal={EditCustomerModal}
       displayDeleteModal
       TableCreateDrawer={CreateCommodityModal}
       tableQueryKey="customer-table-data"

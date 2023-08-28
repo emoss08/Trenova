@@ -34,7 +34,7 @@ import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
 import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
 import { jobFunctionChoices } from "@/utils/apps/accounts";
 
-export function CreateJobTitleModalForm(): React.ReactElement {
+function CreateJobTitleModalForm(): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -88,7 +88,7 @@ export function CreateJobTitleModalForm(): React.ReactElement {
       status: "A",
       name: "",
       description: "",
-      job_function: "",
+      jobFunction: "",
     },
   });
 
@@ -102,7 +102,7 @@ export function CreateJobTitleModalForm(): React.ReactElement {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<JobTitleFormValues>
               form={form}
               data={statusChoices}
               className={classes.fields}
@@ -112,7 +112,7 @@ export function CreateJobTitleModalForm(): React.ReactElement {
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<JobTitleFormValues>
               form={form}
               className={classes.fields}
               name="name"
@@ -122,7 +122,7 @@ export function CreateJobTitleModalForm(): React.ReactElement {
               withAsterisk
             />
           </SimpleGrid>
-          <ValidatedTextArea
+          <ValidatedTextArea<JobTitleFormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -130,11 +130,11 @@ export function CreateJobTitleModalForm(): React.ReactElement {
             placeholder="Description"
             variant="filled"
           />
-          <SelectInput
+          <SelectInput<JobTitleFormValues>
             form={form}
             data={jobFunctionChoices}
             className={classes.fields}
-            name="job_function"
+            name="jobFunction"
             label="Job Function"
             placeholder="Job Function"
             variant="filled"

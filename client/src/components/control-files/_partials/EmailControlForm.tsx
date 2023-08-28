@@ -38,10 +38,10 @@ interface Props {
   selectEmailProfileData: TChoiceProps[];
 }
 
-export const EmailControlForm: React.FC<Props> = ({
+export function EmailControlForm({
   emailControl,
   selectEmailProfileData,
-}) => {
+}: Props): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -68,12 +68,12 @@ export const EmailControlForm: React.FC<Props> = ({
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: APIError) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,
@@ -86,15 +86,14 @@ export const EmailControlForm: React.FC<Props> = ({
       onSettled: () => {
         setLoading(false);
       },
-    }
+    },
   );
 
   const form = useForm<EmailControlFormValues>({
     validate: yupResolver(emailControlSchema),
     initialValues: {
-      billing_email_profile: emailControl.billing_email_profile || "",
-      rate_expiration_email_profile:
-        emailControl.rate_expiration_email_profile || "",
+      billingEmailProfile: emailControl.billingEmailProfile || "",
+      rateExpirationEmailProfile: emailControl.rateExpirationEmailProfile || "",
     },
   });
 
@@ -108,21 +107,21 @@ export const EmailControlForm: React.FC<Props> = ({
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<EmailControlFormValues>
               form={form}
               data={selectEmailProfileData}
               className={classes.fields}
-              name="billing_email_profile"
+              name="billingEmailProfile"
               label="Billing Email Profile"
               placeholder="Billing Email Profile"
               description="The email profile that will be used for billing emails."
               variant="filled"
             />
-            <SelectInput
+            <SelectInput<EmailControlFormValues>
               form={form}
               data={selectEmailProfileData}
               className={classes.fields}
-              name="rate_expiration_email_profile"
+              name="rateExpirationEmailProfile"
               label="Rate Expiration Email Profile"
               placeholder="Rate Expiration Email Profile"
               description="The email profile that will be used for rate expiration emails."
@@ -143,4 +142,4 @@ export const EmailControlForm: React.FC<Props> = ({
       </Box>
     </form>
   );
-};
+}

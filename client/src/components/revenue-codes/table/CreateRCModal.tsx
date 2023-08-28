@@ -41,9 +41,9 @@ type CreateRCModalFormProps = {
   selectGlAccountData: TChoiceProps[];
 };
 
-export function CreateRCModalForm({
+function CreateRCModalForm({
   selectGlAccountData,
-}: CreateRCModalFormProps) {
+}: CreateRCModalFormProps): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
@@ -96,8 +96,8 @@ export function CreateRCModalForm({
     initialValues: {
       code: "",
       description: "",
-      expense_account: "",
-      revenue_account: "",
+      expenseAccount: "",
+      revenueAccount: "",
     },
   });
 
@@ -109,7 +109,7 @@ export function CreateRCModalForm({
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput
+        <ValidatedTextInput<RevenueCodeFormValues>
           form={form}
           className={classes.fields}
           name="code"
@@ -118,7 +118,7 @@ export function CreateRCModalForm({
           variant="filled"
           withAsterisk
         />
-        <ValidatedTextArea
+        <ValidatedTextArea<RevenueCodeFormValues>
           form={form}
           className={classes.fields}
           name="description"
@@ -128,21 +128,21 @@ export function CreateRCModalForm({
           withAsterisk
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput
+          <SelectInput<RevenueCodeFormValues>
             form={form}
             data={selectGlAccountData}
             className={classes.fields}
-            name="expense_account"
+            name="expenseAccount"
             label="Expense Account"
             placeholder="Expense Account"
             variant="filled"
             clearable
           />
-          <SelectInput
+          <SelectInput<RevenueCodeFormValues>
             form={form}
             data={selectGlAccountData}
             className={classes.fields}
-            name="revenue_account"
+            name="revenueAccount"
             label="Revenue Account"
             placeholder="Revenue Account"
             variant="filled"
@@ -180,7 +180,7 @@ export function CreateRCModal(): React.ReactElement {
   const selectGlAccountData =
     glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
       value: glAccount.id,
-      label: glAccount.account_number,
+      label: glAccount.accountNumber,
     })) || [];
 
   return (

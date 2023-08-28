@@ -71,7 +71,7 @@ function ViewACModalForm({ accessorialCharge }: ViewACModalFormProps) {
           description="Charge amount for the accessorial charge."
           variant="filled"
           readOnly
-          value={accessorialCharge.charge_amount}
+          value={accessorialCharge.chargeAmount}
         />
         <Select
           data={fuelMethodChoices}
@@ -92,7 +92,7 @@ function ViewACModalForm({ accessorialCharge }: ViewACModalFormProps) {
           placeholder="Detention"
           variant="filled"
           readOnly
-          checked={accessorialCharge.is_detention}
+          checked={accessorialCharge.isDetention}
         />
       </SimpleGrid>
       <Group position="right" mt="md">

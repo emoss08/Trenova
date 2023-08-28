@@ -95,7 +95,7 @@ export function ViewCustomerNavbar({
               <Avatar
                 src={null}
                 alt={customer?.name}
-                size="xl"
+                size={100}
                 radius={50}
                 color="blue"
                 my={20}
@@ -146,13 +146,13 @@ export function ViewCustomerNavbar({
               <Text className={classes.text} fw={500} size="sm">
                 Address Line 1
               </Text>
-              <Text color="dimmed">{customer?.address_line_1}</Text>
+              <Text color="dimmed">{customer?.addressLine1}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Address Line 2
               </Text>
-              <Text color="dimmed">{customer?.address_line_2}</Text>
+              <Text color="dimmed">{customer?.addressLine2}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
@@ -164,20 +164,20 @@ export function ViewCustomerNavbar({
               <Text className={classes.text} fw={500} size="sm">
                 Zip Code
               </Text>
-              <Text color="dimmed">{customer?.zip_code}</Text>
+              <Text color="dimmed">{customer?.zipCode}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Customer Advocate
               </Text>
-              <Text color="dimmed">{customer?.advocate_full_name || ""}</Text>
+              <Text color="dimmed">{customer?.advocateFullName || ""}</Text>
             </Box>
             <Box my={10}>
               <Text className={classes.text} fw={500} size="sm">
                 Last Ship Date
               </Text>
               <Text color="dimmed">
-                {customer?.customer_shipment_metrics.last_shipment_date || ""}
+                {customer?.customerShipmentMetrics.lastShipmentDate || ""}
               </Text>
             </Box>
             <Box my={10}>
@@ -185,7 +185,7 @@ export function ViewCustomerNavbar({
                 Last Bill Date
               </Text>
               <Text color="dimmed">
-                {customer?.customer_shipment_metrics.last_bill_date || ""}
+                {customer?.customerShipmentMetrics.lastBillDate || ""}
               </Text>
             </Box>
           </Card>

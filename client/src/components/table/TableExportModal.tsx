@@ -43,11 +43,11 @@ interface Props {
   name: string;
 }
 
-export const TableExportModal: React.FC<Props> = ({
+export function TableExportModal({
   store,
   modelName,
   name,
-}) => {
+}: Props): React.ReactElement | null {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [showExportModal, setShowExportModal] = store.use("exportModalOpen");
 
@@ -61,7 +61,7 @@ export const TableExportModal: React.FC<Props> = ({
   const form = useForm<TExportModelFormValue>({
     validate: yupResolver(ExportModelSchema),
     initialValues: {
-      file_format: "csv",
+      fileFormat: "csv",
       columns: [],
     },
   });
@@ -76,8 +76,8 @@ export const TableExportModal: React.FC<Props> = ({
 
     try {
       const response = await axios.post("generate_report/", {
-        model_name: modelName as string,
-        file_format: values.file_format,
+        modelName: modelName as string,
+        fileFormat: values.fileFormat,
         columns: values.columns,
       });
 
@@ -146,9 +146,9 @@ export const TableExportModal: React.FC<Props> = ({
                   {...form.getInputProps("columns")}
                 />
                 <Text size="xs" color="dimmed" mt={5}>
-                      Fields with underscores are related fields. For example,
-                      'organization__name' is the 'name' field of the
-                      organization of the record.
+                  Fields with underscores are related fields. For example,
+                  &apos;organization__name&apos; is the &apos;name&apos; field
+                  of the organization of the record.
                 </Text>
               </Box>
               <Box>
@@ -160,10 +160,10 @@ export const TableExportModal: React.FC<Props> = ({
                   searchable
                   nothingFound="No options"
                   withAsterisk
-                  {...form.getInputProps("file_format")}
+                  {...form.getInputProps("fileFormat")}
                 />
                 <Text size="xs" color="dimmed" mt={5}>
-                      Select a format to export (CSV, Excel, or PDF).
+                  Select a format to export (CSV, Excel, or PDF).
                 </Text>
               </Box>
               <Divider mt={10} />
@@ -178,7 +178,7 @@ export const TableExportModal: React.FC<Props> = ({
                   onClick={() => setShowExportModal(false)}
                   variant="light"
                 >
-                      Cancel
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
@@ -187,7 +187,7 @@ export const TableExportModal: React.FC<Props> = ({
                   loading={loading}
                   disabled={form.values.columns.length === 0}
                 >
-                      Export
+                  Export
                 </Button>
               </Box>
             </form>
@@ -196,4 +196,4 @@ export const TableExportModal: React.FC<Props> = ({
       </Modal.Content>
     </Modal.Root>
   );
-};
+}

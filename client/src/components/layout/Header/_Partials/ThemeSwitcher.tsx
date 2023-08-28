@@ -114,7 +114,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const ThemeSwitcher: React.FC = () => {
+export function ThemeSwitcher(): React.ReactElement {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { classes } = useStyles();
   const [themeSwitcherOpen] = useNavbarStore.use("themeSwitcherOpen");
@@ -129,7 +129,8 @@ export const ThemeSwitcher: React.FC = () => {
           className={classes.mainLinkIcon}
         />
       );
-    } if (colorScheme === "dark") {
+    }
+    if (colorScheme === "dark") {
       return (
         <FontAwesomeIcon
           size="lg"
@@ -145,7 +146,6 @@ export const ThemeSwitcher: React.FC = () => {
         className={classes.mainLinkIcon}
       />
     );
-
   };
 
   return (
@@ -185,7 +185,7 @@ export const ThemeSwitcher: React.FC = () => {
             />
           }
         >
-            Light Theme
+          Light Theme
         </Menu.Item>
         <Menu.Item
           className={classes.menuItem}
@@ -198,9 +198,9 @@ export const ThemeSwitcher: React.FC = () => {
             />
           }
         >
-            Dark Theme
+          Dark Theme
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>
   );
-};
+}

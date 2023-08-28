@@ -31,7 +31,6 @@ import { DeleteRecordModal } from "@/components/DeleteRecordModal";
 import { API_URL } from "@/lib/utils";
 import { TableTopToolbar } from "@/components/table/TableTopToolbar";
 import { TableExportModal } from "./table/TableExportModal";
-import { Store } from "@/utils/zustand";
 
 MontaTable.defaultProps = {
   displayDeleteModal: true,

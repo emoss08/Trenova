@@ -82,6 +82,7 @@ interface SubLinksGroupProps {
   label: string;
   subLinks: LinkItem[];
 }
+
 export function SubLinksGroup({ label, subLinks }: SubLinksGroupProps) {
   const { classes, theme } = useStyles();
   const { userHasPermission } = useUserPermissions();
@@ -91,9 +92,9 @@ export function SubLinksGroup({ label, subLinks }: SubLinksGroupProps) {
       Array.isArray(subLinks) &&
       subLinks.some(
         (subLink) =>
-          !subLink.permission || userHasPermission(subLink.permission)
+          !subLink.permission || userHasPermission(subLink.permission),
       ),
-    [subLinks, userHasPermission]
+    [subLinks, userHasPermission],
   );
 
   const [opened, setOpened] = useState(false);
@@ -102,25 +103,29 @@ export function SubLinksGroup({ label, subLinks }: SubLinksGroupProps) {
 
   const ChevronIcon = useMemo(
     () => (theme.dir === "ltr" ? IconChevronRight : IconChevronLeft),
-    [theme.dir]
+    [theme.dir],
   );
 
-  const subLinkItems = useMemo(() => subLinks
-    ?.filter(
-      (subLink) =>
-        !subLink.permission || userHasPermission(subLink.permission)
-    )
-    .map((subLink) => (
-      <Link
-        to={subLink.link}
-        style={{
-          textDecoration: "none",
-        }}
-        key={subLink.label}
-      >
-        <Text className={classes.link}>{subLink.label}</Text>
-      </Link>
-    )), [subLinks, userHasPermission]);
+  const subLinkItems = useMemo(
+    () =>
+      subLinks
+        ?.filter(
+          (subLink) =>
+            !subLink.permission || userHasPermission(subLink.permission),
+        )
+        .map((subLink) => (
+          <Link
+            to={subLink.link}
+            style={{
+              textDecoration: "none",
+            }}
+            key={subLink.label}
+          >
+            <Text className={classes.link}>{subLink.label}</Text>
+          </Link>
+        )),
+    [subLinks, userHasPermission],
+  );
 
   if (!hasSubLinks) {
     return null;

@@ -16,19 +16,8 @@
  */
 
 import React from "react";
-import {
-  Skeleton,
-  createStyles,
-  rem,
-  Image,
-  Title,
-  Text,
-  Card,
-  Button,
-  Box,
-} from "@mantine/core";
+import { Skeleton, Title, Text, Card, Button, Box } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
-import image from "../../../../assets/images/notfound.png";
 import {
   getCustomerEmailProfile,
   getCustomerRuleProfile,
@@ -40,56 +29,12 @@ import {
   CustomerEmailProfile,
   CustomerRuleProfile,
 } from "@/types/apps/customer";
-import { Alert } from "@/components/ui/Alert";
 import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
 import { usePageStyles } from "@/styles/PageStyles";
 
 type CustomerProfileTabProps = {
   customerId: string;
 };
-
-const useStyles = createStyles((theme) => ({
-  card: {
-    width: "100%",
-    "@media (max-width: 576px)": {
-      height: "auto",
-      maxHeight: "none",
-    },
-  },
-  root: {
-    paddingTop: rem(80),
-    paddingBottom: rem(80),
-  },
-
-  title: {
-    fontWeight: 900,
-    fontSize: rem(34),
-    marginBottom: theme.spacing.md,
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-
-    [theme.fn.smallerThan("sm")]: {
-      fontSize: rem(32),
-    },
-  },
-
-  control: {
-    [theme.fn.smallerThan("sm")]: {
-      width: "100%",
-    },
-  },
-
-  mobileImage: {
-    [theme.fn.largerThan("sm")]: {
-      display: "none",
-    },
-  },
-
-  desktopImage: {
-    [theme.fn.smallerThan("sm")]: {
-      display: "none",
-    },
-  },
-}));
 
 export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
   const queryClient = useQueryClient();

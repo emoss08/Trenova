@@ -20,29 +20,19 @@ import { DateFormatChoiceProps } from "@/utils/apps/invoicing";
 export type InvoiceControl = {
   id: string;
   organization: string;
-  invoice_number_prefix: string;
-  credit_memo_number_prefix: string;
-  invoice_due_after_days: number;
-  invoice_terms?: string | null;
-  invoice_footer?: string | null;
-  invoice_logo?: any | null;
-  invoice_logo_width: number;
-  show_invoice_due_date: boolean;
-  invoice_date_format: DateFormatChoiceProps;
-  show_amount_due: boolean;
-  attach_pdf: boolean;
+  invoiceNumberPrefix: string;
+  creditMemoNumberPrefix: string;
+  invoiceDueAfterDays: number;
+  invoiceTerms?: string | null;
+  invoiceFooter?: string | null;
+  invoiceLogo?: any | null;
+  invoiceLogoWidth: number;
+  showInvoiceDueDate: boolean;
+  invoiceDateFormat: DateFormatChoiceProps;
+  showAmountDue: boolean;
+  attachPdf: boolean;
 };
-
-export type InvoiceControlFormValues = {
-  invoice_number_prefix: string;
-  credit_memo_number_prefix: string;
-  invoice_due_after_days: number;
-  invoice_terms?: string | null;
-  invoice_footer?: string | null;
-  invoice_logo?: any | null;
-  invoice_logo_width: number;
-  show_invoice_due_date: boolean;
-  invoice_date_format: DateFormatChoiceProps;
-  show_amount_due: boolean;
-  attach_pdf: boolean;
-};
+export type InvoiceControlFormValues = Omit<
+  InvoiceControl,
+  "id" | "organization"
+>;

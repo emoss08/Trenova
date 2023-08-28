@@ -107,21 +107,21 @@ function EditCommodityModalForm({
     initialValues: {
       name: commodity.name,
       description: commodity.description,
-      min_temp: commodity.min_temp,
-      max_temp: commodity.max_temp,
-      set_point_temp: commodity.set_point_temp,
-      unit_of_measure: commodity.unit_of_measure,
+      minTemp: commodity.minTemp,
+      maxTemp: commodity.maxTemp,
+      setPointTemp: commodity.setPointTemp,
+      unitOfMeasure: commodity.unitOfMeasure,
       hazmat: commodity.hazmat,
-      is_hazmat: commodity.is_hazmat,
+      isHazmat: commodity.isHazmat,
     },
   });
 
   // Set is_hazmat value based on hazmat value
   React.useEffect(() => {
     if (form.values.hazmat) {
-      form.setFieldValue("is_hazmat", "Y");
+      form.setFieldValue("isHazmat", "Y");
     } else {
-      form.setFieldValue("is_hazmat", "N");
+      form.setFieldValue("isHazmat", "N");
     }
   });
 
@@ -134,7 +134,7 @@ function EditCommodityModalForm({
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <Box>
-          <ValidatedTextInput
+          <ValidatedTextInput<CommodityFormValues>
             form={form}
             className={classes.fields}
             name="name"
@@ -143,7 +143,7 @@ function EditCommodityModalForm({
             variant="filled"
             withAsterisk
           />
-          <ValidatedTextArea
+          <ValidatedTextArea<CommodityFormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -152,25 +152,25 @@ function EditCommodityModalForm({
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput
+            <ValidatedTextInput<CommodityFormValues>
               form={form}
               className={classes.fields}
-              name="min_temp"
+              name="minTemp"
               label="Min Temp"
               placeholder="Min Temp"
               variant="filled"
             />
-            <ValidatedTextInput
+            <ValidatedTextInput<CommodityFormValues>
               form={form}
               className={classes.fields}
-              name="max_temp"
+              name="maxTemp"
               label="Max Temp"
               placeholder="Max Temp"
               variant="filled"
             />
           </SimpleGrid>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput
+            <SelectInput<CommodityFormValues>
               className={classes.fields}
               data={selectHazmatData || []}
               name="hazmat"
@@ -180,10 +180,10 @@ function EditCommodityModalForm({
               variant="filled"
               clearable
             />
-            <SelectInput
+            <SelectInput<CommodityFormValues>
               className={classes.fields}
               data={yesAndNoChoices}
-              name="is_hazmat"
+              name="isHazmat"
               label="Is Hazmat"
               placeholder="Is Hazmat"
               form={form}
@@ -191,10 +191,10 @@ function EditCommodityModalForm({
               withAsterisk
             />
           </SimpleGrid>
-          <SelectInput
+          <SelectInput<CommodityFormValues>
             className={classes.fields}
             data={unitOfMeasureChoices}
-            name="unit_of_measure"
+            name="unitOfMeasure"
             placeholder="Unit of Measure"
             label="Unit of Measure"
             form={form}

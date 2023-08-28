@@ -51,7 +51,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const PasswordChangeForm: React.FC = () => {
+export function PasswordChangeForm(): React.ReactElement {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const { classes } = useStyles();
@@ -63,29 +63,29 @@ export const PasswordChangeForm: React.FC = () => {
   };
 
   interface FormValues {
-    old_password: string;
-    new_password: string;
-    confirm_password: string;
-    non_field_errors?: string;
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    nonFieldErrors?: string;
   }
 
-  const schema = Yup.object().shape({
-    old_password: Yup.string().required("Current Password is required"),
-    new_password: Yup.string().required("New Password is required"),
-    confirm_password: Yup.string()
-      .oneOf(
-        [Yup.ref("new_password"), undefined],
-        "The password and its confirm are not the same",
-      )
-      .required("Confirm Password is required"),
-  });
-  const form = useForm<FormValues>({
+  const schema: Yup.ObjectSchema<Omit<FormValues, "nonFieldErrors">> =
+    Yup.object().shape({
+      oldPassword: Yup.string().required("Current Password is required"),
+      newPassword: Yup.string().required("New Password is required"),
+      confirmPassword: Yup.string()
+        .oneOf(
+          [Yup.ref("new_password"), undefined],
+          "The password and its confirm are not the same",
+        )
+        .required("Confirm Password is required"),
+    });
+  const form = useForm<Omit<FormValues, "nonFieldErrors">>({
     validate: yupResolver(schema),
     initialValues: {
-      old_password: "",
-      new_password: "",
-      confirm_password: "",
-      non_field_errors: "",
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -163,7 +163,7 @@ export const PasswordChangeForm: React.FC = () => {
                     type="password"
                     variant="filled"
                     form={form}
-                    name="old_password"
+                    name="oldPassword"
                     withAsterisk
                   />
                   <ValidatedTextInput
@@ -171,7 +171,7 @@ export const PasswordChangeForm: React.FC = () => {
                     type="password"
                     variant="filled"
                     form={form}
-                    name="new_password"
+                    name="newPassword"
                     withAsterisk
                   />
                   <ValidatedTextInput
@@ -179,7 +179,7 @@ export const PasswordChangeForm: React.FC = () => {
                     type="password"
                     variant="filled"
                     form={form}
-                    name="confirm_password"
+                    name="confirmPassword"
                     withAsterisk
                   />
                 </SimpleGrid>
@@ -205,4 +205,4 @@ export const PasswordChangeForm: React.FC = () => {
       <Divider my="sm" variant="dashed" />
     </>
   );
-};
+}

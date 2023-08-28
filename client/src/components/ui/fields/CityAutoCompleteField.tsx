@@ -23,9 +23,10 @@ import { stateData } from "./StateSelect";
 import { useFormStyles } from "@/styles/FormStyles";
 
 interface CityAutoCompleteFieldProps<TFormValues extends object>
-  extends Omit<AutocompleteProps, "data" | "form"> {
+  extends Omit<AutocompleteProps, "data" | "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   stateSelection: string;
+  name: keyof TFormValues;
 }
 
 export function CityAutoCompleteField<TFormValues extends object>({

@@ -74,10 +74,10 @@ export const stateData = [
   { label: "Wyoming", value: "WY" },
 ] satisfies ReadonlyArray<TChoiceProps>;
 
-interface StateSelectProps<TFormValues extends object>
-  extends Omit<SelectProps, "data" | "form"> {
+interface StateSelectProps<TFormValues>
+  extends Omit<SelectProps, "data" | "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-  name: string;
+  name: keyof TFormValues;
   searchable: boolean;
 }
 
