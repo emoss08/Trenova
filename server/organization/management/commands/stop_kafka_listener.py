@@ -23,7 +23,7 @@ from django.core.management import BaseCommand
 class Command(BaseCommand):
     help = "Stop the Kafka Listner Process"
 
-    def handle(self, *args: Any, **options: Any):
+    def handle(self, *args: Any, **options: Any) -> None:
         # Read the PID from the file
         with open("kafka_listener_pid.txt") as f:
             pid = int(f.read())

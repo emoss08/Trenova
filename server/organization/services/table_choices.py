@@ -47,7 +47,7 @@ class TableChoiceService:
 
         """
 
-        names = self.connection.introspection.table_names()
+        names: list[str] = self.connection.introspection.table_names()
         for table_name in names:
             excluded_names = (
                 "silk_",
