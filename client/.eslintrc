@@ -31,9 +31,11 @@
     "HTMLButtonElement": true,
     "WebSocket": true,
     "HTMLInputElement": true,
-
+    "HTMLDivElement": true,
+    "File": true
   },
   "rules": {
+    "react/jsx-no-useless-fragment": "off",
     "prettier/prettier": "error",
     "arrow-body-style": "off",
     "prefer-arrow-callback": "off",
@@ -51,6 +53,7 @@
     "camelcase": "off",
     "react/jsx-props-no-spreading": "off",
     "react/prop-types": "off",
+    "react/display-name": "off",
     "react/jsx-filename-extension": [
       2,
       {
