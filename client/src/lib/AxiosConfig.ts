@@ -30,7 +30,7 @@ axios.interceptors.request.use(
     console.info(`Making request to ${req.url}`);
     return req;
   },
-  (error: any) => Promise.reject(error)
+  (error: any) => Promise.reject(error),
 );
 
 /**
@@ -45,7 +45,7 @@ axios.interceptors.response.use(
       sessionStorage.removeItem(USER_ID_KEY);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 /**
