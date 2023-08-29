@@ -165,6 +165,12 @@ router.register(
     customer_api.CustomerRuleProfileViewSet,
     basename="customer-rule-profiles",
 )
+router.register(
+    r"delivery_slots",
+    customer_api.DeliverySlotViewSet,
+    basename="delivery-slots",
+)
+
 
 # Equipment Routing
 router.register(
