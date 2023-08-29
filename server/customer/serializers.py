@@ -17,16 +17,28 @@
 
 from typing import Any
 
-from customer import models
-from customer.selectors import (
-    calculate_customer_total_miles,
-    get_customer_credit_balance,
-    get_customer_on_time_performance_diff,
-    get_customer_order_diff,
-    get_customer_revenue_diff,
-    get_customer_shipment_metrics,
-)
+from rest_framework import serializers
+
+from customer import models, selectors, helpers
 from utils.serializers import GenericSerializer
+
+
+class DeliverySlotSerializer(GenericSerializer):
+    """A serializer for the DeliverySlot model.
+
+    The serializer provides default operations for creating, updating, and deleting
+    delivery slots, as well as listing and retrieving delivery slot.
+    It uses the `DeliverySlot` model to convert the delivery slot instances to
+    and from JSON-formatted data.
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `DeliverySlotSerializer` class.
+        """
+
+        model = models.DeliverySlot
+        extra_read_only_fields = ("customer",)
 
 
 class CustomerContactSerializer(GenericSerializer):
@@ -36,10 +48,6 @@ class CustomerContactSerializer(GenericSerializer):
     customer contacts, as well as listing and retrieving customer contacts.
     It uses the `CustomerContact` model to convert the customer contact instances to
     and from JSON-formatted data.
-
-    Only authenticated users are allowed to access the views provided by this serializer.
-    Filtering is also available, with the ability to filter by customer ID, name, and
-    code.
     """
 
     class Meta:
@@ -48,6 +56,7 @@ class CustomerContactSerializer(GenericSerializer):
         """
 
         model = models.CustomerContact
+        extra_read_only_fields = ("customer",)
 
 
 class CustomerEmailProfileSerializer(GenericSerializer):
@@ -175,12 +184,15 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
 
 class CustomerSerializer(GenericSerializer):
-    """A serializer for the `Customer` model.
-
-    This serializer converts instances of the `Customer` model into JSON or other data formats,
-    and vice versa. It uses the specified fields (name, description, and code) to
-    create the serialized representation of the `Customer` model.
     """
+    A serializer for the Customer model.
+    """
+
+    id = serializers.UUIDField(required=False, allow_null=True)
+    email_profile = CustomerEmailProfileSerializer(required=False)
+    rule_profile = CustomerRuleProfileSerializer(required=False)
+    delivery_slots = DeliverySlotSerializer(many=True, required=False)
+    customer_contacts = CustomerContactSerializer(many=True, required=False)
 
     class Meta:
         """
@@ -188,23 +200,32 @@ class CustomerSerializer(GenericSerializer):
         """
 
         model = models.Customer
+        extra_fields = (
+            "organization",
+            "business_unit",
+            "email_profile",
+            "rule_profile",
+            "delivery_slots",
+            "customer_contacts",
+        )
 
     def to_representation(self, instance: models.Customer) -> dict[str, Any]:
-        """Transforms the instance's data into a dictionary.
+        """Converts a Customer instance to a dictionary representation.
 
-        This method retrieve the data from an instance of `Customer`, and then
-        transforms it into a dictionary format suitable for serialization.
-        It also adds a new field `full_address` which extracts the address from
-        the `get_address_combination` property.
+        This method extends the superclass' to_representation method to add additional fields
+        to the serialized data. Adds the full address of the customer, the full name of the
+        advocate, as well as metrics related to the customer if requested via the query parameters.
+
+        The 'expand_metrics' query parameter can be used to include metrics such as total
+        order metrics, total revenue metrics, on-time performance, total mileage metrics,
+        customer shipment metrics, and credit balance for the customer.
 
         Args:
-            instance (models.Customer): The `Customer` model instance that will be serialized.
+            instance (models.Customer): The instance of Customer to be represented.
 
         Returns:
-            dict: A dictionary containing the serialized data from th `Customer` model instance,
-                including the `full_address` field.
+            dict[str, Any]: The dictionary representation of the customer.
         """
-
         data = super().to_representation(instance)
         data["full_address"] = instance.get_address_combination
         data["advocate_full_name"] = (
@@ -212,22 +233,151 @@ class CustomerSerializer(GenericSerializer):
         )
 
         if self.context["request"].query_params.get("expand_metrics", False):
-            data["total_order_metrics"] = get_customer_order_diff(
+            data["total_order_metrics"] = selectors.get_customer_order_diff(
                 customer_id=instance.id
             )
-            data["total_revenue_metrics"] = get_customer_revenue_diff(
+            data["total_revenue_metrics"] = selectors.get_customer_revenue_diff(
                 customer_id=instance.id
             )
-            data["on_time_performance"] = get_customer_on_time_performance_diff(
+            data[
+                "on_time_performance"
+            ] = selectors.get_customer_on_time_performance_diff(customer_id=instance.id)
+            data["total_mileage_metrics"] = selectors.calculate_customer_total_miles(
                 customer_id=instance.id
             )
-            data["total_mileage_metrics"] = calculate_customer_total_miles(
+            data["customer_shipment_metrics"] = selectors.get_customer_shipment_metrics(
                 customer_id=instance.id
             )
-            data["customer_shipment_metrics"] = get_customer_shipment_metrics(
-                customer_id=instance.id
-            )
-            data["credit_balance"] = get_customer_credit_balance(
+            data["credit_balance"] = selectors.get_customer_credit_balance(
                 customer_id=instance.id
             )
         return data
+
+    def create(self, validated_data: Any) -> models.Customer:
+        """Creates a new customer instance and associated objects based on validated data.
+
+        First, it extracts the organization and business unit from the request using helper superclass methods.
+        Then, it separately extracts the email_profile, rule_profile, delivery_slots, and customer_contacts from the validated data.
+
+        A new Customer instance is created, along with associated objects using helper functions for creation or updates.
+        Lastly, the newly created Customer instance is returned.
+
+        Args:
+            validated_data (Any): Data validated for creating an instance of a customer.
+
+        Returns:
+            models.Customer: The newly created Customer instance.
+        """
+        # Get the organization of the user from the request.
+        organization = super().get_organization
+
+        # Get the business unit of the user from the request.
+        business_unit = super().get_business_unit
+
+        # Popped data (email_profile, rule_profile, delivery_slots, customer_contacts)
+        email_profile_data = validated_data.pop("email_profile", None)
+        rule_profile_data = validated_data.pop("rule_profile", None)
+        delivery_slots_data = validated_data.pop("delivery_slots", [])
+        customer_contacts_data = validated_data.pop("customer_contacts", [])
+
+        # Create the customer
+        customer = models.Customer.objects.create(
+            organization=organization,
+            business_unit=business_unit,
+            **validated_data,
+        )
+
+        # Create or update the email profile
+        helpers.create_or_update_email_profile(
+            customer=customer,
+            email_profile_data=email_profile_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        # Create or update the rule profile
+        helpers.create_or_update_rule_profile(
+            customer=customer,
+            rule_profile_data=rule_profile_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        # Create or update the delivery slots
+        helpers.create_or_update_delivery_slots(
+            customer=customer,
+            delivery_slots_data=delivery_slots_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        # Create or update the customer contacts
+        helpers.create_or_update_customer_contacts(
+            customer=customer,
+            customer_contacts_data=customer_contacts_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        return customer
+
+    def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:
+        """Updates an existing customer instance and associated objects based on validated data.
+
+        First, it extracts the organization and business unit from the request using helper superclass methods.
+        Then, it separately extracts the email_profile, rule_profile, delivery_slots, and customer_contacts from the validated data.
+
+        The instance of Customer and its associated objects are updated with new data using helper functions.
+        Lastly, the updated Customer instance is returned.
+
+        Args:
+            instance (models.Customer): The instance of Customer to be updated.
+            validated_data (Any): Data validated for updating an instance of a customer.
+
+        Returns:
+            models.Customer: The updated Customer instance.
+        """
+        # Get the organization of the user from the request.
+        organization = super().get_organization
+
+        # Get the business unit of the user from the request.
+        business_unit = super().get_business_unit
+
+        # Popped data (email_profile, rule_profile, delivery_slots, customer_contacts)
+        email_profile_data = validated_data.pop("email_profile", None)
+        rule_profile_data = validated_data.pop("rule_profile", None)
+        delivery_slots_data = validated_data.pop("delivery_slots", [])
+        customer_contacts_data = validated_data.pop("customer_contacts", [])
+
+        # Create or update the email profile
+        helpers.create_or_update_email_profile(
+            customer=instance,
+            email_profile_data=email_profile_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        # Create or update the rule profile
+        helpers.create_or_update_rule_profile(
+            customer=instance,
+            rule_profile_data=rule_profile_data,
+            organization=organization,
+            business_unit=business_unit,
+        )
+
+        # Create or update the delivery slots
+        helpers.create_or_update_delivery_slots(
+            instance, delivery_slots_data, organization, business_unit
+        )
+
+        # Create or update the customer contacts
+        helpers.create_or_update_customer_contacts(
+            instance, customer_contacts_data, organization, business_unit
+        )
+
+        # Update the customer
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        return instance

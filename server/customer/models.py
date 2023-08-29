@@ -14,25 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-#
-#  This file is part of Monta.
-#
-#  The Monta software is licensed under the Business Source License 1.1. You are granted the right
-#  to copy, modify, and redistribute the software, but only for non-production use or with a total
-#  of less than three server instances. Starting from the Change Date (November 16, 2026), the
-#  software will be made available under version 2 or later of the GNU General Public License.
-#  If you use the software in violation of this license, your rights under the license will be
-#  terminated automatically. The software is provided "as is," and the Licensor disclaims all
-#  warranties and conditions. If you use this license's text or the "Business Source License" name
-#  and trademark, you must comply with the Licensor's covenants, which include specifying the
-#  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
-#  Grant, and not modifying the license in any other way.
 
 import textwrap
 import uuid
 from typing import Any, final
 
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.db import models
 from django.db.transaction import atomic
 from django.urls import reverse
@@ -306,7 +294,7 @@ class CustomerEmailProfile(GenericModel):
         help_text=_("Read Receipt"),
         default=False,
     )
-    read_receipt_to = models.CharField(
+    read_receipt_to = models.EmailField(
         _("Read Receipt To"),
         max_length=255,
         help_text=_("Read Receipt To"),
@@ -339,6 +327,35 @@ class CustomerEmailProfile(GenericModel):
             width=60,
             placeholder="...",
         )
+
+    def clean(self) -> None:
+        """CustomerEmailProfile clean method
+
+        Returns:
+            None: This function does not return anything.
+        """
+        # Call the parent class's clean method first
+        super().clean()
+
+        # Split the blind_copy field by comma to get individual emails
+        emails = [
+            email.strip() for email in self.blind_copy.split(",") if email.strip()
+        ]
+
+        # Use Django's EmailValidator to validate each email
+        validator = EmailValidator()
+        for email in emails:
+            try:
+                validator(email)
+            except ValidationError:
+                raise ValidationError(
+                    {
+                        "blind_copy": _(
+                            f"{email} is not a valid email address. Please try again."
+                        ),
+                    },
+                    code="invalid",
+                )
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer email profile instance
@@ -887,6 +904,12 @@ class DeliverySlot(GenericModel):
     Stores delivery slot information related to the :model:`billing.Customer` model.
     """
 
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
