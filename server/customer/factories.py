@@ -87,7 +87,6 @@ class CustomerEmailProfileFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    name = factory.Faker("word", locale="en_US")
     subject = factory.Faker("word", locale="en_US")
     comment = factory.Faker("word", locale="en_US")
     from_address = factory.Faker("email", locale="en_US")

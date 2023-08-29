@@ -26,6 +26,13 @@ from core.permissions import CustomObjectPermissions
 from customer import models, serializers
 
 
+class DeliverySlotViewSet(viewsets.ModelViewSet):
+    queryset = models.DeliverySlot.objects.all()
+    serializer_class = serializers.DeliverySlotSerializer
+    filterset_fields = ("start_time", "end_time")
+    permission_classes = [CustomObjectPermissions]
+
+
 class CustomerViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing customer information in the system.
 
