@@ -15,46 +15,33 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useEffect, useState } from "react";
-import {
-  WebSocketConnection,
-  WebSocketManager,
-  WebSocketMessageProps,
-  createWebsocketManager,
-} from "@/utils/websockets";
-import { WEB_SOCKET_URL } from "@/lib/utils";
+import React from "react";
+import { Grid } from "@mantine/core";
+import { useParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "react-query";
+import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
 
-interface Props {
-  userId: string;
-  onMessage: (message: WebSocketMessageProps) => void;
-}
+export default function EditCustomer() {
+  const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
-const webSocketManager = createWebsocketManager();
+  const { data: customerData, isLoading: isCustomerDataLoading } = useQuery({
+    queryKey: ["customer", id],
+    queryFn: () => {
+      if (!id) {
+        return Promise.resolve(null);
+      }
+      return getCustomerDetailsWithMetrics(id);
+    },
+    initialData: () => queryClient.getQueryData(["customerWithMetrics", id]),
+    staleTime: Infinity,
+  });
 
-function WebSocketComponent({ userId, onMessage }: Props) {
-  const [socket, setSocket] = useState<WebSocketConnection | undefined>(
-    undefined,
+  return (
+    <Grid>
+      <Grid.Col span={12} sm={6} md={4} lg={3} xl={3}>
+        <p>TEST</p>
+      </Grid.Col>
+    </Grid>
   );
-
-  useEffect(() => {
-    if (userId) {
-      const s = webSocketManager.connect(
-        "billing_client",
-        `${WEB_SOCKET_URL}/billing_client/`,
-        {
-          onOpen: () => console.log("Connected to billing client socket"),
-        },
-      );
-      setSocket(s);
-
-      return () => {
-        s.close();
-      };
-    }
-    return () => {};
-  }, [userId]);
-
-  return socket;
 }
-
-export default WebSocketComponent;

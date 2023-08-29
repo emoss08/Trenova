@@ -97,8 +97,7 @@ export function CustomerTable() {
               </Menu.Item>
               <Menu.Item
                 onClick={() => {
-                  store.set("selectedRecord", row.original);
-                  store.set("editModalOpen", true);
+                  navigate(`/billing/customers/edit/${row.original.id}`);
                 }}
               >
                 Edit
@@ -125,9 +124,7 @@ export function CustomerTable() {
       store={store}
       link="/customers"
       columns={columns}
-      TableEditModal={EditCustomerModal}
       displayDeleteModal
-      TableCreateDrawer={CreateCommodityModal}
       tableQueryKey="customer-table-data"
       exportModelName="Customer"
       name="Customer"

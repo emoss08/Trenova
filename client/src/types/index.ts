@@ -20,11 +20,6 @@ export type TChoiceProps = {
   label: string;
 };
 
-export type TBooleanChoiceProps = {
-  value: boolean;
-  label: string;
-};
-
 export interface IChoiceProps<T extends string> {
   value: T;
   label: string;

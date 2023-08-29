@@ -20,7 +20,7 @@ import {
   faFilePdf,
   faFileCsv,
   faFileExcel,
-} from "@fortawesome/free-solid-svg-icons";
+} from "@fortawesome/pro-solid-svg-icons";
 import { Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDownload } from "@fortawesome/pro-duotone-svg-icons";

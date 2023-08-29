@@ -48,6 +48,7 @@ const HazardousMaterialPage = lazy(
 const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
 const CustomerPage = lazy(() => import("../pages/customer/Customer"));
 const ViewCustomerPage = lazy(() => import("../pages/customer/ViewCustomer"));
+const EditCustomerPage = lazy(() => import("../pages/customer/EditCustomer"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -217,6 +218,15 @@ export const routes: RouteObjectWithPermission[] = [
     path: "/billing/customers/view/:id",
     description: "View customer",
     element: <ViewCustomerPage />,
+    permission: "view_customer",
+  },
+  {
+    title: "Edit Customer",
+    group: "billing",
+    subMenu: "configuration files",
+    path: "/billing/customers/edit/:id",
+    description: "Edit customer",
+    element: <EditCustomerPage />,
     permission: "view_customer",
   },
   // Error Page
