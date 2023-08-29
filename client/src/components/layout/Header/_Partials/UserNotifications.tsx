@@ -113,21 +113,37 @@ const useStyles = createStyles((theme) => ({
 
 const webSocketManager = createWebsocketManager();
 
+let intervalId: number;
+
 const reconnect = () => {
-  webSocketManager.connect(
-    "notificaitons",
-    `${WEB_SOCKET_URL}/notifications/`,
-    {
-      onOpen: () =>
-        notifications.update({
-          id: "connection-closed",
-          title: "Connection re-established",
-          message: "Websocket connection re-established.",
-          color: "green",
-          icon: <FontAwesomeIcon icon={faCheck} />,
-        }),
-    },
-  );
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
+
+  intervalId = setInterval(() => {
+    webSocketManager.connect(
+      "notifications",
+      `${WEB_SOCKET_URL}/notifications/`,
+      {
+        onOpen: () => {
+          notifications.update({
+            id: "connection-closed",
+            title: "Connection re-established",
+            message: "Websocket connection re-established.",
+            color: "green",
+            icon: <FontAwesomeIcon icon={faCheck} />,
+          });
+          clearInterval(intervalId); // Clear the interval once connected
+        },
+      },
+    );
+  }, 5000);
+
+  return () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
 };
 
 export function UserNotifications(): React.ReactElement | null {
@@ -191,9 +207,7 @@ export function UserNotifications(): React.ReactElement | null {
                 autoClose: false,
                 withCloseButton: false,
               });
-              setInterval(() => {
-                reconnect();
-              }, 5000);
+              reconnect();
             }
           },
           onError: (error: Event) => {

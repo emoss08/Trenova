@@ -42,7 +42,10 @@ export type WebSocketMessageProps = {
 export class WebSocketConnection {
   private socket: WebSocket;
 
-  constructor(url: string, private eventHandlers: Handlers) {
+  constructor(
+    url: string,
+    private eventHandlers: Handlers,
+  ) {
     this.socket = new WebSocket(url);
 
     this.socket.onopen = this.handleOpen.bind(this);
@@ -106,12 +109,28 @@ export interface WebSocketManager {
   has: (id: string) => boolean;
 }
 
-export function createWebsocketManager(): WebSocketManager {
+export function createWebsocketManager(): {
+  disconnect: (id: string) => WebSocketConnection;
+  receive: (id: string, handler: (event: WebSocketEvent) => void) => void;
+  sendJson: (id: string, data: any) => void;
+  get: (id: string) => WebSocketConnection;
+  has: (id: string) => boolean;
+  send: (id: string, data: any) => void;
+  connect: (
+    id: string,
+    url: string,
+    handlers: Handlers,
+  ) => WebSocketConnection | boolean;
+} {
   const connections = new Map<string, WebSocketConnection>();
 
-  function connect(id: string, url: string, handlers: Handlers) {
+  function connect(
+    id: string,
+    url: string,
+    handlers: Handlers,
+  ): WebSocketConnection | boolean {
     if (connections.has(id)) {
-      throw new Error(`WebSocket connection with id "${id}" already exists`);
+      return connections.delete(id);
     }
 
     const connection = new WebSocketConnection(url, handlers);

@@ -238,7 +238,9 @@ function EditCustomerModalForm({ customer }: EditCustomerModalProps) {
   );
 }
 
-export function EditCustomerModal({ customer }: EditCustomerModalProps) {
+export function EditCustomerModal({
+  customer,
+}: EditCustomerModalProps): React.ReactElement | null {
   const [showEditModal, setShowEditModal] = store.use("editModalOpen");
 
   if (!showEditModal) return null;

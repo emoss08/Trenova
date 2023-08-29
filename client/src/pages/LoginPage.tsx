@@ -97,25 +97,25 @@ function LoginPage() {
         const userInfo = await getUserDetails(response.data.user_id as string);
         sessionStorage.setItem(
           "mt_user_permissions",
-          JSON.stringify(userInfo.user_permissions),
+          JSON.stringify(userInfo.userPermissions),
         );
         sessionStorage.setItem(
           "mt_user_groups",
           JSON.stringify(userInfo.groups),
         );
-        sessionStorage.setItem("mt_is_admin", userInfo.is_staff.toString());
+        sessionStorage.setItem("mt_is_admin", userInfo.isStaff.toString());
         setIsAuthenticated(true);
       }
     } catch (error: any) {
       if (error.response) {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((error: any) => {
-            form.setFieldError(error.attr, error.detail);
-            if (error.attr === "non_field_errors") {
+          data.errors.forEach((e: any) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
               notifications.show({
                 title: "Error",
-                message: error.detail,
+                message: e.detail,
                 color: "red",
                 withCloseButton: true,
                 icon: <FontAwesomeIcon icon={faXmark} />,

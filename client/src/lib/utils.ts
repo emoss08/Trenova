@@ -16,7 +16,7 @@
  */
 
 // User info constants
-import { TBooleanChoiceProps, TChoiceProps } from "@/types";
+import { IChoiceProps } from "@/types";
 
 export const USER_ID_KEY = import.meta.env.VITE_USER_ID_KEY;
 export const ORGANIZATION_ID_KEY = import.meta.env.VITE_ORGANIZATION_ID_KEY;
@@ -104,18 +104,28 @@ export function clearAllCookies() {
 
 /**
  * Returns status choices for a select input.
+ */
+type TStatusChoiceProps = "A" | "I";
+
+/**
+ * Returns status choices for a select input.
  * @returns An array of status choices.
  */
-export const statusChoices: TChoiceProps[] = [
+export const statusChoices: IChoiceProps<TStatusChoiceProps>[] = [
   { value: "A", label: "Active" },
   { value: "I", label: "Inactive" },
 ];
 
 /**
  * Returns yes & no choices for a select input.
+ */
+type TYesNoChoiceProps = "Y" | "N";
+
+/**
+ * Returns yes & no choices for a select input.
  * @returns An array of yes & no choices.
  */
-export const yesAndNoChoices: TChoiceProps[] = [
+export const yesAndNoChoices: IChoiceProps<TYesNoChoiceProps>[] = [
   { value: "Y", label: "Yes" },
   { value: "N", label: "No" },
 ];
