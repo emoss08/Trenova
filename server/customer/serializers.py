@@ -19,7 +19,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from customer import models, selectors, helpers
+from customer import helpers, models, selectors
 from utils.serializers import GenericSerializer
 
 

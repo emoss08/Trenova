@@ -14,12 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from customer import models, factories
-
 from collections.abc import Generator
 from typing import Any
 
 import pytest
+
+from customer import factories
 
 pytestmark = pytest.mark.django_db
 
