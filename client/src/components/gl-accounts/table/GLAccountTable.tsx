@@ -24,8 +24,21 @@ import { EditGLAccountModal } from "@/components/gl-accounts/table/EditGLAccount
 import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
 import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { TChoiceProps } from "@/types";
+import { IChoiceProps, StatusChoiceProps } from "@/types";
 import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { truncateText } from "@/lib/utils";
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <Badge
+      color={status === "A" ? "green" : "red"}
+      variant="filled"
+      radius="xs"
+    >
+      {status === "A" ? "Active" : "Inactive"}
+    </Badge>
+  );
+}
 
 export function GLAccountTable() {
   const columns = useMemo<MRT_ColumnDef<GeneralLedgerAccount>[]>(
@@ -35,31 +48,25 @@ export function GLAccountTable() {
         accessorKey: "status",
         header: "Status",
         filterFn: "equals",
-        Cell: ({ cell }) => (
-          <Badge
-            color={cell.getValue() === "N" ? "green" : "red"}
-            variant="filled"
-            radius="xs"
-          >
-            {cell.getValue() === "A" ? "Active" : "Inactive"}
-          </Badge>
-        ),
+        Cell: ({ cell }) => <StatusBadge status={cell.getValue() as string} />,
         mantineFilterSelectProps: {
           data: [
             { value: "", label: "All" },
             { value: "A", label: "Active" },
             { value: "I", label: "Inactive" },
-          ] as ReadonlyArray<TChoiceProps>,
+          ] as ReadonlyArray<IChoiceProps<StatusChoiceProps>>,
         },
         filterVariant: "select",
       },
       {
-        accessorKey: "accountNumber", // access nested data with dot notation
+        accessorKey: "accountNumber",
         header: "Account Number",
       },
       {
+        id: "description",
         accessorKey: "description",
         header: "Description",
+        Cell: ({ cell }) => truncateText(cell.getValue() as string, 50),
       },
       {
         accessorKey: "accountType",
