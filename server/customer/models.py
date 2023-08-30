@@ -913,6 +913,7 @@ class DeliverySlot(GenericModel):
     customer = models.ForeignKey(
         Customer,
         on_delete=models.CASCADE,
+        related_name="delivery_slots",
         help_text=_("Customer"),
         verbose_name=_("Customer"),
     )

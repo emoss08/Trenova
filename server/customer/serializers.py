@@ -32,6 +32,8 @@ class DeliverySlotSerializer(GenericSerializer):
     and from JSON-formatted data.
     """
 
+    id = serializers.UUIDField(required=False, allow_null=True)
+
     class Meta:
         """
         A class representing the metadata for the `DeliverySlotSerializer` class.
@@ -49,6 +51,8 @@ class CustomerContactSerializer(GenericSerializer):
     It uses the `CustomerContact` model to convert the customer contact instances to
     and from JSON-formatted data.
     """
+
+    id = serializers.UUIDField(required=False, allow_null=True)
 
     class Meta:
         """
@@ -188,7 +192,6 @@ class CustomerSerializer(GenericSerializer):
     A serializer for the Customer model.
     """
 
-    id = serializers.UUIDField(required=False, allow_null=True)
     email_profile = CustomerEmailProfileSerializer(required=False)
     rule_profile = CustomerRuleProfileSerializer(required=False)
     delivery_slots = DeliverySlotSerializer(many=True, required=False)
@@ -208,22 +211,15 @@ class CustomerSerializer(GenericSerializer):
         )
 
     def to_representation(self, instance: models.Customer) -> dict[str, Any]:
-        """Converts a Customer instance to a dictionary representation.
-
-        This method extends the superclass' to_representation method to add additional fields
-        to the serialized data. Adds the full address of the customer, the full name of the
-        advocate, as well as metrics related to the customer if requested via the query parameters.
-
-        The 'expand_metrics' query parameter can be used to include metrics such as total
-        order metrics, total revenue metrics, on-time performance, total mileage metrics,
-        customer shipment metrics, and credit balance for the customer.
+        """Override the `to_representation` method to provide a custom representation of Customer Instance.
 
         Args:
-            instance (models.Customer): The instance of Customer to be represented.
+            instance (models.Customer): An instance of the Customer model.
 
         Returns:
-            dict[str, Any]: The dictionary representation of the customer.
+            dict[str, Any]: A customized dictionary representation of the customer instance.
         """
+
         data = super().to_representation(instance)
         data["full_address"] = instance.get_address_combination
         data["advocate_full_name"] = (
@@ -252,20 +248,18 @@ class CustomerSerializer(GenericSerializer):
         return data
 
     def create(self, validated_data: Any) -> models.Customer:
-        """Creates a new customer instance and associated objects based on validated data.
+        """Create a new instance of the Customer model with given validated data.
 
-        First, it extracts the organization and business unit from the request using helper superclass methods.
-        Then, it separately extracts the email_profile, rule_profile, delivery_slots, and customer_contacts from the validated data.
-
-        A new Customer instance is created, along with associated objects using helper functions for creation or updates.
-        Lastly, the newly created Customer instance is returned.
+        This executes the creation of new customer, attaches the customer to the business unit and organization associated with the request.
+        It updates the email profile, rule profile, delivery slots, and customer contacts associated with the Customer.
 
         Args:
-            validated_data (Any): Data validated for creating an instance of a customer.
+            validated_data (Any): Data validated through serializer for creating a customer.
 
         Returns:
-            models.Customer: The newly created Customer instance.
+           models.Customer: Newly created Customer instance.
         """
+
         # Get the organization of the user from the request.
         organization = super().get_organization
 
@@ -320,21 +314,19 @@ class CustomerSerializer(GenericSerializer):
         return customer
 
     def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:
-        """Updates an existing customer instance and associated objects based on validated data.
+        """Update an existing instance of the Customer model with given validated data.
 
-        First, it extracts the organization and business unit from the request using helper superclass methods.
-        Then, it separately extracts the email_profile, rule_profile, delivery_slots, and customer_contacts from the validated data.
-
-        The instance of Customer and its associated objects are updated with new data using helper functions.
-        Lastly, the updated Customer instance is returned.
+        This method updates an existing customer, based on the data provided in the request.
+        It updates the email profile, rule profile, delivery slots, and customer contacts associated with the Customer.
 
         Args:
-            instance (models.Customer): The instance of Customer to be updated.
-            validated_data (Any): Data validated for updating an instance of a customer.
+            instance (models.Customer): Existing instance of Customer model to update.
+            validated_data (Any): Data validated through serializer for updating a customer profile.
 
         Returns:
-            models.Customer: The updated Customer instance.
+            models.Customer: Updated Customer instance.
         """
+
         # Get the organization of the user from the request.
         organization = super().get_organization
 
@@ -365,12 +357,18 @@ class CustomerSerializer(GenericSerializer):
 
         # Create or update the delivery slots
         helpers.create_or_update_delivery_slots(
-            instance, delivery_slots_data, organization, business_unit
+            customer=instance,
+            delivery_slots_data=delivery_slots_data,
+            organization=organization,
+            business_unit=business_unit,
         )
 
         # Create or update the customer contacts
         helpers.create_or_update_customer_contacts(
-            instance, customer_contacts_data, organization, business_unit
+            customer=instance,
+            customer_contacts_data=customer_contacts_data,
+            organization=organization,
+            business_unit=business_unit,
         )
 
         # Update the customer
