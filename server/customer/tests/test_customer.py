@@ -14,6 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from collections.abc import Generator
+from typing import Any
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -27,6 +29,14 @@ from organization.models import BusinessUnit, Organization
 pytestmark = pytest.mark.django_db
 
 # TODO(Wolfred): I didn't realize I had literally no tests for this.... Let's do that add some point.
+
+
+@pytest.fixture
+def customer_contact() -> Generator[Any, Any, None]:
+    """
+    Customer contact fixture
+    """
+    yield factories.CustomerContactFactory()
 
 
 def test_customer_creation(customer) -> None:
@@ -101,7 +111,6 @@ def test_create_customer_with_details(api_client: APIClient) -> None:
             },
             "delivery_slots": [
                 {
-                    "name": "Test Delivery Slot",
                     "start_time": "20:37:33",
                     "end_time": "21:37:33",
                     "day_of_week": 0,
@@ -131,6 +140,10 @@ def test_create_customer_with_details(api_client: APIClient) -> None:
     assert response.data["rule_profile"]["document_class"] == [
         document_classification.id
     ]
+    assert response.data["delivery_slots"][0]["start_time"] == "20:37:33"
+    assert response.data["delivery_slots"][0]["end_time"] == "21:37:33"
+    assert response.data["delivery_slots"][0]["day_of_week"] == 0
+    assert response.data["delivery_slots"][0]["location"] == location.id
 
 
 def test_edit_customer_with_details(
@@ -169,7 +182,6 @@ def test_edit_customer_with_details(
             },
             "delivery_slots": [
                 {
-                    "name": "Test Delivery Slot",
                     "start_time": "20:37:33",
                     "end_time": "21:37:33",
                     "day_of_week": 0,
@@ -188,6 +200,21 @@ def test_edit_customer_with_details(
     assert response.data["city"] == "Fake City"
     assert response.data["state"] == "NC"
     assert response.data["zip_code"] == "12345"
+    assert response.data["email_profile"]["subject"] == "Vimeo Customer Support"
+    assert response.data["email_profile"]["comment"] == "Do Not Email"
+    assert response.data["email_profile"]["from_address"] == "test@vimeo.com"
+    assert (
+        response.data["email_profile"]["blind_copy"]
+        == "test2@vimeo.com, test2@vimeo.com"
+    )
+    assert response.data["rule_profile"]["name"] == "Vimeo Rule Profile"
+    assert response.data["rule_profile"]["document_class"] == [
+        document_classification.id
+    ]
+    assert response.data["delivery_slots"][0]["start_time"] == "20:37:33"
+    assert response.data["delivery_slots"][0]["end_time"] == "21:37:33"
+    assert response.data["delivery_slots"][0]["day_of_week"] == 0
+    assert response.data["delivery_slots"][0]["location"] == location.id
 
 
 def test_validate_blind_copy_emails(customer: models.Customer) -> None:
@@ -206,3 +233,33 @@ def test_validate_blind_copy_emails(customer: models.Customer) -> None:
     assert excinfo.value.message_dict["blind_copy"] == [
         "Test2 is not a valid email address. Please try again."
     ]
+
+
+def test_customer_contact_creation(customer_contact: models.CustomerContact) -> None:
+    """
+    Test customer contact creation
+    """
+    assert customer_contact is not None
+
+
+def test_customer_contact_update(customer_contact: models.CustomerContact) -> None:
+    """
+    Test customer contact update
+    """
+    customer_contact.name = "New name"
+    customer_contact.save()
+    assert customer_contact.name == "New name"
+
+
+def test_customer_contact_payable_has_no_email(
+    customer_contact: models.CustomerContact,
+) -> None:
+    """
+    Test customer contact payable has no email
+    """
+
+    with pytest.raises(
+        ValidationError, match="Payable contact must have an email address"
+    ):
+        customer_contact.email = ""
+        customer_contact.full_clean()
