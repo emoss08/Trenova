@@ -183,11 +183,15 @@ class Worker(GenericModel):
         Args:
             *args (Any): Variable length argument list.
             **kwargs (Any): Arbitrary keyword arguments.
+
+        Returns:
+            None: This function does not return anything.
         """
         from worker import services
 
         if not self.code:
-            self.code = services.generate_worker_code(instance=self)
+            self.code = services.generate_worker_code(instance=self).upper()
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -359,7 +363,7 @@ class WorkerProfile(GenericModel):
 
         verbose_name = _("Worker profile")
         verbose_name_plural = _("Worker profiles")
-        ordering: list[str] = ["worker"]
+        ordering = ["worker"]
         db_table = "worker_profile"
 
     def __str__(self) -> str:
@@ -369,9 +373,11 @@ class WorkerProfile(GenericModel):
             str: Worker Profile string representation
         """
 
-        return textwrap.wrap(
-            f"{self.worker.first_name} {self.worker.last_name} Profile", 50
-        )[0]
+        return textwrap.shorten(
+            f"{self.worker.first_name} {self.worker.last_name}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Worker Profile absolute url
@@ -380,7 +386,7 @@ class WorkerProfile(GenericModel):
             str: Worker Profile absolute url
         """
 
-        return reverse("worker:profile-detail", kwargs={"pk": self.pk})
+        return reverse("profile-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Worker Profile clean method

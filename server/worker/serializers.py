@@ -21,7 +21,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from utils.serializers import GenericSerializer
-from worker import models
+from worker import helpers, models
 
 
 class WorkerCommentSerializer(GenericSerializer):
@@ -29,7 +29,7 @@ class WorkerCommentSerializer(GenericSerializer):
     Worker Comment Serializer
     """
 
-    id = serializers.UUIDField(required=False)
+    id = serializers.UUIDField(required=False, allow_null=True)
 
     class Meta:
         """
@@ -37,10 +37,11 @@ class WorkerCommentSerializer(GenericSerializer):
         """
 
         model = models.WorkerComment
-        extra_fields = ("id",)
-        extra_read_only_fields = (
-            "worker",
-            "business_unit",
+        extra_read_only_fields = ("worker",)
+
+    def create(self, validated_data: Any) -> models.WorkerComment:
+        raise NotImplementedError(
+            "WorkerCommentSerializer should not create objects directly. Use helper functions instead."
         )
 
 
@@ -49,7 +50,7 @@ class WorkerContactSerializer(GenericSerializer):
     Worker Contact Serializer
     """
 
-    id = serializers.UUIDField(required=False)
+    id = serializers.UUIDField(required=False, allow_null=True)
 
     class Meta:
         """
@@ -58,10 +59,10 @@ class WorkerContactSerializer(GenericSerializer):
 
         model = models.WorkerContact
         extra_read_only_fields = ("worker",)
-        extra_fields = (
-            "organization",
-            "business_unit",
-            "id",
+
+    def create(self, validated_data: Any) -> models.WorkerContact:
+        raise NotImplementedError(
+            "WorkerContactSerializer should not create objects directly. Use helper functions instead."
         )
 
 
@@ -77,9 +78,10 @@ class WorkerProfileSerializer(GenericSerializer):
 
         model = models.WorkerProfile
         extra_read_only_fields = ("worker",)
-        extra_fields = (
-            "organization",
-            "business_unit",
+
+    def create(self, validated_data: Any) -> models.WorkerProfile:
+        raise NotImplementedError(
+            "WorkerProfileSerializer should not create objects directly. Use helper functions instead."
         )
 
 
@@ -88,14 +90,7 @@ class WorkerSerializer(GenericSerializer):
     Worker Serializer
     """
 
-    id = serializers.UUIDField(
-        required=False,
-        allow_null=True,
-    )
-    code = serializers.CharField(
-        required=False,
-        allow_null=True,
-    )
+    # id = serializers.UUIDField(required=False, allow_null=True)
     profile = WorkerProfileSerializer(required=False)
     contacts = WorkerContactSerializer(many=True, required=False)
     comments = WorkerCommentSerializer(many=True, required=False)
@@ -107,27 +102,45 @@ class WorkerSerializer(GenericSerializer):
 
         model = models.Worker
         extra_fields = (
-            "organization",
-            "business_unit",
-            "is_active",
-            "depot",
-            "manager",
-            "entered_by",
             "profile",
             "contacts",
             "comments",
-            "code",
         )
 
-    def create(self, validated_data: Any) -> models.Worker:
-        """Create the worker.
+    def to_representation(self, instance: models.Worker) -> dict[str, Any]:
+        """Customize the representation of the worker, which will be returned in API response.
+
+        This method provides a custom serialization format, adds related objects data to response.
 
         Args:
-            validated_data (Any): Validated data.
+            instance (models.Worker): object of Worker model to represent.
 
         Returns:
-            Models.Worker: Worker Instance
+            dict: Dictionary containing the representation of relevant information related to the Worker.
         """
+        representation = super().to_representation(instance)
+        representation["profile"] = WorkerProfileSerializer(instance.profile).data
+        representation["contacts"] = WorkerContactSerializer(
+            instance.contacts.all(), many=True
+        ).data
+        representation["comments"] = WorkerCommentSerializer(
+            instance.comments.all(), many=True
+        ).data
+        return representation
+
+    def create(self, validated_data: Any) -> models.Worker:
+        """Create a new instance of the Worker model with given validated data.
+
+        This method creates a new worker, attaches the worker to the business unit and organization associated with the request.
+        It updates the profile, contacts, and comments associated with the worker Profile.
+
+        Args:
+            validated_data (Any): data validated through serializer for the creation of worker.
+
+        Returns:
+            models.Worker: Newly created Worker instance.
+        """
+
         # Get the organization of the user from the request.
         organization = super().get_organization
 
@@ -138,9 +151,9 @@ class WorkerSerializer(GenericSerializer):
         user = self.context["request"].user
 
         # Popped data (profile, contacts, comments)
-        profile_data = validated_data.pop("profile", {})
-        contacts_data = validated_data.pop("contacts", [])
-        comments_data = validated_data.pop("comments", [])
+        worker_profile_data = validated_data.pop("profile", None)
+        worker_contacts_data = validated_data.pop("contacts", [])
+        worker_comments_data = validated_data.pop("comments", [])
 
         # Create the Worker.
         validated_data["organization"] = organization
@@ -149,94 +162,73 @@ class WorkerSerializer(GenericSerializer):
         worker = models.Worker.objects.create(**validated_data)
 
         # Create the Worker Profile
-        if profile_data:
-            # Due to the worker profile signal being a thing, we need to
-            # delete the worker profile if it exists. Then we can create
-            # a new one from the requests.
-
-            worker_profile = models.WorkerProfile.objects.get(worker=worker)
-            worker_profile.delete()
-
-            profile_data["organization"] = organization
-            profile_data["business_unit"] = business_unit
-            models.WorkerProfile.objects.create(worker=worker, **profile_data)
+        helpers.create_or_update_worker_profile(
+            worker=worker,
+            business_unit=business_unit,
+            organization=organization,
+            profile_data=worker_profile_data,
+        )
 
         # Create the Worker Contacts
-        if contacts_data:
-            for contact in contacts_data:
-                contact["organization"] = organization
-                contact["business_unit"] = business_unit
-                models.WorkerContact.objects.create(worker=worker, **contact)
+        helpers.create_or_update_worker_contacts(
+            worker=worker,
+            business_unit=business_unit,
+            organization=organization,
+            worker_contacts_data=worker_contacts_data,
+        )
 
         # Create the Worker Comments
-        if comments_data:
-            for comment_data in comments_data:
-                comment_data["organization"] = organization
-                comment_data["business_unit"] = business_unit
-                models.WorkerComment.objects.create(worker=worker, **comment_data)
+        helpers.create_or_update_worker_comments(
+            worker=worker,
+            business_unit=business_unit,
+            organization=organization,
+            worker_comment_data=worker_comments_data,
+        )
 
         return worker
 
-    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore
-        """The update function is a bit more complicated. It first extracts the profile, comments and
-        contacts data from the validated_data dictionary. Then it enters an atomic transaction block
-        to ensure that all of these operations are performed in one database transaction.
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:
+        """Update an existing instance of the Worker model with given validated data.
+
+        This method updates an existing worker, based on the data provided in the request.
+        It updates the profile, contacts, and comments associated with the worker Profile.
 
         Args:
-            self: Refer to the instance of the class
-            instance(models.Worker): Pass in the instance of the model that is being updated
-            validated_data(Any): Pass the validated data to the update function
+            instance (models.Worker): existing instance of Worker model to update.
+            validated_data (Any): data validated through serializer for the updation of worker profile.
 
         Returns:
-            The instance of the worker that was updated
+            models.Worker: Updated Worker instance.
         """
-        profile_data = validated_data.pop("profile", {})
-        comments_data = validated_data.pop("comments", [])
-        contacts_data = validated_data.pop("contacts", [])
+
+        worker_profile_data = validated_data.pop("profile", None)
+        worker_comments_data = validated_data.pop("comments", [])
+        worker_contacts_data = validated_data.pop("contacts", [])
 
         with transaction.atomic():
-            if profile_data:
-                instance.profile.update_worker_profile(**profile_data)
+            # Update Worker Profile
+            helpers.create_or_update_worker_profile(
+                worker=instance,
+                business_unit=instance.organization.business_unit,
+                organization=instance.organization,
+                profile_data=worker_profile_data,
+            )
 
-            for comment_data in comments_data:
-                comment_id = comment_data.pop("id", None)
-                defaults = {
-                    **comment_data,
-                    "organization": instance.organization,
-                    "business_unit": instance.organization.business_unit,
-                }
-                if comment_id:
-                    updated = models.WorkerComment.objects.filter(
-                        id=comment_id, worker=instance
-                    ).update(**defaults)
-                    if not updated:
-                        raise serializers.ValidationError(
-                            {
-                                "comments": f"Worker comment with id '{comment_id}' does not exist."
-                            }
-                        )
-                else:
-                    instance.comments.create(**defaults)
+            # Update Worker Comments
+            helpers.create_or_update_worker_comments(
+                worker=instance,
+                business_unit=instance.organization.business_unit,
+                organization=instance.organization,
+                worker_comment_data=worker_comments_data,
+            )
 
-            for contact_data in contacts_data:
-                contact_id = contact_data.pop("id", None)
-                defaults = {
-                    **contact_data,
-                    "organization": instance.organization,
-                    "business_unit": instance.organization.business_unit,
-                }
-                if contact_id:
-                    updated = models.WorkerContact.objects.filter(
-                        id=contact_id, worker=instance
-                    ).update(**defaults)
-                    if not updated:
-                        raise serializers.ValidationError(
-                            {
-                                "contacts": f"Worker contact with id '{contact_id}' does not exist."
-                            }
-                        )
-                else:
-                    instance.contacts.create(**defaults)
+            # Update Worker Contacts
+            helpers.create_or_update_worker_contacts(
+                worker=instance,
+                business_unit=instance.organization.business_unit,
+                organization=instance.organization,
+                worker_contacts_data=worker_contacts_data,
+            )
 
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
