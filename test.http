@@ -1,0 +1,30 @@
+### Send POST request with json body
+POST http://localhost:8000/api/workers/
+Content-Type: application/json
+Authorization: Bearer 16b088c7bc360de5f28dab83bbffe433f3f3d828
+
+{
+  "is_active": true,
+  "worker_type": "EMPLOYEE",
+  "first_name": "foo",
+  "last_name": "bar",
+  "address_line_1": "test address line 1",
+  "city": "clark kent",
+  "state": "CA",
+  "zip_code": "12345",
+  "manager": "b7530c09-1338-4db4-9d56-231a50905ebf",
+  "entered_by": "b7530c09-1338-4db4-9d56-231a50905ebf",
+  "code": "TEST",
+  "fleet": 1,
+  "profile": {
+    "organization": "249e34b6-c468-40bb-a6cd-03867ad6534f",
+    "business_unit": "bd0f85e5-6799-4844-891d-2d01025942a8",
+    "race": "TEST",
+    "sex": "MALE",
+    "date_of_birth": "1970-12-10",
+    "license_number": "1234567890",
+    "license_expiration_date": "2022-01-01",
+    "license_state": "NC",
+    "endorsements": "N"
+  }
+}
