@@ -418,9 +418,6 @@ CACHEOPS = {
     "organization.emailcontrol": {"ops": "all"},
     "organization.organization": {"ops": "all"},
     "organization.department": {"ops": "all"},
-    # "accounts.user": {"ops": "all"},
-    # "accounts.userprofile": {"ops": "all"},
-    # "accounts.jobtitle": {"ops": "all"},
     "accounting.generalledgeraccount": {"ops": "all"},
 }
 CACHEOPS_DEGRADE_ON_FAILURE = True
