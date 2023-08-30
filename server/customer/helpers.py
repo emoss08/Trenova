@@ -15,9 +15,10 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from organization.models import Organization, BusinessUnit
-from customer import models
 import typing
+
+from customer import models
+from organization.models import BusinessUnit, Organization
 
 
 def create_or_update_email_profile(

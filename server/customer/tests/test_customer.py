@@ -14,16 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from datetime import timedelta
-
-from django.core.exceptions import ValidationError
-from django.utils import timezone
-from rest_framework.test import APIClient
 
 import pytest
+from django.core.exceptions import ValidationError
+from rest_framework.test import APIClient
 
 from billing.tests.factories import DocumentClassificationFactory
-from customer import models, factories
+from customer import factories, models
 from location.factories import LocationFactory
 from organization.models import BusinessUnit, Organization
 
