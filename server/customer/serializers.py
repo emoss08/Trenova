@@ -201,8 +201,6 @@ class CustomerSerializer(GenericSerializer):
 
         model = models.Customer
         extra_fields = (
-            "organization",
-            "business_unit",
             "email_profile",
             "rule_profile",
             "delivery_slots",
