@@ -21,6 +21,7 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
+from kombu import Queue, Exchange
 
 django_stubs_ext.monkeypatch()
 
@@ -231,19 +232,19 @@ CACHES = {
             },
         },
     },
-    "celery": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/2",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PREFIX": "celery",
-            "PARSER_CLASS": "redis.connection.HiredisParser",
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": 100,
-                "retry_on_timeout": True,
-            },
-        },
-    },
+    # "celery": {
+    #     "BACKEND": "django_redis.cache.RedisCache",
+    #     "LOCATION": "redis://127.0.0.1:6379/2",
+    #     "OPTIONS": {
+    #         "CLIENT_CLASS": "django_redis.client.DefaultClient",
+    #         "PREFIX": "celery",
+    #         "PARSER_CLASS": "redis.connection.HiredisParser",
+    #         "CONNECTION_POOL_KWARGS": {
+    #             "max_connections": 100,
+    #             "retry_on_timeout": True,
+    #         },
+    #     },
+    # },
     "orders": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/3",
@@ -321,13 +322,19 @@ DRF_STANDARDIZED_ERRORS = {
 }
 
 # Celery Configurations
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/2"
+# CELERY_BROKER_URL = "amqp://monta:monta@localhost:5672//"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_CACHE_BACKEND = "celery"
 CELERY_RESULT_EXTENDED = True
 CELERY_TASK_TRACK_STARTED = True
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-
+CELERY_QUEUES = (
+    Queue("high_priority", Exchange("high_priority"), routing_key="high_priority"),
+    Queue(
+        "medium_priority", Exchange("medium_priority"), routing_key="medium_priority"
+    ),
+    Queue("low_priority", Exchange("low_priority"), routing_key="low_priority"),
+)
 # Field Encryption
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 

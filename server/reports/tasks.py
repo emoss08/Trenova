@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
+    queue="low_priority",
 )
 def send_scheduled_report(self: "Task", *, report_id: str) -> None:
     """A Celery task that sends a scheduled report to the user who created it.
@@ -81,6 +82,7 @@ def send_scheduled_report(self: "Task", *, report_id: str) -> None:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
+    queue="low_priority",
 )
 def generate_report_task(
     self: "Task",

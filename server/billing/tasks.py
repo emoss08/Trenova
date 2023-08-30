@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
+    queue="high_priority",
 )
 def automate_mass_order_billing(self: "Task") -> str:
     """Automated Mass Billing Tasks that uses system user to bill orders.
@@ -79,7 +80,9 @@ def automate_mass_order_billing(self: "Task") -> str:
     return "No organizations have auto billing enabled."
 
 
-@shared_task(name="transfer_to_billing_task", bind=True, base=Singleton)
+@shared_task(
+    name="transfer_to_billing_task", bind=True, base=Singleton, queue="high_priority"
+)
 def transfer_to_billing_task(
     self: "Task", *, user_id: str, order_pros: list[str]
 ) -> None:
@@ -124,6 +127,7 @@ def transfer_to_billing_task(
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
+    queue="high_priority",
 )
 def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -> None:
     """Bill Order
@@ -160,6 +164,7 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
+    queue="high_priority",
 )
 def mass_order_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
     """Bill Order

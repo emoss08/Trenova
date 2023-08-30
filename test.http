@@ -14,7 +14,7 @@ Authorization: Bearer 16b088c7bc360de5f28dab83bbffe433f3f3d828
   "zip_code": "12345",
   "manager": "b7530c09-1338-4db4-9d56-231a50905ebf",
   "entered_by": "b7530c09-1338-4db4-9d56-231a50905ebf",
-  "code": "TEST",
+  "code": "WORKER",
   "fleet": 1,
   "profile": {
     "organization": "249e34b6-c468-40bb-a6cd-03867ad6534f",

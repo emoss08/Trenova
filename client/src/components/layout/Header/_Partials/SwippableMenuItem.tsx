@@ -27,12 +27,18 @@ import { useDrag } from "@use-gesture/react";
 import axios from "@/lib/AxiosConfig";
 import { getUserId } from "@/lib/utils";
 
-type SwippableMenuItemProps<T extends Record<string, any>> = {
+type SwippableItemProp = {
+  id: string;
+  report: string;
+  fileName: string;
+};
+
+type SwippableMenuItemProps<T extends SwippableItemProp> = {
   item: T;
   icon: IconProp;
 };
 
-export function SwippableMenuItem<T extends Record<string, any>>({
+export function SwippableMenuItem<T extends SwippableItemProp>({
   item,
   icon,
 }: SwippableMenuItemProps<T>) {
@@ -103,7 +109,7 @@ export function SwippableMenuItem<T extends Record<string, any>>({
           onContextMenu={handleContextMenu}
           href={item.report}
         >
-          {item.file_name}
+          {item.fileName}
         </Menu.Item>
       </div>
       {status === "swiped" && (
