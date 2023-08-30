@@ -190,12 +190,7 @@ export function UserNotifications(): React.ReactElement | null {
           },
           onClose: (event: CloseEvent) => {
             if (event.wasClean) {
-              notifications.show({
-                title: "Connection closed",
-                message: "Websocket connection closed.",
-                color: "green",
-                icon: <FontAwesomeIcon icon={faCheck} />,
-              });
+              console.log("Connection closed cleanly");
             } else {
               notifications.show({
                 id: "connection-closed",

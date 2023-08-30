@@ -36,6 +36,7 @@ import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks"
 import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
 import { SearchModal } from "@/components/layout/Navbar/_partials/SearchModal";
+import { SearchSpotlight } from "@/components/layout/Header/Search";
 
 const useNavbarStyles = createStyles((theme) => ({
   navbar: {
@@ -207,7 +208,7 @@ export function AsideMenu() {
         )}
       </Navbar.Section>
 
-      <SearchModal />
+      <SearchSpotlight />
 
       <Navbar.Section className={classes.section}>
         <UserDownloads />
