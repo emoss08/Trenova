@@ -26,10 +26,15 @@ if TYPE_CHECKING:
     from celery.app.task import Task
 
 
-@app.task(name="table_change_alerts", bind=True, max_retries=3, default_retry_delay=60)
+@app.task(
+    name="table_change_alerts",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    queue="medium_priority",
+)
 def table_change_alerts(self: "Task") -> None:
-    """
-    A Celery task that listens for table change notifications from a PostgreSQL database and retries on errors.
+    """A Celery task that listens for table change notifications from a PostgreSQL database and retries on errors.
 
     This task invokes the `psql_listener` management command using Django's `call_command` function, which sets up
     a PostgreSQL listener using the `psycopg2` library, and listens for notifications on the channels defined in

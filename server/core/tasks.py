@@ -30,7 +30,11 @@ if TYPE_CHECKING:
 
 
 @app.task(
-    name="delete_audit_log_records", bind=True, max_retries=3, default_retry_delay=60
+    name="delete_audit_log_records",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    queue="low_priority",
 )
 def delete_audit_log_records(self: "Task") -> str:
     """Delete audit log records older than 30 days.

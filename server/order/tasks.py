@@ -30,6 +30,7 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
+    queue="medium_priority",
 )
 def consolidate_order_documentation(self: "Task", *, order_id: ModelUUID) -> None:
     """Consolidate Order
