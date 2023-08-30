@@ -35,7 +35,6 @@ export function SearchSpotlight(): React.ReactElement {
     navigate(path);
   };
 
-  // TODO: Add something that removes routes that need to have an id in the path.
   // Converting the routes into actions
   const actions: RouteSpotlightAction[] = routes
     .filter((route) => {
@@ -44,6 +43,7 @@ export function SearchSpotlight(): React.ReactElement {
         return false;
       }
 
+      // Exclude the route if it has a dynamic path
       if (route.path.endsWith("/:id")) {
         return false;
       }
