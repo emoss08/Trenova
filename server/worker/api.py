@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import viewsets
+from rest_framework import response, status, viewsets
 
 from core.permissions import CustomObjectPermissions
 from worker import models, serializers
@@ -105,6 +105,21 @@ class WorkerViewSet(viewsets.ModelViewSet):
     queryset = models.Worker.objects.all()
     serializer_class = serializers.WorkerSerializer
     permission_classes = [CustomObjectPermissions]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        # Re-fetch the worker from the database to ensure all related data is fetched
+        worker = models.Worker.objects.get(pk=serializer.instance.pk)
+        response_serializer = self.get_serializer(worker)
+
+        return response.Response(
+            response_serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def get_queryset(self) -> QuerySet[models.Worker]:
         """Returns a queryset of workers for the current user's organization.

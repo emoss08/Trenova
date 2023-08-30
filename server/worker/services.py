@@ -27,7 +27,7 @@ def generate_worker_code(*, instance: models.Worker) -> str:
     Returns:
         str: Worker code
     """
-    code = f"{instance.first_name[0]}{instance.last_name[:5]}".upper()
+    code = f"{instance.first_name[0]}{instance.last_name[:5]}"
     new_code = f"{code}{models.Worker.objects.count() + 1:04d}"
 
     # Check if the code already exists in the database
