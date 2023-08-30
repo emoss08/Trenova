@@ -203,7 +203,7 @@ export const routes: RouteObjectWithPermission[] = [
   },
   // Customer Page
   {
-    title: "Customer",
+    title: "Customers",
     group: "billing",
     subMenu: "configuration files",
     path: "/billing/customers/",
