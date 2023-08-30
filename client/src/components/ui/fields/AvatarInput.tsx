@@ -107,7 +107,7 @@ export function AvatarInput({
       )}
 
       {avatar && (
-        <label>
+        <label htmlFor="remove-avatar">
           <Tooltip withArrow label="Remove Avatar">
             <ActionIcon
               component="span"
@@ -116,18 +116,20 @@ export function AvatarInput({
               variant="filled"
               size="sm"
               onClick={removeAvatar}
+              id="remove-avatar"
             >
               <FontAwesomeIcon icon={faXmark} size="xs" />
             </ActionIcon>
           </Tooltip>
         </label>
       )}
-      <label>
+      <label htmlFor="avatar-input">
         <Input
           type="file"
           accept=".png, .jpg, .jpeg"
           onChange={handleFileChange}
           style={{ display: "none" }}
+          id="avatar-input"
         />
         <Tooltip withArrow label={avatar ? "Change Avatar" : "Add Avatar"}>
           <ActionIcon
