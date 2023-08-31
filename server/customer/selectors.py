@@ -22,7 +22,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from billing.models import BillingHistory
-from customer import types, models
+from customer import models, types
 from order.models import Order
 from stops.models import Stop
 from utils.models import StatusChoices
