@@ -18,21 +18,17 @@ import uuid
 
 from django.db.models import Case, F, FloatField, Max, Q, When
 from django.db.models.aggregates import Sum
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
 from billing.models import BillingHistory
-from customer.types import (
-    CustomerDiffResponse,
-    CustomerMileageResponse,
-    CustomerOnTimePerfResponse,
-    OrderDiffResponse,
-)
+from customer import types, models
 from order.models import Order
 from stops.models import Stop
 from utils.models import StatusChoices
 
 
-def get_customer_order_diff(*, customer_id: uuid.UUID) -> OrderDiffResponse:
+def get_customer_order_diff(*, customer_id: uuid.UUID) -> types.OrderDiffResponse:
     """Calculate and return the total number of orders made and the percentage difference
     in counts for a customer between the current month, the previous month and the month
     before the previous month.
@@ -59,19 +55,6 @@ def get_customer_order_diff(*, customer_id: uuid.UUID) -> OrderDiffResponse:
         - The "last_month_diff" and "month_before_last_diff" percentages are calculated with
           the order count of last month and month before last month as the base respectively.
           If there were no orders in the base month, the percentage difference is considered 0.
-
-    Example:
-        >>> get_customer_order_diff(customer_id=uuid.UUID("123"))
-        >>> {
-          >>> "total_orders": 50,
-          >>> "last_month_diff": 25.0,
-          >>> "month_before_last_diff": 33.33,
-        >>> }
-
-        The response signifies that the customer 123 has placed 50 orders in the current month,
-        which is a 25% increase compared to the previous month and there was a 33.33% increase
-        in the number of orders in the previous month compared to the month before the previous
-        month.
     """
     now = timezone.now()
     this_month = now.month
@@ -120,7 +103,7 @@ def get_customer_order_diff(*, customer_id: uuid.UUID) -> OrderDiffResponse:
     }
 
 
-def get_customer_revenue_diff(*, customer_id: uuid.UUID) -> CustomerDiffResponse:
+def get_customer_revenue_diff(*, customer_id: uuid.UUID) -> types.CustomerDiffResponse:
     """Calculate and return the total revenue and its percentage difference a customer has generated
     between the current month, the previous month and the month before the previous month.
 
@@ -217,7 +200,7 @@ def get_customer_revenue_diff(*, customer_id: uuid.UUID) -> CustomerDiffResponse
 
 def get_customer_on_time_performance_diff(
     *, customer_id: uuid.UUID
-) -> CustomerOnTimePerfResponse:
+) -> types.CustomerOnTimePerfResponse:
     """Calculate and return the on-time performance metrics difference for a customer between
     the current month and the previous month. The function considers all stops the customer made.
 
@@ -345,7 +328,7 @@ def get_customer_on_time_performance_diff(
 
 def calculate_customer_total_miles(
     *, customer_id: uuid.UUID
-) -> CustomerMileageResponse:
+) -> types.CustomerMileageResponse:
     """Calculate and return the total mileage and its percentage difference a customer has covered
     between the current month and the previous month.
 
@@ -431,7 +414,9 @@ def calculate_customer_total_miles(
     }
 
 
-def get_customer_shipment_metrics(*, customer_id: uuid.UUID) -> dict:
+def get_customer_shipment_metrics(
+    *, customer_id: uuid.UUID
+) -> types.CustomerShipmentMetricsResponse:
     aggregated_dates = Order.objects.filter(
         customer_id=customer_id,
     ).aggregate(
@@ -451,6 +436,17 @@ def get_customer_shipment_metrics(*, customer_id: uuid.UUID) -> dict:
         "last_bill_date": last_bill_date,
         "last_shipment_date": last_shipment_date,
     }
+
+
+def get_customer_email_profile_by_id(
+    *, customer_id: str
+) -> models.CustomerEmailProfile | None:
+    try:
+        customer = get_object_or_404(models.CustomerEmailProfile, id=customer_id)
+    except models.Customer.DoesNotExist:
+        return None
+
+    return customer
 
 
 def get_customer_credit_balance(*, customer_id: uuid.UUID) -> float:
