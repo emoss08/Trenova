@@ -15,14 +15,18 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 import decimal
+import typing
 
 from django.db.models import Sum
 
-from order.models import Order
 from stops.models import Stop
 
 
-def get_total_piece_count_by_order(*, order: Order) -> int:
+if typing.TYPE_CHECKING:
+    from order.models import Order
+
+
+def get_total_piece_count_by_order(*, order: "Order") -> int:
     """Return the total piece count for an order
 
     Args:
@@ -37,7 +41,7 @@ def get_total_piece_count_by_order(*, order: Order) -> int:
     return value or 0
 
 
-def get_total_weight_by_order(*, order: Order) -> decimal.Decimal | int:
+def get_total_weight_by_order(*, order: "Order") -> decimal.Decimal | int:
     """Return the total weight for an order
 
     Args:
