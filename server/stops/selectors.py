@@ -21,7 +21,6 @@ from django.db.models import Sum
 
 from stops.models import Stop
 
-
 if typing.TYPE_CHECKING:
     from order.models import Order
 

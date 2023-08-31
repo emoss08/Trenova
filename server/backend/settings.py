@@ -21,7 +21,7 @@ from pathlib import Path
 
 import django_stubs_ext
 import environ
-from kombu import Queue, Exchange
+from kombu import Exchange, Queue
 
 django_stubs_ext.monkeypatch()
 
