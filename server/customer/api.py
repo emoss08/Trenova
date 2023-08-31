@@ -19,6 +19,7 @@ from django.db.models import Prefetch, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -27,6 +28,17 @@ from customer import models, serializers
 
 
 class DeliverySlotViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing delivery slot information in the system.
+
+    The viewset provides default operations for creating, updating, and deleting delivery slots,
+    as well as listing and retrieving delivery slots. It uses the `DeliverySlotSerializer`
+    class to convert the delivery slot instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by delivery slot ID, start time,
+    and end time.
+    """
+
     queryset = models.DeliverySlot.objects.all()
     serializer_class = serializers.DeliverySlotSerializer
     filterset_fields = ("start_time", "end_time")
@@ -188,17 +200,11 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
         if not customer_id:
             raise ValidationError("Query param `customer_id` is required.")
 
-        try:
-            customer = models.CustomerRuleProfile.objects.get(customer_id=customer_id)
-            serializer = serializers.CustomerRuleProfileSerializer(customer)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except models.CustomerRuleProfile.DoesNotExist:
-            return Response(
-                {
-                    "message": "Customer Rule Profile does not exist for the given customer ID.",
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        customer_rule_profile = get_object_or_404(
+            models.CustomerRuleProfile, id=customer_id
+        )
+        serializer = serializers.CustomerRuleProfileSerializer(customer_rule_profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_queryset(self) -> QuerySet[models.CustomerRuleProfile]:
         """Get the queryset for the viewset.
@@ -290,6 +296,9 @@ class CustomerEmailProfileViewSet(viewsets.ModelViewSet):
         if not customer_id:
             raise ValidationError("Query param `customer_id` is required.")
 
-        customer = models.CustomerEmailProfile.objects.get(customer_id=customer_id)
-        serializer = serializers.CustomerEmailProfileSerializer(customer)
+        customer_email_profile = get_object_or_404(
+            models.CustomerEmailProfile, id=customer_id
+        )
+
+        serializer = serializers.CustomerEmailProfileSerializer(customer_email_profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
