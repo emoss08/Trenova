@@ -46,3 +46,8 @@ class CustomerMileageResponse(typing.TypedDict):
     this_month_miles: int
     last_month_miles: int
     mileage_diff: float
+
+
+class CustomerShipmentMetricsResponse(typing.TypedDict):
+    last_bill_date: str
+    last_shipment_date: str
