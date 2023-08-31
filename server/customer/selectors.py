@@ -353,14 +353,6 @@ def calculate_customer_total_miles(
         - The "mileage_diff" percentage is calculated taking the mileage of the previous month as the base.
           If there is no mileage covered in the previous month, the percentage difference is considered 0.
 
-    Example:
-        >>> calculate_customer_total_miles(customer_id=uuid.UUID("123"))
-        >>> {
-          >>> "this_month_miles": 1500.0,
-          >>> "last_month_miles": 1200.0,
-          >>> "mileage_diff": 25.0,
-        >>> }
-
         The response signifies that the customer 123 has covered 1500.0 miles in the current month,
         which is a 25% increase compared to the 1200.0 miles covered in the previous month.
     """
@@ -417,6 +409,20 @@ def calculate_customer_total_miles(
 def get_customer_shipment_metrics(
     *, customer_id: uuid.UUID
 ) -> types.CustomerShipmentMetricsResponse:
+    """Retrieves and aggregates the last bill date and the last shipment date for a customer
+    by their customer_id.
+
+    Args:
+        customer_id (uuid.UUID): The unique identifier for the customer.
+
+    Returns:
+        types.CustomerShipmentMetricsResponse: Dictionary containing the last_bill_date
+        and last_shipment_date in "Month day, Year" format. None is returned
+        if the customer doesn't have any orders yet.
+
+    Raises:
+        Do not have any exception raises
+    """
     aggregated_dates = Order.objects.filter(
         customer_id=customer_id,
     ).aggregate(
@@ -441,6 +447,19 @@ def get_customer_shipment_metrics(
 def get_customer_email_profile_by_id(
     *, customer_id: str
 ) -> models.CustomerEmailProfile | None:
+    """Returns a customer's email profile by their customer_id. If there's no
+    customer with that id, it returns None.
+
+    Args:
+        customer_id (str): The unique identifier for the customer.
+
+    Returns:
+        models.CustomerEmailProfile | None: A customer's email profile or None if
+        no customer with the provided id exists.
+
+    Raises:
+        Do not have any exception raises
+    """
     try:
         customer = get_object_or_404(models.CustomerEmailProfile, id=customer_id)
     except models.Customer.DoesNotExist:
@@ -450,6 +469,19 @@ def get_customer_email_profile_by_id(
 
 
 def get_customer_credit_balance(*, customer_id: uuid.UUID) -> float:
+    """Retrieves and aggregates the total credit balance for a customer by their
+    customer_id.
+
+    Args:
+        customer_id (uuid.UUID): The unique identifier for the customer.
+
+    Returns:
+        float: The total credit balance for a given customer. The function will
+        return 0 if the customer doesn't have any billing history.
+
+    Raises:
+        Do not have any exception raises
+    """
     # TODO(Wolfred) Actually write validation using collections module to get total credit balance
     # Or add a status field to invoice to show amount due.
     credit_balance = BillingHistory.objects.filter(
