@@ -32,6 +32,11 @@ export async function getUserDetails(id: string): Promise<User> {
   return response.data;
 }
 
+export async function getUsers(): Promise<Array<User>> {
+  const response = await axios.get("/users/?limit=999999999"); // for the time being, we'll just get all the users
+  return response.data.results;
+}
+
 /**
  * Fetches user reports from the server.
  * @returns A promise that resolves to an array of user reports.
