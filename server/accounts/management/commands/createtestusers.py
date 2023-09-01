@@ -25,6 +25,7 @@ from rich.progress import Progress
 
 from accounts.models import JobTitle, UserProfile
 from organization.models import Organization
+from utils.helpers import get_or_create_business_unit
 
 
 class Command(BaseCommand):
@@ -66,6 +67,9 @@ class Command(BaseCommand):
         Raises:
             CommandError: If the organization does not exist or if the number of users is not a valid integer.
         """
+
+        business_unit = get_or_create_business_unit(bs_name="Monta Transportation")
+
         system_org_answer = input(
             "What is the name of organization you'd like to add the test users to? (Scac Code) "
         )
@@ -90,6 +94,7 @@ class Command(BaseCommand):
         job_title, created = JobTitle.objects.get_or_create(
             name="Test User",
             organization=system_org,
+            business_unit=business_unit,
             job_function=JobTitle.JobFunctionChoices.TEST,
         )
 
@@ -119,6 +124,7 @@ class Command(BaseCommand):
                     email=email,
                     password=password,
                     organization=system_org,
+                    business_unit=business_unit,
                 )
                 new_users.append(new_user)
                 progress.update(task, advance=1)
@@ -140,6 +146,7 @@ class Command(BaseCommand):
                 new_profile = UserProfile(
                     user=user,
                     organization=system_org,
+                    business_unit=business_unit,
                     job_title=job_title,
                     first_name="Test",
                     last_name=f"User-{i}",
