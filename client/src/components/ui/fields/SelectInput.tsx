@@ -15,17 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Select, SelectItemProps, Text } from "@mantine/core";
+import { Loader, Select, SelectItemProps, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import React, { forwardRef } from "react";
 import { SelectProps } from "@mantine/core/lib/Select/Select";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/styles/FormStyles";
 
+SelectInput.defaultProps = {
+  isLoading: false,
+  isError: false,
+};
+
 interface ValidatedSelectInputProps<TFormValues>
   extends Omit<SelectProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   name: keyof TFormValues;
+  isLoading?: boolean;
+  isError?: boolean;
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
@@ -38,18 +45,22 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
 
 export function SelectInput<TFormValues extends Record<string, unknown>>({
   form,
-  data,
+  data = [],
   name,
+  isLoading,
+  isError,
   ...rest
 }: ValidatedSelectInputProps<TFormValues>) {
   const { classes } = useFormStyles();
   const error = form.errors[name as string];
 
+  const validatedData = Array.isArray(data) ? data : [];
+
   return (
     <Select
       {...rest}
       {...form.getInputProps(name as string)}
-      data={data}
+      data={validatedData}
       error={error}
       maxDropdownHeight={200}
       nothingFound="Nothing found"
@@ -61,13 +72,25 @@ export function SelectInput<TFormValues extends Record<string, unknown>>({
       filter={(value, item: any) =>
         item.label.toLowerCase().includes(value.toLowerCase().trim())
       }
+      limit={10}
+      disabled={isLoading}
       rightSection={
-        error && (
+        isLoading ? (
+          <Loader size={24} />
+        ) : isError ? ( // Handle error state
           <IconAlertTriangle
             stroke={1.5}
             size="1.1rem"
             className={classes.invalidIcon}
           />
+        ) : (
+          error && (
+            <IconAlertTriangle
+              stroke={1.5}
+              size="1.1rem"
+              className={classes.invalidIcon}
+            />
+          )
         )
       }
       searchable
