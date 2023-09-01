@@ -60,6 +60,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
     queryset = models.Customer.objects.all()
     serializer_class = serializers.CustomerSerializer
     filterset_fields = ("code", "name")
+    search_fields = ("code", "name")
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.Customer]:
