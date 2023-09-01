@@ -44,7 +44,7 @@ class FuelMethodChoices(models.TextChoices):
     PERCENTAGE = "P", _("Percentage")
 
 
-class Customer(GenericModel):  # type: ignore
+class Customer(GenericModel):
     """
     Stores customer information for billing and invoicing
     """

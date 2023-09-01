@@ -198,7 +198,7 @@ class OrderControl(GenericModel):
         return reverse("order_control:detail", kwargs={"pk": self.pk})
 
 
-class OrderType(GenericModel):  # type:ignore
+class OrderType(GenericModel):
     """Stores the order type information for a related :model:`organization.Organization`.
 
     The OrderType model stores information about an order type, such as its name,
@@ -275,7 +275,7 @@ class OrderType(GenericModel):  # type:ignore
         return reverse("order-types-detail", kwargs={"pk": self.pk})
 
 
-class Order(GenericModel):  # type:ignore
+class Order(GenericModel):
     """
     Stores order information related to a :model:`organization.Organization`.
     """
@@ -908,7 +908,7 @@ class OrderComment(GenericModel):
         return reverse("order-comment-detail", kwargs={"pk": self.pk})
 
 
-class AdditionalCharge(GenericModel):  # type: ignore
+class AdditionalCharge(GenericModel):
     """
     Stores Additional Charge related to a :model:`order.Order`.
     """

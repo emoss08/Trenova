@@ -87,9 +87,7 @@ class DocumentTemplate(GenericModel):
     user_id = models.ForeignKey(
         verbose_name=_("Created By"),
         to="accounts.User",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.RESTRICT,
     )
     cloned_from = models.ForeignKey(
         verbose_name=_("Cloned From"),

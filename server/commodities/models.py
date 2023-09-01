@@ -27,7 +27,7 @@ from django.utils.translation import gettext_lazy as _
 from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 
 
-class HazardousMaterial(GenericModel):  # type: ignore
+class HazardousMaterial(GenericModel):
     """A class representing a hazardous material.
 
     This class stores information about a hazardous material, including its name, description, hazard
@@ -167,7 +167,7 @@ class HazardousMaterial(GenericModel):  # type: ignore
         self.save()
 
 
-class Commodity(GenericModel):  # type: ignore
+class Commodity(GenericModel):
     """A class representing a commodity.
 
     This class inherits from the `GenericModel` class and defines several fields that are used to store

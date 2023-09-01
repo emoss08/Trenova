@@ -25,7 +25,6 @@ from django.http import HttpRequest, HttpResponse
 from accounts.selectors import get_user_auth_token_from_request
 from reports import forms, models
 from utils.admin import GenericAdmin, GenericTabularInline
-from utils.types import AuthenticatedHttpRequest
 
 
 class ReportColumnAdmin(GenericTabularInline[models.ReportColumn, models.CustomReport]):
@@ -99,7 +98,7 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
     )
 
     def save_formset(
-        self, request: AuthenticatedHttpRequest, form: Any, formset: Any, change: Any
+        self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """This method overrides the default behavior of Django's save_formset method to validate ReportColumn objects before saving.
 

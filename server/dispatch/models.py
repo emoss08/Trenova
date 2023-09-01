@@ -487,7 +487,7 @@ class CommentType(GenericModel):
         return reverse("comment-types-detail", kwargs={"pk": self.pk})
 
 
-class Rate(GenericModel):  # type:ignore
+class Rate(GenericModel):
     """
     Class: Rate
 
@@ -712,7 +712,7 @@ class Rate(GenericModel):  # type:ignore
         )
 
 
-class RateBillingTable(GenericModel):  # type:ignore
+class RateBillingTable(GenericModel):
     """Django model representing a RateBillingTable. This model stores Billing Table information for a
     related :model:`rates.Rate`.
 

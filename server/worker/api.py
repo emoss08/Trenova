@@ -15,11 +15,16 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import typing
+
 from django.db.models import Prefetch, QuerySet
 from rest_framework import response, status, viewsets
 
 from core.permissions import CustomObjectPermissions
 from worker import models, serializers
+
+if typing.TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 class WorkerCommentViewSet(viewsets.ModelViewSet):
@@ -106,7 +111,9 @@ class WorkerViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.WorkerSerializer
     permission_classes = [CustomObjectPermissions]
 
-    def create(self, request, *args, **kwargs):
+    def create(
+        self, request: "Request", *args: typing.Any, **kwargs: typing.Any
+    ) -> response.Response:
         serializer = self.get_serializer(data=request.data)
 
         serializer.is_valid(raise_exception=True)
@@ -114,7 +121,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
 
         # Re-fetch the worker from the database to ensure all related data is fetched
-        worker = models.Worker.objects.get(pk=serializer.instance.pk)
+        worker = models.Worker.objects.get(pk=serializer.instance.pk)  # type: ignore
         response_serializer = self.get_serializer(worker)
 
         return response.Response(

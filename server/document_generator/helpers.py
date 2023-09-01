@@ -208,15 +208,16 @@ def get_template_context_data(
                 table_data.append(row_data)
             data[binding.placeholder.strip("{}")] = table_data
         else:
-            if raw_value is None:
+            if raw_value or binding.field is None:
                 # TODO(Wolfred): Probably will want to raise a ValidationError here that will send back to the user.
                 logger.error(
                     f"Failed to fetch '{binding.field_name}' from instance of '{type(instance).__name__}'. Placeholder '{binding.placeholder}' will be left unchanged."
                 )
                 continue
+
             value = format_value(value=raw_value, field_type=binding.field.type)
             key = binding.placeholder.strip("{}").replace(".", "_")
-            data[key] = value
+            data[key] = value  # type: ignore
     return data
 
 

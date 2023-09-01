@@ -24,7 +24,6 @@ from django.db.models import QuerySet
 from django.db.models.base import Model
 from django.http import HttpRequest
 
-from utils.types import AuthenticatedHttpRequest
 
 # Model Generic Type
 _M = TypeVar("_M", bound=Model)
@@ -44,7 +43,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
     autocomplete: bool = True
     # exclude: tuple[str, ...] = ("organization", "business_unit")
 
-    def get_queryset(self, request: AuthenticatedHttpRequest) -> QuerySet[_M]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[_M]:
         """Get Queryset for Model
 
         Args:
@@ -57,12 +56,12 @@ class GenericAdmin(admin.ModelAdmin[_M]):
             super()
             .get_queryset(request)
             .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization_id=request.user.organization_id)
+            .filter(organization_id=request.user.organization_id)  # type: ignore
         )
 
     def save_model(
         self,
-        request: AuthenticatedHttpRequest,
+        request: HttpRequest,
         obj: _M,
         form: type[forms.BaseModelForm],
         change: bool,
@@ -78,12 +77,12 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         Returns:
             None
         """
-        obj.organization = request.user.organization
-        obj.business_unit = request.user.organization.business_unit
+        obj.organization = request.user.organization  # type: ignore
+        obj.business_unit = request.user.organization.business_unit  # type: ignore
         super().save_model(request, obj, form, change)
 
     def save_formset(
-        self, request: AuthenticatedHttpRequest, form: Any, formset: Any, change: Any
+        self, request: HttpRequest, form: Any, formset: Any, change: Any
     ) -> None:
         """Save Formset for Inline Models
 
@@ -98,15 +97,15 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         """
         instances = formset.save(commit=False)
         for instance in instances:
-            instance.organization = request.user.organization
-            instance.business_unit = request.user.organization.business_unit
+            instance.organization = request.user.organization  # type: ignore
+            instance.business_unit = request.user.organization.business_unit  # type: ignore
             instance.save()
         formset.save_m2m()
         super().save_formset(request, form, formset, change)
 
     def get_form(
         self,
-        request: AuthenticatedHttpRequest,
+        request: HttpRequest,
         obj: _M | None = None,
         change: bool = False,
         **kwargs: Any,
@@ -115,7 +114,7 @@ class GenericAdmin(admin.ModelAdmin[_M]):
 
         Args:
             change (bool): If the model is being changed
-            request (AuthenticatedHttpRequest): Authenticated Request Object
+            request (HttpRequest): Authenticated Request Object
             obj (Optional[_M]): Model Object
             **kwargs (Any): Keyword Arguments
 
@@ -125,20 +124,18 @@ class GenericAdmin(admin.ModelAdmin[_M]):
         form = super().get_form(request, obj, **kwargs)
         for field in form.base_fields:
             if field == "organization":
-                form.base_fields[field].initial = request.user.organization
+                form.base_fields[field].initial = request.user.organization  # type: ignore
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             elif field == "business_unit":
                 form.base_fields[
                     field
-                ].initial = request.user.organization.business_unit
+                ].initial = request.user.organization.business_unit  # type: ignore
                 form.base_fields[field].widget = form.base_fields[field].hidden_widget()
             form.base_fields[field].widget.attrs["placeholder"] = field.title()
 
         return form
 
-    def get_autocomplete_fields(
-        self, request: AuthenticatedHttpRequest
-    ) -> Sequence[str]:
+    def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:
         """Get Autocomplete Fields
 
         Args:
@@ -169,7 +166,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
 
     extra = 0
 
-    def get_queryset(self, request: AuthenticatedHttpRequest) -> QuerySet[_C]:
+    def get_queryset(self, request: HttpRequest) -> QuerySet[_C]:
         """Get Queryset
         Args:
             request (HttpRequest): Request Object
@@ -180,7 +177,7 @@ class GenericStackedInline(admin.StackedInline[_C, _P]):
             super()
             .get_queryset(request)
             .select_related(*self.get_autocomplete_fields(request))
-            .filter(organization_id=request.user.organization_id)
+            .filter(organization_id=request.user.organization_id)  # type: ignore
         )
 
     def get_autocomplete_fields(self, request: HttpRequest) -> Sequence[str]:

@@ -14,8 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from typing import Any
+import typing
 
 from django.db.models import Model
 from django.utils.functional import cached_property
@@ -24,15 +23,17 @@ from rest_framework import serializers
 from accounts.models import Token
 from organization.models import BusinessUnit, Organization
 
+_MT = typing.TypeVar("_MT", bound=Model)
+
 
 class GenericSerializer(serializers.ModelSerializer):
     class Meta:
-        model: type[Model]
-        exclude: tuple[str, ...] = ()
+        model: type[_MT]  # type: ignore
+        exclude: typing.Sequence[str] | None
         extra_fields: list[str] = []
         extra_read_only_fields: list[str] = []
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
         super().__init__(*args, **kwargs)
         self.set_fields()
 
@@ -54,7 +55,7 @@ class GenericSerializer(serializers.ModelSerializer):
         token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
         return Token.objects.get(key=token).user.organization.business_unit
 
-    def create(self, validated_data: Any) -> Any:
+    def create(self, validated_data: typing.Any) -> _MT:  # type:ignore
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
@@ -63,7 +64,7 @@ class GenericSerializer(serializers.ModelSerializer):
 
         return super().create(validated_data)
 
-    def update(self, instance: Model, validated_data: Any) -> Any:
+    def update(self, instance: _MT, validated_data: typing.Any) -> _MT:
         organization: Organization = self.get_organization
         validated_data["organization"] = organization
 
