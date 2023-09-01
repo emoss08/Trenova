@@ -122,33 +122,6 @@ class UserProfileSerializer(GenericSerializer):
         representation.
         extra_read_only_fields: A tuple of field names that should be read-only in the
         serialized representation.
-
-    Typical usage example:
-        # In a view
-        >>> class UserProfileView(generics.RetrieveUpdateAPIView):
-            >>> serializer_class = UserProfileSerializer
-            >>> queryset = models.UserProfile.objects.all()
-
-        # In a serializer class definition
-        >>> class UserProfileSerializer(GenericSerializer):
-            >>> job_title = serializers.PrimaryKeyRelatedField(
-                >>> queryset=models.JobTitle.objects.all(),
-                >>> required=False,
-                >>> allow_null=True,
-            >>> )
-
-            >>> title_name = JobTitleListingField(
-                >>> source="title",
-                >>> read_only=True,
-            >>> )
-
-            >>> class Meta:
-                >>> model = models.UserProfile
-                >>> extra_fields = ("title", "title_name")
-                >>> extra_read_only_fields = (
-                    >>> "id",
-                    >>> "user",
-                >>> )
     """
 
     organization = serializers.PrimaryKeyRelatedField(
@@ -178,16 +151,6 @@ class UserProfileSerializer(GenericSerializer):
             in addition to the fields defined on the model.
             extra_read_only_fields: A tuple of field names that should be read-only in the serialized
             representation.
-
-        Example Usage:
-            # In a serializer class definition
-            class BookSerializer(serializers.ModelSerializer):
-                author = AuthorSerializer()
-
-                class Meta:
-                    model = Book
-                    fields = ('id', 'title', 'author')
-                    extra_read_only_fields = ('id',)
         """
 
         model = models.UserProfile
@@ -268,9 +231,7 @@ class UserSerializer(GenericSerializer):
     User Serializer
     """
 
-    # Make groups return the group name instead of the group id
     groups = serializers.StringRelatedField(many=True, read_only=True)
-    # Make string related field return code name instead of id
     user_permissions = serializers.SlugRelatedField(
         many=True, read_only=True, slug_field="codename"
     )
@@ -303,6 +264,16 @@ class UserSerializer(GenericSerializer):
             "date_joined": {"read_only": True},
         }
 
+    def to_representation(self, instance: models.User) -> dict[str, Any]:
+        data = super().to_representation(instance=instance)
+
+        # Check if the instance has a profile
+        if not hasattr(instance, "profile"):
+            data["full_name"] = None
+        else:
+            data["full_name"] = instance.profile.get_full_name
+        return data
+
     def create(self, validated_data: Any) -> models.User:  # type: ignore
         """Create a user
 
@@ -312,6 +283,8 @@ class UserSerializer(GenericSerializer):
         Returns:
             models.User: User instance
         """
+
+        # TODO(WOLFRED): Break this out into separate functions.
 
         # Get the organization of the user from the request.
         organization = super().get_organization

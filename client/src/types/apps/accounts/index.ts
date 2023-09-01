@@ -50,6 +50,7 @@ export type User = {
   online: boolean;
   lastLogin: string;
   profile?: UserProfile;
+  fullName: string;
 };
 
 export type UserFormValues = {
