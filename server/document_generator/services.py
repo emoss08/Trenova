@@ -47,7 +47,7 @@ def render_document(*, template: models.DocumentTemplate, instance: Model) -> st
         Any exceptions raised by get_template_context_data(), Template(), Template.render(),
         get_parsed_stylesheet(), apply_template_customizations() or serialize_stylesheet()
         are handled within the function and logged but not propagated further.
-        Render errors result in a "Error in template rendering." message return.
+        Render errors result in an "Error in template rendering." message return.
     """
     try:
         data = helpers.get_template_context_data(template=template, instance=instance)
@@ -61,6 +61,6 @@ def render_document(*, template: models.DocumentTemplate, instance: Model) -> st
         helpers.apply_template_customizations(stylesheet=stylesheet, template=template)
         customized_css = helpers.serialize_stylesheet(stylesheet=stylesheet)
 
-        rendered_content = f"<style>{customized_css}</style>\n{rendered_content}"
+        rendered_content = f"<style>{customized_css}</style>\n{rendered_content}"  # type: ignore
 
     return rendered_content

@@ -24,7 +24,7 @@ class CustomExceptionHandler(ExceptionHandler):
     def convert_known_exceptions(self, exc: Exception) -> Exception:
         if isinstance(exc, ValidationError):
             return exceptions.ValidationError(detail=exc.message_dict)
-        return super().convert_known_exceptions(exc)  # type: ignore
+        return super().convert_known_exceptions(exc)
 
 
 class ServiceException(Exception):

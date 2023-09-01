@@ -41,14 +41,12 @@ def create_or_update_email_profile(
     Returns:
         models.CustomerEmailProfile: The created or updated email profile object.
     """
-    if email_profile_data:
-        email_profile_data["organization"] = organization
-        email_profile_data["business_unit"] = business_unit
-
-        email_profile, _ = models.CustomerEmailProfile.objects.update_or_create(
-            customer=customer, defaults=email_profile_data
-        )
-        return email_profile
+    email_profile_data["organization"] = organization
+    email_profile_data["business_unit"] = business_unit
+    email_profile, _ = models.CustomerEmailProfile.objects.update_or_create(
+        customer=customer, defaults=email_profile_data
+    )
+    return email_profile
 
 
 @transaction.atomic
@@ -70,17 +68,17 @@ def create_or_update_rule_profile(
     Returns:
         models.CustomerRuleProfile: The created or updated rule profile object.
     """
-    if rule_profile_data:
-        document_classifications = rule_profile_data.pop("document_class", [])
-        rule_profile_data["business_unit"] = business_unit
-        rule_profile_data["organization"] = organization
 
-        rule_profile, created = models.CustomerRuleProfile.objects.update_or_create(
-            customer=customer, defaults=rule_profile_data
-        )
-        if document_classifications:
-            rule_profile.document_class.set(document_classifications)
-        return rule_profile
+    document_classifications = rule_profile_data.pop("document_class", [])
+    rule_profile_data["business_unit"] = business_unit
+    rule_profile_data["organization"] = organization
+
+    rule_profile, created = models.CustomerRuleProfile.objects.update_or_create(
+        customer=customer, defaults=rule_profile_data
+    )
+    if document_classifications:
+        rule_profile.document_class.set(document_classifications)
+    return rule_profile
 
 
 @transaction.atomic
@@ -103,25 +101,24 @@ def create_or_update_delivery_slots(
         list[models.DeliverySlot]: A list of created or updated delivery slot objects.
     """
     created_slots = []
-    if delivery_slots_data:
-        existing_slot_ids = set(customer.delivery_slots.values_list("id", flat=True))
-        new_slot_ids = set()
+    existing_slot_ids = set(customer.delivery_slots.values_list("id", flat=True))
+    new_slot_ids = set()
 
-        for delivery_slot_data in delivery_slots_data:
-            delivery_slot_data["business_unit"] = business_unit
-            delivery_slot_data["organization"] = organization
-            slot, created = models.DeliverySlot.objects.update_or_create(
-                id=delivery_slot_data.get("id"),
-                customer=customer,
-                defaults=delivery_slot_data,
-            )
-            created_slots.append(slot)
-            if not created:
-                new_slot_ids.add(slot.id)
+    for delivery_slot_data in delivery_slots_data:
+        delivery_slot_data["business_unit"] = business_unit
+        delivery_slot_data["organization"] = organization
+        slot, created = models.DeliverySlot.objects.update_or_create(
+            id=delivery_slot_data.get("id"),
+            customer=customer,
+            defaults=delivery_slot_data,
+        )
+        created_slots.append(slot)
+        if not created:
+            new_slot_ids.add(slot.id)
 
-        # Delete slots that are not in the new list
-        to_delete_ids = existing_slot_ids - new_slot_ids
-        models.DeliverySlot.objects.filter(id__in=to_delete_ids).delete()
+    # Delete slots that are not in the new list
+    to_delete_ids = existing_slot_ids - new_slot_ids
+    models.DeliverySlot.objects.filter(id__in=to_delete_ids).delete()
 
     return created_slots
 
@@ -146,24 +143,23 @@ def create_or_update_customer_contacts(
         list[models.CustomerContact]: A list of created or updated customer contact objects.
     """
     created_contacts = []
-    if customer_contacts_data:
-        existing_contact_ids = set(customer.contacts.values_list("id", flat=True))
-        new_contact_ids = set()
+    existing_contact_ids = set(customer.contacts.values_list("id", flat=True))
+    new_contact_ids = set()
 
-        for customer_contact_data in customer_contacts_data:
-            customer_contact_data["business_unit"] = business_unit
-            customer_contact_data["organization"] = organization
-            contact, created = models.CustomerContact.objects.update_or_create(
-                id=customer_contact_data.get("id"),
-                customer=customer,
-                defaults=customer_contact_data,
-            )
-            created_contacts.append(contact)
-            if not created:
-                new_contact_ids.add(contact.id)
+    for customer_contact_data in customer_contacts_data:
+        customer_contact_data["business_unit"] = business_unit
+        customer_contact_data["organization"] = organization
+        contact, created = models.CustomerContact.objects.update_or_create(
+            id=customer_contact_data.get("id"),
+            customer=customer,
+            defaults=customer_contact_data,
+        )
+        created_contacts.append(contact)
+        if not created:
+            new_contact_ids.add(contact.id)
 
-        # Delete contacts that are not in the new list
-        to_delete_ids = existing_contact_ids - new_contact_ids
-        models.CustomerContact.objects.filter(id__in=to_delete_ids).delete()
+    # Delete contacts that are not in the new list
+    to_delete_ids = existing_contact_ids - new_contact_ids
+    models.CustomerContact.objects.filter(id__in=to_delete_ids).delete()
 
     return created_contacts

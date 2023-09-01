@@ -22,13 +22,14 @@ from organization.models import BusinessUnit, Organization
 from worker import models
 
 
+@transaction.atomic
 def create_or_update_worker_profile(
     *,
     worker: models.Worker,
     profile_data: dict[str, typing.Any],
     organization: Organization,
     business_unit: BusinessUnit,
-) -> models.WorkerProfile:
+) -> models.WorkerProfile | None:
     """Create or update a worker's profile.
 
     Args:
@@ -49,6 +50,8 @@ def create_or_update_worker_profile(
             worker=worker, defaults=profile_data
         )
         return profile
+
+    return None
 
 
 @transaction.atomic

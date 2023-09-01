@@ -14,8 +14,8 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import decimal
 import typing
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.files.storage import Storage, get_storage_class
@@ -23,7 +23,7 @@ from pypdf import PdfMerger
 
 from billing.models import DocumentClassification
 from movements.models import Movement
-from order import models, selectors
+from order import helpers, models, selectors
 
 
 def create_initial_movement(*, order: models.Order) -> None:
@@ -95,7 +95,7 @@ def gather_formula_variables(order: models.Order) -> dict[str, typing.Any]:
     }
 
 
-def calculate_total(*, order: models.Order) -> decimal.Decimal:
+def calculate_total(*, order: models.Order) -> Decimal:
     """Calculate the sub_total for an order
 
     Calculate the sub_total for the order if the organization 'OrderControl'
@@ -103,58 +103,44 @@ def calculate_total(*, order: models.Order) -> decimal.Decimal:
     save method.
 
     Returns:
-        decimal.Decimal: The total for the order
+        Decimal: The total for the order
     """
 
-    from order.helpers import evaluate_formula, validate_formula
+    if not order.freight_charge_amount:
+        return Decimal(0)
 
-    if order.freight_charge_amount:
-        # Calculate `FLAT` rating method
-        if order.rate_method == models.RatingMethodChoices.FLAT:
-            return (
-                decimal.Decimal(order.freight_charge_amount) + order.other_charge_amount
-            )
+    freight_charge = Decimal(order.freight_charge_amount)
+    other_charge = (
+        Decimal(order.other_charge_amount) if order.other_charge_amount else Decimal(0)
+    )
 
-        # Calculate `PER_MILE` rating method
-        if (
-            order.mileage
-            and order.rate_method
-            and order.rate_method == models.RatingMethodChoices.PER_MILE
-        ):
-            return (
-                decimal.Decimal(order.freight_charge_amount)
-                * decimal.Decimal(order.mileage)
-                + order.other_charge_amount
-            )
+    # Calculate `FLAT` rating method
+    if order.rate_method == models.RatingMethodChoices.FLAT:
+        return freight_charge + other_charge
 
-        # Calculate `PER_STOP` rating method
-        if order.rate_method == models.RatingMethodChoices.PER_STOP:
-            order_stops_count = selectors.get_order_stops(order=order).count()
-            return (
-                decimal.Decimal(order.freight_charge_amount * order_stops_count)
-                + order.other_charge_amount
-            )
+    # Calculate `PER_MILE` rating method
+    if order.rate_method == models.RatingMethodChoices.PER_MILE and order.mileage:
+        return (freight_charge * Decimal(order.mileage)) + other_charge
 
-        # Calculate `PER_POUND` rating method
-        if order.rate_method == models.RatingMethodChoices.POUNDS and order.weight > 0:
-            return (
-                decimal.Decimal(order.freight_charge_amount * order.weight)
-                + order.other_charge_amount
-            )
+    # Calculate `PER_STOP` rating method
+    if order.rate_method == models.RatingMethodChoices.PER_STOP:
+        order_stops_count = selectors.get_order_stops(order=order).count()
+        return (freight_charge * Decimal(order_stops_count)) + other_charge
 
-        # Calculate `OTHER` rating method
-        if order.rate_method == models.RatingMethodChoices.OTHER:
-            if order.formula_template:
-                formula_text = order.formula_template.formula_text
-                if validate_formula(formula=formula_text):
-                    variables = gather_formula_variables(order)
-                    return decimal.Decimal(
-                        evaluate_formula(formula=formula_text, **variables)
-                    )
-            else:
-                return (
-                    order.freight_charge_amount * order.rating_units
-                    + order.other_charge_amount
+    # Calculate `PER_POUND` rating method
+    if order.rate_method == models.RatingMethodChoices.POUNDS and order.weight > 0:
+        return (freight_charge * Decimal(order.weight)) + other_charge
+
+    # Calculate `OTHER` rating method
+    if order.rate_method == models.RatingMethodChoices.OTHER:
+        if order.formula_template:
+            formula_text = order.formula_template.formula_text
+            if helpers.validate_formula(formula=formula_text):
+                variables = gather_formula_variables(order)
+                return Decimal(
+                    helpers.evaluate_formula(formula=formula_text, **variables)
                 )
+        else:
+            return (freight_charge * Decimal(order.rating_units)) + other_charge
 
-        return order.freight_charge_amount
+    return freight_charge

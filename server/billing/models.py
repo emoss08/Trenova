@@ -315,7 +315,7 @@ class ChargeType(GenericModel):
         return reverse("charge-type-detail", kwargs={"pk": self.pk})
 
 
-class AccessorialCharge(GenericModel):  # type: ignore
+class AccessorialCharge(GenericModel):
     """Class for storing information about other charges.
 
     Attributes:
@@ -502,7 +502,7 @@ class DocumentClassification(GenericModel):
         self.save()
 
 
-class BillingQueue(GenericModel):  # type:ignore
+class BillingQueue(GenericModel):
     """Class for storing information about the billing queue.
 
     It has several fields, including:
@@ -1035,7 +1035,7 @@ class BillingLogEntry(GenericModel):
         return reverse("billing-log-entry-detail", kwargs={"pk": self.pk})
 
 
-class BillingHistory(GenericModel):  # type:ignore
+class BillingHistory(GenericModel):
     """
     Class for storing information about the billing history.
     """

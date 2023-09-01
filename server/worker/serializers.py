@@ -17,7 +17,6 @@
 
 from typing import Any
 
-from django.db import transaction
 from rest_framework import serializers
 
 from utils.serializers import GenericSerializer
@@ -187,7 +186,7 @@ class WorkerSerializer(GenericSerializer):
 
         return worker
 
-    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:
+    def update(self, instance: models.Worker, validated_data: Any) -> models.Worker:  # type: ignore[override]
         """Update an existing instance of the Worker model with given validated data.
 
         This method updates an existing worker, based on the data provided in the request.
@@ -205,33 +204,32 @@ class WorkerSerializer(GenericSerializer):
         worker_comments_data = validated_data.pop("comments", [])
         worker_contacts_data = validated_data.pop("contacts", [])
 
-        with transaction.atomic():
-            # Update Worker Profile
-            helpers.create_or_update_worker_profile(
-                worker=instance,
-                business_unit=instance.organization.business_unit,
-                organization=instance.organization,
-                profile_data=worker_profile_data,
-            )
+        # Update Worker Profile
+        helpers.create_or_update_worker_profile(
+            worker=instance,
+            business_unit=instance.organization.business_unit,
+            organization=instance.organization,
+            profile_data=worker_profile_data,
+        )
 
-            # Update Worker Comments
-            helpers.create_or_update_worker_comments(
-                worker=instance,
-                business_unit=instance.organization.business_unit,
-                organization=instance.organization,
-                worker_comment_data=worker_comments_data,
-            )
+        # Update Worker Comments
+        helpers.create_or_update_worker_comments(
+            worker=instance,
+            business_unit=instance.organization.business_unit,
+            organization=instance.organization,
+            worker_comment_data=worker_comments_data,
+        )
 
-            # Update Worker Contacts
-            helpers.create_or_update_worker_contacts(
-                worker=instance,
-                business_unit=instance.organization.business_unit,
-                organization=instance.organization,
-                worker_contacts_data=worker_contacts_data,
-            )
+        # Update Worker Contacts
+        helpers.create_or_update_worker_contacts(
+            worker=instance,
+            business_unit=instance.organization.business_unit,
+            organization=instance.organization,
+            worker_contacts_data=worker_contacts_data,
+        )
 
-            for attr, value in validated_data.items():
-                setattr(instance, attr, value)
-            instance.save()
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
 
         return instance

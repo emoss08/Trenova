@@ -303,7 +303,7 @@ class UserSerializer(GenericSerializer):
             "date_joined": {"read_only": True},
         }
 
-    def create(self, validated_data: Any) -> models.User:
+    def create(self, validated_data: Any) -> models.User:  # type: ignore
         """Create a user
 
         Args:

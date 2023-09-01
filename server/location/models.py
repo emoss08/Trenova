@@ -90,7 +90,7 @@ class LocationCategory(GenericModel):
         self.save()
 
 
-class Location(GenericModel):  # type: ignore
+class Location(GenericModel):
     """
     Stores location information for a related :model:`organization.Organization`.
     """
