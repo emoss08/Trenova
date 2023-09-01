@@ -280,40 +280,44 @@ class CustomerSerializer(GenericSerializer):
         )
 
         # Create or update the email profile
-        helpers.create_or_update_email_profile(
-            customer=customer,
-            email_profile_data=email_profile_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if email_profile_data:
+            helpers.create_or_update_email_profile(
+                customer=customer,
+                email_profile_data=email_profile_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Create or update the rule profile
-        helpers.create_or_update_rule_profile(
-            customer=customer,
-            rule_profile_data=rule_profile_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if rule_profile_data:
+            helpers.create_or_update_rule_profile(
+                customer=customer,
+                rule_profile_data=rule_profile_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Create or update the delivery slots
-        helpers.create_or_update_delivery_slots(
-            customer=customer,
-            delivery_slots_data=delivery_slots_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if delivery_slots_data:
+            helpers.create_or_update_delivery_slots(
+                customer=customer,
+                delivery_slots_data=delivery_slots_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Create or update the customer contacts
-        helpers.create_or_update_customer_contacts(
-            customer=customer,
-            customer_contacts_data=customer_contacts_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if customer_contacts_data:
+            helpers.create_or_update_customer_contacts(
+                customer=customer,
+                customer_contacts_data=customer_contacts_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         return customer
 
-    def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:
+    def update(self, instance: models.Customer, validated_data: Any) -> models.Customer:  # type: ignore
         """Update an existing instance of the Customer model with given validated data.
 
         This method updates an existing customer, based on the data provided in the request.
@@ -340,36 +344,40 @@ class CustomerSerializer(GenericSerializer):
         customer_contacts_data = validated_data.pop("customer_contacts", [])
 
         # Create or update the email profile
-        helpers.create_or_update_email_profile(
-            customer=instance,
-            email_profile_data=email_profile_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if email_profile_data:
+            helpers.create_or_update_email_profile(
+                customer=instance,
+                email_profile_data=email_profile_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Create or update the rule profile
-        helpers.create_or_update_rule_profile(
-            customer=instance,
-            rule_profile_data=rule_profile_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if rule_profile_data:
+            helpers.create_or_update_rule_profile(
+                customer=instance,
+                rule_profile_data=rule_profile_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Create or update the delivery slots
-        helpers.create_or_update_delivery_slots(
-            customer=instance,
-            delivery_slots_data=delivery_slots_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if delivery_slots_data:
+            helpers.create_or_update_delivery_slots(
+                customer=instance,
+                delivery_slots_data=delivery_slots_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Create or update the customer contacts
-        helpers.create_or_update_customer_contacts(
-            customer=instance,
-            customer_contacts_data=customer_contacts_data,
-            organization=organization,
-            business_unit=business_unit,
-        )
+        if customer_contacts_data:
+            helpers.create_or_update_customer_contacts(
+                customer=instance,
+                customer_contacts_data=customer_contacts_data,
+                organization=organization,
+                business_unit=business_unit,
+            )
 
         # Update the customer
         for attr, value in validated_data.items():
