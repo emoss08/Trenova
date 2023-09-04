@@ -20,9 +20,9 @@ import React, { useEffect } from "react";
 import { Card, Flex, Text } from "@mantine/core";
 import { useAuthStore } from "@/stores/AuthStore";
 import axios from "@/helpers/AxiosConfig";
-import { clearAllCookies } from "@/helpers/constants";
+import { clearAllCookies } from "@/helpers/auth";
 
-const LogoutPage: React.FC = () => {
+export default function LogoutPage() {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
@@ -65,6 +65,4 @@ const LogoutPage: React.FC = () => {
       </Card>
     </Flex>
   );
-};
-
-export default LogoutPage;
+}

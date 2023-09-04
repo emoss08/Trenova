@@ -37,7 +37,7 @@ import { getUserDetails } from "@/services/UserRequestService";
 import axios from "@/helpers/AxiosConfig";
 import { ValidatedPasswordInput } from "@/components/common/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { getUserCSRFToken } from "@/helpers/constants";
+import { getUserCSRFToken } from "@/helpers/auth";
 import { LoginSchema } from "@/helpers/schemas/AccountsSchema";
 
 type LoginFormValues = {
