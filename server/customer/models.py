@@ -30,7 +30,13 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices, Weekdays
+from utils.models import (
+    ChoiceField,
+    GenericModel,
+    PrimaryStatusChoices,
+    Weekdays,
+    CharWeekdays,
+)
 
 
 @final
@@ -917,8 +923,11 @@ class DeliverySlot(GenericModel):
         help_text=_("Customer"),
         verbose_name=_("Customer"),
     )
-    day_of_week = models.PositiveSmallIntegerField(
-        _("Day of Week"), choices=Weekdays.choices, help_text=_("Day of Week")
+    day_of_week = ChoiceField(
+        _("Day of Week"),
+        choices=CharWeekdays.choices,
+        default=CharWeekdays.MONDAY,
+        help_text=_("Day of the week associated with the delivery slot."),
     )
     start_time = models.TimeField(_("Start Time"), help_text=_("Start Time"))
     end_time = models.TimeField(_("End Time"), help_text=_("End Time"))
@@ -977,4 +986,4 @@ class DeliverySlot(GenericModel):
         Returns:
             str: Delivery slot url
         """
-        return reverse("billing:delivery-slot-detail", kwargs={"pk": self.pk})
+        return reverse("delivery-slot-detail", kwargs={"pk": self.pk})
