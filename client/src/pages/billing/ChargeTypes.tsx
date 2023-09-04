@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { ChargeTypeTable } from "@/components/charge-types/table/ChargeTypeTable";
 
 const ChargeTypes: React.FC = () => {

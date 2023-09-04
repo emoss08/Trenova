@@ -18,8 +18,8 @@
 import { useQuery, useQueryClient } from "react-query";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
 import React from "react";
-import { getInvoiceControl } from "@/requests/OrganizationRequestFactory";
-import { usePageStyles } from "@/styles/PageStyles";
+import { getInvoiceControl } from "@/services/OrganizationRequestService";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { InvoiceControlForm } from "@/components/control-files/_partials/InvoiceControlForm";
 
 function InvoiceControlPage() {

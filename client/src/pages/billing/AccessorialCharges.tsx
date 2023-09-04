@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { ACChargeTable } from "@/components/accessorial-charges/table/ACChargeTable";
 
 const AccessorialCharges: React.FC = () => {

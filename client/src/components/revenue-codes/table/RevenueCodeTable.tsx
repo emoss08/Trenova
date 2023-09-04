@@ -17,14 +17,14 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { ViewRCModal } from "@/components/revenue-codes/table/ViewRCModal";
 import { EditRCModal } from "@/components/revenue-codes/table/EditRCModal";
 import { CreateRCModal } from "./CreateRCModal";
-import { RevenueCode } from "@/types/apps/accounting";
-import { truncateText } from "@/lib/utils";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { RevenueCode } from "@/types/accounting";
+import { truncateText } from "@/helpers/constants";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function RevenueCodeTable() {
   const columns = useMemo<MRT_ColumnDef<RevenueCode>[]>(
@@ -44,7 +44,9 @@ export function RevenueCodeTable() {
         accessorKey: "revAccountNum",
         header: "Revenue Account",
         Cell: ({ cell }) => {
-          return cell.getValue() ? cell.getValue() : "No Revenue Account";
+          return cell.getValue()
+            ? (cell.getValue() as string)
+            : "No Revenue Account";
         },
       },
       {
@@ -52,7 +54,9 @@ export function RevenueCodeTable() {
         accessorKey: "expAccountNum",
         header: "Expense Account",
         Cell: ({ cell }) => {
-          return cell.getValue() ? cell.getValue() : "No Expense Account";
+          return cell.getValue()
+            ? (cell.getValue() as string)
+            : "No Expense Account";
         },
       },
       {

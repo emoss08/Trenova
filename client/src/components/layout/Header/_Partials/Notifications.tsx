@@ -18,8 +18,8 @@ import React from "react";
 import { Badge, Group, Skeleton, Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faEnvelopeOpen } from "@fortawesome/pro-duotone-svg-icons";
-import { Notification, UserNotification } from "@/types/apps/accounts";
-import { formatTimestamp } from "@/utils/date";
+import { Notification, UserNotification } from "@/types/accounts";
+import { formatTimestamp } from "@/helpers/date";
 
 type Props = {
   notification: UserNotification;

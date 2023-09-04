@@ -26,7 +26,7 @@ import {
 } from "@mantine/core";
 import React from "react";
 import { billingClientStore } from "@/stores/BillingStores";
-import { WebSocketManager, WebSocketMessageProps } from "@/utils/websockets";
+import { WebSocketManager, WebSocketMessageProps } from "@/helpers/websockets";
 
 interface Props {
   websocketMessage: WebSocketMessageProps;
@@ -90,19 +90,19 @@ export const BillingExceptionModal: React.FC<Props> = ({
               <tbody>
                 {typeof websocketMessage.message !== "string" &&
                 websocketMessage.status === "FAILURE" ? (
-                    websocketMessage.message?.flatMap((subArray, index) =>
-                      subArray.map((item, subIndex) => (
-                        <tr key={`${index}-${subIndex}`}>
-                          <td>{item.invoice_number}</td>
-                          <td>{item.missing_documents.join(", ")}</td>
-                        </tr>
-                      ))
-                    )
-                  ) : (
-                    <tr>
-                      <td colSpan={2}>{websocketMessage.message as string}</td>
-                    </tr>
-                  )}
+                  websocketMessage.message?.flatMap((subArray, index) =>
+                    subArray.map((item, subIndex) => (
+                      <tr key={`${index}-${subIndex}`}>
+                        <td>{item.invoice_number}</td>
+                        <td>{item.missing_documents.join(", ")}</td>
+                      </tr>
+                    )),
+                  )
+                ) : (
+                  <tr>
+                    <td colSpan={2}>{websocketMessage.message as string}</td>
+                  </tr>
+                )}
               </tbody>
             </Table>
           </ScrollArea>

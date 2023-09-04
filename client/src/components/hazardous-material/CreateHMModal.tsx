@@ -23,14 +23,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
-import { useFormStyles } from "@/styles/FormStyles";
-import { HazardousMaterialFormValues } from "@/types/apps/commodities";
-import axios from "@/lib/AxiosConfig";
-import { hazardousMaterialSchema } from "@/utils/apps/commodities/schema";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { statusChoices } from "@/lib/utils";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { HazardousMaterialFormValues } from "@/types/commodities";
+import axios from "@/helpers/AxiosConfig";
+import { hazardousMaterialSchema } from "@/helpers/schemas/CommoditiesSchema";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { statusChoices } from "@/helpers/constants";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import {
   hazardousClassChoices,
   packingGroupChoices,

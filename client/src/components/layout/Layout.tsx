@@ -23,7 +23,7 @@ import {
   createStyles,
   rem,
 } from "@mantine/core";
-import { Breadcrumb } from "@/components/ui/BreadCrumbs";
+import { Breadcrumb } from "@/components/common/BreadCrumbs";
 import { AsideMenu } from "@/components/layout/Navbar/AsideMenu";
 
 type LayoutProps = {

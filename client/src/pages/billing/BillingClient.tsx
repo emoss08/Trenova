@@ -20,14 +20,14 @@ import { Card, Flex, Skeleton } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX } from "@fortawesome/pro-duotone-svg-icons";
-import { usePageStyles } from "@/styles/PageStyles";
-import { WebSocketManager, WebsocketMessageProps } from "@/utils/websockets";
+import { usePageStyles } from "@/assets/styles/PageStyles";
+import { WebSocketManager, WebsocketMessageProps } from "@/helpers/websockets";
 import {
   ENABLE_WEBSOCKETS,
   getUserId,
   WEB_SOCKET_URL,
   WEBSOCKET_RETRY_INTERVAL,
-} from "@/lib/utils";
+} from "@/helpers/constants";
 import { useAuthStore } from "@/stores/AuthStore";
 import { billingClientStore } from "@/stores/BillingStores";
 import { BillingExceptionModal } from "@/components/billing/_partials/BillingExceptionModal";
@@ -43,16 +43,16 @@ export const STEPS = [
 
 /** Partial Page components */
 const GettingStartedPage = React.lazy(
-  () => import("../../components/billing/GettingStarted")
+  () => import("../../components/billing/GettingStarted"),
 );
 const OrdersReadyPage = React.lazy(
-  () => import("../../components/billing/OrdersReady")
+  () => import("../../components/billing/OrdersReady"),
 );
 const BillingQueuePage = React.lazy(
-  () => import("../../components/billing/BillingQueue")
+  () => import("../../components/billing/BillingQueue"),
 );
 const GoodJobPage = React.lazy(
-  () => import("../../components/billing/GoodJob")
+  () => import("../../components/billing/GoodJob"),
 );
 
 const BillingClient: React.FC = () => {
@@ -153,19 +153,19 @@ const BillingClient: React.FC = () => {
           onClose: (event: CloseEvent) => {
             if (event.wasClean) {
               console.info(
-                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`
+                `[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`,
               );
             } else {
               console.info(
-                "[close] Connection died. Reconnect will be attempted in 1 second."
+                "[close] Connection died. Reconnect will be attempted in 1 second.",
               );
               setTimeout(
                 () =>
                   webSocketManager.connect(
                     "billing_client",
-                    `${WEB_SOCKET_URL}/billing_client/`
+                    `${WEB_SOCKET_URL}/billing_client/`,
                   ),
-                WEBSOCKET_RETRY_INTERVAL
+                WEBSOCKET_RETRY_INTERVAL,
               );
             }
           },
@@ -173,7 +173,7 @@ const BillingClient: React.FC = () => {
           onError: (error: Event) => {
             console.log(`[error] ${error}`);
           },
-        }
+        },
       );
     } else if (isAuthenticated && !userId) {
       webSocketManager.disconnect("billing_client");
@@ -198,33 +198,33 @@ const BillingClient: React.FC = () => {
 
   const renderStep = () => {
     switch (step) {
-    case 0:
-      return (
-        <Suspense fallback={<Skeleton height={700} />}>
-          <GettingStartedPage websocketManager={webSocketManager} />
-        </Suspense>
-      );
-    case 1:
-      return (
-        <Suspense fallback={<Skeleton height={700} />}>
-          <OrdersReadyPage websocketManager={webSocketManager} />
-        </Suspense>
-      );
-    case 2:
-      return (
-        <Suspense fallback={<Skeleton height={700} />}>
-          <BillingQueuePage websocketManager={webSocketManager} />
-        </Suspense>
-      );
-    case 3:
-      return (
-        <Suspense fallback={<Skeleton height={700} />}>
-          <GoodJobPage websocketManager={webSocketManager} />
-        </Suspense>
-      );
+      case 0:
+        return (
+          <Suspense fallback={<Skeleton height={700} />}>
+            <GettingStartedPage websocketManager={webSocketManager} />
+          </Suspense>
+        );
+      case 1:
+        return (
+          <Suspense fallback={<Skeleton height={700} />}>
+            <OrdersReadyPage websocketManager={webSocketManager} />
+          </Suspense>
+        );
+      case 2:
+        return (
+          <Suspense fallback={<Skeleton height={700} />}>
+            <BillingQueuePage websocketManager={webSocketManager} />
+          </Suspense>
+        );
+      case 3:
+        return (
+          <Suspense fallback={<Skeleton height={700} />}>
+            <GoodJobPage websocketManager={webSocketManager} />
+          </Suspense>
+        );
       // Add more cases here for more steps...
-    default:
-      return null;
+      default:
+        return null;
     }
   };
   return (

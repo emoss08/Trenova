@@ -22,21 +22,18 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/lib/AxiosConfig";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import axios from "@/helpers/AxiosConfig";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { APIError } from "@/types/server";
-import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import {
-  InvoiceControl,
-  InvoiceControlFormValues,
-} from "@/types/apps/invoicing";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { dateFormatChoices } from "@/utils/apps/invoicing";
-import { ValidatedFileInput } from "@/components/ui/fields/FileInput";
-import { invoiceControlSchema } from "@/utils/apps/invoicing/schema";
-import { useFormStyles } from "@/styles/FormStyles";
+import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { InvoiceControl, InvoiceControlFormValues } from "@/types/invoicing";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { DateFormatChoices } from "@/helpers/choices";
+import { ValidatedFileInput } from "@/components/common/fields/FileInput";
+import { invoiceControlSchema } from "@/helpers/schemas/InvoicingSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   invoiceControl: InvoiceControl;
@@ -186,7 +183,7 @@ export function InvoiceControlForm({
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <SelectInput<InvoiceControlFormValues>
               form={form}
-              data={dateFormatChoices}
+              data={DateFormatChoices}
               className={classes.fields}
               name="invoiceDateFormat"
               label="Invoice Date Format"

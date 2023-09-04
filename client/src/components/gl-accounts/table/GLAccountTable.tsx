@@ -19,14 +19,14 @@ import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { EditGLAccountModal } from "@/components/gl-accounts/table/EditGLAccountModal";
 import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
+import { GeneralLedgerAccount } from "@/types/accounting";
 import { IChoiceProps, StatusChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
-import { truncateText } from "@/lib/utils";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
+import { truncateText } from "@/helpers/constants";
 
 function StatusBadge({ status }: { status: string }) {
   return (

@@ -22,17 +22,17 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/lib/AxiosConfig";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import axios from "@/helpers/AxiosConfig";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { APIError } from "@/types/server";
-import { RouteControl, RouteControlFormValues } from "@/types/apps/route";
+import { RouteControl, RouteControlFormValues } from "@/types/route";
 import {
   distanceMethodChoices,
   routeDistanceUnitChoices,
 } from "@/utils/apps/route";
-import { routeControlSchema } from "@/utils/apps/route/schema";
-import { useFormStyles } from "@/styles/FormStyles";
+import { routeControlSchema } from "@/helpers/schemas/RouteSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   routeControl: RouteControl;

@@ -21,10 +21,10 @@ import React from "react";
 import {
   getEmailControl,
   getEmailProfiles,
-} from "@/requests/OrganizationRequestFactory";
-import { usePageStyles } from "@/styles/PageStyles";
+} from "@/services/OrganizationRequestService";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { EmailControlForm } from "@/components/control-files/_partials/EmailControlForm";
-import { EmailProfile } from "@/types/apps/organization";
+import { EmailProfile } from "@/types/organization";
 
 function EmailControlPage() {
   const { classes } = usePageStyles();

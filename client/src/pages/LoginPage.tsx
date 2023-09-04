@@ -32,13 +32,13 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
-import { LoginSchema } from "@/utils/schema";
 import { useAuthStore } from "@/stores/AuthStore";
-import { getUserDetails } from "@/requests/UserRequestFactory";
-import axios from "@/lib/AxiosConfig";
-import { ValidatedPasswordInput } from "@/components/ui/fields/PasswordInput";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { getUserCSRFToken } from "@/lib/utils";
+import { getUserDetails } from "@/services/UserRequestService";
+import axios from "@/helpers/AxiosConfig";
+import { ValidatedPasswordInput } from "@/components/common/fields/PasswordInput";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { getUserCSRFToken } from "@/helpers/constants";
+import { LoginSchema } from "@/helpers/schemas/AccountsSchema";
 
 type LoginFormValues = {
   username: string;

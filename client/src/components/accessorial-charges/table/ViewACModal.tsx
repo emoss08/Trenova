@@ -29,8 +29,8 @@ import {
 } from "@mantine/core";
 import React, { Suspense } from "react";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
-import { AccessorialCharge } from "@/types/apps/billing";
-import { useFormStyles } from "@/styles/FormStyles";
+import { AccessorialCharge } from "@/types/billing";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 
 type ViewACModalFormProps = {

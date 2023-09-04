@@ -19,9 +19,9 @@ import React from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { Image, rem, Skeleton, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
-import { getUserOrganizationId } from "@/lib/utils";
-import { getOrganizationDetails } from "@/requests/OrganizationRequestFactory";
-import { useHeaderStyles } from "@/styles/HeaderStyles";
+import { getUserOrganizationId } from "@/helpers/constants";
+import { getOrganizationDetails } from "@/services/OrganizationRequestService";
+import { useHeaderStyles } from "@/assets/styles/HeaderStyles";
 
 export function OrganizationLogo() {
   const queryClient = useQueryClient();

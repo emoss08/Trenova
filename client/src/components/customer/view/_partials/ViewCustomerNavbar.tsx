@@ -27,9 +27,9 @@ import {
   Skeleton,
   Text,
 } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
-import { Customer } from "@/types/apps/customer";
-import { upperFirst } from "@/lib/utils";
+import { usePageStyles } from "@/assets/styles/PageStyles";
+import { Customer } from "@/types/customer";
+import { upperFirst } from "@/helpers/constants";
 import { customerStore as store } from "@/stores/CustomerStore";
 import { EditCustomerModal } from "@/components/customer/view/_partials/EditCustomerModal";
 
@@ -45,7 +45,7 @@ type ViewCustomerNavbarProps = {
 export function ViewCustomerNavbar({
   customer,
   isLoading,
-}: ViewCustomerNavbarProps) {
+}: ViewCustomerNavbarProps): React.ReactElement {
   const { classes } = usePageStyles();
 
   const mapStatusToBadge = (status: string) => {
@@ -189,9 +189,7 @@ export function ViewCustomerNavbar({
               </Text>
             </Box>
           </Card>
-          <Suspense fallback={<Skeleton height={500} />}>
-            <EditCustomerModal customer={customer} />
-          </Suspense>
+          <EditCustomerModal customer={customer} />
         </>
       )}
     </Flex>

@@ -21,16 +21,13 @@ import { useQuery, useQueryClient } from "react-query";
 import {
   getCustomerEmailProfile,
   getCustomerRuleProfile,
-} from "@/requests/CustomerRequestFactory";
+} from "@/services/CustomerRequestService";
 import { customerStore as store } from "@/stores/CustomerStore";
 import { CustomerEmailProfileForm } from "./profile_forms/CustomerEmailProfileForm";
 import { CustomerRuleProfileForm } from "./profile_forms/CustomerRuleProfileForm";
-import {
-  CustomerEmailProfile,
-  CustomerRuleProfile,
-} from "@/types/apps/customer";
+import { CustomerEmailProfile, CustomerRuleProfile } from "@/types/customer";
 import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 
 type CustomerProfileTabProps = {
   customerId: string;

@@ -23,9 +23,9 @@ import {
   faEnvelope,
   faMapPin,
 } from "@fortawesome/pro-duotone-svg-icons";
-import { JobTitle, User } from "@/types/apps/accounts";
-import { AvatarInput } from "../ui/fields/AvatarInput";
-import { usePageStyles } from "@/styles/PageStyles";
+import { JobTitle, User } from "@/types/accounts";
+import { AvatarInput } from "@/components/common/fields/AvatarInput";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 
 type ViewUserProfileDetailsProps = {
   user: User;

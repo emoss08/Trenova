@@ -23,20 +23,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { commodityTableStore as store } from "@/stores/CommodityStore";
-import {
-  CommodityFormValues,
-  HazardousMaterial,
-} from "@/types/apps/commodities";
-import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
+import { CommodityFormValues, HazardousMaterial } from "@/types/commodities";
+import { getHazardousMaterials } from "@/services/CommodityRequestService";
 import { TChoiceProps } from "@/types";
-import { useFormStyles } from "@/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
 import { APIError } from "@/types/server";
-import { commoditySchema } from "@/utils/apps/commodities/schema";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { yesAndNoChoices } from "@/lib/utils";
+import { commoditySchema } from "@/helpers/schemas/CommoditiesSchema";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { yesAndNoChoices } from "@/helpers/constants";
 import { unitOfMeasureChoices } from "@/utils/apps/commodities";
 
 type CreateCommodityModalFormProps = {

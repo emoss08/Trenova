@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { CustomerTable } from "@/components/customer/CustomerTable";
 
 export default function Customer() {

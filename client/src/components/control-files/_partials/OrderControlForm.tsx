@@ -22,12 +22,12 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/lib/AxiosConfig";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import axios from "@/helpers/AxiosConfig";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { APIError } from "@/types/server";
-import { OrderControl, OrderControlFormValues } from "@/types/apps/order";
-import { orderControlSchema } from "@/utils/apps/order/schema";
-import { useFormStyles } from "@/styles/FormStyles";
+import { OrderControl, OrderControlFormValues } from "@/types/order";
+import { orderControlSchema } from "@/helpers/schemas/OrderSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   orderControl: OrderControl;

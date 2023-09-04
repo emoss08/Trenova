@@ -22,17 +22,17 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/helpers/AxiosConfig";
 import {
-  autoBillingCriteriaChoices,
-  orderTransferCriteriaChoices,
+  AutoBillingCriteriaChoices,
+  OrderTransferCriteriaChoices,
 } from "@/utils/apps/billing";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
-import { BillingControl, BillingControlFormValues } from "@/types/apps/billing";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { BillingControl, BillingControlFormValues } from "@/types/billing";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { APIError } from "@/types/server";
-import { billingControlSchema } from "@/utils/apps/billing/schema";
-import { useFormStyles } from "@/styles/FormStyles";
+import { billingControlSchema } from "@/helpers/schemas/BillingSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   billingControl: BillingControl;
@@ -141,7 +141,7 @@ export function BillingControlForm({
             />
             <SelectInput<BillingControlFormValues>
               form={form}
-              data={autoBillingCriteriaChoices}
+              data={AutoBillingCriteriaChoices}
               className={classes.fields}
               name="autoBillCriteria"
               label="Auto Bill Criteria"
@@ -152,7 +152,7 @@ export function BillingControlForm({
             />
             <SelectInput<BillingControlFormValues>
               form={form}
-              data={orderTransferCriteriaChoices}
+              data={OrderTransferCriteriaChoices}
               className={classes.fields}
               name="orderTransferCriteria"
               label="Order Transfer Criteria"

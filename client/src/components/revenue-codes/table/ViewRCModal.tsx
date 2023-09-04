@@ -30,10 +30,10 @@ import {
 } from "@mantine/core";
 import { useContextMenu } from "mantine-contextmenu";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { GeneralLedgerAccount, RevenueCode } from "@/types/apps/accounting";
+import { getGLAccounts } from "@/services/AccountingRequestService";
+import { GeneralLedgerAccount, RevenueCode } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
-import { useFormStyles } from "@/styles/FormStyles";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 type ViewRCModalFormProps = {
   revenueCode: RevenueCode;

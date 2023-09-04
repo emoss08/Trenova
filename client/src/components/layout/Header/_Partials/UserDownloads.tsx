@@ -32,9 +32,9 @@ import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "react-query";
 import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
 import { useNavbarStore } from "@/stores/HeaderStore";
-import { useHeaderStyles } from "@/styles/HeaderStyles";
-import { getUserReports } from "@/requests/UserRequestFactory";
-import { getUserId } from "@/lib/utils";
+import { useHeaderStyles } from "@/assets/styles/HeaderStyles";
+import { getUserReports } from "@/services/UserRequestService";
+import { getUserId } from "@/helpers/constants";
 
 const useStyles = createStyles((theme) => ({
   mainLinks: {

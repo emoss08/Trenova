@@ -19,13 +19,13 @@ import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { CreateDCModal } from "@/components/division-codes/table/CreateDCModal";
 import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
 import { ViewDCModal } from "@/components/division-codes/table/ViewDCModal";
-import { DivisionCode } from "@/types/apps/accounting";
+import { DivisionCode } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function DivisionCodeTable() {
   const columns = useMemo<MRT_ColumnDef<DivisionCode>[]>(

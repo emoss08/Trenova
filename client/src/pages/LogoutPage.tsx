@@ -19,8 +19,8 @@ import { useNavigate } from "react-router-dom";
 import React, { useEffect } from "react";
 import { Card, Flex, Text } from "@mantine/core";
 import { useAuthStore } from "@/stores/AuthStore";
-import axios from "@/lib/AxiosConfig";
-import { clearAllCookies } from "@/lib/utils";
+import axios from "@/helpers/AxiosConfig";
+import { clearAllCookies } from "@/helpers/constants";
 
 const LogoutPage: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useAuthStore((state) => [

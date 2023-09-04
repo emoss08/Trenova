@@ -36,7 +36,7 @@ import { useDebouncedCallback } from "use-debounce";
 import { faSearch } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { SearchControl } from "@/components/layout/Header/_Partials/SpotlightSearchControl";
-import axios from "@/lib/AxiosConfig";
+import axios from "@/helpers/AxiosConfig";
 import { allowedSearchModels } from "@/utils/apps/search";
 
 export function SearchModal() {

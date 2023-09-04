@@ -24,7 +24,7 @@ import {
 import { Text } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faDownload } from "@fortawesome/pro-duotone-svg-icons";
-import { UserReportResponse } from "@/types/apps/accounts";
+import { UserReportResponse } from "@/types/accounts";
 import { SwippableMenuItem } from "@/components/layout/Header/_Partials/SwippableMenuItem";
 
 type Props = {

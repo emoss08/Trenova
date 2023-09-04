@@ -18,14 +18,14 @@
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
 import { EditJobTitleModal } from "@/components/job-title/table/EditJobTitleModal";
 import { ViewJobTitleModal } from "@/components/job-title/table/ViewJobTitleModal";
 import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
-import { JobTitle } from "@/types/apps/accounts";
+import { JobTitle } from "@/types/accounts";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function JobTitleTable() {
   const columns = useMemo<MRT_ColumnDef<JobTitle>[]>(

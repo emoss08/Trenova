@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/utils/zustand";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 
 interface HeaderStoreType {
   downloadMenuOpen: boolean;

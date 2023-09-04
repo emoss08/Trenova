@@ -17,7 +17,7 @@
 
 import { Card, Flex } from "@mantine/core";
 import React from "react";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { DivisionCodeTable } from "@/components/division-codes/table/DivisionCodeTable";
 
 const DivisionCodes: React.FC = () => {

@@ -29,7 +29,7 @@ import React from "react";
 import {
   getDepartmentDetails,
   getOrganizationDetails,
-} from "@/requests/OrganizationRequestFactory";
+} from "@/services/OrganizationRequestService";
 import { userTableStore } from "@/stores/UserTableStore";
 
 const useStyles = createStyles((theme) => {

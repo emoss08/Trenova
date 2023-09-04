@@ -19,7 +19,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "react-query";
 import { Grid, Tabs } from "@mantine/core";
-import { getCustomerDetailsWithMetrics } from "@/requests/CustomerRequestFactory";
+import { getCustomerDetailsWithMetrics } from "@/services/CustomerRequestService";
 import { ViewCustomerNavbar } from "@/components/customer/view/_partials/ViewCustomerNavbar";
 import { CustomerOverviewTab } from "@/components/customer/view/_partials/CustomerOverviewTab";
 import { CustomerProfileTab } from "@/components/customer/view/_partials/CustomerProfileTab";

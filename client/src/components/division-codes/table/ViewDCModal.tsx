@@ -29,11 +29,11 @@ import {
 } from "@mantine/core";
 import React, { Suspense } from "react";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/requests/AccountingRequestFactory";
-import { DivisionCode, GeneralLedgerAccount } from "@/types/apps/accounting";
+import { getGLAccounts } from "@/services/AccountingRequestService";
+import { DivisionCode, GeneralLedgerAccount } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
-import { useFormStyles } from "@/styles/FormStyles";
-import { statusChoices } from "@/lib/utils";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { statusChoices } from "@/helpers/constants";
 
 type ViewDCModalFormProps = {
   divisionCode: DivisionCode;

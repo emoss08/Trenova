@@ -22,19 +22,16 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/lib/AxiosConfig";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import axios from "@/helpers/AxiosConfig";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { APIError } from "@/types/server";
-import {
-  DispatchControl,
-  DispatchControlFormValues,
-} from "@/types/apps/dispatch";
-import { serviceIncidentControlChoices } from "@/utils/apps/dispatch";
-import { ValidatedNumberInput } from "@/components/ui/fields/NumberInput";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { dispatchControlSchema } from "@/utils/apps/dispatch/schema";
-import { useFormStyles } from "@/styles/FormStyles";
+import { DispatchControl, DispatchControlFormValues } from "@/types/dispatch";
+import { ServiceIncidentControlChoices } from "@/helpers/choices";
+import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { dispatchControlSchema } from "@/helpers/schemas/DispatchSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   dispatchControl: DispatchControl;
@@ -119,7 +116,7 @@ export function DispatchControlForm({
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
             <SelectInput<DispatchControlFormValues>
               form={form}
-              data={serviceIncidentControlChoices}
+              data={ServiceIncidentControlChoices}
               className={classes.fields}
               name="recordServiceIncident"
               label="Record Service Incident"

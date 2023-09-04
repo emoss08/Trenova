@@ -21,12 +21,12 @@ import { Badge, Button, Menu } from "@mantine/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/pro-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
-import { MontaTable } from "@/components/MontaTable";
-import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { customerTableStore as store } from "@/stores/CustomerStore";
-import { Customer } from "@/types/apps/customer";
+import { Customer } from "@/types/customer";
 import { TChoiceProps } from "@/types";
-import { EditCustomerModal } from "@/components/customer/view/_partials/EditCustomerModal";
+import { CreateCustomerModal } from "./view/_partials/CreateCustomerModal";
+import { ErrorProvider } from "@/utils/apps/customers/CustomerErrorContext";
 
 export function CustomerTable() {
   const navigate = useNavigate();
@@ -125,7 +125,9 @@ export function CustomerTable() {
       link="/customers"
       columns={columns}
       displayDeleteModal
-      tableQueryKey="customer-table-data"
+      showCreateDrawer
+      TableCreateDrawer={CreateCustomerModal}
+      tableQueryKey="customers-table-data"
       exportModelName="Customer"
       name="Customer"
     />

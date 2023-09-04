@@ -17,14 +17,14 @@
 import React from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { CreateACModal } from "@/components/accessorial-charges/table/CreateACModal";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
 import { ViewACModal } from "@/components/accessorial-charges/table/ViewACModal";
-import { AccessorialCharge } from "@/types/apps/billing";
-import { truncateText, USDollarFormat } from "@/lib/utils";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { AccessorialCharge } from "@/types/billing";
+import { truncateText, USDollarFormat } from "@/helpers/constants";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { TChoiceProps } from "@/types";
 
 export function ACChargeTable() {

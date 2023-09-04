@@ -19,9 +19,9 @@ import React from "react";
 import { createStyles, Divider, rem, Skeleton } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import Typed from "typed.js";
-import { WebSocketManager } from "@/utils/websockets";
+import { WebSocketManager } from "@/helpers/websockets";
 import { OrdersReadyTable } from "@/components/billing/_partials/OrdersReadyTable";
-import { getOrdersReadyToBill } from "@/requests/BillingRequestFactory";
+import { getOrdersReadyToBill } from "@/services/BillingRequestService";
 
 interface Props {
   websocketManager: WebSocketManager;

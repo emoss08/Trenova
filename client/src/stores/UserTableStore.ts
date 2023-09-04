@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobTitle, User } from "@/types/apps/accounts";
-import { createGlobalStore } from "@/utils/zustand";
+import { JobTitle, User } from "@/types/accounts";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 
 export const userTableStore = createGlobalStore<

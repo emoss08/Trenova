@@ -23,16 +23,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
-import { useFormStyles } from "@/styles/FormStyles";
-import { AccessorialChargeFormValues } from "@/types/apps/billing";
-import axios from "@/lib/AxiosConfig";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { AccessorialChargeFormValues } from "@/types/billing";
+import axios from "@/helpers/AxiosConfig";
 import { APIError } from "@/types/server";
-import { accessorialChargeSchema } from "@/utils/apps/billing/schema";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { accessorialChargeSchema } from "@/helpers/schemas/BillingSchema";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { fuelMethodChoices } from "@/utils/apps/billing";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
 
 export function CreateACModalForm() {
   const { classes } = useFormStyles();

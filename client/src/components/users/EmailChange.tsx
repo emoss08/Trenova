@@ -23,10 +23,10 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useQueryClient } from "react-query";
-import axios from "@/lib/AxiosConfig";
-import { ValidatedTextInput } from "../ui/fields/TextInput";
-import { User } from "@/types/apps/accounts";
-import { useFormStyles } from "@/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { User } from "@/types/accounts";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface EmailChangeFormProps {
   user: User;
