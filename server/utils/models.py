@@ -209,3 +209,14 @@ class Weekdays(models.IntegerChoices):
     FRIDAY = 4, _("Friday")
     SATURDAY = 5, _("Saturday")
     SUNDAY = 6, _("Sunday")
+
+
+@final
+class CharWeekdays(models.TextChoices):
+    MONDAY = "MON", _("Monday")
+    TUESDAY = "TUE", _("Tuesday")
+    WEDNESDAY = "WED", _("Wednesday")
+    THURSDAY = "THU", _("Thursday")
+    FRIDAY = "FRI", _("Friday")
+    SATURDAY = "SAT", _("Saturday")
+    SUNDAY = "SUN", _("Sunday")
