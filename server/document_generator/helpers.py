@@ -73,7 +73,7 @@ def format_value(*, value: typing.Any, field_type: str) -> str:
     elif field_type == models.FieldTypes.DATETIME:
         return value.strftime("%Y-%m-%d %H:%M:%S")
     elif field_type == models.FieldTypes.NUMBER:
-        return "{:,.2f}".format(value)
+        return f"{value:,.2f}"
     elif field_type == models.FieldTypes.BOOLEAN:
         return "Yes" if value else "No"
     else:

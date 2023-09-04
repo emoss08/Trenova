@@ -30,13 +30,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import (
-    ChoiceField,
-    GenericModel,
-    PrimaryStatusChoices,
-    Weekdays,
-    CharWeekdays,
-)
+from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 @final

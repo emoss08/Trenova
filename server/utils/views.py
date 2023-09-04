@@ -43,7 +43,7 @@ class ValidateView(APIView):
     """
 
     serializer_class = None
-    step_to_fields: typing.Dict[str, typing.List[str]] = None
+    step_to_fields: dict[str, list[str]] = None
 
     def post(self, request: "Request") -> "Response":
         """Handle HTTP POST request.
@@ -101,7 +101,7 @@ class ValidateView(APIView):
         )
 
     def validate_custom_step(
-        self, request: "Request", partial_data: typing.Dict
+        self, request: "Request", partial_data: dict
     ) -> None:
         """Example method for a custom step called "custom_step".
 

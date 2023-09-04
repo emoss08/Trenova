@@ -16,10 +16,10 @@
 # --------------------------------------------------------------------------------------------------
 
 import pytest
-
-from utils import views
 from rest_framework.test import APIClient
+
 from customer.api import ValidateCustomerInfoView
+from utils import views
 
 pytestmark = pytest.mark.django_db
 
