@@ -32,31 +32,6 @@ export const ENABLE_WEBSOCKETS = import.meta.env.VITE_ENABLE_WEBSOCKETS;
 export const API_URL = import.meta.env.VITE_API_URL as string;
 
 /**
- * Retrieves the CSRF token from the user's cookies.
- * @returns The CSRF token, or undefined if it was not found.
- */
-export const getUserCSRFToken = (): string | undefined => {
-  const csrfCookie = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("csrftoken="));
-
-  if (csrfCookie) {
-    return csrfCookie.split("=")[1];
-  }
-  console.error("No CSRF token found");
-};
-
-/**
- * Retrieves the specified item from the user's session storage.
- * @param key - The key of the item to retrieve.
- * @returns The item from session storage, parsed as JSON, or null if it was not found.
- */
-export const getSessionItem = (key: string): any => {
-  const item = sessionStorage.getItem(key);
-  return item ? JSON.parse(item) : null;
-};
-
-/**
  * Retrieves the current user's ID from session storage.
  * @returns The user's ID, or null if it was not found.
  */
@@ -69,37 +44,12 @@ export const getUserId = (): string | null => {
 };
 
 /**
- * Retrieves the current user's organization ID from session storage.
- * @returns The organization's ID, or null if it was not found.
- */
-export const getUserOrganizationId = (): string | null => {
-  const userOrganization = sessionStorage.getItem(ORGANIZATION_ID_KEY);
-  if (userOrganization) {
-    return userOrganization;
-  }
-  return null;
-};
-
-/**
  * Transforms the first character of the provided string to upper case.
  * @param str - The string to be transformed.
  * @returns A new string with the first character in upper case and the rest of the string unchanged.
  */
 export function upperFirst(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-/**
- * Clears all cookies from the browser.
- * @returns void
- * @see https://stackoverflow.com/a/179514
- */
-export function clearAllCookies() {
-  const cookies = document.cookie.split(";");
-  cookies.forEach((cookie) => {
-    const name = cookie.split("=")[0].trim();
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-  });
 }
 
 /**

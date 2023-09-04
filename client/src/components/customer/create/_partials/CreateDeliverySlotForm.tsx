@@ -37,68 +37,72 @@ export function DeliverySlotForm({
 }) {
   const theme = useMantineTheme();
 
-  const fields = form.values.deliverySlots?.map((item, index) => (
-    <>
-      <Group mt="xs" key={index}>
-        <ValidatedTimeInput<CreateCustomerFormValues>
-          label="Start Time"
-          form={form}
-          name={`deliverySlots.${index}.startTime`}
-          sx={{ flex: 1 }}
-          placeholder="Enter Start Time"
-          variant="filled"
-          withSeconds
-        />
-        <ValidatedTimeInput<CreateCustomerFormValues>
-          label="End Time"
-          form={form}
-          name={`deliverySlots.${index}.endTime`}
-          sx={{ flex: 1 }}
-          placeholder="Enter End Time"
-          variant="filled"
-          withSeconds
-        />
-        <SelectInput<CreateCustomerFormValues>
-          form={form}
-          label="Day of Week"
-          name={`deliverySlots.${index}.dayOfWeek`}
-          data={DayOfWeekChoices}
-          sx={{ flex: 1 }}
-          placeholder="Select Day of Week"
-          variant="filled"
-        />
-      </Group>
-      <Group spacing="xl">
-        <SelectInput<CreateCustomerFormValues>
-          form={form}
-          name={`deliverySlots.${index}.location`}
-          data={locations}
-          isLoading={isLocationsLoading}
-          isError={isLocationsError}
-          label="Location"
-          placeholder="Select Location"
-          variant="filled"
-        />
-        <Button
-          mt={40}
-          variant="subtle"
-          style={{
-            color:
-              theme.colorScheme === "dark"
-                ? theme.colors.gray[0]
-                : theme.colors.dark[9],
-            backgroundColor: "transparent",
-          }}
-          size="sm"
-          compact
-          onClick={() => form.removeListItem("deliverySlots", index)}
-        >
-          Remove Delivery Slot
-        </Button>
-      </Group>
-      <Divider variant="dashed" mt={20} />
-    </>
-  ));
+  const fields = form.values.deliverySlots?.map((item, index) => {
+    const { location } = item;
+
+    return (
+      <>
+        <Group mt="xs" key={location}>
+          <ValidatedTimeInput<CreateCustomerFormValues>
+            label="Start Time"
+            form={form}
+            name={`deliverySlots.${index}.startTime`}
+            sx={{ flex: 1 }}
+            placeholder="Enter Start Time"
+            variant="filled"
+            withSeconds
+          />
+          <ValidatedTimeInput<CreateCustomerFormValues>
+            label="End Time"
+            form={form}
+            name={`deliverySlots.${index}.endTime`}
+            sx={{ flex: 1 }}
+            placeholder="Enter End Time"
+            variant="filled"
+            withSeconds
+          />
+          <SelectInput<CreateCustomerFormValues>
+            form={form}
+            label="Day of Week"
+            name={`deliverySlots.${index}.dayOfWeek`}
+            data={DayOfWeekChoices}
+            sx={{ flex: 1 }}
+            placeholder="Select Day of Week"
+            variant="filled"
+          />
+        </Group>
+        <Group spacing="xl">
+          <SelectInput<CreateCustomerFormValues>
+            form={form}
+            name={`deliverySlots.${index}.location`}
+            data={locations}
+            isLoading={isLocationsLoading}
+            isError={isLocationsError}
+            label="Location"
+            placeholder="Select Location"
+            variant="filled"
+          />
+          <Button
+            mt={40}
+            variant="subtle"
+            style={{
+              color:
+                theme.colorScheme === "dark"
+                  ? theme.colors.gray[0]
+                  : theme.colors.dark[9],
+              backgroundColor: "transparent",
+            }}
+            size="sm"
+            compact
+            onClick={() => form.removeListItem("deliverySlots", index)}
+          >
+            Remove Delivery Slot
+          </Button>
+        </Group>
+        <Divider variant="dashed" mt={20} />
+      </>
+    );
+  });
 
   return (
     <Box>

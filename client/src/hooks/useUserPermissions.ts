@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { getSessionItem } from "@/helpers/constants";
+import { getSessionItem } from "@/helpers/auth";
 import { useAuthStore } from "@/stores/AuthStore";
 
 /**

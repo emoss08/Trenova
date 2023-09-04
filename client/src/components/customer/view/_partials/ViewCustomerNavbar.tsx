@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
+import React from "react";
 import {
   Avatar,
   Badge,
