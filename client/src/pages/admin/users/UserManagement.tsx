@@ -18,7 +18,7 @@
 import React from "react";
 import { Card, Flex } from "@mantine/core";
 import { UsersAdminTable } from "@/components/user-management/table/UserTable";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 
 const UserManagement: React.FC = () => {
   const { classes } = usePageStyles();

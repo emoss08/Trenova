@@ -18,8 +18,8 @@
 import { useQuery, useQueryClient } from "react-query";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
 import React from "react";
-import { getRouteControl } from "@/requests/OrganizationRequestFactory";
-import { usePageStyles } from "@/styles/PageStyles";
+import { getRouteControl } from "@/services/OrganizationRequestService";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { RouteControlForm } from "@/components/control-files/_partials/RouteControlForm";
 
 function RouteControlPage() {

@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/utils/zustand";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 import {
   DivisionCode,
   GeneralLedgerAccount,
   RevenueCode,
-} from "@/types/apps/accounting";
+} from "@/types/accounting";
 
 export const divisionCodeTableStore = createGlobalStore<
   Omit<TableStoreProps<DivisionCode>, "drawerOpen">

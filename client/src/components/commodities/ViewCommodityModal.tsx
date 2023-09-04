@@ -29,11 +29,11 @@ import {
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { commodityTableStore } from "@/stores/CommodityStore";
-import { getHazardousMaterials } from "@/requests/CommodityRequestFactory";
-import { Commodity, HazardousMaterial } from "@/types/apps/commodities";
+import { getHazardousMaterials } from "@/services/CommodityRequestService";
+import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
-import { useFormStyles } from "@/styles/FormStyles";
-import { yesAndNoChoices } from "@/lib/utils";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { yesAndNoChoices } from "@/helpers/constants";
 import { unitOfMeasureChoices } from "@/utils/apps/commodities";
 
 type ViewCommodityModalFormProps = {

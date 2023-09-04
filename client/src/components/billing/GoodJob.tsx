@@ -24,9 +24,9 @@ import {
   rem,
   SimpleGrid,
   Text,
-  Title
+  Title,
 } from "@mantine/core";
-import { WebSocketManager } from "@/utils/websockets";
+import { WebSocketManager } from "@/helpers/websockets";
 import { STEPS } from "@/pages/billing/BillingClient";
 import { billingClientStore } from "@/stores/BillingStores";
 
@@ -43,11 +43,11 @@ const useStyles = createStyles((theme) => {
     text: {
       fontSize: BREAKPOINT ? theme.fontSizes.xl : theme.fontSizes.xxl,
       fontWeight: 700,
-      color: theme.colorScheme === "dark" ? "white" : "black"
+      color: theme.colorScheme === "dark" ? "white" : "black",
     },
     root: {
       paddingTop: rem(80),
-      paddingBottom: rem(80)
+      paddingBottom: rem(80),
     },
 
     title: {
@@ -57,27 +57,27 @@ const useStyles = createStyles((theme) => {
       fontFamily: `Greycliff CF, ${theme.fontFamily}`,
 
       [theme.fn.smallerThan("sm")]: {
-        fontSize: rem(32)
-      }
+        fontSize: rem(32),
+      },
     },
 
     control: {
       [theme.fn.smallerThan("sm")]: {
-        width: "100%"
-      }
+        width: "100%",
+      },
     },
 
     mobileImage: {
       [theme.fn.largerThan("sm")]: {
-        display: "none"
-      }
+        display: "none",
+      },
     },
 
     desktopImage: {
       [theme.fn.smallerThan("sm")]: {
-        display: "none"
-      }
-    }
+        display: "none",
+      },
+    },
   };
 });
 
@@ -88,13 +88,17 @@ function GoodJob({ websocketManager }: Props) {
   const getStarted = () => {
     // send message to websocket to get started
     websocketManager.sendJsonMessage("billing_client", {
-      action: STEPS[0] // or "get_started"
+      action: STEPS[0], // or "get_started"
     });
   };
 
   return (
     <Container className={classes.root}>
-      <SimpleGrid spacing={80} cols={2} breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}>
+      <SimpleGrid
+        spacing={80}
+        cols={2}
+        breakpoints={[{ maxWidth: "sm", cols: 1, spacing: 40 }]}
+      >
         <Image src={image} className={classes.mobileImage} />
         <div>
           <Title className={classes.title}>🎉 You are all done!</Title>
@@ -113,7 +117,8 @@ function GoodJob({ websocketManager }: Props) {
               size="md"
               mt="xl"
               className={classes.control}
-              onClick={getStarted}>
+              onClick={getStarted}
+            >
               Get Started
             </Button>
           )}

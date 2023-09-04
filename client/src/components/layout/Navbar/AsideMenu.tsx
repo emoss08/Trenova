@@ -26,8 +26,8 @@ import {
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
-import { getUserId } from "@/lib/utils";
-import { getUserDetails } from "@/requests/UserRequestFactory";
+import { getUserId } from "@/helpers/constants";
+import { getUserDetails } from "@/services/UserRequestService";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
 import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
 import { ThemeSwitcher } from "@/components/layout/Header/_Partials/ThemeSwitcher";
@@ -35,7 +35,6 @@ import { navbarScroll } from "@/components/layout/Navbar/_partials/NavbarScroll"
 import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks";
 import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
-import { SearchModal } from "@/components/layout/Navbar/_partials/SearchModal";
 import { SearchSpotlight } from "@/components/layout/Header/Search";
 
 const useNavbarStyles = createStyles((theme) => ({

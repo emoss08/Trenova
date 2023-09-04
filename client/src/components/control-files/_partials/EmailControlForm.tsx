@@ -22,16 +22,13 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/lib/AxiosConfig";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import axios from "@/helpers/AxiosConfig";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { APIError } from "@/types/server";
-import {
-  EmailControl,
-  EmailControlFormValues,
-} from "@/types/apps/organization";
+import { EmailControl, EmailControlFormValues } from "@/types/organization";
 import { TChoiceProps } from "@/types";
-import { emailControlSchema } from "@/utils/apps/organization/schema";
-import { useFormStyles } from "@/styles/FormStyles";
+import { emailControlSchema } from "@/helpers/schemas/OrganizationSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   emailControl: EmailControl;

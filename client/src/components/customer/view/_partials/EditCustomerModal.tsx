@@ -23,15 +23,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { customerStore as store } from "@/stores/CustomerStore";
-import { Customer, CustomerFormValues } from "@/types/apps/customer";
-import { useFormStyles } from "@/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
-import { customerSchema } from "@/utils/apps/customers/schema";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { statusChoices, yesAndNoChoices } from "@/lib/utils";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
-import { StateSelect } from "@/components/ui/fields/StateSelect";
+import { Customer, CustomerFormValues } from "@/types/customer";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
+import { customerSchema } from "@/helpers/schemas/CustomerSchema";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { statusChoices, yesAndNoChoices } from "@/helpers/constants";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { CityAutoCompleteField } from "@/components/common/fields/CityAutoCompleteField";
+import { StateSelect } from "@/components/common/fields/StateSelect";
 
 EditCustomerModalForm.defaultProps = {
   customer: null,

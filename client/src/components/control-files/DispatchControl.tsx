@@ -18,8 +18,8 @@
 import { useQuery, useQueryClient } from "react-query";
 import { Card, Divider, Skeleton, Text } from "@mantine/core";
 import React from "react";
-import { getDispatchControl } from "@/requests/OrganizationRequestFactory";
-import { usePageStyles } from "@/styles/PageStyles";
+import { getDispatchControl } from "@/services/OrganizationRequestService";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { DispatchControlForm } from "@/components/control-files/_partials/DispatchControlForm";
 
 function DispatchControlPage() {

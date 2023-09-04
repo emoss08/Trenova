@@ -21,10 +21,10 @@ import { Avatar, Badge, Box, Text, Tooltip } from "@mantine/core";
 import { CreateUserDrawer } from "@/components/user-management/table/CreateUserDrawer";
 import { ViewUserModal } from "./ViewUserModal";
 import { userTableStore } from "@/stores/UserTableStore";
-import { MontaTable } from "@/components/MontaTable";
-import { User } from "@/types/apps/accounts";
-import { formatDate, formatDateToHumanReadable } from "@/utils/date";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { MontaTable } from "@/components/common/table/MontaTable";
+import { User } from "@/types/accounts";
+import { formatDate, formatDateToHumanReadable } from "@/helpers/date";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function UsersAdminTable() {
   const columns = useMemo<MRT_ColumnDef<User>[]>(

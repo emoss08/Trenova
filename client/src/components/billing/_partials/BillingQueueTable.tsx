@@ -22,9 +22,9 @@ import {
   useMantineReactTable,
 } from "mantine-react-table";
 import { Badge, Button, Stack } from "@mantine/core";
-import { BillingQueue } from "@/types/apps/billing";
+import { BillingQueue } from "@/types/billing";
 import { TChoiceProps } from "@/types";
-import { WebSocketManager } from "@/utils/websockets";
+import { WebSocketManager } from "@/helpers/websockets";
 import { billingClientStore } from "@/stores/BillingStores";
 
 interface Props {
@@ -38,7 +38,7 @@ export function BillingQueueTable({ data, websocketManager }: Props) {
   // Add up the total amounts of each row
   const totalAmount = useMemo(
     () => data.reduce((acc, row) => acc + parseFloat(row.total_amount), 0),
-    [data]
+    [data],
   );
 
   const columns = useMemo<MRT_ColumnDef<BillingQueue>[]>(
@@ -108,7 +108,7 @@ export function BillingQueueTable({ data, websocketManager }: Props) {
         ),
       },
     ],
-    []
+    [],
   );
 
   if (!data) return <div>Loading...</div>;
@@ -168,7 +168,7 @@ export function BillingQueueTable({ data, websocketManager }: Props) {
             onClick={handleTransfer}
             disabled={
               !Object.keys(table.getState().rowSelection).some(
-                (key) => table.getState().rowSelection[key]
+                (key) => table.getState().rowSelection[key],
               )
             }
             variant="filled"

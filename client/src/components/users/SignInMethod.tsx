@@ -18,11 +18,11 @@
 import React from "react";
 import { Card, Divider, Flex, Text } from "@mantine/core";
 import { faShieldCheck } from "@fortawesome/pro-duotone-svg-icons";
-import { Alert } from "@/components/ui/Alert";
-import { User } from "@/types/apps/accounts";
+import { Alert } from "@/components/common/Alert";
+import { User } from "@/types/accounts";
 import { PasswordChangeForm } from "./PasswordChange";
 import { EmailChangeForm } from "./EmailChange";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 
 type Props = {
   user: User;

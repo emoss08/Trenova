@@ -17,13 +17,13 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { CreateChargeTypeModal } from "@/components/charge-types/table/CreateChargeTypeModal";
 import { EditChargeTypeModal } from "@/components/charge-types/table/EditChargeTypeModal";
 import { ViewChargeTypeModal } from "@/components/charge-types/table/ViewChargeTypeModal";
-import { ChargeType } from "@/types/apps/billing";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { ChargeType } from "@/types/billing";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function ChargeTypeTable() {
   const columns = useMemo<MRT_ColumnDef<ChargeType>[]>(

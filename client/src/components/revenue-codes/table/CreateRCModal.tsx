@@ -23,19 +23,19 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/requests/AccountingRequestFactory";
+import { getGLAccounts } from "@/services/AccountingRequestService";
 import {
   GeneralLedgerAccount,
   RevenueCodeFormValues,
-} from "@/types/apps/accounting";
+} from "@/types/accounting";
 import { TChoiceProps } from "@/types";
-import { useFormStyles } from "@/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
 import { APIError } from "@/types/server";
-import { revenueCodeSchema } from "@/utils/apps/accounting/schema";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { revenueCodeSchema } from "@/helpers/schemas/AccountingSchema";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 
 type CreateRCModalFormProps = {
   selectGlAccountData: TChoiceProps[];

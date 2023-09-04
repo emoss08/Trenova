@@ -17,7 +17,7 @@
 
 import { Card, Flex } from "@mantine/core";
 import React from "react";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { GLAccountTable } from "@/components/gl-accounts/table/GLAccountTable";
 
 function GLAccounts(): React.ReactElement {

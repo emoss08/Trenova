@@ -15,9 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/utils/zustand";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
-import { Commodity, HazardousMaterial } from "@/types/apps/commodities";
+import { Commodity, HazardousMaterial } from "@/types/commodities";
 
 export const hazardousMaterialTableStore = createGlobalStore<
   Omit<TableStoreProps<HazardousMaterial>, "drawerOpen">

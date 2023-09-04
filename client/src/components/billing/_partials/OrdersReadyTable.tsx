@@ -22,9 +22,9 @@ import {
   useMantineReactTable,
 } from "mantine-react-table";
 import { Badge, Button } from "@mantine/core";
-import { OrdersReadyProps } from "@/types/apps/billing";
+import { OrdersReadyProps } from "@/types/billing";
 import { TChoiceProps } from "@/types";
-import { WebSocketManager } from "@/utils/websockets";
+import { WebSocketManager } from "@/helpers/websockets";
 import { billingClientStore } from "@/stores/BillingStores";
 
 interface Props {
@@ -105,7 +105,7 @@ export function OrdersReadyTable({ data, websocketManager }: Props) {
         header: "Sub Total",
       },
     ],
-    []
+    [],
   );
 
   if (!data) return <div>Loading...</div>;
@@ -136,7 +136,6 @@ export function OrdersReadyTable({ data, websocketManager }: Props) {
           borderRight: "1px solid rgba(224,224,224,1)",
         },
       };
-
     },
     initialState: {
       showColumnFilters: false,
@@ -170,7 +169,7 @@ export function OrdersReadyTable({ data, websocketManager }: Props) {
             "invalidOrders",
             table
               .getSelectedRowModel()
-              .flatRows.filter((row) => row.getValue("is_missing_documents"))
+              .flatRows.filter((row) => row.getValue("is_missing_documents")),
           );
           billingClientStore.set("transferConfirmModalOpen", true);
           return;
@@ -195,7 +194,7 @@ export function OrdersReadyTable({ data, websocketManager }: Props) {
             onClick={handleTransfer}
             disabled={
               !Object.keys(table.getState().rowSelection).some(
-                (key) => table.getState().rowSelection[key]
+                (key) => table.getState().rowSelection[key],
               )
             }
             variant="filled"

@@ -16,14 +16,14 @@
  */
 
 import { MRT_Row } from "mantine-react-table";
-import { createGlobalStore } from "@/utils/zustand";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 import {
   AccessorialCharge,
   ChargeType,
   OrdersReadyProps,
-} from "@/types/apps/billing";
-import { WebsocketMessageProps } from "@/utils/websockets";
+} from "@/types/billing";
+import { WebsocketMessageProps } from "@/helpers/websockets";
 
 export const chargeTypeTableStore = createGlobalStore<
   Omit<TableStoreProps<ChargeType>, "drawerOpen">

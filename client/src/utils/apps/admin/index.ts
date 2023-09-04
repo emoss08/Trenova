@@ -26,7 +26,7 @@ import {
 import { lazy } from "react";
 import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
-import { NavLinks } from "@/components/ui/NavBar";
+import { NavLinks } from "@/components/common/NavBar";
 
 /** Links for System Health Navigation Menu */
 export const adminNavLinks = [

@@ -28,3 +28,18 @@ export interface IChoiceProps<T extends string> {
 export type StatusChoiceProps = "A" | "I";
 
 export type YesNoChoiceProps = "Y" | "N";
+
+export type TDayOfWeekChoiceProps =
+  | "MON"
+  | "TUE"
+  | "WED"
+  | "THU"
+  | "FRI"
+  | "SAT"
+  | "SUN";
+
+type NestedKeys<T> = {
+  [K in keyof T]: K extends string ? `${K}.${NestedKeys<T[K]>}` | K : never;
+}[keyof T];
+
+export type InputFieldNameProp<T> = keyof T | NestedKeys<T>;

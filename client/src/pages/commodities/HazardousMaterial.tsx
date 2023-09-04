@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { HazardousMaterialTable } from "@/components/hazardous-material/HazardousMaterialTable";
 
 export default function HazardousMaterial() {

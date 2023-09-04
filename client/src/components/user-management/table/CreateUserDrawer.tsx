@@ -42,21 +42,21 @@ import { faUser, faUserShield } from "@fortawesome/pro-duotone-svg-icons";
 import { useContextMenu } from "mantine-contextmenu";
 import { IconCopy, IconNote } from "@tabler/icons-react";
 import { useClipboard } from "@mantine/hooks";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
-import { JobTitle, UserFormValues } from "@/types/apps/accounts";
-import axios from "@/lib/AxiosConfig";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { JobTitle, UserFormValues } from "@/types/accounts";
+import axios from "@/helpers/AxiosConfig";
 import {
   getDepartments,
   getJobTitles,
   getOrganizations,
-} from "@/requests/OrganizationRequestFactory";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { StateSelect } from "@/components/ui/fields/StateSelect";
-import { CityAutoCompleteField } from "@/components/ui/fields/CityAutoCompleteField";
+} from "@/services/OrganizationRequestService";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { StateSelect } from "@/components/common/fields/StateSelect";
+import { CityAutoCompleteField } from "@/components/common/fields/CityAutoCompleteField";
 import { userTableStore } from "@/stores/UserTableStore";
-import { Organization, Department } from "@/types/apps/organization";
-import { useFormStyles } from "@/styles/FormStyles";
+import { Organization, Department } from "@/types/organization";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 const initialValues: TransferListData = [
   [

@@ -17,7 +17,7 @@
 
 import React from "react";
 import { Card, Flex } from "@mantine/core";
-import { usePageStyles } from "@/styles/PageStyles";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { RevenueCodeTable } from "@/components/revenue-codes/table/RevenueCodeTable";
 
 const RevenueCodes: React.FC = () => {

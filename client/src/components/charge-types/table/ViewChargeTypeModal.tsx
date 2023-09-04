@@ -26,8 +26,8 @@ import {
 } from "@mantine/core";
 import React, { Suspense } from "react";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { ChargeType } from "@/types/apps/billing";
-import { useFormStyles } from "@/styles/FormStyles";
+import { ChargeType } from "@/types/billing";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 type ViewChargeTypeModalFormProps = {
   chargeType: ChargeType;

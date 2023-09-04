@@ -18,15 +18,15 @@
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge, Text } from "@mantine/core";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
 import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
 import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
-import { Commodity } from "@/types/apps/commodities";
-import { truncateText } from "@/lib/utils";
+import { Commodity } from "@/types/commodities";
+import { truncateText } from "@/helpers/constants";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function CommodityTable() {
   const columns = useMemo<MRT_ColumnDef<Commodity>[]>(

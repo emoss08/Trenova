@@ -23,13 +23,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { ChargeType, ChargeTypeFormValues } from "@/types/apps/billing";
-import { useFormStyles } from "@/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+import { ChargeType, ChargeTypeFormValues } from "@/types/billing";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
 import { APIError } from "@/types/server";
-import { chargeTypeSchema } from "@/utils/apps/billing/schema";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
+import { chargeTypeSchema } from "@/helpers/schemas/BillingSchema";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 
 type EditChargeTypeModalFormProps = {
   chargeType: ChargeType;

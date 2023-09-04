@@ -28,9 +28,9 @@ import {
   TextInput,
 } from "@mantine/core";
 import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
-import { HazardousMaterial } from "@/types/apps/commodities";
-import { useFormStyles } from "@/styles/FormStyles";
-import { statusChoices } from "@/lib/utils";
+import { HazardousMaterial } from "@/types/commodities";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { statusChoices } from "@/helpers/constants";
 import {
   hazardousClassChoices,
   packingGroupChoices,

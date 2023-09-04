@@ -16,21 +16,20 @@
  */
 
 import {
-  faBuildingColumns,
   faGrid2,
   faHandHoldingDollar,
 } from "@fortawesome/pro-duotone-svg-icons";
-import { TChoiceProps } from "@/types";
+import { IChoiceProps, TChoiceProps } from "@/types";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
 /** Type for fuel method choices */
-export type fuelMethodChoicesProps = "D" | "F" | "P";
+export type FuelMethodChoicesProps = "D" | "F" | "P";
 
-export const fuelMethodChoices: TChoiceProps[] = [
+export const fuelMethodChoices = [
   { value: "D", label: "Distance" },
   { value: "F", label: "Flat" },
   { value: "P", label: "Percentage" },
-];
+] satisfies ReadonlyArray<IChoiceProps<FuelMethodChoicesProps>>;
 
 /** Type for Auto Billing Criteria Choices */
 export type AutoBillingCriteriaChoicesProps =
@@ -38,7 +37,7 @@ export type AutoBillingCriteriaChoicesProps =
   | "TRANSFERRED_TO_BILL"
   | "MARKED_READY";
 
-export const autoBillingCriteriaChoices: TChoiceProps[] = [
+export const AutoBillingCriteriaChoices = [
   { value: "ORDER_DELIVERY", label: "Auto Bill when order is delivered" },
   {
     value: "TRANSFERRED_TO_BILL",
@@ -48,7 +47,7 @@ export const autoBillingCriteriaChoices: TChoiceProps[] = [
     value: "MARKED_READY",
     label: "Auto Bill when order is marked ready to bill in Billing Queue",
   },
-];
+] as ReadonlyArray<IChoiceProps<AutoBillingCriteriaChoicesProps>>;
 
 /** Type for order transfer criteria */
 export type OrderTransferCriteriaChoicesProps =
@@ -56,11 +55,11 @@ export type OrderTransferCriteriaChoicesProps =
   | "COMPLETED"
   | "READY_TO_BILL";
 
-export const orderTransferCriteriaChoices: TChoiceProps[] = [
+export const OrderTransferCriteriaChoices = [
   { value: "READY_AND_COMPLETED", label: "Ready to bill & Completed" },
   { value: "COMPLETED", label: "Completed" },
   { value: "READY_TO_BILL", label: "Ready to bill" },
-];
+] satisfies ReadonlyArray<IChoiceProps<OrderTransferCriteriaChoicesProps>>;
 
 /** Type for Bill Type choices */
 export type billTypeChoicesProps =

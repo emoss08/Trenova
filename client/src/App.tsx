@@ -17,7 +17,7 @@
 
 import React, { Suspense, useEffect } from "react";
 import { BrowserRouter } from "react-router-dom";
-import "./styles/App.css";
+import "./assets/styles/App.css";
 import {
   ColorScheme,
   ColorSchemeProvider,
@@ -30,7 +30,7 @@ import { ReactQueryDevtools } from "react-query/devtools";
 import { ContextMenuProvider } from "mantine-contextmenu";
 import { ModalsProvider } from "@mantine/modals";
 import { useAuthStore } from "./stores/AuthStore";
-import { LoadingScreen } from "./components/LoadingScreen";
+import { LoadingScreen } from "./components/common/LoadingScreen";
 import { ProtectedRoutes } from "./routing/ProtectedRoutes";
 import { useVerifyToken } from "./hooks/withTokenVerification";
 

@@ -16,10 +16,10 @@
  */
 
 import { MRT_RowSelectionState } from "mantine-react-table";
-import { createGlobalStore } from "@/utils/zustand";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
-import { Customer } from "@/types/apps/customer";
-import { BillingHistory } from "@/types/apps/billing";
+import { Customer } from "@/types/customer";
+import { BillingHistory } from "@/types/billing";
 
 type customerStoreProps = {
   editModalOpen: boolean;

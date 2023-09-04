@@ -17,8 +17,8 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/AuthStore";
-import axios from "@/lib/AxiosConfig";
-import { getUserDetails } from "@/requests/UserRequestFactory";
+import axios from "@/helpers/AxiosConfig";
+import { getUserDetails } from "@/services/UserRequestService";
 
 /**
  * Custom hook to verify the user's token.

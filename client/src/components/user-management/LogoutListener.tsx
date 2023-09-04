@@ -17,8 +17,8 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { clearAllCookies, WEB_SOCKET_URL } from "@/lib/utils";
-import { createWebsocketManager } from "@/utils/websockets";
+import { clearAllCookies, WEB_SOCKET_URL } from "@/helpers/constants";
+import { createWebsocketManager } from "@/helpers/websockets";
 import { useAuthStore } from "@/stores/AuthStore";
 
 interface LogoutListenerProps {

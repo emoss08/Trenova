@@ -34,10 +34,14 @@ import axios from "axios";
 import { notifications } from "@mantine/notifications";
 import { Howl, Howler } from "howler";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
-import { getUserNotifications } from "@/requests/UserRequestFactory";
-import { getUserId, WEB_SOCKET_URL, ENABLE_WEBSOCKETS } from "@/lib/utils";
+import { getUserNotifications } from "@/services/UserRequestService";
+import {
+  getUserId,
+  WEB_SOCKET_URL,
+  ENABLE_WEBSOCKETS,
+} from "@/helpers/constants";
 import { useAuthStore } from "@/stores/AuthStore";
-import { createWebsocketManager } from "@/utils/websockets";
+import { createWebsocketManager } from "@/helpers/websockets";
 import { useNavbarStore } from "@/stores/HeaderStore";
 
 import NotificationSound from "@/assets/audio/notification.webm";

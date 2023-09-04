@@ -28,15 +28,15 @@ import {
 } from "@mantine/core";
 import React, { Suspense } from "react";
 import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
-import { GeneralLedgerAccount } from "@/types/apps/accounting";
-import { useFormStyles } from "@/styles/FormStyles";
-import { statusChoices } from "@/lib/utils";
+import { GeneralLedgerAccount } from "@/types/accounting";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { statusChoices } from "@/helpers/constants";
 import {
   accountClassificationChoices,
   accountSubTypeChoices,
   accountTypeChoices,
   cashFlowTypeChoices,
-} from "@/utils/apps/accounting";
+} from "@/helpers/choices";
 
 type ViewGLAccountModalFormProps = {
   glAccount: GeneralLedgerAccount;

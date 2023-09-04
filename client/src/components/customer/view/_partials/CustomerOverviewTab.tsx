@@ -19,11 +19,11 @@ import { Box, Button, Card, SimpleGrid, Skeleton, Text } from "@mantine/core";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPencil } from "@fortawesome/pro-duotone-svg-icons";
-import { Customer } from "@/types/apps/customer";
+import { Customer } from "@/types/customer";
 import { CustomerStats } from "@/components/customer/view/_partials/CustomerStats";
 import { CustomerBillingHistoryTable } from "@/components/customer/view/_partials/CustomerBillingHistoryTable";
-import { usePageStyles } from "@/styles/PageStyles";
-import { USDollarFormat } from "@/lib/utils";
+import { usePageStyles } from "@/assets/styles/PageStyles";
+import { USDollarFormat } from "@/helpers/constants";
 
 CustomerOverviewTab.defaultProps = {
   customer: null,

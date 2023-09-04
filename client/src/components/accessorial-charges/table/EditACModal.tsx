@@ -26,16 +26,16 @@ import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import {
   AccessorialCharge,
   AccessorialChargeFormValues,
-} from "@/types/apps/billing";
-import { useFormStyles } from "@/styles/FormStyles";
-import axios from "@/lib/AxiosConfig";
+} from "@/types/billing";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
 import { APIError } from "@/types/server";
-import { accessorialChargeSchema } from "@/utils/apps/billing/schema";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedTextArea } from "@/components/ui/fields/TextArea";
-import { SelectInput } from "@/components/ui/fields/SelectInput";
+import { accessorialChargeSchema } from "@/helpers/schemas/BillingSchema";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 import { fuelMethodChoices } from "@/utils/apps/billing";
-import { SwitchInput } from "@/components/ui/fields/SwitchInput";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
 
 type EditACModalFormProps = {
   accessorialCharge: AccessorialCharge;

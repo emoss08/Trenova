@@ -39,7 +39,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
 import { useNavbarStore } from "@/stores/HeaderStore";
-import { User } from "@/types/apps/accounts";
+import { User } from "@/types/accounts";
 
 const pageStyles = createStyles((theme) => ({
   user: {

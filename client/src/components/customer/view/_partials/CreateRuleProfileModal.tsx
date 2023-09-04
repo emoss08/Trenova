@@ -21,15 +21,15 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm } from "@mantine/form";
-import { useFormStyles } from "@/styles/FormStyles";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 import { customerStore as store } from "@/stores/CustomerStore";
-import axios from "@/lib/AxiosConfig";
-import { CustomerRuleProfileFormValues } from "@/types/apps/customer";
+import axios from "@/helpers/AxiosConfig";
+import { CustomerRuleProfileFormValues } from "@/types/customer";
 import { APIError } from "@/types/server";
-import { ValidatedTextInput } from "@/components/ui/fields/TextInput";
-import { ValidatedMultiSelect } from "@/components/ui/fields/MultiSelect";
-import { getDocumentClassifications } from "@/requests/BillingRequestFactory";
-import { DocumentClassification } from "@/types/apps/billing";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedMultiSelect } from "@/components/common/fields/MultiSelect";
+import { getDocumentClassifications } from "@/services/BillingRequestService";
+import { DocumentClassification } from "@/types/billing";
 
 type Props = {
   customerId: string;

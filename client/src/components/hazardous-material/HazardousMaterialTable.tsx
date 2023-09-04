@@ -18,14 +18,14 @@
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
-import { MontaTable } from "@/components/MontaTable";
+import { MontaTable } from "@/components/common/table/MontaTable";
 import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
 import { CreateHMModal } from "@/components/hazardous-material/CreateHMModal";
 import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
 import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
-import { HazardousMaterial } from "@/types/apps/commodities";
+import { HazardousMaterial } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/ui/table/ActionsMenu";
+import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function HazardousMaterialTable() {
   const columns = useMemo<MRT_ColumnDef<HazardousMaterial>[]>(

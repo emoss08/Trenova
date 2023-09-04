@@ -33,8 +33,8 @@ import {
   IconCurrencyDollar,
   IconTruckDelivery,
 } from "@tabler/icons-react";
-import { Customer } from "@/types/apps/customer";
-import { truncateText, USDollarFormat } from "@/lib/utils";
+import { Customer } from "@/types/customer";
+import { truncateText, USDollarFormat } from "@/helpers/constants";
 
 export type CustomerMetricProps = {
   customer: Customer;

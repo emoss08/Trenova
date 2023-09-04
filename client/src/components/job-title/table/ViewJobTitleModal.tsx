@@ -30,11 +30,11 @@ import {
 } from "@mantine/core";
 import React from "react";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
-import { getJobTitleDetails } from "@/requests/OrganizationRequestFactory";
-import { JobTitle } from "@/types/apps/accounts";
-import { useFormStyles } from "@/styles/FormStyles";
-import { statusChoices } from "@/lib/utils";
-import { jobFunctionChoices } from "@/utils/apps/accounts";
+import { getJobTitleDetails } from "@/services/OrganizationRequestService";
+import { JobTitle } from "@/types/accounts";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import { statusChoices } from "@/helpers/constants";
+import { jobFunctionChoices } from "@/helpers/choices";
 
 type ViewJobTitleModalFormProps = {
   jobTitle: JobTitle;

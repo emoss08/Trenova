@@ -18,7 +18,7 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { Grid, Skeleton } from "@mantine/core";
 import { useLocation, useNavigate } from "react-router-dom";
-import { NavBar } from "@/components/ui/NavBar";
+import { NavBar } from "@/components/common/NavBar";
 import { controlFileData } from "@/utils/apps/admin";
 
 function ControlFiles() {

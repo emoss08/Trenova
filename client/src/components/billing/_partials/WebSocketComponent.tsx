@@ -21,8 +21,8 @@ import {
   WebSocketManager,
   WebSocketMessageProps,
   createWebsocketManager,
-} from "@/utils/websockets";
-import { WEB_SOCKET_URL } from "@/lib/utils";
+} from "@/helpers/websockets";
+import { WEB_SOCKET_URL } from "@/helpers/constants";
 
 interface Props {
   userId: string;
