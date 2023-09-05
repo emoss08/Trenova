@@ -27,6 +27,8 @@ import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { DelayCode } from "@/types/dispatch";
 import { useDelayCodeStore } from "@/stores/DispatchStore";
 import { CreateDelayCodeModal } from "@/components/delay-codes/CreateDelayCodeModal";
+import { ViewDelayCodeModal } from "@/components/delay-codes/ViewDelayCodeModal";
+import { EditDelayCodeModal } from "@/components/delay-codes/EditDelayCodeModal";
 
 export function DelayCodeTable() {
   const columns = useMemo<MRT_ColumnDef<DelayCode>[]>(
@@ -84,9 +86,10 @@ export function DelayCodeTable() {
       store={useDelayCodeStore}
       link="/delay_codes"
       columns={columns}
-      TableEditModal={EditCommodityModal}
-      TableViewModal={ViewCommodityModal}
+      TableEditModal={EditDelayCodeModal}
+      TableViewModal={ViewDelayCodeModal}
       displayDeleteModal
+      deleteKey="code"
       TableCreateDrawer={CreateDelayCodeModal}
       tableQueryKey="delay-code-table-data"
       exportModelName="DelayCode"

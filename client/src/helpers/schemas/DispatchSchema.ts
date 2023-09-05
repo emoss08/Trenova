@@ -17,7 +17,10 @@
 
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-import { DispatchControlFormValues } from "@/types/dispatch";
+import {
+  DelayCodeFormValues,
+  DispatchControlFormValues,
+} from "@/types/dispatch";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
@@ -39,4 +42,15 @@ export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
     tractorWorkerFleetConstraint: Yup.boolean().required(
       "Tractor Worker Fleet Constraint is required",
     ),
+  });
+
+export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =
+  Yup.object().shape({
+    code: Yup.string()
+      .required("Name is required")
+      .max(4, "Code cannot be more than 4 characters"),
+    description: Yup.string()
+      .required("Description is required")
+      .max(100, "Description cannot be more than 100 characters"),
+    fCarrierOrDriver: Yup.boolean().required("Carrier or Driver is required"),
   });

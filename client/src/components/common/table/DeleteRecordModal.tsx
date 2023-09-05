@@ -19,21 +19,27 @@ import React from "react";
 import { useQueryClient } from "react-query";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck } from "@fortawesome/pro-solid-svg-icons";
+import { faCheck, faX } from "@fortawesome/pro-solid-svg-icons";
 import { notifications } from "@mantine/notifications";
 import { Box, Button, Modal, Text } from "@mantine/core";
 import { API_URL } from "@/helpers/constants";
+
+DeleteRecordModal.defaultProps = {
+  deleteKey: "id",
+};
 
 export interface DeleteRecordModalProps {
   link: string;
   queryKey: string;
   store: any;
+  deleteKey?: string;
 }
 
 export function DeleteRecordModal({
   link,
   queryKey,
   store,
+  deleteKey = "id",
 }: DeleteRecordModalProps): React.ReactElement | null {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [showDeleteRecordModal, setShowDeleteRecordModal] =
@@ -45,9 +51,10 @@ export function DeleteRecordModal({
     if (!selectedRecord) return;
 
     setLoading(true);
+
     try {
       const response = await axios.delete(
-        `${API_URL}${link}/${selectedRecord.id}`,
+        `${API_URL}${link}/${selectedRecord[deleteKey]}`,
       );
       if (response.status === 204) {
         queryClient.invalidateQueries([queryKey]).then(() => {
@@ -61,7 +68,13 @@ export function DeleteRecordModal({
         });
       }
     } catch (error: any) {
-      console.log(error);
+      notifications.show({
+        title: "Error",
+        message: "Something went wrong while deleting the record",
+        color: "red",
+        withCloseButton: true,
+        icon: <FontAwesomeIcon icon={faX} />,
+      });
     } finally {
       setLoading(false);
       setShowDeleteRecordModal(false);

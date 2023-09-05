@@ -39,6 +39,7 @@ export function SwitchInput<
       {...rest}
       {...form.getInputProps(name as string, { type: "checkbox" })}
       mt={rem(10)}
+      variant="filled"
     />
   );
 }

@@ -14,38 +14,28 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { faTruckFront } from "@fortawesome/pro-duotone-svg-icons";
+import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-export type DispatchControl = {
-  id: string;
-  organization: string;
-  recordServiceIncident: string;
-  gracePeriod: number;
-  deadheadTarget: number;
-  driverAssign: boolean;
-  trailerContinuity: boolean;
-  dupeTrailerCheck: boolean;
-  regulatoryCheck: boolean;
-  prevOrdersOnHold: boolean;
-  driverTimeAwayRestriction: boolean;
-  tractorWorkerFleetConstraint: boolean;
-};
-
-export type DispatchControlFormValues = Omit<
-  DispatchControl,
-  "id" | "organization"
->;
-
-export type DelayCode = {
-  organization: string;
-  businessUnit: string;
-  code: string;
-  description: string;
-  fCarrierOrDriver: boolean;
-  created: string;
-  modified: string;
-};
-
-export type DelayCodeFormValues = Omit<
-  DelayCode,
-  "organization" | "businessUnit" | "created" | "modified"
->;
+/** Links for System Health Navigation Menu */
+export const dispatchNavLinks = [
+  {
+    label: "Dispatch",
+    icon: faTruckFront,
+    link: "/",
+    permission: "view_dispatch",
+    links: [
+      {
+        label: "Configuration Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "Delay Codes",
+            link: "/dispatch/delay-codes",
+            permission: "view_delaycode",
+          },
+        ],
+      },
+    ],
+  },
+] as LinksGroupProps[];
