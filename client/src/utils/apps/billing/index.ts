@@ -96,11 +96,6 @@ export const billingExceptionChoices: TChoiceProps[] = [
 /** Links for Billing Navigation Menu */
 export const billingNavLinks = [
   {
-    label: "Dashboard",
-    icon: faGrid2,
-    link: "/",
-  },
-  {
     label: "Billing & Accounting",
     icon: faHandHoldingDollar,
     link: "/billing", // Placeholder, replace with the actual link
@@ -153,4 +148,4 @@ export const billingNavLinks = [
       },
     ],
   },
-] as LinksGroupProps[];
+] satisfies LinksGroupProps[];

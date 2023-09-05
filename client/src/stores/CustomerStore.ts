@@ -38,8 +38,14 @@ type paymentRecordsTableStoreProps<T extends Record<string, unknown>> = {
   rowSelection: MRT_RowSelectionState;
 };
 
+type customerTableStoreProps = {
+  loading: boolean;
+  activeStep: number;
+  attemptedNext: boolean;
+};
+
 export const customerTableStore = createGlobalStore<
-  Omit<TableStoreProps<Customer>, "drawerOpen">
+  Omit<TableStoreProps<Customer>, "drawerOpen"> & customerTableStoreProps
 >({
   pagination: {
     pageIndex: 0,
@@ -55,6 +61,9 @@ export const customerTableStore = createGlobalStore<
   columnFilters: false,
   rowSelection: {},
   errorCount: 0,
+  loading: false,
+  activeStep: 0,
+  attemptedNext: false,
 });
 
 export const paymentRecordsTableStore = createGlobalStore<

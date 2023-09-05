@@ -129,7 +129,7 @@ function CreateRuleProfileModalForm({ customerId }: Props) {
         />
         <ValidatedMultiSelect<CustomerRuleProfileFormValues>
           form={form}
-          name="document_class"
+          name="documentClass"
           data={selectDocumentClassData}
           placeholder="Select document class"
           label="Document Class"

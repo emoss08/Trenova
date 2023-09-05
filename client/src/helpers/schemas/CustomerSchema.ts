@@ -24,10 +24,11 @@ import {
 } from "@/types";
 import {
   CreateCustomerFormValues,
+  CustomerContactFormValues,
   CustomerEmailProfileFormValues,
   CustomerFormValues,
   CustomerRuleProfileFormValues,
-  DeliverySlot,
+  DeliverySlotFormValues,
 } from "@/types/customer";
 
 /** Customer Schema */
@@ -75,16 +76,25 @@ export const CustomerRuleProfileSchema: ObjectSchema<CustomerRuleProfileFormValu
       .required("Document Class is required"),
   });
 
-const DeliverySlotSchema: ObjectSchema<
-  Omit<DeliverySlot, "id" | "organization" | "businessUnit" | "customer">
-> = Yup.object().shape({
-  dayOfWeek: Yup.string<TDayOfWeekChoiceProps>().required(
-    "Day of Week is required",
-  ),
-  startTime: Yup.string().required("Start Time is required"),
-  endTime: Yup.string().required("End Time is required"),
-  location: Yup.string().required("Location is required"),
-});
+const DeliverySlotSchema: ObjectSchema<DeliverySlotFormValues> =
+  Yup.object().shape({
+    dayOfWeek: Yup.string<TDayOfWeekChoiceProps>().required(
+      "Day of Week is required",
+    ),
+    startTime: Yup.string().required("Start Time is required"),
+    endTime: Yup.string().required("End Time is required"),
+    location: Yup.string().required("Location is required"),
+  });
+
+const CustomerContactSchema: ObjectSchema<CustomerContactFormValues> =
+  Yup.object().shape({
+    isActive: Yup.boolean().required(),
+    name: Yup.string().required("Name is required"),
+    email: Yup.string().required("Email is required"),
+    title: Yup.string().required("Title is required"),
+    phone: Yup.string().notRequired(),
+    isPayableContact: Yup.boolean().required(),
+  });
 
 export const CreateCustomerSchema: ObjectSchema<CreateCustomerFormValues> =
   Yup.object().shape({
@@ -106,14 +116,56 @@ export const CreateCustomerSchema: ObjectSchema<CreateCustomerFormValues> =
     emailProfile: Yup.object().shape({
       subject: Yup.string().notRequired().max(100),
       comment: Yup.string().notRequired().max(100),
-      fromAddress: Yup.string().notRequired(),
-      blindCopy: Yup.string().notRequired(),
+      fromAddress: Yup.string().email("Invalid email address").notRequired(),
+      blindCopy: Yup.string()
+        .notRequired()
+        .test("is-valid-emails", "Invalid email or list of emails", (value) => {
+          if (!value) return true; // Skip validation if empty
+          return value
+            .split(",")
+            .every((email) => Yup.string().email().isValidSync(email.trim()));
+        }),
       readReceipt: Yup.boolean().required(),
       readReceiptTo: Yup.string().when("readReceipt", {
         is: true,
-        then: (schema) => schema.required("Read Receipt To is required"),
-        otherwise: (schema) => schema.notRequired(),
+        then: (schema) =>
+          schema
+            .required("Read Receipt To is required")
+            .test(
+              "is-valid-emails",
+              "Invalid email or list of emails",
+              (value) => {
+                if (!value) return false; // Mandatory if readReceipt is true
+                return value
+                  .split(",")
+                  .every((email) =>
+                    Yup.string().email().isValidSync(email.trim()),
+                  );
+              },
+            ),
+        // make sure it is a comma email or list of emails regardless
+        otherwise: (schema) =>
+          schema.test(
+            "is-valid-emails",
+            "Invalid email or list of emails",
+            (value) => {
+              if (!value) return true; // Skip validation if empty
+              return value
+                .split(",")
+                .every((email) =>
+                  Yup.string().email().isValidSync(email.trim()),
+                );
+            },
+          ),
       }),
       attachmentName: Yup.string().notRequired(),
     }),
+    ruleProfile: Yup.object().shape({
+      name: Yup.string().required("Name is required"),
+      documentClass: Yup.array()
+        .of(Yup.string().required())
+        .min(1, "At Least one document class is required.")
+        .required(),
+    }),
+    customerContacts: Yup.array().of(CustomerContactSchema).notRequired(),
   });

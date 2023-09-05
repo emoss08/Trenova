@@ -112,21 +112,28 @@ export type CreateCustomerFormValues = Omit<
   | "creditBalance"
   | "advocateFullName"
 > & {
-  deliverySlots?:
-    | Omit<DeliverySlot, "id" | "organization" | "businessUnit" | "customer">[]
-    | null;
+  deliverySlots?: Array<DeliverySlotFormValues> | null;
   emailProfile?: CustomerEmailProfileFormValues | null;
+  customerContacts?: Array<CustomerContactFormValues> | null;
+  ruleProfile?: CustomerRuleProfileFormValues | null;
 };
 
 /** Customer Rule Profile Type */
 export type CustomerRuleProfile = {
   id: string;
+  organization: string;
+  businessUnit: string;
   name: string;
   customer: string;
   documentClass: string[];
+  created: string;
+  modified: string;
 };
 
-export type CustomerRuleProfileFormValues = Omit<CustomerRuleProfile, "id">;
+export type CustomerRuleProfileFormValues = Omit<
+  CustomerRuleProfile,
+  "id" | "customer" | "businessUnit" | "organization" | "created" | "modified"
+>;
 
 /** Customer Email Profile Type */
 export type CustomerEmailProfile = {
@@ -157,4 +164,31 @@ export type DeliverySlot = {
   startTime: string;
   endTime: string;
   location: string;
+  created: string;
+  modified: string;
 };
+
+export type DeliverySlotFormValues = Omit<
+  DeliverySlot,
+  "id" | "organization" | "businessUnit" | "customer" | "created" | "modified"
+>;
+
+type CustomerContact = {
+  id: string;
+  organization: string;
+  businessUnit: string;
+  customer: string;
+  isActive: boolean;
+  name: string;
+  email: string;
+  title: string;
+  phone?: string | null;
+  isPayableContact: boolean;
+  created: string;
+  modified: string;
+};
+
+export type CustomerContactFormValues = Omit<
+  CustomerContact,
+  "id" | "organization" | "businessUnit" | "customer" | "created" | "modified"
+>;

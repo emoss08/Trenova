@@ -16,21 +16,13 @@
  */
 
 import React from "react";
-import { Box, Card, Text } from "@mantine/core";
-import { useFormStyles } from "@/assets/styles/FormStyles";
-import { usePageStyles } from "@/assets/styles/PageStyles";
+import { LinksGroup } from "@/components/layout/Navbar/_partials/LinksGroup";
+import { dispatchNavLinks } from "@/helpers/links/dispatch";
 
-export function CustomerRuleProfileForm(): React.ReactElement {
-  const { classes } = useFormStyles();
-  const { classes: pageClass } = usePageStyles();
+export function DispatchLinks() {
+  const dispatchLinks = dispatchNavLinks.map((item) => (
+    <LinksGroup {...item} key={item.label} />
+  ));
 
-  return (
-    <Card className={pageClass.card} mt={20}>
-      <Box>
-        <Text className={classes.text} fw={600} fz={20}>
-          Customer Rule Profile
-        </Text>
-      </Box>
-    </Card>
-  );
+  return <>{dispatchLinks}</>;
 }

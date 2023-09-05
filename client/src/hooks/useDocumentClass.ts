@@ -15,30 +15,28 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { rem, Switch, SwitchProps } from "@mantine/core";
-import { UseFormReturnType } from "@mantine/form";
-import { InputFieldNameProp } from "@/types";
+import { useQuery, useQueryClient } from "react-query";
+import { getDocumentClassifications } from "@/services/BillingRequestService";
+import { DocumentClassification } from "@/types/billing";
 
-interface ValidatedSwitchInputPropsBase
-  extends Omit<SwitchProps, "form" | "name"> {}
+export function useDocumentClass(showCreateModal: boolean) {
+  const queryClient = useQueryClient();
 
-type ValidatedSwitchInputProps<TFormValues extends object> =
-  ValidatedSwitchInputPropsBase & {
-    form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-    name: InputFieldNameProp<TFormValues>;
-  };
+  const { data, isLoading, isError, isFetched } = useQuery({
+    queryKey: ["documentClassifications"],
+    queryFn: async () => getDocumentClassifications(),
+    enabled: showCreateModal,
+    initialData: () => queryClient.getQueryData("documentClassifications"),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
-export function SwitchInput<
-  TFormValues extends Record<string, unknown> = Record<string, unknown>,
->(props: ValidatedSwitchInputProps<TFormValues>) {
-  const { form, name, ...rest } = props;
+  const selectDocumentClassData =
+    data?.map((item: DocumentClassification) => ({
+      value: item.id,
+      label: item.name,
+    })) || [];
 
-  return (
-    <Switch
-      {...rest}
-      {...form.getInputProps(name as string, { type: "checkbox" })}
-      mt={rem(10)}
-    />
-  );
+  return { selectDocumentClassData, isLoading, isError, isFetched };
 }
