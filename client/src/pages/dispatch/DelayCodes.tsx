@@ -15,37 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type DispatchControl = {
-  id: string;
-  organization: string;
-  recordServiceIncident: string;
-  gracePeriod: number;
-  deadheadTarget: number;
-  driverAssign: boolean;
-  trailerContinuity: boolean;
-  dupeTrailerCheck: boolean;
-  regulatoryCheck: boolean;
-  prevOrdersOnHold: boolean;
-  driverTimeAwayRestriction: boolean;
-  tractorWorkerFleetConstraint: boolean;
-};
+import { Card, Flex } from "@mantine/core";
+import React from "react";
+import { usePageStyles } from "@/assets/styles/PageStyles";
+import { DelayCodeTable } from "@/components/delay-codes/DelayCodeTable";
 
-export type DispatchControlFormValues = Omit<
-  DispatchControl,
-  "id" | "organization"
->;
+function DelayCodes(): React.ReactElement {
+  const { classes } = usePageStyles();
 
-export type DelayCode = {
-  organization: string;
-  businessUnit: string;
-  code: string;
-  description: string;
-  fCarrierOrDriver: boolean;
-  created: string;
-  modified: string;
-};
+  return (
+    <Flex>
+      <Card className={classes.card}>
+        <DelayCodeTable />
+      </Card>
+    </Flex>
+  );
+}
 
-export type DelayCodeFormValues = Omit<
-  DelayCode,
-  "organization" | "businessUnit" | "created" | "modified"
->;
+export default DelayCodes;

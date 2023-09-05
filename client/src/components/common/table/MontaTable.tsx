@@ -38,7 +38,7 @@ MontaTable.defaultProps = {
   TableDeleteModal: undefined,
   TableEditModal: undefined,
   TableViewModal: undefined,
-  showCreateDrawer: false,
+  deleteKey: "id",
 };
 
 type Props<T extends Record<string, any>> = MRT_TableInstance<T> &
@@ -56,6 +56,7 @@ type MontaTableProps<T extends Record<string, any>> = {
   name: string;
   tableQueryKey: string;
   columns: MRT_ColumnDef<T>[];
+  deleteKey?: string;
 } & Pick<Props<T>, "mantineBottomToolbarProps" | "mantineTableBodyRowProps">;
 
 export function MontaTable<T extends Record<string, any>>({
@@ -70,6 +71,7 @@ export function MontaTable<T extends Record<string, any>>({
   displayDeleteModal,
   name,
   columns,
+  deleteKey,
 }: MontaTableProps<T>) {
   const theme = useMantineTheme();
   const [pagination] = store.use("pagination");
@@ -162,7 +164,12 @@ export function MontaTable<T extends Record<string, any>>({
       <TableExportModal store={store} name={name} modelName={exportModelName} />
       {TableCreateDrawer && <TableCreateDrawer />}
       {displayDeleteModal && !TableDeleteModal && (
-        <DeleteRecordModal link={link} queryKey={tableQueryKey} store={store} />
+        <DeleteRecordModal
+          link={link}
+          queryKey={tableQueryKey}
+          store={store}
+          deleteKey={deleteKey}
+        />
       )}
       {TableEditModal && <TableEditModal />}
       {TableDeleteModal && <TableDeleteModal />}

@@ -15,30 +15,34 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
-import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
+import React from "react";
+import { Box, Button, Group, Modal } from "@mantine/core";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { useDelayCodeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { DelayCodeFormValues } from "@/types/dispatch";
+import { useDelayCodeStore as store } from "@/stores/DispatchStore";
 import { delayCodeSchema } from "@/helpers/schemas/DispatchSchema";
+import { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 
-export function CreateDelayCodeModalForm() {
+type EditDelayCodeModalFormProps = {
+  delayCode: DelayCode;
+};
+
+function EditDelayCodeModalForm({ delayCode }: EditDelayCodeModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: DelayCodeFormValues) => axios.post("/delay_codes/", values),
+    (values: DelayCodeFormValues) =>
+      axios.put(`/delay_codes/${delayCode.code}/`, values),
     {
       onSuccess: () => {
         queryClient
@@ -48,18 +52,18 @@ export function CreateDelayCodeModalForm() {
           .then(() => {
             notifications.show({
               title: "Success",
-              message: "Delay Code created successfully",
+              message: "Delay Codes updated successfully",
               color: "green",
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
             });
-            store.set("createModalOpen", false);
+            store.set("editModalOpen", false);
           });
       },
       onError: (error: any) => {
         const { data } = error.response;
         if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
+          data.errors.forEach((e: any) => {
             form.setFieldError(e.attr, e.detail);
             if (e.attr === "non_field_errors") {
               notifications.show({
@@ -70,12 +74,6 @@ export function CreateDelayCodeModalForm() {
                 icon: <FontAwesomeIcon icon={faXmark} />,
                 autoClose: 10_000, // 10 seconds
               });
-            } else if (
-              e.attr === "__all__" &&
-              e.detail ===
-                "Delay Code with this Code and Organization already exists."
-            ) {
-              form.setFieldError("code", e.detail);
             }
           });
         }
@@ -89,9 +87,9 @@ export function CreateDelayCodeModalForm() {
   const form = useForm<DelayCodeFormValues>({
     validate: yupResolver(delayCodeSchema),
     initialValues: {
-      code: "",
-      description: "",
-      fCarrierOrDriver: false,
+      code: delayCode.code,
+      description: delayCode.description,
+      fCarrierOrDriver: delayCode.fCarrierOrDriver,
     },
   });
 
@@ -110,6 +108,7 @@ export function CreateDelayCodeModalForm() {
           placeholder="Code"
           description="Unique Code of the delay code"
           withAsterisk
+          disabled
         />
         <ValidatedTextArea<DelayCodeFormValues>
           form={form}
@@ -135,26 +134,20 @@ export function CreateDelayCodeModalForm() {
   );
 }
 
-export function CreateDelayCodeModal() {
-  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
-
-  if (!showCreateModal) return null;
+export function EditDelayCodeModal() {
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+  const [delayCode] = store.use("selectedRecord");
 
   return (
-    <Modal.Root
-      opened={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
-    >
+    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Create Delay Code</Modal.Title>
+          <Modal.Title>Edit Delay Code</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateDelayCodeModalForm />
-          </Suspense>
+          {delayCode && <EditDelayCodeModalForm delayCode={delayCode} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

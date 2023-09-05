@@ -44,6 +44,7 @@ export function ValidatedTextArea<TFormValues extends object>({
       className={classes.fields}
       autosize
       minRows={2}
+      variant="filled"
       rightSection={
         error && (
           <IconAlertTriangle

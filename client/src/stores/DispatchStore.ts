@@ -14,38 +14,25 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { createGlobalStore } from "@/helpers/useGlobalStore";
+import { TableStoreProps } from "@/types/tables";
+import { DelayCode } from "@/types/dispatch";
 
-export type DispatchControl = {
-  id: string;
-  organization: string;
-  recordServiceIncident: string;
-  gracePeriod: number;
-  deadheadTarget: number;
-  driverAssign: boolean;
-  trailerContinuity: boolean;
-  dupeTrailerCheck: boolean;
-  regulatoryCheck: boolean;
-  prevOrdersOnHold: boolean;
-  driverTimeAwayRestriction: boolean;
-  tractorWorkerFleetConstraint: boolean;
-};
-
-export type DispatchControlFormValues = Omit<
-  DispatchControl,
-  "id" | "organization"
->;
-
-export type DelayCode = {
-  organization: string;
-  businessUnit: string;
-  code: string;
-  description: string;
-  fCarrierOrDriver: boolean;
-  created: string;
-  modified: string;
-};
-
-export type DelayCodeFormValues = Omit<
-  DelayCode,
-  "organization" | "businessUnit" | "created" | "modified"
->;
+export const useDelayCodeStore = createGlobalStore<
+  Omit<TableStoreProps<DelayCode>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
