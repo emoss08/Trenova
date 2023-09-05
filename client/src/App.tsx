@@ -29,10 +29,10 @@ import { Notifications } from "@mantine/notifications";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { ContextMenuProvider } from "mantine-contextmenu";
 import { ModalsProvider } from "@mantine/modals";
-import { useAuthStore } from "./stores/AuthStore";
-import { LoadingScreen } from "./components/common/LoadingScreen";
-import { ProtectedRoutes } from "./routing/ProtectedRoutes";
-import { useVerifyToken } from "./hooks/withTokenVerification";
+import { useAuthStore } from "@/stores/AuthStore";
+import { LoadingScreen } from "@/components/common/LoadingScreen";
+import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
+import { useVerifyToken } from "@/hooks/useVerifyToken";
 
 function App() {
   const { isVerifying } = useVerifyToken();

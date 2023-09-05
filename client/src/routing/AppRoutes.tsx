@@ -49,6 +49,7 @@ const CommodityPage = lazy(() => import("../pages/commodities/Commodity"));
 const CustomerPage = lazy(() => import("../pages/customer/Customer"));
 const ViewCustomerPage = lazy(() => import("../pages/customer/ViewCustomer"));
 const EditCustomerPage = lazy(() => import("../pages/customer/EditCustomer"));
+const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -228,6 +229,16 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Edit customer",
     element: <EditCustomerPage />,
     permission: "view_customer",
+  },
+  // Dispatch pages
+  {
+    title: "Delay Codes",
+    group: "dispatch",
+    subMenu: "configuration files",
+    path: "/dispatch/delay-codes/",
+    description: "Delay Codes",
+    element: <DelayCodePage />,
+    permission: "view_delaycode",
   },
   // Error Page
   {

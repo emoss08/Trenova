@@ -58,6 +58,7 @@ export function ValidatedTextInput<TFormValues extends object>({
           />
         )
       }
+      variant="filled"
     />
   );
 }

@@ -23,8 +23,8 @@ import {
   getCustomerRuleProfile,
 } from "@/services/CustomerRequestService";
 import { customerStore as store } from "@/stores/CustomerStore";
-import { CustomerEmailProfileForm } from "./profile_forms/CustomerEmailProfileForm";
-import { CustomerRuleProfileForm } from "./profile_forms/CustomerRuleProfileForm";
+import { CustomerEmailProfileForm } from "@/components/customer/create/steps/CustomerEmailProfileForm";
+import { CustomerRuleProfileForm } from "@/components/customer/create/steps/CustomerRuleProfileForm";
 import { CustomerEmailProfile, CustomerRuleProfile } from "@/types/customer";
 import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
 import { usePageStyles } from "@/assets/styles/PageStyles";

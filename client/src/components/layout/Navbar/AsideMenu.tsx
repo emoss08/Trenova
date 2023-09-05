@@ -36,6 +36,8 @@ import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks"
 import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
 import { SearchSpotlight } from "@/components/layout/Header/Search";
+import { DispatchLinks } from "@/components/layout/Navbar/_partials/DispatchLinks";
+import { MainLinks } from "@/components/layout/Navbar/_partials/MainLinks";
 
 const useNavbarStyles = createStyles((theme) => ({
   navbar: {
@@ -216,6 +218,12 @@ export function AsideMenu() {
       </Navbar.Section>
       <Navbar.Section grow className={classes.links} component={navbarScroll}>
         <div className={classes.linksInner}>
+          {/* Main Application Links */}
+          <MainLinks />
+
+          {/* Dispatch Links */}
+          <DispatchLinks />
+
           {/* Billing Links */}
           <BillingLinks />
 

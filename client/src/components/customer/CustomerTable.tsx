@@ -25,12 +25,11 @@ import { MontaTable } from "@/components/common/table/MontaTable";
 import { customerTableStore as store } from "@/stores/CustomerStore";
 import { Customer } from "@/types/customer";
 import { TChoiceProps } from "@/types";
-import { CreateCustomerModal } from "./view/_partials/CreateCustomerModal";
-import { ErrorProvider } from "@/utils/apps/customers/CustomerErrorContext";
+import { CreateCustomerModal } from "./create/CreateCustomerModal";
 
 export function CustomerTable() {
   const navigate = useNavigate();
-  const columns = useMemo<MRT_ColumnDef<Customer>[]>(
+  const columns = useMemo<Array<MRT_ColumnDef<Customer>>>(
     () => [
       {
         id: "status",

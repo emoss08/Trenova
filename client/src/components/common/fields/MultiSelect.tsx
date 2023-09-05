@@ -25,32 +25,39 @@ import {
 import { UseFormReturnType } from "@mantine/form";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import { InputFieldNameProp } from "@/types";
 
 ValidatedMultiSelect.defaultProps = {
   isLoading: false,
+  isError: false,
 };
 
 interface ValidatedMultiSelectProps<TFormValues>
   extends Omit<MultiSelectProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   isLoading?: boolean;
-  name: keyof TFormValues;
+  name: InputFieldNameProp<TFormValues>;
+  isError?: boolean;
 }
 
 export function ValidatedMultiSelect<TFormValues extends object>({
   form,
   name,
+  data = [],
   isLoading,
+  isError,
   ...rest
 }: ValidatedMultiSelectProps<TFormValues>): React.ReactElement {
   const { classes } = useFormStyles();
-  const error: React.ReactNode = form.errors[name as string];
+  const error = form.errors[name as string];
   const theme = useMantineTheme();
+  const validatedData = Array.isArray(data) ? data : [];
 
   return (
     <MultiSelect
       {...rest}
       {...form.getInputProps(name as string)}
+      data={validatedData}
       error={error}
       styles={{
         label: {
@@ -70,6 +77,12 @@ export function ValidatedMultiSelect<TFormValues extends object>({
       rightSection={
         isLoading ? (
           <Loader size={24} />
+        ) : isError ? ( // Handle error state
+          <IconAlertTriangle
+            stroke={1.5}
+            size="1.1rem"
+            className={classes.invalidIcon}
+          />
         ) : (
           error && (
             <IconAlertTriangle

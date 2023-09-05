@@ -16,29 +16,24 @@
  */
 
 import React from "react";
-import { rem, Switch, SwitchProps } from "@mantine/core";
-import { UseFormReturnType } from "@mantine/form";
-import { InputFieldNameProp } from "@/types";
+import { faGrid2 } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  LinksGroup,
+  LinksGroupProps,
+} from "@/components/layout/Navbar/_partials/LinksGroup";
 
-interface ValidatedSwitchInputPropsBase
-  extends Omit<SwitchProps, "form" | "name"> {}
+export function MainLinks() {
+  const links = [
+    {
+      label: "Dashboard",
+      icon: faGrid2,
+      link: "/",
+    }, // TODO(wolfred): split into separate links
+  ] satisfies LinksGroupProps[];
 
-type ValidatedSwitchInputProps<TFormValues extends object> =
-  ValidatedSwitchInputPropsBase & {
-    form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-    name: InputFieldNameProp<TFormValues>;
-  };
+  const mainLinks = links.map((item) => (
+    <LinksGroup {...item} key={item.label} />
+  ));
 
-export function SwitchInput<
-  TFormValues extends Record<string, unknown> = Record<string, unknown>,
->(props: ValidatedSwitchInputProps<TFormValues>) {
-  const { form, name, ...rest } = props;
-
-  return (
-    <Switch
-      {...rest}
-      {...form.getInputProps(name as string, { type: "checkbox" })}
-      mt={rem(10)}
-    />
-  );
+  return <>{mainLinks}</>;
 }

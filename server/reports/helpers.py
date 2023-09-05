@@ -221,4 +221,13 @@ ALLOWED_MODELS = {
             {"value": "auto_mark_ready_to_bill", "label": "Auto Mark Ready To Bill"},
         ],
     },
+    "DelayCode": {
+        "app_label": "dispatch",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "code", "label": "Code"},
+            {"value": "description", "label": "Description"},
+            {"value": "f_carrier_or_driver", "label": "F Carrier Or Driver"},
+        ],
+    },
 }

@@ -15,16 +15,19 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
+import typing
 from django.db.models import Prefetch, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from rest_framework.request import Request
 from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from customer import models, serializers
+
+if typing.TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 class DeliverySlotViewSet(viewsets.ModelViewSet):
@@ -180,7 +183,7 @@ class CustomerRuleProfileViewSet(viewsets.ModelViewSet):
     @action(
         detail=False, methods=["GET"], name="Get Customer Rule Profile by Customer ID"
     )
-    def get_by_customer_id(self, request: Request) -> Response:
+    def get_by_customer_id(self, request: "Request") -> "Response":
         """Get Customer Rule Profile by Customer ID.
 
         Args:
@@ -276,7 +279,7 @@ class CustomerEmailProfileViewSet(viewsets.ModelViewSet):
     @action(
         detail=False, methods=["GET"], name="Get Customer Email Profile by Customer ID"
     )
-    def get_by_customer_id(self, request: Request) -> Response:
+    def get_by_customer_id(self, request: "Request") -> "Response":
         """Get Customer Email Profile by Customer ID.
 
         Args:

@@ -68,16 +68,6 @@ class DispatchControl(GenericModel):
             Returns the string representation of the DispatchControl model.
         get_absolute_url(self) -> str:
             Returns the URL for this object's detail view.
-
-    Examples:
-    >>> dispatch_control = DispatchControl.objects.update(
-        ...    record_service_incident=DispatchControl.ServiceIncidentControlChoices.NEVER,
-        ...    grace_period=0,
-        ...    deadhead_target=0.00,
-        ...    driver_assign=True,
-        ...    trailer_continuity=False,
-        ...    distance_method=DispatchControl.DistanceMethodChoices.MONTA,
-        ... )
     """
 
     @final
@@ -188,10 +178,7 @@ class DispatchControl(GenericModel):
 
 
 class DelayCode(GenericModel):
-    """
-    Class: DelayCode
-
-    A model to store delay codes for a service incident.
+    """A model to store delay codes for a service incident.
 
     The DelayCode model stores codes and descriptions for a delay that occurs during a service incident. The fault of
         the delay can be recorded as either the fault of the carrier or driver.
@@ -216,14 +203,6 @@ class DelayCode(GenericModel):
             code attribute.
         get_absolute_url(self) -> str:
             Returns the URL for the DelayCode instance's detail view.
-
-    References:
-        https://docs.djangoproject.com/en/4.2/ref/models/instances/#
-
-    Examples:
-        >>> delay_code = DelayCode.objects.get(code="0001")
-        >>> delay_code.code
-        "0001"
     """
 
     code = models.CharField(
@@ -265,7 +244,9 @@ class DelayCode(GenericModel):
         Returns:
             str: Delay code string representation
         """
-        return textwrap.wrap(self.code, 50)[0]
+        return textwrap.shorten(
+            f"{self.code} - {self.description}", width=50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """Delay code absolute URL
