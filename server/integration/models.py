@@ -23,6 +23,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
+from encrypted_model_fields.fields import EncryptedCharField
 
 from utils.models import ChoiceField, GenericModel
 
@@ -131,7 +132,7 @@ class Integration(GenericModel):
         blank=True,
         help_text=_("Login URL for the integration"),
     )
-    auth_token = models.CharField(
+    auth_token = EncryptedCharField(
         _("Auth Token"),
         max_length=255,
         help_text=_("Api or Bearer Token  for the specified integration"),
@@ -143,19 +144,19 @@ class Integration(GenericModel):
         help_text=_("Username for the specified integration"),
         blank=True,
     )
-    password = models.CharField(
+    password = EncryptedCharField(
         _("Password"),
         max_length=255,
         help_text=_("Password for the specified integration"),
         blank=True,
     )
-    client_id = models.CharField(
+    client_id = EncryptedCharField(
         _("Client ID"),
         max_length=255,
         blank=True,
         help_text=_("Client ID for the specified integration"),
     )
-    client_secret = models.CharField(
+    client_secret = EncryptedCharField(
         _("Client Secret"),
         max_length=255,
         blank=True,
