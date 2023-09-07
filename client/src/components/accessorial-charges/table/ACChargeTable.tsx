@@ -65,7 +65,7 @@ export function ACChargeTable() {
         filterVariant: "select",
       },
       {
-        id: "charge_amount",
+        id: "chargeAmount",
         accessorKey: "chargeAmount",
         header: "Charge Amount",
         filterVariant: "text",
