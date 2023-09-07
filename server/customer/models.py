@@ -31,11 +31,10 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
 from utils.models import (
+    CharWeekdays,
     ChoiceField,
     GenericModel,
     PrimaryStatusChoices,
-    Weekdays,
-    CharWeekdays,
 )
 
 
