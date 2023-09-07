@@ -453,10 +453,7 @@ class CommentType(GenericModel):
 
 
 class Rate(GenericModel):
-    """
-    Class: Rate
-
-    Django model representing a Rate. This model stores information about the rates for a related customer,
+    """Django model representing a Rate. This model stores information about the rates for a related customer,
     commodity, order type, and equipment type.
 
     Attributes:
@@ -497,6 +494,11 @@ class Rate(GenericModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    is_active = models.BooleanField(
+        _("Is Active"),
+        default=True,
+        help_text=_("Is the rate active."),
     )
     rate_number = models.CharField(
         _("Rate Number"),
@@ -617,7 +619,7 @@ class Rate(GenericModel):
         Returns:
             str: The first 10 characters of the rate_number field.
         """
-        return textwrap.wrap(self.rate_number, 10)[0]
+        return textwrap.shorten(f"{self.rate_number}", width=10, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """
@@ -752,10 +754,7 @@ class RateBillingTable(GenericModel):
         db_table = "rate_billing_table"
 
     def __str__(self) -> str:
-        """
-        Return the string representation of a RateBillingTable instance.
-
-        The string representation of a RateBillingTable instance is the value of its description field.
+        """String representation of a RateBillingTable instance is the value of its description field.
 
         Returns:
             str: The description field of the RateBillingTable instance.
@@ -872,10 +871,7 @@ class FeasibilityToolControl(GenericModel):
         db_table = "feasibility_tool_control"
 
     def __str__(self) -> str:
-        """
-        Return the string representation of a FeasibilityToolControl instance.
-
-        The string representation of a FeasibilityToolControl instance is the value of its organization field.
+        """String representation of a FeasibilityToolControl instance is the value of its organization field.
 
         Returns:
             str: The organization field of the FeasibilityToolControl instance.
@@ -887,8 +883,7 @@ class FeasibilityToolControl(GenericModel):
         )
 
     def get_absolute_url(self) -> str:
-        """
-        Return the absolute URL for the detail view of a FeasibilityToolControl instance.
+        """Absolute URL for the detail view of a FeasibilityToolControl instance.
 
         Returns:
             str: The absolute URL for the detail view of the FeasibilityToolControl instance.
