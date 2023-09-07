@@ -22,10 +22,12 @@ import {
   Divider,
   Modal,
   MultiSelect,
+  rem,
   Select,
   Skeleton,
   Stack,
   Text,
+  useMantineTheme,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -36,6 +38,7 @@ import { exportModelTypes, TExportModelFormValue } from "@/types/forms";
 import { getColumns } from "@/services/ReportRequestService";
 import axios from "@/helpers/AxiosConfig";
 import { ExportModelSchema } from "@/helpers/schemas/GenericSchema";
+import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {
   store: any;
@@ -50,6 +53,8 @@ export function TableExportModal({
 }: Props): React.ReactElement | null {
   const [loading, setLoading] = React.useState<boolean>(false);
   const [showExportModal, setShowExportModal] = store.use("exportModalOpen");
+  const { classes } = useFormStyles();
+  const theme = useMantineTheme();
 
   const { data: columnsData, isLoading: isColumnsLoading } = useQuery({
     queryKey: [`${modelName}-Columns`],
@@ -143,6 +148,21 @@ export function TableExportModal({
                   limit={20}
                   dropdownComponent="div"
                   withAsterisk
+                  variant="filled"
+                  styles={{
+                    label: {
+                      marginTop: rem(10),
+                    },
+                    input: {
+                      backgroundColor:
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[6]
+                          : theme.colors.gray[1],
+                      "& [data-invalid=true]": {
+                        borderColor: theme.colors.red[6],
+                      },
+                    },
+                  }}
                   {...form.getInputProps("columns")}
                 />
                 <Text size="xs" color="dimmed" mt={5}>
@@ -160,6 +180,8 @@ export function TableExportModal({
                   searchable
                   nothingFound="No options"
                   withAsterisk
+                  variant="filled"
+                  className={classes.fields}
                   {...form.getInputProps("fileFormat")}
                 />
                 <Text size="xs" color="dimmed" mt={5}>
