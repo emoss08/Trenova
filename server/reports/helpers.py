@@ -243,4 +243,14 @@ ALLOWED_MODELS = {
             {"value": "manager__username", "label": "Manager Username"},
         ],
     },
+    "CommentType": {
+        "app_label": "dispatch",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "name", "label": "Name"},
+            {"value": "description", "label": "Description"},
+            {"value": "created", "label": "Created At"},
+            {"value": "modified", "label": "Modified At"},
+        ],
+    },
 }
