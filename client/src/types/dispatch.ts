@@ -68,3 +68,18 @@ export type FleetCodeFormValues = Omit<
   FleetCode,
   "organization" | "businessUnit" | "created" | "modified"
 >;
+
+export type CommentType = {
+  organization: string;
+  businessUnit: string;
+  id: string;
+  name: string;
+  description: string;
+  created: string;
+  modified: string;
+};
+
+export type CommentTypeFormValues = Omit<
+  CommentType,
+  "organization" | "businessUnit" | "created" | "modified" | "id"
+>;

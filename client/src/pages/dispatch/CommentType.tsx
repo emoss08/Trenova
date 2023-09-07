@@ -14,37 +14,20 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
-import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-export const dispatchNavLinks = [
-  {
-    label: "Dispatch",
-    icon: faTruck,
-    link: "/",
-    permission: "view_dispatch",
-    links: [
-      {
-        label: "Configuration Files",
-        link: "#",
-        subLinks: [
-          {
-            label: "Delay Codes",
-            link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
-          },
-          {
-            label: "Fleet Codes",
-            link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
-          },
-          {
-            label: "Comment Type",
-            link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
-          },
-        ],
-      },
-    ],
-  },
-] as LinksGroupProps[];
+import { Card, Flex } from "@mantine/core";
+import React from "react";
+import { usePageStyles } from "@/assets/styles/PageStyles";
+import { CommentTypeTable } from "@/components/comment-type/CommentTypeTable";
+
+export default function CommentTypes(): React.ReactElement {
+  const { classes } = usePageStyles();
+
+  return (
+    <Flex>
+      <Card className={classes.card}>
+        <CommentTypeTable />
+      </Card>
+    </Flex>
+  );
+}

@@ -18,6 +18,7 @@
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 import {
+  CommentTypeFormValues,
   DelayCodeFormValues,
   DispatchControlFormValues,
   FleetCodeFormValues,
@@ -102,4 +103,10 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
       .required("Description is required")
       .max(100, "Description cannot be more than 100 characters"),
     manager: Yup.string().nullable().notRequired(),
+  });
+
+export const commentTypeSchema: ObjectSchema<CommentTypeFormValues> =
+  Yup.object().shape({
+    name: Yup.string().required("Name is required"),
+    description: Yup.string().required("Description is required"),
   });
