@@ -16,7 +16,7 @@
  */
 
 // User info constants
-import { IChoiceProps } from "@/types";
+import { BChoiceProps, IChoiceProps } from "@/types";
 
 export const USER_ID_KEY = import.meta.env.VITE_USER_ID_KEY;
 export const ORGANIZATION_ID_KEY = import.meta.env.VITE_ORGANIZATION_ID_KEY;
@@ -64,6 +64,15 @@ type TStatusChoiceProps = "A" | "I";
 export const statusChoices: IChoiceProps<TStatusChoiceProps>[] = [
   { value: "A", label: "Active" },
   { value: "I", label: "Inactive" },
+];
+
+/**
+ * Returns boolean yes & no choices for a select input.
+ * @returns An array of yes & no choices.
+ */
+export const yesAndNoChoicesBoolean: ReadonlyArray<BChoiceProps> = [
+  { value: true, label: "Yes" },
+  { value: false, label: "No" },
 ];
 
 /**

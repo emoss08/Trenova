@@ -15,27 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "react-query";
-import { getUsers } from "@/services/UserRequestService";
-import { User } from "@/types/accounts";
+import { Card, Flex } from "@mantine/core";
+import React from "react";
+import { usePageStyles } from "@/assets/styles/PageStyles";
+import { FleetCodeTable } from "@/components/fleet-codes/FleetCodeTable";
 
-export function useUsers(show: boolean) {
-  const queryClient = useQueryClient();
+function FleetCodes(): React.ReactElement {
+  const { classes } = usePageStyles();
 
-  /** Get users for the select input */
-  const { data, isError, isLoading } = useQuery({
-    queryKey: ["users"],
-    queryFn: () => getUsers(),
-    enabled: show,
-    initialData: () => queryClient.getQueryData("users"),
-    staleTime: Infinity,
-  });
-
-  const selectUsersData =
-    data?.map((user: User) => ({
-      value: user.id,
-      label: user.fullName || user.username, // if fullName is null, use username
-    })) || [];
-
-  return { selectUsersData, isError, isLoading };
+  return (
+    <Flex>
+      <Card className={classes.card}>
+        <FleetCodeTable />
+      </Card>
+    </Flex>
+  );
 }
+
+export default FleetCodes;

@@ -14,25 +14,29 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { faTruckFront } from "@fortawesome/pro-duotone-svg-icons";
+import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-/** Links for System Health Navigation Menu */
 export const dispatchNavLinks = [
   {
     label: "Dispatch",
-    icon: faTruckFront,
+    icon: faTruck,
     link: "/",
     permission: "view_dispatch",
     links: [
       {
         label: "Configuration Files",
-        link: "#", // Placeholder, replace with the actual link
+        link: "#",
         subLinks: [
           {
             label: "Delay Codes",
-            link: "/dispatch/delay-codes",
+            link: "/dispatch/delay-codes/",
             permission: "view_delaycode",
+          },
+          {
+            label: "Fleet Codes",
+            link: "/dispatch/fleet-codes/",
+            permission: "view_fleetcode",
           },
         ],
       },

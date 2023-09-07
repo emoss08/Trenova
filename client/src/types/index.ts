@@ -25,6 +25,11 @@ export interface IChoiceProps<T extends string> {
   label: string;
 }
 
+export interface BChoiceProps {
+  value: boolean;
+  label: string;
+}
+
 export type StatusChoiceProps = "A" | "I";
 
 export type YesNoChoiceProps = "Y" | "N";
