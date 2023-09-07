@@ -51,6 +51,7 @@ const ViewCustomerPage = lazy(() => import("../pages/customer/ViewCustomer"));
 const EditCustomerPage = lazy(() => import("../pages/customer/EditCustomer"));
 const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
 const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCode"));
+const CommentTypePage = lazy(() => import("../pages/dispatch/CommentType"));
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -249,6 +250,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Fleet Codes",
     element: <FleetCodePage />,
     permission: "view_fleetcode",
+  },
+  {
+    title: "Comment Types",
+    group: "dispatch",
+    subMenu: "configuration files",
+    path: "/dispatch/comment-types/",
+    description: "Comment Types",
+    element: <CommentTypePage />,
+    permission: "view_commenttype",
   },
   // Error Page
   {
