@@ -375,10 +375,7 @@ class FleetCode(GenericModel):
 
 
 class CommentType(GenericModel):
-    """
-    Class: CommentType
-
-    Model for storing different types of comments.
+    """Model for storing different types of comments.
 
     A CommentType instance represents a type of comment that can be associated with a comment.
     This allows for categorization and grouping of comments based on their type.
@@ -427,6 +424,12 @@ class CommentType(GenericModel):
         verbose_name_plural = _("Comment Types")
         ordering = ["organization"]
         db_table = "comment_type"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "organization"],
+                name="unique_comment_type_name_organization",
+            )
+        ]
 
     def __str__(self) -> str:
         """
