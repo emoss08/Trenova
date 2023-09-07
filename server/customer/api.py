@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import typing
+
 from django.db.models import Prefetch, QuerySet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action

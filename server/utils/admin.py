@@ -24,7 +24,6 @@ from django.db.models import QuerySet
 from django.db.models.base import Model
 from django.http import HttpRequest
 
-
 # Model Generic Type
 _M = TypeVar("_M", bound=Model)
 
