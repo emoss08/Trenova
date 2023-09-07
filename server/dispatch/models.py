@@ -438,7 +438,9 @@ class CommentType(GenericModel):
         Returns:
             str: A string representation of the CommentType instance, wrapped to a maximum of 50 characters.
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(
+            f"{self.name} - {self.description}", 50, placeholder="..."
+        )
 
     def get_absolute_url(self) -> str:
         """
