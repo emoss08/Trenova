@@ -40,6 +40,7 @@ export function ValidatedNumberInput<TFormValues extends object>({
       {...form.getInputProps(name as string)}
       error={error}
       className={classes.fields}
+      variant="filled"
       rightSection={
         error && (
           <IconAlertTriangle

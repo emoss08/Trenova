@@ -21,7 +21,7 @@ import React, { forwardRef } from "react";
 import { SelectProps } from "@mantine/core/lib/Select/Select";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { InputFieldNameProp } from "@/types";
+import { BChoiceProps, InputFieldNameProp, TChoiceProps } from "@/types";
 
 SelectInput.defaultProps = {
   isLoading: false,
@@ -29,11 +29,12 @@ SelectInput.defaultProps = {
 };
 
 interface ValidatedSelectInputProps<TFormValues>
-  extends Omit<SelectProps, "form" | "name"> {
+  extends Omit<SelectProps, "form" | "name" | "data"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   name: InputFieldNameProp<TFormValues>;
   isLoading?: boolean;
   isError?: boolean;
+  data: ReadonlyArray<TChoiceProps> | ReadonlyArray<BChoiceProps>;
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
@@ -93,6 +94,7 @@ export function SelectInput<TFormValues extends Record<string, unknown>>({
           )
         )
       }
+      variant="filled"
       searchable
     />
   );
