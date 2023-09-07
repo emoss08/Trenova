@@ -28,7 +28,7 @@ export function MainLinks() {
       label: "Dashboard",
       icon: faGrid2,
       link: "/",
-    }, // TODO(wolfred): split into separate links
+    },
   ] satisfies LinksGroupProps[];
 
   const mainLinks = links.map((item) => (
