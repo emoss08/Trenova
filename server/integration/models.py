@@ -288,7 +288,7 @@ class GoogleAPI(GenericModel):
         related_name="google_api",
         related_query_name="google_apis",
     )
-    api_key = models.CharField(
+    api_key = EncryptedCharField(
         _("API Key"),
         max_length=255,
         help_text=_("Google API Key for the organization."),
