@@ -151,6 +151,17 @@ class RateViewSet(viewsets.ModelViewSet):
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
     permission_classes = [CustomObjectPermissions]
+    search_fields = (
+        "rate_number",
+        "customer__code",
+        "customer__name",
+        "order_type__name",
+        "equipment_type__name",
+        "origin_location__code",
+        "destination_location__code",
+        "rate_method",
+        "is_active",
+    )
 
     def get_queryset(self) -> QuerySet[models.Rate]:
         queryset = self.queryset.prefetch_related(
