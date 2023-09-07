@@ -102,69 +102,67 @@ export function CreateACModalForm() {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
+        <ValidatedTextInput<AccessorialChargeFormValues>
+          form={form}
+          className={classes.fields}
+          name="code"
+          label="Code"
+          description="Code for the accessorial charge"
+          placeholder="Code"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextArea<AccessorialChargeFormValues>
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          description="Description of the accessorial charge"
+          placeholder="Description"
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <ValidatedTextInput<AccessorialChargeFormValues>
             form={form}
             className={classes.fields}
-            name="code"
-            label="Code"
-            description="Code for the accessorial charge"
-            placeholder="Code"
+            name="chargeAmount"
+            label="Charge Amount"
+            placeholder="Charge Amount"
+            description="Charge amount for the accessorial charge"
             variant="filled"
             withAsterisk
           />
-          <ValidatedTextArea<AccessorialChargeFormValues>
+          <SelectInput<AccessorialChargeFormValues>
+            form={form}
+            data={fuelMethodChoices}
+            className={classes.fields}
+            name="method"
+            label="Fuel Method"
+            description="Method for calculating the accessorial charge"
+            placeholder="Fuel Method"
+            variant="filled"
+            withAsterisk
+          />
+          <SwitchInput<AccessorialChargeFormValues>
             form={form}
             className={classes.fields}
-            name="description"
-            label="Description"
-            description="Description of the accessorial charge"
-            placeholder="Description"
+            name="isDetention"
+            label="Detention"
+            description="Is this a detention charge?"
+            placeholder="Detention"
             variant="filled"
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput<AccessorialChargeFormValues>
-              form={form}
-              className={classes.fields}
-              name="chargeAmount"
-              label="Charge Amount"
-              placeholder="Charge Amount"
-              description="Charge amount for the accessorial charge"
-              variant="filled"
-              withAsterisk
-            />
-            <SelectInput<AccessorialChargeFormValues>
-              form={form}
-              data={fuelMethodChoices}
-              className={classes.fields}
-              name="method"
-              label="Fuel Method"
-              description="Method for calculating the accessorial charge"
-              placeholder="Fuel Method"
-              variant="filled"
-              withAsterisk
-            />
-            <SwitchInput<AccessorialChargeFormValues>
-              form={form}
-              className={classes.fields}
-              name="isDetention"
-              label="Detention"
-              description="Is this a detention charge?"
-              placeholder="Detention"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );
