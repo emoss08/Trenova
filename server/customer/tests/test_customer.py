@@ -113,7 +113,7 @@ def test_create_customer_with_details(api_client: APIClient) -> None:
                 {
                     "start_time": "20:37:33",
                     "end_time": "21:37:33",
-                    "day_of_week": 0,
+                    "day_of_week": "MON",
                     "location": location.id,
                 }
             ],
@@ -142,7 +142,7 @@ def test_create_customer_with_details(api_client: APIClient) -> None:
     ]
     assert response.data["delivery_slots"][0]["start_time"] == "20:37:33"
     assert response.data["delivery_slots"][0]["end_time"] == "21:37:33"
-    assert response.data["delivery_slots"][0]["day_of_week"] == 0
+    assert response.data["delivery_slots"][0]["day_of_week"] == "MON"
     assert response.data["delivery_slots"][0]["location"] == location.id
 
 
@@ -184,7 +184,7 @@ def test_edit_customer_with_details(
                 {
                     "start_time": "20:37:33",
                     "end_time": "21:37:33",
-                    "day_of_week": 0,
+                    "day_of_week": "MON",
                     "location": location.id,
                 }
             ],
@@ -213,7 +213,7 @@ def test_edit_customer_with_details(
     ]
     assert response.data["delivery_slots"][0]["start_time"] == "20:37:33"
     assert response.data["delivery_slots"][0]["end_time"] == "21:37:33"
-    assert response.data["delivery_slots"][0]["day_of_week"] == 0
+    assert response.data["delivery_slots"][0]["day_of_week"] == "MON"
     assert response.data["delivery_slots"][0]["location"] == location.id
 
 
