@@ -79,7 +79,7 @@ function ViewDelayCodeModalForm({ delayCode }: ViewDelayCodeModalFormProps) {
               store.set("editModalOpen", true);
             }}
           >
-            Edit Commodity
+            Edit Delay Code
           </Button>
         </Group>
       </Box>

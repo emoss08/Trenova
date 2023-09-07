@@ -19,8 +19,6 @@ import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge, Text } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
-import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
-import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 import { truncateText } from "@/helpers/constants";
 import { TChoiceProps } from "@/types";
 import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
