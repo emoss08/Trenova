@@ -580,7 +580,7 @@ def test_validate_appointment_window_against_customer_delivery_slots(
     """
     # This assumes that the customer does not allow deliveries on Sundays at any time
     delivery_slot.customer = order.customer
-    delivery_slot.day_of_week = 6  # Sunday
+    delivery_slot.day_of_week = "SUN"  # Sunday
     delivery_slot.start_time = datetime.time(9, 0)  # 9:00 AM
     delivery_slot.end_time = datetime.time(17, 0)  # 5:00 PM
     delivery_slot.location = order.destination_location
