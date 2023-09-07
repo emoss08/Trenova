@@ -16,10 +16,29 @@
  */
 import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
-import { DelayCode } from "@/types/dispatch";
+import { DelayCode, FleetCode } from "@/types/dispatch";
 
 export const useDelayCodeStore = createGlobalStore<
   Omit<TableStoreProps<DelayCode>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  rowSelection: {},
+  columnFilters: false,
+  errorCount: 0,
+});
+
+export const useFleetCodeStore = createGlobalStore<
+  Omit<TableStoreProps<FleetCode>, "drawerOpen">
 >({
   pagination: {
     pageIndex: 0,

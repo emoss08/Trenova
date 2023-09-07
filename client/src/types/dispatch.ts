@@ -49,3 +49,22 @@ export type DelayCodeFormValues = Omit<
   DelayCode,
   "organization" | "businessUnit" | "created" | "modified"
 >;
+
+export type FleetCode = {
+  organization: string;
+  businessUnit: string;
+  code: string;
+  description: string;
+  isActive: boolean;
+  revenueGoal: number;
+  deadheadGoal: number;
+  mileageGoal: number;
+  manager?: string | null;
+  created: string;
+  modified: string;
+};
+
+export type FleetCodeFormValues = Omit<
+  FleetCode,
+  "organization" | "businessUnit" | "created" | "modified"
+>;

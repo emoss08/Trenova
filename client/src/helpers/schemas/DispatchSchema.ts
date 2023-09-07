@@ -20,6 +20,7 @@ import { ObjectSchema } from "yup";
 import {
   DelayCodeFormValues,
   DispatchControlFormValues,
+  FleetCodeFormValues,
 } from "@/types/dispatch";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
@@ -53,4 +54,52 @@ export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =
       .required("Description is required")
       .max(100, "Description cannot be more than 100 characters"),
     fCarrierOrDriver: Yup.boolean().required("Carrier or Driver is required"),
+  });
+
+export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
+  Yup.object().shape({
+    code: Yup.string()
+      .required("Name is required")
+      .max(4, "Code cannot be more than 4 characters"),
+    isActive: Yup.boolean().required("Active is required"),
+    revenueGoal: Yup.number()
+      .required("Revenue Goal is required")
+      .test(
+        "is-decimal",
+        "Revenue Goal must be a decimal with no more than two decimal places",
+        (value) => {
+          if (value !== undefined && value !== null) {
+            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+          }
+          return false;
+        },
+      ),
+    deadheadGoal: Yup.number()
+      .required("Deadhead Goal is required")
+      .test(
+        "is-decimal",
+        "Deadhead Goal must be a decimal with no more than two decimal places",
+        (value) => {
+          if (value !== undefined && value !== null) {
+            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+          }
+          return false;
+        },
+      ),
+    mileageGoal: Yup.number()
+      .required("Mileage Goal is required")
+      .test(
+        "is-decimal",
+        "Mileage Goal must be a decimal with no more than two decimal places",
+        (value) => {
+          if (value !== undefined && value !== null) {
+            return /^\d+(\.\d{1,2})?$/.test(value.toString());
+          }
+          return false;
+        },
+      ),
+    description: Yup.string()
+      .required("Description is required")
+      .max(100, "Description cannot be more than 100 characters"),
+    manager: Yup.string().nullable().notRequired(),
   });

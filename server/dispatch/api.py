@@ -83,6 +83,7 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.FleetCodeSerializer
     filterset_fields = ("is_active",)
     permission_classes = [CustomObjectPermissions]
+    search_fields = ("code", "description", "is_active", "manager__username")
 
     def get_queryset(self) -> QuerySet[models.FleetCode]:
         queryset = self.queryset.filter(
