@@ -291,19 +291,6 @@ class FleetCode(GenericModel):
 
         get_absolute_url(self) -> str:
             Returns the URL for this object's detail view.
-
-    Examples:
-        >>> fleet_code = FleetCode.objects.create(
-        ...     code="FLEET",
-        ...     description="Fleet Code",
-        ...     revenue_goal=1000.00,
-        ...     deadhead_goal=100.00,
-        ...     mileage_goal=1000.00,
-        ... )
-        >>> fleet_code.code
-        "FLEET"
-        >>> fleet_code.description
-        "Fleet Code"
     """
 
     code = models.CharField(
@@ -410,14 +397,6 @@ class CommentType(GenericModel):
 
         get_absolute_url(self) -> str:
             Returns the URL for this object's detail view.
-
-    Typical Usage Example:
-        >>> comment_type = CommentType.objects.create(
-        ...     name="Test Comment Type",
-        ...     description="Test Comment Type Description",
-        ... )
-        >>> comment_type
-        <CommentType: Test Comment Type>
     """
 
     id = models.UUIDField(
