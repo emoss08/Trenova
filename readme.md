@@ -1,7 +1,5 @@
 <h1 align="center"><b>Monta Suite</b></h1>
 
----
-
 <div align="center">
 
 A comprehensive suite of applications tailored for the transportation and logistics sector. Enhancing your business
