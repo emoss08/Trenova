@@ -640,6 +640,7 @@ class Rate(GenericModel):
         Returns:
             None: This function does not return anything.
         """
+
         if not self.rate_number:
             self.rate_number = self.generate_rate_number()
 
@@ -661,7 +662,8 @@ class Rate(GenericModel):
                 }
             )
 
-    def generate_rate_number(self) -> str:
+    @classmethod
+    def generate_rate_number(cls) -> str:
         """
         Generate a unique rate number for a Rate instance.
 
@@ -671,12 +673,8 @@ class Rate(GenericModel):
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        code = f"R{self.__class__.objects.count() + 1:05d}"
-        return (
-            "R00001"
-            if self.__class__.objects.filter(rate_number=code).exists()
-            else code
-        )
+        code = f"R{cls.objects.count() + 1:05d}"
+        return "R00001" if cls.objects.filter(rate_number=code).exists() else code
 
 
 class RateBillingTable(GenericModel):

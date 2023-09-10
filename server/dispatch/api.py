@@ -14,8 +14,11 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import Prefetch, QuerySet
-from rest_framework import permissions, viewsets
+from django.db.models import Prefetch, QuerySet, Max
+from rest_framework import permissions, viewsets, status
+from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
 
 from core.permissions import CustomObjectPermissions
 from dispatch import models, serializers
@@ -151,6 +154,7 @@ class RateViewSet(viewsets.ModelViewSet):
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
     permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("is_active",)
     search_fields = (
         "rate_number",
         "customer__code",
@@ -162,6 +166,20 @@ class RateViewSet(viewsets.ModelViewSet):
         "rate_method",
         "is_active",
     )
+
+    @action(detail=False, methods=["get"])
+    def get_new_rate_number(self, request: Request) -> Response:
+        """Get the latest rate number
+
+        Args:
+            request(Request): Request objects
+
+        Returns:
+            Response: Response Object
+        """
+        new_rate_number = models.Rate.generate_rate_number()
+
+        return Response({"rate_number": new_rate_number}, status=status.HTTP_200_OK)
 
     def get_queryset(self) -> QuerySet[models.Rate]:
         queryset = self.queryset.prefetch_related(
@@ -195,39 +213,5 @@ class RateViewSet(viewsets.ModelViewSet):
             "organization_id",
             "distance_override",
             "comments",
-        )
-        return queryset
-
-
-class RateBillingTableViewSet(viewsets.ModelViewSet):
-    """
-    Django Rest Framework ViewSet for the RateBillingTable model.
-
-    The RateBillingTableViewSet class provides the CRUD operation for the RateBillingTable model
-    through the Django Rest Framework. The class is a subclass of viewsets.ModelViewSet,
-    which provides the organization-related functionality.
-
-    Attributes:
-        queryset (models.RateBillingTable.objects.all()): The default queryset for the viewset.
-        serializer_class (serializers.RateBillingTableSerializer): The serializer class for the viewset.
-        filterset_fields (tuple): The fields to use for filtering the queryset.
-    """
-
-    queryset = models.RateBillingTable.objects.all()
-    serializer_class = serializers.RateBillingTableSerializer
-    filterset_fields = ("rate",)
-    permission_classes = [CustomObjectPermissions]
-
-    def get_queryset(self) -> QuerySet[models.RateBillingTable]:
-        queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "id",
-            "rate_id",
-            "accessorial_charge_id",
-            "description",
-            "unit",
-            "charge_amount",
-            "sub_total",
         )
         return queryset

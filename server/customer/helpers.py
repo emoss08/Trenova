@@ -23,6 +23,7 @@ from customer import models
 from organization.models import BusinessUnit, Organization
 
 
+@transaction.atomic
 def create_or_update_email_profile(
     *,
     customer: models.Customer,

@@ -17,6 +17,7 @@
 from django.db import models
 
 from organization.models import BusinessUnit
+from dateutil.parser import parse
 
 
 def get_or_create_business_unit(*, bs_name: str) -> BusinessUnit:
@@ -35,3 +36,11 @@ def get_pk_value(*, instance):
     if isinstance(pk, models.Model):
         pk = get_pk_value(instance=pk)
     return pk
+
+
+def convert_to_date(date_str: str) -> str:
+    """Convert an ISO 8601 string to a date string."""
+    try:
+        return parse(date_str).date().isoformat()
+    except ValueError:
+        return date_str

@@ -218,11 +218,6 @@ router.register(
     basename="dispatch-control",
 )
 router.register(r"rates", dispatch_api.RateViewSet, basename="rates")
-router.register(
-    r"rate_billing_tables",
-    dispatch_api.RateBillingTableViewSet,
-    basename="rate-billing-tables",
-)
 
 # Integration Routing
 router.register(
