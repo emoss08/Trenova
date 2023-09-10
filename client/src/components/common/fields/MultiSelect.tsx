@@ -61,7 +61,7 @@ export function ValidatedMultiSelect<TFormValues extends object>({
       error={error}
       styles={{
         label: {
-          marginTop: rem(10),
+          marginTop: rem(5),
         },
         input: {
           backgroundColor:
