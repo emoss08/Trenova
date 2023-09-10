@@ -22,7 +22,7 @@ export const useFormStyles = createStyles((theme) => {
 
   return {
     fields: {
-      marginTop: rem(10), // 160px
+      marginTop: rem(5), // 160px
       "& input": {
         backgroundColor:
           theme.colorScheme === "dark"
