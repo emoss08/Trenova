@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 import datetime
+import decimal
 import uuid
 
 import pytest
@@ -268,6 +269,63 @@ def test_rate_api_create(api_client: APIClient, organization: Organization) -> N
     assert models.Rate.objects.get().customer.id == data["customer"]
 
 
+def test_rate_api_create_with_tables(
+    api_client: APIClient, organization: Organization
+) -> None:
+    """
+    Test the create method.
+    """
+    customer = CustomerFactory()
+    commodity = CommodityFactory()
+    order_type = OrderTypeFactory()
+    equipment_type = EquipmentTypeFactory()
+    accessorial_charge = AccessorialChargeFactory()
+
+    response = api_client.post(
+        "/api/rates/",
+        data={
+            "organization": organization.id,
+            "customer": customer.id,
+            "effective_date": timezone.now().date(),
+            "expiration_date": timezone.now().date(),
+            "commodity": commodity.id,
+            "order_type": order_type.id,
+            "equipment_type": equipment_type.id,
+            "comments": "Test Rate 01",
+            "rate_billing_tables": [
+                {
+                    "accessorial_charge": accessorial_charge.id,
+                    "description": "Test Rate Billing Table",
+                    "unit": 1,
+                    "charge_amount": 100.00,
+                    "sub_total": 100.00,
+                }
+            ],
+        },
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert models.Rate.objects.count() == 1
+    assert models.Rate.objects.get().customer.id == customer.id
+    assert (
+        response.data["rate_billing_tables"][0]["accessorial_charge"]
+        == accessorial_charge.id
+    )
+    assert (
+        response.data["rate_billing_tables"][0]["description"]
+        == "Test Rate Billing Table"
+    )
+    assert response.data["rate_billing_tables"][0]["unit"] == 1
+    assert (
+        decimal.Decimal(response.data["rate_billing_tables"][0]["charge_amount"])
+        == 100.00
+    )
+    assert (
+        decimal.Decimal(response.data["rate_billing_tables"][0]["sub_total"]) == 100.00
+    )
+
+
 def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     """
     Test the update method.
@@ -343,105 +401,3 @@ def test_set_rate_number_increment_hook(rate: models.Rate) -> None:
     assert rate.rate_number == "R00001"
     assert rate2.rate_number is not None
     assert rate2.rate_number == "R00002"
-
-
-def test_rate_billing_table_api_get(api_client: APIClient) -> None:
-    """
-    Test Rate Billing Table API GET method.
-    """
-    response = api_client.get(reverse("rate-billing-tables-list"))
-    assert response.status_code == status.HTTP_200_OK
-
-
-def test_rate_billing_table_api_post(
-    api_client: APIClient, organization: Organization, rate: models.Rate
-) -> None:
-    """
-    Test Rate Billing Table API POST method.
-    """
-    charge_code = AccessorialChargeFactory()
-
-    data = {
-        "organization": organization.id,
-        "rate": rate.id,
-        "accessorial_charge": charge_code.id,
-        "description": "Test Rate Billing Table",
-        "unit": 1,
-    }
-
-    response = api_client.post(reverse("rate-billing-tables-list"), data=data)
-
-    billing_table = models.RateBillingTable.objects.get(id=response.data["id"])
-    assert response.status_code == status.HTTP_201_CREATED
-    assert models.RateBillingTable.objects.count() == 1
-    assert billing_table.description == data["description"]
-    assert billing_table.accessorial_charge.id == data["accessorial_charge"]
-    assert billing_table.unit == data["unit"]
-
-
-def test_rate_billing_table_api_update(
-    api_client: APIClient,
-    organization: Organization,
-    rate: models.Rate,
-    rate_billing_table_api: Response,
-) -> None:
-    """
-    Test Rate Billing Table API PUT method.
-    """
-    charge_code = AccessorialChargeFactory()
-
-    data = {
-        "organization": organization.id,
-        "rate": rate.id,
-        "accessorial_charge": charge_code.id,
-        "description": "Test Rate Billing Table",
-        "unit": 1,
-        "charge_amount": 100.00,
-        "sub_total": 100.00,
-    }
-
-    response = api_client.put(
-        reverse(
-            "rate-billing-tables-detail",
-            kwargs={"pk": rate_billing_table_api.data["id"]},
-        ),
-        data=data,
-    )
-    assert response.status_code == status.HTTP_200_OK
-    assert models.RateBillingTable.objects.count() == 1
-
-
-def test_rate_billing_table_delete(
-    api_client: APIClient, rate_billing_table_api: Response
-) -> None:
-    """
-    Test Rate Billing Table API DELETE method.
-    """
-    response = api_client.delete(
-        reverse(
-            "rate-billing-tables-detail",
-            kwargs={"pk": rate_billing_table_api.data["id"]},
-        )
-    )
-
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    assert response.data is None
-    assert models.RateBillingTable.objects.count() == 0
-
-
-def test_rate_billing_table_before_save_hook() -> None:
-    """
-    Test the Rate billing Table BEFORE_SAVE hook properly set values
-    """
-
-    accessorial_charge = AccessorialChargeFactory()
-    rate_billing_table = RateBillingTableFactory(
-        accessorial_charge=accessorial_charge,
-        charge_amount=0,
-    )
-
-    assert rate_billing_table.charge_amount == accessorial_charge.charge_amount
-    assert (
-        rate_billing_table.sub_total
-        == accessorial_charge.charge_amount * rate_billing_table.unit
-    )
