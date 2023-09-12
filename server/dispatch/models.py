@@ -704,14 +704,14 @@ class RateBillingTable(GenericModel):
     )
     rate = models.ForeignKey(
         Rate,
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,  # if rate is deleted, delete the rate billing table
         related_name="rate_billing_tables",
         verbose_name=_("Rate"),
         help_text=_("Rate for Rate Billing Table"),
     )
     accessorial_charge = models.ForeignKey(
         "billing.AccessorialCharge",
-        on_delete=models.PROTECT,
+        on_delete=models.RESTRICT,  # if accessorial charge is deleted, do not delete the rate billing table
         related_name="rate_billing_tables",
         verbose_name=_("Charge Code"),
         help_text=_("Charge Code for Rate Billing Table"),
