@@ -108,6 +108,24 @@ export type Rate = {
   modified: string;
 };
 
+export const rateFields: ReadonlyArray<keyof RateFormValues> = [
+  "isActive",
+  "rateNumber",
+  "customer",
+  "effectiveDate",
+  "expirationDate",
+  "effectiveDate",
+  "commodity",
+  "orderType",
+  "equipmentType",
+  "originLocation",
+  "destinationLocation",
+  "rateMethod",
+  "rateAmount",
+  "distanceOverride",
+  "comments",
+];
+
 export type RateBillingTable = {
   organization: string;
   businessUnit: string;

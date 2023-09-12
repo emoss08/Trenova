@@ -17,6 +17,7 @@
 
 import React from "react";
 import {
+  Badge,
   Box,
   Button,
   Divider,
@@ -43,7 +44,7 @@ import { SelectInput } from "@/components/common/fields/SelectInput";
 import { TChoiceProps } from "@/types";
 import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/helpers/constants";
 import { useCustomers } from "@/hooks/useCustomers";
-import { RateFormValues } from "@/types/dispatch";
+import { rateFields, RateFormValues } from "@/types/dispatch";
 import { rateSchema } from "@/helpers/schemas/DispatchSchema";
 import { useCommodities } from "@/hooks/useCommodities";
 import { ValidatedDateInput } from "@/components/common/fields/DateInput";
@@ -439,12 +440,31 @@ export function CreateRateModal() {
     },
   });
 
+  type ErrorCountType = (tab: string | null) => number;
+
+  const getErrorCount: ErrorCountType = (tab) => {
+    switch (tab) {
+      case "overview":
+        return rateFields.filter((field: string) => form.errors[field]).length;
+      case "rate-billing-table":
+        return Object.keys(form.errors).filter((field) =>
+          field.startsWith("rateBillingTables"),
+        ).length;
+      default:
+        return 0;
+    }
+  };
+
+  console.log("Error count overview tab", getErrorCount("overview"));
+  console.log(
+    "Error Count rate billing tab",
+    getErrorCount("rate-billing-table"),
+  );
+
   const submitForm = (values: RateFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
-
-  console.log("Form Values", form.values);
 
   // Requests
   const {
@@ -511,8 +531,35 @@ export function CreateRateModal() {
               onTabChange={setActiveTab}
             >
               <Tabs.List>
-                <Tabs.Tab value="overview">Overview</Tabs.Tab>
-                <Tabs.Tab value="rate-billing-table">Billing Tables</Tabs.Tab>
+                <Tabs.Tab
+                  color={getErrorCount("overview") > 0 ? "red" : "gray"}
+                  value="overview"
+                >
+                  Overview
+                </Tabs.Tab>
+                <Tabs.Tab
+                  color={
+                    getErrorCount("rate-billing-table") > 0 ? "red" : "gray"
+                  }
+                  rightSection={
+                    getErrorCount("rate-billing-table") > 0 ? (
+                      <Badge
+                        w={16}
+                        h={16}
+                        sx={{ pointerEvents: "none" }}
+                        variant="filled"
+                        size="xs"
+                        p={0}
+                        color="red"
+                      >
+                        {getErrorCount("rate-billing-table")}
+                      </Badge>
+                    ) : undefined
+                  }
+                  value="rate-billing-table"
+                >
+                  Rate Billing Table
+                </Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="overview" pt="xs">
                 <CreateRateModalForm
