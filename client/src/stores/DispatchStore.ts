@@ -16,7 +16,7 @@
  */
 import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
-import { CommentType, DelayCode, FleetCode } from "@/types/dispatch";
+import { CommentType, DelayCode, FleetCode, Rate } from "@/types/dispatch";
 
 export const useDelayCodeStore = createGlobalStore<
   Omit<TableStoreProps<DelayCode>, "drawerOpen">
@@ -58,6 +58,25 @@ export const useFleetCodeStore = createGlobalStore<
 
 export const useCommentTypeStore = createGlobalStore<
   Omit<TableStoreProps<CommentType>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  createModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
+
+export const useRateStore = createGlobalStore<
+  Omit<TableStoreProps<Rate>, "drawerOpen">
 >({
   pagination: {
     pageIndex: 0,

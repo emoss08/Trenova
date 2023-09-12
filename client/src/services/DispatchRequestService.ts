@@ -14,41 +14,14 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
-import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-export const dispatchNavLinks = [
-  {
-    label: "Dispatch",
-    icon: faTruck,
-    link: "/",
-    permission: "view_dispatch",
-    links: [
-      {
-        label: "Rate Management",
-        link: "/dispatch/rate-management/",
-      },
-      {
-        label: "Configuration Files",
-        link: "#",
-        subLinks: [
-          {
-            label: "Delay Codes",
-            link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
-          },
-          {
-            label: "Fleet Codes",
-            link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
-          },
-          {
-            label: "Comment Type",
-            link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
-          },
-        ],
-      },
-    ],
-  },
-] as LinksGroupProps[];
+import axios from "@/helpers/AxiosConfig";
+
+/**
+ * Fetches new Rate Number from the server.
+ * @returns A promise that resolves to a string representation of the latest rate number.
+ */
+export async function getNewRateNumber(): Promise<string> {
+  const response = await axios.get("/rates/get_new_rate_number/");
+  return response.data.rateNumber;
+}

@@ -16,7 +16,7 @@
  */
 
 import axios from "@/helpers/AxiosConfig";
-import { HazardousMaterial } from "@/types/commodities";
+import { Commodity, HazardousMaterial } from "@/types/commodities";
 
 /**
  * Fetches hazardous material from the server.
@@ -24,5 +24,10 @@ import { HazardousMaterial } from "@/types/commodities";
  */
 export async function getHazardousMaterials(): Promise<HazardousMaterial[]> {
   const response = await axios.get("/hazardous_materials/");
+  return response.data.results;
+}
+
+export async function getCommodities(): Promise<ReadonlyArray<Commodity>> {
+  const response = await axios.get("commodities/");
   return response.data.results;
 }

@@ -14,41 +14,28 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
-import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
+import { useQuery, useQueryClient } from "react-query";
+import { EquipmentType } from "@/types/equipment";
+import { getEquipmentTypes } from "@/services/EquipmentRequestService";
 
-export const dispatchNavLinks = [
-  {
-    label: "Dispatch",
-    icon: faTruck,
-    link: "/",
-    permission: "view_dispatch",
-    links: [
-      {
-        label: "Rate Management",
-        link: "/dispatch/rate-management/",
-      },
-      {
-        label: "Configuration Files",
-        link: "#",
-        subLinks: [
-          {
-            label: "Delay Codes",
-            link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
-          },
-          {
-            label: "Fleet Codes",
-            link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
-          },
-          {
-            label: "Comment Type",
-            link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
-          },
-        ],
-      },
-    ],
-  },
-] as LinksGroupProps[];
+export function useEquipmentTypes(show: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched } = useQuery({
+    queryKey: ["equipment-types"],
+    queryFn: async () => getEquipmentTypes(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData("equipment-types"),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const selectEquipmentType =
+    data?.map((item: EquipmentType) => ({
+      value: item.id,
+      label: item.name,
+    })) || [];
+
+  return { selectEquipmentType, isLoading, isError, isFetched };
+}

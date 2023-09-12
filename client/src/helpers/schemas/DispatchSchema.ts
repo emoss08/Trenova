@@ -22,7 +22,10 @@ import {
   DelayCodeFormValues,
   DispatchControlFormValues,
   FleetCodeFormValues,
+  RateBillingTableFormValues,
+  RateFormValues,
 } from "@/types/dispatch";
+import { TRateMethodChoices } from "@/helpers/constants";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
@@ -110,3 +113,36 @@ export const commentTypeSchema: ObjectSchema<CommentTypeFormValues> =
     name: Yup.string().required("Name is required"),
     description: Yup.string().required("Description is required"),
   });
+
+export const rateBillingTableSchema: ObjectSchema<RateBillingTableFormValues> =
+  Yup.object().shape({
+    accessorialCharge: Yup.string().required("Accessorial Charge is required"),
+    description: Yup.string()
+      .max(100, "Description cannot be more than 100 characters long")
+      .required("Description is required"),
+    unit: Yup.number().required("Unit is required"),
+    chargeAmount: Yup.number().required("Charge Amount is required"),
+    subTotal: Yup.number().required("Subtotal is required"),
+  });
+
+export const rateSchema: ObjectSchema<RateFormValues> = Yup.object().shape({
+  isActive: Yup.boolean().required("Name is required"),
+  rateNumber: Yup.string()
+    .max(6, "Rate Number cannot be more than 6 characters")
+    .required("Rate Number is required"),
+  customer: Yup.string().nullable().notRequired(),
+  effectiveDate: Yup.date().required("Effective Date is required"),
+  expirationDate: Yup.date().required("Expiration Date is required"),
+  commodity: Yup.string().nullable().notRequired(),
+  orderType: Yup.string().nullable().notRequired(),
+  equipmentType: Yup.string().nullable().notRequired(),
+  originLocation: Yup.string().nullable().notRequired(),
+  destinationLocation: Yup.string().nullable().notRequired(),
+  rateMethod: Yup.string<TRateMethodChoices>().required(
+    "Rate Method is required",
+  ),
+  rateAmount: Yup.number().required("Rate Amount is required"),
+  distanceOverride: Yup.number().nullable().notRequired(),
+  comments: Yup.string().nullable().notRequired(),
+  rateBillingTables: Yup.array().of(rateBillingTableSchema).notRequired(),
+});
