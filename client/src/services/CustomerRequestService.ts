@@ -22,6 +22,11 @@ import {
   CustomerRuleProfile,
 } from "@/types/customer";
 
+export async function getCustomers(): Promise<ReadonlyArray<Customer>> {
+  const response = await axios.get("customers/");
+  return response.data.results;
+}
+
 /**
  * Fetches the details of the customer with the specified ID.
  * @param id The ID of the customer to fetch details for.

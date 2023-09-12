@@ -14,41 +14,29 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
-import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-export const dispatchNavLinks = [
-  {
-    label: "Dispatch",
-    icon: faTruck,
-    link: "/",
-    permission: "view_dispatch",
-    links: [
-      {
-        label: "Rate Management",
-        link: "/dispatch/rate-management/",
-      },
-      {
-        label: "Configuration Files",
-        link: "#",
-        subLinks: [
-          {
-            label: "Delay Codes",
-            link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
-          },
-          {
-            label: "Fleet Codes",
-            link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
-          },
-          {
-            label: "Comment Type",
-            link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
-          },
-        ],
-      },
-    ],
-  },
-] as LinksGroupProps[];
+import { useQuery, useQueryClient } from "react-query";
+import { getCustomers } from "@/services/CustomerRequestService";
+import { Customer } from "@/types/customer";
+
+export function useCustomers(show: boolean) {
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, isError, isFetched } = useQuery({
+    queryKey: ["customers"],
+    queryFn: async () => getCustomers(),
+    enabled: show,
+    initialData: () => queryClient.getQueryData("customers"),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const selectCustomersData =
+    data?.map((item: Customer) => ({
+      value: item.id,
+      label: item.name,
+    })) || [];
+
+  return { selectCustomersData, isLoading, isError, isFetched };
+}

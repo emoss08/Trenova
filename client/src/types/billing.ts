@@ -17,7 +17,7 @@
 
 import {
   AutoBillingCriteriaChoicesProps,
-  fuelMethodChoicesProps,
+  FuelMethodChoicesProps,
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
 
@@ -56,7 +56,7 @@ export type AccessorialCharge = {
   description?: string | null;
   isDetention: boolean;
   chargeAmount: number | undefined;
-  method: fuelMethodChoicesProps;
+  method: FuelMethodChoicesProps;
 };
 
 export type AccessorialChargeFormValues = Omit<AccessorialCharge, "id">;

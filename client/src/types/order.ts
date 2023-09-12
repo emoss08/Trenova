@@ -80,3 +80,14 @@ export type Order = {
   revenueCode: null | string;
   originLocation: string;
 };
+
+export type OrderType = {
+  organization: string;
+  businessUnit: string;
+  id: string;
+  isActive: boolean;
+  name: string;
+  description: string;
+  created: string;
+  modified: string;
+};

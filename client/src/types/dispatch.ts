@@ -15,6 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { TRateMethodChoices } from "@/helpers/constants";
+
 export type DispatchControl = {
   id: string;
   organization: string;
@@ -83,3 +85,51 @@ export type CommentTypeFormValues = Omit<
   CommentType,
   "organization" | "businessUnit" | "created" | "modified" | "id"
 >;
+
+export type Rate = {
+  organization: string;
+  businessUnit: string;
+  id: string;
+  isActive: boolean;
+  rateNumber: string;
+  customer?: string | null;
+  effectiveDate: Date;
+  expirationDate: Date;
+  commodity?: string | null;
+  orderType?: string | null;
+  equipmentType?: string | null;
+  originLocation?: string | null;
+  destinationLocation?: string | null;
+  rateMethod: TRateMethodChoices;
+  rateAmount: number;
+  distanceOverride?: number | null;
+  comments?: string | null;
+  created: string;
+  modified: string;
+};
+
+export type RateBillingTable = {
+  organization: string;
+  businessUnit: string;
+  id: string;
+  rate: string;
+  accessorialCharge: string;
+  description: string;
+  unit: number;
+  chargeAmount: number;
+  subTotal: number;
+  created: string;
+  modified: string;
+};
+
+export type RateBillingTableFormValues = Omit<
+  RateBillingTable,
+  "id" | "rate" | "organization" | "businessUnit" | "created" | "modified"
+>;
+
+export type RateFormValues = Omit<
+  Rate,
+  "organization" | "businessUnit" | "created" | "modified" | "id"
+> & {
+  rateBillingTables?: Array<RateBillingTableFormValues> | null;
+};

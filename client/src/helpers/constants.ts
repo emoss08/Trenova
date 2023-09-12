@@ -90,6 +90,21 @@ export const yesAndNoChoices: IChoiceProps<TYesNoChoiceProps>[] = [
 ];
 
 /**
+ * Returns rate method choices for a select input
+ */
+export type TRateMethodChoices = "F" | "PM" | "PS" | "PP" | "O";
+
+export const rateMethodChoices: ReadonlyArray<
+  IChoiceProps<TRateMethodChoices>
+> = [
+  { value: "F", label: "Flat" },
+  { value: "PM", label: "Per Mile" },
+  { value: "PS", label: "Per Stop" },
+  { value: "PP", label: "Per Pound" },
+  { value: "O", label: "Other" },
+];
+
+/**
  * Truncates the provided text to the specified limit.
  * @param text - The text to be truncated.
  * @param limit - The maximum number of characters to be displayed.
