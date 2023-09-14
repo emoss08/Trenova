@@ -47,7 +47,7 @@ function App() {
     setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
 
   const initialLoading = useAuthStore(
-    (state: { initialLoading: any }) => state.initialLoading,
+    (state: { initialLoading: boolean }) => state.initialLoading,
   );
 
   useHotkeys([["mod+J", () => toggleColorScheme()]]);
