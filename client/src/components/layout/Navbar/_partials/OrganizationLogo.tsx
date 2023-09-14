@@ -44,7 +44,7 @@ export function OrganizationLogo() {
     });
 
   if (isOrganizationDataLoading) {
-    return <Skeleton width={rem(180)} height={rem(35)} />;
+    return <Skeleton width={rem(190)} height={rem(30)} />;
   }
 
   if (organizationData && organizationData.logo) {

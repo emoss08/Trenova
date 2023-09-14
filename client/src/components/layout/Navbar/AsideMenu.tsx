@@ -17,12 +17,12 @@
 
 import React from "react";
 import {
-  Navbar,
   Code,
+  createStyles,
   Group,
+  Navbar,
   rem,
   Skeleton,
-  createStyles,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
@@ -203,7 +203,13 @@ export function AsideMenu() {
 
       <Navbar.Section className={classes.section}>
         {isUserDataLoading ? (
-          <Skeleton width={rem(300)} height={rem(70)} />
+          <Group my={15}>
+            <Skeleton ml={rem(15)} width={rem(250)} height={rem(40)} circle />
+            <div>
+              <Skeleton width={rem(120)} height={rem(15)} />
+              <Skeleton mt={rem(5)} width={rem(150)} height={rem(15)} />
+            </div>
+          </Group>
         ) : (
           userData && <HeaderUserMenu user={userData} />
         )}
