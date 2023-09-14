@@ -18,28 +18,29 @@
 import React from "react";
 import {
   Avatar,
-  Group,
-  Text,
-  Menu,
   Burger,
   createStyles,
-  UnstyledButton,
+  Group,
   Indicator,
+  Menu,
+  Text,
+  UnstyledButton,
 } from "@mantine/core";
 import {
+  IconChevronRight,
   IconHeart,
-  IconStar,
   IconMessage,
   IconPlayerPause,
-  IconTrash,
+  IconStar,
   IconSwitchHorizontal,
-  IconChevronRight,
+  IconTrash,
 } from "@tabler/icons-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faGear, faRightFromBracket } from "@fortawesome/pro-regular-svg-icons";
 import { Link } from "react-router-dom";
 import { useNavbarStore } from "@/stores/HeaderStore";
 import { User } from "@/types/accounts";
+import { useLogout } from "@/hooks/useLogout";
 
 const pageStyles = createStyles((theme) => ({
   user: {
@@ -69,6 +70,7 @@ type Props = {
 export function HeaderUserMenu({ user }: Props) {
   const { classes, theme } = pageStyles();
   const [userMenuOpen] = useNavbarStore.use("userMenuOpen");
+  const logout = useLogout();
 
   if (!user) {
     return <div>No user data available</div>;
@@ -186,19 +188,18 @@ export function HeaderUserMenu({ user }: Props) {
             Change account
           </Menu.Item>
 
-          <Link to="/logout/" style={{ textDecoration: "none" }}>
-            <Menu.Item
-              icon={
-                <FontAwesomeIcon
-                  size="sm"
-                  icon={faRightFromBracket}
-                  stroke="1.5"
-                />
-              }
-            >
-              Logout
-            </Menu.Item>
-          </Link>
+          <Menu.Item
+            onClick={() => logout()}
+            icon={
+              <FontAwesomeIcon
+                size="sm"
+                icon={faRightFromBracket}
+                stroke="1.5"
+              />
+            }
+          >
+            Logout
+          </Menu.Item>
 
           <Menu.Divider />
 

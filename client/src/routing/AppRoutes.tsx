@@ -21,7 +21,6 @@ import { RouteObject } from "react-router-dom";
 const HomePage = lazy(() => import("../pages"));
 const LoginPage = lazy(() => import("../pages/LoginPage"));
 const ErrorPage = lazy(() => import("../pages/ErrorPage"));
-const LogoutPage = lazy(() => import("../pages/LogoutPage"));
 const UserManagementPage = lazy(
   () => import("../pages/admin/users/UserManagement"),
 );
@@ -78,13 +77,6 @@ export const routes: RouteObjectWithPermission[] = [
     group: "auth",
     path: "/login",
     element: <LoginPage />,
-    excludeFromMenu: true,
-  },
-  {
-    title: "Logout",
-    group: "auth",
-    path: "/logout",
-    element: <LogoutPage />,
     excludeFromMenu: true,
   },
   {
