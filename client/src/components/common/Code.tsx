@@ -31,6 +31,7 @@ export function MCode({ children, ...props }: Props): React.ReactElement {
         backgroundColor: props.backgroundColor,
         color: props.color,
       }}
+      {...props}
     >
       {children}
     </Code>
