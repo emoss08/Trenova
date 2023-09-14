@@ -49,7 +49,10 @@ import { rateSchema } from "@/helpers/schemas/DispatchSchema";
 import { useCommodities } from "@/hooks/useCommodities";
 import { ValidatedDateInput } from "@/components/common/fields/DateInput";
 import { useLocations } from "@/hooks/useLocations";
-import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
+import {
+  NestedKeys,
+  ValidatedNumberInput,
+} from "@/components/common/fields/NumberInput";
 import { getNewRateNumber } from "@/services/DispatchRequestService";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
 import { useOrderTypes } from "@/hooks/useOrderTypes";
@@ -119,14 +122,18 @@ function CreateRateBillingTableForm({
           />
           <ValidatedNumberInput<RateFormValues>
             form={form}
-            name={`rateBillingTables.${index}.chargeAmount`}
+            name={
+              `rateBillingTables.${index}.chargeAmount` as NestedKeys<RateFormValues>
+            }
             label="Charge Amount"
             placeholder="Charge Amount"
             description="Charge Amount for Rate Billing Table"
           />
           <ValidatedNumberInput<RateFormValues>
             form={form}
-            name={`rateBillingTables.${index}.subTotal`}
+            name={
+              `rateBillingTables.${index}.subTotal` as NestedKeys<RateFormValues>
+            }
             label="Sub Total"
             placeholder="Sub Total"
             description="Sub Total for Rate Billing Table"
@@ -454,12 +461,6 @@ export function CreateRateModal() {
         return 0;
     }
   };
-
-  console.log("Error count overview tab", getErrorCount("overview"));
-  console.log(
-    "Error Count rate billing tab",
-    getErrorCount("rate-billing-table"),
-  );
 
   const submitForm = (values: RateFormValues) => {
     setLoading(true);
