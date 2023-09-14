@@ -21,7 +21,7 @@ import { IconAlertTriangle } from "@tabler/icons-react";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 
-interface ValidatedNumberInputProps<TFormValues>
+interface ValidatedNumberInputProps<TFormValues extends object>
   extends Omit<NumberInputProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   name: keyof TFormValues;
