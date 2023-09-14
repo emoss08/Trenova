@@ -15,21 +15,32 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Route, Routes, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 export function ProtectedRoutes(): React.ReactElement {
   const { isAuthenticated, userHasPermission } = useUserPermissions();
+  const location = useLocation();
 
+  useEffect(() => {
+    if (
+      !isAuthenticated &&
+      location.pathname !== "/login"
+      // location.pathname !== "/logout"
+    ) {
+      const returnUrl = location.pathname + location.search;
+      sessionStorage.setItem("returnUrl", returnUrl);
+    }
+  }, [isAuthenticated, location.pathname, location.search]);
   return (
     <Routes>
       {routes.map((route: RouteObjectWithPermission, i: number) => {
         const isPublicRoute =
           route.path === "/login" ||
-          route.path === "/logout" ||
+          // route.path === "/logout" ||
           route.path === "/reset-password";
 
         let element: React.ReactNode;
