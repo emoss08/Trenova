@@ -17,13 +17,13 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Group,
   Box,
   Collapse,
+  createStyles,
+  Group,
+  rem,
   Text,
   UnstyledButton,
-  createStyles,
-  rem,
 } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
@@ -45,12 +45,15 @@ const useStyles = createStyles((theme) => ({
       color:
         theme.colorScheme === "dark"
           ? theme.colors.dark[2]
-          : theme.colors.gray[6],
+          : theme.colors.gray[9],
     },
     color:
       theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
     "&:hover svg": {
-      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
+      color:
+        theme.colorScheme === "dark"
+          ? theme.colors.gray[0]
+          : theme.colors.gray[7],
     },
   },
 

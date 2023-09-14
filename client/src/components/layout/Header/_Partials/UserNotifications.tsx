@@ -19,11 +19,9 @@ import React, { useEffect } from "react";
 import {
   Badge,
   Button,
-  createStyles,
   Divider,
   Indicator,
   Popover,
-  rem,
   ScrollArea,
   UnstyledButton,
 } from "@mantine/core";
@@ -36,9 +34,9 @@ import { Howl, Howler } from "howler";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
 import { getUserNotifications } from "@/services/UserRequestService";
 import {
+  ENABLE_WEBSOCKETS,
   getUserId,
   WEB_SOCKET_URL,
-  ENABLE_WEBSOCKETS,
 } from "@/helpers/constants";
 import { useAuthStore } from "@/stores/AuthStore";
 import { createWebsocketManager } from "@/helpers/websockets";
@@ -46,74 +44,11 @@ import { useNavbarStore } from "@/stores/HeaderStore";
 
 import NotificationSound from "@/assets/audio/notification.webm";
 import NotificationSoundMp3 from "@/assets/audio/notification.mp3";
+import { useAsideStyles } from "@/assets/styles/AsideStyles";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
 });
-
-const useStyles = createStyles((theme) => ({
-  mainLinks: {
-    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-  },
-  button: {
-    "&:hover": {
-      backgroundColor: "transparent",
-    },
-    height: "30px",
-    width: "160px",
-  },
-  mainLink: {
-    display: "flex",
-    alignItems: "center",
-    width: "100%",
-    fontSize: theme.fontSizes.xs,
-    padding: `${rem(8)} ${theme.spacing.xs}`,
-    borderRadius: theme.radius.sm,
-    fontWeight: 500,
-    // Turn svg color to black
-    "& svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[2]
-          : theme.colors.gray[6],
-    },
-    color:
-      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-      color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    },
-    "&:hover svg": {
-      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
-    },
-  },
-
-  mainLinkInner: {
-    display: "flex",
-    alignItems: "center",
-    flex: 1,
-  },
-
-  mainLinkIcon: {
-    marginRight: theme.spacing.sm,
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[2]
-        : theme.colors.gray[6],
-  },
-
-  mainLinkBadge: {
-    padding: 0,
-    width: rem(20),
-    height: rem(20),
-    pointerEvents: "none",
-  },
-}));
 
 const webSocketManager = createWebsocketManager();
 
@@ -155,7 +90,7 @@ export function UserNotifications(): React.ReactElement | null {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const userId = getUserId() || "";
   const queryClient = useQueryClient();
-  const { classes } = useStyles();
+  const { classes } = useAsideStyles();
 
   useEffect(() => {
     if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {

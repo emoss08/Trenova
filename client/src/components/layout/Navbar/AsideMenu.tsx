@@ -16,14 +16,7 @@
  */
 
 import React from "react";
-import {
-  Code,
-  createStyles,
-  Group,
-  Navbar,
-  rem,
-  Skeleton,
-} from "@mantine/core";
+import { createStyles, Group, Navbar, rem, Skeleton } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import { getUserId } from "@/helpers/constants";
@@ -38,6 +31,7 @@ import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLin
 import { SearchSpotlight } from "@/components/layout/Header/Search";
 import { DispatchLinks } from "@/components/layout/Navbar/_partials/DispatchLinks";
 import { MainLinks } from "@/components/layout/Navbar/_partials/MainLinks";
+import { MCode } from "@/components/common/Code";
 
 const useNavbarStyles = createStyles((theme) => ({
   navbar: {
@@ -198,7 +192,13 @@ export function AsideMenu() {
     >
       <Group className={classes.header} position="apart">
         <OrganizationLogo />
-        <Code sx={{ fontWeight: 700 }}>v0.0.1</Code>
+        <MCode
+          backgroundColor="rgba(112, 72, 232, .5)"
+          color="white"
+          sx={{ fontWeight: 700 }}
+        >
+          SANDBOX
+        </MCode>
       </Group>
 
       <Navbar.Section className={classes.section}>
