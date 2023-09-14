@@ -18,10 +18,8 @@
 import React from "react";
 import {
   Badge,
-  createStyles,
   Divider,
   Menu,
-  rem,
   ScrollArea,
   Skeleton,
   UnstyledButton,
@@ -35,68 +33,11 @@ import { useNavbarStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/assets/styles/HeaderStyles";
 import { getUserReports } from "@/services/UserRequestService";
 import { getUserId } from "@/helpers/constants";
-
-const useStyles = createStyles((theme) => ({
-  mainLinks: {
-    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-  },
-
-  mainLink: {
-    fontWeight: 500,
-    display: "flex",
-    alignItems: "center",
-    width: "100%",
-    fontSize: theme.fontSizes.xs,
-    padding: `${rem(8)} ${theme.spacing.xs}`,
-    borderRadius: theme.radius.sm,
-    "& svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[2]
-          : theme.colors.gray[6],
-    },
-    color:
-      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-      color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    },
-    "&:hover svg": {
-      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
-    },
-  },
-
-  mainLinkInner: {
-    display: "flex",
-    alignItems: "center",
-    fontWeight: 500,
-    flex: 1,
-  },
-
-  mainLinkIcon: {
-    marginRight: theme.spacing.sm,
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[2]
-        : theme.colors.gray[6],
-  },
-
-  mainLinkBadge: {
-    padding: 0,
-    width: rem(20),
-    height: rem(20),
-    pointerEvents: "none",
-  },
-}));
+import { useAsideStyles } from "@/assets/styles/AsideStyles";
 
 export function UserDownloads(): React.ReactElement {
   const [downloadMenuOpen] = useNavbarStore.use("downloadMenuOpen");
-  const { classes } = useStyles();
+  const { classes } = useAsideStyles();
   const { classes: headerClasses } = useHeaderStyles();
   const userId = getUserId() || "";
   const queryClient = useQueryClient();

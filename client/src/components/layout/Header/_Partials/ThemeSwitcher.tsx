@@ -16,10 +16,8 @@
  */
 
 import {
-  createStyles,
   Divider,
   Menu,
-  rem,
   UnstyledButton,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -27,96 +25,11 @@ import React, { useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLaptop, faMoon, faSun } from "@fortawesome/pro-duotone-svg-icons";
 import { useNavbarStore } from "@/stores/HeaderStore";
-
-const useStyles = createStyles((theme) => ({
-  mainLinks: {
-    paddingLeft: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-    paddingRight: `calc(${theme.spacing.md} - ${theme.spacing.xs})`,
-    paddingBottom: theme.spacing.xs,
-  },
-  button: {
-    "&:hover": {
-      backgroundColor: "transparent",
-    },
-    height: "30px",
-    width: "160px",
-  },
-  mainLink: {
-    display: "flex",
-    alignItems: "center",
-    width: "100%",
-    fontSize: theme.fontSizes.xs,
-    padding: `${rem(8)} ${theme.spacing.xs}`,
-    borderRadius: theme.radius.sm,
-    fontWeight: 500,
-    "& svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[2]
-          : theme.colors.gray[6],
-    },
-    color:
-      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-      color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    },
-    "&:hover svg": {
-      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
-    },
-  },
-
-  menuItem: {
-    "& svg": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[2]
-          : theme.colors.gray[6],
-    },
-    color:
-      theme.colorScheme === "dark" ? theme.colors.dark[0] : theme.colors.black,
-
-    "&:hover": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.dark[6]
-          : theme.colors.gray[0],
-      color: theme.colorScheme === "dark" ? theme.white : theme.black,
-    },
-    "&:hover svg": {
-      color: theme.colorScheme === "dark" ? theme.colors.gray[0] : theme.black,
-    },
-  },
-
-  mainLinkInner: {
-    display: "flex",
-    alignItems: "center",
-    flex: 1,
-  },
-
-  mainLinkIcon: {
-    marginRight: theme.spacing.sm,
-    color:
-      theme.colorScheme === "dark"
-        ? theme.colors.dark[2]
-        : theme.colors.gray[6],
-  },
-
-  mainLinkBadge: {
-    padding: 0,
-    width: rem(20),
-    height: rem(20),
-    pointerEvents: "none",
-  },
-}));
+import { useAsideStyles } from "@/assets/styles/AsideStyles";
 
 export function ThemeSwitcher(): React.ReactElement {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { classes } = useStyles();
+  const { classes } = useAsideStyles();
   const [themeSwitcherOpen] = useNavbarStore.use("themeSwitcherOpen");
   const ref = useRef<HTMLButtonElement>(null);
 
@@ -162,7 +75,7 @@ export function ThemeSwitcher(): React.ReactElement {
     >
       <Menu.Target>
         <div className={classes.mainLinks}>
-          <UnstyledButton className={classes.mainLink} ref={ref}>
+          <UnstyledButton className={classes.mainLink} mb={5} ref={ref}>
             <div className={classes.mainLinkInner}>
               {getThemeIcon()}
               <span>Switch Theme</span>
@@ -177,26 +90,14 @@ export function ThemeSwitcher(): React.ReactElement {
         <Menu.Item
           className={classes.menuItem}
           onClick={() => toggleColorScheme("light")}
-          icon={
-            <FontAwesomeIcon
-              size="lg"
-              icon={faSun}
-              className={classes.mainLinkIcon}
-            />
-          }
+          icon={<FontAwesomeIcon size="lg" icon={faSun} />}
         >
           Light Theme
         </Menu.Item>
         <Menu.Item
           className={classes.menuItem}
           onClick={() => toggleColorScheme("dark")}
-          icon={
-            <FontAwesomeIcon
-              size="lg"
-              icon={faMoon}
-              className={classes.mainLinkIcon}
-            />
-          }
+          icon={<FontAwesomeIcon size="lg" icon={faMoon} />}
         >
           Dark Theme
         </Menu.Item>
