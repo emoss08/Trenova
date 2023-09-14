@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Group, Navbar, rem, Skeleton } from "@mantine/core";
+import { Group, Navbar, rem, Skeleton, useMantineTheme } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 import { getUserId } from "@/helpers/constants";
@@ -38,6 +38,7 @@ export function AsideMenu(): React.ReactElement {
   const { classes } = useNavbarStyles();
   const queryClient = useQueryClient();
   const userId = getUserId() || "";
+  const theme = useMantineTheme();
 
   const { data: userData, isLoading: isUserDataLoading } = useQuery({
     queryKey: ["user", userId],
@@ -48,7 +49,7 @@ export function AsideMenu(): React.ReactElement {
       return getUserDetails(userId);
     },
     initialData: () => queryClient.getQueryData(["user", userId]),
-    staleTime: Infinity, // never refetch
+    staleTime: Infinity,
   });
 
   return (
@@ -63,7 +64,11 @@ export function AsideMenu(): React.ReactElement {
       <Group className={classes.header} position="apart">
         <OrganizationLogo />
         <MCode
-          backgroundColor="rgba(112, 72, 232, .5)"
+          backgroundColor={
+            theme.colorScheme === "dark"
+              ? "rgba(112, 72, 232, .5)"
+              : "rgba(112, 72, 232)"
+          }
           color="white"
           sx={{ fontWeight: 700 }}
         >
