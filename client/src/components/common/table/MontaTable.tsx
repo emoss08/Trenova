@@ -24,6 +24,7 @@ import {
 } from "mantine-react-table";
 import { useQuery } from "react-query";
 import { useMantineTheme } from "@mantine/core";
+import { useLocation, useSearchParams } from "react-router-dom";
 import axios from "@/helpers/AxiosConfig";
 import { montaTableIcons } from "@/components/common/table/Icons";
 import { ApiResponse } from "@/types/server";
@@ -75,16 +76,23 @@ export function MontaTable<T extends Record<string, any>>({
 }: MontaTableProps<T>) {
   const theme = useMantineTheme();
   const [pagination] = store.use("pagination");
-  const [globalFilter, setGlobalFilter] = store.use("globalFilter");
   const [rowSelection, setRowSelection] = store.use("rowSelection");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  const searchQuery = searchParams.get("search") ?? "";
+
+  React.useEffect(() => {
+    setSearchParams(new URLSearchParams(location.search));
+  }, [location.search]);
 
   const { data, isError, isFetching, isLoading } = useQuery<ApiResponse<T>>(
-    [tableQueryKey, pagination.pageIndex, pagination.pageSize, globalFilter],
+    [tableQueryKey, pagination.pageIndex, pagination.pageSize, searchQuery],
     async () => {
       const offset = pagination.pageIndex * pagination.pageSize;
       const fullUrl = `${API_URL}${link}?limit=${
         pagination.pageSize
-      }&offset=${offset}${globalFilter ? `&search=${globalFilter}` : ""}`;
+      }&offset=${offset}${searchQuery ? `&search=${searchQuery}` : ""}`;
       const response = await axios.get(fullUrl);
       return response.data;
     },
@@ -141,7 +149,15 @@ export function MontaTable<T extends Record<string, any>>({
         }}
         enableGlobalFilterModes={false}
         onGlobalFilterChange={(filter: string) => {
-          setGlobalFilter(filter);
+          if (filter) {
+            setSearchParams({ search: filter });
+          } else {
+            const newSearchParams = new URLSearchParams(
+              searchParams.toString(),
+            );
+            newSearchParams.delete("search");
+            setSearchParams(newSearchParams);
+          }
         }}
         mantineFilterTextInputProps={{
           sx: { borderBottom: "unset", marginTop: "8px" },
