@@ -19,13 +19,13 @@ import { Link, useNavigate } from "react-router-dom";
 import React from "react";
 import {
   Anchor,
+  Button,
   Checkbox,
   Container,
   Group,
   Paper,
   Text,
   Title,
-  Button,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -66,7 +66,9 @@ function LoginPage() {
   const navigate = useNavigate();
   React.useEffect((): void => {
     if (isAuthenticated) {
-      navigate("/");
+      const returnUrl = sessionStorage.getItem("returnUrl") || "/";
+      sessionStorage.removeItem("returnUrl");
+      navigate(returnUrl);
     }
   }, [isAuthenticated, navigate]);
 
