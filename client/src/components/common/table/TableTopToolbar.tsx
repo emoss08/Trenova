@@ -16,7 +16,10 @@
  */
 
 import { Box, Button, Checkbox, Flex, Popover } from "@mantine/core";
-import { MRT_GlobalFilterTextInput } from "mantine-react-table";
+import {
+  MRT_GlobalFilterTextInput,
+  MRT_TableInstance,
+} from "mantine-react-table";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFileExport,
@@ -25,13 +28,17 @@ import {
 } from "@fortawesome/pro-duotone-svg-icons";
 import React from "react";
 
-interface TopToolbarProps {
-  table: any;
+interface TopToolbarProps<T extends Record<string, any>> {
+  table: MRT_TableInstance<T>;
   store: any;
   name: string;
 }
 
-export function TableTopToolbar({ table, store, name }: TopToolbarProps) {
+export function TableTopToolbar<T extends Record<string, any>>({
+  table,
+  store,
+  name,
+}: TopToolbarProps<T>) {
   const [showColumnFilters, setShowColumnFilters] = store.use("columnFilters");
 
   return (
