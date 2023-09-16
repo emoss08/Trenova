@@ -49,10 +49,7 @@ import { rateSchema } from "@/helpers/schemas/DispatchSchema";
 import { useCommodities } from "@/hooks/useCommodities";
 import { ValidatedDateInput } from "@/components/common/fields/DateInput";
 import { useLocations } from "@/hooks/useLocations";
-import {
-  NestedKeys,
-  ValidatedNumberInput,
-} from "@/components/common/fields/NumberInput";
+import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { getNewRateNumber } from "@/services/DispatchRequestService";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
 import { useOrderTypes } from "@/hooks/useOrderTypes";
@@ -122,18 +119,14 @@ function CreateRateBillingTableForm({
           />
           <ValidatedNumberInput<RateFormValues>
             form={form}
-            name={
-              `rateBillingTables.${index}.chargeAmount` as NestedKeys<RateFormValues>
-            }
+            name={`rateBillingTables.${index}.chargeAmount`}
             label="Charge Amount"
             placeholder="Charge Amount"
             description="Charge Amount for Rate Billing Table"
           />
           <ValidatedNumberInput<RateFormValues>
             form={form}
-            name={
-              `rateBillingTables.${index}.subTotal` as NestedKeys<RateFormValues>
-            }
+            name={`rateBillingTables.${index}.subTotal`}
             label="Sub Total"
             placeholder="Sub Total"
             description="Sub Total for Rate Billing Table"
@@ -315,7 +308,7 @@ export function CreateRateModalForm({
           name="destinationLocation"
           label="Destination Location"
           placeholder="Destination Location"
-          description="Destination Location associated with this Rate"
+          description="Dest. Location associated with this Rate"
           data={locations}
           isLoading={isLocationsLoading}
           isError={isLocationsError}
