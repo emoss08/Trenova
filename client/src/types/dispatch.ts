@@ -106,6 +106,7 @@ export type Rate = {
   comments?: string | null;
   created: string;
   modified: string;
+  rateBillingTables?: Array<RateBillingTable> | null;
 };
 
 export const rateFields: ReadonlyArray<keyof RateFormValues> = [
