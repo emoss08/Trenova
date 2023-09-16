@@ -253,4 +253,28 @@ ALLOWED_MODELS = {
             {"value": "modified", "label": "Modified At"},
         ],
     },
+    "Rate": {
+        "app_label": "dispatch",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "rate_number", "label": "Rate Number"},
+            {"value": "customer__name", "label": "Customer Name"},
+            {"value": "customer__code", "label": "Customer Code"},
+            {"value": "effective_date", "label": "Effective Date"},
+            {"value": "expiration_date", "label": "Expiration Date"},
+            {"value": "commodity__name", "label": "Commodity Name"},
+            {"value": "commodity__description", "label": "Commodity Description"},
+            {"value": "order_type__name", "label": "Order Type Name"},
+            {"value": "equipment_type__name", "label": "Equipment Type Name"},
+            {"value": "origin_location__code", "label": "Origin Location Code"},
+            {
+                "value": "destination_location__code",
+                "label": "Destination Location Code",
+            },
+            {"value": "rate_method", "label": "Rate Method"},
+            {"value": "rate_amount", "label": "Rate Amount"},
+            {"value": "distance_override", "label": "Distance Override"},
+            {"value": "comments", "label": "Comments"},
+        ],
+    },
 }
