@@ -99,3 +99,33 @@ export function SelectInput<TFormValues extends Record<string, unknown>>({
     />
   );
 }
+
+interface ViewSelectInputProps
+  extends Omit<SelectProps, "form" | "name" | "data" | "value"> {
+  data: ReadonlyArray<TChoiceProps> | ReadonlyArray<BChoiceProps>;
+  value: string | boolean;
+}
+
+export function ViewSelectInput({
+  data = [],
+  value,
+  ...rest
+}: ViewSelectInputProps) {
+  const { classes } = useFormStyles();
+  const validatedData = Array.isArray(data) ? data : [];
+
+  return (
+    <Select
+      {...rest}
+      data={validatedData}
+      value={value}
+      maxDropdownHeight={200}
+      nothingFound="Nothing found"
+      className={classes.fields}
+      itemComponent={SelectItem}
+      limit={10}
+      variant="filled"
+      searchable
+    />
+  );
+}
