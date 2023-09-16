@@ -42,24 +42,6 @@ class BillingControlSerializer(GenericSerializer):
         model = models.BillingControl
 
 
-class BillingTransferLogSerializer(GenericSerializer):
-    """A serializer for the `BillingTransferLog` model.
-
-    A serializer class for the BillingTransferLog Model. This serializer is used to convert the BillingTransferLog
-    model instances into a Python dictionary format that can be rendered into a JSON response. It also defines
-    the fields that should be included in the serialized representation of the model.
-    """
-
-    class Meta:
-        """Metaclass for BillingTransferLogSerializer
-
-        Attributes:
-            model (models.BillingTransferLog): The model that the serializer is for.
-        """
-
-        model = models.BillingTransferLog
-
-
 class BillingQueueSerializer(GenericSerializer):
     """A serializer for the `BillingQueue` model.
 
@@ -81,6 +63,25 @@ class BillingQueueSerializer(GenericSerializer):
         data = super().to_representation(instance)
         data["customer_name"] = instance.customer.name
         return data
+
+
+class BillingLogEntrySerializer(GenericSerializer):
+    """A serializer for the `BillingLogEntry` model.
+
+    A serializer class for the BillingLogEntry Model. This serializer is used
+    to convert the BillingLogEntry model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+    """
+
+    class Meta:
+        """Metaclass for BillingLogEntrySerializer
+
+        Attributes:
+            model (models.BillingLogEntry): The model that the serializer is for.
+        """
+
+        model = models.BillingLogEntry
 
 
 class BillingHistorySerializer(GenericSerializer):

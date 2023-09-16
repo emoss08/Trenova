@@ -135,9 +135,9 @@ router.register(
     basename="document-classifications",
 )
 router.register(
-    r"billing_transfer_logs",
-    billing_api.BillingTransferLogViewSet,
-    basename="billing-transfer-logs",
+    r"billing_log_entry",
+    billing_api.BillingLogEntryViewSet,
+    basename="billing-log-entry",
 )
 
 # Commodity Routing

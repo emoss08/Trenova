@@ -80,8 +80,7 @@ class BillingControlViewSet(viewsets.ModelViewSet):
 
 
 class BillingQueueViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing and editing billing queue in the system.
+    """A viewset for viewing and editing billing queue in the system.
 
     The viewset provides default operations for creating, updating, and deleting records in
     billing queue,as well as listing and retrieving charge types. It uses the `BillingQueueSerializer`
@@ -144,6 +143,50 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
             "revenue_code_id",
             "is_summary",
             "bill_type",
+        )
+
+        return queryset
+
+
+class BillingLogEntryViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing billing log entry in the system.
+
+    The viewset provides default operations for creating, updating, and deleting records in
+    billing queue,as well as listing and retrieving charge types. It uses the `BillingLogEntrySerializer`
+    class to convert the charge type instances to and from JSON-formatted data.
+
+    Only authenticated users are allowed to access the views provided by this viewset.
+    """
+
+    queryset = models.BillingLogEntry.objects.all()
+    serializer_class = serializers.BillingLogEntrySerializer
+    permission_classes = [CustomObjectPermissions]
+
+    def get_queryset(self) -> QuerySet[models.BillingLogEntry]:
+        """The get_queryset function is used to filter the queryset based on the request.
+        The function returns a QuerySet of `BillingLogEntry` objects that are filtered by `organization_id`,
+        which is equal to the user's `organization_id`. The only() method limits which fields are returned in
+        the response.
+
+        Args:
+            self: Represent the instance of the class
+
+        Returns:
+            QuerySet[models.BillingLogEntry]: A queryset that is filtered by the `organization_id`
+        """
+
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "task_id",
+            "object_pk",
+            "content_type",
+            "action",
+            "order",
+            "invoice_number",
+            "customer",
+            "actor",
         )
 
         return queryset
@@ -213,28 +256,6 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
             "bill_type",
         )
         return queryset
-
-
-class BillingTransferLogViewSet(viewsets.ModelViewSet):
-    """
-    A viewset for viewing billing transfers in the system.
-
-    The viewset provides default operation for viewing billing history,
-    as well as listing and retrieving charge types. It uses the `BillingTransferLogSerializer`
-    class to convert the charge type instances to and from JSON-formatted data.
-
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by `order` pro_number, & `user` username.
-    """
-
-    queryset = models.BillingTransferLog.objects.all()
-    serializer_class = serializers.BillingTransferLogSerializer
-    filterset_fields = (
-        "order__pro_number",
-        "transferred_by__username",
-    )
-    http_method_names = ["get", "head", "options"]
-    permission_classes = [CustomObjectPermissions]
 
 
 class ChargeTypeViewSet(viewsets.ModelViewSet):

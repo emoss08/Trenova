@@ -25,7 +25,6 @@ from billing.models import (
     BillingHistory,
     BillingLogEntry,
     BillingQueue,
-    BillingTransferLog,
     ChargeType,
     DocumentClassification,
 )
@@ -104,7 +103,7 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
 
 
 @admin.register(BillingLogEntry)
-class BillingTransferLogAdmin(GenericAdmin[BillingLogEntry]):
+class BillingLogEntry(GenericAdmin[BillingLogEntry]):
     """
     Billing Transfer Log Admin
     """
@@ -127,13 +126,13 @@ class BillingTransferLogAdmin(GenericAdmin[BillingLogEntry]):
     )
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: BillingTransferLog | None = None
+        self, request: HttpRequest, obj: BillingLogEntry | None = None
     ) -> bool:
         """Has permission to delete.
 
         Args:
             request (HttpRequest): Request object from the view function that called this method (if any).
-            obj (BillingTransferLog | None): Object to be deleted (if any).
+            obj (BillingLogEntry | None): Object to be deleted (if any).
 
         Returns:
             bool: True if the user has permission to delete the given object, False otherwise.

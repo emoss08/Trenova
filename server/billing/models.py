@@ -25,9 +25,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from encrypted_model_fields.fields import EncryptedCharField
 
 from order.models import Order
 from organization.models import BusinessUnit, Organization
@@ -184,13 +182,6 @@ class BillingControl(GenericModel):
         help_text=_(
             "Define if customer billing requirements will be enforced when billing."
         ),
-    )
-    open_exchange_rates_app_id = EncryptedCharField(
-        verbose_name=_("Open Exchange Rates App ID"),
-        help_text=_("Key from openexchangerates.org to use for currency conversion."),
-        max_length=255,
-        blank=True,
-        null=True,
     )
 
     class Meta:
@@ -458,7 +449,7 @@ class DocumentClassification(GenericModel):
         Returns:
             str: Document classification url
         """
-        return reverse("billing:document-classification-detail", kwargs={"pk": self.pk})
+        return reverse("document-classification-detail", kwargs={"pk": self.pk})
 
     def delete(self, *args: typing.Any, **kwargs: typing.Any) -> ModelDelete:
         if self.name == "CON":
@@ -756,7 +747,6 @@ class BillingQueue(GenericModel):
 
         errors = []
 
-        # TODO (WOLFRED): Write validation tests for this.
         # TODO (WOLFRED): Think about moving this into a validation.py file, and changing it to a dictionary of errors.
 
         # If order is already billed raise ValidationError
@@ -833,90 +823,12 @@ class BillingQueue(GenericModel):
             raise ValidationError(
                 {
                     "invoice_number": _(
-                        "Invoice number must start with invoice prefix from Organization's invoice_control. Please try again."
+                        "Invoice number must start with invoice prefix from Organization's invoice_control. Please "
+                        "try again."
                     )
                 },
                 code="invalid",
             )
-
-
-# TODO(WOLFRED): Remove BillingTransferLog model and replace with BillingLogEntry
-
-
-class BillingTransferLog(GenericModel):
-    """
-    Class for storing information about the billing transfer log.
-    """
-
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        unique=True,
-        help_text=_("Unique identifier for the billing history"),
-    )
-    task_id = models.CharField(
-        _("Task ID"),
-        max_length=255,
-        help_text=_("Task ID for the billing transfer log"),
-        blank=True,
-    )
-    order = models.ForeignKey(
-        "order.Order",
-        on_delete=models.RESTRICT,
-        related_name="billing_transfer_log",
-        help_text=_("Assigned order to the billing transfer log"),
-        verbose_name=_("Order"),
-    )
-    transferred_at = models.DateTimeField(
-        verbose_name=_("Transferred At"),
-        help_text=_("Date and time when the order was transferred to billing"),
-    )
-    transferred_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.RESTRICT,
-        related_name="billing_transfer_log",
-        help_text=_("User who transferred the order to billing"),
-        verbose_name=_("Transferred By"),
-    )
-
-    class Meta:
-        """
-        Metaclass for the BillingTransferLog model.
-        """
-
-        verbose_name = _("Billing Transfer Log")
-        verbose_name_plural = _("Billing Transfer Logs")
-        ordering = ["-transferred_at"]
-        db_table = "billing_transfer_log"
-
-    def __str__(self) -> str:
-        """
-        String representation for the BillingTransferLog model.
-
-        Returns:
-            String representation for the BillingTransferLog model.
-        """
-        user_tz = timezone.get_current_timezone()
-        transferred_at_local = timezone.localtime(
-            value=self.transferred_at, timezone=user_tz
-        )
-        transferred_at_str = transferred_at_local.strftime("%Y-%m-%d %H:%M:%S")
-
-        return textwrap.shorten(
-            f"{self.order} transferred to billing at {transferred_at_str}",
-            width=100,
-            placeholder="...",
-        )
-
-    def get_absolute_url(self) -> str:
-        """Billing Transfer Log absolute url
-
-        Returns:
-            Absolute url for the billing transfer log object. For example,
-            `/billing_transfer_log/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
-        """
-        return reverse("billing-transfer-log-detail", kwargs={"pk": self.pk})
 
 
 @typing.final
