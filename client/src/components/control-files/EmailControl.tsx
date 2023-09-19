@@ -15,18 +15,151 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "react-query";
-import { Card, Divider, Skeleton, Text } from "@mantine/core";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Group,
+  SimpleGrid,
+  Skeleton,
+  Text,
+} from "@mantine/core";
 import React from "react";
+import { notifications } from "@mantine/notifications";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useForm, yupResolver } from "@mantine/form";
 import {
   getEmailControl,
   getEmailProfiles,
 } from "@/services/OrganizationRequestService";
 import { usePageStyles } from "@/assets/styles/PageStyles";
-import { EmailControlForm } from "@/components/control-files/_partials/EmailControlForm";
-import { EmailProfile } from "@/types/organization";
+import {
+  EmailControl,
+  EmailControlFormValues,
+  EmailProfile,
+} from "@/types/organization";
+import { TChoiceProps } from "@/types";
+import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
+import { APIError } from "@/types/server";
+import { emailControlSchema } from "@/helpers/schemas/OrganizationSchema";
+import { SelectInput } from "@/components/common/fields/SelectInput";
 
-function EmailControlPage() {
+interface Props {
+  emailControl: EmailControl;
+  selectEmailProfileData: TChoiceProps[];
+}
+
+function EmailControlForm({
+  emailControl,
+  selectEmailProfileData,
+}: Props): React.ReactElement {
+  const { classes } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation(
+    (values: EmailControlFormValues) =>
+      axios.put(`/email_control/${emailControl.id}/`, values),
+    {
+      onSuccess: () => {
+        queryClient
+          .invalidateQueries({
+            queryKey: ["emailControl"],
+          })
+          .then(() => {
+            notifications.show({
+              title: "Success",
+              message: "Email Control updated successfully",
+              color: "green",
+              withCloseButton: true,
+              icon: <FontAwesomeIcon icon={faCheck} />,
+            });
+          });
+      },
+      onError: (error: any) => {
+        const { data } = error.response;
+        if (data.type === "validation_error") {
+          data.errors.forEach((e: APIError) => {
+            form.setFieldError(e.attr, e.detail);
+            if (e.attr === "non_field_errors") {
+              notifications.show({
+                title: "Error",
+                message: e.detail,
+                color: "red",
+                withCloseButton: true,
+                icon: <FontAwesomeIcon icon={faXmark} />,
+                autoClose: 10_000, // 10 seconds
+              });
+            }
+          });
+        }
+      },
+      onSettled: () => {
+        setLoading(false);
+      },
+    },
+  );
+
+  const form = useForm<EmailControlFormValues>({
+    validate: yupResolver(emailControlSchema),
+    initialValues: {
+      billingEmailProfile: emailControl.billingEmailProfile || "",
+      rateExpirationEmailProfile: emailControl.rateExpirationEmailProfile || "",
+    },
+  });
+
+  const handleSubmit = (values: EmailControlFormValues) => {
+    setLoading(true);
+    mutation.mutate(values);
+  };
+
+  return (
+    <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
+      <Box className={classes.div}>
+        <Box>
+          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput<EmailControlFormValues>
+              form={form}
+              data={selectEmailProfileData}
+              className={classes.fields}
+              name="billingEmailProfile"
+              label="Billing Email Profile"
+              placeholder="Billing Email Profile"
+              description="The email profile that will be used for billing emails."
+              variant="filled"
+            />
+            <SelectInput<EmailControlFormValues>
+              form={form}
+              data={selectEmailProfileData}
+              className={classes.fields}
+              name="rateExpirationEmailProfile"
+              label="Rate Expiration Email Profile"
+              placeholder="Rate Expiration Email Profile"
+              description="The email profile that will be used for rate expiration emails."
+              variant="filled"
+            />
+          </SimpleGrid>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              loading={loading}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Box>
+      </Box>
+    </form>
+  );
+}
+
+export default function EmailControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
@@ -75,5 +208,3 @@ function EmailControlPage() {
     </Card>
   );
 }
-
-export default EmailControlPage;
