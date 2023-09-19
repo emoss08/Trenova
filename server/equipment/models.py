@@ -63,7 +63,7 @@ class EquipmentType(GenericModel):
 
         verbose_name = _("Equipment Type")
         verbose_name_plural = _("Equipment Types")
-        ordering = ["-id"]
+        ordering = ["-name"]
         db_table = "equipment_type"
         constraints = [
             models.UniqueConstraint(
@@ -78,7 +78,7 @@ class EquipmentType(GenericModel):
         Returns:
             str: String representation of the Equipment Type Model
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(self.name, width=40, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Equipment Type absolute URL

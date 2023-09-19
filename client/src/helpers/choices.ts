@@ -207,7 +207,7 @@ export const distanceMethodChoices = [
 /** Type for Feasibility Operator Choices */
 type FeasibilityOperatorChoiceProps = "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
 
-export const FeasibilityOperatorChoices = [
+export const feasibilityOperatorChoices = [
   { value: "eq", label: "Equals" },
   { value: "ne", label: "Not Equals" },
   { value: "gt", label: "Greater Than" },
