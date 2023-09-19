@@ -20,11 +20,12 @@ import { NumberInput, NumberInputProps } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import { InputFieldNameProp } from "@/types";
 
 interface ValidatedNumberInputProps<TFormValues extends object>
   extends Omit<NumberInputProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-  name: keyof TFormValues;
+  name: InputFieldNameProp<TFormValues>;
 }
 
 export function ValidatedNumberInput<TFormValues extends object>({
