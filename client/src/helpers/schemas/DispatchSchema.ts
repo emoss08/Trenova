@@ -119,7 +119,7 @@ export const rateBillingTableSchema: ObjectSchema<RateBillingTableFormValues> =
     accessorialCharge: Yup.string().required("Accessorial Charge is required"),
     description: Yup.string()
       .max(100, "Description cannot be more than 100 characters long")
-      .required("Description is required"),
+      .notRequired(),
     unit: Yup.number().required("Unit is required"),
     chargeAmount: Yup.number().required("Charge Amount is required"),
     subTotal: Yup.number().required("Subtotal is required"),
@@ -144,5 +144,8 @@ export const rateSchema: ObjectSchema<RateFormValues> = Yup.object().shape({
   rateAmount: Yup.number().required("Rate Amount is required"),
   distanceOverride: Yup.number().nullable().notRequired(),
   comments: Yup.string().nullable().notRequired(),
-  rateBillingTables: Yup.array().of(rateBillingTableSchema).notRequired(),
+  rateBillingTables: Yup.array()
+    .of(rateBillingTableSchema)
+    .notRequired()
+    .nullable(),
 });

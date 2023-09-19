@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from django.db.models import Prefetch, QuerySet, Max
+from django.db.models import Prefetch, QuerySet
 from rest_framework import permissions, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.request import Request
@@ -200,6 +200,7 @@ class RateViewSet(viewsets.ModelViewSet):
         ).only(
             "id",
             "rate_number",
+            "is_active",
             "customer_id",
             "effective_date",
             "expiration_date",
@@ -213,5 +214,49 @@ class RateViewSet(viewsets.ModelViewSet):
             "organization_id",
             "distance_override",
             "comments",
+        )
+        return queryset
+
+
+class FeasibilityToolControlViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing FeasibilityToolControl in the system.
+
+    The viewset provides default operations for creating, updating Order Control,
+    as well as listing and retrieving Feasibility Tool Control. It uses the ``FeasibilityToolControlSerializer``
+    class to convert the order control instance to and from JSON-formatted data.
+
+    Only admin users are allowed to access the views provided by this viewset.
+
+    Attributes:
+        queryset (QuerySet): A queryset of FeasibilityToolControl objects that will be used to
+        retrieve and update OrderControl objects.
+
+        serializer_class (FeasibilityToolControlSerializer): A serializer class that will be used to
+        convert FeasibilityToolControl objects to and from JSON-formatted data.
+
+        permission_classes (list): A list of permission classes that will be used to
+        determine if a user has permission to perform a particular action.
+    """
+
+    queryset = models.FeasibilityToolControl.objects.all()
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = serializers.FeasibilityToolControlSerializer
+    http_method_names = ["get", "put", "patch", "head", "options"]
+
+    def get_queryset(self) -> "QuerySet[models.FeasibilityToolControl]":
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "business_unit_id",
+            "mpw_operator",
+            "mpw_criteria",
+            "mpd_operator",
+            "mpd_criteria",
+            "mpg_operator",
+            "mpg_criteria",
+            "otp_operator",
+            "otp_criteria",
         )
         return queryset

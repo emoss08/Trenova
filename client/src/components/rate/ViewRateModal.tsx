@@ -51,7 +51,6 @@ function ViewRateBillingTableModal({
   rateBillingTables: Array<RateBillingTable>;
 }) {
   const { classes } = useFormStyles();
-  // const theme = useMantineTheme();
   const fields = rateBillingTables?.map((item, index) => {
     const { accessorialCharge } = item;
 
@@ -70,7 +69,7 @@ function ViewRateBillingTableModal({
           />
           <TextInput
             label="Description"
-            value={rateBillingTables[index].description}
+            value={rateBillingTables[index].description || ""}
             placeholder="Description"
             description="Description for Rate Billing Table"
             className={classes.fields}
@@ -89,7 +88,9 @@ function ViewRateBillingTableModal({
           <TextInput
             label="Charge Amount"
             placeholder="Charge Amount"
-            value={rateBillingTables[index].chargeAmount}
+            value={parseFloat(
+              String(rateBillingTables[index].chargeAmount),
+            ).toFixed(2)}
             description="Charge Amount for Rate Billing Table"
             className={classes.fields}
             variant="filled"
@@ -98,7 +99,9 @@ function ViewRateBillingTableModal({
           <TextInput
             label="Sub Total"
             placeholder="Sub Total"
-            value={rateBillingTables[index].subTotal}
+            value={parseFloat(
+              String(rateBillingTables[index].subTotal),
+            ).toFixed(2)}
             description="Sub Total for Rate Billing Table"
             className={classes.fields}
             variant="filled"
@@ -108,6 +111,16 @@ function ViewRateBillingTableModal({
       </>
     );
   });
+
+  if (rateBillingTables.length === 0) {
+    return (
+      <Box>
+        <Text fw={400} className={classes.text}>
+          No Rate Billing Table found
+        </Text>
+      </Box>
+    );
+  }
 
   return <Box>{fields}</Box>;
 }
@@ -268,6 +281,15 @@ function ViewRateModalForm({
           variant="filled"
           readOnly
         />
+        <TextInput
+          label="Distance Override"
+          placeholder="Distance Override"
+          description="Dist. Override associated with this Rate"
+          className={classes.fields}
+          value={rate.distanceOverride || ""}
+          variant="filled"
+          readOnly
+        />
       </SimpleGrid>
       <Textarea
         label="Comments"
@@ -288,7 +310,6 @@ export function ViewRateModal(): React.ReactElement {
   const [activeTab, setActiveTab] = React.useState<string | null>("overview");
   const isMobile = useMediaQuery("(max-width: 50em)");
 
-  // Requests
   const { selectCustomersData } = useCustomers(showViewModal);
 
   const { selectCommodityData } = useCommodities(showViewModal);
