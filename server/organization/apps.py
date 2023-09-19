@@ -26,6 +26,8 @@ class OrganizationConfig(AppConfig):
     def ready(self) -> None:
         from organization import signals
 
+        # TODO(WOLFRED): Possibly remove signals and replace with Celery tasks.
+
         # Organization
         post_save.connect(
             signals.create_dispatch_control,
@@ -51,6 +53,11 @@ class OrganizationConfig(AppConfig):
             signals.create_email_control,
             sender="organization.Organization",
             dispatch_uid="create_email_control",
+        )
+        post_save.connect(
+            signals.create_feasibility_tool_control,
+            sender="organization.Organization",
+            dispatch_uid="create_feasibility_tool_control",
         )
         post_save.connect(
             signals.create_invoice_control,
