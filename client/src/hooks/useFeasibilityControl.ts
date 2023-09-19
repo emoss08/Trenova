@@ -14,24 +14,18 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+import { useQuery, useQueryClient } from "react-query";
+import { getFeasibilityControl } from "@/services/DispatchRequestService";
 
-import axios from "@/helpers/AxiosConfig";
-import { FeasibilityToolControl } from "@/types/dispatch";
+export function useFeasibilityControl() {
+  const queryClient = useQueryClient();
 
-/**
- * Fetches new Rate Number from the server.
- * @returns A promise that resolves to a string representation of the latest rate number.
- */
-export async function getNewRateNumber(): Promise<string> {
-  const response = await axios.get("/rates/get_new_rate_number/");
-  return response.data.rateNumber;
-}
-
-/**
- * Fetches the feasibility tool control from the server.
- * @returns A promise that resolves to a FeasibilityToolControl object.
- */
-export async function getFeasibilityControl(): Promise<FeasibilityToolControl> {
-  const response = await axios.get("/feasibility_tool_control/");
-  return response.data.results;
+  return useQuery({
+    queryKey: ["feasibilityControl"],
+    queryFn: async () => getFeasibilityControl(),
+    initialData: () => queryClient.getQueryData("feasibilityControl"),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 }

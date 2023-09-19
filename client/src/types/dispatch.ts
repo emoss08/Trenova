@@ -133,7 +133,7 @@ export type RateBillingTable = {
   id: string;
   rate: string;
   accessorialCharge: string;
-  description: string;
+  description?: string | null;
   unit: number;
   chargeAmount: number;
   subTotal: number;
@@ -148,7 +148,33 @@ export type RateBillingTableFormValues = Omit<
 
 export type RateFormValues = Omit<
   Rate,
-  "organization" | "businessUnit" | "created" | "modified" | "id"
+  | "organization"
+  | "businessUnit"
+  | "created"
+  | "modified"
+  | "id"
+  | "rateBillingTables"
 > & {
   rateBillingTables?: Array<RateBillingTableFormValues> | null;
 };
+
+export type FeasibilityToolControl = {
+  id: string;
+  organization: string;
+  businessUnit: string;
+  mpwOperator: string;
+  mpwCriteria: number;
+  mpdOperator: string;
+  mpdCriteria: number;
+  mpgOperator: string;
+  mpgCriteria: number;
+  otpOperator: string;
+  otpCriteria: number;
+  created: string;
+  modified: string;
+};
+
+export type FeasibilityToolControlFormValues = Omit<
+  FeasibilityToolControl,
+  "id" | "organization" | "businessUnit" | "created" | "modified"
+>;

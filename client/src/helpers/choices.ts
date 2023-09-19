@@ -169,3 +169,49 @@ export const DateFormatChoices: ReadonlyArray<
   { value: "%Y/%d/%m", label: "YYYY/DD/MM" },
   { value: "%Y/%m/%d", label: "YYYY/MM/DD" },
 ];
+
+/** Type for Route Avoidance Choices */
+type RouteAvoidanceChoiceProps = "tolls" | "highways" | "ferries";
+
+export const routeAvoidanceChoices = [
+  { value: "tolls", label: "Tolls" },
+  { value: "highways", label: "Highways" },
+  { value: "ferries", label: "Ferries" },
+] satisfies ReadonlyArray<IChoiceProps<RouteAvoidanceChoiceProps>>;
+
+/** Type for Route Model Choices */
+type RouteModelChoiceProps = "best_guess" | "optimistic" | "pessimistic";
+
+export const routeModelChoices = [
+  { value: "best_guess", label: "Best Guess" },
+  { value: "optimistic", label: "Optimistic" },
+  { value: "pessimistic", label: "Pessimistic" },
+] satisfies ReadonlyArray<IChoiceProps<RouteModelChoiceProps>>;
+
+/** Type for Route Distance Unit Choices */
+type RouteDistanceUnitProps = "metric" | "imperial";
+
+export const routeDistanceUnitChoices = [
+  { value: "metric", label: "Metric" },
+  { value: "imperial", label: "Imperial" },
+] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
+
+/** Type for Distance Method Choices */
+type DistanceMethodChoiceProps = "Google" | "Monta";
+
+export const distanceMethodChoices = [
+  { value: "Google", label: "Google" },
+  { value: "Monta", label: "Monta" },
+] satisfies ReadonlyArray<IChoiceProps<DistanceMethodChoiceProps>>;
+
+/** Type for Feasibility Operator Choices */
+type FeasibilityOperatorChoiceProps = "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
+
+export const FeasibilityOperatorChoices = [
+  { value: "eq", label: "Equals" },
+  { value: "ne", label: "Not Equals" },
+  { value: "gt", label: "Greater Than" },
+  { value: "gte", label: "Greater Than or Equal To" },
+  { value: "lt", label: "Less Than" },
+  { value: "lte", label: "Less Than or Equal To" },
+] satisfies ReadonlyArray<IChoiceProps<FeasibilityOperatorChoiceProps>>;

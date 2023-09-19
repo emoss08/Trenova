@@ -16,12 +16,13 @@
  */
 
 import {
-  faUserCrown,
   faBox,
   faBuildingColumns,
   faFileInvoiceDollar,
   faInbox,
+  faTruckClock,
   faTruckFast,
+  faUserCrown,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { lazy } from "react";
 import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
@@ -102,9 +103,9 @@ export const adminNavLinks = [
             permission: "view_emailcontrol",
           },
           {
-            label: "Route Controls",
-            link: "/admin/control-files#route-controls",
-            permission: "view_routecontrol",
+            label: "Feasibility Controls",
+            link: "/admin/control-files#feasibility-tool-controls",
+            permission: "view_feasibilitytoolcontrol",
           },
         ],
       },
@@ -129,6 +130,9 @@ const EmailControlContent = lazy(
 );
 const RouteControlContent = lazy(
   () => import("../../../components/control-files/RouteControl"),
+);
+const FeasibilityToolControlContent = lazy(
+  () => import("../../../components/control-files/FeasibilityControl"),
 );
 
 // TODO(Wolfred): Add permissions to control files to restrict access to certain users
@@ -168,5 +172,11 @@ export const controlFileData: NavLinks[] = [
     label: "Route Controls",
     description: "Manage and Optimize Delivery Routes",
     component: RouteControlContent,
+  },
+  {
+    icon: faTruckClock,
+    label: "Feasibility Tool Controls",
+    description: "Control and Optimize Feasibility Tool",
+    component: FeasibilityToolControlContent,
   },
 ];
