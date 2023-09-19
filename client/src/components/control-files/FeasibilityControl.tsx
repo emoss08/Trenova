@@ -40,7 +40,10 @@ import {
   FeasibilityToolControl,
   FeasibilityToolControlFormValues as FormValues,
 } from "@/types/dispatch";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { feasibilityOperatorChoices } from "@/helpers/choices";
 import { useFeasibilityControl } from "@/hooks/useFeasibilityControl";
+import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 
 interface Props {
   feasibilityControl: FeasibilityToolControl;
@@ -55,7 +58,7 @@ function FeasibilityControlForm({
 
   const mutation = useMutation(
     (values: FormValues) =>
-      axios.put(`/feasibility_control/${feasibilityControl.id}/`, values),
+      axios.put(`/feasibility_tool_control/${feasibilityControl.id}/`, values),
     {
       onSuccess: () => {
         queryClient
@@ -119,8 +122,67 @@ function FeasibilityControlForm({
     <form onSubmit={form.onSubmit((values) => handleSubmit(values))}>
       <Box className={classes.div}>
         <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            Test
+          <SimpleGrid cols={4} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+            <SelectInput<FormValues>
+              form={form}
+              name="mpwOperator"
+              label="MPW Operator"
+              description="Select the operator for MPW"
+              data={feasibilityOperatorChoices}
+              withAsterisk
+            />
+            <ValidatedNumberInput<FormValues>
+              form={form}
+              name="mpwCriteria"
+              label="MPW Criteria"
+              description="Enter Miles Per Week criteria"
+              withAsterisk
+            />
+            <SelectInput<FormValues>
+              form={form}
+              name="mpdOperator"
+              label="MPD Operator"
+              description="Select the operator for MPD"
+              data={feasibilityOperatorChoices}
+              withAsterisk
+            />
+            <ValidatedNumberInput<FormValues>
+              form={form}
+              name="mpdCriteria"
+              label="MPD Criteria"
+              description="Enter Miles Per Day criteria"
+              withAsterisk
+            />
+            <SelectInput<FormValues>
+              form={form}
+              name="mpgOperator"
+              label="MPG Operator"
+              description="Select the operator for MPG"
+              data={feasibilityOperatorChoices}
+              withAsterisk
+            />
+            <ValidatedNumberInput<FormValues>
+              form={form}
+              name="mpgCriteria"
+              label="MPG Criteria"
+              description="Enter Miles Per Gallon criteria"
+              withAsterisk
+            />
+            <SelectInput<FormValues>
+              form={form}
+              name="otpOperator"
+              label="OTP Operator"
+              description="Select the operator for OTP"
+              data={feasibilityOperatorChoices}
+              withAsterisk
+            />
+            <ValidatedNumberInput<FormValues>
+              form={form}
+              name="otpCriteria"
+              label="OTP Criteria"
+              description="Enter On-Time Percentage Criteria"
+              withAsterisk
+            />
           </SimpleGrid>
           <Group position="right" mt="md">
             <Button
@@ -141,18 +203,32 @@ function FeasibilityControlForm({
 export default function FeasibilityControlPage() {
   const { classes } = usePageStyles();
 
-  const { data, isLoading } = useFeasibilityControl();
+  const {
+    data: feasibilityControlData,
+    isLoading: isFeasibilityControlDataLoading,
+  } = useFeasibilityControl();
 
-  return isLoading ? (
+  const feasibilityControlDataArray = feasibilityControlData?.[0];
+
+  return isFeasibilityControlDataLoading ? (
     <Skeleton height={400} />
   ) : (
-    <Card className={classes.card}>
+    <Card
+      className={classes.card}
+      sx={{
+        overflow: "visible",
+      }}
+    >
       <Text fz="xl" fw={700} className={classes.text}>
         Feasibility Tool Controls
       </Text>
 
       <Divider my={10} />
-      {data && <FeasibilityControlForm feasibilityControl={data} />}
+      {feasibilityControlDataArray && (
+        <FeasibilityControlForm
+          feasibilityControl={feasibilityControlDataArray}
+        />
+      )}
     </Card>
   );
 }

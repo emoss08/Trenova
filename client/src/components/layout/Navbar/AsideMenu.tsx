@@ -64,7 +64,7 @@ export function AsideMenu(): React.ReactElement {
       <Group className={classes.header} position="apart">
         <OrganizationLogo />
         <MCode
-          backgroundColor={
+          bgcolor={
             theme.colorScheme === "dark"
               ? "rgba(112, 72, 232, .5)"
               : "rgba(112, 72, 232)"

@@ -31,7 +31,9 @@ export async function getNewRateNumber(): Promise<string> {
  * Fetches the feasibility tool control from the server.
  * @returns A promise that resolves to a FeasibilityToolControl object.
  */
-export async function getFeasibilityControl(): Promise<FeasibilityToolControl> {
+export async function getFeasibilityControl(): Promise<
+  FeasibilityToolControl[]
+> {
   const response = await axios.get("/feasibility_tool_control/");
   return response.data.results;
 }
