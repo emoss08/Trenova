@@ -14,9 +14,12 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import typing
 
 from django.core.exceptions import ValidationError
+from drf_standardized_errors.formatter import ExceptionFormatter
 from drf_standardized_errors.handler import ExceptionHandler
+from drf_standardized_errors.types import ErrorResponse
 from rest_framework import exceptions
 
 
@@ -40,3 +43,17 @@ class CommandCallException(Exception):
     This exception is raised when a django command is called with invalid arguments,
     or when the command fails to execute.
     """
+
+
+class CustomExceptionFormatter(ExceptionFormatter):
+    @staticmethod
+    def snake_to_camel(snake_str: str) -> str:
+        components = snake_str.split("_")
+        return components[0] + "".join(x.title() for x in components[1:])
+
+    def format_error_response(
+        self, error_response: ErrorResponse
+    ) -> dict[str, typing.Any]:
+        for error in error_response.errors:
+            error.attr = self.snake_to_camel(error.attr)
+        return super().format_error_response(error_response)
