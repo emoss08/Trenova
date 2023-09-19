@@ -218,6 +218,11 @@ router.register(
     basename="dispatch-control",
 )
 router.register(r"rates", dispatch_api.RateViewSet, basename="rates")
+router.register(
+    r"feasibility_tool_control",
+    dispatch_api.FeasibilityToolControlViewSet,
+    basename="feasibility-tool-control",
+)
 
 # Integration Routing
 router.register(
