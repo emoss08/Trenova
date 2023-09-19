@@ -23,7 +23,7 @@ from django.db.models.signals import post_migrate
 from django.dispatch import Signal, receiver
 
 from billing.models import BillingControl
-from dispatch.models import DispatchControl
+from dispatch.models import DispatchControl, FeasibilityToolControl
 from invoicing.models import InvoiceControl
 from order.models import OrderControl
 from organization import models
@@ -194,6 +194,33 @@ def create_invoice_control(
     """
     if created:
         InvoiceControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
+
+
+def create_feasibility_tool_control(
+    sender: models.Organization,
+    instance: models.Organization,
+    created: bool,
+    **kwargs: Any,
+) -> None:
+    """Create an FeasibilityToolControl model instance for a new Organization model instance.
+
+    This function is called as a signal when an Organization model instance is saved.
+    If a new Organization instance is created, it creates an FeasibilityToolControl model
+    instance with the organization reference.
+
+    Args:
+        sender (models.Organization): The class of the sending instance.
+        instance (models.Organization): The instance of the Organization model being saved.
+        created (bool): True if a new record was created, False otherwise.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    if created:
+        FeasibilityToolControl.objects.create(
             organization=instance, business_unit=instance.business_unit
         )
 
