@@ -224,11 +224,7 @@ class RateSerializer(GenericSerializer):
         # Get the business unit of the user from the request.
         business_unit = super().get_business_unit
 
-        # Pop rate billing table data.
-        rate_billing_table_data = validated_data.pop("rate_billing_tables", [])
-
-        # Create or update the rate billing tables
-        if rate_billing_table_data:
+        if rate_billing_table_data := validated_data.pop("rate_billing_tables", []):
             helpers.create_or_update_rate_billing_table(
                 organization=organization,
                 business_unit=business_unit,
@@ -241,3 +237,20 @@ class RateSerializer(GenericSerializer):
         instance.save()
 
         return instance
+
+
+class FeasibilityToolControlSerializer(GenericSerializer):
+    """A serializer for the `FeasibilityToolControl` model.
+
+    A serializer class for the FeasibilityToolControl model. This serializer is used
+    to convert the FeasibilityToolControl model instances into a Python dictionary
+    format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `FeasibilityToolControlSerializer` class.
+        """
+
+        model = models.FeasibilityToolControl

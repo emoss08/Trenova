@@ -334,6 +334,11 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     commodity = CommodityFactory()
     order_type = OrderTypeFactory()
     equipment_type = EquipmentTypeFactory()
+    accessorial_charge = AccessorialChargeFactory()
+    rate = models.Rate.objects.get(id=rate_api.data["id"])
+    billing_table = RateBillingTableFactory(
+        rate=rate,
+    )
 
     data = {
         "customer": customer.id,
@@ -341,11 +346,32 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
         "order_type": order_type.id,
         "equipment_type": equipment_type.id,
         "comments": "Test Rate Update",
+        "rate_billing_tables": [
+            {
+                "accessorial_charge": accessorial_charge.id,
+                "description": "Test Rate Billing Table",
+                "unit": 1,
+                "charge_amount": 100.00,
+                "sub_total": 100.00,
+            },
+            {
+                "accessorial_charge": accessorial_charge.id,
+                "rate": rate.id,
+                "description": "Test Rate Billing Table 2",
+                "unit": 1,
+                "charge_amount": 100.00,
+                "sub_total": 100.00,
+            },
+        ],
     }
 
-    response = api_client.patch(
-        reverse("rates-detail", kwargs={"pk": rate_api.data["id"]}), data=data
+    response = api_client.put(
+        reverse("rates-detail", kwargs={"pk": rate_api.data["id"]}),
+        data=data,
+        format="json",
     )
+
+    print(response.data)
 
     assert response.status_code == status.HTTP_200_OK
     assert models.Rate.objects.count() == 1
@@ -354,6 +380,16 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     assert models.Rate.objects.get().order_type.id == data["order_type"]
     assert models.Rate.objects.get().equipment_type.id == data["equipment_type"]
     assert models.Rate.objects.get().comments == data["comments"]
+    assert (
+        response.data["rate_billing_tables"][0]["description"]
+        == "Test Rate Billing Table"
+    )
+    assert response.data["rate_billing_tables"][0]["unit"] == 1
+    assert (
+        response.data["rate_billing_tables"][1]["description"]
+        == "Test Rate Billing Table 2"
+    )
+    assert response.data["rate_billing_tables"][1]["unit"] == 1
 
 
 def test_rate_api_delete(api_client: APIClient, rate_api: Response) -> None:

@@ -673,8 +673,10 @@ class Rate(GenericModel):
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        code = f"R{cls.objects.count() + 1:05d}"
-        return "R00001" if cls.objects.filter(rate_number=code).exists() else code
+        code = cls.objects.order_by("-rate_number").first()
+        if code:
+            return f"R{int(code.rate_number[1:]) + 1:05d}"
+        return "R00001"
 
 
 class RateBillingTable(GenericModel):

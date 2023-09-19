@@ -22,9 +22,9 @@ import { USDollarFormat } from "@/helpers/constants";
 import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { Rate } from "@/types/dispatch";
 import { useRateStore } from "@/stores/DispatchStore";
-import { EditFleetCodeModal } from "@/components/fleet-codes/EditFleetCodeModal";
 import { CreateRateModal } from "@/components/rate/CreateRateModal";
 import { ViewRateModal } from "@/components/rate/ViewRateModal";
+import { EditRateModal } from "@/components/rate/EditRateModal";
 
 export function RateTable() {
   const columns: MRT_ColumnDef<Rate>[] = useMemo<MRT_ColumnDef<Rate>[]>(
@@ -66,7 +66,7 @@ export function RateTable() {
       store={useRateStore}
       link="/rates"
       columns={columns}
-      TableEditModal={EditFleetCodeModal}
+      TableEditModal={EditRateModal}
       TableViewModal={ViewRateModal}
       displayDeleteModal
       deleteKey="id"

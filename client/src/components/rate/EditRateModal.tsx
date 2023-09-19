@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import {
   Badge,
   Box,
@@ -28,53 +27,34 @@ import {
   Text,
   useMantineTheme,
 } from "@mantine/core";
+import React from "react";
+import { useMediaQuery } from "@mantine/hooks";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
-import { useMediaQuery } from "@mantine/hooks";
 import { useRateStore as store } from "@/stores/DispatchStore";
+import { TChoiceProps } from "@/types";
+import { Rate, rateFields, RateFormValues } from "@/types/dispatch";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { ValidatedDateInput } from "@/components/common/fields/DateInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import axios from "@/helpers/AxiosConfig";
 import { APIError } from "@/types/server";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { SelectInput } from "@/components/common/fields/SelectInput";
-import { TChoiceProps } from "@/types";
-import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/helpers/constants";
-import { useCustomers } from "@/hooks/useCustomers";
-import { rateFields, RateFormValues } from "@/types/dispatch";
 import { rateSchema } from "@/helpers/schemas/DispatchSchema";
+import { useCustomers } from "@/hooks/useCustomers";
 import { useCommodities } from "@/hooks/useCommodities";
-import { ValidatedDateInput } from "@/components/common/fields/DateInput";
 import { useLocations } from "@/hooks/useLocations";
-import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
-import { getNewRateNumber } from "@/services/DispatchRequestService";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
 import { useOrderTypes } from "@/hooks/useOrderTypes";
 import { useAccessorialCharges } from "@/hooks/useAccessorialCharges";
+import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 
-type Props = {
-  customers: ReadonlyArray<TChoiceProps>;
-  isCustomersLoading: boolean;
-  isCustomersError: boolean;
-  commodities: ReadonlyArray<TChoiceProps>;
-  isCommoditiesLoading: boolean;
-  isCommoditiesError: boolean;
-  orderTypes: ReadonlyArray<TChoiceProps>;
-  isOrderTypesLoading: boolean;
-  isOrderTypesError: boolean;
-  equipmentTypes: ReadonlyArray<TChoiceProps>;
-  isEquipmentTypesLoading: boolean;
-  isEquipmentTypesError: boolean;
-  locations: ReadonlyArray<TChoiceProps>;
-  isLocationsLoading: boolean;
-  isLocationsError: boolean;
-  form: UseFormReturnType<RateFormValues>;
-};
-
-function CreateRateBillingTableForm({
+function EditRateBillingTableForm({
   accessorialCharges,
   isAccessorialChargesLoading,
   isAccessorialChargesError,
@@ -102,6 +82,7 @@ function CreateRateBillingTableForm({
             label="Accessorial Charge"
             placeholder="Select Accessorial Charge"
             description="Accessorial Charge associated with this Rate"
+            withAsterisk
           />
           <ValidatedTextInput<RateFormValues>
             label="Description"
@@ -110,26 +91,29 @@ function CreateRateBillingTableForm({
             placeholder="Description"
             description="Description for Rate Billing Table"
           />
-          <ValidatedNumberInput<RateFormValues>
+          <ValidatedTextInput<RateFormValues>
             form={form}
             name={`rateBillingTables.${index}.unit`}
             label="Unit"
             placeholder="Unit"
             description="Unit for Rate Billing Table"
+            withAsterisk
           />
-          <ValidatedNumberInput<RateFormValues>
+          <ValidatedTextInput<RateFormValues>
             form={form}
             name={`rateBillingTables.${index}.chargeAmount`}
             label="Charge Amount"
             placeholder="Charge Amount"
             description="Charge Amount for Rate Billing Table"
+            withAsterisk
           />
-          <ValidatedNumberInput<RateFormValues>
+          <ValidatedTextInput<RateFormValues>
             form={form}
             name={`rateBillingTables.${index}.subTotal`}
             label="Sub Total"
             placeholder="Sub Total"
             description="Sub Total for Rate Billing Table"
+            withAsterisk
           />
           <Button
             mt={40}
@@ -172,9 +156,9 @@ function CreateRateBillingTableForm({
           form.insertListItem("rateBillingTables", {
             accessorialCharge: "",
             description: "",
-            unit: 1,
-            chargeAmount: 1,
-            subTotal: 1,
+            unit: Number(1),
+            chargeAmount: Number(1),
+            subTotal: Number(1),
           })
         }
       >
@@ -184,7 +168,26 @@ function CreateRateBillingTableForm({
   );
 }
 
-function CreateRateModalForm({
+type Props = {
+  customers: ReadonlyArray<TChoiceProps>;
+  isCustomersLoading: boolean;
+  isCustomersError: boolean;
+  commodities: ReadonlyArray<TChoiceProps>;
+  isCommoditiesLoading: boolean;
+  isCommoditiesError: boolean;
+  orderTypes: ReadonlyArray<TChoiceProps>;
+  isOrderTypesLoading: boolean;
+  isOrderTypesError: boolean;
+  equipmentTypes: ReadonlyArray<TChoiceProps>;
+  isEquipmentTypesLoading: boolean;
+  isEquipmentTypesError: boolean;
+  locations: ReadonlyArray<TChoiceProps>;
+  isLocationsLoading: boolean;
+  isLocationsError: boolean;
+  form: UseFormReturnType<RateFormValues>;
+};
+
+function EditRateModalForm({
   customers,
   isCustomersLoading,
   isCustomersError,
@@ -201,22 +204,8 @@ function CreateRateModalForm({
   isLocationsLoading,
   isLocationsError,
   form,
-}: Props) {
+}: Props): React.ReactElement {
   const { classes } = useFormStyles();
-
-  const fetchRate = React.useCallback(async () => {
-    try {
-      const rateNumber = await getNewRateNumber();
-      form.setFieldValue("rateNumber", rateNumber);
-    } catch (err) {
-      console.error("Error fetching rate number:", err);
-    }
-  }, []);
-
-  // fetch rate number and assign it to rateNumber field once when component mounts
-  React.useEffect(() => {
-    fetchRate();
-  }, [fetchRate]);
 
   return (
     <Box className={classes.div}>
@@ -346,6 +335,10 @@ function CreateRateModalForm({
           form={form}
           name="rateAmount"
           label="Rate Amount"
+          thousandsSeparator=","
+          decimalSeparator="."
+          precision={2}
+          hideControls
           placeholder="Rate Amount"
           description="Rate Amount associated with this Rate"
           withAsterisk
@@ -354,9 +347,12 @@ function CreateRateModalForm({
           form={form}
           name="distanceOverride"
           label="Distance Override"
+          thousandsSeparator=","
+          decimalSeparator="."
+          precision={2}
+          hideControls
           placeholder="Distance Override"
           description="Dist. Override associated with this Rate"
-          withAsterisk
         />
       </SimpleGrid>
       <ValidatedTextArea<RateFormValues>
@@ -370,16 +366,20 @@ function CreateRateModalForm({
   );
 }
 
-export function CreateRateModal() {
-  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
+export function EditRateModalBody({
+  rate,
+  showEditModal,
+}: {
+  rate: Rate;
+  showEditModal: boolean;
+}) {
   const [activeTab, setActiveTab] = React.useState<string | null>("overview");
-  const [loading, setLoading] = React.useState<boolean>(false);
-  const isMobile = useMediaQuery("(max-width: 50em)");
+  const [loading, setLoading] = React.useState(false);
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: RateFormValues) => axios.post("/rates/", values),
+    (values: RateFormValues) => axios.put(`/rates/${rate.id}/`, values),
     {
       onSuccess: () => {
         queryClient
@@ -394,7 +394,7 @@ export function CreateRateModal() {
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
             });
-            store.set("createModalOpen", false);
+            store.set("editModalOpen", false);
           });
       },
       onError: (error: any) => {
@@ -432,21 +432,21 @@ export function CreateRateModal() {
   const form = useForm<RateFormValues>({
     validate: yupResolver(rateSchema),
     initialValues: {
-      isActive: true,
-      rateNumber: "",
-      customer: "",
-      effectiveDate: new Date(),
-      expirationDate: new Date(),
-      commodity: "",
-      orderType: "",
-      equipmentType: "",
-      originLocation: "",
-      destinationLocation: "",
-      rateMethod: "F",
-      rateAmount: Number(0),
-      distanceOverride: Number(0),
-      comments: "",
-      rateBillingTables: [],
+      isActive: rate.isActive,
+      rateNumber: rate.rateNumber,
+      customer: rate.customer,
+      effectiveDate: new Date(rate.effectiveDate as Date),
+      expirationDate: new Date(rate.expirationDate as Date),
+      commodity: rate.commodity,
+      orderType: rate.orderType,
+      equipmentType: rate.equipmentType,
+      originLocation: rate.originLocation,
+      destinationLocation: rate.destinationLocation,
+      rateMethod: rate.rateMethod,
+      rateAmount: Number(rate.rateAmount as number) || 0,
+      distanceOverride: Number(rate.distanceOverride as number) || 0,
+      comments: rate.comments,
+      rateBillingTables: rate?.rateBillingTables,
     },
   });
 
@@ -470,49 +470,125 @@ export function CreateRateModal() {
     mutation.mutate(values);
   };
 
-  // Requests
   const {
     selectCustomersData,
     isLoading: isCustomersLoading,
     isError: isCustomersError,
-  } = useCustomers(showCreateModal);
+  } = useCustomers(showEditModal);
 
   const {
     selectCommodityData,
     isLoading: isCommoditiesLoading,
     isError: isCommoditiesError,
-  } = useCommodities(showCreateModal);
+  } = useCommodities(showEditModal);
 
   const {
     selectLocationData,
     isLoading: isLocationsLoading,
     isError: isLocationsError,
-  } = useLocations(showCreateModal);
+  } = useLocations(showEditModal);
 
   const {
     selectEquipmentType,
     isLoading: isEquipmentTypesLoading,
     isError: isEquipmentTypesError,
-  } = useEquipmentTypes(showCreateModal);
+  } = useEquipmentTypes(showEditModal);
 
   const {
     selectOrderType,
     isLoading: isOrderTypesLoading,
     isError: isOrderTypesError,
-  } = useOrderTypes(showCreateModal);
+  } = useOrderTypes(showEditModal);
 
   const {
     selectAccessorialChargeData,
     isLoading: isAccessorialChargesLoading,
     isError: isAccessorialChargesError,
-  } = useAccessorialCharges(showCreateModal);
+  } = useAccessorialCharges(showEditModal);
 
-  if (!showCreateModal) return null;
+  return (
+    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+      <Tabs
+        defaultValue="overview"
+        value={activeTab}
+        onTabChange={setActiveTab}
+      >
+        <Tabs.List>
+          <Tabs.Tab
+            color={getErrorCount("overview") > 0 ? "red" : "blue"}
+            value="overview"
+          >
+            Overview
+          </Tabs.Tab>
+          <Tabs.Tab
+            color={getErrorCount("rate-billing-table") > 0 ? "red" : "blue"}
+            rightSection={
+              getErrorCount("rate-billing-table") > 0 ? (
+                <Badge
+                  w={16}
+                  h={16}
+                  sx={{ pointerEvents: "none" }}
+                  variant="filled"
+                  size="xs"
+                  p={0}
+                  color="red"
+                >
+                  {getErrorCount("rate-billing-table")}
+                </Badge>
+              ) : undefined
+            }
+            value="rate-billing-table"
+          >
+            Rate Billing Table
+          </Tabs.Tab>
+        </Tabs.List>
+        <Tabs.Panel value="overview" pt="xs">
+          <EditRateModalForm
+            customers={selectCustomersData}
+            isCustomersLoading={isCustomersLoading}
+            isCustomersError={isCustomersError}
+            commodities={selectCommodityData}
+            isCommoditiesLoading={isCommoditiesLoading}
+            isCommoditiesError={isCommoditiesError}
+            locations={selectLocationData}
+            isLocationsLoading={isLocationsLoading}
+            isLocationsError={isLocationsError}
+            equipmentTypes={selectEquipmentType}
+            isEquipmentTypesLoading={isEquipmentTypesLoading}
+            isEquipmentTypesError={isEquipmentTypesError}
+            orderTypes={selectOrderType}
+            isOrderTypesError={isOrderTypesError}
+            isOrderTypesLoading={isOrderTypesLoading}
+            form={form}
+          />
+        </Tabs.Panel>
+        <Tabs.Panel value="rate-billing-table" pt="xs">
+          <EditRateBillingTableForm
+            accessorialCharges={selectAccessorialChargeData}
+            isAccessorialChargesLoading={isAccessorialChargesLoading}
+            isAccessorialChargesError={isAccessorialChargesError}
+            form={form}
+          />
+        </Tabs.Panel>
+      </Tabs>
+      <Group position="right" mt="md">
+        <Button type="submit" loading={loading}>
+          Submit
+        </Button>
+      </Group>
+    </form>
+  );
+}
+
+export function EditRateModal(): React.ReactElement {
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+  const [rate] = store.use("selectedRecord");
+  const isMobile = useMediaQuery("(max-width: 50em)");
 
   return (
     <Modal.Root
-      opened={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
+      opened={showEditModal}
+      onClose={() => setShowEditModal(false)}
       fullScreen={isMobile}
       transitionProps={{ transition: "fade", duration: 200 }}
       styles={{
@@ -524,82 +600,15 @@ export function CreateRateModal() {
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Create Rate</Modal.Title>
+          <Modal.Title>Edit Rate</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-            <Tabs
-              defaultValue="overview"
-              value={activeTab}
-              onTabChange={setActiveTab}
-            >
-              <Tabs.List>
-                <Tabs.Tab
-                  color={getErrorCount("overview") > 0 ? "red" : "gray"}
-                  value="overview"
-                >
-                  Overview
-                </Tabs.Tab>
-                <Tabs.Tab
-                  color={
-                    getErrorCount("rate-billing-table") > 0 ? "red" : "gray"
-                  }
-                  rightSection={
-                    getErrorCount("rate-billing-table") > 0 ? (
-                      <Badge
-                        w={16}
-                        h={16}
-                        sx={{ pointerEvents: "none" }}
-                        variant="filled"
-                        size="xs"
-                        p={0}
-                        color="red"
-                      >
-                        {getErrorCount("rate-billing-table")}
-                      </Badge>
-                    ) : undefined
-                  }
-                  value="rate-billing-table"
-                >
-                  Rate Billing Table
-                </Tabs.Tab>
-              </Tabs.List>
-              <Tabs.Panel value="overview" pt="xs">
-                <CreateRateModalForm
-                  customers={selectCustomersData}
-                  isCustomersLoading={isCustomersLoading}
-                  isCustomersError={isCustomersError}
-                  commodities={selectCommodityData}
-                  isCommoditiesLoading={isCommoditiesLoading}
-                  isCommoditiesError={isCommoditiesError}
-                  locations={selectLocationData}
-                  isLocationsLoading={isLocationsLoading}
-                  isLocationsError={isLocationsError}
-                  equipmentTypes={selectEquipmentType}
-                  isEquipmentTypesLoading={isEquipmentTypesLoading}
-                  isEquipmentTypesError={isEquipmentTypesError}
-                  orderTypes={selectOrderType}
-                  isOrderTypesError={isOrderTypesError}
-                  isOrderTypesLoading={isOrderTypesLoading}
-                  form={form}
-                />
-              </Tabs.Panel>
-              <Tabs.Panel value="rate-billing-table" pt="xs">
-                <CreateRateBillingTableForm
-                  accessorialCharges={selectAccessorialChargeData}
-                  isAccessorialChargesLoading={isAccessorialChargesLoading}
-                  isAccessorialChargesError={isAccessorialChargesError}
-                  form={form}
-                />
-              </Tabs.Panel>
-            </Tabs>
-            <Group position="right" mt="md">
-              <Button type="submit" loading={loading}>
-                Submit
-              </Button>
-            </Group>
-          </form>
+          {rate ? (
+            <EditRateModalBody rate={rate} showEditModal={showEditModal} />
+          ) : (
+            <Text>Rate not found</Text>
+          )}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
