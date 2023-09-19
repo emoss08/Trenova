@@ -16,6 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.contrib import admin
+from django.http import HttpRequest
 
 from dispatch import models
 from utils.admin import GenericAdmin, GenericStackedInline
@@ -98,3 +99,28 @@ class RateAdmin(GenericAdmin[models.Rate]):
     )
     search_fields = ("rate_number",)
     inlines = (RateBillingTableAdmin,)
+
+
+@admin.register(models.FeasibilityToolControl)
+class FeasibilityToolControlAdmin(GenericAdmin[models.FeasibilityToolControl]):
+    """
+    Feasibility Tool Control Admin
+    """
+
+    autocomplete = False
+    model: type[models.FeasibilityToolControl] = models.FeasibilityToolControl
+    list_display = ("organization", "id")
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: models.FeasibilityToolControl | None = None
+    ) -> bool:
+        """Has permission to delete.
+
+        Args:
+            request (HttpRequest): Request object from the view function that called this method (if any).
+            obj (models.FeasibilityToolControl | None): Object to be deleted (if any).
+
+        Returns:
+            bool: True if the user has permission to delete the given object, False otherwise.
+        """
+        return False
