@@ -15,47 +15,57 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, SimpleGrid } from "@mantine/core";
-import React from "react";
-import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQueryClient } from "react-query";
+import {
+  Box,
+  Button,
+  Card,
+  Divider,
+  Group,
+  SimpleGrid,
+  Skeleton,
+  Text,
+} from "@mantine/core";
+import React from "react";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/helpers/AxiosConfig";
-import { SwitchInput } from "@/components/common/fields/SwitchInput";
-import { SelectInput } from "@/components/common/fields/SelectInput";
-import { APIError } from "@/types/server";
-import { RouteControl, RouteControlFormValues } from "@/types/route";
-import {
-  distanceMethodChoices,
-  routeDistanceUnitChoices,
-} from "@/utils/apps/route";
-import { routeControlSchema } from "@/helpers/schemas/RouteSchema";
+import { useForm, yupResolver } from "@mantine/form";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import axios from "@/helpers/AxiosConfig";
+import { APIError } from "@/types/server";
+import { emailControlSchema } from "@/helpers/schemas/OrganizationSchema";
+import {
+  FeasibilityToolControl,
+  FeasibilityToolControlFormValues as FormValues,
+} from "@/types/dispatch";
+import { useFeasibilityControl } from "@/hooks/useFeasibilityControl";
 
 interface Props {
-  routeControl: RouteControl;
+  feasibilityControl: FeasibilityToolControl;
 }
 
-export function RouteControlForm({ routeControl }: Props) {
+function FeasibilityControlForm({
+  feasibilityControl,
+}: Props): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: RouteControlFormValues) =>
-      axios.put(`/route_control/${routeControl.id}/`, values),
+    (values: FormValues) =>
+      axios.put(`/feasibility_control/${feasibilityControl.id}/`, values),
     {
       onSuccess: () => {
         queryClient
           .invalidateQueries({
-            queryKey: ["routeControl"],
+            queryKey: ["feasibilityControl"],
           })
           .then(() => {
             notifications.show({
               title: "Success",
-              message: "Route Control updated successfully",
+              message: "Feasibility Control updated successfully",
               color: "green",
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
@@ -86,16 +96,21 @@ export function RouteControlForm({ routeControl }: Props) {
     },
   );
 
-  const form = useForm<RouteControlFormValues>({
-    validate: yupResolver(routeControlSchema),
+  const form = useForm<FormValues>({
+    validate: yupResolver(emailControlSchema),
     initialValues: {
-      distanceMethod: routeControl.distanceMethod,
-      mileageUnit: routeControl.mileageUnit,
-      generateRoutes: routeControl.generateRoutes,
+      mpwCriteria: feasibilityControl.mpwCriteria,
+      mpwOperator: feasibilityControl.mpwOperator,
+      mpdCriteria: feasibilityControl.mpdCriteria,
+      mpdOperator: feasibilityControl.mpdOperator,
+      mpgCriteria: feasibilityControl.mpgCriteria,
+      mpgOperator: feasibilityControl.mpgOperator,
+      otpCriteria: feasibilityControl.otpCriteria,
+      otpOperator: feasibilityControl.otpOperator,
     },
   });
 
-  const handleSubmit = (values: RouteControlFormValues) => {
+  const handleSubmit = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -105,36 +120,7 @@ export function RouteControlForm({ routeControl }: Props) {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<RouteControlFormValues>
-              form={form}
-              data={distanceMethodChoices}
-              className={classes.fields}
-              name="distanceMethod"
-              label="Distance Method"
-              placeholder="Distance Method"
-              description="Distance method for the company."
-              variant="filled"
-              withAsterisk
-            />
-            <SelectInput<RouteControlFormValues>
-              form={form}
-              data={routeDistanceUnitChoices}
-              className={classes.fields}
-              name="mileageUnit"
-              label="Mileage Unit"
-              placeholder="Mileage Unit"
-              description="The mileage unit that the organization uses."
-              variant="filled"
-              withAsterisk
-            />
-            <SwitchInput<RouteControlFormValues>
-              form={form}
-              className={classes.fields}
-              name="generateRoutes"
-              label="Auto Generate Routes"
-              description="Automatically generate routes for the company."
-              variant="filled"
-            />
+            Test
           </SimpleGrid>
           <Group position="right" mt="md">
             <Button
@@ -149,5 +135,24 @@ export function RouteControlForm({ routeControl }: Props) {
         </Box>
       </Box>
     </form>
+  );
+}
+
+export default function FeasibilityControlPage() {
+  const { classes } = usePageStyles();
+
+  const { data, isLoading } = useFeasibilityControl();
+
+  return isLoading ? (
+    <Skeleton height={400} />
+  ) : (
+    <Card className={classes.card}>
+      <Text fz="xl" fw={700} className={classes.text}>
+        Feasibility Tool Controls
+      </Text>
+
+      <Divider my={10} />
+      {data && <FeasibilityControlForm feasibilityControl={data} />}
+    </Card>
   );
 }
