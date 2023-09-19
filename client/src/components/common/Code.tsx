@@ -20,7 +20,7 @@ import { Code, CodeProps } from "@mantine/core";
 
 interface Props extends Omit<CodeProps, "color"> {
   color?: string;
-  backgroundColor?: string;
+  bgcolor?: string;
   children: React.ReactNode;
 }
 
@@ -28,7 +28,7 @@ export function MCode({ children, ...props }: Props): React.ReactElement {
   return (
     <Code
       style={{
-        backgroundColor: props.backgroundColor,
+        backgroundColor: props.bgcolor,
         color: props.color,
       }}
       {...props}
@@ -39,6 +39,6 @@ export function MCode({ children, ...props }: Props): React.ReactElement {
 }
 
 MCode.defaultProps = {
-  backgroundColor: "blue",
+  bgcolor: "blue",
   color: "white",
 };
