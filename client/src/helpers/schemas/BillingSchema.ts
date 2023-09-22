@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ObjectSchema } from "yup";
 import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 import {
   AccessorialChargeFormValues,
   BillingControlFormValues,
@@ -24,7 +24,7 @@ import {
 } from "@/types/billing";
 import {
   AutoBillingCriteriaChoicesProps,
-  fuelMethodChoicesProps,
+  FuelMethodChoicesProps,
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
 
@@ -36,7 +36,7 @@ export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> 
     chargeAmount: Yup.number()
       .min(1, "Charge Amount must be greater than zero.")
       .required("Charge amount is required"),
-    method: Yup.string<fuelMethodChoicesProps>().required("Method is required"),
+    method: Yup.string<FuelMethodChoicesProps>().required("Method is required"),
   });
 
 export const chargeTypeSchema: ObjectSchema<ChargeTypeFormValues> =

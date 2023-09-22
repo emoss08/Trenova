@@ -28,7 +28,7 @@ import {
   AccountSubTypeChoiceProps,
   AccountTypeChoiceProps,
   CashFlowTypeChoiceProps,
-} from "@/utils/apps/accounting";
+} from "../choices";
 
 export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
   Yup.object().shape({

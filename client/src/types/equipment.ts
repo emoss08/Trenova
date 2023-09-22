@@ -14,13 +14,43 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
+import { EquipmentClassChoiceProps } from "@/helpers/choices";
+
+export type EquipmentTypeDetail = {
+  id: string;
+  equipmentClass: EquipmentClassChoiceProps;
+  equipmentType: string;
+  fixedCost: string;
+  variableCost: string;
+  height: string;
+  length: string;
+  width: string;
+  weight: string;
+  idlingFuelUsage: string;
+  exemptFromTolls: boolean;
+};
+
 export type EquipmentType = {
   organization: string;
   businessUnit: string;
   id: string;
   name: string;
-  description: string;
-  costPerMile: number;
+  description?: string | null;
+  costPerMile: string;
   created: string;
   modified: string;
+  equipmentTypeDetails: EquipmentTypeDetail;
+};
+
+export type EquipmentTypeDetailFormValues = Omit<
+  EquipmentTypeDetail,
+  "id" | "equipmentType"
+>;
+
+export type EquipmentTypeFormValues = Pick<
+  EquipmentType,
+  "name" | "description" | "costPerMile"
+> & {
+  equipmentTypeDetails: EquipmentTypeDetailFormValues;
 };

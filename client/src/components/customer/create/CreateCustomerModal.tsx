@@ -28,7 +28,7 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { UseFormReturnType, useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { customerTableStore as store } from "@/stores/CustomerStore";
 import { CreateCustomerFormValues } from "@/types/customer";
 import axios from "@/helpers/AxiosConfig";
@@ -229,7 +229,7 @@ export function CreateCustomerModal(): React.ReactElement {
         if (data.type === "validation_error") {
           data.errors.forEach((e: APIError) => {
             form.setFieldError(e.attr, e.detail);
-            if (e.attr === "non_field_errors") {
+            if (e.attr === "nonFieldErrors") {
               notifications.show({
                 title: "Error",
                 message: e.detail,
@@ -239,7 +239,7 @@ export function CreateCustomerModal(): React.ReactElement {
                 autoClose: 10_000, // 10 seconds
               });
             } else if (
-              e.attr === "__all__" &&
+              e.attr === "All" &&
               e.detail ===
                 "Customer Rule Profile with this Name and Organization already exists."
             ) {

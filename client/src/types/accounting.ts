@@ -21,7 +21,7 @@ import {
   AccountSubTypeChoiceProps,
   AccountTypeChoiceProps,
   CashFlowTypeChoiceProps,
-} from "@/utils/apps/accounting";
+} from "@/helpers/choices";
 
 /** Types for Division Codes */
 export type DivisionCode = {

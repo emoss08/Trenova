@@ -55,7 +55,7 @@ import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { StateSelect } from "@/components/common/fields/StateSelect";
 import { CityAutoCompleteField } from "@/components/common/fields/CityAutoCompleteField";
 import { userTableStore } from "@/stores/UserTableStore";
-import { Organization, Department } from "@/types/organization";
+import { Department, Organization } from "@/types/organization";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 
 const initialValues: TransferListData = [
@@ -154,6 +154,7 @@ export function CreateUserDrawer(): React.ReactElement | null {
       username: "",
       email: "",
       department: "",
+      isSuperuser: false,
       profile: {
         jobTitle: "",
         organization: "",

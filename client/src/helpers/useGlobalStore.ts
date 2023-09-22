@@ -24,23 +24,6 @@ export type EqualityFn<T> = (
   right: T | null | undefined,
 ) => boolean;
 
-export type Store<State> = {
-  get: <K extends keyof State>(key: K) => State[K];
-  getAll: () => State;
-  use: <K extends keyof State>(
-    key: K,
-    defaultValue?: State[K],
-    equalityFn?: EqualityFn<State[K]>,
-  ) => [State[K], (value: SetStateAction<State[K]>) => void];
-  useAll: () => State;
-  set: <K extends keyof State>(key: K, value: SetStateAction<State[K]>) => void;
-  setAll: (state: State) => void;
-  has: <K extends keyof State>(key: K) => boolean;
-  delete: <K extends keyof State>(key: K) => void;
-  update: (state: Partial<State>) => void;
-  reset: () => void;
-};
-
 // eslint-disable-next-line @typescript-eslint/ban-types
 const isFunction = (fn: unknown): fn is Function => typeof fn === "function";
 

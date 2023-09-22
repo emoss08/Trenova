@@ -15,13 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Loader, Select, SelectItemProps, Text } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
+import { Select, SelectItemProps, Text } from "@mantine/core";
 import React, { forwardRef } from "react";
 import { SelectProps } from "@mantine/core/lib/Select/Select";
-import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { BChoiceProps, InputFieldNameProp, TChoiceProps } from "@/types";
+import { BChoiceProps } from "@/types";
 
 interface BooleanSelectInputProps
   extends Omit<SelectProps, "form" | "data" | "value"> {
@@ -53,6 +51,7 @@ export function BooleanSelectInput({
       nothingFound="Nothing found"
       className={classes.fields}
       itemComponent={SelectItem}
+      // @ts-ignore
       value={value}
       limit={10}
       variant="filled"

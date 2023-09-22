@@ -118,6 +118,7 @@ export function ViewSelectInput({
     <Select
       {...rest}
       data={validatedData}
+      // @ts-ignore
       value={value}
       maxDropdownHeight={200}
       nothingFound="Nothing found"

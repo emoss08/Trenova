@@ -15,10 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  faGrid2,
-  faHandHoldingDollar,
-} from "@fortawesome/pro-duotone-svg-icons";
+import { faHandHoldingDollar } from "@fortawesome/pro-duotone-svg-icons";
 import { IChoiceProps, TChoiceProps } from "@/types";
 import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 

@@ -21,12 +21,13 @@ import { AutocompleteProps } from "@mantine/core/lib/Autocomplete/Autocomplete";
 import { UseFormReturnType } from "@mantine/form";
 import { stateData } from "./StateSelect";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import { InputFieldNameProp } from "@/types";
 
 interface CityAutoCompleteFieldProps<TFormValues extends object>
   extends Omit<AutocompleteProps, "data" | "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   stateSelection: string;
-  name: keyof TFormValues;
+  name: InputFieldNameProp<TFormValues>;
 }
 
 export function CityAutoCompleteField<TFormValues extends object>({

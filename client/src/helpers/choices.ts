@@ -18,7 +18,7 @@
 import { IChoiceProps, TDayOfWeekChoiceProps } from "@/types";
 
 /** Type for Account Type Choices */
-type AccountTypeChoiceProps =
+export type AccountTypeChoiceProps =
   | "ASSET"
   | "LIABILITY"
   | "EQUITY"
@@ -36,7 +36,7 @@ export const accountTypeChoices: ReadonlyArray<
 ];
 
 /** Type for Cash Flow Type Choices */
-type CashFlowTypeChoiceProps = "OPERATING" | "INVESTING" | "FINANCING";
+export type CashFlowTypeChoiceProps = "OPERATING" | "INVESTING" | "FINANCING";
 
 export const cashFlowTypeChoices: ReadonlyArray<
   IChoiceProps<CashFlowTypeChoiceProps>
@@ -47,7 +47,7 @@ export const cashFlowTypeChoices: ReadonlyArray<
 ];
 
 /** Type for Account Sub Type Choices */
-type AccountSubTypeChoiceProps =
+export type AccountSubTypeChoiceProps =
   | "CURRENT_ASSET"
   | "FIXED_ASSET"
   | "OTHER_ASSET"
@@ -77,7 +77,7 @@ export const accountSubTypeChoices: ReadonlyArray<
 ];
 
 /** Type for Account Classification Choices */
-type AccountClassificationChoiceProps =
+export type AccountClassificationChoiceProps =
   | "BANK"
   | "CASH"
   | "ACCOUNTS_RECEIVABLE"
@@ -86,9 +86,7 @@ type AccountClassificationChoiceProps =
   | "OTHER_CURRENT_ASSET"
   | "FIXED_ASSET";
 
-export const accountClassificationChoices: ReadonlyArray<
-  IChoiceProps<AccountClassificationChoiceProps>
-> = [
+export const accountClassificationChoices = [
   { value: "BANK", label: "Bank" },
   { value: "CASH", label: "Cash" },
   { value: "ACCOUNTS_RECEIVABLE", label: "Accounts Receivable" },
@@ -96,10 +94,10 @@ export const accountClassificationChoices: ReadonlyArray<
   { value: "INVENTORY", label: "Inventory" },
   { value: "OTHER_CURRENT_ASSET", label: "Other Current Asset" },
   { value: "FIXED_ASSET", label: "Fixed Asset" },
-];
+] satisfies ReadonlyArray<IChoiceProps<AccountClassificationChoiceProps>>;
 
 /** Types for Job Function Choices */
-type JobFunctionChoiceProps =
+export type JobFunctionChoiceProps =
   | "MANAGER"
   | "MANAGEMENT_TRAINEE"
   | "SUPERVISOR"
@@ -110,9 +108,7 @@ type JobFunctionChoiceProps =
   | "SYS_ADMIN"
   | "TEST";
 
-export const jobFunctionChoices: ReadonlyArray<
-  IChoiceProps<JobFunctionChoiceProps>
-> = [
+export const jobFunctionChoices = [
   { value: "MANAGER", label: "Manager" },
   { value: "MANAGEMENT_TRAINEE", label: "Management Trainee" },
   { value: "SUPERVISOR", label: "Supervisor" },
@@ -122,11 +118,9 @@ export const jobFunctionChoices: ReadonlyArray<
   { value: "SAFETY", label: "Safety" },
   { value: "SYS_ADMIN", label: "System Administrator" },
   { value: "TEST", label: "Test Job Function" },
-];
+] satisfies ReadonlyArray<IChoiceProps<JobFunctionChoiceProps>>;
 
-export const DayOfWeekChoices: ReadonlyArray<
-  IChoiceProps<TDayOfWeekChoiceProps>
-> = [
+export const DayOfWeekChoices = [
   { value: "MON", label: "Monday" },
   { value: "TUE", label: "Tuesday" },
   { value: "WED", label: "Wednesday" },
@@ -134,7 +128,7 @@ export const DayOfWeekChoices: ReadonlyArray<
   { value: "FRI", label: "Friday" },
   { value: "SAT", label: "Saturday" },
   { value: "SUN", label: "Sunday" },
-];
+] satisfies ReadonlyArray<IChoiceProps<TDayOfWeekChoiceProps>>;
 
 type ServiceIncidentControlChoiceProps =
   | "Never"
@@ -143,15 +137,13 @@ type ServiceIncidentControlChoiceProps =
   | "Pickup and Delivery"
   | "All except shipper";
 
-export const ServiceIncidentControlChoices: ReadonlyArray<
-  IChoiceProps<ServiceIncidentControlChoiceProps>
-> = [
+export const ServiceIncidentControlChoices = [
   { value: "Never", label: "Never" },
   { value: "Pickup", label: "Pickup" },
   { value: "Delivery", label: "Delivery" },
   { value: "Pickup and Delivery", label: "Pickup and Delivery" },
   { value: "All except shipper", label: "All except shipper" },
-];
+] satisfies ReadonlyArray<IChoiceProps<ServiceIncidentControlChoiceProps>>;
 
 /** Type for Date Format Choices */
 export type DateFormatChoiceProps =
@@ -159,16 +151,14 @@ export type DateFormatChoiceProps =
   | "%d/%m/%Y"
   | "%Y/%d/%m"
   | "%Y/%m/%d"
-  | "FUCK";
+  | "";
 
-export const DateFormatChoices: ReadonlyArray<
-  IChoiceProps<DateFormatChoiceProps>
-> = [
+export const DateFormatChoices = [
   { value: "%m/%d/%Y", label: "MM/DD/YYYY" },
   { value: "%d/%m/%Y", label: "DD/MM/YYYY" },
   { value: "%Y/%d/%m", label: "YYYY/DD/MM" },
   { value: "%Y/%m/%d", label: "YYYY/MM/DD" },
-];
+] satisfies ReadonlyArray<IChoiceProps<DateFormatChoiceProps>>;
 
 /** Type for Route Avoidance Choices */
 type RouteAvoidanceChoiceProps = "tolls" | "highways" | "ferries";
@@ -180,7 +170,7 @@ export const routeAvoidanceChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteAvoidanceChoiceProps>>;
 
 /** Type for Route Model Choices */
-type RouteModelChoiceProps = "best_guess" | "optimistic" | "pessimistic";
+export type RouteModelChoiceProps = "best_guess" | "optimistic" | "pessimistic";
 
 export const routeModelChoices = [
   { value: "best_guess", label: "Best Guess" },
@@ -197,7 +187,7 @@ export const routeDistanceUnitChoices = [
 ] satisfies ReadonlyArray<IChoiceProps<RouteDistanceUnitProps>>;
 
 /** Type for Distance Method Choices */
-type DistanceMethodChoiceProps = "Google" | "Monta";
+export type DistanceMethodChoiceProps = "Google" | "Monta";
 
 export const distanceMethodChoices = [
   { value: "Google", label: "Google" },
@@ -215,3 +205,25 @@ export const feasibilityOperatorChoices = [
   { value: "lt", label: "Less Than" },
   { value: "lte", label: "Less Than or Equal To" },
 ] satisfies ReadonlyArray<IChoiceProps<FeasibilityOperatorChoiceProps>>;
+
+/** Type for Equipment Class Choices */
+export type EquipmentClassChoiceProps =
+  | "UNDEFINED"
+  | "CAR"
+  | "VAN"
+  | "PICKUP"
+  | "WALK_IN"
+  | "STRAIGHT"
+  | "TRACTOR"
+  | "TRAILER";
+
+export const equipmentClassChoices = [
+  { value: "UNDEFINED", label: "Undefined" },
+  { value: "CAR", label: "Car" },
+  { value: "VAN", label: "Van" },
+  { value: "PICKUP", label: "Pickup" },
+  { value: "WALK_IN", label: "Walk In" },
+  { value: "STRAIGHT", label: "Straight" },
+  { value: "TRACTOR", label: "Tractor" },
+  { value: "TRAILER", label: "Trailer" },
+] as ReadonlyArray<IChoiceProps<EquipmentClassChoiceProps>>;

@@ -16,15 +16,13 @@
  */
 
 import React from "react";
-import { Skeleton, Title, Text, Card, Button, Box } from "@mantine/core";
+import { Box, Button, Card, Skeleton, Text, Title } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import {
   getCustomerEmailProfile,
   getCustomerRuleProfile,
 } from "@/services/CustomerRequestService";
 import { customerStore as store } from "@/stores/CustomerStore";
-import { CustomerEmailProfileForm } from "@/components/customer/create/steps/CustomerEmailProfileForm";
-import { CustomerRuleProfileForm } from "@/components/customer/create/steps/CustomerRuleProfileForm";
 import { CustomerEmailProfile, CustomerRuleProfile } from "@/types/customer";
 import { CreateRuleProfileModal } from "./CreateRuleProfileModal";
 import { usePageStyles } from "@/assets/styles/PageStyles";
@@ -69,8 +67,9 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
   ) : (
     <>
       {emailProfile ? (
-        <CustomerEmailProfileForm emailProfile={emailProfile} />
+        <p>Test</p>
       ) : (
+        // <CustomerEmailProfileForm form={form} />
         <Card mb={20} className={classes.card}>
           <Box
             style={{
@@ -102,7 +101,8 @@ export function CustomerProfileTab({ customerId }: CustomerProfileTabProps) {
         </Card>
       )}
       {ruleProfile ? (
-        <CustomerRuleProfileForm ruleProfile={ruleProfile} />
+        // <CustomerRuleProfileForm ruleProfile={ruleProfile} />
+        <p>Test</p>
       ) : (
         <Card mb={20} className={classes.card}>
           <Box
