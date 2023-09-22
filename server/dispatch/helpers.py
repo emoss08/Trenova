@@ -18,6 +18,7 @@
 import typing
 
 from django.db import transaction
+
 from dispatch import models
 from organization.models import BusinessUnit, Organization
 

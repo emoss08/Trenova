@@ -131,16 +131,14 @@ def calculate_total(*, order: models.Order) -> Decimal:
     if order.rate_method == models.RatingMethodChoices.POUNDS and order.weight > 0:
         return (freight_charge * Decimal(order.weight)) + other_charge
 
-    # Calculate `OTHER` rating method
     if order.rate_method == models.RatingMethodChoices.OTHER:
-        if order.formula_template:
-            formula_text = order.formula_template.formula_text
-            if helpers.validate_formula(formula=formula_text):
-                variables = gather_formula_variables(order)
-                return Decimal(
-                    helpers.evaluate_formula(formula=formula_text, **variables)
-                )
-        else:
+        if not order.formula_template:
             return (freight_charge * Decimal(order.rating_units)) + other_charge
 
+        formula_text = order.formula_template.formula_text
+        if helpers.validate_formula(formula=formula_text):
+            variables = gather_formula_variables(order)
+            return Decimal(
+                helpers.evaluate_formula(formula=formula_text, **variables)
+            )
     return freight_charge
