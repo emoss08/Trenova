@@ -73,7 +73,7 @@ export function CreateFleetCodeModalForm({
         if (data.type === "validation_error") {
           data.errors.forEach((e: APIError) => {
             form.setFieldError(e.attr, e.detail);
-            if (e.attr === "non_field_errors") {
+            if (e.attr === "nonFieldErrors") {
               notifications.show({
                 title: "Error",
                 message: e.detail,
@@ -83,7 +83,7 @@ export function CreateFleetCodeModalForm({
                 autoClose: 10_000, // 10 seconds
               });
             } else if (
-              e.attr === "__all__" &&
+              e.attr === "All" &&
               e.detail ===
                 "Fleet Code with this Code and Organization already exists."
             ) {

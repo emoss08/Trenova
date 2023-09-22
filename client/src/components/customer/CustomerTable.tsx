@@ -124,7 +124,6 @@ export function CustomerTable() {
       link="/customers"
       columns={columns}
       displayDeleteModal
-      showCreateDrawer
       TableCreateDrawer={CreateCustomerModal}
       tableQueryKey="customers-table-data"
       exportModelName="Customer"

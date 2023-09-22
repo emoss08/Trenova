@@ -79,7 +79,7 @@ function EditHMModalForm({ hazardousMaterial }: Props): React.ReactElement {
         if (data.type === "validation_error") {
           data.errors.forEach((e: APIError) => {
             form.setFieldError(e.attr, e.detail);
-            if (e.attr === "non_field_errors") {
+            if (e.attr === "nonFieldErrors") {
               notifications.show({
                 title: "Error",
                 message: e.detail,

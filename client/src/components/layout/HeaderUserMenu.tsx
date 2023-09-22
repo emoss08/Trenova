@@ -52,7 +52,7 @@ const pageStyles = createStyles((theme) => ({
     "&:hover": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.colors.dark[7]
+          ? theme.colors.dark[6]
           : theme.colors.gray[0],
     },
   },
@@ -107,7 +107,6 @@ export function HeaderUserMenu({ user }: Props) {
               <Indicator
                 inline
                 withBorder
-                processing
                 size={10}
                 offset={3}
                 position="bottom-end"

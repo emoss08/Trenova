@@ -52,6 +52,9 @@ const DelayCodePage = lazy(() => import("../pages/dispatch/DelayCodes"));
 const FleetCodePage = lazy(() => import("../pages/dispatch/FleetCode"));
 const CommentTypePage = lazy(() => import("../pages/dispatch/CommentType"));
 const RatePage = lazy(() => import("../pages/dispatch/Rate"));
+const EquipmentTypePage = lazy(
+  () => import("../pages/equipment/EquipmentType"),
+);
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -260,6 +263,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Rate Management",
     element: <RatePage />,
     permission: "view_rate",
+  },
+  {
+    title: "Equipment Types",
+    group: "equipment",
+    subMenu: "configuration files",
+    path: "/equipment/equipment-types/",
+    description: "Equipment Types",
+    element: <EquipmentTypePage />,
+    permission: "view_equipmenttype",
   },
   // Error Page
   {

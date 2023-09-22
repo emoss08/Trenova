@@ -18,7 +18,7 @@
 import {
   DistanceMethodChoiceProps,
   RouteModelChoiceProps,
-} from "@/utils/apps/route";
+} from "@/helpers/choices";
 
 export type RouteControl = {
   id: string;
@@ -27,4 +27,5 @@ export type RouteControl = {
   mileageUnit: RouteModelChoiceProps;
   generateRoutes: boolean;
 };
+
 export type RouteControlFormValues = Omit<RouteControl, "id" | "organization">;

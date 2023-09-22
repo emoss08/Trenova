@@ -55,7 +55,7 @@ export type AccessorialCharge = {
   code: string;
   description?: string | null;
   isDetention: boolean;
-  chargeAmount: number | undefined;
+  chargeAmount: number;
   method: FuelMethodChoicesProps;
 };
 

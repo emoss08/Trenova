@@ -18,7 +18,7 @@
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 import { InvoiceControlFormValues } from "@/types/invoicing";
-import { DateFormatChoiceProps } from "@/utils/apps/invoicing";
+import { DateFormatChoiceProps } from "../choices";
 
 const MAX_FILE_SIZE = 1024000; // 1MB
 

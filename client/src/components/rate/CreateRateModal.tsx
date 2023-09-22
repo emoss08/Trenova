@@ -250,11 +250,11 @@ function CreateRateModalForm({
             flexDirection: "column",
           }}
         >
-          <Text fw={400} className={classes.text}>
+          <Text fw={400} fz="lg" className={classes.text}>
             Rate Details
           </Text>
+          <Divider my={10} />
         </div>
-        <Divider variant="dashed" />
       </Box>
       <SimpleGrid cols={4} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
         <SelectInput<RateFormValues>
@@ -402,7 +402,7 @@ export function CreateRateModal() {
         if (data.type === "validation_error") {
           data.errors.forEach((e: APIError) => {
             form.setFieldError(e.attr, e.detail);
-            if (e.attr === "non_field_errors") {
+            if (e.attr === "nonFieldErrors") {
               notifications.show({
                 title: "Error",
                 message: e.detail,
@@ -412,7 +412,7 @@ export function CreateRateModal() {
                 autoClose: 10_000, // 10 seconds
               });
             } else if (
-              e.attr === "__all__" &&
+              e.attr === "All" &&
               e.detail ===
                 "Rate with this rate number and Organization already exists."
             ) {
@@ -536,14 +536,29 @@ export function CreateRateModal() {
             >
               <Tabs.List>
                 <Tabs.Tab
-                  color={getErrorCount("overview") > 0 ? "red" : "gray"}
+                  color={getErrorCount("overview") > 0 ? "red" : "blue"}
                   value="overview"
+                  rightSection={
+                    getErrorCount("overview") > 0 ? (
+                      <Badge
+                        w={16}
+                        h={16}
+                        sx={{ pointerEvents: "none" }}
+                        variant="filled"
+                        size="xs"
+                        p={0}
+                        color="red"
+                      >
+                        {getErrorCount("overview")}
+                      </Badge>
+                    ) : undefined
+                  }
                 >
                   Overview
                 </Tabs.Tab>
                 <Tabs.Tab
                   color={
-                    getErrorCount("rate-billing-table") > 0 ? "red" : "gray"
+                    getErrorCount("rate-billing-table") > 0 ? "red" : "blue"
                   }
                   rightSection={
                     getErrorCount("rate-billing-table") > 0 ? (

@@ -40,7 +40,7 @@ type ViewDCModalFormProps = {
   selectGlAccountData: TChoiceProps[];
 };
 
-export function ViewDCModalForm({
+function ViewDCModalForm({
   divisionCode,
   selectGlAccountData,
 }: ViewDCModalFormProps) {

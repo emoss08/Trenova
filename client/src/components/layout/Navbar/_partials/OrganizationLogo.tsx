@@ -64,7 +64,7 @@ export function OrganizationLogo() {
 
   return (
     <Link to="/" style={{ textDecoration: "none" }}>
-      <Text size="lg" fw={600} className={classes.logoText}>
+      <Text size="md" fw={600} className={classes.logoText}>
         {organizationData?.name}
       </Text>
     </Link>

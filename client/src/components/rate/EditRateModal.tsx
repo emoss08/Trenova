@@ -402,7 +402,7 @@ export function EditRateModalBody({
         if (data.type === "validation_error") {
           data.errors.forEach((e: APIError) => {
             form.setFieldError(e.attr, e.detail);
-            if (e.attr === "non_field_errors") {
+            if (e.attr === "nonFieldErrors") {
               notifications.show({
                 title: "Error",
                 message: e.detail,
@@ -412,7 +412,7 @@ export function EditRateModalBody({
                 autoClose: 10_000, // 10 seconds
               });
             } else if (
-              e.attr === "__all__" &&
+              e.attr === "All" &&
               e.detail ===
                 "Rate with this rate number and Organization already exists."
             ) {

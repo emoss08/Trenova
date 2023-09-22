@@ -61,7 +61,7 @@ export function AsideMenu(): React.ReactElement {
       zIndex={10}
       className={classes.navbar}
     >
-      <Group className={classes.header} position="apart">
+      <Group className={classes.header} position="apart" spacing="xs">
         <OrganizationLogo />
         <MCode
           bgcolor={

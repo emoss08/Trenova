@@ -15,10 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TChoiceProps } from "@/types/index";
+import { IChoiceProps } from "@/types/index";
 
 /** Types for Export Model */
-export const exportModelTypes: TChoiceProps[] = [
+export type ExportModelType = "csv" | "xlsx" | "pdf";
+export const exportModelTypes: ReadonlyArray<IChoiceProps<ExportModelType>> = [
   { value: "csv", label: "CSV" },
   { value: "xlsx", label: "Excel" },
   { value: "pdf", label: "PDF" },
