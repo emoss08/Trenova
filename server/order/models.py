@@ -1188,15 +1188,11 @@ class FormulaTemplate(GenericModel):
                 formula=self.formula_text
             )
 
-            # Get the list of variables that are not allowed in the formula.
-            invalid_variables = [
+            if invalid_variables := [
                 var
                 for var in formula_variables
                 if var not in helpers.FORMULA_ALLOWED_VARIABLES
-            ]
-
-            # If there are invalid variables, raise a validation error.
-            if invalid_variables:
+            ]:
                 raise ValidationError(
                     {
                         "formula_text": _(

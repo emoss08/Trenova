@@ -30,12 +30,7 @@ from localflavor.us.models import USStateField, USZipCodeField
 from phonenumber_field.modelfields import PhoneNumberField
 
 from billing.models import AccessorialCharge, DocumentClassification
-from utils.models import (
-    CharWeekdays,
-    ChoiceField,
-    GenericModel,
-    PrimaryStatusChoices,
-)
+from utils.models import CharWeekdays, ChoiceField, GenericModel, PrimaryStatusChoices
 
 
 @final
@@ -352,7 +347,7 @@ class CustomerEmailProfile(GenericModel):
         for email in emails:
             try:
                 validator(email)
-            except ValidationError:
+            except ValidationError as e:
                 raise ValidationError(
                     {
                         "blind_copy": _(
@@ -360,7 +355,7 @@ class CustomerEmailProfile(GenericModel):
                         ),
                     },
                     code="invalid",
-                )
+                ) from e
 
     def get_absolute_url(self) -> str:
         """Returns the url to access a particular customer email profile instance

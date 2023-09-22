@@ -33,7 +33,7 @@ def redis_set(data: dict) -> int:
 
 def redis_get(data: dict) -> int:
     count = 0
-    for key in data.keys():
+    for key in data:
         val = redis_client.get(key)
         if val:
             count += 1

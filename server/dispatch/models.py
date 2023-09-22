@@ -673,8 +673,7 @@ class Rate(GenericModel):
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        code = cls.objects.order_by("-rate_number").first()
-        if code:
+        if code := cls.objects.order_by("-rate_number").first():
             return f"R{int(code.rate_number[1:]) + 1:05d}"
         return "R00001"
 

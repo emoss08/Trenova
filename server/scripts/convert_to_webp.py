@@ -81,15 +81,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     directory_path = sys.argv[1]
-    quality = 80
-    method = 4
-
     lossless = sys.argv[2].lower() == "true" if len(sys.argv) > 2 else False
-    if len(sys.argv) > 3:
-        quality = int(sys.argv[3])
-    if len(sys.argv) > 4:
-        method = int(sys.argv[4])
-
+    quality = int(sys.argv[3]) if len(sys.argv) > 3 else 80
+    method = int(sys.argv[4]) if len(sys.argv) > 4 else 4
     convert_png_to_webp(
         directory_path, lossless=lossless, quality=quality, method=method
     )

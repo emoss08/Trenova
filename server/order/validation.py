@@ -345,7 +345,7 @@ class OrderValidation:
     def validate_formula_template(self) -> None:
         if (
             self.order.formula_template
-            and not self.order.rate_method == RatingMethodChoices.OTHER
+            and self.order.rate_method != RatingMethodChoices.OTHER
         ):
             self.errors["formula_template"] = _(
                 "Formula template can only be used with rating method 'OTHER'. Please try again."

@@ -27,7 +27,6 @@ class OrganizationConfig(AppConfig):
         from organization import signals
 
         # TODO(WOLFRED): Possibly remove signals and replace with Celery tasks.
-
         # Organization
         post_save.connect(
             signals.create_dispatch_control,

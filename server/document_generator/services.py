@@ -54,7 +54,7 @@ def render_document(*, template: models.DocumentTemplate, instance: Model) -> st
         django_template = Template(template.content)
         rendered_content = django_template.render(Context(data))
     except TemplateSyntaxError as e:
-        raise ValidationError(f"Template syntax error: {e}")
+        raise ValidationError(f"Template syntax error: {e}") from e
 
     if theme := getattr(template, "theme", None):
         stylesheet = helpers.get_parsed_stylesheet(theme=theme)

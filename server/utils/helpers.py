@@ -14,10 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from dateutil.parser import parse
 from django.db import models
 
 from organization.models import BusinessUnit
-from dateutil.parser import parse
 
 
 def get_or_create_business_unit(*, bs_name: str) -> BusinessUnit:
