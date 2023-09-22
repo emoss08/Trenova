@@ -14,11 +14,16 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import typing
+
 from django.db.models import Prefetch, QuerySet
-from rest_framework import viewsets
+from rest_framework import response, status, viewsets
 
 from core.permissions import CustomObjectPermissions
 from equipment import models, serializers
+
+if typing.TYPE_CHECKING:
+    from rest_framework.request import Request
 
 
 class EquipmentTypeViewSet(viewsets.ModelViewSet):
@@ -36,6 +41,22 @@ class EquipmentTypeViewSet(viewsets.ModelViewSet):
     queryset = models.EquipmentType.objects.all()
     serializer_class = serializers.EquipmentTypeSerializer
     permission_classes = [CustomObjectPermissions]
+
+    def create(
+        self, request: "Request", *args: typing.Any, **kwargs: typing.Any
+    ) -> response.Response:
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        # Re-fetch the worker from the database to ensure all related data is fetched
+        worker = models.EquipmentType.objects.get(pk=serializer.instance.pk)  # type: ignore
+        response_serializer = self.get_serializer(worker)
+
+        return response.Response(
+            response_serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def get_queryset(self) -> QuerySet[models.EquipmentType]:
         queryset = (
@@ -149,7 +170,7 @@ class TrailerViewSet(viewsets.ModelViewSet):
             "organization_id",
             "make",
             "lease_expiration_date",
-            "fleet_id",
+            "fleet_code_id",
             "axles",
             "owner",
             "license_plate_number",

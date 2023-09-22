@@ -17,7 +17,7 @@
 
 import textwrap
 import uuid
-from typing import Any, final
+from typing import final
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -199,7 +199,11 @@ class EquipmentTypeDetail(GenericModel):
         Returns:
             str: String representation of the Equipment Type Detail Model
         """
-        return textwrap.wrap(self.equipment_type.name, 50)[0]
+        return textwrap.shorten(
+            f"{self.equipment_type.name} - {self.equipment_class}",
+            width=50,
+            placeholder="...",
+        )
 
     def get_absolute_url(self) -> str:
         """Equipment Type Detail absolute URL
@@ -208,19 +212,6 @@ class EquipmentTypeDetail(GenericModel):
             str: Absolute URL of the Equipment Type Detail Model
         """
         return reverse("equipment-type-details", kwargs={"pk": self.pk})
-
-    def update_details(self, **kwargs: Any) -> None:
-        """Updates the Equipment Type Detail Model
-
-        Args:
-            **kwargs: Keyword arguments to update the model
-
-        Returns:
-            None: This function does not return anything.
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
 
 class EquipmentManufacturer(GenericModel):
@@ -602,7 +593,7 @@ class Trailer(GenericModel):
         validators=[us_vin_number_validator],
     )
     # TODO (wolfred): Change this to fleet_code
-    fleet = models.ForeignKey(
+    fleet_code = models.ForeignKey(
         "dispatch.FleetCode",
         on_delete=models.CASCADE,
         related_name="trailer",
