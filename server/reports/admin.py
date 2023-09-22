@@ -82,7 +82,6 @@ class CustomReportAdmin(GenericAdmin[models.CustomReport]):
     list_display = ("name", "table", "organization")
     list_filter = ("organization",)
     search_fields = ("name", "table")
-    change_form_template = "admin/reports/customreport_change_form.html"
     inlines = (ReportColumnAdmin,)
     ordering = ("name",)
     fieldsets = (
