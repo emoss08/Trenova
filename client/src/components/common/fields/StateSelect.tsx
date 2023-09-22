@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 import React, { forwardRef } from "react";
-import { Text, Select, SelectProps } from "@mantine/core";
+import { Select, SelectProps, Text } from "@mantine/core";
 import { IconAlertTriangle } from "@tabler/icons-react";
 import { UseFormReturnType } from "@mantine/form";
-import { TChoiceProps } from "@/types";
+import { InputFieldNameProp, TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 
 export const stateData = [
@@ -77,7 +77,7 @@ export const stateData = [
 interface StateSelectProps<TFormValues>
   extends Omit<SelectProps, "data" | "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-  name: keyof TFormValues;
+  name: InputFieldNameProp<TFormValues>;
   searchable: boolean;
 }
 
