@@ -62,3 +62,15 @@ export function ValidatedTextInput<TFormValues extends object>({
     />
   );
 }
+
+interface ViewTextInputProps extends Omit<TextInputProps, "name" | "value"> {
+  value: any;
+}
+
+export function ViewTextInput({ ...rest }: ViewTextInputProps) {
+  const { classes } = useFormStyles();
+
+  return (
+    <TextInput {...rest} className={classes.fields} variant="filled" readOnly />
+  );
+}
