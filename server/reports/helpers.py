@@ -277,4 +277,12 @@ ALLOWED_MODELS = {
             {"value": "comments", "label": "Comments"},
         ],
     },
+    "EquipmentType": {
+        "app_label": "equipment",
+        "allowed_fields": [
+            {"value": "name", "label": "Name"},
+            {"value": "description", "label": "Description"},
+            {"value": "cost_per_mile", "label": "Cost Per Mile"},
+        ],
+    },
 }

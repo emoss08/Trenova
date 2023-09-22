@@ -17,7 +17,7 @@
 
 from typing import Any
 
-from equipment import models
+from equipment import helpers, models
 from utils.serializers import GenericSerializer
 
 
@@ -72,20 +72,13 @@ class EquipmentTypeSerializer(GenericSerializer):
             organization=organization, business_unit=business_unit, **validated_data
         )
 
-        if detail_data:
-            if details := models.EquipmentTypeDetail.objects.get(  # type: ignore
-                organization=organization,
-                business_unit=business_unit,
-                equipment_type=equipment_type,
-            ):
-                details.delete()
-
-            models.EquipmentTypeDetail.objects.create(
-                organization=organization,
-                business_unit=business_unit,
-                equipment_type=equipment_type,
-                **detail_data,
-            )
+        # Create Equipment Type Details
+        helpers.create_or_update_equip_type_details(
+            business_unit=business_unit,
+            equipment_type=equipment_type,
+            detail_data=detail_data,
+            organization=organization,
+        )
 
         return equipment_type
 
@@ -104,12 +97,17 @@ class EquipmentTypeSerializer(GenericSerializer):
 
         detail_data = validated_data.pop("equipment_type_details", {})
 
-        instance.name = validated_data.get("name", instance.name)
-        instance.description = validated_data.get("description", instance.description)
-        instance.save()
+        # Create Equipment Type Details
+        helpers.create_or_update_equip_type_details(
+            business_unit=instance.business_unit,
+            equipment_type=instance,
+            detail_data=detail_data,
+            organization=instance.organization,
+        )
 
-        if detail_data:
-            instance.equipment_type_details.update_details(**detail_data)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
 
         return instance
 
