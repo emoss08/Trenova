@@ -67,7 +67,6 @@ INSTALLED_APPS = [
     "encrypted_model_fields",
     "nested_inline",
     "drf_spectacular",
-    "djmoney",
     "auditlog",
     "notifications",
     "channels",
