@@ -57,3 +57,15 @@ export function ValidatedTextArea<TFormValues extends object>({
     />
   );
 }
+
+interface ViewTextAreaProps extends Omit<TextareaProps, "form" | "name"> {
+  value: string;
+}
+
+export function ViewTextarea({ ...rest }: ViewTextAreaProps) {
+  const { classes } = useFormStyles();
+
+  return (
+    <Textarea {...rest} className={classes.fields} variant="filled" readOnly />
+  );
+}
