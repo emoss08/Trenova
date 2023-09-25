@@ -17,7 +17,6 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { clearAllCookies } from "@/helpers/auth";
 import { createWebsocketManager } from "@/helpers/websockets";
 import { useAuthStore } from "@/stores/AuthStore";
 import { WEB_SOCKET_URL } from "@/helpers/constants";
@@ -47,7 +46,6 @@ export function LogoutListener({ userId }: LogoutListenerProps) {
             sessionStorage.clear();
             setIsAuthenticated(false);
             navigate("/login");
-            clearAllCookies(); // Clear all cookies to prevent auto-login
             console.info("Logged out");
           }
         },

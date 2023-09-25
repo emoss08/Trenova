@@ -54,3 +54,13 @@ export type EquipmentTypeFormValues = Pick<
 > & {
   equipmentTypeDetails: EquipmentTypeDetailFormValues;
 };
+
+export type EquipmentManufacturer = {
+  organization: string;
+  businessUnit: string;
+  id: string;
+  name: string;
+  description: string;
+  created: string;
+  modified: string;
+};

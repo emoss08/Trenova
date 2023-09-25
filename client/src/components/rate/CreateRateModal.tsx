@@ -241,20 +241,14 @@ function CreateRateModalForm({
         />
       </SimpleGrid>
       <Box my={10}>
-        <div
-          style={{
-            textAlign: "center",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
-          }}
-        >
+        {" "}
+        {/** Move into */}
+        <div className="flex flex-col items-center justify-center text-center">
           <Text fw={400} fz="lg" className={classes.text}>
             Rate Details
           </Text>
-          <Divider my={10} />
         </div>
+        <Divider my={5} variant="dashed" />
       </Box>
       <SimpleGrid cols={4} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
         <SelectInput<RateFormValues>
