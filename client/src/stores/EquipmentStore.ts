@@ -17,10 +17,29 @@
 
 import { createGlobalStore } from "@/helpers/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
-import { EquipmentType } from "@/types/equipment";
+import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 
 export const useEquipTypeTableStore = createGlobalStore<
   Omit<TableStoreProps<EquipmentType>, "drawerOpen">
+>({
+  pagination: {
+    pageIndex: 0,
+    pageSize: 10,
+  },
+  viewModalOpen: false,
+  editModalOpen: false,
+  selectedRecord: null,
+  globalFilter: "",
+  createModalOpen: false,
+  exportModalOpen: false,
+  deleteModalOpen: false,
+  columnFilters: false,
+  rowSelection: {},
+  errorCount: 0,
+});
+
+export const useEquipManufacturerTableStore = createGlobalStore<
+  Omit<TableStoreProps<EquipmentManufacturer>, "drawerOpen">
 >({
   pagination: {
     pageIndex: 0,

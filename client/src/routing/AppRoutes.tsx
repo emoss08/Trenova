@@ -55,6 +55,9 @@ const RatePage = lazy(() => import("../pages/dispatch/Rate"));
 const EquipmentTypePage = lazy(
   () => import("../pages/equipment/EquipmentType"),
 );
+const EquipmentManfacturerPage = lazy(
+  () => import("../pages/equipment/EquipmentManufacturer"),
+);
 
 export type RouteObjectWithPermission = RouteObject & {
   title: string;
@@ -272,6 +275,15 @@ export const routes: RouteObjectWithPermission[] = [
     description: "Equipment Types",
     element: <EquipmentTypePage />,
     permission: "view_equipmenttype",
+  },
+  {
+    title: "Equipment Manufacturer",
+    group: "equipment",
+    subMenu: "configuration files",
+    path: "/equipment/equipment-manufacturers/",
+    description: "Equipment Manufacturer",
+    element: <EquipmentManfacturerPage />,
+    permission: "view_equipmentmanufacturer",
   },
   // Error Page
   {
