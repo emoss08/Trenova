@@ -97,7 +97,7 @@ def test_feasibility_tool_eligible_driver(
     )
 
     # Create a FeasibilityControl instance
-    models.FeasibilityToolControl.objects.create(
+    models.FeasibilityToolControl.objects.update(
         organization=organization,
         business_unit=business_unit,
         mpw_operator=models.FeasibilityToolControl.OperatorChoices.GREATER_THAN_OR_EQUAL_TO,
@@ -195,7 +195,7 @@ def test_feasibility_tool_not_eligible(
     )
 
     # Create a FeasibilityControl instance
-    models.FeasibilityToolControl.objects.create(
+    models.FeasibilityToolControl.objects.update(
         business_unit=business_unit,
         organization=organization,
         mpw_operator=models.FeasibilityToolControl.OperatorChoices.GREATER_THAN_OR_EQUAL_TO,
