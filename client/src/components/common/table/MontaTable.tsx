@@ -31,6 +31,8 @@ import { DeleteRecordModal } from "@/components/common/table/DeleteRecordModal";
 import { API_URL } from "@/helpers/constants";
 import { TableTopToolbar } from "@/components/common/table/TableTopToolbar";
 import { TableExportModal } from "./TableExportModal";
+import { StoreType } from "@/helpers/useGlobalStore";
+import { TableStoreProps } from "@/types/tables";
 
 MontaTable.defaultProps = {
   displayDeleteModal: true,
@@ -44,8 +46,8 @@ MontaTable.defaultProps = {
 type Props<T extends Record<string, any>> = MRT_TableInstance<T> &
   MRT_TableOptions<T>;
 
-type MontaTableProps<T extends Record<string, any>> = {
-  store: any;
+type MontaTableProps<T extends Record<string, any>, K> = {
+  store: StoreType<K>;
   link: string;
   displayDeleteModal?: boolean;
   TableCreateDrawer?: React.ComponentType;
@@ -59,7 +61,10 @@ type MontaTableProps<T extends Record<string, any>> = {
   deleteKey?: string;
 } & Pick<Props<T>, "mantineBottomToolbarProps" | "mantineTableBodyRowProps">;
 
-export function MontaTable<T extends Record<string, any>>({
+export function MontaTable<
+  T extends Record<string, any>,
+  K extends Omit<TableStoreProps<T>, "drawerOpen">,
+>({
   store,
   link,
   TableCreateDrawer,
@@ -72,7 +77,7 @@ export function MontaTable<T extends Record<string, any>>({
   name,
   columns,
   deleteKey,
-}: MontaTableProps<T>) {
+}: MontaTableProps<T, K>) {
   const theme = useMantineTheme();
   const [pagination] = store.use("pagination");
   const [globalFilter, setGlobalFilter] = store.use("globalFilter");
