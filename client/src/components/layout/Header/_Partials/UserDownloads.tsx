@@ -32,14 +32,14 @@ import { UserReports } from "@/components/layout/Header/_Partials/UserReports";
 import { useNavbarStore } from "@/stores/HeaderStore";
 import { useHeaderStyles } from "@/assets/styles/HeaderStyles";
 import { getUserReports } from "@/services/UserRequestService";
-import { getUserId } from "@/helpers/constants";
 import { useAsideStyles } from "@/assets/styles/AsideStyles";
+import { useUserStore } from "@/stores/AuthStore";
 
 export function UserDownloads(): React.ReactElement {
   const [downloadMenuOpen] = useNavbarStore.use("downloadMenuOpen");
   const { classes } = useAsideStyles();
   const { classes: headerClasses } = useHeaderStyles();
-  const userId = getUserId() || "";
+  const { userId } = useUserStore.get("user");
   const queryClient = useQueryClient();
 
   // No stale time on this we want it to always be up-to-date
@@ -48,6 +48,7 @@ export function UserDownloads(): React.ReactElement {
       queryKey: ["userReport", userId],
       queryFn: () => getUserReports(),
       initialData: () => queryClient.getQueryData(["userReport", userId]),
+      staleTime: Infinity,
     },
   );
 
@@ -92,7 +93,7 @@ export function UserDownloads(): React.ReactElement {
         )}
         <Divider mb={2} mt={10} />
         <Link
-          to="#"
+          to="/#"
           style={{
             display: "flex",
             alignItems: "center",

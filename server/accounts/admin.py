@@ -19,6 +19,7 @@ from typing import Any
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import IS_POPUP_VAR, csrf_protect_m
 from django.contrib.admin.utils import unquote
 from django.contrib.auth import update_session_auth_hash
@@ -28,6 +29,7 @@ from django.contrib.auth.forms import (
     UserChangeForm,
     UserCreationForm,
 )
+from django.contrib.sessions.models import Session
 from django.core.exceptions import PermissionDenied
 from django.db import router, transaction
 from django.db.models import QuerySet
@@ -348,3 +350,11 @@ class JobTitleAdmin(GenericAdmin[models.JobTitle]):
 
     search_fields = ("name",)
     list_display = ("name", "status", "description")
+
+
+@admin.register(Session)
+class SessionAdmin(ModelAdmin):
+    def _session_data(self, obj):
+        return obj.get_decoded()
+
+    list_display = ["session_key", "_session_data", "expire_date"]

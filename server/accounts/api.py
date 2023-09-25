@@ -14,15 +14,13 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from datetime import timedelta
 from typing import Any
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.contrib.auth import login, logout
+from django.contrib.auth import logout, login
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
-from django.middleware import csrf
 from django.utils import timezone
 from rest_framework import (
     exceptions,
@@ -39,8 +37,6 @@ from rest_framework.request import Request
 from accounts import models, serializers
 from accounts.permissions import ViewAllUsersPermission
 from core.permissions import CustomObjectPermissions
-from utils.exceptions import InvalidTokenException
-from utils.types import AuthenticatedRequest
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -292,128 +288,111 @@ class JobTitleViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class TokenVerifyView(views.APIView):
-    """
-    Rest API endpoint for users can verify a token
+class UserDetailView(views.APIView):
+    """A class for the user's detail view that inherits from views.APIView.
+
+    Attributes:
+        permission_classes: An empty list. This endpoint doesn't require specific permissions to be accessed.
+        http_method_names: A list containing allowed HTTP method names for this view.
+
+    Methods:
+        get: Handles "GET" request and returns a response with the authenticated user's details.
     """
 
     permission_classes = []
-    http_method_names = ["post"]
+    http_method_names = ["get"]
 
-    def post(
-        self, request: AuthenticatedRequest, *args: Any, **kwargs: Any
-    ) -> response.Response:
-        """The post function is used to refresh the token.
+    def get(self, request, *args, **kwargs) -> response.Response:
+        """Handles sending of 'GET' request. Returns the authenticated user's details
+        or an error message if the user is not authenticated.
 
         Args:
-            self: Represent the instance of the object itself
-            request(Request): Get the request object
-            *args(Any): Pass in a list of arguments
-            **kwargs(Any): Pass in any additional arguments to the function
+            request: The incoming 'GET' request.
+            *args: Variable length arbitrary arguments from a user.
+            **kwargs: Variable length arbitrary keyword arguments from a user.
 
         Returns:
-            A response object, which is a dictionary with the following keys:
-
+            A Response object containing the authenticated user's details in case
+            the user is authenticated, or an error message stating that the
+            session has expired or the user is not authenticated. The HTTP status
+            code is also included in the response.
         """
-        # Get the token from the cookies
-        token = request.COOKIES.get("auth_token")
-
-        # Get organization token expiration days
-        token_expire_days = request.user.organization.token_expiration_days
-
-        # Check if token is provided. If not, raise an exception.
-        if not token:
-            raise InvalidTokenException("No token provided")
-
-        try:
-            # Get the token object
-            token_obj = models.Token.objects.get(key=token)
-            # Update token's expiration time
-            token_obj.expires = timezone.now() + timedelta(
-                days=token_expire_days
-            )  # set expires to 1 day from now
-            token_obj.save()
-
-            # Create a data object, with the user_id and organization_id
-            data = {
-                "user_id": token_obj.user_id,
-                "organization_id": token_obj.user.organization_id,
-            }
-
-            # Create a response object
-            res = response.Response(data, status=status.HTTP_200_OK)
-
-            # Set the token in the cookies again
-            res.set_cookie(
-                key="auth_token",
-                value=token_obj.key,
-                expires=token_obj.expires,
-                httponly=True,
-                secure=True,
-                samesite="Lax",
-                domain=None,
+        # Ensure the user is authenticated
+        if not request.user.is_authenticated:
+            return response.Response(
+                {"error": "Session has expired or user is not authenticated."},
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
-            return res
+        user = request.user
 
-        except models.Token.DoesNotExist as e:
-            raise InvalidTokenException("Token is invalid") from e
+        data = {
+            "userId": user.id,
+            "organizationId": user.organization_id
+            if hasattr(user, "organization")
+            else None,  # Assuming organization is an attribute
+            "userPermissions": list(user.get_all_permissions()),
+            "userGroups": list(user.groups.values_list("name", flat=True)),
+            "userIsStaff": user.is_staff,
+        }
+
+        return response.Response(data, status=status.HTTP_200_OK)
 
 
 class TokenProvisionView(ObtainAuthToken):
+    """A class for token provisioning that inherits from ObtainAuthToken.
+
+    Attributes:
+        throttle_scope: A string representing the scope of throttling.
+        permission_classes: A tuple containing permission classes.
+                           This endpoint allows any kind of access not requiring specific permissions.
+        serializer_class: TokenProvisionSerializer class for serializer purposes.
+        authentication_classes: An empty list. This endpoint doesn't require authentication to be accessed.
+
+    Methods:
+        post: Handles "POST" request and returns a response.
+    """
+
     throttle_scope = "auth"
     permission_classes = (permissions.AllowAny,)
     serializer_class = serializers.TokenProvisionSerializer
     authentication_classes = []  # bypass authentication for this endpoint
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
-        """The post function is used to log in a user.
-        It takes the username and password from the request body, validates them, and returns an auth token if successful.
-        If unsuccessful it will return a 400 error code with an error message explaining why.
+        """Handles sending of 'POST' request. Validates the incoming data and
+        provides a token or initiates one if it doesn't exist.
 
         Args:
-            self: Represent the instance of the object itself
-            request(Request): Get the request from the client
-            *args(Any): Pass a variable number of arguments to the function
-            **kwargs(Any): Pass in the keyword arguments
+            request: The incoming 'POST' request.
+            *args: Variable length arbitrary arguments from a user.
+            **kwargs: Variable length arbitrary keyword arguments from a user.
 
         Returns:
-            response.Response: A response object with the status code 200
+            A Response object containing a success message in case of
+            successful login, and a status code of OK(200).
         """
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         token, _ = models.Token.objects.get_or_create(user=user)
-        res = response.Response(status=status.HTTP_200_OK)
 
         if token.is_expired:
             token.delete()
-            token = models.Token.objects.create(user=user)
+            models.Token.objects.create(user=user)
 
         if user.is_active:
-            login(request, user)
+            login(request, user)  # Login the user which will also create a session
             user.online = True
             user.last_login = timezone.now()
             user.session_key = request.session.session_key
             user.save()
 
-        res.set_cookie(
-            key="auth_token",
-            value=token.key,
-            expires=token.expires,
-            httponly=True,
-            secure=False,
-            samesite="Lax",
-            domain=None,
+        return response.Response(
+            {
+                "message": "Login successful",
+            },
+            status=status.HTTP_200_OK,
         )
-        csrf.get_token(request)
-
-        res.data = {
-            "user_id": user.id,
-            "organization_id": user.organization_id,
-        }
-
-        return res
 
 
 class UserLogoutView(views.APIView):
@@ -421,7 +400,7 @@ class UserLogoutView(views.APIView):
     Rest API endpoint for users can logout
     """
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     http_method_names = ["post"]
 
     def post(self, request: Request, *args: Any, **kwargs: Any) -> response.Response:
@@ -438,17 +417,12 @@ class UserLogoutView(views.APIView):
 
         """
         user = request.user
+        logout(request)
+        user.online = False
+        user.session_key = None
+        user.save()
 
-        if user.is_authenticated:
-            logout(request)
-            user.online = False
-            user.session_key = None
-            user.save()
-
-        res = response.Response(status=status.HTTP_204_NO_CONTENT)
-        res.delete_cookie("auth_token")
-
-        return res
+        return response.Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RemoveUserSessionView(views.APIView):

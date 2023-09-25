@@ -105,7 +105,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "core.middleware.business_unit_middleware.BusinessUnitMiddleware",
+    # "core.middleware.business_unit_middleware.BusinessUnitMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "auditlog.middleware.AuditlogMiddleware",
@@ -260,7 +260,7 @@ CACHES = {
 }
 
 # Session Configurations
-SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+# SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # Cors Configurations
 CORS_ALLOWED_ORIGINS = [
@@ -276,6 +276,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
 
 # Rest Framework Configurations
 REST_FRAMEWORK = {
@@ -318,7 +320,7 @@ REST_FRAMEWORK = {
 
 DRF_STANDARDIZED_ERRORS = {
     "EXCEPTION_HANDLER_CLASS": "core.exceptions.CustomExceptionHandler",
-    "EXCEPTION_FORMATTER_CLASS": "core.exceptions.CustomExceptionFormatter",
+    # "EXCEPTION_FORMATTER_CLASS": "core.exceptions.CustomExceptionFormatter",
 }
 
 # Celery Configurations

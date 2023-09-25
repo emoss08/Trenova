@@ -15,8 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { getSessionItem } from "@/helpers/auth";
-import { useAuthStore } from "@/stores/AuthStore";
+import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 
 /**
  * Custom hook that provides user's authentication and permission status.
@@ -29,8 +28,8 @@ import { useAuthStore } from "@/stores/AuthStore";
  */
 export function useUserPermissions() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = getSessionItem("mt_is_admin");
-  const permissions = getSessionItem("mt_user_permissions") || [];
+  const isAdmin = useUserStore.get("user").userIsStaff;
+  const permissions = useUserStore.get("user").userPermissions || [];
 
   const userHasPermission = (permission: string) =>
     isAdmin || permissions.includes(permission);

@@ -16,9 +16,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/stores/AuthStore";
+import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import axios from "@/helpers/AxiosConfig";
-import { getUserDetails } from "@/services/UserRequestService";
 
 /**
  * Custom hook to verify the user's token.
@@ -31,44 +30,37 @@ export const useVerifyToken = () => {
   const setIsAuthenticated = useAuthStore((state) => state.setIsAuthenticated);
   const setLoading = useAuthStore((state) => state.setLoading);
   const setInitialLoading = useAuthStore((state) => state.setInitialLoading);
-  const [isVerifying, setIsVerifying] = useState(true);
+  const [, setUser] = useUserStore.use("user");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isInitializationComplete, setInitializationComplete] = useState(false);
 
   useEffect(() => {
     const verifyToken = async (): Promise<void> => {
+      setIsVerifying(true); // Start the verification process
       setInitialLoading(true);
+
       try {
         setLoading(true);
-        const response = await axios.post("verify_token/");
-        sessionStorage.setItem("mt_user_id", response.data.userId as string);
-        sessionStorage.setItem(
-          "mt_organization_id",
-          response.data.organizationId as string,
-        );
+        const response = await axios.get("/me/", {
+          withCredentials: true,
+        });
 
-        const userInfo = await getUserDetails(response.data.userId as string);
-        sessionStorage.setItem(
-          "mt_user_permissions",
-          JSON.stringify(userInfo.userPermissions),
-        );
-        sessionStorage.setItem(
-          "mt_user_groups",
-          JSON.stringify(userInfo.groups),
-        );
-        sessionStorage.setItem("mt_is_admin", userInfo.isStaff.toString());
-
-        setIsAuthenticated(true);
+        if (response.status === 200) {
+          setUser(response.data);
+          setIsAuthenticated(true);
+        }
       } catch (error) {
-        sessionStorage.clear();
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
+        setIsVerifying(false); // End the verification process
+        setInitialLoading(false);
+        setInitializationComplete(true);
       }
     };
 
-    verifyToken().then(() => {
-      setIsVerifying(false);
-      setInitialLoading(false);
-    });
-  }, [setIsAuthenticated, setLoading, setInitialLoading]);
-  return { isVerifying };
+    verifyToken();
+  }, [setIsAuthenticated, setLoading, setInitialLoading, setUser]);
+
+  return { isVerifying, isInitializationComplete };
 };

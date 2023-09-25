@@ -16,7 +16,8 @@
  */
 
 import axios from "axios";
-import { API_URL, USER_ID_KEY } from "@/helpers/constants";
+import { API_URL } from "@/helpers/constants";
+import { getCookie } from "@/helpers/auth";
 
 /**
  * Axios request interceptor.
@@ -27,6 +28,14 @@ axios.interceptors.request.use(
   (req) => {
     req.baseURL = API_URL;
     req.withCredentials = true;
+
+    // Set CSRF Token
+    const csrfToken = getCookie("csrftoken");
+
+    if (csrfToken) {
+      req.headers["X-CSRFToken"] = csrfToken;
+    }
+
     console.info(`Making request to ${req.url}`);
     return req;
   },
@@ -38,15 +47,15 @@ axios.interceptors.request.use(
  * It handles 401 unauthorized errors by removing the user ID from session storage.
  * Other errors are simply forwarded.
  */
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response.status === 401) {
-      sessionStorage.removeItem(USER_ID_KEY);
-    }
-    return Promise.reject(error);
-  },
-);
+// axios.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     if (error.response.status === 401) {
+//       sessionStorage.removeItem(USER_ID_KEY);
+//     }
+//     return Promise.reject(error);
+//   },
+// );
 
 /**
  * Exporting the configured Axios instance.

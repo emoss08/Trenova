@@ -15,21 +15,20 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { clearAllCookies } from "@/helpers/auth";
 import { useAuthStore } from "@/stores/AuthStore";
+import axios from "@/helpers/AxiosConfig";
 
 export function useLogout() {
   const navigate = useNavigate();
+
   const [, setIsAuthenticated] = useAuthStore((state) => [
     state.isAuthenticated,
     state.setIsAuthenticated,
   ]);
-  return async () => {
+  return () => {
     try {
-      await axios.post("/logout/");
-      sessionStorage.clear();
+      axios.post("/logout/").then(() => {});
       const returnUrl = sessionStorage.getItem("returnUrl");
       if (returnUrl !== "/login" && returnUrl !== "/logout") {
         sessionStorage.removeItem("returnUrl");
@@ -37,7 +36,6 @@ export function useLogout() {
       // You can also add the setIsAuthenticated here if it is needed
       setIsAuthenticated(false);
 
-      clearAllCookies(); // Clear all cookies to prevent auto-login
       navigate("/login");
     } catch (exception) {
       // handle errors

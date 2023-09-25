@@ -35,6 +35,7 @@ export function ProtectedRoutes(): React.ReactElement {
       sessionStorage.setItem("returnUrl", returnUrl);
     }
   }, [isAuthenticated, location.pathname, location.search]);
+
   return (
     <Routes>
       {routes.map((route: RouteObjectWithPermission, i: number) => {

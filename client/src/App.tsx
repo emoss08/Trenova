@@ -15,7 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense, useEffect } from "react";
+import React, {
+  memo,
+  PropsWithChildren,
+  Suspense,
+  useEffect,
+  useMemo,
+} from "react";
 import { BrowserRouter } from "react-router-dom";
 import "./assets/styles/App.css";
 import {
@@ -24,32 +30,51 @@ import {
   MantineProvider,
 } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { Notifications } from "@mantine/notifications";
 import { ReactQueryDevtools } from "react-query/devtools";
 import { ContextMenuProvider } from "mantine-contextmenu";
 import { ModalsProvider } from "@mantine/modals";
+import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { useAuthStore } from "@/stores/AuthStore";
 import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
 
-function App() {
-  const { isVerifying } = useVerifyToken();
-  useVerifyToken();
-
-  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
-    key: "mt-color-scheme",
-    defaultValue: "light",
-    getInitialValueInEffect: true,
-  });
-  const toggleColorScheme = (value?: ColorScheme) =>
-    setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
+export default function App() {
+  const { isVerifying, isInitializationComplete } = useVerifyToken();
 
   const initialLoading = useAuthStore(
     (state: { initialLoading: boolean }) => state.initialLoading,
   );
 
+  const isLoading = isVerifying || initialLoading || !isInitializationComplete;
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <MantineColorProvider>
+      <AppImpl />
+    </MantineColorProvider>
+  );
+}
+
+function MantineColorProvider({
+  children,
+}: PropsWithChildren<NonNullable<unknown>>) {
+  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
+    key: "mt-color-scheme",
+    defaultValue: "light",
+    getInitialValueInEffect: true,
+  });
   useHotkeys([["mod+J", () => toggleColorScheme()]]);
 
   useEffect(() => {
@@ -57,17 +82,12 @@ function App() {
       colorScheme === "dark" ? "dark-theme" : "light-theme";
   }, [colorScheme]);
 
-  if (isVerifying || initialLoading) {
-    return <LoadingScreen />;
-  }
-
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
+  const toggleColorScheme = useMemo(
+    () => (value?: ColorScheme) => {
+      setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
     },
-  });
+    [colorScheme, setColorScheme],
+  );
 
   return (
     <ColorSchemeProvider
@@ -83,22 +103,26 @@ function App() {
         withNormalizeCSS
         withCSSVariables
       >
-        <ModalsProvider>
-          <ContextMenuProvider zIndex={1000} shadow="md" borderRadius="md">
-            <Notifications limit={3} position="top-right" zIndex={2077} />
-            <QueryClientProvider client={queryClient}>
-              <BrowserRouter>
-                <Suspense fallback={<LoadingScreen />}>
-                  <ProtectedRoutes />
-                </Suspense>
-              </BrowserRouter>
-              <ReactQueryDevtools initialIsOpen={false} />
-            </QueryClientProvider>
-          </ContextMenuProvider>
-        </ModalsProvider>
+        {children}
       </MantineProvider>
     </ColorSchemeProvider>
   );
 }
 
-export default App;
+const AppImpl = memo(() => {
+  return (
+    <ModalsProvider>
+      <ContextMenuProvider zIndex={1000} shadow="md" borderRadius="md">
+        <Notifications limit={3} position="top-right" zIndex={2077} />
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <Suspense fallback={<LoadingScreen />}>
+              <ProtectedRoutes />
+            </Suspense>
+          </BrowserRouter>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </ContextMenuProvider>
+    </ModalsProvider>
+  );
+});

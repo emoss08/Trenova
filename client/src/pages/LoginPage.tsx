@@ -32,12 +32,10 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
-import { useAuthStore } from "@/stores/AuthStore";
-import { getUserDetails } from "@/services/UserRequestService";
+import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import axios from "@/helpers/AxiosConfig";
 import { ValidatedPasswordInput } from "@/components/common/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { getUserCSRFToken } from "@/helpers/auth";
 import { LoginSchema } from "@/helpers/schemas/AccountsSchema";
 
 type LoginFormValues = {
@@ -53,6 +51,7 @@ function LoginPage() {
     ],
   );
   const [loading, setLoading] = React.useState<boolean>(false);
+  const [, setUserDetails] = useUserStore.use("user");
 
   const form = useForm<LoginFormValues>({
     validate: yupResolver(LoginSchema),
@@ -61,7 +60,21 @@ function LoginPage() {
       password: "",
     },
   });
-  const csrfToken = getUserCSRFToken();
+
+  const fetchUserDetails = async () => {
+    try {
+      const response = await axios.get("/me/", {
+        withCredentials: true,
+      });
+
+      if (response.status === 200) {
+        setUserDetails(response.data);
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      setIsAuthenticated(false);
+    }
+  };
 
   const navigate = useNavigate();
   React.useEffect((): void => {
@@ -75,37 +88,13 @@ function LoginPage() {
   const login = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      const response = await axios.post(
-        "/login/",
-        {
-          username: values.username,
-          password: values.password,
-        },
-        {
-          headers: {
-            "X-CSRFToken": csrfToken,
-          },
-          withCredentials: true,
-        },
-      );
+      const response = await axios.post("/login/", {
+        username: values.username,
+        password: values.password,
+      });
 
       if (response.status === 200) {
-        sessionStorage.setItem("mt_user_id", response.data.user_id as string);
-        sessionStorage.setItem(
-          "mt_organization_id",
-          response.data.organization_id as string,
-        );
-
-        const userInfo = await getUserDetails(response.data.user_id as string);
-        sessionStorage.setItem(
-          "mt_user_permissions",
-          JSON.stringify(userInfo.userPermissions),
-        );
-        sessionStorage.setItem(
-          "mt_user_groups",
-          JSON.stringify(userInfo.groups),
-        );
-        sessionStorage.setItem("mt_is_admin", userInfo.isStaff.toString());
+        await fetchUserDetails();
         setIsAuthenticated(true);
       }
     } catch (error: any) {

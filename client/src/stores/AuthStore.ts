@@ -15,8 +15,9 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { create, GetState, SetState, StateCreator, StoreApi } from "zustand";
+import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
+import { createGlobalStore } from "@/helpers/useGlobalStore";
 
 type AuthState = {
   isAuthenticated: boolean;
@@ -28,11 +29,7 @@ type AuthState = {
   reset: () => void;
 };
 
-const createStore = (
-  set: SetState<AuthState>,
-  get: GetState<AuthState>,
-  api: StoreApi<AuthState>
-) => ({
+const createStore = (set: SetState<AuthState>) => ({
   isAuthenticated: false,
   setIsAuthenticated: (isAuthenticated: boolean) => set({ isAuthenticated }),
   loading: false,
@@ -46,5 +43,27 @@ const createStore = (
 export const useAuthStore = create<AuthState>(
   persist(createStore, {
     name: "auth-storage",
-  }) as StateCreator<AuthState>
+  }) as StateCreator<AuthState>,
 );
+
+type UserState = {
+  userId: string;
+  organizationId: string;
+  userPermissions: string[];
+  userGroups: string[];
+  userIsStaff: boolean;
+};
+
+type UserStoreState = {
+  user: UserState;
+};
+
+export const useUserStore = createGlobalStore<UserStoreState>({
+  user: {
+    userId: "",
+    organizationId: "",
+    userPermissions: [],
+    userGroups: [],
+    userIsStaff: false,
+  },
+});

@@ -25,7 +25,7 @@ import { Button, Menu } from "@mantine/core";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useDrag } from "@use-gesture/react";
 import axios from "@/helpers/AxiosConfig";
-import { getUserId } from "@/helpers/constants";
+import { useUserStore } from "@/stores/AuthStore";
 
 type SwippableItemProp = {
   id: string;
@@ -43,7 +43,7 @@ export function SwippableMenuItem<T extends SwippableItemProp>({
   icon,
 }: SwippableMenuItemProps<T>) {
   const [status, setStatus] = useState("normal"); // can be "normal", "swiped", or "deleted"
-  const userId = getUserId() || "";
+  const { userId } = useUserStore.get("user");
   const [{ x }, set] = useSpring(() => ({ x: 0 }));
   const queryClient = useQueryClient();
 
