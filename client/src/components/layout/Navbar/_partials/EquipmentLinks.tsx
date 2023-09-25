@@ -16,53 +16,59 @@
  */
 
 import React from "react";
-import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
+import { faToolbox } from "@fortawesome/pro-duotone-svg-icons";
 import {
   LinksGroup,
   LinksGroupProps,
 } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-/** Links for Dispatch Navigation Menu */
-export const dispatchNavLinks = [
+/** Links for Equipment Maintenance Navigation Menu */
+export const equipmentNavLinks = [
   {
-    label: "Dispatch",
-    icon: faTruck,
+    label: "Equipment Maintenance",
+    icon: faToolbox,
     link: "/",
-    permission: "view_dispatch",
+    permission: "admin.equipment_maintenance.view",
     links: [
       {
-        label: "Rate Management",
-        link: "/dispatch/rate-management/",
+        label: "Equipment Maintenance Plan",
+        link: "#",
+        permission: "view_equipmentmaintenanceplan",
       },
       {
         label: "Configuration Files",
-        link: "#",
+        link: "#", // Placeholder, replace with the actual link
         subLinks: [
           {
-            label: "Delay Codes",
-            link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
+            label: "Equipment Types",
+            link: "/equipment/equipment-types/",
+            permission: "view_equipmenttype",
           },
           {
-            label: "Fleet Codes",
-            link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
+            label: "Equipment Manufacturers",
+            link: "/equipment/equipment-manufacturers/",
+            permission: "view_equipmentmanufacturer",
           },
           {
-            label: "Comment Type",
-            link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
+            label: "Tractor",
+            link: "/equipment/tractor/",
+            permission: "view_tractor",
+          },
+          {
+            label: "Trailer",
+            link: "/equipment/trailer/",
+            permission: "view_trailer",
           },
         ],
       },
     ],
   },
-] as LinksGroupProps[];
+] satisfies LinksGroupProps[];
 
-export function DispatchLinks() {
-  const dispatchLinks = dispatchNavLinks.map((item) => (
+export function EquipLinks() {
+  const equipmentLinks = equipmentNavLinks.map((item) => (
     <LinksGroup {...item} key={item.label} />
   ));
 
-  return <>{dispatchLinks}</>;
+  return <>{equipmentLinks}</>;
 }

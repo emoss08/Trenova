@@ -16,8 +16,68 @@
  */
 
 import React from "react";
-import { LinksGroup } from "@/components/layout/Navbar/_partials/LinksGroup";
-import { billingNavLinks } from "@/utils/apps/billing";
+import { faHandHoldingDollar } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  LinksGroup,
+  LinksGroupProps,
+} from "@/components/layout/Navbar/_partials/LinksGroup";
+
+/** Links for Billing Navigation Menu */
+export const billingNavLinks = [
+  {
+    label: "Billing & Accounting",
+    icon: faHandHoldingDollar,
+    link: "/billing", // Placeholder, replace with the actual link
+    links: [
+      {
+        label: "Billing Client",
+        link: "/billing/client/",
+        permission: "billing.use_billing_client",
+      },
+      {
+        label: "Billing Control",
+        link: "/admin/control-files#billing-controls/",
+        permission: "view_billingcontrol",
+      },
+      {
+        label: "Configuration Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "Charge Types",
+            link: "/billing/charge-types/",
+            permission: "view_chargetype",
+          },
+          {
+            label: "Division Codes",
+            link: "/accounting/division-codes/",
+            permission: "view_divisioncode",
+          },
+          {
+            label: "GL Accounts",
+            link: "/accounting/gl-accounts/",
+            permission: "view_generalledgeraccount",
+          },
+          {
+            label: "Revenue Codes",
+            link: "/accounting/revenue-codes/",
+            permission: "view_revenuecode",
+          },
+          {
+            label: "Accessorial Charges",
+            link: "/billing/accessorial-charges/",
+            permission: "view_accessorialcharge",
+          },
+          {
+            label: "Customers",
+            link: "/billing/customers/",
+            permission: "view_customer",
+          },
+        ],
+      },
+    ],
+  },
+] satisfies LinksGroupProps[];
 
 export function BillingLinks() {
   const billingLinks = billingNavLinks.map((item) => (
