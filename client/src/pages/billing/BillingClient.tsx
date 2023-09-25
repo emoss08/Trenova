@@ -81,7 +81,6 @@ const BillingClient: React.FC = () => {
           onMessage: (event: MessageEvent) => {
             const data = JSON.parse(event.data) as WebsocketMessageProps;
 
-            console.log("Billing Client Websocket Message", data);
             if (data.action === "orders_ready" && data.step === 2) {
               notifications.show({
                 id: "billing_client_orders_ready",
