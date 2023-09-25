@@ -16,8 +16,95 @@
  */
 
 import React from "react";
-import { LinksGroup } from "@/components/layout/Navbar/_partials/LinksGroup";
-import { adminNavLinks } from "@/utils/apps/admin";
+import { faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
+import {
+  LinksGroup,
+  LinksGroupProps,
+} from "@/components/layout/Navbar/_partials/LinksGroup";
+
+/** Links for Administrator Navigation Menu */
+export const adminNavLinks = [
+  {
+    label: "Administrator",
+    icon: faUserCrown,
+    link: "/",
+    permission: "admin.view_systemhealth",
+    links: [
+      {
+        label: "Active Sessions",
+        link: "#",
+        permission: "admin.view_activesessions",
+      },
+      {
+        label: "Active Threads",
+        link: "#",
+        permission: "admin.active_threads",
+      },
+      {
+        label: "Active DB Triggers",
+        link: "#",
+        permission: "admin.view_activetriggers",
+      },
+      {
+        label: "Cache Manager",
+        link: "#",
+        permission: "admin.view_cachemanager",
+      },
+      {
+        label: "Configuration Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "User Management",
+            link: "/admin/users",
+            permission: "admin.users.view",
+          },
+          {
+            label: "Job Titles",
+            link: "/accounts/job-titles",
+            permission: "view_jobtitle",
+          },
+        ],
+      },
+      {
+        label: "Control Files",
+        link: "#", // Placeholder, replace with the actual link
+        subLinks: [
+          {
+            label: "Billing Controls",
+            link: "/admin/control-files#billing-controls",
+            permission: "view_billingcontrol",
+          },
+          {
+            label: "Dispatch Controls",
+            link: "/admin/control-files#dispatch-controls",
+            permission: "view_dispatchcontrol",
+          },
+          {
+            label: "Invoice Controls",
+            link: "/admin/control-files#invoice-controls",
+            permission: "view_invoicecontrol",
+          },
+          {
+            label: "Order Controls",
+            link: "/admin/control-files#order-controls",
+            permission: "view_ordercontrol",
+          },
+          {
+            label: "Email Controls",
+            link: "/admin/control-files#email-controls",
+            permission: "view_emailcontrol",
+          },
+          {
+            label: "Feasibility Controls",
+            link: "/admin/control-files#feasibility-tool-controls",
+            permission: "view_feasibilitytoolcontrol",
+          },
+        ],
+      },
+    ],
+  },
+] satisfies LinksGroupProps[];
 
 export function AdminLinks() {
   const administratorLinks = adminNavLinks.map((item) => (
