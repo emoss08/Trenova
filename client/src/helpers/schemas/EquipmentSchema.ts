@@ -18,6 +18,7 @@
 import * as Yup from "yup";
 import { ObjectSchema, StringSchema } from "yup";
 import {
+  EquipmentManufacturerFormValues,
   EquipmentTypeDetailFormValues,
   EquipmentTypeFormValues,
 } from "@/types/equipment";
@@ -80,4 +81,12 @@ export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
       })
       .required("Cost per mile is required"),
     equipmentTypeDetails: equipmentTypeDetailSchema,
+  });
+
+export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValues> =
+  Yup.object().shape({
+    name: Yup.string()
+      .required("Name is required")
+      .max(50, "Name cannot be more than 50 characters"),
+    description: Yup.string().notRequired(),
   });

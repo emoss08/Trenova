@@ -320,7 +320,7 @@ REST_FRAMEWORK = {
 
 DRF_STANDARDIZED_ERRORS = {
     "EXCEPTION_HANDLER_CLASS": "core.exceptions.CustomExceptionHandler",
-    # "EXCEPTION_FORMATTER_CLASS": "core.exceptions.CustomExceptionFormatter",
+    "EXCEPTION_FORMATTER_CLASS": "core.exceptions.CustomExceptionFormatter",
 }
 
 # Celery Configurations
