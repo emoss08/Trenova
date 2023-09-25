@@ -311,6 +311,7 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
             </tbody>
         </table>
         """,
+        user=user,
         document_classification=doc_class,
         theme=doc_theme,
     )
@@ -509,6 +510,9 @@ def test_save_template_version(
     Returns:
         None: This function does not return anything.
     """
+
+    user = UserFactory()
+
     doc_class = DocumentClassificationFactory()
     template = models.DocumentTemplate.objects.create(
         organization=organization,
@@ -519,6 +523,7 @@ def test_save_template_version(
         Total Amount: {{ invoice_total_amount }}
         Date: {{ invoice_bill_date }}
         """,
+        user=user,
         document_classification=doc_class,
     )
 

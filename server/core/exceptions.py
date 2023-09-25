@@ -25,7 +25,9 @@ from rest_framework import exceptions
 
 class CustomExceptionFormatter(ExceptionFormatter):
     @staticmethod
-    def snake_to_camel(snake_str: str) -> str:
+    def snake_to_camel(snake_str: str) -> str | None:
+        if snake_str is None:
+            return None
         components = snake_str.split("_")
         return components[0] + "".join(x.title() for x in components[1:])
 
