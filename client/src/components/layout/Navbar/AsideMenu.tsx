@@ -19,10 +19,7 @@ import React from "react";
 import { Group, Navbar, rem, Skeleton, useMantineTheme } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
-import { getUserId } from "@/helpers/constants";
 import { getUserDetails } from "@/services/UserRequestService";
-import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
-import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
 import { ThemeSwitcher } from "@/components/layout/Header/_Partials/ThemeSwitcher";
 import { navbarScroll } from "@/components/layout/Navbar/_partials/NavbarScroll";
 import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks";
@@ -33,11 +30,15 @@ import { DispatchLinks } from "@/components/layout/Navbar/_partials/DispatchLink
 import { MainLinks } from "@/components/layout/Navbar/_partials/MainLinks";
 import { MCode } from "@/components/common/Code";
 import { useNavbarStyles } from "@/assets/styles/AsideStyles";
+import { EquipLinks } from "@/components/layout/Navbar/_partials/EquipmentLinks";
+import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
+import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
+import { useUserStore } from "@/stores/AuthStore";
 
 export function AsideMenu(): React.ReactElement {
   const { classes } = useNavbarStyles();
   const queryClient = useQueryClient();
-  const userId = getUserId() || "";
+  const { userId } = useUserStore.get("user");
   const theme = useMantineTheme();
 
   const { data: userData, isLoading: isUserDataLoading } = useQuery({
@@ -102,11 +103,14 @@ export function AsideMenu(): React.ReactElement {
           {/* Main Application Links */}
           <MainLinks />
 
+          {/* Billing Links */}
+          <BillingLinks />
+
           {/* Dispatch Links */}
           <DispatchLinks />
 
-          {/* Billing Links */}
-          <BillingLinks />
+          {/* Equipment Maintenance Links */}
+          <EquipLinks />
 
           {/* Admin Links */}
           <AdminLinks />
