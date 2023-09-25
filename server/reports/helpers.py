@@ -285,4 +285,14 @@ ALLOWED_MODELS = {
             {"value": "cost_per_mile", "label": "Cost Per Mile"},
         ],
     },
+    "EquipmentManufacturer": {
+        "app_label": "equipment",
+        "allowed_fields": [
+            {"value": "organization__name", "label": "Organization Name"},
+            {"value": "name", "label": "Name"},
+            {"value": "description", "label": "Description"},
+            {"value": "created", "label": "Created"},
+            {"value": "modified", "label": "Modified"},
+        ],
+    },
 }

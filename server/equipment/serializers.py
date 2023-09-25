@@ -17,6 +17,8 @@
 
 from typing import Any
 
+from rest_framework import serializers
+
 from equipment import helpers, models
 from utils.serializers import GenericSerializer
 
@@ -126,6 +128,31 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         """
 
         model = models.EquipmentManufacturer
+
+    def validate_name(self, value: str) -> str:
+        """Validate name does not exist for the organization. Will only apply to
+        create operations.
+
+        Args:
+            value: Name of the Equipment Manufacturer
+
+        Returns:
+            str: Name of the Equipment Manufacturer
+
+        """
+        organization = super().get_organization
+
+        if (
+            self.instance is None
+            and models.EquipmentManufacturer.objects.filter(
+                organization=organization, name=value
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                "Equipment Manufacturer with this name already exists."
+            )
+
+        return value
 
 
 class TractorSerializer(GenericSerializer):

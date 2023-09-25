@@ -20,13 +20,10 @@ import { MRT_ColumnDef } from "mantine-react-table";
 import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { EquipmentManufacturer } from "@/types/equipment";
-import {
-  useEquipManufacturerTableStore,
-  useEquipTypeTableStore,
-} from "@/stores/EquipmentStore";
-import { CreateEquipmentTypeModal } from "@/components/equipment-type/CreateEquipmentTypeModal";
-import { ViewEquipmentTypeModal } from "@/components/equipment-type/ViewEquipmentTypeModal";
-import { EditEquipmentTypeModal } from "@/components/equipment-type/EditEquipmentTypeModal";
+import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
+import { CreateEquipManufacturerModal } from "@/components/equipment-manufacturer/CreateEquipManfacturerModal";
+import { EditEMModal } from "@/components/equipment-manufacturer/EditEquipManufacturerModal";
+import { ViewEMModal } from "@/components/equipment-manufacturer/ViewEquipManufacturerModal";
 
 export function EquipManufacturerTable() {
   const columns = useMemo<MRT_ColumnDef<EquipmentManufacturer>[]>(
@@ -43,10 +40,7 @@ export function EquipManufacturerTable() {
         id: "actions",
         header: "Actions",
         Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={useEquipTypeTableStore}
-            data={row.original}
-          />
+          <MontaTableActionMenu store={store} data={row.original} />
         ),
       },
     ],
@@ -55,13 +49,13 @@ export function EquipManufacturerTable() {
 
   return (
     <MontaTable
-      store={useEquipManufacturerTableStore}
+      store={store}
       link="/equipment_manufacturers"
       columns={columns}
-      TableEditModal={EditEquipmentTypeModal}
-      TableViewModal={ViewEquipmentTypeModal}
+      TableEditModal={EditEMModal}
+      TableViewModal={ViewEMModal}
       displayDeleteModal
-      TableCreateDrawer={CreateEquipmentTypeModal}
+      TableCreateDrawer={CreateEquipManufacturerModal}
       tableQueryKey="equipment-manufacturer-table-data"
       exportModelName="EquipmentManufacturer"
       name="Equipment Manufacturer"

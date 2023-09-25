@@ -60,7 +60,12 @@ export type EquipmentManufacturer = {
   businessUnit: string;
   id: string;
   name: string;
-  description: string;
+  description?: string | null;
   created: string;
   modified: string;
 };
+
+export type EquipmentManufacturerFormValues = Pick<
+  EquipmentManufacturer,
+  "name" | "description"
+>;
