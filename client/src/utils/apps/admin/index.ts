@@ -22,96 +22,10 @@ import {
   faInbox,
   faTruckClock,
   faTruckFast,
-  faUserCrown,
 } from "@fortawesome/pro-duotone-svg-icons";
 import { lazy } from "react";
 import { faRoad } from "@fortawesome/pro-duotone-svg-icons/faRoad";
-import { LinksGroupProps } from "@/components/layout/Navbar/_partials/LinksGroup";
 import { NavLinks } from "@/components/common/NavBar";
-
-/** Links for System Health Navigation Menu */
-export const adminNavLinks = [
-  {
-    label: "Administrator",
-    icon: faUserCrown,
-    link: "/",
-    permission: "admin.view_systemhealth",
-    links: [
-      {
-        label: "Active Sessions",
-        link: "#",
-        permission: "admin.view_activesessions",
-      },
-      {
-        label: "Active Threads",
-        link: "#",
-        permission: "admin.active_threads",
-      },
-      {
-        label: "Active DB Triggers",
-        link: "#",
-        permission: "admin.view_activetriggers",
-      },
-      {
-        label: "Cache Manager",
-        link: "#",
-        permission: "admin.view_cachemanager",
-      },
-      {
-        label: "Configuration Files",
-        link: "#", // Placeholder, replace with the actual link
-        subLinks: [
-          {
-            label: "User Management",
-            link: "/admin/users",
-            permission: "admin.users.view",
-          },
-          {
-            label: "Job Titles",
-            link: "/accounts/job-titles",
-            permission: "view_jobtitles",
-          },
-        ],
-      },
-      {
-        label: "Control Files",
-        link: "#", // Placeholder, replace with the actual link
-        subLinks: [
-          {
-            label: "Billing Controls",
-            link: "/admin/control-files#billing-controls",
-            permission: "view_billingcontrol",
-          },
-          {
-            label: "Dispatch Controls",
-            link: "/admin/control-files#dispatch-controls",
-            permission: "view_dispatchcontrol",
-          },
-          {
-            label: "Invoice Controls",
-            link: "/admin/control-files#invoice-controls",
-            permission: "view_invoicecontrol",
-          },
-          {
-            label: "Order Controls",
-            link: "/admin/control-files#order-controls",
-            permission: "view_ordercontrol",
-          },
-          {
-            label: "Email Controls",
-            link: "/admin/control-files#email-controls",
-            permission: "view_emailcontrol",
-          },
-          {
-            label: "Feasibility Controls",
-            link: "/admin/control-files#feasibility-tool-controls",
-            permission: "view_feasibilitytoolcontrol",
-          },
-        ],
-      },
-    ],
-  },
-] as LinksGroupProps[];
 
 const BillingControlContent = lazy(
   () => import("../../../components/control-files/BillingControl"),
