@@ -26,22 +26,11 @@ export const WEB_SOCKET_URL = import.meta.env.VITE_WS_URL;
 // export const MAX_WEBSOCKET_RETRIES = import.meta.env.VITE_MAX_WEBSOCKET_RETRIES;
 export const WEBSOCKET_RETRY_INTERVAL = import.meta.env
   .VITE_WEBSOCKET_RETRY_INTERVAL;
-export const ENABLE_WEBSOCKETS = import.meta.env.VITE_ENABLE_WEBSOCKETS;
+export const ENABLE_WEBSOCKETS = import.meta.env
+  .VITE_ENABLE_WEBSOCKETS as boolean;
 
 // API constants
 export const API_URL = import.meta.env.VITE_API_URL as string;
-
-/**
- * Retrieves the current user's ID from session storage.
- * @returns The user's ID, or null if it was not found.
- */
-export const getUserId = (): string | null => {
-  const userId = sessionStorage.getItem(USER_ID_KEY);
-  if (userId) {
-    return userId;
-  }
-  return null;
-};
 
 /**
  * Transforms the first character of the provided string to upper case.

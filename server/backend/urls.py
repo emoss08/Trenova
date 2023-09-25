@@ -329,9 +329,9 @@ urlpatterns = [
         name="logout-user",
     ),
     path(
-        "api/verify_token/",
-        accounts_api.TokenVerifyView.as_view(),
-        name="verify-token",
+        "api/me/",
+        accounts_api.UserDetailView.as_view(),
+        name="me",
     ),
     path("api/system_health/", org_api.health_check, name="system-health"),
     path("api/bill_invoice/", billing_api.bill_invoice_view, name="bill-order"),

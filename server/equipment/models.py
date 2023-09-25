@@ -244,7 +244,7 @@ class EquipmentManufacturer(GenericModel):
 
         verbose_name = _("Equipment Manufacturer")
         verbose_name_plural = _("Equipment Manufacturers")
-        ordering = ["-id"]
+        ordering = ["-name"]
         db_table = "equipment_manufacturer"
         constraints = [
             models.UniqueConstraint(
@@ -259,7 +259,7 @@ class EquipmentManufacturer(GenericModel):
         Returns:
             str: String representation of the Equipment Manufacturer Model
         """
-        return textwrap.wrap(self.name, 50)[0]
+        return textwrap.shorten(self.name, width=40, placeholder="...")
 
     def get_absolute_url(self) -> str:
         """Equipment Manufacturer absolute URL
@@ -822,6 +822,9 @@ class EquipmentMaintenancePlan(GenericModel):
                 fields=["name", "organization"],
                 name="unique_equipment_maintenance_plan_name_organization",
             )
+        ]
+        permissions = [
+            ("admin.equipment_maintenance.view", "Can view equipment maintenance")
         ]
 
     def __str__(self) -> str:

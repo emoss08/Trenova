@@ -30,15 +30,11 @@ import { faBell, faCheck } from "@fortawesome/pro-duotone-svg-icons";
 import { useQuery, useQueryClient } from "react-query";
 import axios from "axios";
 import { notifications } from "@mantine/notifications";
-import { Howl, Howler } from "howler";
+import { Howl } from "howler";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
 import { getUserNotifications } from "@/services/UserRequestService";
-import {
-  ENABLE_WEBSOCKETS,
-  getUserId,
-  WEB_SOCKET_URL,
-} from "@/helpers/constants";
-import { useAuthStore } from "@/stores/AuthStore";
+import { ENABLE_WEBSOCKETS, WEB_SOCKET_URL } from "@/helpers/constants";
+import { useAuthStore, useUserStore } from "@/stores/AuthStore";
 import { createWebsocketManager } from "@/helpers/websockets";
 import { useNavbarStore } from "@/stores/HeaderStore";
 
@@ -48,6 +44,7 @@ import { useAsideStyles } from "@/assets/styles/AsideStyles";
 
 const sound = new Howl({
   src: [NotificationSound, NotificationSoundMp3],
+  volume: 0.5,
 });
 
 const webSocketManager = createWebsocketManager();
@@ -88,7 +85,7 @@ const reconnect = () => {
 export function UserNotifications(): React.ReactElement | null {
   const [notificationMenuOpen] = useNavbarStore.use("notificationsMenuOpen");
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const userId = getUserId() || "";
+  const { userId } = useUserStore.get("user");
   const queryClient = useQueryClient();
   const { classes } = useAsideStyles();
 
@@ -124,7 +121,6 @@ export function UserNotifications(): React.ReactElement | null {
                 }
 
                 sound.play();
-                Howler.volume(0.5);
               });
           },
           onClose: (event: CloseEvent) => {
@@ -169,6 +165,7 @@ export function UserNotifications(): React.ReactElement | null {
         }
         return getUserNotifications();
       },
+      staleTime: Infinity,
       initialData: () =>
         queryClient.getQueryData(["userNotifications", userId]),
     });

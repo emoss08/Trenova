@@ -15,54 +15,36 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ORGANIZATION_ID_KEY } from "@/helpers/constants";
+import { useUserStore } from "@/stores/AuthStore";
 
 /**
  * Retrieves the CSRF token from the user's cookies.
  * @returns The CSRF token, or undefined if it was not found.
  */
-export const getUserCSRFToken = (): string | undefined => {
-  const csrfCookie = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("csrftoken="));
-
-  if (csrfCookie) {
-    return csrfCookie.split("=")[1];
+export function getCookie(name: string) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === `${name}=`) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
   }
-  console.error("No CSRF token found");
-};
-
-/**
- * Retrieves the specified item from the user's session storage.
- * @param key - The key of the item to retrieve.
- * @returns The item from session storage, parsed as JSON, or null if it was not found.
- */
-export const getSessionItem = (key: string): any => {
-  const item = sessionStorage.getItem(key);
-  return item ? JSON.parse(item) : null;
-};
-
+  return cookieValue;
+}
 /**
  * Retrieves the current user's organization ID from session storage.
  * @returns The organization's ID, or null if it was not found.
  */
 export const getUserOrganizationId = (): string | null => {
-  const userOrganization = sessionStorage.getItem(ORGANIZATION_ID_KEY);
+  const user = useUserStore.get("user");
+  const userOrganization = user?.organizationId;
   if (userOrganization) {
     return userOrganization;
   }
   return null;
 };
-
-/**
- * Clears all cookies from the browser.
- * @returns void
- * @see https://stackoverflow.com/a/179514
- */
-export function clearAllCookies() {
-  const cookies = document.cookie.split(";");
-  cookies.forEach((cookie) => {
-    const name = cookie.split("=")[0].trim();
-    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-  });
-}
