@@ -24,6 +24,23 @@ export type EqualityFn<T> = (
   right: T | null | undefined,
 ) => boolean;
 
+export type StoreType<State> = {
+  use<K extends keyof State>(
+    key: K,
+    defaultValue?: State[K],
+    equalityFn?: EqualityFn<State[K]>,
+  ): [State[K], (value: SetStateAction<State[K]>) => void];
+  useAll: () => State;
+  delete: <K extends keyof State>(key: K) => void;
+  get: <K extends keyof State>(key: K) => State[K];
+  getAll: () => State;
+  has: <K extends keyof State>(key: K) => boolean;
+  setAll: (state: State) => void;
+  update: (state: Partial<State>) => void;
+  set: <K extends keyof State>(key: K, value: SetStateAction<State[K]>) => void;
+  reset: () => void;
+};
+
 // eslint-disable-next-line @typescript-eslint/ban-types
 const isFunction = (fn: unknown): fn is Function => typeof fn === "function";
 
@@ -47,6 +64,7 @@ const isFunction = (fn: unknown): fn is Function => typeof fn === "function";
  *   ...
  * };
  */
+
 export const createGlobalStore = <State extends object>(
   initialState: State,
 ) => {
@@ -92,7 +110,8 @@ export const createGlobalStore = <State extends object>(
     /** Deletes a `key` from state, causing a re-render for anything listening. */
     delete<K extends keyof State>(key: K) {
       store.setState((prevState) => {
-        const { [key]: _, ...rest } = prevState;
+        const rest = { ...prevState };
+        delete rest[key];
         return rest as Partial<State>;
       }, true);
     },
