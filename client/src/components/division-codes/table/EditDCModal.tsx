@@ -23,7 +23,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/services/AccountingRequestService";
 import {
   DivisionCode,
   DivisionCodeFormValues,
@@ -38,6 +37,7 @@ import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/helpers/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { getGLAccounts } from "@/services/AccountingRequestService";
 
 type EditDCModalFormProps = {
   divisionCode: DivisionCode;

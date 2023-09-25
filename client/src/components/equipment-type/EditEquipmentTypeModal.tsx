@@ -14,8 +14,8 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import { Button, Group, Modal, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
+import { Button, Group, Modal } from "@mantine/core";
+import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useEquipTypeTableStore as store } from "@/stores/EquipmentStore";
@@ -25,11 +25,12 @@ import {
 } from "@/types/equipment";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { equipmentTypeSchema } from "@/helpers/schemas/EquipmentSchema";
-import { usePutMutation } from "@/hooks/useCustomMutation";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
   EquipmentTypeDetailForm,
   EquipmentTypeForm,
 } from "@/components/equipment-type/CreateEquipmentTypeModal";
+import { TableStoreProps } from "@/types/tables";
 
 function ModalBody({ equipType }: { equipType: EquipmentType }) {
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -55,20 +56,20 @@ function ModalBody({ equipType }: { equipType: EquipmentType }) {
     },
   });
 
-  const mutation = usePutMutation<FormValues>(
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<EquipmentType>, "drawerOpen">
+  >(
     form,
     store,
     notifications,
     {
+      method: "PUT",
       path: `/equipment_types/${equipType.id}/`,
       successMessage: "Equipment type updated successfully.",
       queryKeysToInvalidate: ["equipment-type-table-data"],
       closeModal: true,
       errorMessage: "Failed to update equipment type.",
-      notificationId: "update-equipment-type",
-      validationDetail:
-        "Equipment Type with this Name and Organization already exists.",
-      validationFieldName: "name",
     },
     () => setLoading(false),
   );
@@ -112,9 +113,7 @@ export function EditEquipmentTypeModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={600} />}>
-            {equipType && <ModalBody equipType={equipType} />}
-          </Suspense>
+          {equipType && <ModalBody equipType={equipType} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

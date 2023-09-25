@@ -31,13 +31,17 @@ import {
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { EquipmentTypeFormValues as FormValues } from "@/types/equipment";
+import {
+  EquipmentType,
+  EquipmentTypeFormValues as FormValues,
+} from "@/types/equipment";
 import { equipmentTypeSchema } from "@/helpers/schemas/EquipmentSchema";
 import { useEquipTypeTableStore as store } from "@/stores/EquipmentStore";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { equipmentClassChoices } from "@/helpers/choices";
 import { yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { TableStoreProps } from "@/types/tables";
 
 export function EquipmentTypeDetailForm({
   form,
@@ -204,20 +208,20 @@ function ModalBody() {
     },
   });
 
-  const mutation = useCustomMutation<FormValues>(
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<EquipmentType>, "drawerOpen">
+  >(
     form,
     store,
     notifications,
     {
+      method: "POST",
       path: "/equipment_types/",
       successMessage: "Equipment type created successfully.",
       queryKeysToInvalidate: ["equipment-type-table-data"],
       closeModal: true,
       errorMessage: "Failed to create equipment type.",
-      notificationId: "create-equipment-type",
-      validationDetail:
-        "Equipment Type with this Name and Organization already exists.",
-      validationFieldName: "name",
     },
     () => setLoading(false),
   );
