@@ -110,3 +110,26 @@ def test_delete(api_client: APIClient, charge_type_api: Response) -> None:
 
     assert response.status_code == 204
     assert response.data is None
+
+
+def test_post_with_unique_name(api_client, job_title: models.JobTitle) -> None:
+    """
+    Test posting a job title with the same name throws serializer.ValidationError.
+    """
+    job_title.name = "test"
+    job_title.save()
+
+    job_title.refresh_from_db()
+
+    response = api_client.post(
+        "/api/job_titles/",
+        {"name": "test", "job_function": "MANAGER"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.data["type"] == "validationError"
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Charge Type with this name already exists. Please try again."
+    )

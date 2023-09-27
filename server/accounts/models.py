@@ -507,7 +507,7 @@ class JobTitle(GenericModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["name", "organization"],
-                name="unique_job_title",
+                name="unique_name_job_title",
             )
         ]
 

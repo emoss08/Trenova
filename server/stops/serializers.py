@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from rest_framework import serializers
 
 from stops import models
 from utils.serializers import GenericSerializer
@@ -37,6 +37,41 @@ class QualifierCodeSerializer(GenericSerializer):
         """
 
         model = models.QualifierCode
+
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the QualifierCode model.
+
+        This method validates the `code` field of the QualifierCode model.
+        It checks if the qualifier code with the given code already exists in the organization.
+        If the qualifier code exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the qualifier code with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.QualifierCode.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Qualifier Code with this `code` already exists. Please try again."
+            )
+
+        return value
 
 
 class StopCommentSerializer(GenericSerializer):

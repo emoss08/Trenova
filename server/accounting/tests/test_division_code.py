@@ -358,3 +358,29 @@ def test_api_delete(
     response = api_client.delete(f"/api/division_codes/{division_code_api.data['id']}/")
     assert response.status_code == 204
     assert response.data is None
+
+
+def test_post_with_unique_code(api_client, division_code: models.DivisionCode) -> None:
+    """
+    Test posting a division code with the same code throws serializer.ValidationError.
+    """
+    division_code.code = "test"
+    division_code.save()
+
+    division_code.refresh_from_db()
+
+    response = api_client.post(
+        "/api/division_codes/",
+        {
+            "code": "test",
+            "description": "Test Description",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.data["type"] == "validationError"
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Division Code with this `code` already exists. Please try again."
+    )

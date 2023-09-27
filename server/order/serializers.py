@@ -60,6 +60,41 @@ class OrderTypeSerializer(GenericSerializer):
 
         model = models.OrderType
 
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the OrderType model.
+
+        This method validates the `name` field of the OrderType model.
+        It checks if the order type with the given name already exists in the organization.
+        If the order type exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the order type with the given name already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.OrderType.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Order Type with this `name` already exists. Please try again."
+            )
+
+        return value
+
 
 class ReasonCodeSerializer(GenericSerializer):
     """A serializer for the `ReasonCode` model.
@@ -78,6 +113,41 @@ class ReasonCodeSerializer(GenericSerializer):
         """
 
         model = models.ReasonCode
+
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the ReasonCode model.
+
+        This method validates the `code` field of the ReasonCode model.
+        It checks if the reason code with the given code already exists in the organization.
+        If the reason code exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the reason code with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.ReasonCode.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Reason Code with this `code` already exists. Please try again."
+            )
+
+        return value
 
 
 class OrderSerializer(GenericSerializer):

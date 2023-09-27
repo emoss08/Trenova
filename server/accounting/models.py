@@ -148,6 +148,12 @@ class GeneralLedgerAccount(GenericModel):
         verbose_name_plural = _("General Ledger Accounts")
         ordering = ["account_number"]
         db_table = "general_ledger_account"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["account_number", "organization"],
+                name="unique_account_number_organization",
+            )
+        ]
 
     def __str__(self) -> str:
         """GeneralLedgerAccount string representation
@@ -166,42 +172,6 @@ class GeneralLedgerAccount(GenericModel):
             str: GeneralLedgerAccount absolute url
         """
         return reverse("gl-accounts-detail", kwargs={"pk": self.pk})
-
-    def clean(self) -> None:
-        """General ledger account clean method
-
-        Returns:
-            None
-
-        Raises:
-            ValidationError: If account number is not unique
-        """
-        super().clean()
-
-        if (
-            self.__class__.objects.filter(account_number__exact=self.account_number)
-            .exclude(id__exact=self.id)
-            .exists()
-        ):
-            raise ValidationError(
-                {
-                    "account_number": _(
-                        "An account with this account number already exists. Please try again."
-                    )
-                },
-                code="invalid",
-            )
-
-    def update_gl_account(self, **kwargs):
-        """Update the General Ledger account
-
-        Args:
-            **kwargs: Keyword arguments
-        """
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save(**kwargs)
 
 
 class RevenueCode(GenericModel):

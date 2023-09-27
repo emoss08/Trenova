@@ -57,6 +57,41 @@ class EquipmentTypeSerializer(GenericSerializer):
         model = models.EquipmentType
         extra_fields = ("equipment_type_details",)
 
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the EquipmentType model.
+
+        This method validates the `name` field of the EquipmentType model.
+        It checks if the equipment type with the given name already exists in the organization.
+        If the equipment type exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the equipment type with the given name already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.EquipmentType.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Equipment Type with this `name` already exists. Please try again."
+            )
+
+        return value
+
     def create(self, validated_data: Any) -> models.EquipmentType:
         """Create new Equipment Type
 
@@ -130,26 +165,36 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         model = models.EquipmentManufacturer
 
     def validate_name(self, value: str) -> str:
-        """Validate name does not exist for the organization. Will only apply to
-        create operations.
+        """Validate the `name` field of the Equipment Manufacturer model.
+
+        This method validates the `name` field of the Equipment Manufacturer model.
+        It checks if the equipment manufacturer with the given name already exists in the organization.
+        If the equipment manufacturer exists, it raises a validation error.
 
         Args:
-            value: Name of the Equipment Manufacturer
+            value (str): The value of the `name` field.
 
         Returns:
-            str: Name of the Equipment Manufacturer
+            str: The value of the `name` field.
 
+        Raises:
+            serializers.ValidationError: If the equipment manufacturer with the given name already exists in the
+             organization.
         """
         organization = super().get_organization
 
-        if (
-            self.instance is None
-            and models.EquipmentManufacturer.objects.filter(
-                organization=organization, name=value
-            ).exists()
-        ):
+        queryset = models.EquipmentManufacturer.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
             raise serializers.ValidationError(
-                "Equipment Manufacturer with this name already exists."
+                "Equipment Manufacturer with this `name` already exists. Please try again."
             )
 
         return value
@@ -169,6 +214,41 @@ class TractorSerializer(GenericSerializer):
 
         model = models.Tractor
 
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the Tractor model.
+
+        This method validates the `code` field of the Tractor model.
+        It checks if the tractor with the given code already exists in the organization.
+        If the tractor exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the tractor with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.Tractor.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Tractor with this `code` already exists. Please try again."
+            )
+
+        return value
+
 
 class TrailerSerializer(GenericSerializer):
     """A serializer for the Trailer model
@@ -183,6 +263,41 @@ class TrailerSerializer(GenericSerializer):
         """
 
         model = models.Trailer
+
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the Trailer model.
+
+        This method validates the `code` field of the Trailer model.
+        It checks if the trailer with the given code already exists in the organization.
+        If the trailer exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the trailer with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.Trailer.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Trailer with this `code` already exists. Please try again."
+            )
+
+        return value
 
 
 class EquipmentMaintenancePlanSerializer(GenericSerializer):
@@ -199,3 +314,38 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
         """
 
         model = models.EquipmentMaintenancePlan
+
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the EquipmentMaintenancePlan model.
+
+        This method validates the `name` field of the EquipmentMaintenancePlan model.
+        It checks if the equipment maintenance plan with the given name already exists in the organization.
+        If the equipment maintenance plan exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the equipment maintenance plan with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.EquipmentMaintenancePlan.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Equipment Maintenance Plan with this `name` already exists. Please try again."
+            )
+
+        return value

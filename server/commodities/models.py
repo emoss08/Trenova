@@ -156,16 +156,6 @@ class HazardousMaterial(GenericModel):
         """
         return reverse("hazardous-materials-detail", kwargs={"pk": self.pk})
 
-    def update_hazmat(self, **kwargs: Any) -> None:
-        """Update Hazardous Material
-
-        Args:
-            **kwargs (Any): Hazardous Material Fields
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
-
 
 class Commodity(GenericModel):
     """A class representing a commodity.

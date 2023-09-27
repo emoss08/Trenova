@@ -173,3 +173,26 @@ def test_expand_users_is_false(
 
     assert response.status_code == 200
     assert "users" not in response.data["results"][0]
+
+
+def test_post_with_unique_name(api_client, job_title: models.JobTitle) -> None:
+    """
+    Test posting a job title with the same name throws serializer.ValidationError.
+    """
+    job_title.name = "test"
+    job_title.save()
+
+    job_title.refresh_from_db()
+
+    response = api_client.post(
+        "/api/job_titles/",
+        {"name": "test", "job_function": "MANAGER"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.data["type"] == "validationError"
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Job Title with this `name` already exists. Please try again."
+    )

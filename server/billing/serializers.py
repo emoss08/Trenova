@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+import decimal
 from typing import Any
 
 from rest_framework import serializers
@@ -119,6 +120,33 @@ class ChargeTypeSerializer(GenericSerializer):
 
         model = models.ChargeType
 
+    def validate_name(self, value: str) -> str:
+        """Validate name does not exist for the organization. Will only apply to
+        create operations.
+
+        Args:
+            value: Name of the Charge Type
+
+        Returns:
+            str: Name of the Charge Type
+
+        """
+
+        organization = super().get_organization
+
+        if (
+            self.instance is None
+            and models.ChargeType.objects.filter(
+                organization=organization,
+                name__iexact=value,
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                "Charge Type with this name already exists. Please try again."
+            )
+
+        return value
+
 
 class AccessorialChargeSerializer(GenericSerializer):
     """
@@ -130,19 +158,61 @@ class AccessorialChargeSerializer(GenericSerializer):
     representation of the `AccessorialCharge` model.
     """
 
-    def validate(self, attrs: dict[str, Any]) -> Any:
-        if attrs.get("charge_amount") == 0:
-            raise serializers.ValidationError(
-                {"charge_amount": "Charge amount must be greater than zero."}
-            )
-        return attrs
-
     class Meta:
         """k
         A class representing the metadata for the `AccessorialChargeSerializer` class.
         """
 
         model = models.AccessorialCharge
+
+    def validate_charge_amount(self, value: decimal.Decimal) -> decimal.Decimal:
+        """Validates the charge amount for an accessorial charge.
+
+        Args:
+            value (decimal.Decimal): The charge amount to be validated.
+
+        Returns:
+            decimal.Decimal: The validated charge amount.
+
+        Raises:
+            serializers.ValidationError: If the charge amount is zero or less.
+        """
+        if value < 1:
+            raise serializers.ValidationError(
+                "Charge amount must be greater than zero. Please try again."
+            )
+
+        return value
+
+    def validate_code(self, value: str) -> str:
+        """Validate code does not exist for the organization. Will only apply to
+        create operations.
+
+        Args:
+            value: Code of the Accessorial Charge
+
+        Returns:
+            str: Code of the Accessorial Charge
+
+        """
+
+        organization = super().get_organization
+
+        queryset = models.AccessorialCharge.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Accessorial Charge with this `code` already exists. Please try again."
+            )
+
+        return value
 
 
 class DocumentClassificationSerializer(GenericSerializer):
@@ -160,6 +230,38 @@ class DocumentClassificationSerializer(GenericSerializer):
         """
 
         model = models.DocumentClassification
+
+    def validate_name(self, value: str) -> str:
+        """This method validates the name of a document classification instance. It checks if a document classification
+        with the same name already exists for the organization.
+
+        Args:
+            value (str): The name of the document classification.
+
+        Returns:
+            str: The validated name if no duplicates are found.
+
+        Raises:
+            serializers.ValidationError: If a document classification with the same name already exists.
+        """
+
+        organization = super().get_organization
+
+        queryset = models.DocumentClassification.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Document Classification with this `name` already exists. Please try again."
+            )
+
+        return value
 
 
 class OrdersReadySerializer(serializers.Serializer):

@@ -138,7 +138,5 @@ def calculate_total(*, order: models.Order) -> Decimal:
         formula_text = order.formula_template.formula_text
         if helpers.validate_formula(formula=formula_text):
             variables = gather_formula_variables(order)
-            return Decimal(
-                helpers.evaluate_formula(formula=formula_text, **variables)
-            )
+            return Decimal(helpers.evaluate_formula(formula=formula_text, **variables))
     return freight_charge
