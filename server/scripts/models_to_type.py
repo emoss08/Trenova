@@ -67,6 +67,8 @@ class ModelVisitor(ast.NodeVisitor):
                     if isinstance(target, ast.Name):
                         field_name = target.id
                         field_type = None
+                        is_nullable = False
+                        is_blankable = False
 
                         if isinstance(stmt.value, ast.Call):
                             if isinstance(stmt.value.func, ast.Attribute):
@@ -74,7 +76,27 @@ class ModelVisitor(ast.NodeVisitor):
                             elif isinstance(stmt.value.func, ast.Name):
                                 field_type = stmt.value.func.id
 
-                            if ts_type := TYPE_MAP.get(field_type):
+                            for keyword in stmt.value.keywords:
+                                if (
+                                    keyword.arg == "null"
+                                    and isinstance(keyword.value, ast.Constant)
+                                    and keyword.value.value
+                                ):
+                                    is_nullable = True
+                                if (
+                                    keyword.arg == "blank"
+                                    and isinstance(keyword.value, ast.Constant)
+                                    and keyword.value.value
+                                ):
+                                    is_blankable = True
+
+                            ts_type = TYPE_MAP.get(field_type)
+
+                            if ts_type:
+                                if is_nullable:
+                                    ts_type += " | null"
+                                if is_blankable:
+                                    field_name += "?"
                                 fields.append((field_name, ts_type))
 
         if fields:
