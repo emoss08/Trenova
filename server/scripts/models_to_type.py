@@ -55,29 +55,10 @@ TYPE_MAP = {
 
 
 class ModelVisitor(ast.NodeVisitor):
-    """An AST node visitor that finds Django model classes in a file.
-
-    Attributes:
-        models: A dictionary where keys are model class names and values are
-            lists of tuples, each containing a field name and its corresponding
-            TypeScript type.
-    """
-
     def __init__(self):
-        """
-        Initialize the node visitor with an empty models dictionary.
-        """
         self.models = {}
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        """Visit a ClassDef node in the AST. If the class contains Django model
-        fields, add it to the models dictionary.
-
-        Args:
-            node(ast.ClassDef): An AST ClassDef node to visit.
-
-        Returns: this function does not return anything.
-        """
         fields = []
 
         for stmt in node.body:
@@ -85,6 +66,7 @@ class ModelVisitor(ast.NodeVisitor):
                 for target in stmt.targets:
                     if isinstance(target, ast.Name):
                         field_name = target.id
+                        field_type = None
 
                         if isinstance(stmt.value, ast.Call):
                             if isinstance(stmt.value.func, ast.Attribute):
@@ -100,49 +82,30 @@ class ModelVisitor(ast.NodeVisitor):
 
 
 def parse_model_file(path: str) -> dict[str, list[tuple[str, str]]]:
-    """Parse a Django models.py file and find model definitions.
-
-    Args:
-        path(str): The path to a Django models.py file.
-
-    Returns:
-        A dictionary where keys are model class names and values are lists of
-        tuples, each containing a field name and its corresponding TypeScript type.
-    """
     with open(path) as file:
         tree = ast.parse(file.read())
 
     visitor = ModelVisitor()
     visitor.visit(tree)
-
     return visitor.models
 
 
-def write_ts_type(_models: dict[str, list[tuple[str, str]]], output_path: str) -> None:
-    """
-    Write TypeScript type definitions for Django models to a file.
-
-    Args:
-        _models: A dictionary where keys are model class names and values are lists of
-            tuples, each containing a field name and its corresponding TypeScript type.
-        output_path: The path to the output file.
-    """
+def write_ts_interface(
+    models: dict[str, list[tuple[str, str]]], output_path: str
+) -> None:
     with open(output_path, "w") as file:
-        for model_name, fields in _models.items():
-            file.write(f"export type {model_name} = {{\n")
+        for model_name, fields in models.items():
+            file.write(
+                f"export interface {model_name} extends IBaseMontaInterface {{\n"
+            )
             for field_name, ts_type in fields:
                 file.write(f"  {field_name}: {ts_type};\n")
-            file.write("};\n\n")
+            file.write("}\n\n")
 
 
 def main(ignore_dirs: list[str]) -> None:
-    """
-    Main function to traverse directories, parse model files, and write TypeScript types.
-    """
-    # Create ts_models directory in the root directory
     os.makedirs("ts_models", exist_ok=True)
 
-    # Recursively search for all models.py files
     with Progress() as progress:
         task = progress.add_task("[cyan]Starting...", total=100)
 
@@ -152,30 +115,25 @@ def main(ignore_dirs: list[str]) -> None:
             for name in files:
                 if name == "models.py":
                     file_path = os.path.join(root, name)
-
-                    # Parse the Django model file
                     models = parse_model_file(file_path)
-
-                    # Name the output file based on the directory where models.py was found
                     dir_name = os.path.basename(root)
                     output_file = os.path.join("ts_models", f"{dir_name}-models.ts")
-
-                    # Write the TypeScript type to the output file
-                    write_ts_type(models, output_file)
+                    write_ts_interface(models, output_file)
 
                     for model_name in models.keys():
                         progress.update(
                             task,
                             advance=10,
-                            description=f"[cyan]Generating type for {model_name}...",
+                            description=f"[cyan]Generating interface for {model_name}...",
                         )
+
         progress.stop()
         rich.print("[green]Done!")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Convert Django models to TypeScript types."
+        description="Convert Django models to TypeScript interfaces."
     )
     parser.add_argument("--ignore_dirs", nargs="+", help="directories to ignore")
     args = parser.parse_args()
