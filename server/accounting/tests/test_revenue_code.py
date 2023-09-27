@@ -126,3 +126,31 @@ def test_api_get_by_id(api_client: APIClient, revenue_code_api: Response) -> Non
     assert response.data["description"] == "Test Description"
     assert response.data["expense_account"] is None
     assert response.data["revenue_account"] is None
+
+
+def test_post_with_unique_code(api_client, revenue_code: models.RevenueCode) -> None:
+    """
+    Test posting a revenue code with the same code throws serializer.ValidationError.
+    """
+    revenue_code.code = "test"
+    revenue_code.save()
+
+    revenue_code.refresh_from_db()
+
+    response = api_client.post(
+        "/api/revenue_codes/",
+        {
+            "code": "test",
+            "description": "Test Description",
+            "organization": revenue_code.organization.id,
+            "business_unit": revenue_code.business_unit.id,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.data["type"] == "validationError"
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Revenue Code with this `code` already exists. Please try again."
+    )

@@ -22,7 +22,6 @@ from typing import Any, final
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
-from django.db.transaction import atomic
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -444,17 +443,6 @@ class CustomerRuleProfile(GenericModel):
         """
         return reverse("customer-rule-profile-detail", kwargs={"pk": self.pk})
 
-    @atomic
-    def update_customer_rule_profile(self, **kwargs: Any) -> None:
-        """Updates customer rule profile information
-
-        Args:
-            **kwargs (Any): Customer rule profile information to update
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
-
 
 class CustomerContact(GenericModel):
     """
@@ -563,16 +551,6 @@ class CustomerContact(GenericModel):
                     ),
                 }
             )
-
-    def update_customer_contact(self, **kwargs: Any) -> None:
-        """Updates customer contact information
-
-        Args:
-            **kwargs (Any): Customer contact information to update
-        """
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-        self.save()
 
 
 class CustomerFuelProfile(GenericModel):
@@ -941,7 +919,6 @@ class DeliverySlot(GenericModel):
         verbose_name_plural = _("Delivery Slots")
         ordering = ["customer", "day_of_week", "start_time", "end_time"]
         db_table = "delivery_slot"
-        unique_together = ["customer", "day_of_week", "start_time", "end_time"]
         constraints = [
             models.UniqueConstraint(
                 fields=[
@@ -951,7 +928,7 @@ class DeliverySlot(GenericModel):
                     "end_time",
                     "location",
                 ],
-                name="unique_delivery_slot",
+                name="unique_ds_customer_day_start_end_loc",
             ),
             # TODO(wolfred): Write test for this check constraint.
             # Check if start_time is less than end_time

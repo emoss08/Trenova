@@ -431,7 +431,7 @@ class DocumentClassification(GenericModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["name", "organization"],
-                name="unique_document_classification_name_per_organization",
+                name="unique_document_classification_name_organization",
             )
         ]
 

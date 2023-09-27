@@ -14,7 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from rest_framework import serializers
 
 from commodities import models
 from utils.serializers import GenericSerializer
@@ -52,3 +52,34 @@ class CommoditySerializer(GenericSerializer):
         """
 
         model = models.Commodity
+
+    def validate_name(self, value: str) -> str:
+        """Validates the name of the commodity to ensure that it is unique.
+
+        Args:
+            value: The name of the commodity to validate.
+
+        Returns:
+            str: The validated name.
+
+        Raises:
+            serializers.ValidationError: If a commodity with the same name already exists.
+        """
+
+        organization = super().get_organization
+
+        queryset = models.Commodity.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Commodity with this `name` already exists. Please try again."
+            )
+
+        return value

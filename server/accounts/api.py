@@ -18,7 +18,7 @@ from typing import Any
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.contrib.auth import logout, login
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import Group, Permission
 from django.db.models import Prefetch, QuerySet
 from django.utils import timezone

@@ -16,6 +16,8 @@
 # --------------------------------------------------------------------------------------------------
 import typing
 
+from rest_framework import serializers
+
 from accounting import models
 from utils.serializers import GenericSerializer
 
@@ -42,6 +44,34 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
+
+    def validate_account_number(self, value: str) -> str:
+        """Validate account number does not exist for the organization. Will only apply to
+        create operations.
+
+        Args:
+            value: Account Number of the General Ledger Account
+
+        Returns:
+            str: Account Number of the General Ledger Account
+        """
+        organization = super().get_organization
+
+        queryset = models.GeneralLedgerAccount.objects.filter(
+            organization=organization,
+            account_number__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "General Ledger Account with this `account_number` already exists. Please try again."
+            )
+
+        return value
 
 
 class RevenueCodeSerializer(GenericSerializer):
@@ -96,6 +126,35 @@ class RevenueCodeSerializer(GenericSerializer):
         )
         return data
 
+    def validate_code(self, value: str) -> str:
+        """Validate code does not exist for the organization. Will only apply to
+        create operations and update operations that change the code.
+
+        Args:
+            value: Code of the Revenue Code
+
+        Returns:
+            str: Code of the Revenue Code
+        """
+
+        organization = super().get_organization
+
+        queryset = models.RevenueCode.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Revenue Code with this `code` already exists. Please try again."
+            )
+
+        return value
+
 
 class DivisionCodeSerializer(GenericSerializer):
     """A serializer class for the DivisionCode model.
@@ -114,3 +173,32 @@ class DivisionCodeSerializer(GenericSerializer):
         """
 
         model = models.DivisionCode
+
+    def validate_code(self, value: str) -> str:
+        """Validate code does not exist for the organization. Will only apply to
+        create operations.
+
+        Args:
+            value: Name of the Division Code
+
+        Returns:
+            str: Name of the Division Code
+        """
+
+        organization = super().get_organization
+
+        queryset = models.DivisionCode.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Division Code with this `code` already exists. Please try again."
+            )
+
+        return value

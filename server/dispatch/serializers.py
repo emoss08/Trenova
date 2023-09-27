@@ -42,6 +42,41 @@ class CommentTypeSerializer(GenericSerializer):
 
         model = models.CommentType
 
+    def validate_code(self, value: str) -> str:
+        """Validate the `name` field of the Comment Type model.
+
+        This method validates the `name` field of the Comment Type model.
+        It checks if the comment type with the given name already exists in the organization.
+        If the comment type exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the comment type with the given name already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.CommentType.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Comment Type with this `name` already exists. Please try again."
+            )
+
+        return value
+
 
 class DelayCodeSerializer(GenericSerializer):
     """A serializer for the DelayCode model.
@@ -62,6 +97,41 @@ class DelayCodeSerializer(GenericSerializer):
 
         model = models.DelayCode
 
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the Delay Code model.
+
+        This method validates the `code` field of the Delay Code model.
+        It checks if the delay code with the given code already exists in the organization.
+        If the delay code exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the delay code with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.DelayCode.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Delay Code with this `code` already exists. Please try again."
+            )
+
+        return value
+
 
 class FleetCodeSerializer(GenericSerializer):
     """A serializer for the FleetCode model.
@@ -81,6 +151,41 @@ class FleetCodeSerializer(GenericSerializer):
         """
 
         model = models.FleetCode
+
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the Fleet Code model.
+
+        This method validates the `code` field of the Fleet Code model.
+        It checks if the fleet code with the given code already exists in the organization.
+        If the fleet code exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the fleet code with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.FleetCode.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Fleet Code with this `code` already exists. Please try again."
+            )
+
+        return value
 
 
 class DispatchControlSerializer(GenericSerializer):
@@ -159,6 +264,41 @@ class RateSerializer(GenericSerializer):
             if date_str := data.get(field):
                 data[field] = convert_to_date(date_str)
         return super().to_internal_value(data)
+
+    def validate_rate_number(self, value: str) -> str:
+        """Validate the `rate_number` field of the Rate model.
+
+        This method validates the `rate_number` field of the Rate model.
+        It checks if the rate with the given rate_number already exists in the organization.
+        If the rate exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `rate_number` field.
+
+        Returns:
+            str: The value of the `rate_number` field.
+
+        Raises:
+            serializers.ValidationError: If the rate with the given rate_number already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.Rate.objects.filter(
+            organization=organization,
+            rate_number__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Rate with this `rate_number` already exists. Please try again."
+            )
+
+        return value
 
     def create(self, validated_data: typing.Any) -> models.Rate:
         """Creates a new `Rate` instance using the provided validated data.

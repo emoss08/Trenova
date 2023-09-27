@@ -371,8 +371,6 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
         format="json",
     )
 
-    print(response.data)
-
     assert response.status_code == status.HTTP_200_OK
     assert models.Rate.objects.count() == 1
     assert models.Rate.objects.get().customer.id == data["customer"]

@@ -72,23 +72,6 @@ class JobTitleListingField(serializers.RelatedField):
 
         Returns:
             A serialized representation of the data object, typically a dictionary or a list of dictionaries.
-
-        Raises:
-            SerializerError: If there is an error during the serialization process.
-
-        Example Usage:
-            # In a serializer class definition
-            class BookSerializer(serializers.ModelSerializer):
-                author = AuthorSerializer()
-
-        class Meta:
-            model = Book
-            fields = ('id', 'title', 'author')
-
-        def to_representation(self, instance):
-            representation = super().to_representation(instance)
-            representation['title'] = representation['title'].upper()
-            return representation
         """
         return instance.name
 
@@ -389,6 +372,35 @@ class JobTitleSerializer(GenericSerializer):
             "job_function",
             "users",
         ]
+
+    def validate_name(self, value: str) -> str:
+        """Validate name does not exist for the organization. Will only apply to
+        create operations.
+
+        Args:
+            value: Name of the Job Title
+
+        Returns:
+            str: Name of the Job Title
+        """
+
+        organization = super().get_organization
+
+        queryset = models.JobTitle.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Job Title with this `name` already exists. Please try again."
+            )
+
+        return value
 
     def get_users(self, obj: models.JobTitle) -> list[str]:
         """The get_users function is a custom function that returns the list of users associated with a job title.

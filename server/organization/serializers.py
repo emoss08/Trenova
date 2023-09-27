@@ -68,6 +68,41 @@ class DepotSerializer(serializers.ModelSerializer):
             "details",
         )
 
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the Depot model.
+
+        This method validates the `name` field of the Depot model.
+        It checks if the depot with the given name already exists in the organization.
+        If the depot exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the depot with the given name already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.Depot.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Depot with this `name` already exists. Please try again."
+            )
+
+        return value
+
 
 class OrganizationSerializer(serializers.ModelSerializer):
     """
@@ -187,6 +222,41 @@ class TableChangeAlertSerializer(GenericSerializer):
         model = models.TableChangeAlert
         extra_read_only_fields = ("function_name", "trigger_name", "listener_name")
 
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the TableChangeAlert model.
+
+        This method validates the `name` field of the TableChangeAlert model.
+        It checks if the table change alert with the given name already exists in the organization.
+        If the table change alert exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the table change alert with the given name already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.TableChangeAlert.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Table Change Alert with this `name` already exists. Please try again."
+            )
+
+        return value
+
 
 class NotificationTypeSerializer(GenericSerializer):
     """
@@ -199,6 +269,41 @@ class NotificationTypeSerializer(GenericSerializer):
         """
 
         model = models.NotificationType
+
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the NotificationType model.
+
+        This method validates the `name` field of the NotificationType model.
+        It checks if the notification type with the given name already exists in the organization.
+        If the notification type exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the notification type with the given name already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.NotificationType.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Notification Type with this `name` already exists. Please try again."
+            )
+
+        return value
 
 
 class NotificationSettingSerializer(GenericSerializer):

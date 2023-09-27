@@ -121,6 +121,41 @@ class CustomerFuelTableSerializer(GenericSerializer):
         model = models.CustomerFuelTable
         extra_fields = ("customer_fuel_table_details",)
 
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the Customer Fuel Table model.
+
+        This method validates the `name` field of the Customer Fuel Table model.
+        It checks if the customer fuel table with the given name already exists in the organization.
+        If the customer fuel table exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the customer fuel table with the given name already exists
+            in the organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.CustomerFuelTable.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Customer Fuel Table with this `name` already exists. Please try again."
+            )
+
+        return value
+
     def update(  # type: ignore
         self, instance: models.CustomerFuelTable, validated_data: Any
     ) -> models.CustomerFuelTable:
@@ -186,6 +221,41 @@ class CustomerRuleProfileSerializer(GenericSerializer):
 
         model = models.CustomerRuleProfile
 
+    def validate_name(self, value: str) -> str:
+        """Validate the `name` field of the Customer Rule Profile model.
+
+        This method validates the `name` field of the Customer Rule Profile model.
+        It checks if the customer rule profile with the given name already exists in the organization.
+        If the customer rule profile exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `name` field.
+
+        Returns:
+            str: The value of the `name` field.
+
+        Raises:
+            serializers.ValidationError: If the customer rule profile with the given name already exists
+            in the organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.CustomerRuleProfile.objects.filter(
+            organization=organization,
+            name__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Customer Rule Profile with this `name` already exists. Please try again."
+            )
+
+        return value
+
 
 class CustomerSerializer(GenericSerializer):
     """
@@ -209,6 +279,40 @@ class CustomerSerializer(GenericSerializer):
             "delivery_slots",
             "customer_contacts",
         )
+
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the Customer model.
+
+        This method validates the `code` field of the Customer model.
+        It checks if the customer with the given code already exists in the organization.
+        If the customer exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the customer with the given code already exists in the organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.Customer.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Customer with this `code` already exists. Please try again."
+            )
+
+        return value
 
     def to_representation(self, instance: models.Customer) -> dict[str, Any]:
         """Override the `to_representation` method to provide a custom representation of Customer Instance.

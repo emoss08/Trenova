@@ -106,6 +106,41 @@ class WorkerSerializer(GenericSerializer):
             "comments",
         )
 
+    def validate_code(self, value: str) -> str:
+        """Validate the `code` field of the Worker model.
+
+        This method validates the `code` field of the Worker model.
+        It checks if the worker with the given code already exists in the organization.
+        If the worker exists, it raises a validation error.
+
+        Args:
+            value (str): The value of the `code` field.
+
+        Returns:
+            str: The value of the `code` field.
+
+        Raises:
+            serializers.ValidationError: If the worker with the given code already exists in the
+             organization.
+        """
+        organization = super().get_organization
+
+        queryset = models.Worker.objects.filter(
+            organization=organization,
+            code__iexact=value,  # iexact performs a case-insensitive search
+        )
+
+        # Exclude the current instance if updating
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
+            raise serializers.ValidationError(
+                "Worker with this `code` already exists. Please try again."
+            )
+
+        return value
+
     def to_representation(self, instance: models.Worker) -> dict[str, Any]:
         """Customize the representation of the worker, which will be returned in API response.
 
