@@ -15,72 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
-import { useMutation, useQueryClient } from "react-query";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import React from "react";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { JobTitleFormValues } from "@/types/accounts";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
+import { JobTitle, JobTitleFormValues } from "@/types/accounts";
 import { jobTitleSchema } from "@/helpers/schemas/AccountsSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/helpers/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { jobFunctionChoices } from "@/helpers/choices";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 function CreateJobTitleModalForm(): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation(
-    (values: JobTitleFormValues) => axios.post("/job_titles/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["job-title-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Job Title created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
 
   const form = useForm<JobTitleFormValues>({
     validate: yupResolver(jobTitleSchema),
@@ -91,6 +44,24 @@ function CreateJobTitleModalForm(): React.ReactElement {
       jobFunction: "",
     },
   });
+
+  const mutation = useCustomMutation<
+    JobTitleFormValues,
+    Omit<TableStoreProps<JobTitle>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/job_titles/",
+      successMessage: "Job Title created successfully.",
+      queryKeysToInvalidate: ["job-title-table-data"],
+      closeModal: true,
+      errorMessage: "Failed to create job title.",
+    },
+    () => setLoading(false),
+  );
 
   const submitForm = (values: JobTitleFormValues) => {
     setLoading(true);
@@ -164,6 +135,13 @@ export function CreateJobTitleModal(): React.ReactElement {
     <Modal.Root
       opened={showCreateModal}
       onClose={() => setShowCreateModal(false)}
+      styles={{
+        inner: {
+          section: {
+            overflowY: "visible",
+          },
+        },
+      }}
     >
       <Modal.Overlay />
       <Modal.Content>
@@ -172,9 +150,7 @@ export function CreateJobTitleModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateJobTitleModalForm />
-          </Suspense>
+          <CreateJobTitleModalForm />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

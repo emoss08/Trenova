@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
+import React from "react";
 import { useQuery, useQueryClient } from "react-query";
 import {
   Box,
@@ -24,11 +24,9 @@ import {
   Modal,
   Select,
   SimpleGrid,
-  Skeleton,
   Textarea,
   TextInput,
 } from "@mantine/core";
-import { useContextMenu } from "mantine-contextmenu";
 import { revenueCodeTableStore } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import { GeneralLedgerAccount, RevenueCode } from "@/types/accounting";
@@ -86,7 +84,6 @@ export function ViewRCModalForm({
             color="white"
             type="submit"
             onClick={() => {
-              revenueCodeTableStore.set("selectedRecord", revenueCode);
               revenueCodeTableStore.set("viewModalOpen", false);
               revenueCodeTableStore.set("editModalOpen", true);
             }}
@@ -129,14 +126,12 @@ export function ViewRCModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            {revenueCode && (
-              <ViewRCModalForm
-                revenueCode={revenueCode}
-                selectGlAccountData={selectGlAccountData}
-              />
-            )}
-          </Suspense>
+          {revenueCode && (
+            <ViewRCModalForm
+              revenueCode={revenueCode}
+              selectGlAccountData={selectGlAccountData}
+            />
+          )}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

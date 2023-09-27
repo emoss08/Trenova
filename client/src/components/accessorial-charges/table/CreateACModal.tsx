@@ -17,74 +17,29 @@
 
 import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { accessorialChargeTableStore as store } from "@/stores/BillingStores";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { AccessorialChargeFormValues } from "@/types/billing";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { accessorialChargeSchema } from "@/helpers/schemas/BillingSchema";
+import {
+  AccessorialCharge,
+  AccessorialChargeFormValues as FormValues,
+} from "@/types/billing";
+import { accessorialChargeSchema as Schema } from "@/helpers/schemas/BillingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 export function CreateACModalForm() {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: AccessorialChargeFormValues) =>
-      axios.post("/accessorial_charges/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["accessorial-charges-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Accessorial Charge created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            accessorialChargeTableStore.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<AccessorialChargeFormValues>({
-    validate: yupResolver(accessorialChargeSchema),
+  const form = useForm<FormValues>({
+    validate: yupResolver(Schema),
     initialValues: {
       code: "",
       description: "",
@@ -94,7 +49,25 @@ export function CreateACModalForm() {
     },
   });
 
-  const submitForm = (values: AccessorialChargeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<AccessorialCharge>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/accessorial_charges/",
+      successMessage: "Accessorial Charge created successfully.",
+      queryKeysToInvalidate: ["accessorial-charges-table-data"],
+      closeModal: true,
+      errorMessage: "Failed to create accessorial charge.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -102,7 +75,7 @@ export function CreateACModalForm() {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput<AccessorialChargeFormValues>
+        <ValidatedTextInput<FormValues>
           form={form}
           className={classes.fields}
           name="code"
@@ -112,7 +85,7 @@ export function CreateACModalForm() {
           variant="filled"
           withAsterisk
         />
-        <ValidatedTextArea<AccessorialChargeFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           className={classes.fields}
           name="description"
@@ -122,7 +95,7 @@ export function CreateACModalForm() {
           variant="filled"
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ValidatedTextInput<AccessorialChargeFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             className={classes.fields}
             name="chargeAmount"
@@ -132,7 +105,7 @@ export function CreateACModalForm() {
             variant="filled"
             withAsterisk
           />
-          <SelectInput<AccessorialChargeFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={fuelMethodChoices}
             className={classes.fields}
@@ -143,7 +116,7 @@ export function CreateACModalForm() {
             variant="filled"
             withAsterisk
           />
-          <SwitchInput<AccessorialChargeFormValues>
+          <SwitchInput<FormValues>
             form={form}
             className={classes.fields}
             name="isDetention"
@@ -169,10 +142,7 @@ export function CreateACModalForm() {
 }
 
 export function CreateACModal() {
-  const [showCreateModal, setShowCreateModal] =
-    accessorialChargeTableStore.use("createModalOpen");
-
-  if (!showCreateModal) return null;
+  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
   return (
     <Modal.Root

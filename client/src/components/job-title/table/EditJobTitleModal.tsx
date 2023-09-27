@@ -15,33 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  Box,
-  Button,
-  Group,
-  Modal,
-  SimpleGrid,
-  Skeleton,
-  Stack,
-} from "@mantine/core";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
-import { getJobTitleDetails } from "@/services/OrganizationRequestService";
 import { JobTitle, JobTitleFormValues } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { jobTitleSchema } from "@/helpers/schemas/AccountsSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/helpers/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { jobFunctionChoices } from "@/helpers/choices";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 type EditJobTitleModalFormProps = {
   jobTitle: JobTitle;
@@ -52,57 +40,6 @@ export function EditJobTitleModalForm({
 }: EditJobTitleModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation(
-    (values: JobTitleFormValues) =>
-      axios.put(`/job_titles/${jobTitle.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["job-title-table-data"],
-          })
-          .then(() => {
-            queryClient
-              .invalidateQueries({
-                queryKey: ["jobTitle", jobTitle.id],
-              })
-              .finally(() => {
-                notifications.show({
-                  title: "Success",
-                  message: "Job Title updated successfully",
-                  color: "green",
-                  withCloseButton: true,
-                  icon: <FontAwesomeIcon icon={faCheck} />,
-                });
-                store.set("editModalOpen", false);
-              });
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
 
   const form = useForm<JobTitleFormValues>({
     validate: yupResolver(jobTitleSchema),
@@ -113,6 +50,24 @@ export function EditJobTitleModalForm({
       jobFunction: jobTitle.jobFunction,
     },
   });
+
+  const mutation = useCustomMutation<
+    JobTitleFormValues,
+    Omit<TableStoreProps<JobTitle>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/job_titles/${jobTitle.id}/`,
+      successMessage: "Job Title updated successfully.",
+      queryKeysToInvalidate: ["job-title-table-data"],
+      closeModal: true,
+      errorMessage: "Failed to update job title.",
+    },
+    () => setLoading(false),
+  );
 
   const submitForm = (values: JobTitleFormValues) => {
     setLoading(true);
@@ -180,22 +135,19 @@ export function EditJobTitleModalForm({
 export function EditJobTitleModal(): React.ReactElement {
   const [showEditModal, setShowEditModal] = store.use("editModalOpen");
   const [jobTitle] = store.use("selectedRecord");
-  const queryClient = useQueryClient();
-
-  const { data: jobTitleData, isLoading: isJobTitleDataLoading } = useQuery({
-    queryKey: ["jobTitle", jobTitle?.id],
-    queryFn: () => {
-      if (!jobTitle) {
-        return Promise.resolve(null);
-      }
-      return getJobTitleDetails(jobTitle.id);
-    },
-    enabled: showEditModal,
-    initialData: () => queryClient.getQueryData(["jobTitle", jobTitle?.id]),
-  });
 
   return (
-    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
+    <Modal.Root
+      opened={showEditModal}
+      onClose={() => setShowEditModal(false)}
+      styles={{
+        inner: {
+          section: {
+            overflowY: "visible",
+          },
+        },
+      }}
+    >
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
@@ -203,13 +155,7 @@ export function EditJobTitleModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isJobTitleDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            jobTitleData && <EditJobTitleModalForm jobTitle={jobTitleData} />
-          )}
+          {jobTitle && <EditJobTitleModalForm jobTitle={jobTitle} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

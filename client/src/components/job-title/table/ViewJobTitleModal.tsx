@@ -15,7 +15,6 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useQuery, useQueryClient } from "react-query";
 import {
   Box,
   Button,
@@ -23,14 +22,11 @@ import {
   Modal,
   Select,
   SimpleGrid,
-  Skeleton,
-  Stack,
   Textarea,
   TextInput,
 } from "@mantine/core";
 import React from "react";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
-import { getJobTitleDetails } from "@/services/OrganizationRequestService";
 import { JobTitle } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { statusChoices } from "@/helpers/constants";
@@ -84,7 +80,6 @@ export function ViewJobTitleModalForm({
           color="white"
           type="submit"
           onClick={() => {
-            store.set("selectedRecord", jobTitle);
             store.set("viewModalOpen", false);
             store.set("editModalOpen", true);
           }}
@@ -100,19 +95,6 @@ export function ViewJobTitleModalForm({
 export function ViewJobTitleModal(): React.ReactElement {
   const [showViewModal, setShowViewModal] = store.use("viewModalOpen");
   const [jobTitle] = store.use("selectedRecord");
-  const queryClient = useQueryClient();
-
-  const { data: jobTitleData, isLoading: isJobTitleDataLoading } = useQuery({
-    queryKey: ["jobTitle", jobTitle?.id],
-    queryFn: () => {
-      if (!jobTitle) {
-        return Promise.resolve(null);
-      }
-      return getJobTitleDetails(jobTitle.id);
-    },
-    enabled: showViewModal,
-    initialData: () => queryClient.getQueryData(["jobTitle", jobTitle?.id]),
-  });
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -123,13 +105,7 @@ export function ViewJobTitleModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isJobTitleDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            jobTitleData && <ViewJobTitleModalForm jobTitle={jobTitleData} />
-          )}
+          {jobTitle && <ViewJobTitleModalForm jobTitle={jobTitle} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
