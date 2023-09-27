@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { faToolbox } from "@fortawesome/pro-duotone-svg-icons";
+import { faScrewdriverWrench } from "@fortawesome/pro-duotone-svg-icons";
 import {
   LinksGroup,
   LinksGroupProps,
@@ -26,7 +26,7 @@ import {
 export const equipmentNavLinks = [
   {
     label: "Equipment Maintenance",
-    icon: faToolbox,
+    icon: faScrewdriverWrench,
     link: "/",
     permission: "admin.equipment_maintenance.view",
     links: [

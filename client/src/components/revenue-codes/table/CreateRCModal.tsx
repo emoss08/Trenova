@@ -15,27 +15,26 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import React from "react";
+import { useQuery, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
+import { revenueCodeTableStore as store } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import {
   GeneralLedgerAccount,
+  RevenueCode,
   RevenueCodeFormValues,
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { revenueCodeSchema } from "@/helpers/schemas/AccountingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 type CreateRCModalFormProps = {
   selectGlAccountData: TChoiceProps[];
@@ -46,50 +45,6 @@ function CreateRCModalForm({
 }: CreateRCModalFormProps): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation(
-    (values: RevenueCodeFormValues) => axios.post("/revenue_codes/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["revenue-code-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Revenue Code created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            revenueCodeTableStore.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
 
   const form = useForm<RevenueCodeFormValues>({
     validate: yupResolver(revenueCodeSchema),
@@ -100,6 +55,24 @@ function CreateRCModalForm({
       revenueAccount: "",
     },
   });
+
+  const mutation = useCustomMutation<
+    RevenueCodeFormValues,
+    Omit<TableStoreProps<RevenueCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/revenue_codes/",
+      successMessage: "Revenue Code created successfully.",
+      queryKeysToInvalidate: ["revenue-code-table-data"],
+      closeModal: true,
+      errorMessage: "Failed to create revenue code.",
+    },
+    () => setLoading(false),
+  );
 
   const submitForm = (values: RevenueCodeFormValues) => {
     setLoading(true);
@@ -165,8 +138,7 @@ function CreateRCModalForm({
 }
 
 export function CreateRCModal(): React.ReactElement {
-  const [showCreateModal, setShowCreateModal] =
-    revenueCodeTableStore.use("createModalOpen");
+  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
   const queryClient = useQueryClient();
 
   const { data: glAccountData } = useQuery({
@@ -195,9 +167,7 @@ export function CreateRCModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateRCModalForm selectGlAccountData={selectGlAccountData} />
-          </Suspense>
+          <CreateRCModalForm selectGlAccountData={selectGlAccountData} />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

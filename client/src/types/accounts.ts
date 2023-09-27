@@ -80,9 +80,14 @@ export type JobTitle = {
   description?: string | null;
   status: StatusChoiceProps;
   jobFunction: JobFunctionChoiceProps | "";
+  created: string;
+  modified: string;
 };
 
-export type JobTitleFormValues = Omit<JobTitle, "id" | "organization">;
+export type JobTitleFormValues = Omit<
+  JobTitle,
+  "id" | "organization" | "created" | "modified"
+>;
 
 export type UserReport = {
   id: string;

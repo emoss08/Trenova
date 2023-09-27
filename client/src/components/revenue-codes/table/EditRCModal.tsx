@@ -25,12 +25,10 @@ import {
   Stack,
 } from "@mantine/core";
 import React from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { revenueCodeTableStore } from "@/stores/AccountingStores";
+import { revenueCodeTableStore as store } from "@/stores/AccountingStores";
 import {
   getGLAccounts,
   getRevenueCodeDetail,
@@ -42,12 +40,12 @@ import {
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { revenueCodeSchema } from "@/helpers/schemas/AccountingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 type EditRCModalFormProps = {
   revenueCode: RevenueCode;
@@ -60,57 +58,6 @@ export function EditRCModalForm({
 }: EditRCModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation(
-    (values: RevenueCodeFormValues) =>
-      axios.put(`/revenue_codes/${revenueCode.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["revenue-code-table-data"],
-          })
-          .then(() => {
-            queryClient
-              .invalidateQueries({
-                queryKey: ["revenueCode", revenueCode?.id],
-              })
-              .then(() => {
-                notifications.show({
-                  title: "Success",
-                  message: "Revenue Code updated successfully",
-                  color: "green",
-                  withCloseButton: true,
-                  icon: <FontAwesomeIcon icon={faCheck} />,
-                });
-                revenueCodeTableStore.set("editModalOpen", false);
-              });
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
 
   const form = useForm<RevenueCodeFormValues>({
     validate: yupResolver(revenueCodeSchema),
@@ -121,6 +68,24 @@ export function EditRCModalForm({
       revenueAccount: revenueCode.revenueAccount || "",
     },
   });
+
+  const mutation = useCustomMutation<
+    RevenueCodeFormValues,
+    Omit<TableStoreProps<RevenueCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/revenue_codes/${revenueCode.id}/`,
+      successMessage: "Revenue Code updated successfully.",
+      queryKeysToInvalidate: ["revenue-code-table-data"],
+      closeModal: true,
+      errorMessage: "Failed to update revenue code.",
+    },
+    () => setLoading(false),
+  );
 
   const submitForm = (values: RevenueCodeFormValues) => {
     setLoading(true);
@@ -188,9 +153,8 @@ export function EditRCModalForm({
 }
 
 export function EditRCModal(): React.ReactElement {
-  const [showEditModal, setShowEditModal] =
-    revenueCodeTableStore.use("editModalOpen");
-  const [revenueCode] = revenueCodeTableStore.use("selectedRecord");
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+  const [revenueCode] = store.use("selectedRecord");
   const queryClient = useQueryClient();
 
   const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({

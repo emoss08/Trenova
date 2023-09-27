@@ -17,25 +17,22 @@
 
 import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { accessorialChargeTableStore } from "@/stores/BillingStores";
+import { accessorialChargeTableStore as store } from "@/stores/BillingStores";
 import {
   AccessorialCharge,
-  AccessorialChargeFormValues,
+  AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { accessorialChargeSchema } from "@/helpers/schemas/BillingSchema";
+import { accessorialChargeSchema as Schema } from "@/helpers/schemas/BillingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 type EditACModalFormProps = {
   accessorialCharge: AccessorialCharge;
@@ -44,57 +41,9 @@ type EditACModalFormProps = {
 export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: AccessorialChargeFormValues) =>
-      axios.put(`/accessorial_charges/${accessorialCharge.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["accessorial-charges-table-data"],
-        });
-        queryClient
-          .invalidateQueries({
-            queryKey: ["accessorialCharge", accessorialCharge.id],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Accessorial Charge updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            accessorialChargeTableStore.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<AccessorialChargeFormValues>({
-    validate: yupResolver(accessorialChargeSchema),
+  const form = useForm<FormValues>({
+    validate: yupResolver(Schema),
     initialValues: {
       code: accessorialCharge.code,
       description: accessorialCharge.description || "",
@@ -104,7 +53,25 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
     },
   });
 
-  const submitForm = (values: AccessorialChargeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<AccessorialCharge>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/accessorial_charges/${accessorialCharge.id}/`,
+      successMessage: "Accessorial Charge updated successfully.",
+      queryKeysToInvalidate: ["accessorial-charges-table-data"],
+      closeModal: true,
+      errorMessage: "Failed to update accessorial charge.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -112,77 +79,74 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <Box>
-          <ValidatedTextInput
+        <ValidatedTextInput<FormValues>
+          form={form}
+          className={classes.fields}
+          name="code"
+          label="Code"
+          description="Code for the accessorial charge."
+          placeholder="Code"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextArea<FormValues>
+          form={form}
+          className={classes.fields}
+          name="description"
+          label="Description"
+          description="Description of the accessorial charge."
+          placeholder="Description"
+          variant="filled"
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <ValidatedTextInput<FormValues>
             form={form}
             className={classes.fields}
-            name="code"
-            label="Code"
-            description="Code for the accessorial charge."
-            placeholder="Code"
+            name="chargeAmount"
+            label="Charge Amount"
+            placeholder="Charge Amount"
+            description="Charge amount for the accessorial charge."
             variant="filled"
             withAsterisk
           />
-          <ValidatedTextArea
+          <SelectInput<FormValues>
             form={form}
+            data={fuelMethodChoices}
             className={classes.fields}
-            name="description"
-            label="Description"
-            description="Description of the accessorial charge."
-            placeholder="Description"
+            name="method"
+            label="Fuel Method"
+            description="Method for calculating the other charge."
+            placeholder="Fuel Method"
             variant="filled"
           />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput
-              form={form}
-              className={classes.fields}
-              name="chargeAmount"
-              label="Charge Amount"
-              placeholder="Charge Amount"
-              description="Charge amount for the accessorial charge."
-              variant="filled"
-              withAsterisk
-            />
-            <SelectInput
-              form={form}
-              data={fuelMethodChoices}
-              className={classes.fields}
-              name="method"
-              label="Fuel Method"
-              description="Method for calculating the other charge."
-              placeholder="Fuel Method"
-              variant="filled"
-            />
-            <SwitchInput
-              form={form}
-              className={classes.fields}
-              name="isDetention"
-              label="Detention"
-              description="Is detention charge?"
-              placeholder="Detention"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
+          <SwitchInput<FormValues>
+            form={form}
+            className={classes.fields}
+            name="isDetention"
+            label="Detention"
+            description="Is detention charge?"
+            placeholder="Detention"
+            variant="filled"
+          />
+        </SimpleGrid>
+        <Group position="right" mt="md">
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
+            Submit
+          </Button>
+        </Group>
       </Box>
     </form>
   );
 }
 
 export function EditACModal(): React.ReactElement | null {
-  const [showEditModal, setShowEditModal] =
-    accessorialChargeTableStore.use("editModalOpen");
-  const [accessorialCharge] = accessorialChargeTableStore.use("selectedRecord");
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+  const [accessorialCharge] = store.use("selectedRecord");
 
   if (!showEditModal) return null;
 
