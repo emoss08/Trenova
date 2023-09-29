@@ -30,7 +30,7 @@ import * as Yup from "yup";
 import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 
 const useStyles = createStyles((theme) => ({

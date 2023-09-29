@@ -2,13 +2,12 @@ celery-types==0.20.0
 djangorestframework-stubs[compatible-mypy]==3.14.2
 factory_boy==3.3.0
 isort==5.12.0
-pydantic==2.3.0
+pydantic==2.4.2
 pytest==7.4.2
 pytest-cov==4.1.0
 pytest-django==4.5.2
 pytest-sugar==0.9.7
 pytest-clarity==1.0.1
-pyupgrade==3.12.0
 tox==4.11.3
-types-redis==4.6.0.6
+types-redis==4.6.0.7
 pretty_errors==1.2.25

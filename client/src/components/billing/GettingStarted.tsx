@@ -26,7 +26,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { WebSocketManager } from "@/helpers/websockets";
+import { WebSocketManager } from "@/lib/websockets";
 import { STEPS } from "@/pages/billing/BillingClient";
 import { billingClientStore } from "@/stores/BillingStores";
 
@@ -81,14 +81,14 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
+export default function GettingStarted({ websocketManager }: any) {
   const [websocketMessage] = billingClientStore.use("websocketMessage");
   const [step] = billingClientStore.use("step");
   const { classes } = useStyles();
 
   const getStarted = () => {
     // send message to websocket to get started
-    websocketManager.sendJsonMessage("billing_client", {
+    websocketManager.sendJson("billing_client", {
       action: STEPS[0], // or "get_started"
     });
   };
@@ -136,6 +136,4 @@ const GettingStarted: React.FC<Props> = ({ websocketManager }) => {
       </SimpleGrid>
     </Container>
   );
-};
-
-export default GettingStarted;
+}

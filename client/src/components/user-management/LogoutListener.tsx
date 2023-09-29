@@ -17,9 +17,9 @@
 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createWebsocketManager } from "@/helpers/websockets";
+import { createWebsocketManager } from "@/lib/websockets";
 import { useAuthStore } from "@/stores/AuthStore";
-import { WEB_SOCKET_URL } from "@/helpers/constants";
+import { WEB_SOCKET_URL } from "@/lib/constants";
 
 interface LogoutListenerProps {
   userId: string;

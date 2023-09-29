@@ -18,7 +18,7 @@
 import {
   DistanceMethodChoiceProps,
   RouteModelChoiceProps,
-} from "@/helpers/choices";
+} from "@/lib/choices";
 
 export type RouteControl = {
   id: string;

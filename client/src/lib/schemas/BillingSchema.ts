@@ -41,8 +41,12 @@ export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> 
 
 export const chargeTypeSchema: ObjectSchema<ChargeTypeFormValues> =
   Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().notRequired(),
+    name: Yup.string()
+      .max(50, "Name must be less than 50 characters.")
+      .required("Name is required"),
+    description: Yup.string()
+      .max(100, "Description must be less than 100 characters.")
+      .notRequired(),
   });
 
 export const billingControlSchema: ObjectSchema<BillingControlFormValues> =

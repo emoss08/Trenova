@@ -15,78 +15,25 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
-import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
+import React from "react";
+import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { useDelayCodeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { DelayCodeFormValues } from "@/types/dispatch";
-import { delayCodeSchema } from "@/helpers/schemas/DispatchSchema";
+import { DelayCode, DelayCodeFormValues as FormValues } from "@/types/dispatch";
+import { delayCodeSchema } from "@/lib/schemas/DispatchSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 export function CreateDelayCodeModalForm() {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: DelayCodeFormValues) => axios.post("/delay_codes/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["delay-code-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Delay Code created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Delay Code with this Code and Organization already exists."
-            ) {
-              form.setFieldError("code", e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<DelayCodeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(delayCodeSchema),
     initialValues: {
       code: "",
@@ -95,7 +42,26 @@ export function CreateDelayCodeModalForm() {
     },
   });
 
-  const submitForm = (values: DelayCodeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<DelayCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/delay_codes/",
+      successMessage: "Delay Code created successfully.",
+      queryKeysToInvalidate: ["delay-code-table-data"],
+      additionalInvalidateQueries: ["delayCodes"],
+      closeModal: true,
+      errorMessage: "Failed to create delay code.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -103,7 +69,7 @@ export function CreateDelayCodeModalForm() {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput<DelayCodeFormValues>
+        <ValidatedTextInput<FormValues>
           form={form}
           name="code"
           label="Code"
@@ -111,7 +77,7 @@ export function CreateDelayCodeModalForm() {
           description="Unique Code of the delay code"
           withAsterisk
         />
-        <ValidatedTextArea<DelayCodeFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           name="description"
           label="Description"
@@ -119,7 +85,7 @@ export function CreateDelayCodeModalForm() {
           placeholder="Description"
           withAsterisk
         />
-        <SwitchInput<DelayCodeFormValues>
+        <SwitchInput<FormValues>
           form={form}
           name="fCarrierOrDriver"
           label="F. Carrier/Driver"
@@ -138,10 +104,6 @@ export function CreateDelayCodeModalForm() {
 export function CreateDelayCodeModal() {
   const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
-  if (!showCreateModal) {
-    return null;
-  }
-
   return (
     <Modal.Root
       opened={showCreateModal}
@@ -154,9 +116,7 @@ export function CreateDelayCodeModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateDelayCodeModalForm />
-          </Suspense>
+          <CreateDelayCodeModalForm />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

@@ -17,23 +17,25 @@
 
 import React from "react";
 import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useFleetCodeStore as store } from "@/stores/DispatchStore";
-import { fleetCodeSchema } from "@/helpers/schemas/DispatchSchema";
-import { FleetCode, FleetCodeFormValues } from "@/types/dispatch";
+import { fleetCodeSchema } from "@/lib/schemas/DispatchSchema";
+import {
+  FleetCode,
+  FleetCodeFormValues as FormValues,
+  FleetCodeFormValues,
+} from "@/types/dispatch";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { yesAndNoChoicesBoolean } from "@/lib/constants";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { useUsers } from "@/hooks/useUsers";
 import { TChoiceProps } from "@/types";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 function EditFleetCodeModalForm({
   fleetCode,
@@ -48,51 +50,6 @@ function EditFleetCodeModalForm({
 }) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation(
-    (values: FleetCodeFormValues) =>
-      axios.put(`/fleet_codes/${fleetCode.code}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["fleet-code-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Fleet Code updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: any) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
 
   const form = useForm<FleetCodeFormValues>({
     validate: yupResolver(fleetCodeSchema),
@@ -106,6 +63,25 @@ function EditFleetCodeModalForm({
       manager: fleetCode.manager,
     },
   });
+
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<FleetCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/fleet_codes/${fleetCode.code}`,
+      successMessage: "Fleet Code updated successfully.",
+      queryKeysToInvalidate: ["fleet-code-table-data"],
+      additionalInvalidateQueries: ["fleetCodes"],
+      closeModal: true,
+      errorMessage: "Failed to update fleet code.",
+    },
+    () => setLoading(false),
+  );
 
   const submitForm = (values: FleetCodeFormValues) => {
     setLoading(true);

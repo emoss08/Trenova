@@ -30,22 +30,21 @@ import {
 import React from "react";
 import { useMediaQuery } from "@mantine/hooks";
 import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useRateStore as store } from "@/stores/DispatchStore";
 import { TChoiceProps } from "@/types";
-import { Rate, rateFields, RateFormValues } from "@/types/dispatch";
+import {
+  Rate,
+  rateFields,
+  RateFormValues as FormValues,
+} from "@/types/dispatch";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { ValidatedDateInput } from "@/components/common/fields/DateInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { rateSchema } from "@/helpers/schemas/DispatchSchema";
+import { rateSchema } from "@/lib/schemas/DispatchSchema";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCommodities } from "@/hooks/useCommodities";
 import { useLocations } from "@/hooks/useLocations";
@@ -53,6 +52,8 @@ import { useEquipmentTypes } from "@/hooks/useEquipmentType";
 import { useOrderTypes } from "@/hooks/useOrderTypes";
 import { useAccessorialCharges } from "@/hooks/useAccessorialCharges";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 function EditRateBillingTableForm({
   accessorialCharges,
@@ -63,7 +64,7 @@ function EditRateBillingTableForm({
   accessorialCharges: ReadonlyArray<TChoiceProps>;
   isAccessorialChargesLoading: boolean;
   isAccessorialChargesError: boolean;
-  form: UseFormReturnType<RateFormValues>;
+  form: UseFormReturnType<FormValues>;
 }) {
   const theme = useMantineTheme();
 
@@ -73,7 +74,7 @@ function EditRateBillingTableForm({
     return (
       <>
         <Group mt="xs" key={accessorialCharge}>
-          <SelectInput<RateFormValues>
+          <SelectInput<FormValues>
             form={form}
             name={`rateBillingTables.${index}.accessorialCharge`}
             data={accessorialCharges}
@@ -84,14 +85,14 @@ function EditRateBillingTableForm({
             description="Accessorial Charge associated with this Rate"
             withAsterisk
           />
-          <ValidatedTextInput<RateFormValues>
+          <ValidatedTextInput<FormValues>
             label="Description"
             form={form}
             name={`rateBillingTables.${index}.description`}
             placeholder="Description"
             description="Description for Rate Billing Table"
           />
-          <ValidatedTextInput<RateFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             name={`rateBillingTables.${index}.unit`}
             label="Unit"
@@ -99,7 +100,7 @@ function EditRateBillingTableForm({
             description="Unit for Rate Billing Table"
             withAsterisk
           />
-          <ValidatedTextInput<RateFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             name={`rateBillingTables.${index}.chargeAmount`}
             label="Charge Amount"
@@ -107,7 +108,7 @@ function EditRateBillingTableForm({
             description="Charge Amount for Rate Billing Table"
             withAsterisk
           />
-          <ValidatedTextInput<RateFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             name={`rateBillingTables.${index}.subTotal`}
             label="Sub Total"
@@ -184,7 +185,7 @@ type Props = {
   locations: ReadonlyArray<TChoiceProps>;
   isLocationsLoading: boolean;
   isLocationsError: boolean;
-  form: UseFormReturnType<RateFormValues>;
+  form: UseFormReturnType<FormValues>;
 };
 
 function EditRateModalForm({
@@ -210,7 +211,7 @@ function EditRateModalForm({
   return (
     <Box className={classes.div}>
       <SimpleGrid cols={4} breakpoints={[{ maxWidth: "lg", cols: 1 }]}>
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="isActive"
           label="Is Active"
@@ -219,7 +220,7 @@ function EditRateModalForm({
           withAsterisk
           data={yesAndNoChoicesBoolean}
         />
-        <ValidatedTextInput<RateFormValues>
+        <ValidatedTextInput<FormValues>
           form={form}
           name="rateNumber"
           label="Rate Number"
@@ -246,7 +247,7 @@ function EditRateModalForm({
         <Divider variant="dashed" />
       </Box>
       <SimpleGrid cols={4} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="customer"
           label="Customer"
@@ -256,7 +257,7 @@ function EditRateModalForm({
           isLoading={isCustomersLoading}
           isError={isCustomersError}
         />
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="commodity"
           label="Commodity"
@@ -266,7 +267,7 @@ function EditRateModalForm({
           isLoading={isCommoditiesLoading}
           isError={isCommoditiesError}
         />
-        <ValidatedDateInput<RateFormValues>
+        <ValidatedDateInput<FormValues>
           form={form}
           name="effectiveDate"
           label="Effective Date"
@@ -274,7 +275,7 @@ function EditRateModalForm({
           description="Effective Date for Rate"
           withAsterisk
         />
-        <ValidatedDateInput<RateFormValues>
+        <ValidatedDateInput<FormValues>
           form={form}
           name="expirationDate"
           label="Expiration Date"
@@ -282,7 +283,7 @@ function EditRateModalForm({
           description="Expiration Date for Rate"
           withAsterisk
         />
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="originLocation"
           label="Origin Location"
@@ -292,7 +293,7 @@ function EditRateModalForm({
           isLoading={isLocationsLoading}
           isError={isLocationsError}
         />
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="destinationLocation"
           label="Destination Location"
@@ -302,7 +303,7 @@ function EditRateModalForm({
           isLoading={isLocationsLoading}
           isError={isLocationsError}
         />
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="equipmentType"
           label="Equipment Type"
@@ -312,7 +313,7 @@ function EditRateModalForm({
           isLoading={isEquipmentTypesLoading}
           isError={isEquipmentTypesError}
         />
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="orderType"
           label="Order Type"
@@ -322,7 +323,7 @@ function EditRateModalForm({
           isLoading={isOrderTypesLoading}
           isError={isOrderTypesError}
         />
-        <SelectInput<RateFormValues>
+        <SelectInput<FormValues>
           form={form}
           name="rateMethod"
           label="Rate Method"
@@ -331,7 +332,7 @@ function EditRateModalForm({
           data={rateMethodChoices}
           withAsterisk
         />
-        <ValidatedNumberInput<RateFormValues>
+        <ValidatedNumberInput<FormValues>
           form={form}
           name="rateAmount"
           label="Rate Amount"
@@ -343,7 +344,7 @@ function EditRateModalForm({
           description="Rate Amount associated with this Rate"
           withAsterisk
         />
-        <ValidatedNumberInput<RateFormValues>
+        <ValidatedNumberInput<FormValues>
           form={form}
           name="distanceOverride"
           label="Distance Override"
@@ -355,7 +356,7 @@ function EditRateModalForm({
           description="Dist. Override associated with this Rate"
         />
       </SimpleGrid>
-      <ValidatedTextArea<RateFormValues>
+      <ValidatedTextArea<FormValues>
         form={form}
         name="comments"
         label="Comments"
@@ -376,60 +377,7 @@ export function EditRateModalBody({
   const [activeTab, setActiveTab] = React.useState<string | null>("overview");
   const [loading, setLoading] = React.useState(false);
 
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation(
-    (values: RateFormValues) => axios.put(`/rates/${rate.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["rate-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Rate created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Rate with this rate number and Organization already exists."
-            ) {
-              form.setFieldError("rate_number", e.detail);
-            } else if (e.code === "invalid") {
-              form.setFieldError(e.attr, e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<RateFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(rateSchema),
     initialValues: {
       isActive: rate.isActive,
@@ -450,6 +398,25 @@ export function EditRateModalBody({
     },
   });
 
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<Rate>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/rates/${rate.id}`,
+      successMessage: "Rate updated successfully.",
+      queryKeysToInvalidate: ["rate-table-data"],
+      additionalInvalidateQueries: ["rates"],
+      closeModal: true,
+      errorMessage: "Failed to update rate.",
+    },
+    () => setLoading(false),
+  );
+
   type ErrorCountType = (tab: string | null) => number;
 
   const getErrorCount: ErrorCountType = (tab) => {
@@ -465,7 +432,7 @@ export function EditRateModalBody({
     }
   };
 
-  const submitForm = (values: RateFormValues) => {
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -580,7 +547,7 @@ export function EditRateModalBody({
   );
 }
 
-export function EditRateModal(): React.ReactElement {
+export function EditRateModal() {
   const [showEditModal, setShowEditModal] = store.use("editModalOpen");
   const [rate] = store.use("selectedRecord");
   const isMobile = useMediaQuery("(max-width: 50em)");

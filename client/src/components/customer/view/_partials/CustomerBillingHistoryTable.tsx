@@ -21,9 +21,9 @@ import { useQuery } from "react-query";
 import { SimpleGrid, TextInput, useMantineTheme } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { useContextMenu } from "mantine-contextmenu";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/common/table/Icons";
-import { API_URL, USDollarFormat } from "@/helpers/constants";
+import { API_URL, USDollarFormat } from "@/lib/constants";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
 import { BillingHistory } from "@/types/billing";
 

@@ -35,9 +35,9 @@ import { getBillingControl } from "@/services/OrganizationRequestService";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { BillingControl, BillingControlFormValues } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { billingControlSchema } from "@/helpers/schemas/BillingSchema";
+import { billingControlSchema } from "@/lib/schemas/BillingSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import {

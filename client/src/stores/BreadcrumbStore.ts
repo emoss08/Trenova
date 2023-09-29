@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/helpers/useGlobalStore";
+import { createGlobalStore } from "@/lib/useGlobalStore";
 import { RouteObjectWithPermission } from "@/routing/AppRoutes";
 
 interface BreadcrumbStoreType {

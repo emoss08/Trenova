@@ -21,29 +21,28 @@ import {
   AccountSubTypeChoiceProps,
   AccountTypeChoiceProps,
   CashFlowTypeChoiceProps,
-} from "@/helpers/choices";
+} from "@/lib/choices";
+import { BaseModel } from "@/types/organization";
 
 /** Types for Division Codes */
-export type DivisionCode = {
+export interface DivisionCode extends BaseModel {
   id: string;
-  organization: string;
-  created: string;
-  modified: string;
   status: StatusChoiceProps;
   code: string;
   description: string;
   apAccount?: string | null;
   cashAccount?: string | null;
   expenseAccount?: string | null;
-};
+}
 
-export interface DivisionCodeFormValues
-  extends Omit<DivisionCode, "id" | "organization" | "created" | "modified"> {}
+export type DivisionCodeFormValues = Omit<
+  DivisionCode,
+  "id" | "organization" | "created" | "modified"
+>;
 
 /** Types for General Ledger Accounts */
-export type GeneralLedgerAccount = {
+export interface GeneralLedgerAccount extends BaseModel {
   id: string;
-  organization: string;
   status: StatusChoiceProps;
   accountNumber: string;
   description: string;
@@ -51,24 +50,30 @@ export type GeneralLedgerAccount = {
   cashFlowType?: CashFlowTypeChoiceProps | "" | null;
   accountSubType?: AccountSubTypeChoiceProps | "" | null;
   accountClassification?: AccountClassificationChoiceProps | "" | null;
-};
+}
 
-export interface GLAccountFormValues
-  extends Omit<GeneralLedgerAccount, "id" | "organization"> {}
+export type GLAccountFormValues = Omit<
+  GeneralLedgerAccount,
+  "organization" | "created" | "modified" | "id"
+>;
 
 /** Types for Revenue Codes */
-export type RevenueCode = {
+export interface RevenueCode extends BaseModel {
   id: string;
-  organization: string;
   code: string;
   description: string;
   expenseAccount?: string | null;
   revenueAccount?: string | null;
   revAccountNum?: string | null;
   expAccountNum?: string | null;
-};
+}
 
 export type RevenueCodeFormValues = Omit<
   RevenueCode,
-  "id" | "organization" | "revAccountNum" | "expAccountNum"
+  | "id"
+  | "organization"
+  | "revAccountNum"
+  | "expAccountNum"
+  | "created"
+  | "modified"
 >;

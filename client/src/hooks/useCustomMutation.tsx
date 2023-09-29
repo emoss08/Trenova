@@ -21,25 +21,25 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import React from "react";
 import { NotificationsEvents } from "@mantine/notifications/lib/events";
 import { UseFormReturnType } from "@mantine/form";
-import axios from "@/helpers/AxiosConfig";
+import { AxiosResponse } from "axios";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { TableStoreProps } from "@/types/tables";
-import { StoreType } from "@/helpers/useGlobalStore";
+import { StoreType } from "@/lib/useGlobalStore";
+import { QueryKeys } from "@/types";
 
 type MutationOptions = {
   path: string;
   successMessage: string;
   errorMessage?: string;
-  queryKeysToInvalidate?: Array<string>;
+  queryKeysToInvalidate?: QueryKeys[];
   closeModal?: boolean;
   method: "POST" | "PUT" | "PATCH" | "DELETE";
+  additionalInvalidateQueries?: QueryKeys[];
 };
 
 const DEFAULT_ERROR_MESSAGE = "An error occurred.";
-export function useCustomMutation<
-  T extends Record<string, any>,
-  K extends Omit<TableStoreProps<T>, "drawerOpen">,
->(
+
+export function useCustomMutation<T, K>(
   form: UseFormReturnType<T>,
   store: StoreType<K>,
   notifications: NotificationsEvents,
@@ -49,33 +49,24 @@ export function useCustomMutation<
   const queryClient = useQueryClient();
 
   return useMutation(
-    (values: T) => executeMethod(options.method, options.path, values),
+    (values: T) => executeApiMethod(options.method, options.path, values),
     {
       onSuccess: () =>
         handleSuccess(options, notifications, queryClient, store),
-      onError: (error: any) => handleError(error, options, form, notifications),
+      onError: (error: Error) =>
+        handleError(error, options, form, notifications),
       onSettled: onMutationSettled,
     },
   );
 }
 
-function executeMethod(
+function executeApiMethod(
   method: MutationOptions["method"],
   path: string,
-  values: any,
-): Promise<any> {
-  switch (method) {
-    case "POST":
-      return axios.post(path, values);
-    case "PUT":
-      return axios.put(path, values);
-    case "PATCH":
-      return axios.patch(path, values);
-    case "DELETE":
-      return axios.delete(path);
-    default:
-      throw new Error(`Unsupported method: ${method}`);
-  }
+  data?: any,
+): Promise<AxiosResponse> {
+  const axiosConfig = { method, url: path, data };
+  return axios(axiosConfig);
 }
 
 function handleSuccess<K>(
@@ -83,18 +74,26 @@ function handleSuccess<K>(
   notifications: NotificationsEvents,
   queryClient: QueryClient,
   store: StoreType<K>,
-): void {
-  if (options.queryKeysToInvalidate) {
-    queryClient.invalidateQueries(options.queryKeysToInvalidate).then(() => {
-      showNotification(
-        notifications,
-        "Success",
-        options.successMessage,
-        "green",
-        faCheck,
-      );
-    });
-  }
+) {
+  const notifySuccess = () => {
+    showNotification(
+      notifications,
+      "Success",
+      options.successMessage,
+      "green",
+      faCheck,
+    );
+  };
+
+  const invalidateQueries = async (queries?: string[]) => {
+    if (queries) {
+      await queryClient.invalidateQueries(queries);
+      notifySuccess();
+    }
+  };
+
+  invalidateQueries(options.queryKeysToInvalidate);
+  invalidateQueries(options.additionalInvalidateQueries);
 
   const modalKey =
     options.method === "POST" ? "createModalOpen" : "editModalOpen";
@@ -108,9 +107,9 @@ function handleError(
   options: MutationOptions,
   form: UseFormReturnType<any>,
   notifications: NotificationsEvents,
-): void {
-  const { data } = error.response;
-  if (data && data.type === "validationError") {
+) {
+  const { data } = error?.response || {};
+  if (data?.type === "validationError") {
     handleValidationErrors(data.errors, form, notifications);
   } else {
     showErrorNotification(notifications, options.errorMessage);
@@ -122,8 +121,8 @@ function showNotification(
   title: string,
   message: string,
   color: string,
-  icon: any,
-): void {
+  icon: typeof faCheck,
+) {
   notifications.show({
     title,
     message,
@@ -137,7 +136,7 @@ function showNotification(
 function showErrorNotification(
   notifications: NotificationsEvents,
   errorMessage?: string,
-): void {
+) {
   showNotification(
     notifications,
     "Error",
@@ -147,11 +146,11 @@ function showErrorNotification(
   );
 }
 
-function handleValidationErrors<T extends Record<string, any>>(
+function handleValidationErrors<T>(
   errors: APIError[],
   form: UseFormReturnType<T>,
   notifications: NotificationsEvents,
-): void {
+) {
   errors.forEach((e: APIError) => {
     form.setFieldError(e.attr, e.detail);
     if (e.attr === "nonFieldErrors") {

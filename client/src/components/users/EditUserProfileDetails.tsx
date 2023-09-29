@@ -29,14 +29,14 @@ import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { StateSelect } from "@/components/common/fields/StateSelect";
 import { CityAutoCompleteField } from "@/components/common/fields/CityAutoCompleteField";
 import { User } from "@/types/accounts";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { UserSchema } from "@/helpers/schemas/AccountsSchema";
+import { UserSchema } from "@/lib/schemas/AccountsSchema";
 
 type Props = {
   user: User;

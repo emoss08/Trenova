@@ -22,10 +22,10 @@ export function useOrderTypes(show: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["order-types"],
+    queryKey: ["orderTypes"],
     queryFn: async () => getOrderTypes(),
     enabled: show,
-    initialData: () => queryClient.getQueryData("order-types"),
+    initialData: () => queryClient.getQueryData("orderTypes"),
     staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,

@@ -17,7 +17,7 @@
 
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/AuthStore";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 
 export function useLogout() {
   const navigate = useNavigate();

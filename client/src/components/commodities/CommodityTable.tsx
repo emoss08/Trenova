@@ -24,10 +24,8 @@ import { CreateCommodityModal } from "@/components/commodities/CreateCommodityMo
 import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
 import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 import { Commodity } from "@/types/commodities";
-import { truncateText } from "@/helpers/constants";
+import { truncateText } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
-import { DelayCode } from "@/types/dispatch";
 
 export function CommodityTable() {
   const columns = useMemo<MRT_ColumnDef<Commodity>[]>(
@@ -80,16 +78,6 @@ export function CommodityTable() {
           ] as ReadonlyArray<TChoiceProps>,
         },
         filterVariant: "select",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={commodityTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

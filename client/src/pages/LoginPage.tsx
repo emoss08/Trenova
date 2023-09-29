@@ -33,10 +33,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { faLockKeyhole, faUser } from "@fortawesome/pro-duotone-svg-icons";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedPasswordInput } from "@/components/common/fields/PasswordInput";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { LoginSchema } from "@/helpers/schemas/AccountsSchema";
+import { LoginSchema } from "@/lib/schemas/AccountsSchema";
 
 type LoginFormValues = {
   username: string;

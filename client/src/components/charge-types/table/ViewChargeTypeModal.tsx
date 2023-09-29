@@ -15,25 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  Box,
-  Button,
-  Group,
-  Modal,
-  Skeleton,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
-import React, { Suspense } from "react";
+import { Box, Button, Group, Modal, Textarea, TextInput } from "@mantine/core";
+import React from "react";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { ChargeType } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 
-type ViewChargeTypeModalFormProps = {
-  chargeType: ChargeType;
-};
-
-function ViewChargeTypeModalForm({ chargeType }: ViewChargeTypeModalFormProps) {
+function ViewChargeTypeModalForm({ chargeType }: { chargeType: ChargeType }) {
   const { classes } = useFormStyles();
 
   return (
@@ -86,9 +74,7 @@ export function ViewChargeTypeModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton />}>
-            {chargeType && <ViewChargeTypeModalForm chargeType={chargeType} />}
-          </Suspense>
+          {chargeType && <ViewChargeTypeModalForm chargeType={chargeType} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

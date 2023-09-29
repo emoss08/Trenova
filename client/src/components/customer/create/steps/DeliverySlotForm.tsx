@@ -21,7 +21,7 @@ import { Box, Button, Divider, Group, useMantineTheme } from "@mantine/core";
 import { ValidatedTimeInput } from "@/components/common/fields/TimeInput";
 import { CreateCustomerFormValues } from "@/types/customer";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { DayOfWeekChoices } from "@/helpers/choices";
+import { DayOfWeekChoices } from "@/lib/choices";
 import { TChoiceProps } from "@/types";
 
 export function DeliverySlotForm({

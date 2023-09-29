@@ -23,7 +23,7 @@ import { faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { notifications } from "@mantine/notifications";
 import { useQueryClient } from "react-query";
 import { User } from "@/types/accounts";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 
 interface AvatarInputProps {
   defaultAvatar?: string;

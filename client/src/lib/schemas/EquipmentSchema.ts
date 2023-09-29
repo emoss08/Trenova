@@ -22,7 +22,7 @@ import {
   EquipmentTypeDetailFormValues,
   EquipmentTypeFormValues,
 } from "@/types/equipment";
-import { EquipmentClassChoiceProps } from "@/helpers/choices";
+import { EquipmentClassChoiceProps } from "@/lib/choices";
 
 Yup.addMethod<StringSchema>(
   Yup.string,

@@ -19,7 +19,7 @@ import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 import { JobTitleFormValues } from "@/types/accounts";
 import { StatusChoiceProps } from "@/types";
-import { JobFunctionChoiceProps } from "@/helpers/choices";
+import { JobFunctionChoiceProps } from "@/lib/choices";
 
 export const jobTitleSchema: ObjectSchema<JobTitleFormValues> =
   Yup.object().shape({

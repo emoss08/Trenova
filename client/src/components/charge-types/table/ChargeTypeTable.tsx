@@ -23,7 +23,6 @@ import { CreateChargeTypeModal } from "@/components/charge-types/table/CreateCha
 import { EditChargeTypeModal } from "@/components/charge-types/table/EditChargeTypeModal";
 import { ViewChargeTypeModal } from "@/components/charge-types/table/ViewChargeTypeModal";
 import { ChargeType } from "@/types/billing";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function ChargeTypeTable() {
   const columns = useMemo<MRT_ColumnDef<ChargeType>[]>(
@@ -35,16 +34,6 @@ export function ChargeTypeTable() {
       {
         accessorKey: "description",
         header: "Description",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={chargeTypeTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

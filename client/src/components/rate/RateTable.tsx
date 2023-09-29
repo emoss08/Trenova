@@ -18,13 +18,12 @@
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { MontaTable } from "@/components/common/table/MontaTable";
-import { USDollarFormat } from "@/helpers/constants";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { Rate } from "@/types/dispatch";
 import { useRateStore } from "@/stores/DispatchStore";
 import { CreateRateModal } from "@/components/rate/CreateRateModal";
 import { ViewRateModal } from "@/components/rate/ViewRateModal";
 import { EditRateModal } from "@/components/rate/EditRateModal";
+import { USDollarFormat } from "@/lib/utils";
 
 export function RateTable() {
   const columns: MRT_ColumnDef<Rate>[] = useMemo<MRT_ColumnDef<Rate>[]>(
@@ -49,13 +48,6 @@ export function RateTable() {
         sortingFn: "text",
         Cell: ({ cell }) =>
           USDollarFormat(Math.round(cell.getValue() as number)),
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu store={useRateStore} data={row.original} />
-        ),
       },
     ],
     [],

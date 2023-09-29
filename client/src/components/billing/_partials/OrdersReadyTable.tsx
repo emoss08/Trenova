@@ -24,7 +24,7 @@ import {
 import { Badge, Button } from "@mantine/core";
 import { OrdersReadyProps } from "@/types/billing";
 import { TChoiceProps } from "@/types";
-import { WebSocketManager } from "@/helpers/websockets";
+import { WebSocketManager } from "@/lib/websockets";
 import { billingClientStore } from "@/stores/BillingStores";
 
 interface Props {

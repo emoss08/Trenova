@@ -30,13 +30,13 @@ import React, { Suspense } from "react";
 import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import {
   accountClassificationChoices,
   accountSubTypeChoices,
   accountTypeChoices,
   cashFlowTypeChoices,
-} from "@/helpers/choices";
+} from "@/lib/choices";
 
 type ViewGLAccountModalFormProps = {
   glAccount: GeneralLedgerAccount;

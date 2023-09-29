@@ -19,6 +19,7 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from rest_framework.test import APIClient
 
 from dispatch import factories, models
 
@@ -47,3 +48,32 @@ def test_comment_type_update(comment_type: models.CommentType) -> None:
     comment_type.code = "NEWC"
     comment_type.save()
     assert comment_type.code == "NEWC"
+
+
+def test_post_with_unique_name(
+    comment_type: models.CommentType, api_client: APIClient
+) -> None:
+    """Test duplicate `name` returns 404 response.
+
+    Args:
+        comment_type(models.CommentType): Comment type fixture
+        api_client(APIClient): APIClient fixture
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    comment_type.name = "test"
+    comment_type.save()
+    comment_type.refresh_from_db()
+
+    response = api_client.post(
+        "/api/comment_types/", {"name": "test", "description": "test"}, format="json"
+    )
+
+    assert response.status_code == 400
+    assert response.data["type"] == "validationError"
+    assert (
+        response.data["errors"][0]["detail"]
+        == "Comment Type with this `name` already exists. Please try again."
+    )

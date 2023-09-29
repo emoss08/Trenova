@@ -119,7 +119,7 @@ export function CustomerTable() {
   );
 
   return (
-    <MontaTable<Customer>
+    <MontaTable
       store={store}
       link="/customers"
       columns={columns}

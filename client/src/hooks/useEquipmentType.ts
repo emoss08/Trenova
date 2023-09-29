@@ -22,10 +22,10 @@ export function useEquipmentTypes(show: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["equipment-types"],
+    queryKey: ["equipmentTypes"],
     queryFn: async () => getEquipmentTypes(),
     enabled: show,
-    initialData: () => queryClient.getQueryData("equipment-types"),
+    initialData: () => queryClient.getQueryData("equipmentTypes"),
     staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,

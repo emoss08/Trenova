@@ -17,7 +17,7 @@
 
 import { create, SetState, StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
-import { createGlobalStore } from "@/helpers/useGlobalStore";
+import { createGlobalStore } from "@/lib/useGlobalStore";
 
 type AuthState = {
   isAuthenticated: boolean;

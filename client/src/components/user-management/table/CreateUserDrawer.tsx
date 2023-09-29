@@ -45,7 +45,7 @@ import { useClipboard } from "@mantine/hooks";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { JobTitle, UserFormValues } from "@/types/accounts";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import {
   getDepartments,
   getJobTitles,

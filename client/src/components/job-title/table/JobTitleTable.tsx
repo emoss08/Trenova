@@ -25,7 +25,6 @@ import { ViewJobTitleModal } from "@/components/job-title/table/ViewJobTitleModa
 import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
 import { JobTitle } from "@/types/accounts";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function JobTitleTable() {
   const columns = useMemo<MRT_ColumnDef<JobTitle>[]>(
@@ -64,16 +63,6 @@ export function JobTitleTable() {
       {
         accessorKey: "jobFunction",
         header: "Job Function",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={jobTitleTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

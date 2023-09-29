@@ -22,7 +22,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX } from "@fortawesome/pro-solid-svg-icons";
 import { notifications } from "@mantine/notifications";
 import { Box, Button, Modal, Text } from "@mantine/core";
-import { API_URL } from "@/helpers/constants";
+import { API_URL } from "@/lib/constants";
 
 DeleteRecordModal.defaultProps = {
   deleteKey: "id",

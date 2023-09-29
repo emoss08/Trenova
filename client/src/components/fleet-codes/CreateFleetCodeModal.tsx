@@ -17,24 +17,21 @@
 
 import React, { Suspense } from "react";
 import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { useFleetCodeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { FleetCodeFormValues } from "@/types/dispatch";
-import { fleetCodeSchema } from "@/helpers/schemas/DispatchSchema";
+import { FleetCode, FleetCodeFormValues as FormValues } from "@/types/dispatch";
+import { fleetCodeSchema } from "@/lib/schemas/DispatchSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { TChoiceProps } from "@/types";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { useUsers } from "@/hooks/useUsers";
-import { yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { yesAndNoChoicesBoolean } from "@/lib/constants";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 export function CreateFleetCodeModalForm({
   users,
@@ -47,58 +44,8 @@ export function CreateFleetCodeModalForm({
 }) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: FleetCodeFormValues) => axios.post("/fleet_codes/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["fleet-code-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Fleet Code created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Fleet Code with this Code and Organization already exists."
-            ) {
-              form.setFieldError("code", e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<FleetCodeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(fleetCodeSchema),
     initialValues: {
       code: "",
@@ -111,7 +58,26 @@ export function CreateFleetCodeModalForm({
     },
   });
 
-  const submitForm = (values: FleetCodeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<FleetCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/fleet_codes/",
+      successMessage: "Fleet Code created successfully.",
+      queryKeysToInvalidate: ["fleet-code-table-data"],
+      additionalInvalidateQueries: ["fleetCodes"],
+      closeModal: true,
+      errorMessage: "Failed to create fleet code.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -120,7 +86,7 @@ export function CreateFleetCodeModalForm({
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<FleetCodeFormValues>
+          <SelectInput<FormValues>
             form={form}
             name="isActive"
             label="Is Active"
@@ -128,7 +94,7 @@ export function CreateFleetCodeModalForm({
             withAsterisk
             data={yesAndNoChoicesBoolean}
           />
-          <ValidatedTextInput<FleetCodeFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             name="code"
             label="Code"
@@ -137,7 +103,7 @@ export function CreateFleetCodeModalForm({
             withAsterisk
           />
         </SimpleGrid>
-        <ValidatedTextArea<FleetCodeFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           name="description"
           label="Description"
@@ -146,7 +112,7 @@ export function CreateFleetCodeModalForm({
           withAsterisk
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ValidatedNumberInput<FleetCodeFormValues>
+          <ValidatedNumberInput<FormValues>
             form={form}
             name="revenueGoal"
             label="Revenue Goal"
@@ -155,7 +121,7 @@ export function CreateFleetCodeModalForm({
             withAsterisk
             description="Revenue goal for Fleet Code"
           />
-          <ValidatedNumberInput<FleetCodeFormValues>
+          <ValidatedNumberInput<FormValues>
             form={form}
             name="deadheadGoal"
             label="Deadhead Goal"
@@ -164,7 +130,7 @@ export function CreateFleetCodeModalForm({
             withAsterisk
             description="Deadhead goal for Fleet Code"
           />
-          <ValidatedNumberInput<FleetCodeFormValues>
+          <ValidatedNumberInput<FormValues>
             form={form}
             name="mileageGoal"
             label="Mileage Goal"
@@ -173,7 +139,7 @@ export function CreateFleetCodeModalForm({
             withAsterisk
             description="Mileage goal for Fleet Code"
           />
-          <SelectInput<FleetCodeFormValues>
+          <SelectInput<FormValues>
             form={form}
             name="manager"
             label="Manager"
@@ -201,8 +167,6 @@ export function CreateFleetCodeModal() {
     isLoading: isUsersLoading,
     isError: isUsersError,
   } = useUsers(showCreateModal);
-
-  if (!showCreateModal) return null;
 
   return (
     <Modal.Root

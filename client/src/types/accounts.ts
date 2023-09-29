@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { JobFunctionChoiceProps } from "@/helpers/choices";
+import { JobFunctionChoiceProps } from "@/lib/choices";
 import { StatusChoiceProps } from "@/types/index";
 
 export type UserProfile = {

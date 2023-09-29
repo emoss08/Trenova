@@ -24,7 +24,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 
 const ResetPasswordPage: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(false);

@@ -25,7 +25,6 @@ import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
 import { ViewDCModal } from "@/components/division-codes/table/ViewDCModal";
 import { DivisionCode } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function DivisionCodeTable() {
   const columns = useMemo<MRT_ColumnDef<DivisionCode>[]>(
@@ -60,16 +59,6 @@ export function DivisionCodeTable() {
       {
         accessorKey: "description",
         header: "Description",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={divisionCodeTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

@@ -48,3 +48,51 @@ type NestedKeys<T> = {
 }[keyof T];
 
 export type InputFieldNameProp<T> = keyof T | NestedKeys<T>;
+
+/** Query Keys used in Monta by react-query
+ *
+ * @note: Only written to give autocomplete & type checking so people don't invalidate or use
+ * query keys that don't exist. THANK ME LATER!
+ */
+export type QueryKeys =
+  | "accessorialCharges"
+  | "accessorial-charges-table-data"
+  | "billingControl"
+  | "charge-type-table-data"
+  | "chargeTypes"
+  | "comment-types-table-data"
+  | "commentTypes"
+  | "commodity-table-data"
+  | "commodities"
+  | "customers-table-data"
+  | "customers"
+  | "dispatchControl"
+  | "delay-code-table-data"
+  | "delayCodes"
+  | "division-code-table-data"
+  | "divisionCodes"
+  | "documentClassifications"
+  | "emailControl"
+  | "equipment-manufacturer-table-data"
+  | "equipmentManufacturers"
+  | "equipment-type-table-data"
+  | "equipmentTypes"
+  | "feasibilityControl"
+  | "fleet-code-table-data"
+  | "fleetCodes"
+  | "gl-account-table-data"
+  | "glAccounts"
+  | "hazardous-material-table-data"
+  | "hazardousMaterials"
+  | "invoiceControl"
+  | "job-title-table-data"
+  | "jobTitles"
+  | "rate-table-data"
+  | "rates"
+  | "revenue-code-table-data"
+  | "revenueCodes"
+  | "routeControl"
+  | "locations"
+  | "orderTypes"
+  | "orderControl"
+  | "users";

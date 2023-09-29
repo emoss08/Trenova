@@ -29,8 +29,8 @@ import React from "react";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { JobTitle } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { statusChoices } from "@/helpers/constants";
-import { jobFunctionChoices } from "@/helpers/choices";
+import { statusChoices } from "@/lib/constants";
+import { jobFunctionChoices } from "@/lib/choices";
 
 type ViewJobTitleModalFormProps = {
   jobTitle: JobTitle;

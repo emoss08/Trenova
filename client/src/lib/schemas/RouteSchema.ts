@@ -21,7 +21,7 @@ import { RouteControlFormValues } from "@/types/route";
 import {
   DistanceMethodChoiceProps,
   RouteModelChoiceProps,
-} from "@/helpers/choices";
+} from "@/lib/choices";
 
 export const routeControlSchema: ObjectSchema<RouteControlFormValues> =
   Yup.object().shape({

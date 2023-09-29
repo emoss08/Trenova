@@ -17,7 +17,6 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { EquipmentType } from "@/types/equipment";
 import { useEquipTypeTableStore } from "@/stores/EquipmentStore";
@@ -40,16 +39,6 @@ export function EquipmentTypeTable() {
       {
         accessorKey: "costPerMile",
         header: "Cost Per Mile",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={useEquipTypeTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

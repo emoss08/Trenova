@@ -21,19 +21,21 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faX } from "@fortawesome/pro-duotone-svg-icons";
 import { usePageStyles } from "@/assets/styles/PageStyles";
-import { WebSocketManager, WebsocketMessageProps } from "@/helpers/websockets";
+import {
+  createWebsocketManager,
+  WebSocketMessageProps,
+} from "@/lib/websockets";
 import {
   ENABLE_WEBSOCKETS,
-  getUserId,
   WEB_SOCKET_URL,
   WEBSOCKET_RETRY_INTERVAL,
-} from "@/helpers/constants";
+} from "@/lib/constants";
 import { useAuthStore } from "@/stores/AuthStore";
 import { billingClientStore } from "@/stores/BillingStores";
-import { BillingExceptionModal } from "@/components/billing/_partials/BillingExceptionModal";
 import { TransferConfirmModal } from "@/components/billing/_partials/TransferConfirmModal";
+import { BillingExceptionModal } from "@/components/billing/_partials/BillingExceptionModal";
 
-const webSocketManager = new WebSocketManager();
+const webSocketManager = createWebsocketManager();
 export const STEPS = [
   "get_started",
   "orders_ready",
@@ -55,16 +57,15 @@ const GoodJobPage = React.lazy(
   () => import("../../components/billing/GoodJob"),
 );
 
-const BillingClient: React.FC = () => {
+export function BillingClient() {
   const { classes } = usePageStyles();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const userId = getUserId() || "";
   const [websocketMessage, setWebsocketMessage] =
     billingClientStore.use("websocketMessage");
   const [step, setStep] = billingClientStore.use("step");
 
   useEffect(() => {
-    if (ENABLE_WEBSOCKETS && isAuthenticated && userId) {
+    if (ENABLE_WEBSOCKETS && isAuthenticated) {
       webSocketManager.connect(
         "billing_client",
         `${WEB_SOCKET_URL}/billing_client/`,
@@ -79,7 +80,7 @@ const BillingClient: React.FC = () => {
           },
 
           onMessage: (event: MessageEvent) => {
-            const data = JSON.parse(event.data) as WebsocketMessageProps;
+            const data = JSON.parse(event.data) as WebSocketMessageProps;
 
             if (data.action === "orders_ready" && data.step === 2) {
               notifications.show({
@@ -163,6 +164,7 @@ const BillingClient: React.FC = () => {
                   webSocketManager.connect(
                     "billing_client",
                     `${WEB_SOCKET_URL}/billing_client/`,
+                    {},
                   ),
                 WEBSOCKET_RETRY_INTERVAL,
               );
@@ -174,7 +176,7 @@ const BillingClient: React.FC = () => {
           },
         },
       );
-    } else if (isAuthenticated && !userId) {
+    } else if (isAuthenticated) {
       webSocketManager.disconnect("billing_client");
     }
 
@@ -184,7 +186,7 @@ const BillingClient: React.FC = () => {
         webSocketManager.disconnect("billing_client");
       }
     };
-  }, [isAuthenticated, userId]); // add dependencies here if necessary
+  }, [isAuthenticated]); // add dependencies here if necessary
 
   useEffect(() => {
     if (websocketMessage.action) {
@@ -238,5 +240,5 @@ const BillingClient: React.FC = () => {
       <TransferConfirmModal />
     </>
   );
-};
+}
 export default BillingClient;

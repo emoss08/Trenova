@@ -27,9 +27,9 @@ import {
   Skeleton,
   Text,
 } from "@mantine/core";
+import { upperFirst } from "@mantine/hooks";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { Customer } from "@/types/customer";
-import { upperFirst } from "@/helpers/constants";
 import { customerStore as store } from "@/stores/CustomerStore";
 import { EditCustomerModal } from "@/components/customer/view/_partials/EditCustomerModal";
 

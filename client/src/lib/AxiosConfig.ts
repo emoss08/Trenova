@@ -16,8 +16,8 @@
  */
 
 import axios from "axios";
-import { API_URL } from "@/helpers/constants";
-import { getCookie } from "@/helpers/auth";
+import { API_URL } from "@/lib/constants";
+import { getCookie } from "@/lib/auth";
 
 /**
  * Axios request interceptor.

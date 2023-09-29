@@ -19,9 +19,8 @@ import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge, Text } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
-import { truncateText } from "@/helpers/constants";
+import { truncateText } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { DelayCode } from "@/types/dispatch";
 import { useDelayCodeStore } from "@/stores/DispatchStore";
 import { CreateDelayCodeModal } from "@/components/delay-codes/CreateDelayCodeModal";
@@ -67,13 +66,6 @@ export function DelayCodeTable() {
           ] as ReadonlyArray<TChoiceProps>,
         },
         filterVariant: "select",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu store={useDelayCodeStore} data={row.original} />
-        ),
       },
     ],
     [],

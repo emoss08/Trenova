@@ -97,6 +97,8 @@ class CustomerViewSet(viewsets.ModelViewSet):
                 "has_customer_portal",
                 "status",
                 "name",
+                "auto_mark_ready_to_bill",
+                "advocate_id",
             )
         )
 

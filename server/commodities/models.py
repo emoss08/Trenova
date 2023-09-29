@@ -205,7 +205,7 @@ class Commodity(GenericModel):
     )
     name = models.CharField(
         _("Name"),
-        max_length=255,
+        max_length=100,
         help_text=_("Name of the Commodity"),
     )
     description = models.TextField(

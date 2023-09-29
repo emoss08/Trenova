@@ -29,7 +29,7 @@ import { useFormStyles } from "@/assets/styles/FormStyles";
 import { CommentType } from "@/types/dispatch";
 import { useCommentTypeStore as store } from "@/stores/DispatchStore";
 
-function ViewDelayCodeModalForm({ commentType }: { commentType: CommentType }) {
+function CommentTypeModalBody({ commentType }: { commentType: CommentType }) {
   const { classes } = useFormStyles();
 
   return (
@@ -60,7 +60,6 @@ function ViewDelayCodeModalForm({ commentType }: { commentType: CommentType }) {
           type="submit"
           className={classes.control}
           onClick={() => {
-            store.set("selectedRecord", commentType);
             store.set("viewModalOpen", false);
             store.set("editModalOpen", true);
           }}
@@ -76,8 +75,6 @@ export function ViewCommentTypeModal() {
   const [showViewModal, setShowViewModal] = store.use("viewModalOpen");
   const [commentType] = store.use("selectedRecord");
 
-  if (!showViewModal) return null;
-
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
       <Modal.Overlay />
@@ -88,9 +85,7 @@ export function ViewCommentTypeModal() {
         </Modal.Header>
         <Modal.Body>
           <Suspense fallback={<Skeleton height={400} />}>
-            {commentType && (
-              <ViewDelayCodeModalForm commentType={commentType} />
-            )}
+            {commentType && <CommentTypeModalBody commentType={commentType} />}
           </Suspense>
         </Modal.Body>
       </Modal.Content>

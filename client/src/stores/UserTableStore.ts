@@ -16,7 +16,7 @@
  */
 
 import { JobTitle, User } from "@/types/accounts";
-import { createGlobalStore } from "@/helpers/useGlobalStore";
+import { createGlobalStore } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 
 export const userTableStore = createGlobalStore<

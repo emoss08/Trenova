@@ -19,7 +19,7 @@ import React from "react";
 import { createStyles, Divider, rem, Skeleton } from "@mantine/core";
 import { useQuery, useQueryClient } from "react-query";
 import Typed from "typed.js";
-import { WebSocketManager } from "@/helpers/websockets";
+import { WebSocketManager } from "@/lib/websockets";
 import { OrdersReadyTable } from "@/components/billing/_partials/OrdersReadyTable";
 import { getOrdersReadyToBill } from "@/services/BillingRequestService";
 
@@ -72,7 +72,7 @@ const useStyles = createStyles((theme) => {
   };
 });
 
-const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
+export default function OrdersReady({ websocketManager }: Props) {
   const queryClient = useQueryClient();
   const { classes } = useStyles();
   const el = React.useRef(null);
@@ -116,6 +116,4 @@ const OrdersReady: React.FC<Props> = ({ websocketManager }) => {
       )}
     </>
   );
-};
-
-export default OrdersReady;
+}

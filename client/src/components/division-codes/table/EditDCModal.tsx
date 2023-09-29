@@ -15,94 +15,43 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import React from "react";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { divisionCodeTableStore } from "@/stores/AccountingStores";
+import { divisionCodeTableStore as store } from "@/stores/AccountingStores";
 import {
   DivisionCode,
-  DivisionCodeFormValues,
-  GeneralLedgerAccount,
+  DivisionCodeFormValues as FormValues,
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { divisionCodeSchema } from "@/helpers/schemas/AccountingSchema";
+import { divisionCodeSchema } from "@/lib/schemas/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { getGLAccounts } from "@/services/AccountingRequestService";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
+import { useGLAccounts } from "@/hooks/useGLAccounts";
 
 type EditDCModalFormProps = {
   divisionCode: DivisionCode;
   selectGlAccountData: TChoiceProps[];
+  isGLAccountsLoading: boolean;
+  isGLAccountsError: boolean;
 };
 
 export function EditDCModalForm({
   divisionCode,
   selectGlAccountData,
+  isGLAccountsError,
+  isGLAccountsLoading,
 }: EditDCModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: DivisionCodeFormValues) =>
-      axios.put(`/division_codes/${divisionCode.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["division-code-table-data"],
-          })
-          .then(() => {
-            queryClient
-              .invalidateQueries({
-                queryKey: ["divisionCode", divisionCode?.id],
-              })
-              .then(() => {
-                notifications.show({
-                  title: "Success",
-                  message: "Division Code updated successfully",
-                  color: "green",
-                  withCloseButton: true,
-                  icon: <FontAwesomeIcon icon={faCheck} />,
-                });
-              });
-            divisionCodeTableStore.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<DivisionCodeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(divisionCodeSchema),
     initialValues: {
       status: divisionCode.status,
@@ -114,7 +63,26 @@ export function EditDCModalForm({
     },
   });
 
-  const submitForm = (values: DivisionCodeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<DivisionCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/division_codes/${divisionCode.id}/`,
+      successMessage: "Division Code updated successfully.",
+      queryKeysToInvalidate: ["division-code-table-data"],
+      additionalInvalidateQueries: ["divisionCodes"],
+      closeModal: true,
+      errorMessage: "Failed to updated division code.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -124,7 +92,7 @@ export function EditDCModalForm({
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<DivisionCodeFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={statusChoices}
               className={classes.fields}
@@ -132,11 +100,8 @@ export function EditDCModalForm({
               label="Status"
               placeholder="Status"
               variant="filled"
-              onMouseLeave={() => {
-                form.setFieldValue("status", form.values.status);
-              }}
             />
-            <ValidatedTextInput<DivisionCodeFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               className={classes.fields}
               name="code"
@@ -146,7 +111,7 @@ export function EditDCModalForm({
               withAsterisk
             />
           </SimpleGrid>
-          <ValidatedTextArea<DivisionCodeFormValues>
+          <ValidatedTextArea<FormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -156,9 +121,11 @@ export function EditDCModalForm({
             withAsterisk
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<DivisionCodeFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={selectGlAccountData}
+              isLoading={isGLAccountsLoading}
+              isError={isGLAccountsError}
               className={classes.fields}
               name="apAccount"
               label="AP Account"
@@ -166,9 +133,11 @@ export function EditDCModalForm({
               variant="filled"
               clearable
             />
-            <SelectInput<DivisionCodeFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={selectGlAccountData}
+              isLoading={isGLAccountsLoading}
+              isError={isGLAccountsError}
               className={classes.fields}
               name="cashAccount"
               label="Cash Account"
@@ -177,9 +146,11 @@ export function EditDCModalForm({
               clearable
             />
           </SimpleGrid>
-          <SelectInput<DivisionCodeFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={selectGlAccountData}
+            isLoading={isGLAccountsLoading}
+            isError={isGLAccountsError}
             className={classes.fields}
             name="expenseAccount"
             label="Expense Account"
@@ -204,24 +175,9 @@ export function EditDCModalForm({
 }
 
 export function EditDCModal(): React.ReactElement {
-  const [showEditModal, setShowEditModal] =
-    divisionCodeTableStore.use("editModalOpen");
-  const [divisionCode] = divisionCodeTableStore.use("selectedRecord");
-  const queryClient = useQueryClient();
-
-  const { data: glAccountData } = useQuery({
-    queryKey: "gl-account-data",
-    queryFn: () => getGLAccounts(),
-    enabled: showEditModal,
-    initialData: () => queryClient.getQueryData("gl-account"),
-    staleTime: Infinity,
-  });
-
-  const selectGlAccountData =
-    glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
-      value: glAccount.id,
-      label: glAccount.accountNumber,
-    })) || [];
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+  const [divisionCode] = store.use("selectedRecord");
+  const { selectGLAccounts, isLoading, isError } = useGLAccounts(showEditModal);
 
   return (
     <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
@@ -232,14 +188,14 @@ export function EditDCModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            {divisionCode && (
-              <EditDCModalForm
-                divisionCode={divisionCode}
-                selectGlAccountData={selectGlAccountData}
-              />
-            )}
-          </Suspense>
+          {divisionCode && (
+            <EditDCModalForm
+              divisionCode={divisionCode}
+              selectGlAccountData={selectGLAccounts}
+              isGLAccountsError={isError}
+              isGLAccountsLoading={isLoading}
+            />
+          )}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

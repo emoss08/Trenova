@@ -15,77 +15,27 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
-import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
+import React from "react";
+import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { useCommentTypeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { CommentTypeFormValues } from "@/types/dispatch";
-import { commentTypeSchema } from "@/helpers/schemas/DispatchSchema";
+import {
+  CommentType,
+  CommentTypeFormValues as FormValues,
+} from "@/types/dispatch";
+import { commentTypeSchema } from "@/lib/schemas/DispatchSchema";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 function CreateCommentTypeModalForm() {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: CommentTypeFormValues) => axios.post("/comment_types/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["comment-types-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Comment Type created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Comment Type with this Name and Organization already exists."
-            ) {
-              form.setFieldError("name", e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<CommentTypeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(commentTypeSchema),
     initialValues: {
       name: "",
@@ -93,7 +43,26 @@ function CreateCommentTypeModalForm() {
     },
   });
 
-  const submitForm = (values: CommentTypeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<CommentType>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/comment_types/",
+      successMessage: "Comment Type created successfully.",
+      queryKeysToInvalidate: ["comment-types-table-data"],
+      additionalInvalidateQueries: ["commentTypes"],
+      closeModal: true,
+      errorMessage: "Failed to create comment type.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -101,7 +70,7 @@ function CreateCommentTypeModalForm() {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput<CommentTypeFormValues>
+        <ValidatedTextInput<FormValues>
           form={form}
           name="name"
           label="Name"
@@ -109,7 +78,7 @@ function CreateCommentTypeModalForm() {
           description="Unique Name of the comment type"
           withAsterisk
         />
-        <ValidatedTextArea<CommentTypeFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           name="description"
           label="Description"
@@ -130,8 +99,6 @@ function CreateCommentTypeModalForm() {
 export function CreateCommentTypeModal() {
   const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
-  if (!showCreateModal) return null;
-
   return (
     <Modal.Root
       opened={showCreateModal}
@@ -144,9 +111,7 @@ export function CreateCommentTypeModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateCommentTypeModalForm />
-          </Suspense>
+          <CreateCommentTypeModalForm />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

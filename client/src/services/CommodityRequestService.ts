@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { Commodity, HazardousMaterial } from "@/types/commodities";
 
 /**

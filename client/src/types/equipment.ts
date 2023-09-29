@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { EquipmentClassChoiceProps } from "@/helpers/choices";
+import { EquipmentClassChoiceProps } from "@/lib/choices";
 
 export type EquipmentTypeDetail = {
   id: string;

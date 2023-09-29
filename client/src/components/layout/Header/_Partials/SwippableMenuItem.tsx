@@ -24,7 +24,7 @@ import { faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { Button, Menu } from "@mantine/core";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { useDrag } from "@use-gesture/react";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { useUserStore } from "@/stores/AuthStore";
 
 type SwippableItemProp = {

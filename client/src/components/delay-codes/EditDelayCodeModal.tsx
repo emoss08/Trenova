@@ -17,74 +17,23 @@
 
 import React from "react";
 import { Box, Button, Group, Modal } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useDelayCodeStore as store } from "@/stores/DispatchStore";
-import { delayCodeSchema } from "@/helpers/schemas/DispatchSchema";
-import { DelayCode, DelayCodeFormValues } from "@/types/dispatch";
+import { delayCodeSchema } from "@/lib/schemas/DispatchSchema";
+import { DelayCode, DelayCodeFormValues as FormValues } from "@/types/dispatch";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
-type EditDelayCodeModalFormProps = {
-  delayCode: DelayCode;
-};
-
-function EditDelayCodeModalForm({ delayCode }: EditDelayCodeModalFormProps) {
+function EditDelayCodeModalForm({ delayCode }: { delayCode: DelayCode }) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: DelayCodeFormValues) =>
-      axios.put(`/delay_codes/${delayCode.code}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["delay-code-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Delay Codes updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: any) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<DelayCodeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(delayCodeSchema),
     initialValues: {
       code: delayCode.code,
@@ -93,7 +42,26 @@ function EditDelayCodeModalForm({ delayCode }: EditDelayCodeModalFormProps) {
     },
   });
 
-  const submitForm = (values: DelayCodeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<DelayCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/delay_codes/${delayCode.code}/`,
+      successMessage: "Delay Code updated successfully.",
+      queryKeysToInvalidate: ["delay-code-table-data"],
+      additionalInvalidateQueries: ["delayCodes"],
+      closeModal: true,
+      errorMessage: "Failed to update delay code.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -101,7 +69,7 @@ function EditDelayCodeModalForm({ delayCode }: EditDelayCodeModalFormProps) {
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput<DelayCodeFormValues>
+        <ValidatedTextInput<FormValues>
           form={form}
           name="code"
           label="Code"
@@ -110,7 +78,7 @@ function EditDelayCodeModalForm({ delayCode }: EditDelayCodeModalFormProps) {
           withAsterisk
           disabled
         />
-        <ValidatedTextArea<DelayCodeFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           name="description"
           label="Description"
@@ -118,7 +86,7 @@ function EditDelayCodeModalForm({ delayCode }: EditDelayCodeModalFormProps) {
           placeholder="Description"
           withAsterisk
         />
-        <SwitchInput<DelayCodeFormValues>
+        <SwitchInput<FormValues>
           form={form}
           name="fCarrierOrDriver"
           label="F. Carrier/Driver"

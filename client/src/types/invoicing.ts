@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { DateFormatChoiceProps } from "@/helpers/choices";
+import { DateFormatChoiceProps } from "@/lib/choices";
 
 export type InvoiceControl = {
   id: string;

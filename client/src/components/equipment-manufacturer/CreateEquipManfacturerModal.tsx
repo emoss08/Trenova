@@ -14,9 +14,9 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import React, { Suspense } from "react";
+import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
+import { Box, Button, Group, Modal } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
   EquipmentManufacturer,
@@ -25,12 +25,12 @@ import {
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { equipManufacturerSchema } from "@/helpers/schemas/EquipmentSchema";
+import { equipManufacturerSchema } from "@/lib/schemas/EquipmentSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
 import { TableStoreProps } from "@/types/tables";
 
-function ModalBody() {
+function EquipManufacturerBody() {
   const [loading, setLoading] = React.useState<boolean>(false);
   const { classes } = useFormStyles();
 
@@ -54,6 +54,7 @@ function ModalBody() {
       path: "/equipment_manufacturers/",
       successMessage: "Equipment Manufacturer created successfully.",
       queryKeysToInvalidate: ["equipment-manufacturer-table-data"],
+      additionalInvalidateQueries: ["equipmentManufacturers"],
       closeModal: true,
       errorMessage: "Failed to create equipment manufacturer.",
     },
@@ -96,10 +97,6 @@ function ModalBody() {
 export function CreateEquipManufacturerModal() {
   const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
-  if (!showCreateModal) {
-    return null;
-  }
-
   return (
     <Modal.Root
       opened={showCreateModal}
@@ -113,9 +110,7 @@ export function CreateEquipManufacturerModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={600} />}>
-            <ModalBody />
-          </Suspense>
+          <EquipManufacturerBody />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

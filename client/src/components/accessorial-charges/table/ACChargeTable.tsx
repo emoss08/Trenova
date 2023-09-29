@@ -23,8 +23,7 @@ import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
 import { ViewACModal } from "@/components/accessorial-charges/table/ViewACModal";
 import { AccessorialCharge } from "@/types/billing";
-import { truncateText, USDollarFormat } from "@/helpers/constants";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
+import { truncateText, USDollarFormat } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
 
 export function ACChargeTable() {
@@ -72,16 +71,6 @@ export function ACChargeTable() {
         sortingFn: "text",
         Cell: ({ cell }) =>
           USDollarFormat(Math.round(cell.getValue() as number)),
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={accessorialChargeTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],
