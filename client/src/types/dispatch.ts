@@ -15,7 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { TRateMethodChoices } from "@/helpers/constants";
+import { TRateMethodChoices } from "@/lib/constants";
+import { BaseModel } from "./organization";
 
 export type DispatchControl = {
   id: string;
@@ -37,24 +38,18 @@ export type DispatchControlFormValues = Omit<
   "id" | "organization"
 >;
 
-export type DelayCode = {
-  organization: string;
-  businessUnit: string;
+export interface DelayCode extends BaseModel {
   code: string;
   description: string;
   fCarrierOrDriver: boolean;
-  created: string;
-  modified: string;
-};
+}
 
 export type DelayCodeFormValues = Omit<
   DelayCode,
   "organization" | "businessUnit" | "created" | "modified"
 >;
 
-export type FleetCode = {
-  organization: string;
-  businessUnit: string;
+export interface FleetCode extends BaseModel {
   code: string;
   description: string;
   isActive: boolean;
@@ -62,33 +57,27 @@ export type FleetCode = {
   deadheadGoal: number;
   mileageGoal: number;
   manager?: string | null;
-  created: string;
-  modified: string;
-};
+}
 
 export type FleetCodeFormValues = Omit<
   FleetCode,
   "organization" | "businessUnit" | "created" | "modified"
 >;
 
-export type CommentType = {
-  organization: string;
-  businessUnit: string;
+export interface CommentType extends BaseModel {
   id: string;
   name: string;
   description: string;
   created: string;
   modified: string;
-};
+}
 
 export type CommentTypeFormValues = Omit<
   CommentType,
   "organization" | "businessUnit" | "created" | "modified" | "id"
 >;
 
-export type Rate = {
-  organization: string;
-  businessUnit: string;
+export interface Rate extends BaseModel {
   id: string;
   isActive: boolean;
   rateNumber: string;
@@ -104,10 +93,8 @@ export type Rate = {
   rateAmount: number;
   distanceOverride?: number | null;
   comments?: string | null;
-  created: string;
-  modified: string;
   rateBillingTables?: Array<RateBillingTable> | null;
-};
+}
 
 export const rateFields: ReadonlyArray<keyof RateFormValues> = [
   "isActive",

@@ -23,8 +23,7 @@ import { ViewRCModal } from "@/components/revenue-codes/table/ViewRCModal";
 import { EditRCModal } from "@/components/revenue-codes/table/EditRCModal";
 import { CreateRCModal } from "./CreateRCModal";
 import { RevenueCode } from "@/types/accounting";
-import { truncateText } from "@/helpers/constants";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
+import { truncateText } from "@/lib/utils";
 
 export function RevenueCodeTable() {
   const columns = useMemo<MRT_ColumnDef<RevenueCode>[]>(
@@ -58,16 +57,6 @@ export function RevenueCodeTable() {
             ? (cell.getValue() as string)
             : "No Expense Account";
         },
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={revenueCodeTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

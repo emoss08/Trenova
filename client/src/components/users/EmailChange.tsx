@@ -23,7 +23,7 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { useQueryClient } from "react-query";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { User } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";

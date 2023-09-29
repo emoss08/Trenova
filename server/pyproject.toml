@@ -98,7 +98,7 @@ remove-all-unused-imports = true
 remove-unused-variables = true
 in-place = true
 
-[tool.pytest]
+[tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "backend.settings"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -112,7 +112,6 @@ filterwarnings = [
     "ignore::PendingDeprecationWarning",
     "ignore::ImportWarning",
     "ignore::ResourceWarning",
-    "ignore::RemovedInDjango51Warning"
 ]
 
 [tool.bandit]

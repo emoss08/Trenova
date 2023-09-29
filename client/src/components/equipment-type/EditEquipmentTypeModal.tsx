@@ -24,7 +24,7 @@ import {
   EquipmentTypeFormValues as FormValues,
 } from "@/types/equipment";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { equipmentTypeSchema } from "@/helpers/schemas/EquipmentSchema";
+import { equipmentTypeSchema } from "@/lib/schemas/EquipmentSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
   EquipmentTypeDetailForm,
@@ -68,6 +68,7 @@ function ModalBody({ equipType }: { equipType: EquipmentType }) {
       path: `/equipment_types/${equipType.id}/`,
       successMessage: "Equipment type updated successfully.",
       queryKeysToInvalidate: ["equipment-type-table-data"],
+      additionalInvalidateQueries: ["equipmentTypes"],
       closeModal: true,
       errorMessage: "Failed to update equipment type.",
     },

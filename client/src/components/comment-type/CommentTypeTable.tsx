@@ -19,8 +19,7 @@ import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
 import { Text } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
-import { truncateText } from "@/helpers/constants";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
+import { truncateText } from "@/lib/utils";
 import { CommentType } from "@/types/dispatch";
 import { useCommentTypeStore } from "@/stores/DispatchStore";
 import { CreateCommentTypeModal } from "@/components/comment-type/CreateCommentTypeModal";
@@ -44,16 +43,6 @@ export function CommentTypeTable() {
           }
           return <Text>No Description</Text>;
         },
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={useCommentTypeStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

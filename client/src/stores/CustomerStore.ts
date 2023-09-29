@@ -16,7 +16,7 @@
  */
 
 import { MRT_RowSelectionState } from "mantine-react-table";
-import { createGlobalStore } from "@/helpers/useGlobalStore";
+import { createGlobalStore } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 import { Customer } from "@/types/customer";
 import { BillingHistory } from "@/types/billing";

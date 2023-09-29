@@ -26,7 +26,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { WebSocketManager } from "@/helpers/websockets";
+import { WebSocketManager } from "@/lib/websockets";
 import { STEPS } from "@/pages/billing/BillingClient";
 import { billingClientStore } from "@/stores/BillingStores";
 

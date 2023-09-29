@@ -17,19 +17,22 @@
 
 import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { chargeTypeTableStore } from "@/stores/BillingStores";
-import { ChargeType, ChargeTypeFormValues } from "@/types/billing";
+import {
+  chargeTypeTableStore as store,
+  chargeTypeTableStore,
+} from "@/stores/BillingStores";
+import {
+  ChargeType,
+  ChargeTypeFormValues as FormValues,
+} from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { chargeTypeSchema } from "@/helpers/schemas/BillingSchema";
+import { chargeTypeSchema } from "@/lib/schemas/BillingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 type EditChargeTypeModalFormProps = {
   chargeType: ChargeType;
@@ -40,56 +43,8 @@ export function EditChargeTypeModalForm({
 }: EditChargeTypeModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: ChargeTypeFormValues) =>
-      axios.put(`/charge_types/${chargeType.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: ["charge-type-table-data"],
-        });
-        queryClient
-          .invalidateQueries({
-            queryKey: ["chargeType", chargeType.id],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Charge Type updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            chargeTypeTableStore.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<ChargeTypeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(chargeTypeSchema),
     initialValues: {
       name: chargeType.name,
@@ -97,7 +52,26 @@ export function EditChargeTypeModalForm({
     },
   });
 
-  const submitForm = (values: ChargeTypeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<ChargeType>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/charge_types/${chargeType.id}/`,
+      successMessage: "Charge Type updated successfully.",
+      queryKeysToInvalidate: ["charge-type-table-data"],
+      additionalInvalidateQueries: ["chargeTypes"],
+      closeModal: true,
+      errorMessage: "Failed to update charge type.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };

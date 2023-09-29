@@ -25,86 +25,35 @@ import {
   Stack,
 } from "@mantine/core";
 import React from "react";
-import { useMutation, useQuery, useQueryClient } from "react-query";
-import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { useQuery, useQueryClient } from "react-query";
 import { useForm, yupResolver } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { divisionCodeTableStore as store } from "@/stores/AccountingStores";
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import {
-  DivisionCodeFormValues,
+  DivisionCode,
+  DivisionCodeFormValues as FormValues,
   GeneralLedgerAccount,
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { divisionCodeSchema } from "@/helpers/schemas/AccountingSchema";
+import { divisionCodeSchema } from "@/lib/schemas/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { APIError } from "@/types/server";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
-type CreateDCModalFormProps = {
+function CreateDCModalForm({
+  selectGlAccountData,
+}: {
   selectGlAccountData: TChoiceProps[];
-};
-
-function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
+}) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: DivisionCodeFormValues) => axios.post("/division_codes/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["division-code-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Division Code created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Division Code with this Code and Organization already exists."
-            ) {
-              form.setFieldError("code", e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<DivisionCodeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(divisionCodeSchema),
     initialValues: {
       status: "A",
@@ -116,7 +65,26 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
     },
   });
 
-  const submitForm = (values: DivisionCodeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<DivisionCode>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/division_codes/",
+      successMessage: "Division Code created successfully.",
+      queryKeysToInvalidate: ["division-code-table-data"],
+      additionalInvalidateQueries: ["divisionCodes"],
+      closeModal: true,
+      errorMessage: "Failed to create division code.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -126,7 +94,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<DivisionCodeFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={statusChoices}
               name="status"
@@ -135,7 +103,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextInput<DivisionCodeFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               name="code"
               label="Code"
@@ -145,7 +113,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
               maxLength={4}
             />
           </SimpleGrid>
-          <ValidatedTextArea<DivisionCodeFormValues>
+          <ValidatedTextArea<FormValues>
             form={form}
             name="description"
             label="Description"
@@ -154,7 +122,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
             withAsterisk
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<DivisionCodeFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={selectGlAccountData}
               name="apAccount"
@@ -163,7 +131,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
               variant="filled"
               clearable
             />
-            <SelectInput<DivisionCodeFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={selectGlAccountData}
               name="cashAccount"
@@ -173,7 +141,7 @@ function CreateDCModalForm({ selectGlAccountData }: CreateDCModalFormProps) {
               clearable
             />
           </SimpleGrid>
-          <SelectInput<DivisionCodeFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={selectGlAccountData}
             name="expenseAccount"

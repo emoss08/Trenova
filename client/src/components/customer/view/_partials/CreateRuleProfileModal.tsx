@@ -23,7 +23,7 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { customerStore as store } from "@/stores/CustomerStore";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { CustomerRuleProfileFormValues } from "@/types/customer";
 import { APIError } from "@/types/server";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

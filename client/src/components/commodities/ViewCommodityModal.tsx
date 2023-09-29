@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -23,7 +23,6 @@ import {
   Modal,
   Select,
   SimpleGrid,
-  Skeleton,
   Textarea,
   TextInput,
 } from "@mantine/core";
@@ -33,8 +32,8 @@ import { getHazardousMaterials } from "@/services/CommodityRequestService";
 import { Commodity, HazardousMaterial } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { yesAndNoChoices } from "@/helpers/constants";
-import { unitOfMeasureChoices } from "@/utils/apps/commodities";
+import { yesAndNoChoices } from "@/lib/constants";
+import { UnitOfMeasureChoices } from "@/lib/choices";
 
 type ViewCommodityModalFormProps = {
   commodity: Commodity;
@@ -115,7 +114,7 @@ function ViewCommodityModalForm({
         </SimpleGrid>
         <Select
           className={classes.fields}
-          data={unitOfMeasureChoices}
+          data={UnitOfMeasureChoices}
           name="unitOfMeasure"
           placeholder="Unit of Measure"
           label="Unit of Measure"
@@ -129,7 +128,6 @@ function ViewCommodityModalForm({
             type="submit"
             className={classes.control}
             onClick={() => {
-              commodityTableStore.set("selectedRecord", commodity);
               commodityTableStore.set("viewModalOpen", false);
               commodityTableStore.set("editModalOpen", true);
             }}
@@ -162,8 +160,6 @@ export function ViewCommodityModal() {
       label: hazardousMaterial.name,
     })) || [];
 
-  if (!showViewModal) return null;
-
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
       <Modal.Overlay />
@@ -173,14 +169,12 @@ export function ViewCommodityModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            {commodity && (
-              <ViewCommodityModalForm
-                commodity={commodity}
-                selectHazmatData={selectHazmatData}
-              />
-            )}
-          </Suspense>
+          {commodity && (
+            <ViewCommodityModalForm
+              commodity={commodity}
+              selectHazmatData={selectHazmatData}
+            />
+          )}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

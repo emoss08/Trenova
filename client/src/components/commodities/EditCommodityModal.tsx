@@ -17,27 +17,26 @@
 
 import React from "react";
 import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { commodityTableStore } from "@/stores/CommodityStore";
+import { commodityTableStore as store } from "@/stores/CommodityStore";
 import { getHazardousMaterials } from "@/services/CommodityRequestService";
 import {
   Commodity,
-  CommodityFormValues,
+  CommodityFormValues as FormValues,
   HazardousMaterial,
 } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { commoditySchema } from "@/helpers/schemas/CommoditiesSchema";
+import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { yesAndNoChoices } from "@/helpers/constants";
-import { unitOfMeasureChoices } from "@/utils/apps/commodities";
+import { yesAndNoChoices } from "@/lib/constants";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
+import { UnitOfMeasureChoices } from "@/lib/choices";
 
 type EditCommodityModalFormProps = {
   commodity: Commodity;
@@ -50,59 +49,8 @@ function EditCommodityModalForm({
 }: EditCommodityModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: CommodityFormValues) =>
-      axios.put(`/commodities/${commodity.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["commodity-table-data"],
-          })
-          .then(() => {
-            queryClient
-              .invalidateQueries({
-                queryKey: ["commodity", commodity.id],
-              })
-              .then(() => {
-                notifications.show({
-                  title: "Success",
-                  message: "Commodity updated successfully",
-                  color: "green",
-                  withCloseButton: true,
-                  icon: <FontAwesomeIcon icon={faCheck} />,
-                });
-                commodityTableStore.set("editModalOpen", false);
-              });
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: any) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<CommodityFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(commoditySchema),
     initialValues: {
       name: commodity.name,
@@ -116,6 +64,25 @@ function EditCommodityModalForm({
     },
   });
 
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<Commodity>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/commodities/${commodity.id}/`,
+      successMessage: "Commodity updated successfully.",
+      queryKeysToInvalidate: ["commodity-table-data"],
+      additionalInvalidateQueries: ["commodities"],
+      closeModal: true,
+      errorMessage: "Failed to update commodity.",
+    },
+    () => setLoading(false),
+  );
+
   // Set is_hazmat value based on hazmat value
   React.useEffect(() => {
     if (form.values.hazmat) {
@@ -125,7 +92,7 @@ function EditCommodityModalForm({
     }
   });
 
-  const submitForm = (values: CommodityFormValues) => {
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -134,7 +101,7 @@ function EditCommodityModalForm({
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <Box>
-          <ValidatedTextInput<CommodityFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             className={classes.fields}
             name="name"
@@ -143,7 +110,7 @@ function EditCommodityModalForm({
             variant="filled"
             withAsterisk
           />
-          <ValidatedTextArea<CommodityFormValues>
+          <ValidatedTextArea<FormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -152,7 +119,7 @@ function EditCommodityModalForm({
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput<CommodityFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               className={classes.fields}
               name="minTemp"
@@ -160,7 +127,7 @@ function EditCommodityModalForm({
               placeholder="Min Temp"
               variant="filled"
             />
-            <ValidatedTextInput<CommodityFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               className={classes.fields}
               name="maxTemp"
@@ -170,7 +137,7 @@ function EditCommodityModalForm({
             />
           </SimpleGrid>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<CommodityFormValues>
+            <SelectInput<FormValues>
               className={classes.fields}
               data={selectHazmatData || []}
               name="hazmat"
@@ -180,7 +147,7 @@ function EditCommodityModalForm({
               variant="filled"
               clearable
             />
-            <SelectInput<CommodityFormValues>
+            <SelectInput<FormValues>
               className={classes.fields}
               data={yesAndNoChoices}
               name="isHazmat"
@@ -191,9 +158,9 @@ function EditCommodityModalForm({
               withAsterisk
             />
           </SimpleGrid>
-          <SelectInput<CommodityFormValues>
+          <SelectInput<FormValues>
             className={classes.fields}
-            data={unitOfMeasureChoices}
+            data={UnitOfMeasureChoices}
             name="unitOfMeasure"
             placeholder="Unit of Measure"
             label="Unit of Measure"
@@ -217,9 +184,8 @@ function EditCommodityModalForm({
 }
 
 export function EditCommodityModal() {
-  const [showEditModal, setShowEditModal] =
-    commodityTableStore.use("editModalOpen");
-  const [commodity] = commodityTableStore.use("selectedRecord");
+  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+  const [commodity] = store.use("selectedRecord");
   const queryClient = useQueryClient();
 
   const { data: hazmatData } = useQuery({
@@ -235,8 +201,6 @@ export function EditCommodityModal() {
       value: hazardousMaterial.id,
       label: hazardousMaterial.name,
     })) || [];
-
-  if (!showEditModal) return null;
 
   return (
     <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>

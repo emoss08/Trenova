@@ -20,11 +20,11 @@ import {
   FuelMethodChoicesProps,
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
+import { BaseModel } from "@/types/organization";
 
-/** Types for Division Codes */
-export type BillingControl = {
+/** Types for Billing Control */
+export interface BillingControl extends BaseModel {
   id: string;
-  organization: string;
   removeBillingHistory: boolean;
   autoBillOrders: boolean;
   autoMarkReadyToBill: boolean;
@@ -32,34 +32,39 @@ export type BillingControl = {
   autoBillCriteria: AutoBillingCriteriaChoicesProps;
   orderTransferCriteria: OrderTransferCriteriaChoicesProps;
   enforceCustomerBilling: boolean;
-};
+}
 
 export type BillingControlFormValues = Omit<
   BillingControl,
-  "id" | "organization"
+  "id" | "organization" | "created" | "modified"
 >;
 
-/** Types for Division Codes */
-export type ChargeType = {
+/** Types for Charge Type */
+export interface ChargeType extends BaseModel {
   id: string;
-  organization: string;
   name: string;
   description?: string | null;
-};
+}
 
-export type ChargeTypeFormValues = Omit<ChargeType, "id" | "organization">;
+export type ChargeTypeFormValues = Omit<
+  ChargeType,
+  "id" | "organization" | "created" | "modified"
+>;
 
 /** Types for Accessorial Charge */
-export type AccessorialCharge = {
+export interface AccessorialCharge extends BaseModel {
   id: string;
   code: string;
   description?: string | null;
   isDetention: boolean;
   chargeAmount: number;
   method: FuelMethodChoicesProps;
-};
+}
 
-export type AccessorialChargeFormValues = Omit<AccessorialCharge, "id">;
+export type AccessorialChargeFormValues = Omit<
+  AccessorialCharge,
+  "id" | "organization" | "created" | "modified"
+>;
 
 /** Types for Orders Ready to Bill */
 export type OrdersReadyProps = {
@@ -75,7 +80,7 @@ export type OrdersReadyProps = {
 };
 
 /** Types for Billing Queue */
-export type BillingQueue = {
+export interface BillingQueue extends BaseModel {
   id: string;
   order_type: string;
   order: string;
@@ -99,10 +104,10 @@ export type BillingQueue = {
   bol_number: string;
   user: string;
   customer_name: string;
-};
+}
 
 /** Types for Billing History */
-export type BillingHistory = {
+export interface BillingHistory extends BaseModel {
   id: string;
   organization: string;
   orderType: string;
@@ -129,7 +134,7 @@ export type BillingHistory = {
   user: string;
   created: string;
   modified: string;
-};
+}
 
 /** Types for Document Classification */
 export type DocumentClassification = {

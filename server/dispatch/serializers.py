@@ -42,7 +42,7 @@ class CommentTypeSerializer(GenericSerializer):
 
         model = models.CommentType
 
-    def validate_code(self, value: str) -> str:
+    def validate_name(self, value: str) -> str:
         """Validate the `name` field of the Comment Type model.
 
         This method validates the `name` field of the Comment Type model.

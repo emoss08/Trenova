@@ -26,7 +26,7 @@ import { useFormStyles } from "@/assets/styles/FormStyles";
 import { CreateCustomerFormValues } from "@/types/customer";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedMultiSelect } from "@/components/common/fields/MultiSelect";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
 import { TChoiceProps } from "@/types";
 

@@ -25,7 +25,6 @@ import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
 import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
 import { HazardousMaterial } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 export function HazardousMaterialTable() {
   const columns = useMemo<MRT_ColumnDef<HazardousMaterial>[]>(
@@ -60,16 +59,6 @@ export function HazardousMaterialTable() {
       {
         accessorKey: "description",
         header: "Description",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={hazardousMaterialTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

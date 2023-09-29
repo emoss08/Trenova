@@ -33,15 +33,15 @@ import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { emailControlSchema } from "@/helpers/schemas/OrganizationSchema";
+import { emailControlSchema } from "@/lib/schemas/OrganizationSchema";
 import {
   FeasibilityToolControl,
   FeasibilityToolControlFormValues as FormValues,
 } from "@/types/dispatch";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { feasibilityOperatorChoices } from "@/helpers/choices";
+import { feasibilityOperatorChoices } from "@/lib/choices";
 import { useFeasibilityControl } from "@/hooks/useFeasibilityControl";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 

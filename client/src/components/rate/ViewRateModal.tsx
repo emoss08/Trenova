@@ -17,6 +17,7 @@
 
 import {
   Box,
+  Button,
   Divider,
   Group,
   Modal,
@@ -35,7 +36,7 @@ import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { useRateStore as store } from "@/stores/DispatchStore";
 import { useAccessorialCharges } from "@/hooks/useAccessorialCharges";
-import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCommodities } from "@/hooks/useCommodities";
 import { useLocations } from "@/hooks/useLocations";
@@ -304,9 +305,10 @@ function ViewRateModalForm({
   );
 }
 
-export function ViewRateModal(): React.ReactElement {
+export function ViewRateModal() {
   const [showViewModal, setShowViewModal] = store.use("viewModalOpen");
   const [rate] = store.use("selectedRecord");
+  const { classes } = useFormStyles();
   const [activeTab, setActiveTab] = React.useState<string | null>("overview");
   const isMobile = useMediaQuery("(max-width: 50em)");
 
@@ -371,6 +373,19 @@ export function ViewRateModal(): React.ReactElement {
               )}
             </Tabs.Panel>
           </Tabs>
+          <Group position="right" mt="md">
+            <Button
+              color="white"
+              type="submit"
+              className={classes.control}
+              onClick={() => {
+                store.set("viewModalOpen", false);
+                store.set("editModalOpen", true);
+              }}
+            >
+              Edit Rate
+            </Button>
+          </Group>
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

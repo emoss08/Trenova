@@ -26,7 +26,7 @@ import {
 } from "@mantine/core";
 import React from "react";
 import { billingClientStore } from "@/stores/BillingStores";
-import { WebSocketManager, WebSocketMessageProps } from "@/helpers/websockets";
+import { WebSocketManager, WebSocketMessageProps } from "@/lib/websockets";
 
 interface Props {
   websocketMessage: WebSocketMessageProps;

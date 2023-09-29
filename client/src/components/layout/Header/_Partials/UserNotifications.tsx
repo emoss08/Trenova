@@ -33,9 +33,9 @@ import { notifications } from "@mantine/notifications";
 import { Howl } from "howler";
 import { Notifications } from "@/components/layout/Header/_Partials/Notifications";
 import { getUserNotifications } from "@/services/UserRequestService";
-import { ENABLE_WEBSOCKETS, WEB_SOCKET_URL } from "@/helpers/constants";
+import { ENABLE_WEBSOCKETS, WEB_SOCKET_URL } from "@/lib/constants";
 import { useAuthStore, useUserStore } from "@/stores/AuthStore";
-import { createWebsocketManager } from "@/helpers/websockets";
+import { createWebsocketManager } from "@/lib/websockets";
 import { useNavbarStore } from "@/stores/HeaderStore";
 
 import NotificationSound from "@/assets/audio/notification.webm";

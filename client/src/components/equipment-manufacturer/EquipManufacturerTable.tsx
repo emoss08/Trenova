@@ -17,7 +17,6 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { EquipmentManufacturer } from "@/types/equipment";
 import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
@@ -35,13 +34,6 @@ export function EquipManufacturerTable() {
       {
         accessorKey: "description",
         header: "Description",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu store={store} data={row.original} />
-        ),
       },
     ],
     [],

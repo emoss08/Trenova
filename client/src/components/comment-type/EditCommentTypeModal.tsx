@@ -17,18 +17,19 @@
 
 import React from "react";
 import { Box, Button, Group, Modal } from "@mantine/core";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useCommentTypeStore as store } from "@/stores/DispatchStore";
-import { commentTypeSchema } from "@/helpers/schemas/DispatchSchema";
-import { CommentType, CommentTypeFormValues } from "@/types/dispatch";
+import { commentTypeSchema } from "@/lib/schemas/DispatchSchema";
+import {
+  CommentType,
+  CommentTypeFormValues as FormValues,
+} from "@/types/dispatch";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 function EditCommentTypeModalForm({
   commentType,
@@ -37,59 +38,8 @@ function EditCommentTypeModalForm({
 }) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: CommentTypeFormValues) =>
-      axios.put(`/comment_types/${commentType.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["comment-types-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Comment Type updated successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("editModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: any) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Comment Type with this Name and Organization already exists."
-            ) {
-              form.setFieldError("name", e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<CommentTypeFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(commentTypeSchema),
     initialValues: {
       name: commentType.name,
@@ -97,7 +47,26 @@ function EditCommentTypeModalForm({
     },
   });
 
-  const submitForm = (values: CommentTypeFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<CommentType>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/comment_types/${commentType.id}/`,
+      successMessage: "Comment Type updated successfully.",
+      queryKeysToInvalidate: ["comment-types-table-data"],
+      additionalInvalidateQueries: ["commentTypes"],
+      closeModal: true,
+      errorMessage: "Failed to update comment type.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -105,7 +74,7 @@ function EditCommentTypeModalForm({
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
-        <ValidatedTextInput<CommentTypeFormValues>
+        <ValidatedTextInput<FormValues>
           form={form}
           name="name"
           label="Name"
@@ -113,7 +82,7 @@ function EditCommentTypeModalForm({
           description="Unique Name of the Comment Type"
           withAsterisk
         />
-        <ValidatedTextArea<CommentTypeFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           name="description"
           label="Description"
@@ -140,7 +109,7 @@ export function EditCommentTypeModal() {
       <Modal.Overlay />
       <Modal.Content>
         <Modal.Header>
-          <Modal.Title>Edit CommentType</Modal.Title>
+          <Modal.Title>Edit Comment Type</Modal.Title>
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>

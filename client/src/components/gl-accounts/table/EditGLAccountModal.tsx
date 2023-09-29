@@ -17,19 +17,17 @@
 
 import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
-import { GeneralLedgerAccount, GLAccountFormValues } from "@/types/accounting";
+import {
+  GeneralLedgerAccount,
+  GLAccountFormValues as FormValues,
+} from "@/types/accounting";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { glAccountSchema } from "@/helpers/schemas/AccountingSchema";
+import { glAccountSchema } from "@/lib/schemas/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import {
@@ -37,7 +35,9 @@ import {
   accountSubTypeChoices,
   accountTypeChoices,
   cashFlowTypeChoices,
-} from "@/helpers/choices";
+} from "@/lib/choices";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 type EditGLAccountModalFormProps = {
   glAccount: GeneralLedgerAccount;
@@ -48,59 +48,8 @@ export function EditGLAccountModalForm({
 }: EditGLAccountModalFormProps): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: GLAccountFormValues) =>
-      axios.put(`/gl_accounts/${glAccount.id}/`, values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["gl-account-table-data"],
-          })
-          .then(() => {
-            queryClient
-              .invalidateQueries({
-                queryKey: ["glAccount", glAccount.id],
-              })
-              .finally(() => {
-                notifications.show({
-                  title: "Success",
-                  message: "GL Account updated successfully",
-                  color: "green",
-                  withCloseButton: true,
-                  icon: <FontAwesomeIcon icon={faCheck} />,
-                });
-                store.set("editModalOpen", false);
-              });
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<GLAccountFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(glAccountSchema),
     initialValues: {
       status: glAccount.status,
@@ -113,7 +62,26 @@ export function EditGLAccountModalForm({
     },
   });
 
-  const submitForm = (values: GLAccountFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<GeneralLedgerAccount>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "PUT",
+      path: `/gl_accounts/${glAccount.id}/`,
+      successMessage: "General Ledger Account updated successfully.",
+      queryKeysToInvalidate: ["gl-account-table-data"],
+      additionalInvalidateQueries: ["glAccounts"],
+      closeModal: true,
+      errorMessage: "Failed to create general ledger account.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -122,7 +90,7 @@ export function EditGLAccountModalForm({
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={statusChoices}
             className={classes.fields}
@@ -135,7 +103,7 @@ export function EditGLAccountModalForm({
             }}
             withAsterisk
           />
-          <ValidatedTextInput<GLAccountFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             className={classes.fields}
             name="accountNumber"
@@ -145,7 +113,7 @@ export function EditGLAccountModalForm({
             withAsterisk
           />
         </SimpleGrid>
-        <ValidatedTextArea<GLAccountFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           className={classes.fields}
           name="description"
@@ -155,7 +123,7 @@ export function EditGLAccountModalForm({
           withAsterisk
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={accountTypeChoices}
             className={classes.fields}
@@ -169,7 +137,7 @@ export function EditGLAccountModalForm({
             clearable
             withAsterisk
           />
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={cashFlowTypeChoices}
             className={classes.fields}
@@ -181,7 +149,7 @@ export function EditGLAccountModalForm({
           />
         </SimpleGrid>
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={accountSubTypeChoices}
             className={classes.fields}
@@ -191,7 +159,7 @@ export function EditGLAccountModalForm({
             variant="filled"
             clearable
           />
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={accountClassificationChoices}
             className={classes.fields}

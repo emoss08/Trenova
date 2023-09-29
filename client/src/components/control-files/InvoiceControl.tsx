@@ -35,14 +35,14 @@ import { getInvoiceControl } from "@/services/OrganizationRequestService";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { InvoiceControl, InvoiceControlFormValues } from "@/types/invoicing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { invoiceControlSchema } from "@/helpers/schemas/InvoicingSchema";
+import { invoiceControlSchema } from "@/lib/schemas/InvoicingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { DateFormatChoices } from "@/helpers/choices";
+import { DateFormatChoices } from "@/lib/choices";
 import { ValidatedFileInput } from "@/components/common/fields/FileInput";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 

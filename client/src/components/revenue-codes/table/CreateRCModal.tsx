@@ -29,7 +29,7 @@ import {
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { revenueCodeSchema } from "@/helpers/schemas/AccountingSchema";
+import { revenueCodeSchema } from "@/lib/schemas/AccountingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
@@ -68,6 +68,7 @@ function CreateRCModalForm({
       path: "/revenue_codes/",
       successMessage: "Revenue Code created successfully.",
       queryKeysToInvalidate: ["revenue-code-table-data"],
+      additionalInvalidateQueries: ["revenueCodes"],
       closeModal: true,
       errorMessage: "Failed to create revenue code.",
     },

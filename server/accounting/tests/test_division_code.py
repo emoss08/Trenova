@@ -361,8 +361,14 @@ def test_api_delete(
 
 
 def test_post_with_unique_code(api_client, division_code: models.DivisionCode) -> None:
-    """
-    Test posting a division code with the same code throws serializer.ValidationError.
+    """Test posting a division code with the same code throws serializer.ValidationError.
+
+    Args:
+        api_client(APIClient): APIClient fixture
+        division_code(models.DivisionCode): Division Code fixture
+
+    Returns:
+        None: This function does not return anything.
     """
     division_code.code = "test"
     division_code.save()

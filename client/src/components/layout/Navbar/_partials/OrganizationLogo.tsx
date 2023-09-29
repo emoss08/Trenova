@@ -19,7 +19,7 @@ import React from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { Image, rem, Skeleton, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
-import { getUserOrganizationId } from "@/helpers/auth";
+import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
 import { useHeaderStyles } from "@/assets/styles/HeaderStyles";
 

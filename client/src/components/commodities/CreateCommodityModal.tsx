@@ -17,24 +17,26 @@
 
 import React, { Suspense } from "react";
 import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { commodityTableStore as store } from "@/stores/CommodityStore";
-import { CommodityFormValues, HazardousMaterial } from "@/types/commodities";
+import {
+  Commodity,
+  CommodityFormValues as FormValues,
+  HazardousMaterial,
+} from "@/types/commodities";
 import { getHazardousMaterials } from "@/services/CommodityRequestService";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { commoditySchema } from "@/helpers/schemas/CommoditiesSchema";
+import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { yesAndNoChoices } from "@/helpers/constants";
-import { unitOfMeasureChoices } from "@/utils/apps/commodities";
+import { yesAndNoChoices } from "@/lib/constants";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
+import { UnitOfMeasureChoices } from "@/lib/choices";
 
 type CreateCommodityModalFormProps = {
   selectHazmatData: TChoiceProps[];
@@ -45,58 +47,8 @@ export function CreateCommodityModalForm({
 }: CreateCommodityModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: CommodityFormValues) => axios.post("/commodities/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["commodity-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Commodity created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            } else if (
-              e.attr === "All" &&
-              e.detail ===
-                "Commodity with this Name and Organization already exists."
-            ) {
-              form.setFieldError("name", e.detail);
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<CommodityFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(commoditySchema),
     initialValues: {
       name: "",
@@ -110,6 +62,25 @@ export function CreateCommodityModalForm({
     },
   });
 
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<Commodity>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/commodities/",
+      successMessage: "Commodity created successfully.",
+      queryKeysToInvalidate: ["commodity-table-data"],
+      additionalInvalidateQueries: ["commodities"],
+      closeModal: true,
+      errorMessage: "Failed to create commodity.",
+    },
+    () => setLoading(false),
+  );
+
   React.useEffect(() => {
     if (form.values.hazmat) {
       form.setFieldValue("isHazmat", "Y");
@@ -117,7 +88,8 @@ export function CreateCommodityModalForm({
       form.setFieldValue("isHazmat", "N");
     }
   }, [form.values.hazmat, form]);
-  const submitForm = (values: CommodityFormValues) => {
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -144,7 +116,7 @@ export function CreateCommodityModalForm({
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput<CommodityFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               className={classes.fields}
               name="minTemp"
@@ -152,7 +124,7 @@ export function CreateCommodityModalForm({
               placeholder="Min Temp"
               variant="filled"
             />
-            <ValidatedTextInput<CommodityFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               className={classes.fields}
               name="maxTemp"
@@ -162,7 +134,7 @@ export function CreateCommodityModalForm({
             />
           </SimpleGrid>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<CommodityFormValues>
+            <SelectInput<FormValues>
               className={classes.fields}
               data={selectHazmatData || []}
               name="hazmat"
@@ -172,7 +144,7 @@ export function CreateCommodityModalForm({
               variant="filled"
               clearable
             />
-            <SelectInput<CommodityFormValues>
+            <SelectInput<FormValues>
               className={classes.fields}
               data={yesAndNoChoices}
               name="isHazmat"
@@ -183,9 +155,9 @@ export function CreateCommodityModalForm({
               withAsterisk
             />
           </SimpleGrid>
-          <SelectInput<CommodityFormValues>
+          <SelectInput<FormValues>
             className={classes.fields}
-            data={unitOfMeasureChoices}
+            data={UnitOfMeasureChoices}
             name="unitOfMeasure"
             placeholder="Unit of Measure"
             label="Unit of Measure"
@@ -225,8 +197,6 @@ export function CreateCommodityModal() {
       value: hazardousMaterial.id,
       label: hazardousMaterial.name,
     })) || [];
-
-  if (!showCreateModal) return null;
 
   return (
     <Modal.Root

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 
 /**
  * Fetches the columns for the specified model from the server.

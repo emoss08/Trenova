@@ -40,7 +40,7 @@ import {
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { revenueCodeSchema } from "@/helpers/schemas/AccountingSchema";
+import { revenueCodeSchema } from "@/lib/schemas/AccountingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
@@ -81,6 +81,7 @@ export function EditRCModalForm({
       path: `/revenue_codes/${revenueCode.id}/`,
       successMessage: "Revenue Code updated successfully.",
       queryKeysToInvalidate: ["revenue-code-table-data"],
+      additionalInvalidateQueries: ["revenueCodes"],
       closeModal: true,
       errorMessage: "Failed to update revenue code.",
     },

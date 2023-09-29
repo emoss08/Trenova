@@ -23,8 +23,7 @@ import { ViewUserModal } from "./ViewUserModal";
 import { userTableStore } from "@/stores/UserTableStore";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { User } from "@/types/accounts";
-import { formatDate, formatDateToHumanReadable } from "@/helpers/date";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
+import { formatDate, formatDateToHumanReadable } from "@/lib/date";
 
 export function UsersAdminTable() {
   const columns = useMemo<MRT_ColumnDef<User>[]>(
@@ -126,13 +125,6 @@ export function UsersAdminTable() {
             </Tooltip>
           );
         },
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu store={userTableStore} data={row.original} />
-        ),
       },
     ],
     [],

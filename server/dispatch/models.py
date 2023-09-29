@@ -404,12 +404,12 @@ class CommentType(GenericModel):
     )
     name = models.CharField(
         _("Name"),
-        max_length=255,
+        max_length=50,
         help_text=_("Comment type name"),
     )
-    description = models.TextField(
+    description = models.CharField(
         _("Description"),
-        max_length=255,
+        max_length=100,
         help_text=_("Comment type description"),
     )
 

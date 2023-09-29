@@ -16,7 +16,27 @@
  */
 
 import React from "react";
+import { Card, Container, Divider, Flex, Text } from "@mantine/core";
+import { usePageStyles } from "@/assets/styles/PageStyles";
 
-const Index: React.FC = () => <div>Home</div>;
+export default function Index() {
+  const { classes } = usePageStyles();
 
-export default Index;
+  return (
+    <Flex>
+      <Card className={classes.card}>
+        <Container mx="xs" my="xs">
+          <Text className={classes.text} fz="30px" fw={650}>
+            Under Development
+          </Text>
+          <Divider mb={5} variant="dashed" />
+          <Text>
+            Monta is currently undergoing comprehensive development. As a
+            result, certain features might not yet be accessible, or they may
+            not perform to their intended specifications.
+          </Text>
+        </Container>
+      </Card>
+    </Flex>
+  );
+}

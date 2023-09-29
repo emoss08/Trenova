@@ -330,7 +330,7 @@ class UserDetailView(views.APIView):
             "userId": user.id,
             "organizationId": user.organization_id
             if hasattr(user, "organization")
-            else None,  # Assuming organization is an attribute
+            else None,
             "userPermissions": list(user.get_all_permissions()),
             "userGroups": list(user.groups.values_list("name", flat=True)),
             "userIsStaff": user.is_staff,

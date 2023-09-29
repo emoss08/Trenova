@@ -25,7 +25,7 @@ import {
   AccessorialCharge,
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
-import { accessorialChargeSchema as Schema } from "@/helpers/schemas/BillingSchema";
+import { accessorialChargeSchema as Schema } from "@/lib/schemas/BillingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
@@ -61,6 +61,7 @@ export function CreateACModalForm() {
       path: "/accessorial_charges/",
       successMessage: "Accessorial Charge created successfully.",
       queryKeysToInvalidate: ["accessorial-charges-table-data"],
+      additionalInvalidateQueries: ["accessorialCharges"],
       closeModal: true,
       errorMessage: "Failed to create accessorial charge.",
     },

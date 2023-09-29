@@ -43,9 +43,9 @@ import {
 } from "@/types/organization";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { emailControlSchema } from "@/helpers/schemas/OrganizationSchema";
+import { emailControlSchema } from "@/lib/schemas/OrganizationSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 
 interface Props {

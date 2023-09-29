@@ -25,7 +25,7 @@ export interface TableStoreProps<T> {
   viewModalOpen: boolean;
   editModalOpen: boolean;
   selectedRecord: T | null;
-  globalFilter: string;
+  globalFilter: string | undefined;
   drawerOpen: boolean;
   exportModalOpen: boolean;
   deleteModalOpen: boolean;

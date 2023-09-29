@@ -30,11 +30,8 @@ import {
 import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
 import { HazardousMaterial } from "@/types/commodities";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { statusChoices } from "@/helpers/constants";
-import {
-  hazardousClassChoices,
-  packingGroupChoices,
-} from "@/utils/apps/commodities";
+import { statusChoices } from "@/lib/constants";
+import { HazardousClassChoices, PackingGroupChoices } from "@/lib/choices";
 
 type ViewHMModalFormProps = {
   hazardousMaterial: HazardousMaterial;
@@ -78,7 +75,7 @@ function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
           <Select
-            data={hazardousClassChoices}
+            data={HazardousClassChoices}
             className={classes.fields}
             value={hazardousMaterial.hazardClass}
             name="hazard_class"
@@ -88,7 +85,7 @@ function ViewHMModalForm({ hazardousMaterial }: ViewHMModalFormProps) {
             readOnly
           />
           <Select
-            data={packingGroupChoices}
+            data={PackingGroupChoices}
             className={classes.fields}
             value={hazardousMaterial.packingGroup || ""}
             name="packing_group"

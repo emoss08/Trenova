@@ -16,13 +16,14 @@
  */
 
 import { StatusChoiceProps, YesNoChoiceProps } from "@/types/index";
+import { BaseModel } from "@/types/organization";
 import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
   UnitOfMeasureChoiceProps,
-} from "@/utils/apps/commodities";
+} from "@/lib/choices";
 
-export type HazardousMaterial = {
+export interface HazardousMaterial extends BaseModel {
   id: string;
   status: StatusChoiceProps;
   name: string;
@@ -31,11 +32,14 @@ export type HazardousMaterial = {
   packingGroup?: PackingGroupChoiceProps | null;
   ergNumber?: string | null;
   properShippingName?: string | null;
-};
+}
 
-export type HazardousMaterialFormValues = Omit<HazardousMaterial, "id">;
+export type HazardousMaterialFormValues = Omit<
+  HazardousMaterial,
+  "id" | "organization" | "created" | "modified"
+>;
 
-export type Commodity = {
+export interface Commodity extends BaseModel {
   id: string;
   name: string;
   description?: string | null;
@@ -45,11 +49,9 @@ export type Commodity = {
   unitOfMeasure?: UnitOfMeasureChoiceProps | null;
   hazmat?: string | null;
   isHazmat: YesNoChoiceProps;
-  created: string;
-  modified: string;
-};
+}
 
 export type CommodityFormValues = Omit<
   Commodity,
-  "id" | "created" | "modified"
+  "id" | "created" | "modified" | "organization"
 >;

@@ -17,75 +17,28 @@
 
 import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { HazardousMaterialFormValues } from "@/types/commodities";
-import axios from "@/helpers/AxiosConfig";
-import { hazardousMaterialSchema } from "@/helpers/schemas/CommoditiesSchema";
+import {
+  HazardousMaterial,
+  HazardousMaterialFormValues as FormValues,
+} from "@/types/commodities";
+import { hazardousMaterialSchema } from "@/lib/schemas/CommoditiesSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import {
-  hazardousClassChoices,
-  packingGroupChoices,
-} from "@/utils/apps/commodities";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
+import { HazardousClassChoices, PackingGroupChoices } from "@/lib/choices";
 
 export function CreateHMModalForm() {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: HazardousMaterialFormValues) =>
-      axios.post("/hazardous_materials/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["hazardous-material-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "Hazardous Material created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: any) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<HazardousMaterialFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(hazardousMaterialSchema),
     initialValues: {
       status: "A",
@@ -98,7 +51,26 @@ export function CreateHMModalForm() {
     },
   });
 
-  const submitForm = (values: HazardousMaterialFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<HazardousMaterial>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/hazardous_materials/",
+      successMessage: "Hazardous Material created successfully.",
+      queryKeysToInvalidate: ["hazardous-material-table-data"],
+      additionalInvalidateQueries: ["hazardousMaterials"],
+      closeModal: true,
+      errorMessage: "Failed to create hazardous material.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -108,7 +80,7 @@ export function CreateHMModalForm() {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<HazardousMaterialFormValues>
+            <SelectInput<FormValues>
               form={form}
               data={statusChoices}
               className={classes.fields}
@@ -118,7 +90,7 @@ export function CreateHMModalForm() {
               variant="filled"
               withAsterisk
             />
-            <ValidatedTextInput<HazardousMaterialFormValues>
+            <ValidatedTextInput<FormValues>
               form={form}
               className={classes.fields}
               name="name"
@@ -128,7 +100,7 @@ export function CreateHMModalForm() {
               withAsterisk
             />
           </SimpleGrid>
-          <ValidatedTextArea<HazardousMaterialFormValues>
+          <ValidatedTextArea<FormValues>
             form={form}
             className={classes.fields}
             name="description"
@@ -137,9 +109,9 @@ export function CreateHMModalForm() {
             variant="filled"
           />
           <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<HazardousMaterialFormValues>
+            <SelectInput<FormValues>
               form={form}
-              data={hazardousClassChoices}
+              data={HazardousClassChoices}
               className={classes.fields}
               name="hazardClass"
               label="Hazard Class"
@@ -147,9 +119,9 @@ export function CreateHMModalForm() {
               variant="filled"
               withAsterisk
             />
-            <SelectInput<HazardousMaterialFormValues>
+            <SelectInput<FormValues>
               form={form}
-              data={packingGroupChoices}
+              data={PackingGroupChoices}
               className={classes.fields}
               name="packingGroup"
               label="Packing Group"
@@ -158,7 +130,7 @@ export function CreateHMModalForm() {
               clearable
             />
           </SimpleGrid>
-          <ValidatedTextInput<HazardousMaterialFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             className={classes.fields}
             name="ergNumber"
@@ -166,7 +138,7 @@ export function CreateHMModalForm() {
             placeholder="ERG Number"
             variant="filled"
           />
-          <ValidatedTextArea<HazardousMaterialFormValues>
+          <ValidatedTextArea<FormValues>
             form={form}
             className={classes.fields}
             name="properShippingName"

@@ -25,7 +25,7 @@ import {
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { accessorialChargeSchema as Schema } from "@/helpers/schemas/BillingSchema";
+import { accessorialChargeSchema as Schema } from "@/lib/schemas/BillingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
@@ -65,6 +65,7 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
       path: `/accessorial_charges/${accessorialCharge.id}/`,
       successMessage: "Accessorial Charge updated successfully.",
       queryKeysToInvalidate: ["accessorial-charges-table-data"],
+      additionalInvalidateQueries: ["accessorialCharges"],
       closeModal: true,
       errorMessage: "Failed to update accessorial charge.",
     },
@@ -147,8 +148,6 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
 export function EditACModal(): React.ReactElement | null {
   const [showEditModal, setShowEditModal] = store.use("editModalOpen");
   const [accessorialCharge] = store.use("selectedRecord");
-
-  if (!showEditModal) return null;
 
   return (
     <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>

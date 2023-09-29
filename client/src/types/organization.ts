@@ -69,3 +69,19 @@ export type EmailControlFormValues = {
   billingEmailProfile?: string | null;
   rateExpirationEmailProfile?: string | null;
 };
+
+/** Base Monta Interface
+ *
+ * @note This interface is used for all Monta models that have the following fields:
+ * - organization
+ * - created
+ * - modified
+ *
+ * Please do not put businessUnit in this interface. Add it directly to the interface that
+ * extends this interface.
+ * */
+export interface BaseModel {
+  organization: string;
+  created: string;
+  modified: string;
+}

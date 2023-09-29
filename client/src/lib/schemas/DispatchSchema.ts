@@ -25,7 +25,7 @@ import {
   RateBillingTableFormValues,
   RateFormValues,
 } from "@/types/dispatch";
-import { TRateMethodChoices } from "@/helpers/constants";
+import { TRateMethodChoices } from "@/lib/constants";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
@@ -110,8 +110,12 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
 
 export const commentTypeSchema: ObjectSchema<CommentTypeFormValues> =
   Yup.object().shape({
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().required("Description is required"),
+    name: Yup.string()
+      .max(50, "Name cannot be more than 50 characters")
+      .required("Name is required"),
+    description: Yup.string()
+      .max(100, "Description cannot be more than 100 characters")
+      .required("Description is required"),
   });
 
 export const rateBillingTableSchema: ObjectSchema<RateBillingTableFormValues> =

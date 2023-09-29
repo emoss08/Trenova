@@ -33,7 +33,7 @@ import { getGLAccounts } from "@/services/AccountingRequestService";
 import { DivisionCode, GeneralLedgerAccount } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 
 type ViewDCModalFormProps = {
   divisionCode: DivisionCode;

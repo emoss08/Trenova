@@ -15,46 +15,24 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { useEffect, useState } from "react";
-import {
-  WebSocketConnection,
-  WebSocketManager,
-  WebSocketMessageProps,
-  createWebsocketManager,
-} from "@/lib/websockets";
-import { WEB_SOCKET_URL } from "@/lib/constants";
-
-interface Props {
-  userId: string;
-  onMessage: (message: WebSocketMessageProps) => void;
+/**
+ * Truncates the provided text to the specified limit.
+ * @param text - The text to be truncated.
+ * @param limit - The maximum number of characters to be displayed.
+ * @returns The truncated text.
+ */
+export function truncateText(text: string, limit: number): string {
+  return text.length > limit ? `${text.substring(0, limit)}...` : text;
 }
 
-const webSocketManager = createWebsocketManager();
-
-function WebSocketComponent({ userId, onMessage }: Props) {
-  const [socket, setSocket] = useState<WebSocketConnection | undefined>(
-    undefined,
-  );
-
-  useEffect(() => {
-    if (userId) {
-      const s = webSocketManager.connect(
-        "billing_client",
-        `${WEB_SOCKET_URL}/billing_client/`,
-        {
-          onOpen: () => console.log("Connected to billing client socket"),
-        },
-      );
-      setSocket(s);
-
-      return () => {
-        s.close();
-      };
-    }
-    return () => {};
-  }, [userId]);
-
-  return socket;
+/**
+ * Formats the provided amount as a US dollar amount.
+ * @param amount - The amount to be formatted.
+ * @constructor - The formatted amount.
+ */
+export function USDollarFormat(amount: number): string {
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
 }
-
-export default WebSocketComponent;

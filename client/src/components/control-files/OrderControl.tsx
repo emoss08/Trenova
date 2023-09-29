@@ -35,9 +35,9 @@ import { getOrderControl } from "@/services/OrganizationRequestService";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { OrderControl, OrderControlFormValues } from "@/types/order";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import axios from "@/helpers/AxiosConfig";
+import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { orderControlSchema } from "@/helpers/schemas/OrderSchema";
+import { orderControlSchema } from "@/lib/schemas/OrderSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 
 interface Props {

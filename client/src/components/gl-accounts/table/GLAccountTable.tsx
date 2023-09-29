@@ -25,8 +25,7 @@ import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccount
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { IChoiceProps, StatusChoiceProps } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
-import { truncateText } from "@/helpers/constants";
+import { truncateText } from "@/lib/utils";
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -71,16 +70,6 @@ export function GLAccountTable() {
       {
         accessorKey: "accountType",
         header: "Account Type",
-      },
-      {
-        id: "actions",
-        header: "Actions",
-        Cell: ({ row }) => (
-          <MontaTableActionMenu
-            store={generalLedgerTableStore}
-            data={row.original}
-          />
-        ),
       },
     ],
     [],

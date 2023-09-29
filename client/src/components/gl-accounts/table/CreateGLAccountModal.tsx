@@ -17,19 +17,17 @@
 
 import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
-import { useMutation, useQueryClient } from "react-query";
 import { notifications } from "@mantine/notifications";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
 import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { GLAccountFormValues } from "@/types/accounting";
-import axios from "@/helpers/AxiosConfig";
-import { APIError } from "@/types/server";
-import { glAccountSchema } from "@/helpers/schemas/AccountingSchema";
+import {
+  GeneralLedgerAccount,
+  GLAccountFormValues as FormValues,
+} from "@/types/accounting";
+import { glAccountSchema } from "@/lib/schemas/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import {
@@ -37,61 +35,19 @@ import {
   accountSubTypeChoices,
   accountTypeChoices,
   cashFlowTypeChoices,
-} from "@/helpers/choices";
+} from "@/lib/choices";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 
 function CreateGLAccountModalForm(): React.ReactElement {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
-  const queryClient = useQueryClient();
 
-  const mutation = useMutation(
-    (values: GLAccountFormValues) => axios.post("/gl_accounts/", values),
-    {
-      onSuccess: () => {
-        queryClient
-          .invalidateQueries({
-            queryKey: ["gl-account-table-data"],
-          })
-          .then(() => {
-            notifications.show({
-              title: "Success",
-              message: "GL Account created successfully",
-              color: "green",
-              withCloseButton: true,
-              icon: <FontAwesomeIcon icon={faCheck} />,
-            });
-            store.set("createModalOpen", false);
-          });
-      },
-      onError: (error: any) => {
-        const { data } = error.response;
-        if (data.type === "validation_error") {
-          data.errors.forEach((e: APIError) => {
-            form.setFieldError(e.attr, e.detail);
-            if (e.attr === "nonFieldErrors") {
-              notifications.show({
-                title: "Error",
-                message: e.detail,
-                color: "red",
-                withCloseButton: true,
-                icon: <FontAwesomeIcon icon={faXmark} />,
-                autoClose: 10_000, // 10 seconds
-              });
-            }
-          });
-        }
-      },
-      onSettled: () => {
-        setLoading(false);
-      },
-    },
-  );
-
-  const form = useForm<GLAccountFormValues>({
+  const form = useForm<FormValues>({
     validate: yupResolver(glAccountSchema),
     initialValues: {
       status: "A",
-      accountNumber: "0000-0000-0000-0000",
+      accountNumber: "0000-0000-0000-0000", // TODO(WOLFRED): Instead get the next account number from the backend
       description: "",
       accountType: "",
       cashFlowType: "",
@@ -100,7 +56,26 @@ function CreateGLAccountModalForm(): React.ReactElement {
     },
   });
 
-  const submitForm = (values: GLAccountFormValues) => {
+  const mutation = useCustomMutation<
+    FormValues,
+    Omit<TableStoreProps<GeneralLedgerAccount>, "drawerOpen">
+  >(
+    form,
+    store,
+    notifications,
+    {
+      method: "POST",
+      path: "/gl_accounts/",
+      successMessage: "General Ledger Account created successfully.",
+      queryKeysToInvalidate: ["gl-account-table-data"],
+      additionalInvalidateQueries: ["glAccounts"],
+      closeModal: true,
+      errorMessage: "Failed to create general ledger account.",
+    },
+    () => setLoading(false),
+  );
+
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -109,7 +84,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
       <Box className={classes.div}>
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={statusChoices}
             className={classes.fields}
@@ -119,7 +94,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
             variant="filled"
             withAsterisk
           />
-          <ValidatedTextInput<GLAccountFormValues>
+          <ValidatedTextInput<FormValues>
             form={form}
             className={classes.fields}
             name="accountNumber"
@@ -129,7 +104,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
             withAsterisk
           />
         </SimpleGrid>
-        <ValidatedTextArea<GLAccountFormValues>
+        <ValidatedTextArea<FormValues>
           form={form}
           className={classes.fields}
           name="description"
@@ -139,7 +114,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
           withAsterisk
         />
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={accountTypeChoices}
             className={classes.fields}
@@ -150,7 +125,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
             withAsterisk
             clearable
           />
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={cashFlowTypeChoices}
             className={classes.fields}
@@ -162,7 +137,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
           />
         </SimpleGrid>
         <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={accountSubTypeChoices}
             className={classes.fields}
@@ -172,7 +147,7 @@ function CreateGLAccountModalForm(): React.ReactElement {
             variant="filled"
             clearable
           />
-          <SelectInput<GLAccountFormValues>
+          <SelectInput<FormValues>
             form={form}
             data={accountClassificationChoices}
             className={classes.fields}

@@ -17,12 +17,12 @@
 
 import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Text, Flex, Skeleton } from "@mantine/core";
+import { Flex, Skeleton, Text } from "@mantine/core";
 import { pathToRegexp } from "path-to-regexp";
+import { upperFirst } from "@mantine/hooks";
 import { routes } from "@/routing/AppRoutes";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useBreadcrumbStore } from "@/stores/BreadcrumbStore";
-import { upperFirst } from "@/helpers/constants";
 
 export function Breadcrumb() {
   const location = useLocation();

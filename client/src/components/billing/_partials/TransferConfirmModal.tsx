@@ -29,7 +29,7 @@ import { billingClientStore } from "@/stores/BillingStores";
 
 export function TransferConfirmModal() {
   const [modalOpen, setModalOpen] = billingClientStore.use(
-    "transferConfirmModalOpen"
+    "transferConfirmModalOpen",
   );
   const [invalidOrders] = billingClientStore.use("invalidOrders");
 

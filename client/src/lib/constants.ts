@@ -18,9 +18,6 @@
 // User info constants
 import { BChoiceProps, IChoiceProps } from "@/types";
 
-export const USER_ID_KEY = import.meta.env.VITE_USER_ID_KEY;
-export const ORGANIZATION_ID_KEY = import.meta.env.VITE_ORGANIZATION_ID_KEY;
-
 // Web socket constants
 export const WEB_SOCKET_URL = import.meta.env.VITE_WS_URL;
 // export const MAX_WEBSOCKET_RETRIES = import.meta.env.VITE_MAX_WEBSOCKET_RETRIES;
@@ -31,15 +28,6 @@ export const ENABLE_WEBSOCKETS = import.meta.env
 
 // API constants
 export const API_URL = import.meta.env.VITE_API_URL as string;
-
-/**
- * Transforms the first character of the provided string to upper case.
- * @param str - The string to be transformed.
- * @returns A new string with the first character in upper case and the rest of the string unchanged.
- */
-export function upperFirst(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 /**
  * Returns status choices for a select input.
@@ -92,25 +80,3 @@ export const rateMethodChoices: ReadonlyArray<
   { value: "PP", label: "Per Pound" },
   { value: "O", label: "Other" },
 ];
-
-/**
- * Truncates the provided text to the specified limit.
- * @param text - The text to be truncated.
- * @param limit - The maximum number of characters to be displayed.
- * @returns The truncated text.
- */
-export function truncateText(text: string, limit: number): string {
-  return text.length > limit ? `${text.substring(0, limit)}...` : text;
-}
-
-/**
- * Formats the provided amount as a US dollar amount.
- * @param amount - The amount to be formatted.
- * @constructor - The formatted amount.
- */
-export function USDollarFormat(amount: number): string {
-  return amount.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-  });
-}

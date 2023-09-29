@@ -22,12 +22,12 @@ import { useForm, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { JobTitle, JobTitleFormValues } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { jobTitleSchema } from "@/helpers/schemas/AccountsSchema";
+import { jobTitleSchema } from "@/lib/schemas/AccountsSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices } from "@/helpers/constants";
+import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { jobFunctionChoices } from "@/helpers/choices";
+import { jobFunctionChoices } from "@/lib/choices";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 
@@ -63,6 +63,7 @@ export function EditJobTitleModalForm({
       path: `/job_titles/${jobTitle.id}/`,
       successMessage: "Job Title updated successfully.",
       queryKeysToInvalidate: ["job-title-table-data"],
+      additionalInvalidateQueries: ["jobTitles"],
       closeModal: true,
       errorMessage: "Failed to update job title.",
     },

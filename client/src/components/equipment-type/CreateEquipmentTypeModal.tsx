@@ -17,7 +17,7 @@
 
 import { notifications } from "@mantine/notifications";
 import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
-import React, { Suspense } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -25,7 +25,6 @@ import {
   Group,
   Modal,
   SimpleGrid,
-  Skeleton,
   Text,
 } from "@mantine/core";
 import { useFormStyles } from "@/assets/styles/FormStyles";
@@ -35,12 +34,12 @@ import {
   EquipmentType,
   EquipmentTypeFormValues as FormValues,
 } from "@/types/equipment";
-import { equipmentTypeSchema } from "@/helpers/schemas/EquipmentSchema";
+import { equipmentTypeSchema } from "@/lib/schemas/EquipmentSchema";
 import { useEquipTypeTableStore as store } from "@/stores/EquipmentStore";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { equipmentClassChoices } from "@/helpers/choices";
-import { yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { EquipmentClassChoices } from "@/lib/choices";
+import { yesAndNoChoicesBoolean } from "@/lib/constants";
 import { TableStoreProps } from "@/types/tables";
 
 export function EquipmentTypeDetailForm({
@@ -69,7 +68,7 @@ export function EquipmentTypeDetailForm({
       <SimpleGrid cols={3} breakpoints={[{ maxWidth: "lg", cols: 1 }]}>
         <SelectInput<FormValues>
           form={form}
-          data={equipmentClassChoices}
+          data={EquipmentClassChoices}
           name="equipmentTypeDetails.equipmentClass"
           label="Equipment Class"
           placeholder="Equipment Class"
@@ -220,6 +219,7 @@ function ModalBody() {
       path: "/equipment_types/",
       successMessage: "Equipment type created successfully.",
       queryKeysToInvalidate: ["equipment-type-table-data"],
+      additionalInvalidateQueries: ["equipmentTypes"],
       closeModal: true,
       errorMessage: "Failed to create equipment type.",
     },
@@ -247,10 +247,6 @@ function ModalBody() {
 export function CreateEquipmentTypeModal() {
   const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
 
-  if (!showCreateModal) {
-    return null;
-  }
-
   return (
     <Modal.Root
       opened={showCreateModal}
@@ -264,9 +260,7 @@ export function CreateEquipmentTypeModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={600} />}>
-            <ModalBody />
-          </Suspense>
+          <ModalBody />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

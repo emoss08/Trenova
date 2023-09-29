@@ -22,22 +22,21 @@ import {
   Modal,
   Select,
   SimpleGrid,
-  Skeleton,
   Switch,
   Textarea,
   TextInput,
 } from "@mantine/core";
-import React, { Suspense } from "react";
+import React from "react";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
 import { AccessorialCharge } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { fuelMethodChoices } from "@/utils/apps/billing";
 
-type ViewACModalFormProps = {
+function ViewACModalForm({
+  accessorialCharge,
+}: {
   accessorialCharge: AccessorialCharge;
-};
-
-function ViewACModalForm({ accessorialCharge }: ViewACModalFormProps) {
+}) {
   const { classes } = useFormStyles();
 
   return (
@@ -116,12 +115,10 @@ function ViewACModalForm({ accessorialCharge }: ViewACModalFormProps) {
   );
 }
 
-export function ViewACModal(): React.ReactElement | null {
+export function ViewACModal(): React.ReactElement {
   const [showViewModal, setShowViewModal] =
     accessorialChargeTableStore.use("viewModalOpen");
   const [accessorialCharge] = accessorialChargeTableStore.use("selectedRecord");
-
-  if (!showViewModal) return null;
 
   return (
     <Modal.Root opened={showViewModal} onClose={() => setShowViewModal(false)}>
@@ -132,11 +129,9 @@ export function ViewACModal(): React.ReactElement | null {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            {accessorialCharge && (
-              <ViewACModalForm accessorialCharge={accessorialCharge} />
-            )}
-          </Suspense>
+          {accessorialCharge && (
+            <ViewACModalForm accessorialCharge={accessorialCharge} />
+          )}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>

@@ -21,7 +21,7 @@ import { TChoiceProps } from "@/types";
 import { CreateCustomerFormValues } from "@/types/customer";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { statusChoices, yesAndNoChoices } from "@/helpers/constants";
+import { statusChoices, yesAndNoChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { CityAutoCompleteField } from "@/components/common/fields/CityAutoCompleteField";
 import { StateSelect } from "@/components/common/fields/StateSelect";

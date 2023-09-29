@@ -18,10 +18,10 @@
 import React from "react";
 import {
   createStyles,
-  SimpleGrid,
-  rem,
-  Paper,
   Group,
+  Paper,
+  rem,
+  SimpleGrid,
   Text,
   Tooltip,
 } from "@mantine/core";
@@ -34,7 +34,7 @@ import {
   IconTruckDelivery,
 } from "@tabler/icons-react";
 import { Customer } from "@/types/customer";
-import { truncateText, USDollarFormat } from "@/helpers/constants";
+import { truncateText, USDollarFormat } from "@/lib/utils";
 
 export type CustomerMetricProps = {
   customer: Customer;

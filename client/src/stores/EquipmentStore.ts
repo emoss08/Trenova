@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/helpers/useGlobalStore";
+import { createGlobalStore } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 

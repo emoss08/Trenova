@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { Suspense } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -23,14 +23,13 @@ import {
   Group,
   Modal,
   SimpleGrid,
-  Skeleton,
   Text,
   Textarea,
 } from "@mantine/core";
 import { EquipmentType } from "@/types/equipment";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { equipmentClassChoices } from "@/helpers/choices";
-import { yesAndNoChoicesBoolean } from "@/helpers/constants";
+import { EquipmentClassChoices } from "@/lib/choices";
+import { yesAndNoChoicesBoolean } from "@/lib/constants";
 import { ViewSelectInput } from "../common/fields/SelectInput";
 import { ViewTextInput } from "@/components/common/fields/TextInput";
 import { useEquipTypeTableStore as store } from "@/stores/EquipmentStore";
@@ -84,7 +83,7 @@ function ModalBody({ equipType }: { equipType: EquipmentType }) {
 
         <SimpleGrid cols={3} breakpoints={[{ maxWidth: "lg", cols: 1 }]}>
           <ViewSelectInput
-            data={equipmentClassChoices}
+            data={EquipmentClassChoices}
             value={equipType.equipmentTypeDetails.equipmentClass}
             label="Equipment Class"
             placeholder="Equipment Class"
@@ -175,9 +174,7 @@ export function ViewEquipmentTypeModal() {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            {equipType && <ModalBody equipType={equipType} />}
-          </Suspense>
+          {equipType && <ModalBody equipType={equipType} />}
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
