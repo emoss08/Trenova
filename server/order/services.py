@@ -79,7 +79,7 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
     return documentation
 
 
-def gather_formula_variables(order: models.Order) -> types.FormulaVariables:
+def gather_formula_variables(*, order: models.Order) -> types.FormulaVariables:
     """Gather all the variables needed for the formula
 
     Args:
@@ -112,6 +112,8 @@ def calculate_total(*, order: models.Order) -> Decimal:
         Decimal: The total for the order
     """
 
+    # TODO(WOLFRED): This can be replaced with a dictionary lookup, this seems a bit verbose
+
     if not order.freight_charge_amount:
         return Decimal(0)
 
@@ -143,6 +145,6 @@ def calculate_total(*, order: models.Order) -> Decimal:
 
         formula_text = order.formula_template.formula_text
         if helpers.validate_formula(formula=formula_text):
-            variables = gather_formula_variables(order)
+            variables = gather_formula_variables(order=order)
             return Decimal(helpers.evaluate_formula(formula=formula_text, **variables))
     return freight_charge
