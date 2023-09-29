@@ -1150,7 +1150,7 @@ class FormulaTemplate(GenericModel):
 
     class Meta:
         """
-        Meta class for FormulaTemplate model
+        Metaclass for FormulaTemplate model
         """
 
         verbose_name = _("Formula Template")
