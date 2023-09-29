@@ -14,7 +14,6 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import typing
 from decimal import Decimal
 
 from django.conf import settings
@@ -23,7 +22,7 @@ from pypdf import PdfMerger
 
 from billing.models import DocumentClassification
 from movements.models import Movement
-from order import helpers, models, selectors
+from order import helpers, models, selectors, types
 
 
 def create_initial_movement(*, order: models.Order) -> None:
@@ -80,8 +79,15 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
     return documentation
 
 
-def gather_formula_variables(order: models.Order) -> dict[str, typing.Any]:
-    """Gather variables required for formula evaluation."""
+def gather_formula_variables(order: models.Order) -> types.FormulaVariables:
+    """Gather all the variables needed for the formula
+
+    Args:
+        order (Order): The order instance
+
+    Returns:
+        FormulaVariables: A dictionary of variables that can be used in a formula.
+    """
     return {
         "freight_charge": order.freight_charge_amount,
         "other_charge": order.other_charge_amount,
