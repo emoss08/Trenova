@@ -30,9 +30,9 @@ from core.permissions import CustomObjectPermissions
 class BillingControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing BillingControl in the system.
 
-    The viewset provides default operations for creating, updating Order Control,
-    as well as listing and retrieving Order Control. It uses the ``BillingControlSerializer``
-    class to convert the order control instance to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating Shipment Control,
+    as well as listing and retrieving Shipment Control. It uses the ``BillingControlSerializer``
+    class to convert the Shipment Control instance to and from JSON-formatted data.
 
     Only admin users are allowed to access the views provided by this viewset.
 
@@ -67,12 +67,12 @@ class BillingControlViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
-            "order_transfer_criteria",
+            "shipment_transfer_criteria",
             "auto_mark_ready_to_bill",
             "remove_billing_history",
             "validate_customer_rates",
             "auto_bill_criteria",
-            "auto_bill_orders",
+            "auto_bill_shipments",
             "enforce_customer_billing",
             "organization_id",
         )
@@ -87,18 +87,18 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
     class to convert the charge type instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
-    code, `revenue_code` code and `order_type` id.
+    Filtering is also available, with the ability to filter by `shipment` pro_number, `worker` code, `customer`
+    code, `revenue_code` code and `shipment_type` id.
     """
 
     queryset = models.BillingQueue.objects.all()
     serializer_class = serializers.BillingQueueSerializer
     filterset_fields = (
-        "order__pro_number",
+        "shipment__pro_number",
         "worker__code",
         "customer__code",
         "revenue_code__code",
-        "order_type",
+        "shipment_type",
     )
     http_method_names = ["get", "put", "patch", "post", "head", "options"]
     permission_classes = [CustomObjectPermissions]
@@ -137,9 +137,9 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
             "is_cancelled",
             "worker_id",
             "other_charge_total",
-            "order_type_id",
+            "shipment_type_id",
             "organization_id",
-            "order_id",
+            "shipment_id",
             "revenue_code_id",
             "is_summary",
             "bill_type",
@@ -183,7 +183,7 @@ class BillingLogEntryViewSet(viewsets.ModelViewSet):
             "object_pk",
             "content_type",
             "action",
-            "order",
+            "shipment",
             "invoice_number",
             "customer",
             "actor",
@@ -202,17 +202,17 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
 
     Only authenticated users are allowed to access the views provided by this viewset.
     Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
-    code, `revenue_code` code and `order_type` id.
+    code, `revenue_code` code and `shipment_type` id.
     """
 
     queryset = models.BillingHistory.objects.all()
     serializer_class = serializers.BillingHistorySerializer
     filterset_fields = (
-        "order__pro_number",
+        "shipment__pro_number",
         "worker__code",
         "customer",
         "revenue_code__code",
-        "order_type",
+        "shipment_type",
     )
     http_method_names = ["get", "head", "options"]
     permission_classes = [CustomObjectPermissions]
@@ -248,9 +248,9 @@ class BillingHistoryViewSet(viewsets.ModelViewSet):
             "is_cancelled",
             "worker_id",
             "other_charge_total",
-            "order_type_id",
+            "shipment_type_id",
             "organization_id",
-            "order_id",
+            "shipment_id",
             "revenue_code_id",
             "is_summary",
             "bill_type",
@@ -353,10 +353,10 @@ class DocumentClassificationViewSet(viewsets.ModelViewSet):
 
 @extend_schema(
     tags=["Bill Order"],
-    description="Starts the billing tasks for one order.",
+    description="Starts the billing tasks for one shipment.",
     parameters=[
         OpenApiParameter(
-            name="order_id",
+            name="shipment_id",
             type=OpenApiTypes.UUID,
             description="The order id to be billed.",
         ),
@@ -438,9 +438,9 @@ def bill_invoice_view(request: Request) -> Response:
     },
 )
 @api_view(["POST"])
-def mass_order_bill(request: Request) -> Response:
+def mass_shipments_bill(request: Request) -> Response:
     """
-    Mass bill orders.
+    Mass bill shipments.
 
     Args:
         request (Request): The request object.
@@ -454,7 +454,7 @@ def mass_order_bill(request: Request) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    tasks.mass_order_bill_task.delay(user_id=request.user.id)
+    tasks.mass_shipments_bill_task.delay(user_id=request.user.id)
 
     return Response(
         {"message": "Mass Billing task started."}, status=status.HTTP_200_OK
@@ -463,12 +463,12 @@ def mass_order_bill(request: Request) -> Response:
 
 @extend_schema(
     tags=["Transfer to billing"],
-    description="Transfer a group of orders by pro number.",
+    description="Transfer a group of shipments by pro number.",
     request={
         "type": "object",
         "properties": {
             "type": "array",
-            "order_pros": {
+            "shipment_pros": {
                 "type": "string",
                 "example": "123456",
             },
@@ -501,8 +501,8 @@ def transfer_to_billing(request: Request) -> Response:
     Raises:
         N/A
 
-    This view function expects a POST request containing an `order_pros` key in the request data,
-    which should be a list of order IDs to be transferred to billing. If no `order_pros` key is
+    This view function expects a POST request containing an `shipment_pros` key in the request data,
+    which should be a list of order IDs to be transferred to billing. If no `shipment_pros` key is
     provided, the function will return a response with a 400 status code and an error message.
 
     If the request data is valid, the function will start a Celery task with the provided order IDs
@@ -512,16 +512,16 @@ def transfer_to_billing(request: Request) -> Response:
     Upon successfully starting the Celery task, the function will return a response with a 200 status
     code and a success message indicating that the transfer task has been started.
     """
-    order_pros = request.data.get("order_pros")
+    shipment_pros = request.data.get("shipment_pros")
 
-    if not order_pros:
+    if not shipment_pros:
         return Response(
             {"message": "Order Pro(s) is required. Please Try Again."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     tasks.transfer_to_billing_task.delay(
-        user_id=str(request.user.id), order_pros=order_pros
+        user_id=str(request.user.id), shipment_pros=shipment_pros
     )
 
     return Response(
@@ -530,8 +530,8 @@ def transfer_to_billing(request: Request) -> Response:
 
 
 @extend_schema(
-    tags=["Orders Ready to Bill"],
-    description="Get a list of orders ready to bill.",
+    tags=["shipments Ready to Bill"],
+    description="Get a list of shipments ready to bill.",
     request=None,
     responses={
         (200, "application/json"): {
@@ -554,9 +554,9 @@ def transfer_to_billing(request: Request) -> Response:
     },
 )
 @api_view(["GET"])
-def get_orders_ready(request: Request) -> Response:
-    orders_ready = selectors.get_billable_orders(organization=request.user.organization)  # type: ignore
-    serializer = serializers.OrdersReadySerializer(orders_ready, many=True)
+def get_shipments_ready(request: Request) -> Response:
+    shipments_ready = selectors.get_billable_shipments(organization=request.user.organization)  # type: ignore
+    serializer = serializers.shipmentsReadySerializer(shipments_ready, many=True)
     return Response(
         {
             "results": serializer.data,
@@ -566,8 +566,8 @@ def get_orders_ready(request: Request) -> Response:
 
 
 @extend_schema(
-    tags=["Untransfer Orders"],
-    description="Untransfers a group of orders by invoice number.",
+    tags=["Untransfer shipments"],
+    description="Untransfers a group of shipments by invoice number.",
     request={
         "type": "object",
         "properties": {
@@ -581,7 +581,7 @@ def get_orders_ready(request: Request) -> Response:
     responses={
         (200, "application/json"): {
             "type": "string",
-            "success": "Orders untransferred successfully.",
+            "success": "shipments untransferred successfully.",
         },
         (400, "application/json"): {
             "type": "string",
@@ -594,7 +594,7 @@ def get_orders_ready(request: Request) -> Response:
     },
 )
 @api_view(["POST"])
-def untransfer_orders(request: Request) -> Response:
+def untransfer_shipment(request: Request) -> Response:
     invoice_numbers = request.data.get("invoice_numbers")
 
     if not invoice_numbers:
@@ -612,13 +612,14 @@ def untransfer_orders(request: Request) -> Response:
         billing_queues = models.BillingQueue.objects.filter(
             invoice_number__in=invoice_numbers_list
         )
-        services.untransfer_order_service(
+        services.untransfer_shipment_service(
             invoices=billing_queues,
             task_id=str(request.user.id),
             user_id=request.user.id,
         )
         return Response(
-            {"success": "Orders untransferred successfully."}, status=status.HTTP_200_OK
+            {"success": "Shipments untransferred successfully."},
+            status=status.HTTP_200_OK,
         )
     except ObjectDoesNotExist:
         return Response(

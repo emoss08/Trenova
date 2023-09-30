@@ -21,6 +21,7 @@ from typing import Any
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
+from shipment.tests.factories import OrderFactory, ShipmentTypeFactory
 
 from accounting.tests.factories import RevenueCodeFactory
 from customer.factories import CustomerFactory
@@ -29,7 +30,6 @@ from location.factories import LocationFactory
 from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
-from order.tests.factories import OrderFactory, OrderTypeFactory
 from organization.models import Organization
 from stops import models
 from stops.tests.factories import StopFactory
@@ -64,7 +64,7 @@ def location() -> Generator[Any, Any, None]:
 @pytest.fixture
 def order() -> Generator[Any, Any, None]:
     """
-    Order fixture
+    shipment fixture
     """
     yield OrderFactory()
 
@@ -94,11 +94,11 @@ def stop_api(
 
 
 @pytest.fixture
-def order_type() -> Generator[Any, Any, None]:
+def shipment_type() -> Generator[Any, Any, None]:
     """
-    Order type fixture
+    shipment type fixture
     """
-    yield OrderTypeFactory()
+    yield ShipmentTypeFactory()
 
 
 @pytest.fixture

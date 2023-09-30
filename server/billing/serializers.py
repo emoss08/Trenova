@@ -20,7 +20,7 @@ from typing import Any
 from rest_framework import serializers
 
 from billing import models
-from order.models import Order
+from shipment.models import Shipment
 from utils.serializers import GenericSerializer
 
 
@@ -60,7 +60,7 @@ class BillingQueueSerializer(GenericSerializer):
 
         model = models.BillingQueue
 
-    def to_representation(self, instance: Order) -> dict[str, Any]:
+    def to_representation(self, instance: Shipment) -> dict[str, Any]:
         data = super().to_representation(instance)
         data["customer_name"] = instance.customer.name
         return data
@@ -264,7 +264,7 @@ class DocumentClassificationSerializer(GenericSerializer):
         return value
 
 
-class OrdersReadySerializer(serializers.Serializer):
+class shipmentsReadySerializer(serializers.Serializer):
     id = serializers.UUIDField(read_only=True)
     pro_number = serializers.CharField(
         help_text="Pro Number of the Order", label="Pro Number", read_only=True
@@ -297,8 +297,8 @@ class OrdersReadySerializer(serializers.Serializer):
         required=False,
     )
 
-    def find_missing_documents(self, instance: Order) -> tuple[list[str], bool]:
-        """Determines missing documents for an order based on the rule_profile of the customer of the order.
+    def find_missing_documents(self, instance: Shipment) -> tuple[list[str], bool]:
+        """Determines missing documents for an order based on the rule_profile of the customer of the shipment.
         Uses the document class list in each rule_profile to find courses that require its students to
         submit documents. It will then return a list of missing document names and a boolean flag
         indicating if any documents are missing.
@@ -325,18 +325,18 @@ class OrdersReadySerializer(serializers.Serializer):
             # Get the name of each document_class required in CustomerRuleProfile
             required_documents = rule_profile.document_class.all()
 
-            # Query the OrderDocumentation for each document_class
+            # Query the ShipmentDocumentation for each document_class
             for required_document in required_documents:
-                order_document = instance.order_documentation.filter(
+                shipment_document = instance.shipment_documentation.filter(
                     document_class=required_document
                 ).first()
-                if not order_document:
+                if not shipment_document:
                     missing_documents.append(required_document.name)
                     is_missing_documents = True
 
         return missing_documents, is_missing_documents
 
-    def to_representation(self, instance: Order) -> dict[str, Any]:
+    def to_representation(self, instance: Shipment) -> dict[str, Any]:
         data = super().to_representation(instance)
         data["customer_name"] = instance.customer.name
         missing_documents, is_missing_documents = self.find_missing_documents(instance)

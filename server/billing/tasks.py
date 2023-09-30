@@ -39,11 +39,11 @@ if TYPE_CHECKING:
     base=Singleton,
     queue="high_priority",
 )
-def automate_mass_order_billing(self: "Task") -> str:
-    """Automated Mass Billing Tasks that uses system user to bill orders.
+def automate_mass_shipments_billing(self: "Task") -> str:
+    """Automated Mass Billing Tasks that uses system user to bill shipments.
 
-    Filter the database for the Organizations that have auto bill orders enabled and call the mass_order_billing_service
-    service to bill the orders.
+    Filter the database for the Organizations that have auto bill shipments enabled and call the mass_shipments_billing_service
+    service to bill the shipments.
 
     Args:
         self (celery.app.task.Task): The task object
@@ -52,22 +52,22 @@ def automate_mass_order_billing(self: "Task") -> str:
         str: A string containing the results of the automated mass billing tasks.
 
     Raises:
-        ServiceException: If the Order does not exist in the database.
+        ServiceException: If the shipment does not exist in the database.
     """
 
     # TODO: Remove this once we have a better way to get the system user
     system_user = User.objects.get(username="sys")
 
-    # Get the organizations that have auto bill orders enabled
+    # Get the organizations that have auto bill shipments enabled
     organizations: QuerySet[Organization] = Organization.objects.filter(
-        billing_control__auto_bill_orders=True
+        billing_control__auto_bill_shipments=True
     )
     results = []
 
-    # For each organization, call the mass_order_billing_service service to bill the orders
+    # For each organization, call the mass_shipments_billing_service service to bill the shipments
     for organization in organizations:
         try:
-            services.mass_order_billing_service(
+            services.mass_shipments_billing_service(
                 user_id=system_user.id, task_id=str(self.request.id)
             )
             results.append(
@@ -84,7 +84,7 @@ def automate_mass_order_billing(self: "Task") -> str:
     name="transfer_to_billing_task", bind=True, base=Singleton, queue="high_priority"
 )
 def transfer_to_billing_task(
-    self: "Task", *, user_id: str, order_pros: list[str]
+    self: "Task", *, user_id: str, shipment_pros: list[str]
 ) -> None:
     """
     Starts a Celery task to transfer the specified order(s) to billing for the logged-in user.
@@ -92,7 +92,7 @@ def transfer_to_billing_task(
     Args:
         self: The Celery task instance.
         user_id: A string representing the ID of the user who initiated the transfer.
-        order_pros: A list of strings representing the order IDs to transfer.
+        shipment_pros: A list of strings representing the order IDs to transfer.
 
     Returns:
         None.
@@ -101,7 +101,7 @@ def transfer_to_billing_task(
         self.retry: If an ObjectDoesNotExist exception is raised while processing the task.
 
     This Celery task function calls the `transfer_to_billing_queue_service` function to create BillingQueue objects
-    for each order in the provided list of order IDs, and updates the transfer status and transfer date of each order.
+    for each order in the provided list of order IDs, and updates the transfer status and transfer date of each shipment.
 
     If an ObjectDoesNotExist exception is raised while processing the task, the Celery task will automatically retry
     the task until it succeeds, with an exponential backoff strategy.
@@ -115,7 +115,7 @@ def transfer_to_billing_task(
 
     try:
         services.transfer_to_billing_queue_service(
-            user_id=user_id, order_pros=order_pros, task_id=str(self.request.id)
+            user_id=user_id, shipment_pros=shipment_pros, task_id=str(self.request.id)
         )
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc
@@ -132,8 +132,8 @@ def transfer_to_billing_task(
 def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -> None:
     """Bill Order
 
-    Query the database for the Order and call the bill_order
-    service to bill the order.
+    Query the database for the Order and call the bill_shipments
+    service to bill the shipment.
 
     Args:
         self (celery.app.task.Task): The task object
@@ -149,7 +149,7 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
 
     try:
         if invoice := selectors.get_invoice_by_id(invoice_id=invoice_id):
-            services.bill_orders(
+            services.bill_shipments(
                 invoices=invoice, user_id=user_id, task_id=str(self.request.id)
             )
         else:
@@ -159,14 +159,14 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
 
 
 @shared_task(
-    name="mass_order_billing_task",
+    name="mass_shipments_billing_task",
     bind=True,
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
     queue="high_priority",
 )
-def mass_order_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
+def mass_shipments_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
     """Bill Order
 
     Args:
@@ -180,7 +180,7 @@ def mass_order_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
         ObjectDoesNotExist: If the Order does not exist in the database.
     """
     try:
-        services.mass_order_billing_service(
+        services.mass_shipments_billing_service(
             user_id=user_id, task_id=str(self.request.id)
         )
     except ServiceException as exc:

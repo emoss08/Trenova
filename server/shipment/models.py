@@ -36,36 +36,38 @@ from utils.models import ChoiceField, GenericModel, RatingMethodChoices, StatusC
 User = settings.AUTH_USER_MODEL
 
 
-def order_documentation_upload_to(instance: OrderDocumentation, filename: str) -> str:
-    """Returns the path to upload the order documentation to.
+def shipment_documentation_upload_to(
+    instance: ShipmentDocumentation, filename: str
+) -> str:
+    """Returns the path to upload the shipment documentation to.
 
-    Upload the order documentation to the order documentation directory
-    and name the file with the order id and the filename.
+    Upload the shipment documentation to the shipment documentation directory
+    and name the file with the shipment id and the filename.
 
     Args:
-        instance (Order): The instance of the Order.
+        instance (ShipmentDocumentation): The instance of the Shipment.
         filename (str): The name of the file.
 
     Returns:
-        Upload path for the order documentation to be stored. For example.
+        Upload path for the shipment documentation to be stored. For example.
 
-        `Order_documentation/M000123/invoice-12341.pdf`
+        `shipment/docs/M000123/invoice-12341.pdf`
 
         Upload path is always a string. If the file is not uploaded, the
         upload path will be an empty string.
 
     See Also:
-        `OrderDocumentation`: The model that this function is used for.
+        `ShipmentDocumentation`: The model that this function is used for.
     """
-    return f"order_documentation/{instance.order.pro_number}/{filename}"
+    return f"shipment/docs/{instance.shipment.pro_number}/{filename}"
 
 
-class OrderControl(GenericModel):
-    """Stores the order control information for a related :model:`organization.Organization`.
+class ShipmentControl(GenericModel):
+    """Stores the shipment control information for a related :model:`organization.Organization`.
 
-    The OrderControl model stores the order control information for a related
+    The Shipment Control model stores the Shipment Control information for a related
     organization. It is used to store information such as whether to automatically
-    rate orders, calculate distance, enforce customer information, generate routes,
+    rate shipments, calculate distance, enforce customer information, generate routes,
     and more.
 
     Attributes:
@@ -73,19 +75,19 @@ class OrderControl(GenericModel):
             Editable and unique.
         organization (OneToOneField): ForeignKey to the related organization model
             with a CASCADE on delete. Has a verbose name of "Organization" and
-            related names of "order_control" and "order_controls".
-        auto_rate_orders (BooleanField): Default value is True.
-            Help text is "Auto rate orders".
+            related names of "shipment_control" and "shipment_controls".
+        auto_rate_shipment (BooleanField): Default value is True.
+            Help text is "Auto rate shipments".
         calculate_distance (BooleanField): Default value is True.
-            Help text is "Calculate distance for the order".
+            Help text is "Calculate distance for the shipment".
         enforce_rev_code (BooleanField): Default value is False.
-            Help text is "Enforce rev code being entered when entering an order.".
+            Help text is "Enforce rev code being entered when entering an shipment.".
         generate_routes (BooleanField): Default value is False.
-            Help text is "Automatically generate routes for order entry.".
+            Help text is "Automatically generate routes for shipment entry.".
         auto_sequence_stops (BooleanField): Default value is True.
-            Help text is "Auto Sequence stops for the order and movements.".
-        auto_order_total (BooleanField): Default value is True.
-            Help text is "Automate the order total amount calculation.".
+            Help text is "Auto Sequence stops for the shipment and movements.".
+        auto_shipment_total (BooleanField): Default value is True.
+            Help text is "Automate the shipment total amount calculation.".
         enforce_origin_destination (BooleanField): Default value is False.
             Help text is "Compare and validate that origin and destination are not the same.".
 
@@ -107,48 +109,48 @@ class OrderControl(GenericModel):
         "organization.Organization",
         on_delete=models.CASCADE,
         verbose_name=_("Organization"),
-        related_name="order_control",
-        related_query_name="order_controls",
+        related_name="shipment_control",
+        related_query_name="shipment_controls",
     )
-    auto_rate_orders = models.BooleanField(
-        _("Auto Rate"),
+    auto_rate_shipment = models.BooleanField(
+        _("Auto Rate Shipments"),
         default=True,
-        help_text=_("Auto rate orders"),
+        help_text=_("Auto rate Shipments"),
     )
     calculate_distance = models.BooleanField(
         _("Calculate Distance"),
         default=True,
-        help_text=_("Automatically Calculate distance for the order"),
+        help_text=_("Automatically Calculate distance for the shipment."),
     )
     enforce_rev_code = models.BooleanField(
         _("Enforce Rev Code"),
         default=False,
-        help_text=_("Enforce rev code code when entering an order."),
+        help_text=_("Enforce rev code when entering a shipment."),
     )
     enforce_voided_comm = models.BooleanField(
         _("Enforce Voided Comm"),
         default=False,
-        help_text=_("Enforce comment when voiding an order."),
+        help_text=_("Enforce comment when voiding a shipment."),
     )
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
-        help_text=_("Automatically generate routing information for the order."),
+        help_text=_("Automatically generate routing information for the shipment."),
     )
     enforce_commodity = models.BooleanField(
         _("Enforce Commodity Code"),
         default=False,
-        help_text=_("Enforce the commodity input on the entry of an order."),
+        help_text=_("Enforce the commodity input on the entry of an shipment."),
     )
     auto_sequence_stops = models.BooleanField(
         _("Auto Sequence Stops"),
         default=True,
-        help_text=_("Auto Sequence stops for the order and movements."),
+        help_text=_("Auto Sequence stops for the shipment and movements."),
     )
-    auto_order_total = models.BooleanField(
-        _("Auto Order Total"),
+    auto_shipment_total = models.BooleanField(
+        _("Auto shipment Total"),
         default=True,
-        help_text=_("Automate the order total amount calculation."),
+        help_text=_("Automate the shipment total amount calculation."),
     )
     enforce_origin_destination = models.BooleanField(
         _("Compare Origin Destination"),
@@ -160,48 +162,48 @@ class OrderControl(GenericModel):
     check_for_duplicate_bol = models.BooleanField(
         _("Check for Duplicate BOL"),
         default=False,
-        help_text=_("Check for duplicate BOL numbers when entering an order."),
+        help_text=_("Check for duplicate BOL numbers when entering an shipment."),
     )
-    remove_orders = models.BooleanField(
-        _("Ability to Remove Orders"),
+    remove_shipment = models.BooleanField(
+        _("Ability to Remove Shipments"),
         default=False,
         help_text=_(
-            "Ability to remove orders from system. This will disallow the removal of Orders, Movements and Stops"
+            "Ability to remove shipment from system. This will disallow the removal of shipments, Movements and Stops"
         ),
     )
 
     class Meta:
         """
-        Metaclass for OrderControl
+        Metaclass for ShipmentControl
         """
 
-        verbose_name = _("Order Control")
-        verbose_name_plural = _("Order Controls")
+        verbose_name = _("Shipment Control")
+        verbose_name_plural = _("Shipment Controls")
         ordering = ["organization"]
-        db_table = "order_control"
+        db_table = "shipment_control"
 
     def __str__(self) -> str:
-        """Order control string representation
+        """Shipment control string representation
 
         Returns:
-            str: Order control string representation
+            str: Shipment control string representation
         """
         return textwrap.wrap(self.organization.name, 50)[0]
 
     def get_absolute_url(self) -> str:
-        """Order control absolute url
+        """Shipment Control absolute url
 
         Returns:
-            Absolute url for the order control object. For example,
-            `/order_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/`
+            Absolute url for the Shipment Control object. For example,
+            `/shipment_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/`
         """
-        return reverse("order_control:detail", kwargs={"pk": self.pk})
+        return reverse("shipment_control:detail", kwargs={"pk": self.pk})
 
 
-class OrderType(GenericModel):
-    """Stores the order type information for a related :model:`organization.Organization`.
+class ShipmentType(GenericModel):
+    """Stores the shipment type information for a related :model:`organization.Organization`.
 
-    The OrderType model stores information about an order type, such as its name,
+    The ShipmentType model stores information about a shipment type, such as its name,
     description, and whether it is active. It also has metadata for ordering and
     verbose names.
 
@@ -210,15 +212,15 @@ class OrderType(GenericModel):
             Editable and unique.
         is_active (BooleanField): Default value is True. Verbose name is "Is Active".
         name (CharField): Verbose name is "Name". Max length is 255 and must be unique.
-            Help text is "Name of the Order Type".
+            Help text is "Name of the shipment type".
         description (TextField): Verbose name is "Description". Can be blank.
-            Help text is "Description of the Order Type".
+            Help text is "Description of the shipment type".
 
     Methods:
         __str__(self) -> str:
-            Returns the name of the OrderType.
+            Returns the name of the ShipmentType.
         get_absolute_url(self) -> str:
-            Returns the absolute URL for the OrderType's detail view.
+            Returns the absolute URL for the ShipmentType's detail view.
     """
 
     id = models.UUIDField(
@@ -234,50 +236,50 @@ class OrderType(GenericModel):
     name = models.CharField(
         _("Name"),
         max_length=255,
-        help_text=_("Name of the Order Type"),
+        help_text=_("Name of the Shipment Type"),
     )
     description = models.TextField(
         _("Description"),
         blank=True,
-        help_text=_("Description of the Order Type"),
+        help_text=_("Description of the Shipment Type"),
     )
 
     class Meta:
         """
-        Metaclass for OrderType model
+        Metaclass for ShipmentType model
         """
 
-        verbose_name = _("Order Type")
-        verbose_name_plural = _("Order Types")
+        verbose_name = _("Shipment Type")
+        verbose_name_plural = _("Shipment Types")
         ordering = ["name"]
-        db_table = "order_type"
+        db_table = "shipment_type"
         constraints = [
             models.UniqueConstraint(
                 fields=["name", "organization"],
-                name="unique_order_type_name",
+                name="unique_shipment_type_name",
             )
         ]
 
     def __str__(self) -> str:
-        """Order Type String Representation
+        """Shipment Type String Representation
 
         Returns:
-            str: Order Type Name
+            str: shipment type Name
         """
         return textwrap.wrap(self.name, 50)[0]
 
     def get_absolute_url(self) -> str:
-        """Order Type Absolute URL
+        """Shipment Type Absolute URL
 
         Returns:
-            str: Order Type Absolute URL
+            str: Shipment Type Absolute URL
         """
-        return reverse("order-types-detail", kwargs={"pk": self.pk})
+        return reverse("shipment-types-detail", kwargs={"pk": self.pk})
 
 
-class Order(GenericModel):
+class Shipment(GenericModel):
     """
-    Stores order information related to a :model:`organization.Organization`.
+    Stores shipment information related to a :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
@@ -293,13 +295,13 @@ class Order(GenericModel):
         editable=False,
         help_text=_("Pro Number of the Order"),
     )
-    order_type = models.ForeignKey(
-        OrderType,
+    shipment_type = models.ForeignKey(
+        ShipmentType,
         on_delete=models.PROTECT,
-        verbose_name=_("Order Type"),
-        related_name="orders",
-        related_query_name="order",
-        help_text=_("Order Type of the Order"),
+        verbose_name=_("shipment type"),
+        related_name="shipments",
+        related_query_name="shipment",
+        help_text=_("shipment type of the Order"),
     )
     status = ChoiceField(
         _("Status"),
@@ -309,8 +311,8 @@ class Order(GenericModel):
     revenue_code = models.ForeignKey(
         "accounting.RevenueCode",
         on_delete=models.PROTECT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("Revenue Code"),
         help_text=_("Revenue Code of the Order"),
         blank=True,
@@ -319,8 +321,8 @@ class Order(GenericModel):
     origin_location = models.ForeignKey(
         "location.Location",
         on_delete=models.PROTECT,
-        related_name="origin_order",
-        related_query_name="origin_orders",
+        related_name="origin_shipment",
+        related_query_name="origin_shipments",
         verbose_name=_("Origin Location"),
         help_text=_("Origin Location of the Order"),
         blank=True,
@@ -347,8 +349,8 @@ class Order(GenericModel):
     destination_location = models.ForeignKey(
         "location.Location",
         on_delete=models.PROTECT,
-        related_name="destination_order",
-        related_query_name="destination_orders",
+        related_name="destination_shipment",
+        related_query_name="destination_shipments",
         verbose_name=_("Destination Location"),
         blank=True,
         null=True,
@@ -380,10 +382,10 @@ class Order(GenericModel):
     rate = models.ForeignKey(
         "dispatch.Rate",
         on_delete=models.RESTRICT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("Rate"),
-        help_text=_("Associated Rate to the Order."),
+        help_text=_("Associated Rate to the shipment."),
         blank=True,
         null=True,
     )
@@ -420,8 +422,8 @@ class Order(GenericModel):
     customer = models.ForeignKey(
         "customer.Customer",
         on_delete=models.PROTECT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("Customer"),
         help_text=_("Customer of the Order"),
     )
@@ -446,13 +448,13 @@ class Order(GenericModel):
         _("Billed Date"),
         null=True,
         blank=True,
-        help_text=_("Date order was billed to the Customer."),
+        help_text=_("Date shipment was billed to the Customer."),
     )
     ship_date = models.DateField(
         _("Ship Date"),
         null=True,
         blank=True,
-        help_text=_("Date order was shipped."),
+        help_text=_("Date shipment was shipped."),
     )
     billed = models.BooleanField(
         _("Billed"),
@@ -482,16 +484,16 @@ class Order(GenericModel):
     equipment_type = models.ForeignKey(
         "equipment.EquipmentType",
         on_delete=models.PROTECT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("Equipment Type"),
         help_text=_("Equipment Type"),
     )
     commodity = models.ForeignKey(
         "commodities.Commodity",
         on_delete=models.PROTECT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("Commodity"),
         help_text=_("Commodity"),
         blank=True,
@@ -500,16 +502,16 @@ class Order(GenericModel):
     entered_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("User"),
         help_text=_("Order entered by User"),
     )
     hazmat = models.ForeignKey(
         "commodities.HazardousMaterial",
         on_delete=models.PROTECT,
-        related_name="orders",
-        related_query_name="order",
+        related_name="shipments",
+        related_query_name="shipment",
         verbose_name=_("Hazardous Class"),
         null=True,
         blank=True,
@@ -569,55 +571,55 @@ class Order(GenericModel):
     formula_template = models.ForeignKey(
         "FormulaTemplate",
         on_delete=models.RESTRICT,
-        related_name="orders",
+        related_name="shipments",
         null=True,
         blank=True,
-        help_text=_("Selected formula template for this order."),
+        help_text=_("Selected formula template for this shipment."),
     )
 
     class Meta:
         """
-        Metaclass for the Order model
+        Metaclass for the Shipment model
         """
 
-        verbose_name = _("Order")
-        verbose_name_plural = _("Orders")
+        verbose_name = _("Shipment")
+        verbose_name_plural = _("Shipments")
         ordering = ["pro_number"]
-        db_table = "order"
+        db_table = "shipment"
         constraints = [
             models.UniqueConstraint(
                 fields=["pro_number", "organization"],
-                name="unique_order_number_per_organization",
+                name="unique_shipment_number_per_organization",
             )
         ]
 
     def __str__(self) -> str:
-        """String representation of the Order
+        """String representation of the Shipment
 
         Returns:
-            str: String representation of the Order
+            str: String representation of the Shipment
         """
         return textwrap.wrap(self.pro_number, 10)[0]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
-        """Overrides the default Django save method to provide custom save behavior for the Order model.
+        """Overrides the default Django save method to provide custom save behavior for the Shipment model.
 
         Before saving the instance, if the 'pro_number' field is empty, it generates a pro number using the
         'generate_pro_number' method.
 
-        If 'auto_rate' is true, it retrieves and sets the transfer rate details for this order.
+        If 'auto_rate' is true, it retrieves and sets the transfer rate details for this shipment.
 
         If the order's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
-        piece count and weight for this order.
+        piece count and weight for this shipment.
 
-        If the 'ready_to_bill' flag is present and 'auto_order_total' setting from the organization order control
+        If the 'ready_to_bill' flag is present and 'auto_shipment_total' setting from the organization Shipment Control
         is set to True, the sub_total is automatically calculated.
 
         If 'origin_location' or 'destination_location' exists but the corresponding addresses do not, it sets
         the address using the location's combined address details.
 
         If the order has a commodity set and the commodity has a minimum and maximum temperature specification,
-        these values will be assigned to the 'temperature_min' and 'temperature_max' fields of the order.
+        these values will be assigned to the 'temperature_min' and 'temperature_max' fields of the shipment.
 
         If the commodity is classified as a hazardous material, the 'hazmat' field of the order is set to True.
 
@@ -630,28 +632,28 @@ class Order(GenericModel):
             None: This function does not return anything.
         """
         from dispatch.services import transfer_rate_details
-        from order.services import calculate_total
+        from shipment.services import calculate_total
         from stops.selectors import (
-            get_total_piece_count_by_order,
-            get_total_weight_by_order,
+            get_total_piece_count_by_shipment,
+            get_total_weight_by_shipment,
         )
 
         if not self.pro_number:
             self.pro_number = self.generate_pro_number()
 
         if self.auto_rate:
-            transfer_rate_details(order=self)
+            transfer_rate_details(shipment=self)
 
         if (
             self.status == StatusChoices.COMPLETED
             and not self.pieces
             and not self.weight
         ):
-            self.weight = get_total_weight_by_order(order=self)
-            self.pieces = get_total_piece_count_by_order(order=self)
+            self.weight = get_total_weight_by_shipment(shipment=self)
+            self.pieces = get_total_piece_count_by_shipment(shipment=self)
 
-        if self.organization.order_control.auto_order_total:
-            self.sub_total = calculate_total(order=self)
+        if self.organization.shipment_control.auto_shipment_total:
+            self.sub_total = calculate_total(shipment=self)
 
         if self.origin_location and not self.origin_address:
             self.origin_address = self.origin_location.get_address_combination
@@ -678,17 +680,17 @@ class Order(GenericModel):
         return reverse("order-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
-        """Order clean method
+        """Shipment clean method
 
         Returns:
             None: This function does not return anything.
 
         Raises:
-            ValidationError: If the Order is not valid
+            ValidationError: If the Shipment is not valid
         """
-        from order.validation import OrderValidation
+        from shipment.validation import ShipmentValidator
 
-        OrderValidation(order=self)
+        ShipmentValidator(shipment=self)
 
         # The validate_delivery_slot method will now raise an error directly if the slots don't match.
         if self.origin_location:
@@ -782,9 +784,9 @@ class Order(GenericModel):
         return 0
 
 
-class OrderDocumentation(GenericModel):
+class ShipmentDocumentation(GenericModel):
     """
-    Stores documentation related to a :model:`order.Order`.
+    Stores documentation related to a :model:`shipment.Shipmentt`.
     """
 
     id = models.UUIDField(
@@ -793,56 +795,56 @@ class OrderDocumentation(GenericModel):
         editable=False,
         unique=True,
     )
-    order = models.ForeignKey(
-        Order,
+    shipment = models.ForeignKey(
+        Shipment,
         on_delete=models.CASCADE,
-        related_name="order_documentation",
-        verbose_name=_("Order"),
+        related_name="shipment_documentation",
+        verbose_name=_("Shipment"),
     )
     document = models.FileField(
         _("Document"),
-        upload_to=order_documentation_upload_to,
+        upload_to=shipment_documentation_upload_to,
         validators=[FileExtensionValidator(allowed_extensions=["pdf"])],
     )
     document_class = models.ForeignKey(
         "billing.DocumentClassification",
         on_delete=models.CASCADE,
-        related_name="order_documentation",
+        related_name="shipment_documentation",
         verbose_name=_("Document Class"),
         help_text=_("Document Class"),
     )
 
     class Meta:
         """
-        OrderDocumentation Metaclass
+        ShipmentDocumentation Metaclass
         """
 
-        verbose_name = _("Order Documentation")
-        verbose_name_plural = _("Order Documentation")
-        db_table = "order_documentation"
+        verbose_name = _("Shipment Documentation")
+        verbose_name_plural = _("Shipment Documentation")
+        db_table = "shipment_documentation"
 
     def __str__(self) -> str:
-        """String representation of the OrderDocumentation
+        """String representation of the ShipmentDocumentation
 
         Returns:
-            str: String representation of the OrderDocumentation
+            str: String representation of the ShipmentDocumentation
         """
         return textwrap.shorten(
-            f"{self.order} - {self.document_class}", 50, placeholder="..."
+            f"{self.shipment} - {self.document_class}", 50, placeholder="..."
         )
 
     def get_absolute_url(self) -> str:
-        """Get the absolute url for the OrderDocumentation
+        """Get the absolute url for the ShipmentDocumentation
 
         Returns:
-            str: Absolute url for the OrderDocumentation
+            str: Absolute url for the ShipmentDocumentation
         """
         return reverse("order-documentation-detail", kwargs={"pk": self.pk})
 
 
-class OrderComment(GenericModel):
+class ShipmentComment(GenericModel):
     """
-    Stores comments related to a :model:`order.Order`.
+    Stores comments related to a :model:`shipment.Shipment`.
     """
 
     id = models.UUIDField(
@@ -851,18 +853,18 @@ class OrderComment(GenericModel):
         editable=False,
         unique=True,
     )
-    order = models.ForeignKey(
-        Order,
+    shipment = models.ForeignKey(
+        Shipment,
         on_delete=models.CASCADE,
-        related_name="order_comments",
-        related_query_name="order_comment",
-        verbose_name=_("Order"),
+        related_name="shipment_comments",
+        related_query_name="shipment_comment",
+        verbose_name=_("shipment"),
     )
     comment_type = models.ForeignKey(
         "dispatch.CommentType",
         on_delete=models.CASCADE,
-        related_name="order_comments",
-        related_query_name="order_comment",
+        related_name="shipment_comments",
+        related_query_name="shipment_comment",
         verbose_name=_("Comment Type"),
         help_text=_("Comment Type"),
     )
@@ -873,44 +875,44 @@ class OrderComment(GenericModel):
     entered_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="order_comments",
-        related_query_name="order_comment",
+        related_name="shipment_comments",
+        related_query_name="shipment_comment",
         verbose_name=_("Entered By"),
         help_text=_("Entered By"),
     )
 
     class Meta:
         """
-        OrderComment Metaclass
+        ShipmentComment Metaclass
         """
 
-        verbose_name = _("Order Comment")
-        verbose_name_plural = _("Order Comments")
-        ordering = ["-created"]
-        db_table = "order_comment"
+        verbose_name = _("Shipment Comment")
+        verbose_name_plural = _("Shipment Comments")
+        ordering = ["-comment_type"]
+        db_table = "shipment_comment"
 
     def __str__(self) -> str:
-        """String representation of the OrderComment
+        """String representation of the ShipmentComment
 
         Returns:
-            str: String representation of the OrderComment
+            str: String representation of the ShipmentComment
         """
         return textwrap.shorten(
-            f"{self.order} - {self.comment_type}", 50, placeholder="..."
+            f"{self.shipment} - {self.comment_type}", 50, placeholder="..."
         )
 
     def get_absolute_url(self) -> str:
-        """Get the absolute url for the OrderComment
+        """Get the absolute url for the ShipmentComment
 
         Returns:
-            str: Absolute url for the OrderComment
+            str: Absolute url for the ShipmentComment
         """
-        return reverse("order-comment-detail", kwargs={"pk": self.pk})
+        return reverse("shipment-comment-detail", kwargs={"pk": self.pk})
 
 
 class AdditionalCharge(GenericModel):
     """
-    Stores Additional Charge related to a :model:`order.Order`.
+    Stores Additional Charge related to a :model:`shipment.Shipment`.
     """
 
     id = models.UUIDField(
@@ -919,12 +921,12 @@ class AdditionalCharge(GenericModel):
         editable=False,
         unique=True,
     )
-    order = models.ForeignKey(
-        Order,
+    shipment = models.ForeignKey(
+        Shipment,
         on_delete=models.CASCADE,
         related_name="additional_charges",
         related_query_name="additional_charge",
-        verbose_name=_("Order"),
+        verbose_name=_("shipment"),
     )
     accessorial_charge = models.ForeignKey(
         "billing.AccessorialCharge",
@@ -986,7 +988,7 @@ class AdditionalCharge(GenericModel):
             str: String representation of the AdditionalCharges
         """
         return textwrap.shorten(
-            f"{self.order} - {self.accessorial_charge}", 50, placeholder="..."
+            f"{self.shipment} - {self.accessorial_charge}", 50, placeholder="..."
         )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
@@ -1130,12 +1132,12 @@ class FormulaTemplate(GenericModel):
         blank=True,
         null=True,
     )
-    order_type = models.ForeignKey(
-        OrderType,
+    shipment_type = models.ForeignKey(
+        ShipmentType,
         on_delete=models.RESTRICT,
         related_name="formula_templates",
-        verbose_name=_("Order Type"),
-        help_text=_("Order Type of the formula template"),
+        verbose_name=_("shipment type"),
+        help_text=_("shipment type of the formula template"),
         blank=True,
         null=True,
     )
@@ -1143,7 +1145,7 @@ class FormulaTemplate(GenericModel):
         verbose_name=_("Auto Apply"),
         default=False,
         help_text=_(
-            "Auto apply formula template to orders, based on customer, order_type, and template_type."
+            "Auto apply formula template to orders, based on customer, shipment_type, and template_type."
         ),
     )
     history = AuditlogHistoryField()
@@ -1180,7 +1182,7 @@ class FormulaTemplate(GenericModel):
         Returns:
             None: This function does not return anything.
         """
-        from order import helpers
+        from shipment import helpers
 
         if self.formula_text:
             # Get the list of variables in the formula.

@@ -30,7 +30,7 @@ from utils.models import ChoiceField, GenericModel
 
 class Route(GenericModel):
     """
-    Stores route information related to `orders.Orders` model
+    Stores route information related to `shipments.shipments` model
     """
 
     id = models.UUIDField(
@@ -141,7 +141,7 @@ class RouteControl(GenericModel):
     @final
     class DistanceMethodChoices(models.TextChoices):
         """
-        Distance method choices for Order model
+        Distance method choices for shipment model
         """
 
         GOOGLE = "Google", _("Google")
@@ -175,7 +175,7 @@ class RouteControl(GenericModel):
     generate_routes = models.BooleanField(
         _("Generate Routes"),
         default=False,
-        help_text=_("Automatically generate routes for orders"),
+        help_text=_("Automatically generate routes for shipments"),
     )
 
     class Meta:

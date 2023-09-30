@@ -29,9 +29,8 @@ from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements import models, services
 from movements.tests.factories import MovementFactory
-from order.models import Order
-from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
+from shipment.tests.factories import OrderFactory
 from worker.factories import WorkerFactory
 from worker.models import Worker
 
@@ -42,7 +41,7 @@ def test_create(
     worker: Worker,
     tractor: Tractor,
     organization: Organization,
-    order: Order,
+    shipment: Shipment,
     business_unit: BusinessUnit,
 ) -> None:
     """
@@ -60,13 +59,13 @@ def test_create(
     movement = models.Movement.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order,
+        shipment=shipment,
         tractor=tractor,
         primary_worker=worker,
     )
 
     assert movement is not None
-    assert movement.order == order
+    assert movement.shipment == order
     assert movement.tractor == tractor
     assert movement.primary_worker == worker
 
@@ -94,7 +93,7 @@ def test_initial_stop_creation_hook(
     """
     Test that an initial stop is created when a movement is created.
     """
-    order = OrderFactory(
+    shipment = OrderFactory(
         origin_appointment_window_start=timezone.now(),
         origin_appointment_window_end=timezone.now(),
         destination_appointment_window_start=timezone.now() + timedelta(days=2),
@@ -104,12 +103,12 @@ def test_initial_stop_creation_hook(
     movement = models.Movement.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order,
+        shipment=shipment,
         tractor=tractor,
         primary_worker=worker,
     )
 
-    services.create_initial_stops(movement=movement, order=order)
+    services.create_initial_stops(movement=movement, shipment=shipment)
 
     assert movement.stops.count() == 2
 
@@ -137,7 +136,7 @@ def test_get(api_client: APIClient) -> None:
 def test_get_by_id(
     api_client: APIClient,
     movement_api: Response,
-    order: Order,
+    shipment: Shipment,
     worker: Worker,
     tractor: Tractor,
 ) -> None:
@@ -149,7 +148,7 @@ def test_get_by_id(
 
     assert response.status_code == 200
     assert response.data is not None
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
     assert response.data["primary_worker"] == worker.id
     assert response.data["tractor"] == tractor.id
 
@@ -157,7 +156,7 @@ def test_get_by_id(
 def test_post_movement(
     api_client: APIClient,
     organization: Organization,
-    order: Order,
+    shipment: Shipment,
     worker: Worker,
     tractor: Tractor,
 ) -> None:
@@ -179,14 +178,14 @@ def test_post_movement(
         "/api/movements/",
         {
             "organization": f"{organization.id}",
-            "order": f"{order.id}",
+            "shipment": f"{shipment.id}",
             "primary_worker": f"{worker.id}",
             "tractor": f"{tractor.id}",
         },
     )
     assert response.status_code == 201
     assert response.data is not None
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
     assert response.data["primary_worker"] == worker.id
     assert response.data["tractor"] == tractor.id
 
@@ -336,14 +335,14 @@ def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    order = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
     worker = WorkerFactory()
 
     with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(order=order, primary_worker=worker)
+        MovementFactory(shipment=shipment, primary_worker=worker)
 
     assert excinfo.value.message_dict["primary_worker"] == [
-        "Worker must be hazmat certified to haul this order. Please try again."
+        "Worker must be hazmat certified to haul this shipment. Please try again."
     ]
 
 
@@ -356,14 +355,14 @@ def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> 
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    order = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
     worker = WorkerFactory()
     worker.profile.endorsements = "H"
     worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
     worker.profile.save()
 
     with pytest.raises(ValidationError) as excinfo:
-        MovementFactory(order=order, primary_worker=worker, secondary_worker=None)
+        MovementFactory(shipment=shipment, primary_worker=worker, secondary_worker=None)
 
     assert excinfo.value.message_dict["primary_worker"] == [
         "Worker hazmat certification has expired. Please try again."
@@ -486,18 +485,18 @@ def test_second_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    order = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
     primary_worker = WorkerFactory()
     primary_worker.profile.endorsements = "H"
     worker = WorkerFactory()
 
     with pytest.raises(ValidationError) as excinfo:
         MovementFactory(
-            order=order, primary_worker=primary_worker, secondary_worker=worker
+            shipment=shipment, primary_worker=primary_worker, secondary_worker=worker
         )
 
     assert excinfo.value.message_dict["secondary_worker"] == [
-        "Worker must be hazmat certified to haul this order. Please try again."
+        "Worker must be hazmat certified to haul this shipment. Please try again."
     ]
 
 
@@ -510,7 +509,7 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> N
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    order = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
 
     primary_worker = WorkerFactory()
     primary_worker.profile.endorsements = "H"
@@ -523,7 +522,7 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> N
 
     with pytest.raises(ValidationError) as excinfo:
         MovementFactory(
-            order=order, primary_worker=primary_worker, secondary_worker=worker
+            shipment=shipment, primary_worker=primary_worker, secondary_worker=worker
         )
 
     assert excinfo.value.message_dict["secondary_worker"] == [
@@ -550,12 +549,12 @@ def test_workers_cannot_be_the_same() -> None:
     ]
 
 
-def test_movement_changed_to_in_progress_with_no_worker(order: Order) -> None:
+def test_movement_changed_to_in_progress_with_no_worker(shipment: Shipment) -> None:
     """
     Test ValidationError is thrown when the movement status is changed
     to in progress or completed and no worker or tractor is assigned.
     """
-    movement = models.Movement.objects.filter(order=order).first()
+    movement = models.Movement.objects.filter(shipment=shipment).first()
 
     with pytest.raises(ValidationError) as excinfo:
         movement.status = "P"
@@ -573,13 +572,13 @@ def test_movement_changed_to_in_progress_with_no_worker(order: Order) -> None:
 
 
 def test_movement_cannot_change_status_in_in_progress_if_stops_are_new(
-    order: Order,
+    shipment: Shipment,
 ) -> None:
     """
     Test ValidationError is thrown when the movement status is changed to in progress ,but
     none of the stops associated are in progress.
     """
-    movement = models.Movement.objects.filter(order=order).first()
+    movement = models.Movement.objects.filter(shipment=shipment).first()
 
     with pytest.raises(ValidationError) as excinfo:
         movement.status = "P"
@@ -591,14 +590,14 @@ def test_movement_cannot_change_status_in_in_progress_if_stops_are_new(
 
 
 def test_movement_cannot_change_status_to_completed_if_stops_are_in_progress(
-    order: Order,
+    shipment: Shipment,
 ) -> None:
     """
     Test ValidationError is thrown when the movement status is
     changed to in new, but the stops status is in progress.
     """
 
-    movement = models.Movement.objects.filter(order=order).first()
+    movement = models.Movement.objects.filter(shipment=shipment).first()
 
     with pytest.raises(ValidationError) as excinfo:
         movement.status = "C"
@@ -620,8 +619,8 @@ def test_cannot_delete_movement_if_org_disallows(movement: models.Movement) -> N
         None: This function does not return anything.
     """
 
-    movement.organization.order_control.remove_orders = False
-    movement.organization.order_control.save()
+    movement.organization.shipment_control.remove_orders = False
+    movement.organization.shipment_control.save()
 
     with pytest.raises(ValidationError) as excinfo:
         movement.delete()

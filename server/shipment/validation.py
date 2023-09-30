@@ -19,25 +19,25 @@ from django.core.exceptions import ValidationError
 from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
-from order.models import Order
-from order.selectors import get_order_by_id
+from shipment import models
+from shipment.selectors import get_shipment_by_id
 from utils.models import RatingMethodChoices, StatusChoices
 
 
-class OrderValidation:
+class ShipmentValidator:
     """
-    Class to validate the order model.
+    Class to validate the shipment model.
     """
 
-    def __init__(self, *, order: Order):
-        self.order = order
+    def __init__(self, *, shipment: models.Shipment):
+        self.shipment = shipment
         self.errors: dict[str, Promise] = {}
         self.validate()
 
     def validate(self) -> None:
-        """Validate order.
+        """Validate shipment.
 
-        Validate the order model based on the organization's order control
+        Validate the shipment model based on the organization's Shipment Control
         and rating method. For example, if the organization has enforce_rev_code
         as `TRUE` and the revenue_code is not entered throw a ValidationError.
 
@@ -45,18 +45,18 @@ class OrderValidation:
             None
 
         Raises:
-            ValidationError: If any of the order_control params are true and the associated fields
+            ValidationError: If any of the shipment_control params are true and the associated fields
             are do not fall within the criteria.
         """
 
         self.validate_rating_method()
-        self.validate_order_control()
+        self.validate_shipment_control()
         self.validate_ready_to_bill()
-        self.validate_order_locations()
-        self.validate_duplicate_order_bol()
-        self.validate_order_movement_in_progress()
-        self.validate_order_movements_completed()
-        # self.validate_location_information_cannot_change_once_order_completed()
+        self.validate_shipment_locations()
+        self.validate_duplicate_shipment_bol()
+        self.validate_shipment_movement_in_progress()
+        self.validate_shipment_movements_completed()
+        # self.validate_location_information_cannot_change_once_shipment_completed()
         self.validate_appointment_windows()
         self.validate_per_weight_rating_method()
         self.validate_formula_template()
@@ -80,8 +80,8 @@ class OrderValidation:
 
         # Validate 'freight_charge_amount' is entered if 'rate_method' is 'FLAT'
         if (
-            self.order.rate_method == RatingMethodChoices.FLAT
-            and not self.order.freight_charge_amount
+            self.shipment.rate_method == RatingMethodChoices.FLAT
+            and not self.shipment.freight_charge_amount
         ):
             self.errors["freight_charge_amount"] = _(
                 "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
@@ -89,18 +89,18 @@ class OrderValidation:
 
         # Validate 'mileage' is entered if 'rate_method' is 'PER_MILE'
         if (
-            self.order.rate_method == RatingMethodChoices.PER_MILE
-            and not self.order.mileage
+            self.shipment.rate_method == RatingMethodChoices.PER_MILE
+            and not self.shipment.mileage
         ):
             self.errors["mileage"] = _(
                 "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
             )
 
-    def validate_order_control(self) -> None:
-        """Validate organization order control.
+    def validate_shipment_control(self) -> None:
+        """Validate organization Shipment Control.
 
-        Validate that the respective order control params are being used to validate the
-        order before it is created or updated. For example, if the organization has
+        Validate that the respective Shipment Control params are being used to validate the
+        shipment before it is created or updated. For example, if the organization has
         enforce_origin_destination as `TRUE` and the origin_location and destination_location
         are the same throw a ValidationError.
 
@@ -108,53 +108,53 @@ class OrderValidation:
             None
 
         Raises:
-            ValidationError: If any of the order_control params are true and the associated fields
+            ValidationError: If any of the shipment_control params are true and the associated fields
             are do not fall within the criteria.
         """
 
         # Validate compare origin and destination are not the same.
         if (
-            self.order.organization.order_control.enforce_origin_destination
-            and self.order.origin_location
-            and self.order.destination_location
-            and self.order.origin_location == self.order.destination_location
+            self.shipment.organization.shipment_control.enforce_origin_destination
+            and self.shipment.origin_location
+            and self.shipment.destination_location
+            and self.shipment.origin_location == self.shipment.destination_location
         ):
             self.errors["origin_location"] = _(
                 "Origin and Destination locations cannot be the same. Please try again."
             )
 
-        # Validate revenue code is entered if Order Control requires it for the organization.
+        # Validate revenue code is entered if Shipment Control requires it for the organization.
         if (
-            self.order.organization.order_control.enforce_rev_code
-            and not self.order.revenue_code
+            self.shipment.organization.shipment_control.enforce_rev_code
+            and not self.shipment.revenue_code
         ):
             self.errors["revenue_code"] = _(
                 "Revenue code is required. Please try again."
             )
 
-        # Validate commodity is entered if Order Control requires it for the organization.
+        # Validate commodity is entered if Shipment Control requires it for the organization.
         if (
-            self.order.organization.order_control.enforce_commodity
-            and not self.order.commodity
+            self.shipment.organization.shipment_control.enforce_commodity
+            and not self.shipment.commodity
         ):
             self.errors["commodity"] = _("Commodity is required. Please try again.")
 
-        # Validate voided comment is entered if Order Control requires it for the organization.
+        # Validate voided comment is entered if Shipment Control requires it for the organization.
         if (
-            self.order.organization.order_control.enforce_voided_comm
-            and self.order.status == StatusChoices.VOIDED
-            and not self.order.voided_comm
+            self.shipment.organization.shipment_control.enforce_voided_comm
+            and self.shipment.status == StatusChoices.VOIDED
+            and not self.shipment.voided_comm
         ):
             self.errors["voided_comm"] = _(
                 "Voided Comment is required. Please try again."
             )
 
     def validate_ready_to_bill(self) -> None:
-        """validate order can be marked ready_to_bill
+        """validate shipment can be marked ready_to_bill
 
-        Validate whether the order can be marked `ready_to_bill` based on the status
-        of the order. For example, if the order is currently `IN_PROGRESS` throw a
-        ValidateError because orders can only be marked `ready_to_bill` when status
+        Validate whether the shipment can be marked `ready_to_bill` based on the status
+        of the shipment. For example, if the shipment is currently `IN_PROGRESS` throw a
+        ValidateError because shipments can only be marked `ready_to_bill` when status
         is `COMPLETED`
 
         Returns:
@@ -166,16 +166,16 @@ class OrderValidation:
         """
 
         if (
-            self.order.organization.billing_control.order_transfer_criteria
+            self.shipment.organization.billing_control.shipment_transfer_criteria
             == "READY_AND_COMPLETED"
-            and self.order.ready_to_bill
-            and self.order.status != StatusChoices.COMPLETED
+            and self.shipment.ready_to_bill
+            and self.shipment.status != StatusChoices.COMPLETED
         ):
             self.errors["ready_to_bill"] = _(
                 "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
             )
 
-    def validate_order_locations(self) -> None:
+    def validate_shipment_locations(self) -> None:
         """Validate order location is entered.
 
         Validate that either the `location` foreign key field has input or the
@@ -193,49 +193,52 @@ class OrderValidation:
         """
 
         # Validate that origin_location or origin_address is provided.
-        if not self.order.origin_location and not self.order.origin_address:
+        if not self.shipment.origin_location and not self.shipment.origin_address:
             self.errors["origin_address"] = _(
                 "Origin Location or Address is required. Please try again."
             )
 
         # Validate that destination_location or destination_address is provided.
-        if not self.order.destination_location and not self.order.destination_address:
+        if (
+            not self.shipment.destination_location
+            and not self.shipment.destination_address
+        ):
             self.errors["destination_address"] = _(
                 "Destination Location or Address is required. Please try again."
             )
 
-    def validate_duplicate_order_bol(self) -> None:
+    def validate_duplicate_shipment_bol(self) -> None:
         """Validate duplicate order BOL number.
 
         Validate that the BOL number is not a duplicate. For example, if the user
         enters a BOL number that is already in use by another order, a ValidationError
-        will be thrown and the pro_numbers of the duplicate orders will be returned to the user.
+        will be thrown and the pro_numbers of the duplicate shipments will be returned to the user.
 
         Returns:
             None
 
         Raises:
-            ValidationError: If the BOL number is a duplicate. The error message will include the pro_numbers of the duplicate orders.
+            ValidationError: If the BOL number is a duplicate. The error message will include the pro_numbers of the duplicate shipments.
         """
 
-        duplicates = self.order.organization.orders.filter(
-            bol_number=self.order.bol_number,
+        duplicates = self.shipment.organization.shipments.filter(
+            bol_number=self.shipment.bol_number,
             status__in=[StatusChoices.NEW, StatusChoices.IN_PROGRESS],
-        ).exclude(id=self.order.id)
+        ).exclude(id=self.shipment.id)
 
         if (
-            self.order.organization.order_control.check_for_duplicate_bol
-            and self.order.bol_number
-            and self.order.status in [StatusChoices.NEW, StatusChoices.IN_PROGRESS]
+            self.shipment.organization.shipment_control.check_for_duplicate_bol
+            and self.shipment.bol_number
+            and self.shipment.status in [StatusChoices.NEW, StatusChoices.IN_PROGRESS]
             and duplicates.exists()
         ):
-            pro_numbers = ", ".join([str(order.pro_number) for order in duplicates])
+            pro_numbers = ", ".join([str(shipment.pro_number) for order in duplicates])
             self.errors["bol_number"] = _(
-                f"Duplicate BOL Number found in orders with PRO numbers: {pro_numbers}. If this is a new order, "
+                f"Duplicate BOL Number found in shipments with PRO numbers: {pro_numbers}. If this is a new order, "
                 f"please change the BOL Number."
             )
 
-    def validate_order_movements_completed(self) -> None:
+    def validate_shipment_movements_completed(self) -> None:
         """Validate that an order cannot be marked as 'COMPLETED' if all of its movements are not 'COMPLETED'.
 
         This function is used as a validation function in a Django form or model to ensure that if
@@ -248,19 +251,19 @@ class OrderValidation:
         Raises:
             ValidationError: If the order status is 'COMPLETED' and not all movements are 'COMPLETED'.
         """
-        if self.order.status == StatusChoices.COMPLETED and all(
+        if self.shipment.status == StatusChoices.COMPLETED and all(
             movement.status != StatusChoices.COMPLETED
-            for movement in self.order.movements.all()
+            for movement in self.shipment.movements.all()
         ):
             self.errors["status"] = _(
                 "Cannot mark order as 'COMPLETED' if all movements are not 'COMPLETED'. Please try again."
             )
 
-    def validate_order_movement_in_progress(self) -> None:
-        if self.order.status == StatusChoices.IN_PROGRESS:
+    def validate_shipment_movement_in_progress(self) -> None:
+        if self.shipment.status == StatusChoices.IN_PROGRESS:
             in_progress_movements = [
                 movement
-                for movement in self.order.movements.all()
+                for movement in self.shipment.movements.all()
                 if movement.status == StatusChoices.IN_PROGRESS
             ]
 
@@ -270,7 +273,9 @@ class OrderValidation:
                     "try again."
                 )
 
-    def validate_location_information_cannot_change_once_order_completed(self) -> None:
+    def validate_location_information_cannot_change_once_shipment_completed(
+        self,
+    ) -> None:
         """Validate location information in an order cannot be changed once the order is completed.
 
         Returns:
@@ -279,12 +284,12 @@ class OrderValidation:
         Raises:
             ValidationError: If the location information in an order is changed after the order is completed.
         """
-        order = get_order_by_id(order_id=self.order.id)
+        shipment = get_shipment_by_id(shipment_id=self.shipment.id)
 
-        if not order:
+        if not shipment:
             return None
 
-        if order.status == StatusChoices.COMPLETED:
+        if shipment.status == StatusChoices.COMPLETED:
             location_attributes = [
                 ("origin_location", "Origin location"),
                 ("destination_location", "Destination location"),
@@ -306,7 +311,7 @@ class OrderValidation:
             ]
 
             for attribute, display_name in location_attributes:
-                if getattr(order, attribute) != getattr(self.order, attribute):
+                if getattr(order, attribute) != getattr(self.shipment, attribute):
                     self.errors[attribute] = _(
                         f"{display_name} cannot be changed once the order is completed. Please try again."
                     )
@@ -318,16 +323,16 @@ class OrderValidation:
             None: This function does not return anything.
         """
         if (
-            self.order.origin_appointment_window_end
-            < self.order.origin_appointment_window_start
+            self.shipment.origin_appointment_window_end
+            < self.shipment.origin_appointment_window_start
         ):
             self.errors["origin_appointment_window_end"] = _(
                 "Origin appointment window end cannot be before the start. Please try again."
             )
 
         if (
-            self.order.destination_appointment_window_end
-            < self.order.destination_appointment_window_start
+            self.shipment.destination_appointment_window_end
+            < self.shipment.destination_appointment_window_start
         ):
             self.errors["destination_appointment_window_end"] = _(
                 "Destination appointment window end cannot be before the start. Please try again."
@@ -335,8 +340,8 @@ class OrderValidation:
 
     def validate_per_weight_rating_method(self) -> None:
         if (
-            self.order.rate_method == RatingMethodChoices.POUNDS
-            and self.order.weight < 1
+            self.shipment.rate_method == RatingMethodChoices.POUNDS
+            and self.shipment.weight < 1
         ):
             self.errors["rate_method"] = _(
                 "Weight cannot be 0, and rating method is per weight. Please try again."
@@ -344,8 +349,8 @@ class OrderValidation:
 
     def validate_formula_template(self) -> None:
         if (
-            self.order.formula_template
-            and self.order.rate_method != RatingMethodChoices.OTHER
+            self.shipment.formula_template
+            and self.shipment.rate_method != RatingMethodChoices.OTHER
         ):
             self.errors["formula_template"] = _(
                 "Formula template can only be used with rating method 'OTHER'. Please try again."

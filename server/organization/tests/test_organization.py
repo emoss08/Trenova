@@ -42,12 +42,12 @@ def test_organization_update(organization: models.Organization) -> None:
     assert organization.scac_code == "NEW"
 
 
-def test_order_control_creation(organization: models.Organization) -> None:
+def test_shipment_control_creation(organization: models.Organization) -> None:
     """
-    Test dispatch control is created from create_order_control post_save signal
+    Test dispatch control is created from create_shipment_control post_save signal
     """
-    assert organization.order_control.auto_rate_orders is True
-    assert organization.order_control.organization == organization
+    assert organization.shipment_control.auto_rate_shipments is True
+    assert organization.shipment_control.organization == organization
 
 
 def test_billing_control_hook(organization: models.Organization) -> None:
@@ -58,12 +58,12 @@ def test_billing_control_hook(organization: models.Organization) -> None:
     assert organization.billing_control is not None
 
 
-def test_order_control_hook(organization: models.Organization) -> None:
+def test_shipment_control_hook(organization: models.Organization) -> None:
     """
-    Test that the order control hook is created when a new organization is
+    Test that the Shipment Control hook is created when a new organization is
     created.
     """
-    assert organization.order_control is not None
+    assert organization.shipment_control is not None
 
 
 def test_dispatch_control_hook(organization: models.Organization) -> None:

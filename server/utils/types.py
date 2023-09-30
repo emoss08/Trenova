@@ -33,7 +33,9 @@ HealthStatusAndTime: TypeAlias = Union[
     dict[str, Union[str, int, int, int, float, float]]
 ]
 DiskUsage: TypeAlias = tuple[int, int, int]
-BilledOrders: TypeAlias = tuple[list[Any | list[dict[str, str | list[str]]]], list[Any]]
+BilledShipments: TypeAlias = tuple[
+    list[Any | list[dict[str, str | list[str]]]], list[Any]
+]
 EDIEnvelope: TypeAlias = tuple[str, str, str, str, str, str]
 ModelDelete: TypeAlias = tuple[int, dict[str, int]]
 
@@ -44,9 +46,9 @@ class BillingClientActions(Enum):
     """
 
     GET_STARTED = "GET_STARTED"
-    ORDERS_READY = "ORDERS_READY"
+    shipments_READY = "shipments_READY"
     BILLING_QUEUE = "BILLING_QUEUE"
-    BILL_ORDERS = "BILL_ORDERS"
+    BILL_shipmentS = "BILL_shipmentS"
     BILLING_COMPLETE = "BILLING_COMPLETE"
 
 

@@ -28,9 +28,9 @@ if TYPE_CHECKING:
 class InvoiceControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing InvoiceControl in the system.
 
-    The viewset provides default operations for creating, updating Order Control,
-    as well as listing and retrieving Order Control. It uses the ``InvoiceControlSerializer``
-    class to convert the order control instance to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating Shipment Control,
+    as well as listing and retrieving Shipment Control. It uses the ``InvoiceControlSerializer``
+    class to convert the Shipment Control instance to and from JSON-formatted data.
 
     Only admin users are allowed to access the views provided by this viewset.
 

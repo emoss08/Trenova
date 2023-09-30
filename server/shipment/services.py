@@ -22,44 +22,44 @@ from pypdf import PdfMerger
 
 from billing.models import DocumentClassification
 from movements.models import Movement
-from order import helpers, models, selectors, types
+from shipment import helpers, models, selectors, types
 
 
-def create_initial_movement(*, order: models.Order) -> None:
-    """Create the initial movement for the given order.
+def create_initial_movement(*, shipment: models.Shipment) -> None:
+    """Create the initial movement for the given shipment.
 
     Args:
-        order (Order): The order instance.
+        shipment (Shipment): The shipment instance.
 
     Returns:
         None: This function does not return anything.
     """
     Movement.objects.create(
-        organization=order.organization,
-        business_unit=order.organization.business_unit,
-        order=order,
+        organization=shipment.organization,
+        business_unit=shipment.organization.business_unit,
+        shipment=shipment,
     )
 
 
-def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
-    """Combine all PDFs in Order Document into one PDF file
+def combine_pdfs_service(*, shipment: models.Shipment) -> models.ShipmentDocumentation:
+    """Combine all PDFs in shipment Document into one PDF file
 
     Args:
-        order (Order): Order to combine documents from
+        shipment (Shipment): shipment to combine documents from
 
     Returns:
-        OrderDocumentation: created OrderDocumentation
+        ShipmentDocumentation: created ShipmentDocumentation
     """
 
     document_class = DocumentClassification.objects.get(name="CON")
-    file_path = f"{settings.MEDIA_ROOT}/{order.id}.pdf"
+    file_path = f"{settings.MEDIA_ROOT}/{shipment.id}.pdf"
     merger = PdfMerger()
     storage_class: Storage = get_storage_class()()
 
     if storage_class.exists(file_path):
         raise FileExistsError(f"File {file_path} already exists")
 
-    for document in order.order_documentation.all():
+    for document in shipment.shipment_documentation.all():
         merger.append(document.document.path)
 
     merger.write(file_path)
@@ -67,9 +67,9 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
 
     consolidated_document = storage_class.open(file_path, "rb")
 
-    documentation = models.OrderDocumentation.objects.create(
-        organization=order.organization,
-        order=order,
+    documentation = models.ShipmentDocumentation.objects.create(
+        organization=shipment.organization,
+        shipment=shipment,
         document=consolidated_document,
         document_class=document_class,
     )
@@ -79,33 +79,35 @@ def combine_pdfs_service(*, order: models.Order) -> models.OrderDocumentation:
     return documentation
 
 
-def gather_formula_variables(*, order: models.Order) -> types.FormulaVariables:
+def gather_formula_variables(*, shipment: models.Shipment) -> types.FormulaVariables:
     """Gather all the variables needed for the formula
 
     Args:
-        order (Order): The order instance
+        shipment (Shipment): The shipment instance
 
     Returns:
         FormulaVariables: A dictionary of variables that can be used in a formula.
     """
     return {
-        "freight_charge": order.freight_charge_amount,
-        "other_charge": order.other_charge_amount,
-        "mileage": order.mileage,
-        "weight": order.weight,
-        "stops": selectors.get_order_stops(order=order).count(),
-        "rating_units": order.rating_units,
-        "equipment_cost_per_mile": order.equipment_type.cost_per_mile,
-        "hazmat_additional_cost": order.hazmat.additional_cost if order.hazmat else 0,
-        "temperature_differential": order.temperature_differential,
+        "freight_charge": shipment.freight_charge_amount,
+        "other_charge": shipment.other_charge_amount,
+        "mileage": shipment.mileage,
+        "weight": shipment.weight,
+        "stops": selectors.get_shipment_stops(shipment=shipment).count(),
+        "rating_units": shipment.rating_units,
+        "equipment_cost_per_mile": shipment.equipment_type.cost_per_mile,
+        "hazmat_additional_cost": shipment.hazmat.additional_cost
+        if shipment.hazmat
+        else 0,
+        "temperature_differential": shipment.temperature_differential,
     }
 
 
-def calculate_total(*, order: models.Order) -> Decimal:
+def calculate_total(*, shipment: models.Shipment) -> Decimal:
     """Calculate the sub_total for an order
 
-    Calculate the sub_total for the order if the organization 'OrderControl'
-    has auto_total_order as True. If not, this method will be skipped in the
+    Calculate the sub_total for the shipment if the organization 'ShipmentControl'
+    has auto_total_shipment as True. If not, this method will be skipped in the
     save method.
 
     Returns:
@@ -114,37 +116,42 @@ def calculate_total(*, order: models.Order) -> Decimal:
 
     # TODO(WOLFRED): This can be replaced with a dictionary lookup, this seems a bit verbose
 
-    if not order.freight_charge_amount:
+    if not shipment.freight_charge_amount:
         return Decimal(0)
 
-    freight_charge = Decimal(order.freight_charge_amount)
+    freight_charge = Decimal(shipment.freight_charge_amount)
     other_charge = (
-        Decimal(order.other_charge_amount) if order.other_charge_amount else Decimal(0)
+        Decimal(shipment.other_charge_amount)
+        if shipment.other_charge_amount
+        else Decimal(0)
     )
 
     # Calculate `FLAT` rating method
-    if order.rate_method == models.RatingMethodChoices.FLAT:
+    if shipment.rate_method == models.RatingMethodChoices.FLAT:
         return freight_charge + other_charge
 
     # Calculate `PER_MILE` rating method
-    if order.rate_method == models.RatingMethodChoices.PER_MILE and order.mileage:
-        return (freight_charge * Decimal(order.mileage)) + other_charge
+    if shipment.rate_method == models.RatingMethodChoices.PER_MILE and shipment.mileage:
+        return (freight_charge * Decimal(shipment.mileage)) + other_charge
 
     # Calculate `PER_STOP` rating method
-    if order.rate_method == models.RatingMethodChoices.PER_STOP:
-        order_stops_count = selectors.get_order_stops(order=order).count()
-        return (freight_charge * Decimal(order_stops_count)) + other_charge
+    if shipment.rate_method == models.RatingMethodChoices.PER_STOP:
+        shipment_stops_count = selectors.get_shipment_stops(shipment=shipment).count()
+        return (freight_charge * Decimal(shipment_stops_count)) + other_charge
 
     # Calculate `PER_POUND` rating method
-    if order.rate_method == models.RatingMethodChoices.POUNDS and order.weight > 0:
-        return (freight_charge * Decimal(order.weight)) + other_charge
+    if (
+        shipment.rate_method == models.RatingMethodChoices.POUNDS
+        and shipment.weight > 0
+    ):
+        return (freight_charge * Decimal(shipment.weight)) + other_charge
 
-    if order.rate_method == models.RatingMethodChoices.OTHER:
-        if not order.formula_template:
-            return (freight_charge * Decimal(order.rating_units)) + other_charge
+    if shipment.rate_method == models.RatingMethodChoices.OTHER:
+        if not shipment.formula_template:
+            return (freight_charge * Decimal(shipment.rating_units)) + other_charge
 
-        formula_text = order.formula_template.formula_text
+        formula_text = shipment.formula_template.formula_text
         if helpers.validate_formula(formula=formula_text):
-            variables = gather_formula_variables(order=order)
+            variables = gather_formula_variables(shipment=shipment)
             return Decimal(helpers.evaluate_formula(formula=formula_text, **variables))
     return freight_charge

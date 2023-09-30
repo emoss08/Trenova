@@ -22,8 +22,8 @@ from accounts.tests.factories import UserFactory
 from billing.models import BillingQueue
 from edi import exceptions, helpers
 from edi.tests import factories
-from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
+from shipment.tests.factories import shipmentFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -88,30 +88,30 @@ def test_get_nested_attr(
     Returns:
         None: This function does not return anything.
     """
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     nest_attr = helpers.get_nested_attr(
         obj=billing_item,
-        attr="order.customer.name",
+        attr="shipment.customer.name",
     )
 
-    assert nest_attr == billing_item.order.customer.name
-    assert nest_attr == order_1.customer.name
+    assert nest_attr == billing_item.shipment.customer.name
+    assert nest_attr == shipment_1.customer.name
 
 
 def test_get_nested_attr_exception(
@@ -122,53 +122,53 @@ def test_get_nested_attr_exception(
     Returns:
         None: This function does not return anything.
     """
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     with pytest.raises(exceptions.EDIInvalidFieldException) as excinfo:
         helpers.get_nested_attr(
             obj=billing_item,
-            attr="order.customer.name1",
+            attr="shipment.customer.name1",
         )
 
     assert (
         excinfo.value.args[0]
-        == "Field `order.customer.name1` does not exist on BillingQueue model."
+        == "Field `shipment.customer.name1` does not exist on BillingQueue model."
     )
 
 
 def test_generate_edi_content(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     _, fields, edi_billing_profile = factories.EDISegmentFactory(
@@ -224,21 +224,21 @@ def test_generate_edi_content_value_returns_empty_string(
     Returns:
         None: This function does not return anything.
     """
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     _, fields, edi_billing_profile = factories.EDISegmentFactory(
@@ -246,7 +246,7 @@ def test_generate_edi_content_value_returns_empty_string(
         organization=organization,
     )
 
-    fields.update(model_field="order.commodity")
+    fields.update(model_field="shipment.commodity")
 
     content = helpers.generate_edi_content(
         billing_item=billing_item, edi_billing_profile=edi_billing_profile
@@ -271,21 +271,21 @@ def test_generate_edi_content_parser_error(
     Returns:
         None: This function does not return anything.
     """
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     _, fields, edi_billing_profile = factories.EDISegmentFactory(
@@ -308,21 +308,21 @@ def test_generate_edi_content_parser_error(
 def test_generate_edi_document(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     _, _, edi_billing_profile = factories.EDISegmentFactory(
@@ -370,21 +370,21 @@ def test_generate_edi_content_validation_regex(
         None: This function does return anything.
     """
 
-    order_1 = OrderFactory()
+    shipment_1 = OrderFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     billing_item = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     _, fields, edi_billing_profile = factories.EDISegmentFactory(
@@ -393,7 +393,7 @@ def test_generate_edi_content_validation_regex(
     )
 
     fields.update(validation_regex="^ORD")
-    fields.update(model_field="order.pieces")
+    fields.update(model_field="shipment.pieces")
 
     with pytest.raises(exceptions.EDIFieldValidationError):
         helpers.generate_edi_content(
@@ -404,8 +404,8 @@ def test_generate_edi_content_validation_regex(
 @pytest.mark.parametrize(
     "data_type, model_field, expected",
     [
-        ("CharField", "order.pro_number", True),
-        ("CharField", "order.pieces", False),
+        ("CharField", "shipment.pro_number", True),
+        ("CharField", "shipment.pieces", False),
         ("CharField", "invoice_number", True),
         ("CharField", "pieces", False),
     ],
@@ -424,7 +424,7 @@ def test_validate_data_type(data_type: str, model_field: str, expected: bool) ->
     """
     match, _ = helpers.validate_data_type(data_type=data_type, model_field=model_field)
 
-    # Validate `order.pro_number` is a `CharField`
+    # Validate `shipment.pro_number` is a `CharField`
     assert match == expected
 
 
@@ -438,12 +438,12 @@ def test_validate_data_type_with_invalid_field() -> None:
 
     with pytest.raises(exceptions.EDIInvalidFieldException) as excinfo:
         helpers.validate_data_type(
-            data_type="CharField", model_field="order.invalid_field"
+            data_type="CharField", model_field="shipment.invalid_field"
         )
 
     assert (
         excinfo.value.args[0]
-        == "Field 'invalid_field' does not exist on the Order model."
+        == "Field 'invalid_field' does not exist on the shipment model."
     )
 
 
@@ -452,8 +452,8 @@ def test_validate_data_type_with_invalid_field() -> None:
     [
         ("CharField", "revenue_code.revenue_account.status", True),
         ("PositiveIntegerField", "revenue_code.revenue_account.status", False),
-        ("CharField", "order.customer.name", True),
-        ("IntegerField", "order.customer.name", False),
+        ("CharField", "shipment.customer.name", True),
+        ("IntegerField", "shipment.customer.name", False),
     ],
 )
 def test_validate_data_type_deeply_nested(

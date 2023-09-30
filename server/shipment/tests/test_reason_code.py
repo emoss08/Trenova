@@ -19,8 +19,8 @@ import pytest
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from order import models
 from organization.models import BusinessUnit, Organization
+from shipment import models
 
 pytestmark = pytest.mark.django_db
 
@@ -54,7 +54,7 @@ def test_create(organization: Organization, business_unit: BusinessUnit) -> None
 
 def test_update(reason_code: models.ReasonCode) -> None:
     """
-    Test order type update
+    Test shipment type update
     """
 
     r_code = models.ReasonCode.objects.get(id=reason_code.id)

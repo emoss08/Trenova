@@ -28,7 +28,7 @@ from channels.layers import get_channel_layer
 from billing.selectors import get_invoices_by_invoice_number
 from billing.services import (
     BillingClientSessionManager,
-    bill_orders,
+    bill_shipments,
     transfer_to_billing_queue_service,
 )
 from utils.types import (
@@ -84,9 +84,9 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
         action_map = {
             "restart": self.get_started,
             "get_started": self.get_started,
-            "orders_ready": self.send_orders_ready,
+            "shipments_ready": self.send_shipments_ready,
             "billing_queue": self.send_to_billing_queue,
-            "bill_orders": self.bill_orders,
+            "bill_shipments": self.bill_shipments,
             "confirm_exceptions": self.confirm_exceptions,
         }
 
@@ -128,10 +128,12 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
             }
         )
         await sleep(2)  # simulate loading time for testing
-        await self.send_orders_ready(content)
+        await self.send_shipments_ready(content)
 
-    async def send_orders_ready(self, content) -> None:
-        await self.update_session_action(action=BillingClientActions.ORDERS_READY.value)
+    async def send_shipments_ready(self, content) -> None:
+        await self.update_session_action(
+            action=BillingClientActions.shipmentS_READY.value
+        )
         await self.send_and_update_session_response(
             data={
                 "action": "orders_ready",
@@ -170,7 +172,7 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
             transfer_to_billing_queue_service
         )(
             user_id=self.scope["user"].id,
-            order_pros=content["message"],
+            shipment_pros=content["message"],
             task_id=str(uuid.uuid4()),
         )
         await sleep(2)  # simulate loading time for testing
@@ -183,11 +185,13 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
             }
         )
 
-    async def bill_orders(self, content: BillingClientResponse) -> None:
-        await self.update_session_action_and_payload(action="bill_orders", data=content)
+    async def bill_shipments(self, content: BillingClientResponse) -> None:
+        await self.update_session_action_and_payload(
+            action="bill_shipments", data=content
+        )
         await self.send_and_update_session_response(
             data={
-                "action": "bill_orders",
+                "action": "bill_shipments",
                 "step": 4,
                 "status": BillingClientStatuses.PROCESSING.value,
                 "message": "Please wait while we bill your orders.",
@@ -198,27 +202,29 @@ class BillingClientConsumer(AsyncJsonWebsocketConsumer):
             invoices=content["message"]
         )
 
-        order_missing_info, billed_invoices = await database_sync_to_async(bill_orders)(
+        shipment_missing_info, billed_invoices = await database_sync_to_async(
+            bill_shipments
+        )(
             user_id=self.scope["user"].id,
             invoices=invoices,
         )
         await sleep(2)  # simulate loading time for testing
 
-        if len(order_missing_info) > 0:
+        if len(shipment_missing_info) > 0:
             # Send failure message back to user and update session
             await self.send_and_update_session_response(
                 data={
-                    "action": "bill_orders",
+                    "action": "bill_shipments",
                     "step": 4,
                     "status": BillingClientStatuses.FAILURE.value,
-                    "message": order_missing_info,
+                    "message": shipment_missing_info,
                 }
             )
 
         if len(billed_invoices) > 0:
             await self.send_and_update_session_response(
                 data={
-                    "action": "bill_orders",
+                    "action": "bill_shipments",
                     "step": 4,
                     "status": BillingClientStatuses.SUCCESS.value,
                     "message": billed_invoices,

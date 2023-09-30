@@ -21,15 +21,15 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from billing.models import AccessorialCharge
-from order import models
 from organization.models import BusinessUnit, Organization
+from shipment import models
 
 pytestmark = pytest.mark.django_db
 
 
 def test_list(additional_charge: models.AdditionalCharge) -> None:
     """
-    Test Order Type list
+    Test shipment type list
     """
     assert additional_charge is not None
 
@@ -37,25 +37,25 @@ def test_list(additional_charge: models.AdditionalCharge) -> None:
 def test_create(
     organization: Organization,
     business_unit: BusinessUnit,
-    order: models.Order,
+    shipment: models.Shipment,
     accessorial_charge: AccessorialCharge,
     user: User,
 ) -> None:
     """
-    Test Order Type Create
+    Test shipment type Create
     """
 
     add_charge = models.AdditionalCharge.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order,
+        shipment=shipment,
         accessorial_charge=accessorial_charge,
         unit=1,
         entered_by=user,
     )
 
     assert add_charge is not None
-    assert add_charge.order == order
+    assert add_charge.shipment == order
     assert add_charge.accessorial_charge == accessorial_charge
     assert add_charge.unit == 1
     assert add_charge.entered_by == user
@@ -65,7 +65,7 @@ def test_update(
     accessorial_charge: AccessorialCharge, additional_charge: models.AdditionalCharge
 ) -> None:
     """
-    Test order type update
+    Test shipment type update
     """
 
     add_charge = models.AdditionalCharge.objects.get(id=additional_charge.id)
@@ -92,7 +92,7 @@ def test_api_get(api_client: APIClient) -> None:
 def test_api_get_by_id(
     api_client: APIClient,
     additional_charge_api: Response,
-    order: models.Order,
+    shipment: models.Shipment,
     user: User,
 ):
     """
@@ -105,25 +105,25 @@ def test_api_get_by_id(
 
     assert response.status_code == 200
     assert response.data is not None
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
     assert response.data["unit"] == 2
     assert response.data["entered_by"] == user.id
 
 
 def test_api_patch(
-    api_client: APIClient, additional_charge_api: Response, order: models.Order
+    api_client: APIClient, additional_charge_api: Response, shipment: models.Shipment
 ) -> None:
     """
-    Test put Order Type
+    Test put shipment type
     """
     response = api_client.patch(
         f"/api/additional_charges/{additional_charge_api.data['id']}/",
-        {"order": f"{order.id}"},
+        {"shipment": f"{shipment.id}"},
     )
 
     assert response.status_code == 200
     assert response.data is not None
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
 
 
 def test_api_delete(api_client: APIClient, additional_charge_api: Response) -> None:

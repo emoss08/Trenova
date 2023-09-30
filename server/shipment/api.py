@@ -19,79 +19,79 @@ from rest_framework import permissions, viewsets
 
 from core.permissions import CustomObjectPermissions
 from movements.models import Movement
-from order import models, serializers
+from shipment import models, serializers
 
 
-class OrderControlViewSet(viewsets.ModelViewSet):
-    """A viewset for viewing and editing OrderControl in the system.
+class ShipmentControlViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing ShipmentControl in the system.
 
-    The viewset provides default operations for creating, updating Order Control,
-    as well as listing and retrieving Order Control. It uses the ``OrderControlSerializer``
-    class to convert the order control instance to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating Shipment Control,
+    as well as listing and retrieving Shipment Control. It uses the ``ShipmentControlSerializer``
+    class to convert the Shipment Control instance to and from JSON-formatted data.
 
     Only admin users are allowed to access the views provided by this viewset.
 
     Attributes:
-        queryset (QuerySet): A queryset of OrderControl objects that will be used to
-        retrieve and update OrderControl objects.
+        queryset (QuerySet): A queryset of ShipmentControl objects that will be used to
+        retrieve and update ShipmentControl objects.
 
-        serializer_class (OrderControlSerializer): A serializer class that will be used to
-        convert OrderControl objects to and from JSON-formatted data.
+        serializer_class (ShipmentControlSerializer): A serializer class that will be used to
+        convert ShipmentControl objects to and from JSON-formatted data.
 
         permission_classes (list): A list of permission classes that will be used to
         determine if a user has permission to perform a particular action.
     """
 
-    queryset = models.OrderControl.objects.all()
+    queryset = models.ShipmentControl.objects.all()
     permission_classes = [permissions.IsAdminUser]
-    serializer_class = serializers.OrderControlSerializer
+    serializer_class = serializers.ShipmentControlSerializer
     http_method_names = ["get", "put", "patch", "head", "options"]
 
-    def get_queryset(self) -> "QuerySet[models.OrderControl]":
+    def get_queryset(self) -> "QuerySet[models.ShipmentControl]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "organization_id",
-            "auto_rate_orders",
+            "auto_rate_shipments",
             "calculate_distance",
             "enforce_rev_code",
             "enforce_voided_comm",
             "generate_routes",
             "enforce_commodity",
             "auto_sequence_stops",
-            "auto_order_total",
+            "auto_shipment_total",
             "enforce_origin_destination",
             "check_for_duplicate_bol",
-            "remove_orders",
+            "remove_shipments",
         )
         return queryset
 
 
-class OrderTypeViewSet(viewsets.ModelViewSet):
-    """A viewset for viewing and editing Order types in the system.
+class ShipmentTypeViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing shipment types in the system.
 
-    The viewset provides default operations for creating, updating and deleting order types,
-    as well as listing and retrieving Order Types. It uses the ``OrderTypesSerializer`` class to
-    convert the order type instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating and deleting shipment types,
+    as well as listing and retrieving shipment types. It uses the ``ShipmentTypesSerializer`` class to
+    convert the shipment type instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by order type by is_active.
+    Filtering is also available, with the ability to filter by shipment type by is_active.
 
     Attributes:
-        queryset (QuerySet): A queryset of OrderType objects that will be used to
-        retrieve and update OrderType objects.
+        queryset (QuerySet): A queryset of ShipmentType objects that will be used to
+        retrieve and update ShipmentType objects.
 
-        serializer_class (OrderTypeSerializer): A serializer class that will be used to
-        convert OrderType objects to and from JSON-formatted data.
+        serializer_class (ShipmentTypeSerializer): A serializer class that will be used to
+        convert ShipmentType objects to and from JSON-formatted data.
     """
 
-    queryset = models.OrderType.objects.all()
-    serializer_class = serializers.OrderTypeSerializer
+    queryset = models.ShipmentType.objects.all()
+    serializer_class = serializers.ShipmentTypeSerializer
     filterset_fields = ("is_active",)
     permission_classes = [CustomObjectPermissions]
 
-    def get_queryset(self) -> "QuerySet[models.OrderType]":
+    def get_queryset(self) -> "QuerySet[models.ShipmentType]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
@@ -112,14 +112,14 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
     convert the reason code instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by order type by is_active.
+    Filtering is also available, with the ability to filter by shipment type by is_active.
 
     Attributes:
-        queryset (QuerySet): A queryset of OrderType objects that will be used to
-        retrieve and update OrderType objects.
+        queryset (QuerySet): A queryset of ShipmentType objects that will be used to
+        retrieve and update ShipmentType objects.
 
         serializer_class (ReasonCodeSerializer): A serializer class that will be used to
-        convert OrderType objects to and from JSON-formatted data.
+        convert ShipmentType objects to and from JSON-formatted data.
     """
 
     queryset = models.ReasonCode.objects.all()
@@ -141,13 +141,13 @@ class ReasonCodeViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = models.Order.objects.all()
-    serializer_class = serializers.OrderSerializer
+class ShipmentViewSet(viewsets.ModelViewSet):
+    queryset = models.Shipment.objects.all()
+    serializer_class = serializers.ShipmentSerializer
     permission_classes = [CustomObjectPermissions]
     filterset_fields = ("pro_number", "customer")
 
-    def get_queryset(self) -> "QuerySet[models.Order]":
+    def get_queryset(self) -> "QuerySet[models.Shipment]":
         queryset = (
             self.queryset.filter(
                 organization_id=self.request.user.organization_id  # type: ignore
@@ -158,7 +158,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     queryset=models.AdditionalCharge.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
                     )
-                    .only("id", "order_id", "organization_id")
+                    .only("id", "shipment_id", "organization_id")
                     .all(),
                 ),
                 Prefetch(
@@ -166,23 +166,23 @@ class OrderViewSet(viewsets.ModelViewSet):
                     queryset=Movement.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
                     )
-                    .only("id", "order_id", "organization_id")
+                    .only("id", "shipment_id", "organization_id")
                     .all(),
                 ),
                 Prefetch(
-                    lookup="order_documentation",
-                    queryset=models.OrderDocumentation.objects.filter(
+                    lookup="shipment_documentation",
+                    queryset=models.ShipmentDocumentation.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
                     )
-                    .only("id", "order_id", "organization_id")
+                    .only("id", "shipment_id", "organization_id")
                     .all(),
                 ),
                 Prefetch(
-                    lookup="order_comments",
-                    queryset=models.OrderComment.objects.filter(
+                    lookup="shipment_comments",
+                    queryset=models.ShipmentComment.objects.filter(
                         organization_id=self.request.user.organization_id  # type: ignore
                     )
-                    .only("id", "order_id", "organization_id", "created")
+                    .only("id", "shipment_id", "organization_id", "created")
                     .all(),
                 ),
             )
@@ -217,7 +217,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "equipment_type_id",
                 "transferred_to_billing",
                 "ready_to_bill",
-                "order_type_id",
+                "shipment_type_id",
                 "comment",
                 "temperature_max",
                 "destination_location_id",
@@ -231,70 +231,70 @@ class OrderViewSet(viewsets.ModelViewSet):
         return queryset
 
 
-class OrderDocumentationViewSet(viewsets.ModelViewSet):
-    """A viewset for viewing and editing Order documentation in the system.
+class ShipmentDocumentationViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing shipment documentation in the system.
 
-    The viewset provides default operations for creating, updating and deleting order documentation,
-    as well as listing and retrieving Order Documentation. It uses the ``OrderDocumentationSerializer`` class to
-    convert the order documentation instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating and deleting Shipment documentation,
+    as well as listing and retrieving Shipment Documentation. It uses the ``ShipmentDocumentationSerializer`` class to
+    convert the Shipment documentation instances to and from JSON-formatted data.
 
     Attributes:
-        queryset (QuerySet): A queryset of OrderDocumentation objects that will be used to
-        retrieve and update OrderDocumentation objects.
+        queryset (QuerySet): A queryset of ShipmentDocumentation objects that will be used to
+        retrieve and update ShipmentDocumentation objects.
 
-        serializer_class (OrderDocumentationSerializer): A serializer class that will be used to
-        convert OrderDocumentation objects to and from JSON-formatted data.
+        serializer_class (ShipmentDocumentationSerializer): A serializer class that will be used to
+        convert ShipmentDocumentation objects to and from JSON-formatted data.
     """
 
-    queryset = models.OrderDocumentation.objects.all()
-    serializer_class = serializers.OrderDocumentationSerializer
+    queryset = models.ShipmentDocumentation.objects.all()
+    serializer_class = serializers.ShipmentDocumentationSerializer
     permission_classes = [CustomObjectPermissions]
 
-    def get_queryset(self) -> "QuerySet[models.OrderDocumentation]":
+    def get_queryset(self) -> "QuerySet[models.ShipmentDocumentation]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "document",
-            "order_id",
+            "shipment_id",
             "document_class_id",
         )
         return queryset
 
 
-class OrderCommentViewSet(viewsets.ModelViewSet):
-    """A viewset for viewing and editing Order comments in the system.
+class ShipmentCommentViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing Shipment comments in the system.
 
-    The viewset provides default operations for creating, updating and deleting order comments,
-    as well as listing and retrieving Order Comments. It uses the ``OrderCommentSerializer`` class to
-    convert the order comment instances to and from JSON-formatted data.
+    The viewset provides default operations for creating, updating and deleting Shipment comments,
+    as well as listing and retrieving Shipment Comments. It uses the ``ShipmentCommentSerializer`` class to
+    convert the Shipment comment instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by order type by order_type, and entered_by.
+    Filtering is also available, with the ability to filter by shipment type by shipment_type, and entered_by.
 
     Attributes:
-        queryset (QuerySet): A queryset of OrderComment objects that will be used to
-        retrieve and update OrderComment objects.
+        queryset (QuerySet): A queryset of ShipmentComment objects that will be used to
+        retrieve and update ShipmentComment objects.
 
-        serializer_class (OrderCommentSerializer): A serializer class that will be used to
-        convert OrderComment objects to and from JSON-formatted data.
+        serializer_class (ShipmentCommentSerializer): A serializer class that will be used to
+        convert ShipmentComment objects to and from JSON-formatted data.
     """
 
-    queryset = models.OrderComment.objects.all()
-    serializer_class = serializers.OrderCommentSerializer
+    queryset = models.ShipmentComment.objects.all()
+    serializer_class = serializers.ShipmentCommentSerializer
     filterset_fields = (
         "comment_type",
         "entered_by",
     )
     permission_classes = [CustomObjectPermissions]
 
-    def get_queryset(self) -> "QuerySet[models.OrderComment]":
+    def get_queryset(self) -> "QuerySet[models.ShipmentComment]":
         queryset = self.queryset.filter(
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
             "comment",
-            "order_id",
+            "shipment_id",
             "comment_type_id",
             "entered_by_id",
         )
@@ -309,7 +309,7 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
     class to convert the additional charge instances to and from JSON-formatted data.
 
     Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by order type by charge, and entered_by.
+    Filtering is also available, with the ability to filter by shipment type by charge, and entered_by.
 
     Attributes:
         queryset (QuerySet): A queryset of AdditionalCharge objects that will be used to
@@ -333,7 +333,7 @@ class AdditionalChargeViewSet(viewsets.ModelViewSet):
         ).only(
             "id",
             "accessorial_charge_id",
-            "order_id",
+            "shipment_id",
             "description",
             "charge_amount",
             "unit",

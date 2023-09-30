@@ -19,20 +19,20 @@ from django.apps import AppConfig
 from django.db.models.signals import post_save
 
 
-class OrderConfig(AppConfig):
+class ShipmentConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
-    name = "order"
+    name = "shipment"
 
     def ready(self) -> None:
-        from order import signals
+        from shipment import signals
 
         post_save.connect(
-            signals.create_order_initial_movement,
-            sender="order.Order",
-            dispatch_uid="create_order_initial_movement",
+            signals.create_shipment_initial_movement,
+            sender="shipment.Shipment",
+            dispatch_uid="create_shipment_initial_movement",
         )
         post_save.connect(
-            signals.set_order_mileage_and_create_route,
-            sender="order.Order",
-            dispatch_uid="set_order_mileage_and_create_route",
+            signals.set_shipment_mileage_and_create_route,
+            sender="shipment.Shipment",
+            dispatch_uid="set_shipment_mileage_and_create_route",
         )

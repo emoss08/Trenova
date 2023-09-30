@@ -37,12 +37,12 @@ from integration import api as integration_api
 from invoicing import api as invoicing_api
 from location import api as location_api
 from movements import api as movement_api
-from order import api as order_api
 from organization import api as org_api
 from plugin import api as plugin_api
 from reports import api as reports_api
 from reports import views as reports_views
 from route import api as route_api
+from shipment import api as shipment_api
 from stops import api as stops_api
 from worker import api as worker_api
 
@@ -252,22 +252,32 @@ router.register(
 )
 router.register(r"stops", stops_api.StopViewSet, basename="stops")
 
-# Order Routing
+# shipment Routing
 router.register(
-    r"order_control", order_api.OrderControlViewSet, basename="order-control"
-)
-router.register(r"order_types", order_api.OrderTypeViewSet, basename="order-types")
-router.register(r"reason_codes", order_api.ReasonCodeViewSet, basename="reason-codes")
-router.register(r"orders", order_api.OrderViewSet, basename="orders")
-router.register(
-    r"order_documents", order_api.OrderDocumentationViewSet, basename="order-documents"
+    r"shipment_control",
+    shipment_api.ShipmentControlViewSet,
+    basename="shipment-control",
 )
 router.register(
-    r"order_comments", order_api.OrderCommentViewSet, basename="order-comments"
+    r"shipment_types", shipment_api.ShipmentTypeViewSet, basename="shipment-types"
+)
+router.register(
+    r"reason_codes", shipment_api.ReasonCodeViewSet, basename="reason-codes"
+)
+router.register(r"shipments", shipment_api.ShipmentViewSet, basename="shipments")
+router.register(
+    r"shipment_documents",
+    shipment_api.ShipmentDocumentationViewSet,
+    basename="shipment-documents",
+)
+router.register(
+    r"shipment_comments",
+    shipment_api.ShipmentCommentViewSet,
+    basename="shipment-comments",
 )
 router.register(
     r"additional_charges",
-    order_api.AdditionalChargeViewSet,
+    shipment_api.AdditionalChargeViewSet,
     basename="additional-charges",
 )
 
@@ -333,9 +343,13 @@ urlpatterns = [
         name="me",
     ),
     path("api/system_health/", org_api.health_check, name="system-health"),
-    path("api/bill_invoice/", billing_api.bill_invoice_view, name="bill-order"),
+    path("api/bill_invoice/", billing_api.bill_invoice_view, name="bill-shipment"),
     path("api/active_triggers/", org_api.active_triggers, name="active-triggers"),
-    path("api/mass_bill_orders/", billing_api.mass_order_bill, name="bill-order"),
+    path(
+        "api/mass_bill_shipments/",
+        billing_api.mass_shipments_bill,
+        name="bill-shipment",
+    ),
     path("api/active_sessions/", org_api.active_sessions, name="active-sessions"),
     path("api/active_threads/", org_api.active_threads, name="active-threads"),
     path(
@@ -367,7 +381,7 @@ urlpatterns = [
     ),
     path(
         "api/untransfer_invoice/",
-        billing_api.untransfer_orders,
+        billing_api.untransfer_shipment,
         name="untransfer-invoice",
     ),
     path(
@@ -386,9 +400,9 @@ urlpatterns = [
         name="user-notifications",
     ),
     path(
-        "api/billing/orders_ready/",
-        billing_api.get_orders_ready,
-        name="get-orders-ready",
+        "api/billing/shipments_ready/",
+        billing_api.get_shipments_ready,
+        name="get-shipments-ready",
     ),
     path(
         "api/sessions/kick/",

@@ -43,7 +43,7 @@ class MovementViewSet(viewsets.ModelViewSet):
         "tractor",
         "primary_worker__code",
         "secondary_worker__code",
-        "order__pro_number",
+        "shipment__pro_number",
     )
     permission_classes = [CustomObjectPermissions]
 
@@ -52,7 +52,7 @@ class MovementViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "id",
-            "order_id",
+            "shipment_id",
             "ref_num",
             "status",
             "secondary_worker_id",

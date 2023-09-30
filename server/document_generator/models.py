@@ -59,7 +59,7 @@ class DocumentTemplate(GenericModel):
     )
     content = models.TextField(
         verbose_name=_("Content"),
-        help_text="The template content with custom syntax (e.g., {invoice.order.pro_number}).",
+        help_text="The template content with custom syntax (e.g., {invoice.shipment.pro_number}).",
     )
     document_classification = models.OneToOneField(
         to="billing.DocumentClassification",
@@ -175,7 +175,7 @@ class DocumentTemplateVersion(GenericModel):
     )
     content = models.TextField(
         verbose_name=_("Content"),
-        help_text="The template content with custom syntax (e.g., {invoice.order.pro_number}).",
+        help_text="The template content with custom syntax (e.g., {invoice.shipment.pro_number}).",
     )
     created_at = models.DateTimeField(
         verbose_name=_("Created At"),
@@ -243,7 +243,7 @@ class TemplateField(GenericModel):
         unique=True,
     )
     name = models.CharField(
-        max_length=255, help_text="Name of the field (e.g., order.pro_number)."
+        max_length=255, help_text="Name of the field (e.g., shipment.pro_number)."
     )
     label = models.CharField(
         max_length=255, help_text="Display name (e.g., 'Order Pro Number')."

@@ -38,7 +38,7 @@ class DispatchControl(GenericModel):
     The DispatchControl model stores dispatch control information for a related organization. It is used to store
         information such as the record service incident control, grace period, deadhead target,
         driver assign, trailer continuity, distance method, duplicate trailer check, regulatory check,
-        prevention of orders on hold, and the generation of routes.
+        prevention of shipments on hold, and the generation of routes.
 
     Attributes:
         id (UUIDField): Primary key and default value is a randomly generated UUID. Editable and unique.
@@ -51,7 +51,7 @@ class DispatchControl(GenericModel):
             incident in minutes. Default value is 0.
         deadhead_target (DecimalField): Decimal field that stores the deadhead target mileage for the company. Default
             value is 0.00.
-        driver_assign (BooleanField): Boolean field that enforces driver assign to orders for the company. Default
+        driver_assign (BooleanField): Boolean field that enforces driver assign to shipments for the company. Default
             value is True.
         trailer_continuity (BooleanField): Boolean field that enforces trailer continuity for the company. Default
             value is False.
@@ -59,7 +59,7 @@ class DispatchControl(GenericModel):
             Default value is False.
         regulatory_check (BooleanField): Boolean field that enforces the regulatory check for the company. Default
             value is False.
-        prev_orders_on_hold (BooleanField): Boolean field that prevents dispatch of orders on hold for the company.
+        prev_shipments_on_hold (BooleanField): Boolean field that prevents dispatch of shipments on hold for the company.
             Default value is False.
 
     Methods:
@@ -115,7 +115,7 @@ class DispatchControl(GenericModel):
     driver_assign = models.BooleanField(
         _("Enforce Driver Assign"),
         default=True,
-        help_text=_("Enforce driver assign to orders for the company."),
+        help_text=_("Enforce driver assign to shipments for the company."),
     )
     trailer_continuity = models.BooleanField(
         _("Enforce Trailer Continuity"),
@@ -132,10 +132,10 @@ class DispatchControl(GenericModel):
         default=False,
         help_text=_("Enforce regulatory check for the company."),
     )
-    prev_orders_on_hold = models.BooleanField(
-        _("Prevent Orders On Hold"),
+    prev_shipments_on_hold = models.BooleanField(
+        _("Prevent shipments On Hold"),
         default=False,
-        help_text=_("Prevent dispatch of orders on hold for the company."),
+        help_text=_("Prevent dispatch of shipments on hold for the company."),
     )
     driver_time_away_restriction = models.BooleanField(
         _("Enforce Driver Time Away"),
@@ -454,7 +454,7 @@ class CommentType(GenericModel):
 
 class Rate(GenericModel):
     """Django model representing a Rate. This model stores information about the rates for a related customer,
-    commodity, order type, and equipment type.
+    commodity, shipment type, and equipment type.
 
     Attributes:
         id (UUIDField): Primary key and default value is a randomly generated UUID. Not editable and unique.
@@ -463,7 +463,7 @@ class Rate(GenericModel):
         effective_date (DateField): The date when the rate becomes effective.
         expiration_date (DateField): The date when the rate expires.
         commodity (ForeignKey): A foreign key to the commodity model, with a related name of "rates".
-        order_type (ForeignKey): A foreign key to the order type model, with a related name of "rates".
+        shipment_type (ForeignKey): A foreign key to the shipment type model, with a related name of "rates".
         equipment_type (ForeignKey): A foreign key to the equipment type model, with a related name of "rates".
         comments (TextField): Comments about the rate.
 
@@ -534,10 +534,10 @@ class Rate(GenericModel):
         blank=True,
         help_text=_("Commodity for Rate"),
     )
-    order_type = models.ForeignKey(
-        "order.OrderType",
+    shipment_type = models.ForeignKey(
+        "shipment.ShipmentType",
         on_delete=models.SET_NULL,
-        verbose_name=_("Order Type"),
+        verbose_name=_("shipment type"),
         related_name="rates",
         null=True,
         blank=True,
@@ -673,7 +673,7 @@ class Rate(GenericModel):
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        if code := cls.objects.order_by("-rate_number").first():
+        if code := cls.objects.shipment_by("-rate_number").first():
             return f"R{int(code.rate_number[1:]) + 1:05d}"
         return "R00001"
 

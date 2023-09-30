@@ -79,6 +79,6 @@ class BillingQueueFactory(factory.django.DjangoModelFactory):
         model = "billing.BillingQueue"
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
-    order = factory.SubFactory("order.tests.factories.OrderFactory")
+    shipment = factory.SubFactory("shipment.tests.factories.shipmentFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     customer = factory.SubFactory("customer.factories.CustomerFactory")

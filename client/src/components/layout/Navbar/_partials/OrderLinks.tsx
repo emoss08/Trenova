@@ -16,73 +16,68 @@
  */
 
 import React from "react";
-import { faTruck } from "@fortawesome/pro-duotone-svg-icons";
+import { faBoxTaped } from "@fortawesome/pro-duotone-svg-icons";
 import {
   LinksGroup,
   LinksGroupProps,
 } from "@/components/layout/Navbar/_partials/LinksGroup";
 
-/** Links for Dispatch Navigation Menu */
-export const dispatchNavLinks = [
+/** Links for Shipment Navigation Menu */
+export const shipmentNavLinks = [
   {
-    label: "Dispatch",
-    icon: faTruck,
-    link: "/",
-    permission: "view_dispatch",
+    label: "Shipment Management",
+    icon: faBoxTaped,
+    link: "#",
     links: [
       {
-        label: "Rate Management",
-        link: "/dispatch/rate-management/",
+        label: "Shipment Management",
+        link: "/shipment-management/",
+        permission: "view_order",
+      },
+      {
+        label: "Shipment Controls",
+        link: "/admin/control-files#order-controls/",
+        permission: "view_ordercontrol",
       },
       {
         label: "Configuration Files",
         link: "#",
         subLinks: [
           {
-            label: "Comment Type",
-            link: "/dispatch/comment-types/",
-            permission: "view_commenttype",
+            label: "Formula Templates",
+            link: "/order/formula-template/",
+            permission: "view_formulatemplate",
           },
           {
-            label: "Delay Codes",
-            link: "/dispatch/delay-codes/",
-            permission: "view_delaycode",
+            label: "Shipment Types",
+            link: "/shipment-management/order-types/",
+            permission: "view_ordertype",
           },
           {
-            label: "Fleet Codes",
-            link: "/dispatch/fleet-codes/",
-            permission: "view_fleetcode",
+            label: "Movements",
+            link: "/shipment-management/movements/",
+            permission: "view_movement",
           },
           {
-            label: "Locations",
-            link: "/dispatch/locations/",
-            permission: "view_location",
+            label: "Qualifier Codes",
+            link: "/shipment-management/qualifier-codes/",
+            permission: "view_qualifiercode",
           },
           {
-            label: "Routes",
-            link: "/dispatch/routes/",
-            permission: "view_route",
-          },
-          {
-            label: "Route Control",
-            link: "/admin/control-files#route-controls",
-            permission: "view_routecontrol",
-          },
-          {
-            label: "Locations Categories",
-            link: "/dispatch/locations-categories/",
-            permission: "view_locationcategory",
+            label: "Reason Codes",
+            link: "/shipment-management/reason-codes/",
+            permission: "view_reasoncode",
           },
         ],
       },
     ],
   },
-] as LinksGroupProps[];
+] satisfies LinksGroupProps[];
 
-export function DispatchLinks() {
-  const dispatchLinks = dispatchNavLinks.map((item) => (
+export function ShipmentLinks() {
+  const links = shipmentNavLinks.map((item) => (
     <LinksGroup {...item} key={item.label} />
   ));
 
-  return <>{dispatchLinks}</>;
+  return <>{links}</>;
 }

@@ -32,14 +32,14 @@ from accounts.models import User
 from billing import exceptions, models, selectors, utils
 from billing.exceptions import InvalidSessionKeyError
 from billing.models import BillingQueue
-from order.models import Order
+from shipment.models import Shipment
 from utils.helpers import get_pk_value
 from utils.services.pdf import UUIDEncoder
 from utils.types import (
-    BilledOrders,
     BillingClientActions,
     BillingClientSessionResponse,
     ModelUUID,
+    BilledShipments
 )
 
 logger = logging.getLogger("billing_client")
@@ -52,9 +52,9 @@ def generate_invoice_number(
     for credit memos.
 
     The invoice number generated depends on 3 cases:
-        - When the `is_credit_memo` is True, it re-uses the latest invoice number of the order
+        - When the `is_credit_memo` is True, it re-uses the latest invoice number of the shipment
           associated with the provided `BillingQueue` instance.
-        - When the order associated with the provided `BillingQueue` instance already exists in
+        - When the shipment associated with the provided `BillingQueue` instance already exists in
           the billing queue and has a current suffix, the function adds a new suffix (or extends it
           in case the suffixes list is exceeded) to the base invoice number.
         - When none of the above cases apply, the function sets the `BillingQueue` instance's
@@ -68,36 +68,36 @@ def generate_invoice_number(
         str: The generated invoice number.
     """
     prefix = instance.organization.invoice_control.invoice_number_prefix
-    order = instance.order
+    shipment = instance.shipment
     suffixes = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
     # Remove 'ORD' from pro_number
-    pro_number = order.pro_number.replace("ORD", "")
+    pro_number = shipment.pro_number.replace("ORD", "")
 
     base_invoice_number = f"{prefix}{pro_number}"
 
     if is_credit_memo:
         # Here we are re-using the latest invoice number for the credit memo
-        latest_invoice = order.billing_queue.latest("created")
+        latest_invoice = shipment.billing_queue.latest("created")
         instance.invoice_number = latest_invoice.invoice_number
-    elif order.billing_queue.exists():
-        if order.current_suffix:
+    elif shipment.billing_queue.exists():
+        if shipment.current_suffix:
             # Get the next suffix in the list
-            next_suffix_index = (suffixes.index(order.current_suffix) + 1) % len(
+            next_suffix_index = (suffixes.index(shipment.current_suffix) + 1) % len(
                 suffixes
             )
             next_suffix = suffixes[next_suffix_index]
 
             # Handle the case when the suffix exceeds the list
             if next_suffix_index == 0:
-                order.current_suffix += suffixes[0]
+                shipment.current_suffix += suffixes[0]
             else:
-                order.current_suffix = next_suffix
+                shipment.current_suffix = next_suffix
         else:
-            order.current_suffix = "A"
-        order.save()
+            shipment.current_suffix = "A"
+        shipment.save()
 
-        instance.invoice_number = f"{base_invoice_number}{order.current_suffix}"
+        instance.invoice_number = f"{base_invoice_number}{shipment.current_suffix}"
     else:
         instance.invoice_number = base_invoice_number
 
@@ -106,26 +106,26 @@ def generate_invoice_number(
 
 @transaction.atomic
 def transfer_to_billing_queue_service(
-    *, user_id: "ModelUUID", order_pros: list[str], task_id: str
+    *, user_id: "ModelUUID", shipment_pros: list[str], task_id: str
 ) -> str:
-    """Atomically transfers eligible orders to the billing queue, logs the transfer,
+    """Atomically transfers eligible shipments to the billing queue, logs the transfer,
     and returns a success message. If any part of the operation fails, all changes are rolled back.
 
     Args:
-        user_id (ModelUUID): The ID of the user transferring the orders.
-        order_pros (List[str]): A list of order PRO numbers to be transferred.
+        user_id (ModelUUID): The ID of the user transferring the shipments.
+        shipment_pros (List[str]): A list of shipment PRO numbers to be transferred.
         task_id (str): The ID of the task that initiated the transfer.
 
     Returns:
-        str: A message indicating the success of the transfer and the number of orders transferred.
+        str: A message indicating the success of the transfer and the number of shipments transferred.
 
     Raises:
-        exceptions.BillingException: If no eligible orders are found for transfer or if an error occurs
-            while transferring an order. In case of an error, the transaction is aborted, ensuring that
-            no orders are transferred if there's a problem with any of them.
+        exceptions.BillingException: If no eligible shipments are found for transfer or if an error occurs
+            while transferring a shipment. In case of an error, the transaction is aborted, ensuring that
+            no shipments are transferred if there's a problem with any of them.
 
-    Time Complexity: O(n), where n is the number of orders. The main operations (creating BillingQueue
-        objects, updating Order objects, and creating BillingTransferLog objects) are performed for each order.
+    Time Complexity: O(n), where n is the number of shipments. The main operations (creating BillingQueue
+        objects, updating shipment objects, and creating BillingTransferLog objects) are performed for each shipment.
         However, these operations are managed efficiently using bulk operations.
     """
     # Get the user
@@ -133,74 +133,75 @@ def transfer_to_billing_queue_service(
 
     billing_control = user.organization.billing_control
 
-    # Get the billable orders
-    orders = selectors.get_billable_orders(
-        organization=user.organization, order_pros=order_pros
+    # Get the billable shipments
+    shipments = selectors.get_billable_shipments(
+        organization=user.organization, shipment_pros=shipment_pros
     )
 
-    # If there are no orders, raise an BillingException
-    if not orders:
+    # If there are no shipments, raise an BillingException
+    if not shipments:
         raise exceptions.BillingException(
-            f"No orders found to be eligible for transfer. Orders must be marked {billing_control.order_transfer_criteria}"
+            f"No shipments found to be eligible for transfer. shipments must be marked "
+            f"{billing_control.shipment_transfer_criteria}"
         )
 
     # Get the current time
     now = timezone.now()
 
-    # Loop through the orders and create a BillingQueue object for each
-    for order in orders:
+    # Loop through the shipments and create a BillingQueue object for each
+    for shipment in shipments:
         try:
             # Create a BillingQueue object
             models.BillingQueue.objects.create(
-                organization=order.organization,
-                order=order,
-                customer=order.customer,
-                business_unit=order.business_unit,
+                organization=shipment.organization,
+                shipment=shipment,
+                customer=shipment.customer,
+                business_unit=shipment.business_unit,
             )
 
             # Update the order
-            order.transferred_to_billing = True
-            order.billing_transfer_date = now
+            shipment.transferred_to_billing = True
+            shipment.billing_transfer_date = now
 
             # Create a BillingLogEntry object
             models.BillingLogEntry.objects.create(
-                content_type=ContentType.objects.get_for_model(order),
+                content_type=ContentType.objects.get_for_model(shipment),
                 task_id=task_id,
-                organization=order.organization,
-                business_unit=order.business_unit,
-                order=order,
-                customer=order.customer,
+                organization=shipment.organization,
+                business_unit=shipment.business_unit,
+                shipment=shipment,
+                customer=shipment.customer,
                 action="TRANSFERRED",
                 actor=user,
-                object_pk=get_pk_value(instance=order),
+                object_pk=get_pk_value(instance=shipment),
             )
 
         except* ValidationError as val_error:
             utils.create_billing_exception(
                 user=user,
                 exception_type="OTHER",
-                invoice=order,
-                exception_message=f"Order {order.pro_number} failed to transfer to billing queue: {val_error}",
+                invoice=shipment,
+                exception_message=f"shipment {shipment.pro_number} failed to transfer to billing queue: {val_error}",
             )
         except* IntegrityError as int_error:
             utils.create_billing_exception(
                 user=user,
                 exception_type="OTHER",
-                invoice=order,
-                exception_message=f"Order {order.pro_number} already exists and must be un-transferred: {int_error}",
+                invoice=shipment,
+                exception_message=f"shipment {shipment.pro_number} already exists and must be un-transferred: {int_error}",
             )
 
-    # Bulk update the orders
-    Order.objects.bulk_update(
-        orders, ["transferred_to_billing", "billing_transfer_date"]
+    # Bulk update the shipments
+    Shipment.objects.bulk_update(
+        shipments, ["transferred_to_billing", "billing_transfer_date"]
     )
 
     # Return a success message
-    return f"Successfully transferred {len(orders)} orders to billing queue."
+    return f"Successfully transferred {len(shipments)} shipments to billing queue."
 
 
-def mass_order_billing_service(*, user_id: "ModelUUID", task_id: str) -> None:
-    """Process the billing for multiple orders.
+def mass_shipments_billing_service(*, user_id: "ModelUUID", task_id: str) -> None:
+    """Process the billing for multiple shipments.
 
     Args:
         user_id (ModelUUID): The ID of the user initiating the mass billing.
@@ -211,18 +212,18 @@ def mass_order_billing_service(*, user_id: "ModelUUID", task_id: str) -> None:
     """
 
     user: User = get_object_or_404(User, id=user_id)
-    orders = selectors.get_billing_queue(user=user, task_id=task_id)
-    bill_orders(user_id=user_id, invoices=orders, task_id=task_id)
+    shipments = selectors.get_billing_queue(user=user, task_id=task_id)
+    bill_shipments(user_id=user_id, invoices=shipments, task_id=task_id)
 
 
 @transaction.atomic
-def bill_orders(
+def bill_shipments(
     *,
     user_id: "ModelUUID",
     invoices: QuerySet[models.BillingQueue] | models.BillingQueue,
     task_id: str,
-) -> BilledOrders:
-    """Bill given orders coming from the users and logs the operation into
+) -> BilledShipments:
+    """Bill given shipments coming from the users and logs the operation into
     the system. It performs various checks to ensure that the billing
     requirements are met and then carries out the billing operation.
 
@@ -249,7 +250,7 @@ def bill_orders(
     """
     user = get_object_or_404(User, id=user_id)
     billed_invoices = []
-    order_missing_info = []
+    shipment_missing_info = []
 
     # If invoices is a BillingQueue object, convert it to a list
     if isinstance(invoices, models.BillingQueue):
@@ -268,7 +269,7 @@ def bill_orders(
             task_id=task_id,
             organization=entry.organization,
             business_unit=entry.business_unit,
-            order=entry.order,
+            shipment=entry.shipment,
             invoice_number=entry.invoice_number,
             customer=entry.customer,
             action="BILLED",
@@ -281,7 +282,7 @@ def bill_orders(
 
     # Loop through the invoices and bill them
     for invoice in invoices:
-        bill_order = False
+        bill_shipments = False
         if organization_enforces_billing:
             # If the organization enforces customer billing requirements, check the requirements
             _, missing_documents = utils.check_billing_requirements(
@@ -289,27 +290,27 @@ def bill_orders(
             )
             # Append missing_documents only when it is not empty
             if missing_documents:
-                order_missing_info.append(missing_documents)
+                shipment_missing_info.append(missing_documents)
             else:
-                bill_order = True
+                bill_shipments = True
 
         else:
-            bill_order = True
+            bill_shipments = True
 
-        if bill_order:
+        if bill_shipments:
             # If the customer billing requirements are met or not enforced, bill the order
             _create_log_entry(entry=invoice, user=user, task_id=task_id)
 
-            # Call the order_billing_actions function to bill the order
-            # Do not move create_log_entry below, as order_billing_actions
-            # deletes the order from the BillingQueue, causing it to not have a primary key
-            utils.order_billing_actions(invoice=invoice, user=user)
+            # Call the shipment_billing_actions function to bill the order
+            # Do not move create_log_entry below, as shipment_billing_actions
+            # deletes the shipment from the BillingQueue, causing it to not have a primary key
+            utils.shipment_billing_actions(invoice=invoice, user=user)
             billed_invoices.append(invoice.invoice_number)
 
-    return order_missing_info, billed_invoices
+    return shipment_missing_info, billed_invoices
 
 
-def untransfer_order_service(
+def untransfer_shipment_service(
     *,
     invoices: QuerySet[models.BillingQueue],
     task_id: str,
@@ -333,9 +334,9 @@ def untransfer_order_service(
     log_entries = []
 
     for invoice in invoices:
-        invoice.order.transferred_to_billing = False
-        invoice.order.billing_transfer_date = None
-        invoice.order.save()
+        invoice.shipment.transferred_to_billing = False
+        invoice.shipment.billing_transfer_date = None
+        invoice.shipment.save()
 
         # Create a BillingLogEntry object
         log_entries.append(
@@ -344,7 +345,7 @@ def untransfer_order_service(
                 task_id=task_id,
                 organization=invoice.organization,
                 business_unit=invoice.business_unit,
-                order=invoice.order,
+                shipment=invoice.shipment,
                 customer=invoice.customer,
                 action="BILLED",
                 actor=user,
@@ -359,26 +360,26 @@ def untransfer_order_service(
     models.BillingLogEntry.objects.bulk_create(log_entries)
 
 
-def ready_to_bill_service(order: QuerySet[Order]) -> None:
-    """Automatically set orders ready to bill, if order passes billing requirement check.
+def ready_to_bill_service(shipments: QuerySet[Shipment]) -> None:
+    """Automatically set orders ready to bill, if shipment passes billing requirement check.
 
     Args:
-        order (QuerySet[Order]): Order Queryset
+        shipments (QuerySet[Shipment]): Order Queryset
 
     Returns:
         None: This function does not return anything.
     """
-    for order in order:
-        organization = order.organization
+    for shipment in shipments:
+        organization = shipment.organization
 
         if organization.billing_control.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(user=order.created_by, invoice=order):
-                order.ready_to_bill = True
-                order.save()
-        elif order.customer.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(user=order.created_by, invoice=order):
-                order.ready_to_bill = True
-                order.save()
+            if utils.check_billing_requirements(user=shipment.created_by, invoice=shipment):
+                shipment.ready_to_bill = True
+                shipment.save()
+        elif shipment.customer.auto_mark_ready_to_bill:
+            if utils.check_billing_requirements(user=shipment.created_by, invoice=shipment):
+                shipment.ready_to_bill = True
+                shipment.save()
 
 
 class BillingClientSessionManager:

@@ -39,7 +39,7 @@ class BillingQueueAdmin(GenericAdmin[BillingQueue]):
 
     model: type[BillingQueue] = BillingQueue
     list_display = (
-        "order",
+        "shipment",
         "bol_number",
         "invoice_number",
         "bill_type",
@@ -55,11 +55,11 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
 
     model: type[BillingHistory] = BillingHistory
     list_display = (
-        "order",
+        "shipment",
         "bol_number",
         "invoice_number",
     )
-    search_fields = ("invoice_number", "order", "bol_number")
+    search_fields = ("invoice_number", "shipment", "bol_number")
 
     def has_change_permission(
         self, request: HttpRequest, obj: BillingHistory | None = None
@@ -159,12 +159,12 @@ class BillingExceptionAdmin(GenericAdmin[BillingException]):
 
     model = BillingException
     list_display = (
-        "order",
+        "shipment",
         "exception_type",
     )
     search_fields = (
         "exception_type",
-        "order",
+        "shipment",
     )
 
 
@@ -175,8 +175,8 @@ class BillingControlAdmin(GenericAdmin[BillingControl]):
     """
 
     model: type[BillingControl] = BillingControl
-    list_display = ("organization", "auto_bill_orders")
-    search_fields = ("organization", "auto_bill_orders")
+    list_display = ("organization", "auto_bill_shipment")
+    search_fields = ("organization", "auto_bill_shipment")
 
 
 @admin.register(DocumentClassification)

@@ -230,7 +230,7 @@ class RateSerializer(GenericSerializer):
     """Serializer class for the Rate model.
 
     This class extends the `GenericSerializer` class and serializes the `Rate` model,
-    including fields for the related `Customer`, `Commodity`, `OrderType`, and `EquipmentType` models.
+    including fields for the related `Customer`, `Commodity`, `ShipmentType`, and `EquipmentType` models.
     """
 
     rate_billing_tables = RateBillingTableSerializer(many=True, required=False)

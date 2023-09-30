@@ -26,35 +26,35 @@ from utils.models import StatusChoices
 
 if TYPE_CHECKING:
     from accounts.models import User
-    from order.models import Order
     from organization.models import Organization
     from utils.types import ModelUUID
+    from shipment.models import Shipment
 
 
-def get_billable_orders(
-    *, organization: "Organization", order_pros: list[str] | None = None
-) -> QuerySet["Order"] | None:
-    """Retrieve billable orders for a given organization based on specified criteria.
+def get_billable_shipments(
+    *, organization: "Organization", shipment_pros: list[str] | None = None
+) -> QuerySet["Shipment"] | None:
+    """Retrieve billable shipments for a given organization based on specified criteria.
 
     Args:
-        organization (Organization): The organization for which to retrieve billable orders.
-        order_pros (List[str] | None, optional): A list of order PRO numbers to filter by, if specified.
+        organization (Organization): The organization for which to retrieve billable shipments.
+        shipment_pros (List[str] | None, optional): A list of shipment PRO numbers to filter by, if specified.
             Defaults to None.
 
     Returns:
-        QuerySet[Order] | None: A queryset of billable orders, or None if no billable orders are found.
+        QuerySet[Shipment] | None: A queryset of billable shipments, or None if no billable shipments are found.
     """
 
-    # Map BillingControl.OrderTransferCriteriaChoices to the corresponding query
+    # Map BillingControl.shipmentTransferCriteriaChoices to the corresponding query
     criteria_to_query = {
-        models.BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED: Q(
+        models.BillingControl.ShipmentTransferCriteriaChoices.READY_AND_COMPLETED: Q(
             status=StatusChoices.COMPLETED
         )
         & Q(ready_to_bill=True),
-        models.BillingControl.OrderTransferCriteriaChoices.COMPLETED: Q(
+        models.BillingControl.ShipmentTransferCriteriaChoices.COMPLETED: Q(
             status=StatusChoices.COMPLETED
         ),
-        models.BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL: Q(
+        models.BillingControl.ShipmentTransferCriteriaChoices.READY_TO_BILL: Q(
             ready_to_bill=True
         ),
     }
@@ -64,32 +64,34 @@ def get_billable_orders(
         & Q(transferred_to_billing=False)
         & Q(billing_transfer_date__isnull=True)
     )
-    order_criteria_query: Q | None = criteria_to_query.get(
-        organization.billing_control.order_transfer_criteria
+    shipment_criteria_query: Q | None = criteria_to_query.get(
+        organization.billing_control.shipment_transfer_criteria
     )
 
-    if order_criteria_query is not None:
-        query &= order_criteria_query
+    if shipment_criteria_query is not None:
+        query &= shipment_criteria_query
 
-    if order_pros:
-        query &= Q(pro_number__in=order_pros)
+    if shipment_pros:
+        query &= Q(pro_number__in=shipment_pros)
 
-    orders = organization.orders.filter(query)
+    shipments = organization.shipments.filter(query)
 
-    return orders if orders.exists() else None
+    return shipments if shipments.exists() else None
 
 
-def get_billing_queue_information(*, order: "Order") -> models.BillingQueue | None:
-    """Retrieve the most recent billing queue information for a given order.
+def get_billing_queue_information(
+    *, shipment: "Shipment"
+) -> models.BillingQueue | None:
+    """Retrieve the most recent billing queue information for a given shipment.
 
     Args:
-        order (Order): The order for which to retrieve billing queue information.
+        shipment (Shipment): The shipment for which to retrieve billing queue information.
 
     Returns:
         models.BillingQueue | None: The most recent BillingQueue instance for the given order,
             or None if no billing queue information is found.
     """
-    return models.BillingQueue.objects.filter(order=order).last()
+    return models.BillingQueue.objects.filter(shipment=shipment).last()
 
 
 def get_billing_queue(
@@ -111,8 +113,8 @@ def get_billing_queue(
             organization=user.organization,
             recipient=user,
             level="info",
-            verb="Order Billing Exception",
-            description=f"No Orders in the billing queue for task: {task_id}",
+            verb="shipment Billing Exception",
+            description=f"No shipments in the billing queue for task: {task_id}",
         )
     return billing_queue
 

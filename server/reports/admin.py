@@ -48,7 +48,7 @@ class ReportColumnAdmin(GenericTabularInline[models.ReportColumn, models.CustomR
                 "fields": (
                     "custom_report",
                     "column_name",
-                    "column_order",
+                    "column_shipment",
                 )
             },
         ),

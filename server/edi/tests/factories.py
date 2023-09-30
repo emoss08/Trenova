@@ -82,7 +82,7 @@ class EDISegmentFactory(factory.django.DjangoModelFactory):
             )
 
         # Create fields for each segment based on number of %s in parser.
-        # Pick random fields from BillingQueue model, and order model.
+        # Pick random fields from BillingQueue model, and shipment model.
         for segment in models.EDISegment.objects.all():
             if segment.parser.count("%s") > 0:
                 for i in range(segment.parser.count("%s")):
@@ -91,7 +91,7 @@ class EDISegmentFactory(factory.django.DjangoModelFactory):
                         organization=kwargs["organization"],
                         data_type=kwargs["data_type"],
                         edi_segment=segment,
-                        model_field="order.pieces",
+                        model_field="shipment.pieces",
                         position=i,
                     )
 

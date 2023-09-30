@@ -18,21 +18,21 @@
 from typing import Any
 
 from movements.models import Movement
-from order import models, services
-from route.services import get_order_mileage
+from route.services import get_shipment_mileage
+from shipment import models, services
 
 
-def create_order_initial_movement(
-    instance: models.Order, created: bool, **kwargs: Any
+def create_shipment_initial_movement(
+    instance: models.Shipment, created: bool, **kwargs: Any
 ) -> None:
-    """Create the initial movement of an Order model instance.
+    """Create the initial movement of an shipment model instance.
 
-    This function is called as a signal when an Order model instance is saved.
-    If the order does not have any associated Movement model instances, it creates
+    This function is called as a signal when an shipment model instance is saved.
+    If the shipment does not have any associated Movement model instances, it creates
     the initial movement using the MovementService.
 
     Args:
-        instance (models.Order): The instance of the Order model being saved.
+        instance (models.Shipment): The instance of the shipment model being saved.
         created (bool): True if a new record was created, False otherwise.
         **kwargs: Additional keyword arguments.
 
@@ -42,23 +42,25 @@ def create_order_initial_movement(
     if not created:
         return
 
-    if not Movement.objects.filter(order=instance).exists():
-        services.create_initial_movement(order=instance)
+    if not Movement.objects.filter(shipment=instance).exists():
+        services.create_initial_movement(shipment=instance)
 
 
-def set_order_mileage_and_create_route(instance: models.Order, **kwargs: Any) -> None:
-    """Set the mileage for an order and create a route.
+def set_shipment_mileage_and_create_route(
+    instance: models.Shipment, **kwargs: Any
+) -> None:
+    """Set the mileage for an shipment and create a route.
 
-    This function is called as a signal when an Order model instance is saved.
-    If the order has an origin and destination location, it sets the mileage
-    for the order and creates a route using the generate_route().
+    This function is called as a signal when an shipment model instance is saved.
+    If the shipment has an origin and destination location, it sets the mileage
+    for the shipment and creates a route using the generate_route().
 
     Args:
-        instance (models.Order): The instance of the Order model being saved.
+        instance (models.Shipment): The instance of the shipment model being saved.
         **kwargs (Any): Additional keyword arguments.
 
     Returns:
         None: This function does not return anything.
     """
     if instance.origin_location and instance.destination_location:
-        instance.mileage = get_order_mileage(order=instance)
+        instance.mileage = get_shipment_mileage(shipment=instance)

@@ -17,42 +17,44 @@
 
 from django.contrib import admin
 
-from order import models
+from shipment import models
 from utils.admin import GenericAdmin, GenericStackedInline
 
 
-class OrderDocumentationInline(
-    GenericStackedInline[models.OrderDocumentation, models.Order]
+class ShipmentDocumentationInline(
+    GenericStackedInline[models.ShipmentDocumentation, models.Shipment]
 ):
     """
-    Order documentation inline
+    shipment documentation inline
     """
 
-    model: type[models.OrderDocumentation] = models.OrderDocumentation
+    model: type[models.ShipmentDocumentation] = models.ShipmentDocumentation
 
 
-class OrderCommentInline(GenericStackedInline[models.OrderComment, models.Order]):
+class ShipmentCommentInline(
+    GenericStackedInline[models.ShipmentComment, models.Shipment]
+):
     """
-    Order comment inline
+    shipment comment inline
     """
 
-    model: type[models.OrderComment] = models.OrderComment
+    model: type[models.ShipmentComment] = models.ShipmentComment
 
 
 class AdditionalChargeInline(
-    GenericStackedInline[models.AdditionalCharge, models.Order]
+    GenericStackedInline[models.AdditionalCharge, models.Shipment]
 ):
     """
-    Order Additional Charge inline
+    shipment Additional Charge inline
     """
 
     model: type[models.AdditionalCharge] = models.AdditionalCharge
 
 
-@admin.register(models.OrderType)
-class OrderTypeAdmin(GenericAdmin[models.OrderType]):
+@admin.register(models.ShipmentType)
+class ShipmentTypeAdmin(GenericAdmin[models.ShipmentType]):
     """
-    Order Type Admin
+    shipment type Admin
     """
 
     list_display = (
@@ -75,23 +77,23 @@ class ReasonCodeAdmin(GenericAdmin[models.ReasonCode]):
     search_fields = ("code", "description")
 
 
-@admin.register(models.OrderControl)
-class OrderControlAdmin(GenericAdmin[models.OrderControl]):
+@admin.register(models.ShipmentControl)
+class ShipmentControlAdmin(GenericAdmin[models.ShipmentControl]):
     """
-    Order Control Admin
+    Shipment Control Admin
     """
 
     list_display = (
         "organization",
-        "auto_rate_orders",
+        "auto_rate_shipment",
     )
-    search_fields = ("organization", "auto_rate_orders")
+    search_fields = ("organization", "auto_rate_shipment")
 
 
-@admin.register(models.Order)
-class OrderAdmin(GenericAdmin[models.Order]):
+@admin.register(models.Shipment)
+class OrderAdmin(GenericAdmin[models.Shipment]):
     """
-    Order Admin
+    shipment Admin
     """
 
     list_display = (
@@ -109,14 +111,14 @@ class OrderAdmin(GenericAdmin[models.Order]):
                 "fields": (
                     "organization",
                     "status",
-                    "order_type",
+                    "shipment_type",
                     "revenue_code",
                     "entered_by",
                 )
             },
         ),
         (
-            "Order Information",
+            "Shipment Information",
             {
                 "fields": (
                     "origin_location",
@@ -173,8 +175,8 @@ class OrderAdmin(GenericAdmin[models.Order]):
         ),
     )
     inlines = (
-        OrderDocumentationInline,
-        OrderCommentInline,
+        ShipmentDocumentationInline,
+        ShipmentCommentInline,
         AdditionalChargeInline,
     )
 

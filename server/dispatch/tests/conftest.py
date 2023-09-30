@@ -30,8 +30,8 @@ from dispatch import factories
 from dispatch.models import Rate
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
-from order.tests.factories import OrderTypeFactory
 from organization.models import Organization
+from shipment.tests.factories import ShipmentTypeFactory
 from utils.models import RatingMethodChoices
 
 pytestmark = pytest.mark.django_db
@@ -62,7 +62,7 @@ def rate_api(
     """
     customer = CustomerFactory()
     commodity = CommodityFactory()
-    order_type = OrderTypeFactory()
+    shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
 
     data = {
@@ -71,7 +71,7 @@ def rate_api(
         "effective_date": timezone.now().date(),
         "expiration_date": timezone.now().date(),
         "commodity": commodity.id,
-        "order_type": order_type.id,
+        "shipment_type": shipment_type.id,
         "equipment_type": equipment_type.id,
         "comments": "Test Rate",
     }

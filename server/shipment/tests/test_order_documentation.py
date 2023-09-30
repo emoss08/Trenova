@@ -25,8 +25,8 @@ from rest_framework.response import Response
 from rest_framework.test import APIClient
 
 from billing.models import DocumentClassification
-from order import models
 from organization.models import BusinessUnit, Organization
+from shipment import models
 
 pytestmark = pytest.mark.django_db
 
@@ -75,36 +75,36 @@ def remove_file(file_path: str) -> None:
         os.remove(file)
 
 
-def test_list(order_document: models.OrderDocumentation) -> None:
+def test_list(shipment_document: models.ShipmentDocumentation) -> None:
     """
-    Test Order Documentation list
+    Test shipment Documentation list
     """
-    assert order_document is not None
+    assert shipment_document is not None
 
 
 def test_create(
     organization: Organization,
     business_unit: BusinessUnit,
-    order: models.Order,
+    shipment: models.Shipment,
     document_classification: DocumentClassification,
 ) -> None:
     """
-    Test Order Documentation Create
+    Test shipment Documentation Create
     """
     pdf_file = SimpleUploadedFile(
         "dummy.pdf", b"file_content", content_type="application/pdf"
     )
 
-    created_document = models.OrderDocumentation.objects.create(
+    created_document = models.ShipmentDocumentation.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order,
+        shipment=shipment,
         document=pdf_file,
         document_class=document_classification,
     )
 
     assert created_document is not None
-    assert created_document.order == order
+    assert created_document.shipment == order
     assert created_document.organization == organization
     assert created_document.document_class == document_classification
     assert created_document.document.name is not None
@@ -113,19 +113,19 @@ def test_create(
 
 
 def test_update(
-    order_document: models.OrderDocumentation,
+    shipment_document: models.ShipmentDocumentation,
     organization: Organization,
-    order: models.Order,
+    shipment: models.Shipment,
     document_classification: DocumentClassification,
 ) -> None:
     """
-    Test Order Documentation update
+    Test shipment Documentation update
     """
     pdf_file = SimpleUploadedFile(
         "dummy.pdf", b"file_content", content_type="application/pdf"
     )
 
-    updated_document = models.OrderDocumentation.objects.get(id=order_document.id)
+    updated_document = models.ShipmentDocumentation.objects.get(id=shipment_document.id)
     updated_document.document = pdf_file
     updated_document.save()
 
@@ -137,48 +137,48 @@ def test_update(
 
 def test_get(api_client: APIClient):
     """
-    Test get Order Documentation
+    Test get shipment Documentation
     """
-    response = api_client.get("/api/order_documents/")
+    response = api_client.get("/api/shipment_documents/")
     assert response.status_code == 200
 
 
 def test_get_by_id(
     api_client: APIClient,
-    order_documentation_api: Response,
-    order: models.Order,
+    shipment_documentation_api: Response,
+    shipment: models.Shipment,
     document_classification: DocumentClassification,
 ) -> None:
     """
-    Test get Order Documentation by ID
+    Test get shipment Documentation by ID
     """
 
     response = api_client.get(
-        f"/api/order_documents/{order_documentation_api.data['id']}/"
+        f"/api/shipment_documents/{shipment_documentation_api.data['id']}/"
     )
 
     assert response.data is not None
     assert response.status_code == 200
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
     assert response.data["document"] is not None
     assert response.data["document_class"] == document_classification.id
 
 
 def test_put(
     api_client: APIClient,
-    order: models.Order,
-    order_documentation_api: Response,
+    shipment: models.Shipment,
+    shipment_documentation_api: Response,
     document_classification: DocumentClassification,
 ) -> None:
     """
-    Test put Order Documentation by ID
+    Test put shipment Documentation by ID
     """
 
     with open("order/tests/files/dummy.pdf", "rb") as test_file:
         response = api_client.put(
-            f"/api/order_documents/{order_documentation_api.data['id']}/",
+            f"/api/shipment_documents/{shipment_documentation_api.data['id']}/",
             {
-                "order": f"{order.id}",
+                "shipment": f"{shipment.id}",
                 "document": test_file,
                 "document_class": f"{document_classification.id}",
             },
@@ -186,26 +186,26 @@ def test_put(
 
     assert response.data is not None
     assert response.status_code == 200
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
     assert response.data["document"] is not None
     assert response.data["document_class"] == document_classification.id
 
 
 def test_patch(
     api_client: APIClient,
-    order: models.Order,
-    order_documentation_api: Response,
+    shipment: models.Shipment,
+    shipment_documentation_api: Response,
     document_classification: DocumentClassification,
 ) -> None:
     """
-    Test patch Order Documentation by ID
+    Test patch shipment Documentation by ID
     """
 
     with open("order/tests/files/dummy.pdf", "rb") as test_file:
         response = api_client.put(
-            f"/api/order_documents/{order_documentation_api.data['id']}/",
+            f"/api/shipment_documents/{shipment_documentation_api.data['id']}/",
             {
-                "order": f"{order.id}",
+                "shipment": f"{shipment.id}",
                 "document": test_file,
                 "document_class": f"{document_classification.id}",
             },
@@ -213,18 +213,18 @@ def test_patch(
 
     assert response.data is not None
     assert response.status_code == 200
-    assert response.data["order"] == order.id
+    assert response.data["shipment"] == shipment.id
     assert response.data["document"] is not None
     assert response.data["document_class"] == document_classification.id
 
 
-def test_delete(api_client: APIClient, order_documentation_api: Response) -> None:
+def test_delete(api_client: APIClient, shipment_documentation_api: Response) -> None:
     """
     Test Delete by I
     """
 
     response = api_client.delete(
-        f"/api/order_documents/{order_documentation_api.data['id']}/"
+        f"/api/shipment_documents/{shipment_documentation_api.data['id']}/"
     )
 
     assert response.status_code == 204
@@ -233,4 +233,4 @@ def test_delete(api_client: APIClient, order_documentation_api: Response) -> Non
     if os.path.exists("testfile.txt"):
         return os.remove("testfile.txt")
 
-    remove_media_directory("order_documentation")
+    remove_media_directory("shipment_documentation")

@@ -14,9 +14,10 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
+from django.utils.functional import cached_property
 from rest_framework import serializers
 
+from accounts.models import Token
 from organization import models
 from utils.serializers import GenericSerializer
 
@@ -67,6 +68,16 @@ class DepotSerializer(serializers.ModelSerializer):
             "description",
             "details",
         )
+
+    @cached_property
+    def get_organization(self) -> models.Organization:
+        if self.context["request"].user.is_authenticated:
+            _organization: models.Organization = self.context[
+                "request"
+            ].user.organization
+            return _organization
+        token = self.context["request"].META.get("HTTP_AUTHORIZATION", "").split(" ")[1]
+        return Token.objects.get(key=token).user.organization
 
     def validate_name(self, value: str) -> str:
         """Validate the `name` field of the Depot model.

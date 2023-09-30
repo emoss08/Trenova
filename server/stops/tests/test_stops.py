@@ -34,8 +34,8 @@ from equipment.tests.factories import TractorFactory
 from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
-from order.models import Order, OrderType
 from organization.models import BusinessUnit, Organization
+from shipment.models import Shipment
 from stops import models
 from stops.models import ServiceIncident
 from stops.tests.factories import StopFactory
@@ -258,14 +258,14 @@ def test_stop_has_location_or_address_line():
 
 
 def test_cannot_change_status_to_in_progress_or_completed_if_first_stop_is_not_completed(
-    order: Order,
+    shipment: Shipment,
 ) -> None:
     """
     Test ValidationError is thrown when the status of the stop is changed to `IN_PROGRESS`
     or `COMPLETED` if the previous stop in the movement is not `COMPLETED`.
     """
 
-    movement = Movement.objects.filter(order=order).first()
+    movement = Movement.objects.filter(shipment=shipment).first()
 
     with pytest.raises(ValidationError) as excinfo:
         StopFactory(
@@ -378,7 +378,7 @@ def test_service_incident_created(
     stop_choice,
     expected,
     organization: Organization,
-    order_type: OrderType,
+    shipment_type: ShipmentType,
     revenue_code: RevenueCode,
     origin_location: Location,
     destination_location: Location,
@@ -391,7 +391,7 @@ def test_service_incident_created(
 
     Args:
         organization (Organization): An organization instance.
-        order_type (OrderType): An order type instance.
+        shipment_type (ShipmentType): An shipment type instance.
         revenue_code (RevenueCode): A revenue code instance.
         origin_location (Location): A location instance.
         destination_location (Location): A location instance.
@@ -404,10 +404,10 @@ def test_service_incident_created(
         None: This function does not return anything.
     """
 
-    order = Order.objects.create(
+    shipment = Shipment.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order_type=order_type,
+        shipment_type=shipment_type,
         revenue_code=revenue_code,
         origin_location=origin_location,
         destination_location=destination_location,
@@ -422,18 +422,22 @@ def test_service_incident_created(
         entered_by=user,
         bol_number="1234567890",
     )
-    dispatch_control: DispatchControl = order.organization.dispatch_control
+    dispatch_control: DispatchControl = shipment.organization.dispatch_control
     dispatch_control.record_service_incident = dispatch_control_choice
     dispatch_control.save()
 
     fleet_code = FleetCodeFactory()
     worker = WorkerFactory(fleet=fleet_code)
     tractor = TractorFactory(primary_worker=worker, fleet=fleet_code)
-    Movement.objects.filter(order=order).update(tractor=tractor, primary_worker=worker)
-    order_movement = Movement.objects.get(order=order)
+    Movement.objects.filter(shipment=shipment).update(
+        tractor=tractor, primary_worker=worker
+    )
+    shipment_movement = Movement.objects.get(shipment=shipment)
 
     # Act: Set arrival time past the appointment window on pickup
-    stop_1: models.Stop = models.Stop.objects.get(movement=order_movement, sequence=1)
+    stop_1: models.Stop = models.Stop.objects.get(
+        movement=shipment_movement, sequence=1
+    )
     stop_1.stop_type = stop_choice
     stop_1.appointment_time_window_start = timezone.now() - datetime.timedelta(hours=1)
     stop_1.appointment_time_window_end = timezone.now() + datetime.timedelta(hours=1)
@@ -442,7 +446,9 @@ def test_service_incident_created(
     stop_1.save()
 
     # Act: Set arrival time past the appointment window
-    stop_2: models.Stop = models.Stop.objects.get(movement=order_movement, sequence=2)
+    stop_2: models.Stop = models.Stop.objects.get(
+        movement=shipment_movement, sequence=2
+    )
     stop_2.stop_type = models.StopChoices.DELIVERY
     stop_2.appointment_time_window_start = timezone.now() - datetime.timedelta(hours=1)
     stop_2.appointment_time_window_end = timezone.now() + datetime.timedelta(hours=1)
@@ -451,14 +457,14 @@ def test_service_incident_created(
     stop_2.save()
 
     assert (
-        ServiceIncident.objects.filter(stop=stop_1, movement=order_movement).exists()
+        ServiceIncident.objects.filter(stop=stop_1, movement=shipment_movement).exists()
         == expected
     )
 
 
 def test_first_stop_sets_ship_date(
     organization: Organization,
-    order_type: OrderType,
+    shipment_type: ShipmentType,
     revenue_code: RevenueCode,
     origin_location: Location,
     destination_location: Location,
@@ -468,10 +474,10 @@ def test_first_stop_sets_ship_date(
     business_unit: BusinessUnit,
 ) -> None:
     """ """
-    order = Order.objects.create(
+    shipment = Shipment.objects.create(
         business_unit=business_unit,
         organization=organization,
-        order_type=order_type,
+        shipment_type=shipment_type,
         revenue_code=revenue_code,
         origin_location=origin_location,
         destination_location=destination_location,
@@ -490,23 +496,25 @@ def test_first_stop_sets_ship_date(
     fleet_code = FleetCodeFactory()
     worker = WorkerFactory(fleet=fleet_code)
     tractor = TractorFactory(primary_worker=worker, fleet=fleet_code)
-    Movement.objects.filter(order=order).update(tractor=tractor, primary_worker=worker)
-    order_movement = Movement.objects.get(order=order)
+    Movement.objects.filter(shipment=shipment).update(
+        tractor=tractor, primary_worker=worker
+    )
+    shipment_movement = Movement.objects.get(shipment=shipment)
 
     # Act: Complete the first stop in the movement
-    stop_1 = models.Stop.objects.get(movement=order_movement, sequence=1)
+    stop_1 = models.Stop.objects.get(movement=shipment_movement, sequence=1)
     stop_1.arrival_time = timezone.now() - datetime.timedelta(hours=1)
     stop_1.departure_time = timezone.now()
     stop_1.save()
 
-    order.refresh_from_db()
+    shipment.refresh_from_db()
 
     # Assert: Order has ship date set
-    assert order.ship_date == stop_1.arrival_time.date()
+    assert shipment.ship_date == stop_1.arrival_time.date()
 
 
 def test_cannot_delete_stop_if_org_disallows(stop: models.Stop) -> None:
-    """Test ValidationError is thrown if organization `order_control` does
+    """Test ValidationError is thrown if organization `shipment_control` does
     not allow order removal.
 
     Args:
@@ -516,8 +524,8 @@ def test_cannot_delete_stop_if_org_disallows(stop: models.Stop) -> None:
         None: This function does not return anything.
     """
 
-    stop.organization.order_control.remove_orders = False
-    stop.organization.order_control.save()
+    stop.organization.shipment_control.remove_shipments = False
+    stop.organization.shipment_control.save()
 
     with pytest.raises(ValidationError) as excinfo:
         stop.delete()

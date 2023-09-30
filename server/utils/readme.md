@@ -31,7 +31,7 @@ class MovementAdmin(GenericAdmin[models.Movement]):
     list_display = (
         "status",
         "ref_num",
-        "order",
+        "shipment",
         "equipment",
         "primary_worker",
     )
@@ -45,12 +45,12 @@ class MovementAdmin(GenericAdmin[models.Movement]):
 #### Example Usage
 
 ```python
-class OrderComment(GenericStackedInline[models.OrderComment, models.Order]):
+class ShipmentComment(GenericStackedInline[models.ShipmentComment, models.Shipment]):
     """
     Order comment inline
     """
 
-    model: type[models.OrderComment] = models.OrderComment
+    model: type[models.ShipmentComment] = models.ShipmentComment
 ```
 
 ### GenericTabularInline <a name="GenericTabularInline"></a>
@@ -60,12 +60,12 @@ class OrderComment(GenericStackedInline[models.OrderComment, models.Order]):
 #### Example Usage
 
 ```python
-class OrderDocumentationInline(GenericTabularInline[models.OrderDocumentation, models.Order]):
+class ShipmentDocumentationInline(GenericTabularInline[models.ShipmentDocumentation, models.Shipment]):
     """
     Order documentation inline
     """
 
-    model: type[models.OrderDocumentation] = models.OrderDocumentation
+    model: type[models.ShipmentDocumentation] = models.ShipmentDocumentation
 
 ```
 

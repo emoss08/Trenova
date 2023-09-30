@@ -14,40 +14,46 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+from typing import TYPE_CHECKING
 
-import pytest
+from backend.celery import app
+from core.exceptions import ServiceException
+from shipment import selectors, services
+from utils.types import ModelUUID
 
-from order import models
-from organization.models import Organization
-
-pytestmark = pytest.mark.django_db
+if TYPE_CHECKING:
+    from celery.app.task import Task
 
 
-def test_list(organization: Organization) -> None:
+@app.task(
+    name="consolidate_shipment_documentation",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    queue="medium_priority",
+)
+def consolidate_shipment_documentation(self: "Task", *, shipment_id: ModelUUID) -> None:
+    """Consolidate Order
+
+    Query the database for the shipment and call the consolidate_pdf
+    service to combine the PDFs into a single PDF.
+
+    Args:
+        self (celery.app.task.Task): The task object
+        shipment_id (str): shipment ID
+
+    Returns:
+        None: None
+
+    Raises:
+        ObjectDoesNotExist: If the shipment does not exist in the database.
     """
-    Test Order Control is created when the organization is
-    created. This process happens via signals.
-    """
 
-    assert organization.order_control is not None
+    try:
+        if shipment := selectors.get_shipment_by_id(shipment_id=shipment_id):
+            services.combine_pdfs_service(shipment=shipment)
+        else:
+            return None
 
-
-def test_update(organization: Organization) -> None:
-    """
-    Test order type update
-    """
-
-    order_control = models.OrderControl.objects.get(organization=organization)
-
-    order_control.auto_rate_orders = False
-    order_control.calculate_distance = True
-    order_control.enforce_customer = True
-    order_control.enforce_rev_code = True
-
-    order_control.save()
-
-    assert order_control is not None
-    assert not order_control.auto_rate_orders
-    assert order_control.calculate_distance
-    assert order_control.enforce_customer
-    assert order_control.enforce_rev_code
+    except ServiceException as exc:
+        raise self.retry(exc=exc) from exc

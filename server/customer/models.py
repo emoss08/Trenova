@@ -113,8 +113,8 @@ class Customer(GenericModel):
     auto_mark_ready_to_bill = models.CharField(
         _("Auto Mark Ready to Bill?"),
         help_text=_(
-            "Designates whether to automatically mark customer orders ready to bill. "
-            "if the order passes customer billing requirements."
+            "Designates whether to automatically mark customer shipments ready to bill. "
+            "if the shipment passes customer billing requirements."
         ),
         choices=[("Y", "Yes"), ("N", "No")],
         max_length=1,
@@ -635,13 +635,13 @@ class CustomerFuelProfile(GenericModel):
         choices=DaysToUseChoices.choices,
         help_text=_("Days to Use"),
     )
-    order_type = models.ForeignKey(
-        "order.OrderType",
+    shipment_type = models.ForeignKey(
+        "shipment.ShipmentType",
         on_delete=models.CASCADE,
         related_name="customer_fuel_profiles",
         related_query_name="customer_fuel_profile",
-        help_text=_("Order Type"),
-        verbose_name=_("Order Type"),
+        help_text=_("shipment Type"),
+        verbose_name=_("shipment Type"),
     )
     fuel_region = ChoiceField(
         _("Fuel Region"),

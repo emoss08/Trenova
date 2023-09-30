@@ -18,8 +18,8 @@
 import typing
 
 
-class OrderDiffResponse(typing.TypedDict):
-    total_orders: int
+class shipmentDiffResponse(typing.TypedDict):
+    total_shipments: int
     last_month_diff: float
     month_before_last_diff: float
 

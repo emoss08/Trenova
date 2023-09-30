@@ -264,7 +264,7 @@ ALLOWED_MODELS = {
             {"value": "expiration_date", "label": "Expiration Date"},
             {"value": "commodity__name", "label": "Commodity Name"},
             {"value": "commodity__description", "label": "Commodity Description"},
-            {"value": "order_type__name", "label": "Order Type Name"},
+            {"value": "shipment_type__name", "label": "shipment type Name"},
             {"value": "equipment_type__name", "label": "Equipment Type Name"},
             {"value": "origin_location__code", "label": "Origin Location Code"},
             {
