@@ -214,7 +214,7 @@ class Stop(GenericModel):
         Returns:
             ModelDelete: The result from the super class delete operation.
         """
-        if self.organization.shipment_control.remove_shipments is False:
+        if self.organization.shipment_control.remove_shipment is False:
             raise ValidationError(
                 {
                     "ref_num": _(
@@ -235,7 +235,7 @@ class Stop(GenericModel):
             None
         """
 
-        self.update_status_based_on_times()
+        # self.update_status_based_on_times()
         super().save(*args, **kwargs)
 
         # If the location code is entered and not the address_line then autofill address_line

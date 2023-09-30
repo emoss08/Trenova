@@ -30,6 +30,7 @@ from billing.tests.factories import (
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from organization.factories import EmailProfileFactory
+from shipment.tests.factories import ShipmentTypeFactory
 from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
@@ -60,11 +61,11 @@ def shipment_type() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order() -> Generator[Any, Any, None]:
+def shipment() -> Generator[Any, Any, None]:
     """
     Order Fixture
     """
-    yield OrderFactory()
+    yield ShipmentFactory()
 
 
 @pytest.fixture

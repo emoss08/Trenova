@@ -22,20 +22,16 @@ from utils.models import StatusChoices
 
 
 def update_movement_status(instance: models.Stop, **kwargs: Any) -> None:
-    """Update the movement status when a stop is created.
+    # If the stop is VOIDED, skip the logic below
+    if instance.status == models.StatusChoices.VOIDED:
+        return
 
-    Args:
-        instance (Stop): The stop instance.
-        **kwargs (Any): Keyword arguments.
-
-    Returns:
-        None: This function has no return.
-    """
     stops = instance.movement.stops.all()
 
     completed_stops = stops.filter(status=StatusChoices.COMPLETED)
     in_progress_stops = stops.filter(status=StatusChoices.IN_PROGRESS)
 
+    # Determine the new status for the Movement
     if stops.count() == completed_stops.count():
         new_status = StatusChoices.COMPLETED
     elif completed_stops.count() > 0 or in_progress_stops.count() > 0:

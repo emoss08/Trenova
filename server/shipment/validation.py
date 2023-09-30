@@ -60,6 +60,7 @@ class ShipmentValidator:
         self.validate_appointment_windows()
         self.validate_per_weight_rating_method()
         self.validate_formula_template()
+        self.validate_voided_shipment()
         if self.errors:
             raise ValidationError(self.errors)
 
@@ -232,7 +233,9 @@ class ShipmentValidator:
             and self.shipment.status in [StatusChoices.NEW, StatusChoices.IN_PROGRESS]
             and duplicates.exists()
         ):
-            pro_numbers = ", ".join([str(shipment.pro_number) for order in duplicates])
+            pro_numbers = ", ".join(
+                [str(shipment.pro_number) for shipment in duplicates]
+            )
             self.errors["bol_number"] = _(
                 f"Duplicate BOL Number found in shipments with PRO numbers: {pro_numbers}. If this is a new order, "
                 f"please change the BOL Number."
@@ -311,7 +314,7 @@ class ShipmentValidator:
             ]
 
             for attribute, display_name in location_attributes:
-                if getattr(order, attribute) != getattr(self.shipment, attribute):
+                if getattr(shipment, attribute) != getattr(self.shipment, attribute):
                     self.errors[attribute] = _(
                         f"{display_name} cannot be changed once the order is completed. Please try again."
                     )
@@ -354,4 +357,15 @@ class ShipmentValidator:
         ):
             self.errors["formula_template"] = _(
                 "Formula template can only be used with rating method 'OTHER'. Please try again."
+            )
+
+    def validate_voided_shipment(self) -> None:
+        shipment = get_shipment_by_id(shipment_id=self.shipment.id)
+
+        if not shipment:
+            return None
+
+        if shipment.status == StatusChoices.VOIDED:
+            self.errors["status"] = _(
+                "Cannot update an order that has been voided. Please contact your administrator."
             )

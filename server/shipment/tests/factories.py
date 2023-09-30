@@ -65,7 +65,7 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
     )
 
 
-class OrderFactory(factory.django.DjangoModelFactory):
+class ShipmentFactory(factory.django.DjangoModelFactory):
     """
     shipment Factory
     """

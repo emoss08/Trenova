@@ -194,15 +194,19 @@ class BillingLogEntryViewSet(viewsets.ModelViewSet):
 
 class BillingHistoryViewSet(viewsets.ModelViewSet):
     """
-    A viewset for viewing and editing billing history in the system.
+        A viewset for viewing and editing billing history in the system.
 
-    The viewset provides default operation for viewing billing history,
-    as well as listing and retrieving charge types. It uses the `BillingHistorySerializer` class to
-    convert the charge type instances to and from JSON-formatted data.
+        The viewset provides default operation for viewing billing history,
+        as well as listing and retrieving charge types. It uses the `BillingHistorySerializer` class to
+        convert the charge type instances to and from JSON-formatted data.
 
-    Only authenticated users are allowed to access the views provided by this viewset.
-    Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
-    code, `revenue_code` code and `shipment_type` id.
+        Only authenticated users are allowed to access the views provided by this viewset.
+    <<<<<<< Updated upstream
+        Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
+    =======
+        Filtering is also available, with the ability to filter by `shipment` pro_number, `worker` code, `customer`
+    >>>>>>> Stashed changes
+        code, `revenue_code` code and `shipment_type` id.
     """
 
     queryset = models.BillingHistory.objects.all()
@@ -352,13 +356,13 @@ class DocumentClassificationViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Bill Order"],
+    tags=["Bill Shipment"],
     description="Starts the billing tasks for one shipment.",
     parameters=[
         OpenApiParameter(
             name="shipment_id",
             type=OpenApiTypes.UUID,
-            description="The order id to be billed.",
+            description="The shipment id to be billed.",
         ),
     ],
     request=None,
@@ -368,7 +372,7 @@ class DocumentClassificationViewSet(viewsets.ModelViewSet):
             "properties": {
                 "message": {
                     "type": "string",
-                    "example": "Order ID is required. Please Try Again.",
+                    "example": "shipment ID is required. Please Try Again.",
                 },
             },
         },
@@ -413,7 +417,7 @@ def bill_invoice_view(request: Request) -> Response:
 
 
 @extend_schema(
-    tags=["Mass Billing Order"],
+    tags=["Mass Billing Shipment"],
     description="Starts the mass billing task.",
     request=None,
     responses={
@@ -481,33 +485,33 @@ def mass_shipments_bill(request: Request) -> Response:
         },
         (400, "application/json"): {
             "type": "string",
-            "message": "Order Pro(s) is required. Please Try Again.",
+            "message": "Shipment Pro(s) is required. Please Try Again.",
         },
     },
 )
 @api_view(["POST"])
 def transfer_to_billing(request: Request) -> Response:
     """
-    Starts a Celery task to transfer the specified order(s) to billing for the logged in user.
+    Starts a Celery task to transfer the specified Shipment(s) to billing for the logged in user.
 
     Args:
-        request: A Django Request object that contains the order(s) to transfer to billing.
+        request: A Django Request object that contains the Shipment(s) to transfer to billing.
 
     Returns:
         A Django Response object with a success message and a 200 status code if the transfer task
-        was successfully started. If no order(s) are provided in the request, a 400 status code and
+        was successfully started. If no Shipment(s) are provided in the request, a 400 status code and
         an error message will be returned.
 
     Raises:
         N/A
 
     This view function expects a POST request containing an `shipment_pros` key in the request data,
-    which should be a list of order IDs to be transferred to billing. If no `shipment_pros` key is
+    which should be a list of shipment IDs to be transferred to billing. If no `shipment_pros` key is
     provided, the function will return a response with a 400 status code and an error message.
 
-    If the request data is valid, the function will start a Celery task with the provided order IDs
+    If the request data is valid, the function will start a Celery task with the provided shipment IDs
     and the ID of the currently logged-in user. The task will run in the background and transfer
-    the specified order(s) to billing.
+    the specified Shipment(s) to billing.
 
     Upon successfully starting the Celery task, the function will return a response with a 200 status
     code and a success message indicating that the transfer task has been started.
@@ -516,7 +520,7 @@ def transfer_to_billing(request: Request) -> Response:
 
     if not shipment_pros:
         return Response(
-            {"message": "Order Pro(s) is required. Please Try Again."},
+            {"message": "Shipment Pro(s) is required. Please Try Again."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

@@ -30,10 +30,10 @@ from customer.models import Customer
 from equipment.models import EquipmentType
 from location.models import Location
 from organization.models import Organization
-from shipment.models import ShipmentType
+from shipment.models import ShipmentType, Shipment, ServiceType
 from utils.helpers import get_or_create_business_unit
 
-DESCRIPTION = "GENERATED FROM CREATE TEST shipments COMMAND"
+DESCRIPTION = "GENERATED FROM CREATE TEST SHIPMENTS COMMAND"
 
 
 class Command(BaseCommand):
@@ -311,6 +311,31 @@ class Command(BaseCommand):
         )
         return job_title
 
+    @staticmethod
+    def create_system_service_type(organization: Organization) -> ServiceType:
+        """
+        Creates a new `ServiceType` object associated with the specified organization.
+
+        Args:
+            organization (Organization): The `Organization` object to associate the new service type with.
+
+        Returns:
+            The new `ServiceType` object.
+
+        This method creates a new `ServiceType` object associated with the specified organization. The new service type
+        is assigned a default description and job function of "System Administrator". If the service type already
+        exists, it returns the existing service type instead.
+        """
+        defaults = {
+            "description": "Test Service Type",
+            "code": "EXP",
+            "business_unit": organization.business_unit,
+        }
+        service_type, _ = ServiceType.objects.get_or_create(
+            organization=organization, defaults=defaults
+        )
+        return service_type
+
     @transaction.atomic
     def handle(self, *args: Any, **options: Any) -> None:
         """
@@ -346,6 +371,8 @@ class Command(BaseCommand):
             progress.update(prerequisite_data_task, advance=1)
             user = self.create_user(organization)
             progress.update(prerequisite_data_task, advance=1)
+            service_type = self.create_system_service_type(organization)
+            progress.update(prerequisite_data_task, advance=1)
 
         with Progress() as progress:
             shipment_creation_task = progress.add_task(
@@ -361,6 +388,7 @@ class Command(BaseCommand):
                     origin_location=location_1,
                     freight_charge_amount=100,
                     destination_location=location_2,
+                    service_type=service_type,
                     origin_appointment_window_start=timezone.now(),
                     origin_appointment_window_end=timezone.now(),
                     destination_appointment_window_start=timezone.now()

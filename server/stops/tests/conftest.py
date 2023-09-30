@@ -31,6 +31,7 @@ from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from organization.models import Organization
+from shipment.tests.factories import ShipmentTypeFactory
 from stops import models
 from stops.tests.factories import StopFactory
 
@@ -62,11 +63,11 @@ def location() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order() -> Generator[Any, Any, None]:
+def shipment() -> Generator[Any, Any, None]:
     """
     shipment fixture
     """
-    yield OrderFactory()
+    yield ShipmentFactory()
 
 
 @pytest.fixture

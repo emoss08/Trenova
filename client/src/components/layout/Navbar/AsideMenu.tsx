@@ -34,7 +34,7 @@ import { EquipLinks } from "@/components/layout/Navbar/_partials/EquipmentLinks"
 import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
 import { useUserStore } from "@/stores/AuthStore";
-import { ShipmentLinks } from "@/components/layout/Navbar/_partials/OrderLinks";
+import { ShipmentLinks } from "@/components/layout/Navbar/_partials/ShipmentLinks";
 
 export function AsideMenu(): React.ReactElement {
   const { classes } = useNavbarStyles();

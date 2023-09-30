@@ -55,7 +55,7 @@ def test_create(
     )
 
     assert add_charge is not None
-    assert add_charge.shipment == order
+    assert add_charge.shipment == shipment
     assert add_charge.accessorial_charge == accessorial_charge
     assert add_charge.unit == 1
     assert add_charge.entered_by == user

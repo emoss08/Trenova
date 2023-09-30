@@ -56,11 +56,11 @@ def tractor() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order() -> Generator[Any, Any, None]:
+def shipment() -> Generator[Any, Any, None]:
     """
     Pytest fixture for Order
     """
-    yield OrderFactory()
+    yield ShipmentFactory()
 
 
 @pytest.fixture

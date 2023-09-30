@@ -54,7 +54,7 @@ def test_create(
         entered_by=user,
     )
     assert shipment_comment is not None
-    assert shipment_comment.shipment == order
+    assert shipment_comment.shipment == shipment
     assert shipment_comment.comment_type == comment_type
     assert shipment_comment.comment == "DONT BE SAD"
     assert shipment_comment.entered_by == user

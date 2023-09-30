@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 from django.utils import timezone
 
 from dispatch import models, selectors
-from shipment.models import AdditionalCharge
+from shipment.models import AdditionalCharge, Shipment
 from shipment.selectors import sum_shipment_additional_charges
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ def get_rate(*, shipment: Shipment) -> models.Rate | None:
     """Get the rate for the shipment.
 
     Args:
-        order(Order): The order to get the rate for.
+        shipment (Shipment): The shipment to get the rate for.
 
     Returns:
         models.Rate | None: The rate for the order or None if no rate is found.

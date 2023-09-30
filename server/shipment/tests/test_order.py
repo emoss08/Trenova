@@ -35,6 +35,7 @@ from movements.models import Movement
 from organization.models import BusinessUnit, Organization
 from shipment import models, selectors
 from shipment.selectors import get_shipment_stops
+from shipment.tests.factories import ShipmentFactory
 from stops.models import Stop
 from utils.models import StatusChoices
 from worker.factories import WorkerFactory
@@ -330,7 +331,7 @@ def test_flat_method_requires_freight_charge_amount() -> None:
     and the `freight_charge_amount` is None
     """
     with pytest.raises(ValidationError) as excinfo:
-        OrderFactory(rate_method="F", freight_charge_amount=None)
+        ShipmentFactory(rate_method="F", freight_charge_amount=None)
 
     assert excinfo.value.message_dict["freight_charge_amount"] == [
         "Freight Rate Method is Flat but Freight Charge Amount is not set. Please try again."
@@ -343,7 +344,7 @@ def test_per_mile_requires_mileage() -> None:
     and the `mileage` is None
     """
     with pytest.raises(ValidationError) as excinfo:
-        OrderFactory(rate_method="PM", mileage=None)
+        ShipmentFactory(rate_method="PM", mileage=None)
 
     assert excinfo.value.message_dict["mileage"] == [
         "Rating Method 'PER-MILE' requires Mileage to be set. Please try again."
@@ -355,7 +356,7 @@ def test_shipment_origin_destination_location_cannot_be_the_same() -> None:
     Test ValidationError is thrown when the shipment `origin_location and
     `destination_location` is the same.
     """
-    shipment = OrderFactory()
+    shipment = ShipmentFactory()
     shipment.organization.shipment_control.enforce_origin_destination = True
 
     location = LocationFactory()
@@ -375,7 +376,7 @@ def test_shipment_revenue_code_is_enforced() -> None:
     Test ValidationError is thrown if the `shipment_control` has `enforce_rev_code`
     set as `TRUE`
     """
-    shipment = OrderFactory()
+    shipment = ShipmentFactory()
     shipment.organization.shipment_control.enforce_rev_code = True
 
     with pytest.raises(ValidationError) as excinfo:
@@ -392,7 +393,7 @@ def test_shipment_commodity_is_enforced() -> None:
     Test ValidationError is thrown if the `shipment_control` has `enforce_commodity`
     set as `TRUE`
     """
-    shipment = OrderFactory()
+    shipment = ShipmentFactory()
     shipment.organization.shipment_control.enforce_commodity = True
 
     with pytest.raises(ValidationError) as excinfo:
@@ -410,7 +411,7 @@ def test_shipment_must_be_completed_to_bill() -> None:
     and `ready_to_bill` is marked `TRUE`
     """
     with pytest.raises(ValidationError) as excinfo:
-        OrderFactory(status="N", ready_to_bill=True)
+        ShipmentFactory(status="N", ready_to_bill=True)
 
     assert excinfo.value.message_dict["ready_to_bill"] == [
         "Cannot mark an shipment ready to bill if status is not 'COMPLETED'. Please try again."
@@ -423,7 +424,7 @@ def test_shipment_origin_location_or_address_is_required() -> None:
     `origin_address` is blank
     """
     with pytest.raises(ValidationError) as excinfo:
-        OrderFactory(
+        ShipmentFactory(
             origin_location=None,
             origin_address=None,
         )
@@ -439,7 +440,7 @@ def test_shipment_destination_location_or_address_is_required() -> None:
     `destination_address` is blank
     """
     with pytest.raises(ValidationError) as excinfo:
-        OrderFactory(
+        ShipmentFactory(
             destination_location=None,
             destination_address=None,
         )
@@ -481,7 +482,7 @@ def test_shipment_pro_number_increments(
     Test shipment pro_number increments by one.
     """
 
-    shipment_2 = OrderFactory(organization=organization)
+    shipment_2 = ShipmentFactory(organization=organization)
 
     assert shipment.pro_number == "ORD000001"
     assert shipment_2.pro_number == "ORD000002"
@@ -529,7 +530,7 @@ def test_validate_origin_appointment_window_start_not_after_end(
     """Test origin appointment window end is not before the start of the window..
 
     Args:
-        order (models.Shipment): Order object
+        shipment(models.Shipment): shipmentobject
 
     Returns:
         None: This function does not return anything.
@@ -550,7 +551,7 @@ def test_validate_destination_appointment_window_start_not_after_end(
     """Test destination appointment window end is not before the start of the window.
 
     Args:
-        order (models.Shipment): Order object.
+        shipment(models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -570,7 +571,7 @@ def test_validate_destination_appointment_window_start_not_after_end(
 def test_validate_appointment_window_against_customer_delivery_slots(
     shipment: models.Shipment, delivery_slot: DeliverySlot
 ) -> None:
-    """Test that the appointment window for an order must fall within the customer's allowed delivery slots.
+    """Test that the appointment window for an shipment must fall within the customer's allowed delivery slots.
 
     Args:
         order (models.Shipment): Order object.
@@ -607,10 +608,10 @@ def test_validate_appointment_window_against_customer_delivery_slots(
 
 
 def test_calculate_shipment_per_pound_total(shipment: models.Shipment) -> None:
-    """Test calculate order per pound calculation.
+    """Test calculate shipment per pound calculation.
 
     Args:
-        order(models.Shipment): Order object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -625,10 +626,10 @@ def test_calculate_shipment_per_pound_total(shipment: models.Shipment) -> None:
 
 
 def test_calculate_shipment_per_pound_exception(shipment: models.Shipment) -> None:
-    """Test ValidationError thrown when weight on order is less than 1.
+    """Test ValidationError thrown when weight on shipment is less than 1.
 
     Args:
-        order(models.Shipment): Order object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: this function does not return anything.
@@ -645,10 +646,10 @@ def test_calculate_shipment_per_pound_exception(shipment: models.Shipment) -> No
 
 
 def test_calculate_shipment_flat_total(shipment: models.Shipment) -> None:
-    """Test calculate order ``flat`` fee calculation
+    """Test calculate shipment ``flat`` fee calculation
 
     Args:
-        order(models.Shipment): Order object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: this function does not return anything.
@@ -663,10 +664,10 @@ def test_calculate_shipment_flat_total(shipment: models.Shipment) -> None:
 
 
 def test_calculate_shipment_per_mile_total(shipment: models.Shipment) -> None:
-    """Test calculate order ``PER_MILE`` rate method calculation.
+    """Test calculate shipment ``PER_MILE`` rate method calculation.
 
     Args:
-        order(models.Shipment): Order object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -682,10 +683,10 @@ def test_calculate_shipment_per_mile_total(shipment: models.Shipment) -> None:
 
 
 def test_calculate_shipment_per_stop_total(shipment: models.Shipment) -> None:
-    """Test calculate order ``PER_STOP`` rate method calculation.
+    """Test calculate shipment ``PER_STOP`` rate method calculation.
 
     Args:
-        order(models.Shipment): Order object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -701,7 +702,7 @@ def test_calculate_shipment_per_stop_total(shipment: models.Shipment) -> None:
 def test_calculate_shipment_other_total_with_formula(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    """Test calculate order total using formula template.
+    """Test calculate shipment total using formula template.
 
     Args:
         organization(Organization): Organization object.
@@ -720,7 +721,7 @@ def test_calculate_shipment_other_total_with_formula(
         template_type="REFRIGERATED",
     )
 
-    shipment = OrderFactory(
+    shipment = ShipmentFactory(
         rate_method="O",
         formula_template=formula_template,
         freight_charge_amount=100.00,
@@ -731,12 +732,12 @@ def test_calculate_shipment_other_total_with_formula(
 
 
 def test_calculate_shipment_other_total(shipment: models.Shipment) -> None:
-    """Test calculate order total without using formula template
+    """Test calculate shipment total without using formula template
 
     Defaults to shipment.freight_charge_amount * shipment.rating_units + shipment.other_charge_amount
 
     Args:
-        order(models.Shipment): Order object.
+        Shipment(models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -752,10 +753,10 @@ def test_calculate_shipment_other_total(shipment: models.Shipment) -> None:
 
 
 def test_temperature_differential(shipment: models.Shipment) -> None:
-    """Test calculate order ``temperature_differential`` function.
+    """Test calculate shipment ``temperature_differential`` function.
 
     Args:
-        order(models.Shipment): Order object.
+        Shipment(models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -777,7 +778,7 @@ def test_formula_template_validation(
     Args:
         organization (models.Organization): Organization object.
         business_unit (models.BusinessUnit): BusinessUnit object.
-        order (models.Shipment): Order object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.

@@ -155,3 +155,25 @@ def calculate_total(*, shipment: models.Shipment) -> Decimal:
             variables = gather_formula_variables(shipment=shipment)
             return Decimal(helpers.evaluate_formula(formula=formula_text, **variables))
     return freight_charge
+
+
+def handle_voided_shipment(shipment: models.Shipment) -> None:
+    """If a shipment has the status of voided. Void all stops and movements."""
+
+    shipment.status = models.StatusChoices.VOIDED
+    shipment.ship_date = None
+    shipment.transferred_to_billing = False
+    shipment.billed = False
+    shipment.billing_transfer_date = None
+
+    # Void all related Movements and Stops
+    shipment.movements.update(
+        primary_worker=None,
+        secondary_worker=None,
+        tractor=None,
+        status=models.StatusChoices.VOIDED,
+    )
+    stops = selectors.get_shipment_stops(shipment=shipment)
+    stops.update(
+        status=models.StatusChoices.VOIDED, arrival_time=None, departure_time=None
+    )

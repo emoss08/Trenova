@@ -17,9 +17,9 @@
 
 from __future__ import annotations
 
-import datetime
 import textwrap
 import uuid
+from datetime import datetime
 from typing import Any, final
 
 from auditlog.models import AuditlogHistoryField
@@ -277,9 +277,89 @@ class ShipmentType(GenericModel):
         return reverse("shipment-types-detail", kwargs={"pk": self.pk})
 
 
+class ServiceType(GenericModel):
+    """Stores the service type information for a related :model:`organization.Organization`.
+
+    The ServiceType model stores information about a shipment type, such as its name,
+    description, and whether it is active. It also has metadata for ordering and
+    verbose names.
+
+    Attributes:
+        id (UUIDField): Primary key and default value is a randomly generated UUID.
+            Editable and unique.
+        is_active (BooleanField): Default value is True. Verbose name is "Is Active".
+        code (CharField): Verbose name is "Code". Max length is 4 and must be unique.
+            Help text is "Code of the service type".
+        description (TextField): Verbose name is "Description". Can be blank.
+            Help text is "Description of the service type".
+
+    Methods:
+        __str__(self) -> str:
+            Returns the name of the ServiceType.
+        get_absolute_url(self) -> str:
+            Returns the absolute URL for the ShipmentType's detail view.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("Is Active"),
+    )
+    code = models.CharField(
+        _("Name"),
+        max_length=4,
+        help_text=_("Name of the Service Type"),
+    )
+    description = models.TextField(
+        _("Description"),
+        blank=True,
+        help_text=_("Description of the Service Type"),
+    )
+
+    class Meta:
+        """
+        Metaclass for ShipmentType model
+        """
+
+        verbose_name = _("Service Type")
+        verbose_name_plural = _("Service Types")
+        ordering = ["code"]
+        db_table = "service_type"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code", "organization"],
+                name="unique_service_type_code",
+            )
+        ]
+
+    def __str__(self) -> str:
+        """Service Type String Representation
+
+        Returns:
+            str: service type Name
+        """
+        return textwrap.shorten(
+            f"{self.code} - {self.description}", 50, placeholder="..."
+        )
+
+    def get_absolute_url(self) -> str:
+        """Service Type Absolute URL
+
+        Returns:
+            str: Service Type Absolute URL
+        """
+        return reverse("service-types-detail", kwargs={"pk": self.pk})
+
+
 class Shipment(GenericModel):
     """
-    Stores shipment information related to a :model:`organization.Organization`.
+    >>>>>>> Stashed changes
+        Stores shipment information related to a :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
@@ -291,17 +371,25 @@ class Shipment(GenericModel):
     # General Information
     pro_number = models.CharField(
         _("Pro Number"),
-        max_length=10,
+        max_length=13,
         editable=False,
-        help_text=_("Pro Number of the Order"),
+        help_text=_("Pro Number of the Shipment"),
     )
     shipment_type = models.ForeignKey(
         ShipmentType,
         on_delete=models.PROTECT,
-        verbose_name=_("shipment type"),
+        verbose_name=_("Shipment type"),
         related_name="shipments",
         related_query_name="shipment",
-        help_text=_("shipment type of the Order"),
+        help_text=_("Shipment type of the Shipment"),
+    )
+    service_type = models.ForeignKey(
+        ServiceType,
+        on_delete=models.PROTECT,
+        verbose_name=_("Service type"),
+        related_name="shipments",
+        related_query_name="shipment",
+        help_text=_("Service type of the Shipment"),
     )
     status = ChoiceField(
         _("Status"),
@@ -314,7 +402,7 @@ class Shipment(GenericModel):
         related_name="shipments",
         related_query_name="shipment",
         verbose_name=_("Revenue Code"),
-        help_text=_("Revenue Code of the Order"),
+        help_text=_("Revenue Code of the Shipment"),
         blank=True,
         null=True,
     )
@@ -324,7 +412,7 @@ class Shipment(GenericModel):
         related_name="origin_shipment",
         related_query_name="origin_shipments",
         verbose_name=_("Origin Location"),
-        help_text=_("Origin Location of the Order"),
+        help_text=_("Origin Location of the Shipment"),
         blank=True,
         null=True,
     )
@@ -332,7 +420,7 @@ class Shipment(GenericModel):
         _("Origin Address"),
         max_length=255,
         blank=True,
-        help_text=_("Origin Address of the Order"),
+        help_text=_("Origin Address of the Shipment"),
     )
     origin_appointment_window_start = models.DateTimeField(
         _("Origin Appointment"),
@@ -373,7 +461,7 @@ class Shipment(GenericModel):
         ),
     )
 
-    # Billing Information for the order
+    # Billing Information for the Shipment
     rating_units = models.PositiveIntegerField(
         _("Rating Units"),
         default=1,
@@ -425,18 +513,18 @@ class Shipment(GenericModel):
         related_name="shipments",
         related_query_name="shipment",
         verbose_name=_("Customer"),
-        help_text=_("Customer of the Order"),
+        help_text=_("Customer of the Shipment"),
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
-        help_text=_("Total Piece Count of the Order"),
+        help_text=_("Total Piece Count of the Shipment"),
         default=0,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
-        help_text=_("Total Weight of the Order"),
+        help_text=_("Total Weight of the Shipment"),
         default=0,
     )
     ready_to_bill = models.BooleanField(
@@ -599,7 +687,9 @@ class Shipment(GenericModel):
         Returns:
             str: String representation of the Shipment
         """
-        return textwrap.wrap(self.pro_number, 10)[0]
+        return textwrap.shorten(
+            f"{self.pro_number} - {self.customer}", 50, placeholder="..."
+        )
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """Overrides the default Django save method to provide custom save behavior for the Shipment model.
@@ -610,6 +700,7 @@ class Shipment(GenericModel):
         If 'auto_rate' is true, it retrieves and sets the transfer rate details for this shipment.
 
         If the order's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
+        If the Shipment's status is 'COMPLETED' but no 'pieces' or 'weight' are defined, it calculates the total
         piece count and weight for this shipment.
 
         If the 'ready_to_bill' flag is present and 'auto_shipment_total' setting from the organization Shipment Control
@@ -619,9 +710,10 @@ class Shipment(GenericModel):
         the address using the location's combined address details.
 
         If the order has a commodity set and the commodity has a minimum and maximum temperature specification,
+        If the Shipment has a commodity set and the commodity has a minimum and maximum temperature specification,
         these values will be assigned to the 'temperature_min' and 'temperature_max' fields of the shipment.
 
-        If the commodity is classified as a hazardous material, the 'hazmat' field of the order is set to True.
+        If the commodity is classified as a hazardous material, the 'hazmat' field of the Shipment is set to True.
 
         It recalculates the sub_total and other charges before calling super().save() method.
 
@@ -632,7 +724,7 @@ class Shipment(GenericModel):
             None: This function does not return anything.
         """
         from dispatch.services import transfer_rate_details
-        from shipment.services import calculate_total
+        from shipment.services import calculate_total, handle_voided_shipment
         from stops.selectors import (
             get_total_piece_count_by_shipment,
             get_total_weight_by_shipment,
@@ -668,16 +760,19 @@ class Shipment(GenericModel):
         if self.commodity and self.commodity.hazmat:
             self.hazmat = self.commodity.hazmat
 
+        if self.status == StatusChoices.VOIDED:
+            handle_voided_shipment(shipment=self)
+
         self.calculate_other_charge_amount()
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
-        """Get the absolute url for the Order
+        """Get the absolute url for the Shipment
 
         Returns:
-            str: Absolute url for the Order
+            str: Absolute url for the Shipment
         """
-        return reverse("order-detail", kwargs={"pk": self.pk})
+        return reverse("shipment-detail", kwargs={"pk": self.pk})
 
     def clean(self) -> None:
         """Shipment clean method
@@ -710,19 +805,20 @@ class Shipment(GenericModel):
         super().clean()
 
     def generate_pro_number(self) -> str:
-        code = f"ORD{self.__class__.objects.count() + 1:06d}"
-        return (
-            "ORD000001"
-            if self.__class__.objects.filter(
-                pro_number=code, organization=self.organization
-            ).exists()
-            else code
+        today = datetime.now().strftime("%y%m%d")
+        count_for_today = (
+            self.__class__.objects.filter(
+                pro_number__startswith=today, organization=self.organization
+            ).count()
+            + 1
         )
+
+        return f"{today}-{count_for_today:04d}"
 
     def validate_delivery_slot(
         self,
-        start_time: datetime.datetime,
-        end_time: datetime.datetime,
+        start_time: datetime,
+        end_time: datetime,
         location: Location,
     ) -> None:
         """

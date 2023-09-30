@@ -199,7 +199,7 @@ export function OrdersReadyTable({ data, websocketManager }: Props) {
             }
             variant="filled"
           >
-            Transfer Order(s)
+            Transfer Shipment(s)
           </Button>
           <Button color="red" onClick={restart}>
             Start Over

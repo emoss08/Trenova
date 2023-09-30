@@ -87,7 +87,7 @@ def transfer_to_billing_task(
     self: "Task", *, user_id: str, shipment_pros: list[str]
 ) -> None:
     """
-    Starts a Celery task to transfer the specified order(s) to billing for the logged-in user.
+    Starts a Celery task to transfer the specified Shipment(s) to billing for the logged-in user.
 
     Args:
         self: The Celery task instance.
@@ -106,7 +106,7 @@ def transfer_to_billing_task(
     If an ObjectDoesNotExist exception is raised while processing the task, the Celery task will automatically retry
     the task until it succeeds, with an exponential backoff strategy.
 
-    The `transfer_to_billing_queue_service` function is called to perform the actual transfer of the specified order(s).
+    The `transfer_to_billing_queue_service` function is called to perform the actual transfer of the specified Shipment(s).
     If this operation raises an ObjectDoesNotExist exception, the function will retry the task with an exponential
     backoff strategy until it succeeds.
 

@@ -104,7 +104,7 @@ def test_create(
     )
 
     assert created_document is not None
-    assert created_document.shipment == order
+    assert created_document.shipment == shipment
     assert created_document.organization == organization
     assert created_document.document_class == document_classification
     assert created_document.document.name is not None

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 def get_shipment_by_id(*, shipment_id: "ModelUUID") -> models.Shipment | None:
-    """Get an shipment model instance by its ID.
+    """Get a shipment model instance by its ID.
 
     Args:
         shipment_id (str): The ID of the shipment.
@@ -57,7 +57,7 @@ def get_shipment_movements(*, shipment: models.Shipment) -> "QuerySet[Movement]"
 
 
 def get_shipment_stops(*, shipment: models.Shipment) -> "QuerySet[Stop]":
-    """Get the stops of an shipment.
+    """Get the stops of a shipment.
 
     Args:
         shipment (models.Shipment): The shipment.
