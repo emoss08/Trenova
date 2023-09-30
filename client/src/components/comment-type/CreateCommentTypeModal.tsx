@@ -43,10 +43,7 @@ function CreateCommentTypeModalForm() {
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<CommentType>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<CommentType>>(
     form,
     store,
     notifications,

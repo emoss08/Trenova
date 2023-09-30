@@ -23,17 +23,16 @@ import {
   ChargeType,
   OrdersReadyProps,
 } from "@/types/billing";
-import { WebsocketMessageProps } from "@/lib/websockets";
+import { WebSocketMessageProps } from "@/lib/websockets";
 
 export const chargeTypeTableStore = createGlobalStore<
-  Omit<TableStoreProps<ChargeType>, "drawerOpen">
+  TableStoreProps<ChargeType>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   createModalOpen: false,
@@ -45,16 +44,15 @@ export const chargeTypeTableStore = createGlobalStore<
 });
 
 export const accessorialChargeTableStore = createGlobalStore<
-  Omit<TableStoreProps<AccessorialCharge>, "drawerOpen">
+  TableStoreProps<AccessorialCharge>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
   selectedRecord: null,
   globalFilter: "",
+  drawerOpen: false,
   createModalOpen: false,
   exportModalOpen: false,
   deleteModalOpen: false,
@@ -65,7 +63,7 @@ export const accessorialChargeTableStore = createGlobalStore<
 
 interface BillingClientStoreProps {
   step: number;
-  websocketMessage: WebsocketMessageProps;
+  websocketMessage: WebSocketMessageProps;
   exceptionModalOpen: boolean;
   transferConfirmModalOpen: boolean;
   approveTransfer: boolean;

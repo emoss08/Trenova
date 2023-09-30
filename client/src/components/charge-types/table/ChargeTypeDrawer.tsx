@@ -15,31 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
-import { notifications } from "@mantine/notifications";
+import { Box, Button, Drawer, Group, Textarea, TextInput } from "@mantine/core";
+import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
-import {
-  chargeTypeTableStore as store,
-  chargeTypeTableStore,
-} from "@/stores/BillingStores";
+import { notifications } from "@mantine/notifications";
+import { chargeTypeTableStore as store } from "@/stores/BillingStores";
 import {
   ChargeType,
   ChargeTypeFormValues as FormValues,
 } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { chargeTypeSchema } from "@/lib/schemas/BillingSchema";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 
 type EditChargeTypeModalFormProps = {
   chargeType: ChargeType;
+  onCancel: () => void;
 };
 
-export function EditChargeTypeModalForm({
+function EditChargeTypeModalForm({
   chargeType,
+  onCancel,
 }: EditChargeTypeModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -52,10 +51,7 @@ export function EditChargeTypeModalForm({
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<ChargeType>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<ChargeType>>(
     form,
     store,
     notifications,
@@ -99,6 +95,15 @@ export function EditChargeTypeModalForm({
           />
           <Group position="right" mt="md">
             <Button
+              variant="subtle"
+              onClick={onCancel}
+              color="gray"
+              type="button"
+              className={classes.control}
+            >
+              Cancel
+            </Button>
+            <Button
               color="white"
               type="submit"
               className={classes.control}
@@ -113,25 +118,97 @@ export function EditChargeTypeModalForm({
   );
 }
 
-export function EditChargeTypeModal(): React.ReactElement {
-  const [showEditModal, setShowEditModal] =
-    chargeTypeTableStore.use("editModalOpen");
-  const [chargeType] = chargeTypeTableStore.use("selectedRecord");
+function ViewChargeTypeModalForm({
+  chargeType,
+  onEditClick,
+}: {
+  chargeType: ChargeType;
+  onEditClick: () => void;
+}) {
+  const { classes } = useFormStyles();
 
   return (
-    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
-      <Modal.Overlay />
-      <Modal.Content>
-        <Modal.Header>
-          <Modal.Title>Edit Charge Type</Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
-          <Suspense fallback={<Skeleton height={200} />}>
-            {chargeType && <EditChargeTypeModalForm chargeType={chargeType} />}
-          </Suspense>
-        </Modal.Body>
-      </Modal.Content>
-    </Modal.Root>
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          value={chargeType.name}
+          readOnly
+          className={classes.fields}
+          label="Name"
+          variant="filled"
+        />
+        <Textarea
+          value={chargeType.description || ""}
+          className={classes.fields}
+          label="Description"
+          readOnly
+          variant="filled"
+        />
+        <Group position="right" mt="md" spacing="xs">
+          <Button
+            variant="subtle"
+            type="submit"
+            onClick={onEditClick}
+            className={classes.control}
+          >
+            Edit
+          </Button>
+          <Button
+            color="red"
+            type="submit"
+            onClick={() => {
+              store.set("drawerOpen", false);
+              store.set("deleteModalOpen", true);
+            }}
+            className={classes.control}
+          >
+            Remove
+          </Button>
+        </Group>
+      </Box>
+    </Box>
+  );
+}
+
+export function ChargeTypeDrawer(): React.ReactElement {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
+  const [chargeType] = store.use("selectedRecord");
+
+  const toggleEditMode = () => {
+    setIsEditing((prev) => !prev);
+  };
+
+  return (
+    <Drawer.Root
+      position="right"
+      opened={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+    >
+      <Drawer.Overlay />
+      <Drawer.Content>
+        <Drawer.Header>
+          <Drawer.Title>
+            {isEditing ? "Edit Charge Type" : "View Charge Type"}
+          </Drawer.Title>
+          <Drawer.CloseButton />
+        </Drawer.Header>
+        <Drawer.Body>
+          {chargeType && isEditing ? (
+            <EditChargeTypeModalForm
+              chargeType={chargeType}
+              onCancel={toggleEditMode}
+            />
+          ) : (
+            chargeType && (
+              <ViewChargeTypeModalForm
+                chargeType={chargeType}
+                onEditClick={toggleEditMode}
+              />
+            )
+          )}
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   );
 }

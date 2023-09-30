@@ -15,42 +15,30 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { createGlobalStore } from "@/lib/useGlobalStore";
-import { TableStoreProps } from "@/types/tables";
-import { Commodity, HazardousMaterial } from "@/types/commodities";
+import { useQuery, useQueryClient } from "react-query";
+import { getHazardousMaterials } from "@/services/CommodityRequestService";
+import { HazardousMaterial } from "@/types/commodities";
+import { QueryKeys } from "@/types";
 
-export const hazardousMaterialTableStore = createGlobalStore<
-  TableStoreProps<HazardousMaterial>
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  drawerOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  createModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+export function useHazardousMaterial(show: boolean) {
+  const queryClient = useQueryClient();
 
-export const commodityTableStore = createGlobalStore<
-  TableStoreProps<Commodity>
->({
-  pagination: {
-    pageIndex: 0,
-    pageSize: 10,
-  },
-  drawerOpen: false,
-  selectedRecord: null,
-  globalFilter: "",
-  exportModalOpen: false,
-  deleteModalOpen: false,
-  createModalOpen: false,
-  columnFilters: false,
-  rowSelection: {},
-  errorCount: 0,
-});
+  const { data, isLoading, isError, isFetched } = useQuery({
+    queryKey: ["hazardousMaterials" as QueryKeys],
+    queryFn: async () => getHazardousMaterials(),
+    enabled: show,
+    initialData: () =>
+      queryClient.getQueryData("hazardousMaterials" as QueryKeys),
+    staleTime: Infinity,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  const selectHazardousMaterials =
+    data?.map((item: HazardousMaterial) => ({
+      value: item.id,
+      label: item.name,
+    })) || [];
+
+  return { selectHazardousMaterials, isLoading, isError, isFetched };
+}

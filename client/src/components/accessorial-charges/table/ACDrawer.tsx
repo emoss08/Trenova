@@ -15,30 +15,42 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
-import { notifications } from "@mantine/notifications";
+import {
+  Box,
+  Button,
+  Drawer,
+  Group,
+  Select,
+  SimpleGrid,
+  Switch,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
+import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { accessorialChargeTableStore as store } from "@/stores/BillingStores";
 import {
   AccessorialCharge,
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import { fuelMethodChoices } from "@/utils/apps/billing";
 import { accessorialChargeSchema as Schema } from "@/lib/schemas/BillingSchema";
+import { useCustomMutation } from "@/hooks/useCustomMutation";
+import { TableStoreProps } from "@/types/tables";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
-import { fuelMethodChoices } from "@/utils/apps/billing";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
-import { useCustomMutation } from "@/hooks/useCustomMutation";
-import { TableStoreProps } from "@/types/tables";
 
-type EditACModalFormProps = {
+function EditACModalForm({
+  accessorialCharge,
+  onCancel,
+}: {
   accessorialCharge: AccessorialCharge;
-};
-
-export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
+  onCancel: () => void;
+}) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
 
@@ -55,7 +67,7 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
 
   const mutation = useCustomMutation<
     FormValues,
-    Omit<TableStoreProps<AccessorialCharge>, "drawerOpen">
+    TableStoreProps<AccessorialCharge>
   >(
     form,
     store,
@@ -132,6 +144,15 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
         </SimpleGrid>
         <Group position="right" mt="md">
           <Button
+            variant="subtle"
+            onClick={onCancel}
+            color="gray"
+            type="button"
+            className={classes.control}
+          >
+            Cancel
+          </Button>
+          <Button
             color="white"
             type="submit"
             className={classes.control}
@@ -145,26 +166,133 @@ export function EditACModalForm({ accessorialCharge }: EditACModalFormProps) {
   );
 }
 
-export function EditACModal(): React.ReactElement | null {
-  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
-  const [accessorialCharge] = store.use("selectedRecord");
+function ViewACModalForm({
+  accessorialCharge,
+  onEditClick,
+}: {
+  accessorialCharge: AccessorialCharge;
+  onEditClick: () => void;
+}) {
+  const { classes } = useFormStyles();
 
   return (
-    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
-      <Modal.Overlay />
-      <Modal.Content>
-        <Modal.Header>
-          <Modal.Title>Edit Accessorial Charge</Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
-          <Suspense fallback={<Skeleton height={200} />}>
-            {accessorialCharge && (
-              <EditACModalForm accessorialCharge={accessorialCharge} />
-            )}
-          </Suspense>
-        </Modal.Body>
-      </Modal.Content>
-    </Modal.Root>
+    <Box className={classes.div}>
+      <TextInput
+        className={classes.fields}
+        name="code"
+        label="Code"
+        description="Code for the accessorial charge."
+        placeholder="Code"
+        variant="filled"
+        readOnly
+        value={accessorialCharge.code}
+      />
+      <Textarea
+        className={classes.fields}
+        name="description"
+        label="Description"
+        description="Description of the accessorial charge."
+        placeholder="Description"
+        variant="filled"
+        readOnly
+        value={accessorialCharge.description || ""}
+      />
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <TextInput
+          className={classes.fields}
+          name="charge_amount"
+          label="Charge Amount"
+          placeholder="Charge Amount"
+          description="Charge amount for the accessorial charge."
+          variant="filled"
+          readOnly
+          value={accessorialCharge.chargeAmount}
+        />
+        <Select
+          data={fuelMethodChoices}
+          className={classes.fields}
+          name="method"
+          label="Fuel Method"
+          description="Method for calculating the other charge."
+          placeholder="Fuel Method"
+          variant="filled"
+          readOnly
+          value={accessorialCharge.method}
+        />
+        <Switch
+          className={classes.fields}
+          name="is_detention"
+          label="Detention"
+          description="Is detention charge?"
+          placeholder="Detention"
+          variant="filled"
+          readOnly
+          checked={accessorialCharge.isDetention}
+        />
+      </SimpleGrid>
+      <Group position="right" mt="md" spacing="xs">
+        <Button
+          variant="subtle"
+          type="submit"
+          onClick={onEditClick}
+          className={classes.control}
+        >
+          Edit
+        </Button>
+        <Button
+          color="red"
+          type="submit"
+          onClick={() => {
+            store.set("drawerOpen", false);
+            store.set("deleteModalOpen", true);
+          }}
+          className={classes.control}
+        >
+          Remove
+        </Button>
+      </Group>
+    </Box>
+  );
+}
+
+export function ACDrawer(): React.ReactElement {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [showViewModal, setShowViewModal] = store.use("drawerOpen");
+  const [accessorialCharge] = store.use("selectedRecord");
+
+  const toggleEditMode = () => {
+    setIsEditing((prev) => !prev);
+  };
+  return (
+    <Drawer.Root
+      position="right"
+      opened={showViewModal}
+      onClose={() => setShowViewModal(false)}
+    >
+      <Drawer.Overlay />
+      <Drawer.Content>
+        <Drawer.Header>
+          <Drawer.Title>
+            {isEditing ? "Edit Accessorial Charge" : "View Accessorial Charge"}
+          </Drawer.Title>
+          <Drawer.CloseButton />
+        </Drawer.Header>
+        <Drawer.Body>
+          {accessorialCharge && isEditing ? (
+            <EditACModalForm
+              accessorialCharge={accessorialCharge}
+              onCancel={toggleEditMode}
+            />
+          ) : (
+            accessorialCharge && (
+              <ViewACModalForm
+                accessorialCharge={accessorialCharge}
+                onEditClick={toggleEditMode}
+              />
+            )
+          )}
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   );
 }

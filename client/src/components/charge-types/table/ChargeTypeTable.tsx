@@ -20,9 +20,8 @@ import { MRT_ColumnDef } from "mantine-react-table";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { CreateChargeTypeModal } from "@/components/charge-types/table/CreateChargeTypeModal";
-import { EditChargeTypeModal } from "@/components/charge-types/table/EditChargeTypeModal";
-import { ViewChargeTypeModal } from "@/components/charge-types/table/ViewChargeTypeModal";
 import { ChargeType } from "@/types/billing";
+import { ChargeTypeDrawer } from "@/components/charge-types/table/ChargeTypeDrawer";
 
 export function ChargeTypeTable() {
   const columns = useMemo<MRT_ColumnDef<ChargeType>[]>(
@@ -44,10 +43,9 @@ export function ChargeTypeTable() {
       store={chargeTypeTableStore}
       link="/charge_types"
       columns={columns}
-      TableEditModal={EditChargeTypeModal}
-      TableViewModal={ViewChargeTypeModal}
       displayDeleteModal
       TableCreateDrawer={CreateChargeTypeModal}
+      TableDrawer={ChargeTypeDrawer}
       tableQueryKey="charge-type-table-data"
       exportModelName="ChargeType"
       name="Charge Type"
