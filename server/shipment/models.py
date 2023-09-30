@@ -358,8 +358,7 @@ class ServiceType(GenericModel):
 
 class Shipment(GenericModel):
     """
-    >>>>>>> Stashed changes
-        Stores shipment information related to a :model:`organization.Organization`.
+    Stores shipment information related to a :model:`organization.Organization`.
     """
 
     id = models.UUIDField(
