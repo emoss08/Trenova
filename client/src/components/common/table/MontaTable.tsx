@@ -37,14 +37,12 @@ import { TableExportModal } from "./TableExportModal";
 import { StoreType } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 import { QueryKeys } from "@/types";
-import { MontaTableActionMenu } from "@/components/common/table/ActionsMenu";
 
 MontaTable.defaultProps = {
   displayDeleteModal: true,
   TableCreateDrawer: undefined,
   TableDeleteModal: undefined,
-  TableEditModal: undefined,
-  TableViewModal: undefined,
+  TableDrawer: undefined,
   deleteKey: "id",
 };
 
@@ -57,8 +55,7 @@ type MontaTableProps<T extends Record<string, any>, K> = {
   displayDeleteModal?: boolean;
   TableCreateDrawer?: React.ComponentType;
   TableDeleteModal?: React.ComponentType;
-  TableEditModal?: React.ComponentType;
-  TableViewModal?: React.ComponentType;
+  TableDrawer?: React.ComponentType;
   exportModelName: string;
   name: string;
   tableQueryKey: QueryKeys;
@@ -68,14 +65,13 @@ type MontaTableProps<T extends Record<string, any>, K> = {
 
 export function MontaTable<
   T extends Record<string, any>,
-  K extends Omit<TableStoreProps<T>, "drawerOpen">,
+  K extends TableStoreProps<T>,
 >({
   store,
   link,
   TableCreateDrawer,
-  TableEditModal,
+  TableDrawer,
   TableDeleteModal,
-  TableViewModal,
   tableQueryKey,
   exportModelName,
   displayDeleteModal,
@@ -100,6 +96,7 @@ export function MontaTable<
     }),
     [theme.colorScheme, theme.colors.dark],
   );
+
   const useGetTableData = () => {
     const fetchURL = new URL(`${API_URL}${link}/`);
 
@@ -139,11 +136,11 @@ export function MontaTable<
     getRowId: (row) => row.id,
     enableRowSelection: true,
     icons: montaTableIcons,
-    enableRowActions: true,
+    // enableRowActions: true,
     positionActionsColumn: "last",
-    renderRowActions: ({ row }) => (
-      <MontaTableActionMenu store={store} data={row.original} />
-    ),
+    // renderRowActions: ({ row }) => (
+    //   <MontaTableActionMenu store={store} data={row.original} />
+    // ),
     mantinePaperProps: {
       sx: { overflow: "visible" },
       shadow: "none",
@@ -185,7 +182,18 @@ export function MontaTable<
       sx: { borderBottom: "unset", marginTop: "8px" },
       variant: "filled",
     },
-    mantineTableBodyCellProps: cellProps,
+    mantineTableBodyCellProps: ({ row }) => ({
+      sx: {
+        backgroundColor:
+          theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
+        cursor: "pointer",
+        userSelect: "none",
+      },
+      onDoubleClick: () => {
+        store.set("selectedRecord", row.original);
+        store.set("drawerOpen", true);
+      },
+    }),
     renderTopToolbar: ({ table }) => (
       <TableTopToolbar table={table} store={store} name={name} />
     ),
@@ -204,9 +212,8 @@ export function MontaTable<
           deleteKey={deleteKey}
         />
       )}
-      {TableEditModal && <TableEditModal />}
+      {TableDrawer && <TableDrawer />}
       {TableDeleteModal && <TableDeleteModal />}
-      {TableViewModal && <TableViewModal />}
     </>
   );
 }
