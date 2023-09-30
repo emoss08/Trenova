@@ -27,14 +27,14 @@ from billing.tests.factories import (
 from document_generator import models
 from document_generator.services import render_document
 from organization.models import BusinessUnit, Organization
-from shipment.tests.factories import AdditionalChargeFactory, OrderFactory
+from shipment.tests.factories import AdditionalChargeFactory
 
 pytestmark = pytest.mark.django_db
 
 
 # def test_generate_document_with_line_items(organization, business_unit):
 #     # Create a sample Invoice model instance
-#     shipment_1 = OrderFactory()
+#     shipment_1 = ShipmentFactory()
 #     user = UserFactory()
 #     doc_class = DocumentClassificationFactory()
 #
@@ -234,7 +234,7 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
             }
         """,
     )
-    shipment_1 = OrderFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
     doc_class = DocumentClassificationFactory()
 

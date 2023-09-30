@@ -232,17 +232,17 @@ def bill_shipments(
     the extension of the function itself, rather than the business transaction.
 
     Args:
-        user_id (ModelUUID): The id of the user issuing the orders to be billed.
+        user_id (ModelUUID): The id of the user issuing the shipments to be billed.
         invoices (QuerySet[models.BillingQueue] or models.BillingQueue):
             The invoices to be billed. Can be a queryset of multiple invoices
             or a single invoice object.
         task_id (str): The id of the task corresponding to this operation.
 
     Returns:
-        BilledOrders (tuple): A tuple consisting of two lists.
-            The first list contains information about orders with missing
+        Billedshipments (tuple): A tuple consisting of two lists.
+            The first list contains information about shipments with missing
             billing information if any. The second list contains the invoice
-            numbers of the billed orders.
+            numbers of the billed shipments.
 
     Note:
         create_log_entry function is a nested helper function used to
@@ -316,7 +316,7 @@ def untransfer_shipment_service(
     task_id: str,
     user_id: "ModelUUID",
 ) -> None:
-    """Untransfer the specified orders from the billing queue.
+    """Untransfer the specified shipments from the billing queue.
 
     Args:
         invoices (QuerySet[models.BillingQueue]): QuerySet of BillingQueue objects to be untransferred.
@@ -361,7 +361,7 @@ def untransfer_shipment_service(
 
 
 def ready_to_bill_service(shipments: QuerySet[Shipment]) -> None:
-    """Automatically set orders ready to bill, if shipment passes billing requirement check.
+    """Automatically set shipments ready to bill, if shipment passes billing requirement check.
 
     Args:
         shipments (QuerySet[Shipment]): Order Queryset

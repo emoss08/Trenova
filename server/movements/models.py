@@ -162,7 +162,7 @@ class Movement(GenericModel):
         Returns:
             ModelDelete: tuple[int, dict[str, int]]
         """
-        if self.organization.shipment_control.remove_shipments is False:
+        if self.organization.shipment_control.remove_shipment is False:
             raise ValidationError(
                 {
                     "ref_num": _(
@@ -202,11 +202,13 @@ class Movement(GenericModel):
         This function checks the following:
         - If a tractor is assigned, it sets the primary and secondary workers of the tractor to the Movement instance,
         provided that these fields are not already set.
-        - If a primary worker is assigned but not a tractor, it sets the primary tractor of the worker to the Movement instance.
+        - If a primary worker is assigned but not a tractor, it sets the primary tractor of the worker to the Movement
+         instance.
         This ensures that each Movement instance gets assigned the right tractor and workers.
 
         Note:
-            This function alters the current instance 'self' and might need to save the instance depending on how it's used.
+            This function alters the current instance 'self' and might need to save the instance depending on how it's
+            used.
 
         Returns:
             None: This function does not return anything.

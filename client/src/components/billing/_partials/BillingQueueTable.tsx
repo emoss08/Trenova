@@ -173,7 +173,7 @@ export function BillingQueueTable({ data, websocketManager }: Props) {
             }
             variant="filled"
           >
-            Bill Order(s)
+            Bill Shipment(s)
           </Button>
           <Button color="violet" onClick={restart}>
             Go Back

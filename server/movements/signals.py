@@ -44,10 +44,14 @@ def generate_initial_stops(
 
 
 def update_shipment_status(instance: models.Movement, **kwargs: Any) -> None:
+    # If the movement is VOIDED, skip the logic below
+    if instance.status == models.StatusChoices.VOIDED:
+        return
     movements = instance.shipment.movements.all()
     completed_movements = movements.filter(status=StatusChoices.COMPLETED)
     in_progress_movements = movements.filter(status=StatusChoices.IN_PROGRESS)
 
+    # Determine the new status for the Shipment
     if movements.count() == completed_movements.count():
         new_status = StatusChoices.COMPLETED
     elif completed_movements.count() > 0 or in_progress_movements.count() > 0:

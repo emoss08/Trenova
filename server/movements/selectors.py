@@ -14,57 +14,20 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-import decimal
-import typing
 
-from django.db.models import Sum
-
-from stops.models import Stop
-
-if typing.TYPE_CHECKING:
-    from shipment.models import Shipment
+from movements import models
 
 
-def get_total_piece_count_by_shipment(*, shipment: "Shipment") -> int:
-    """Return the total piece count for an order
+def get_movement_by_id(*, movement_id: str) -> models.Movement | None:
+    """Get a movement model instance by its ID.
 
     Args:
-        shipment (Shipment): shipment instance
+        movement_id (str): The ID of the movement.
 
     Returns:
-        int: Total piece counts for an order
-    """
-    value: int = Stop.objects.filter(movement__shipment__exact=shipment).aggregate(
-        Sum("pieces")
-    )["pieces__sum"]
-    return value or 0
-
-
-def get_total_weight_by_shipment(*, shipment: "Shipment") -> decimal.Decimal | int:
-    """Return the total weight for an order
-
-    Args:
-        shipment (Shipment): shipment instance
-
-    Returns:
-        decimal.Decimal: Total weight for an order
-    """
-    value: decimal.Decimal = Stop.objects.filter(
-        movement__shipment__exact=shipment
-    ).aggregate(Sum("weight"))["weight__sum"]
-    return value or 0
-
-
-def get_stop_by_id(*, stop_id: str) -> Stop | None:
-    """Get a stop model instance by its ID.
-
-    Args:
-        stop_id (str): The ID of the stop.
-
-    Returns:
-        models.Stop: The stop model instance.
+        models.Shipment: The shipment model instance.
     """
     try:
-        return Stop.objects.get(pk__exact=stop_id)
-    except Stop.DoesNotExist:
+        return models.Movement.objects.get(pk__exact=movement_id)
+    except models.Movement.DoesNotExist:
         return None

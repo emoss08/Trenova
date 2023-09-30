@@ -22,6 +22,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from movements import models
+from movements.selectors import get_movement_by_id
 from utils.models import StatusChoices
 from worker.models import WorkerProfile
 
@@ -392,17 +393,18 @@ class MovementValidation:
                 "Please ensure they are part of the same fleet and try again."
             )
 
-    def validate_movement_order(self) -> None:
+    def validate_movement_shipment(self) -> None:
         """Validate previous movement is completed before setting current movement in progress
 
         This method validates the given instance of the Movement model before saving it. Specifically,
         it checks if the instance's status is set to 'IN_PROGRESS' and if there are any previous movements
-        with the same order that are not completed. If there are any previous movements that are not
+        with the same shipment that are not completed. If there are any previous movements that are not
         completed, it raises a validation error with a message indicating that the previous movement(s) must
         be completed before the current movement can be set to 'IN_PROGRESS'.
 
         Raises:
-            ValidationError: If the instance status is set to IN_PROGRESS and the previous movement(s) with the same order are not completed.
+            ValidationError: If the instance status is set to IN_PROGRESS and the previous movement(s) with the same shipment
+            are not completed.
 
         Returns:
             None: This function does not return anything.
@@ -415,13 +417,19 @@ class MovementValidation:
 
             for movement in previous_movements:
                 if movement.status != StatusChoices.COMPLETED:
-                    raise ValidationError(
-                        {
-                            "status": _(
-                                f"The previous movement (ID: {movement.ref_num}) must be completed before"
-                                f" this movement can be set to `{self.movement.get_status_display()}`"
-                                " Please try again."
-                            )
-                        },
-                        code="invalid",
+                    self.errors["status"] = _(
+                        f"The previous movement (ID: {movement.ref_num}) must be completed before"
+                        f" this movement can be set to `{self.movement.get_status_display()}`"
+                        " Please try again."
                     )
+
+    def validate_voided_movement(self) -> None:
+        movement = get_movement_by_id(movement_id=self.movement.id)
+
+        if not movement:
+            return None
+
+        if movement.status == StatusChoices.VOIDED:
+            self.errors["status"] = _(
+                "Cannot update a voided movement. Please contact your administrator."
+            )

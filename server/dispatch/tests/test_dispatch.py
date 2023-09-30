@@ -25,7 +25,6 @@ from dispatch.factories import FleetCodeFactory
 from equipment.tests.factories import TractorFactory
 from organization.models import BusinessUnit, Organization
 from shipment.selectors import get_shipment_movements, get_shipment_stops
-from shipment.tests.factories import OrderFactory
 from worker.factories import WorkerFactory
 from worker.models import WorkerHOS
 
@@ -54,7 +53,7 @@ def test_feasibility_tool_eligible_driver(
         business_unit=business_unit,
     )
 
-    shipment = OrderFactory()
+    shipment = ShipmentFactory()
     movements = get_shipment_movements(shipment=shipment)
 
     for movement in movements:
@@ -152,7 +151,7 @@ def test_feasibility_tool_not_eligible(
         organization=organization, fleet=fleet, primary_worker=worker
     )
 
-    shipment = OrderFactory()
+    shipment = ShipmentFactory()
     movements = get_shipment_movements(shipment=shipment)
 
     for movement in movements:

@@ -23,7 +23,7 @@ from billing.models import BillingQueue
 from edi import exceptions, helpers
 from edi.tests import factories
 from organization.models import BusinessUnit, Organization
-from shipment.tests.factories import shipmentFactory
+from shipment.tests.factories import ShipmentFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -88,7 +88,7 @@ def test_get_nested_attr(
     Returns:
         None: This function does not return anything.
     """
-    shipment_1 = shipmentFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
@@ -122,7 +122,7 @@ def test_get_nested_attr_exception(
     Returns:
         None: This function does not return anything.
     """
-    shipment_1 = shipmentFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
@@ -154,7 +154,7 @@ def test_get_nested_attr_exception(
 def test_generate_edi_content(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    shipment_1 = shipmentFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
@@ -224,7 +224,7 @@ def test_generate_edi_content_value_returns_empty_string(
     Returns:
         None: This function does not return anything.
     """
-    shipment_1 = shipmentFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
@@ -271,7 +271,7 @@ def test_generate_edi_content_parser_error(
     Returns:
         None: This function does not return anything.
     """
-    shipment_1 = shipmentFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
@@ -308,7 +308,7 @@ def test_generate_edi_content_parser_error(
 def test_generate_edi_document(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    shipment_1 = shipmentFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()
@@ -370,7 +370,7 @@ def test_generate_edi_content_validation_regex(
         None: This function does return anything.
     """
 
-    shipment_1 = OrderFactory()
+    shipment_1 = ShipmentFactory()
     user = UserFactory()
 
     shipment_movements = shipment_1.movements.all()

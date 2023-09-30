@@ -30,7 +30,8 @@ from equipment.tests.factories import TractorFactory
 from movements import models, services
 from movements.tests.factories import MovementFactory
 from organization.models import BusinessUnit, Organization
-from shipment.tests.factories import OrderFactory
+from shipment.models import Shipment
+from shipment.tests.factories import ShipmentFactory
 from worker.factories import WorkerFactory
 from worker.models import Worker
 
@@ -65,7 +66,7 @@ def test_create(
     )
 
     assert movement is not None
-    assert movement.shipment == order
+    assert movement.shipment == shipment
     assert movement.tractor == tractor
     assert movement.primary_worker == worker
 
@@ -93,7 +94,7 @@ def test_initial_stop_creation_hook(
     """
     Test that an initial stop is created when a movement is created.
     """
-    shipment = OrderFactory(
+    shipment = ShipmentFactory(
         origin_appointment_window_start=timezone.now(),
         origin_appointment_window_end=timezone.now(),
         destination_appointment_window_start=timezone.now() + timedelta(days=2),
@@ -165,10 +166,10 @@ def test_post_movement(
 
     Args:
         api_client (APIClient): API Client
-        organization (): Organization instance
-        order (): Order instance
-        worker (): Worker instance
-        tractor (): Tractor instance
+        organization (Organization): Organization instance
+        shipment (Shipment): Order instance
+        worker (Worker): Worker instance
+        tractor (Tractor): Tractor instance
 
     Returns:
         None: This function does not return anything.
@@ -335,7 +336,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
     worker = WorkerFactory()
 
     with pytest.raises(ValidationError) as excinfo:
@@ -355,7 +356,7 @@ def test_primary_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> 
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
     worker = WorkerFactory()
     worker.profile.endorsements = "H"
     worker.profile.hazmat_expiration_date = timezone.now().date() - timedelta(days=30)
@@ -485,7 +486,7 @@ def test_second_worker_cannot_be_assigned_to_movement_without_hazmat() -> None:
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
     primary_worker = WorkerFactory()
     primary_worker.profile.endorsements = "H"
     worker = WorkerFactory()
@@ -509,7 +510,7 @@ def test_second_worker_cannot_be_assigned_to_movement_with_expired_hazmat() -> N
 
     hazmat = HazardousMaterialFactory()
     commodity = CommodityFactory(hazmat=hazmat)
-    shipment = OrderFactory(commodity=commodity, hazmat=hazmat)
+    shipment = ShipmentFactory(commodity=commodity, hazmat=hazmat)
 
     primary_worker = WorkerFactory()
     primary_worker.profile.endorsements = "H"
@@ -619,7 +620,7 @@ def test_cannot_delete_movement_if_org_disallows(movement: models.Movement) -> N
         None: This function does not return anything.
     """
 
-    movement.organization.shipment_control.remove_orders = False
+    movement.organization.shipment_control.remove_shipments = False
     movement.organization.shipment_control.save()
 
     with pytest.raises(ValidationError) as excinfo:

@@ -41,14 +41,14 @@ from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
 from organization.models import Organization
-from shipment.models import ShipmentType
+from shipment.models import ShipmentType, Shipment
 from shipment.tests.factories import (
     AdditionalChargeFactory,
     ShipmentCommentFactory,
     ShipmentDocumentationFactory,
-    OrderFactory,
     ShipmentTypeFactory,
     ReasonCodeFactory,
+    ShipmentFactory,
 )
 
 pytestmark = pytest.mark.django_db
@@ -63,11 +63,11 @@ def shipment_type() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order() -> Generator[Any, Any, None]:
+def shipment() -> Generator[Any, Any, None]:
     """
     Pytest Fixture for Order
     """
-    yield OrderFactory()
+    yield ShipmentFactory()
 
 
 @pytest.fixture

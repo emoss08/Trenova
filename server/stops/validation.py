@@ -20,6 +20,7 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from stops import models
+from stops.selectors import get_stop_by_id
 from utils.models import StatusChoices
 
 
@@ -195,4 +196,15 @@ class StopValidation:
         if not self.instance.location and not self.instance.address_line:
             self.errors["location"] = _(
                 "Must enter a location or address line. Please try again."
+            )
+
+    def validate_voided_stop(self) -> None:
+        stop = get_stop_by_id(stop_id=self.instance.id)
+
+        if not stop:
+            return None
+
+        if stop.status == StatusChoices.VOIDED:
+            self.errors["status"] = _(
+                "Cannot change a voided stop. Please contact your administrator."
             )
