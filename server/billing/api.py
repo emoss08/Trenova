@@ -194,19 +194,16 @@ class BillingLogEntryViewSet(viewsets.ModelViewSet):
 
 class BillingHistoryViewSet(viewsets.ModelViewSet):
     """
-        A viewset for viewing and editing billing history in the system.
+    A viewset for viewing and editing billing history in the system.
 
-        The viewset provides default operation for viewing billing history,
-        as well as listing and retrieving charge types. It uses the `BillingHistorySerializer` class to
-        convert the charge type instances to and from JSON-formatted data.
+    The viewset provides default operation for viewing billing history,
+    as well as listing and retrieving charge types. It uses the `BillingHistorySerializer` class to
+    convert the charge type instances to and from JSON-formatted data.
 
-        Only authenticated users are allowed to access the views provided by this viewset.
-    <<<<<<< Updated upstream
-        Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
-    =======
-        Filtering is also available, with the ability to filter by `shipment` pro_number, `worker` code, `customer`
-    >>>>>>> Stashed changes
-        code, `revenue_code` code and `shipment_type` id.
+    Only authenticated users are allowed to access the views provided by this viewset.
+    Filtering is also available, with the ability to filter by `order` pro_number, `worker` code, `customer`
+    Filtering is also available, with the ability to filter by `shipment` pro_number, `worker` code, `customer`
+    code, `revenue_code` code and `shipment_type` id.
     """
 
     queryset = models.BillingHistory.objects.all()
