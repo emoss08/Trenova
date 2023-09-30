@@ -21,11 +21,10 @@ import { Badge, Text } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { commodityTableStore } from "@/stores/CommodityStore";
 import { CreateCommodityModal } from "@/components/commodities/CreateCommodityModal";
-import { EditCommodityModal } from "@/components/commodities/EditCommodityModal";
-import { ViewCommodityModal } from "@/components/commodities/ViewCommodityModal";
 import { Commodity } from "@/types/commodities";
 import { truncateText } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
+import { CommodityDrawer } from "@/components/commodities/CommodityDrawer";
 
 export function CommodityTable() {
   const columns = useMemo<MRT_ColumnDef<Commodity>[]>(
@@ -88,10 +87,9 @@ export function CommodityTable() {
       store={commodityTableStore}
       link="/commodities"
       columns={columns}
-      TableEditModal={EditCommodityModal}
-      TableViewModal={ViewCommodityModal}
       displayDeleteModal
       TableCreateDrawer={CreateCommodityModal}
+      TableDrawer={CommodityDrawer}
       tableQueryKey="commodity-table-data"
       exportModelName="Commodity"
       name="Commodity"

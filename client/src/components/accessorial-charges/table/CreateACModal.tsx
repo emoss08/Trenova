@@ -51,7 +51,7 @@ export function CreateACModalForm() {
 
   const mutation = useCustomMutation<
     FormValues,
-    Omit<TableStoreProps<AccessorialCharge>, "drawerOpen">
+    TableStoreProps<AccessorialCharge>
   >(
     form,
     store,

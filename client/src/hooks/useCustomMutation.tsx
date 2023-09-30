@@ -88,15 +88,13 @@ function handleSuccess<K>(
   const invalidateQueries = async (queries?: string[]) => {
     if (queries) {
       await queryClient.invalidateQueries(queries);
-      notifySuccess();
     }
   };
 
-  invalidateQueries(options.queryKeysToInvalidate);
+  invalidateQueries(options.queryKeysToInvalidate).then(notifySuccess);
   invalidateQueries(options.additionalInvalidateQueries);
 
-  const modalKey =
-    options.method === "POST" ? "createModalOpen" : "editModalOpen";
+  const modalKey = options.method === "POST" ? "createModalOpen" : "drawerOpen";
   if (options.closeModal) {
     store.set(modalKey as keyof K, false as any);
   }

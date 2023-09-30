@@ -20,8 +20,7 @@ import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { CreateACModal } from "@/components/accessorial-charges/table/CreateACModal";
 import { accessorialChargeTableStore } from "@/stores/BillingStores";
-import { EditACModal } from "@/components/accessorial-charges/table/EditACModal";
-import { ViewACModal } from "@/components/accessorial-charges/table/ViewACModal";
+import { ACDrawer } from "@/components/accessorial-charges/table/ACDrawer";
 import { AccessorialCharge } from "@/types/billing";
 import { truncateText, USDollarFormat } from "@/lib/utils";
 import { TChoiceProps } from "@/types";
@@ -81,10 +80,9 @@ export function ACChargeTable() {
       store={accessorialChargeTableStore}
       link="/accessorial_charges"
       columns={columns}
-      TableEditModal={EditACModal}
-      TableViewModal={ViewACModal}
       displayDeleteModal
       TableCreateDrawer={CreateACModal}
+      TableDrawer={ACDrawer}
       tableQueryKey="accessorial-charges-table-data"
       exportModelName="AccessorialCharge"
       name="Accessorial Charge"

@@ -16,36 +16,52 @@
  */
 
 import React from "react";
-import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
-import { useQuery, useQueryClient } from "react-query";
-import { notifications } from "@mantine/notifications";
+import {
+  Box,
+  Button,
+  Drawer,
+  Group,
+  Select,
+  SimpleGrid,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { commodityTableStore as store } from "@/stores/CommodityStore";
-import { getHazardousMaterials } from "@/services/CommodityRequestService";
 import {
   Commodity,
   CommodityFormValues as FormValues,
-  HazardousMaterial,
 } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { SelectInput } from "@/components/common/fields/SelectInput";
 import { yesAndNoChoices } from "@/lib/constants";
+import { UnitOfMeasureChoices } from "@/lib/choices";
+import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
-import { UnitOfMeasureChoices } from "@/lib/choices";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import {
+  SelectInput,
+  ViewSelectInput,
+} from "@/components/common/fields/SelectInput";
+import { useHazardousMaterial } from "@/hooks/useHazardousMaterial";
 
 type EditCommodityModalFormProps = {
   commodity: Commodity;
   selectHazmatData: TChoiceProps[];
+  onCancel: () => void;
+  isErrors: boolean;
+  isLoading: boolean;
 };
 
 function EditCommodityModalForm({
   commodity,
   selectHazmatData,
+  isErrors,
+  isLoading,
+  onCancel,
 }: EditCommodityModalFormProps) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -64,10 +80,7 @@ function EditCommodityModalForm({
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<Commodity>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<Commodity>>(
     form,
     store,
     notifications,
@@ -140,6 +153,8 @@ function EditCommodityModalForm({
             <SelectInput<FormValues>
               className={classes.fields}
               data={selectHazmatData || []}
+              isError={isErrors}
+              isLoading={isLoading}
               name="hazmat"
               placeholder="Hazardous Material"
               label="Hazardous Material"
@@ -169,6 +184,15 @@ function EditCommodityModalForm({
           />
           <Group position="right" mt="md">
             <Button
+              variant="subtle"
+              onClick={onCancel}
+              color="gray"
+              type="button"
+              className={classes.control}
+            >
+              Cancel
+            </Button>
+            <Button
               color="white"
               type="submit"
               className={classes.control}
@@ -183,42 +207,166 @@ function EditCommodityModalForm({
   );
 }
 
-export function EditCommodityModal() {
-  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
-  const [commodity] = store.use("selectedRecord");
-  const queryClient = useQueryClient();
+type ViewCommodityModalFormProps = {
+  commodity: Commodity;
+  selectHazmatData: TChoiceProps[];
+  onEditClick: () => void;
+};
 
-  const { data: hazmatData } = useQuery({
-    queryKey: "hazmat-data",
-    queryFn: () => getHazardousMaterials(),
-    enabled: showEditModal,
-    initialData: () => queryClient.getQueryData("hazmat-data"),
-    staleTime: Infinity,
-  });
-
-  const selectHazmatData =
-    hazmatData?.map((hazardousMaterial: HazardousMaterial) => ({
-      value: hazardousMaterial.id,
-      label: hazardousMaterial.name,
-    })) || [];
+function ViewCommodityModalForm({
+  commodity,
+  selectHazmatData,
+  onEditClick,
+}: ViewCommodityModalFormProps) {
+  const { classes } = useFormStyles();
 
   return (
-    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
-      <Modal.Overlay />
-      <Modal.Content>
-        <Modal.Header>
-          <Modal.Title>Edit Commodity</Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
-          {commodity && (
+    <Box className={classes.div}>
+      <Box>
+        <TextInput
+          className={classes.fields}
+          value={commodity.name}
+          name="name"
+          label="Name"
+          placeholder="Name"
+          readOnly
+          variant="filled"
+          withAsterisk
+        />
+        <Textarea
+          className={classes.fields}
+          name="description"
+          label="Description"
+          placeholder="Description"
+          readOnly
+          variant="filled"
+          value={commodity.description || ""}
+        />
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <TextInput
+            className={classes.fields}
+            name="minTemp"
+            label="Min Temp"
+            placeholder="Min Temp"
+            readOnly
+            variant="filled"
+            value={commodity.minTemp || ""}
+          />
+          <TextInput
+            className={classes.fields}
+            name="maxTemp"
+            label="Max Temp"
+            placeholder="Max Temp"
+            readOnly
+            variant="filled"
+            value={commodity.maxTemp || ""}
+          />
+        </SimpleGrid>
+        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+          <ViewSelectInput
+            className={classes.fields}
+            data={selectHazmatData || []}
+            placeholder="Hazardous Material"
+            label="Hazardous Material"
+            variant="filled"
+            value={commodity.hazmat || ""}
+            readOnly
+            clearable
+          />
+          <Select
+            className={classes.fields}
+            data={yesAndNoChoices}
+            name="isHazmat"
+            label="Is Hazmat"
+            placeholder="Is Hazmat"
+            variant="filled"
+            value={commodity.isHazmat || ""}
+            readOnly
+            withAsterisk
+          />
+        </SimpleGrid>
+        <Select
+          className={classes.fields}
+          data={UnitOfMeasureChoices}
+          name="unitOfMeasure"
+          placeholder="Unit of Measure"
+          label="Unit of Measure"
+          value={commodity.unitOfMeasure || ""}
+          readOnly
+          variant="filled"
+        />
+        <Group position="right" mt="md" spacing="xs">
+          <Button
+            variant="subtle"
+            type="submit"
+            onClick={onEditClick}
+            className={classes.control}
+          >
+            Edit
+          </Button>
+          <Button
+            color="red"
+            type="submit"
+            onClick={() => {
+              store.set("drawerOpen", false);
+              store.set("deleteModalOpen", true);
+            }}
+            className={classes.control}
+          >
+            Remove
+          </Button>
+        </Group>
+      </Box>
+    </Box>
+  );
+}
+
+export function CommodityDrawer() {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
+  const [commodity] = store.use("selectedRecord");
+
+  const toggleEditMode = () => {
+    setIsEditing((prev) => !prev);
+  };
+
+  const { selectHazardousMaterials, isLoading, isError } =
+    useHazardousMaterial(drawerOpen);
+
+  return (
+    <Drawer.Root
+      position="right"
+      opened={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+    >
+      <Drawer.Overlay />
+      <Drawer.Content>
+        <Drawer.Header>
+          <Drawer.Title>
+            {isEditing ? "Edit Commodity" : "View Commodity"}
+          </Drawer.Title>
+          <Drawer.CloseButton />
+        </Drawer.Header>
+        <Drawer.Body>
+          {commodity && isEditing ? (
             <EditCommodityModalForm
+              isLoading={isLoading}
+              isErrors={isError}
               commodity={commodity}
-              selectHazmatData={selectHazmatData}
+              selectHazmatData={selectHazardousMaterials}
+              onCancel={toggleEditMode}
             />
+          ) : (
+            commodity && (
+              <ViewCommodityModalForm
+                commodity={commodity}
+                selectHazmatData={selectHazardousMaterials}
+                onEditClick={toggleEditMode}
+              />
+            )
           )}
-        </Modal.Body>
-      </Modal.Content>
-    </Modal.Root>
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   );
 }

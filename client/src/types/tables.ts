@@ -22,8 +22,6 @@ export interface TableStoreProps<T> {
     pageIndex: number;
     pageSize: number;
   };
-  viewModalOpen: boolean;
-  editModalOpen: boolean;
   selectedRecord: T | null;
   globalFilter: string | undefined;
   drawerOpen: boolean;

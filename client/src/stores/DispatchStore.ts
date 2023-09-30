@@ -18,15 +18,12 @@ import { createGlobalStore } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 import { CommentType, DelayCode, FleetCode, Rate } from "@/types/dispatch";
 
-export const useDelayCodeStore = createGlobalStore<
-  Omit<TableStoreProps<DelayCode>, "drawerOpen">
->({
+export const useDelayCodeStore = createGlobalStore<TableStoreProps<DelayCode>>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,
@@ -37,15 +34,12 @@ export const useDelayCodeStore = createGlobalStore<
   errorCount: 0,
 });
 
-export const useFleetCodeStore = createGlobalStore<
-  Omit<TableStoreProps<FleetCode>, "drawerOpen">
->({
+export const useFleetCodeStore = createGlobalStore<TableStoreProps<FleetCode>>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,
@@ -57,14 +51,13 @@ export const useFleetCodeStore = createGlobalStore<
 });
 
 export const useCommentTypeStore = createGlobalStore<
-  Omit<TableStoreProps<CommentType>, "drawerOpen">
+  TableStoreProps<CommentType>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,
@@ -75,15 +68,12 @@ export const useCommentTypeStore = createGlobalStore<
   errorCount: 0,
 });
 
-export const useRateStore = createGlobalStore<
-  Omit<TableStoreProps<Rate>, "drawerOpen">
->({
+export const useRateStore = createGlobalStore<TableStoreProps<Rate>>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,

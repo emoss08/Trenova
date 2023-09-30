@@ -23,8 +23,7 @@ import { truncateText } from "@/lib/utils";
 import { CommentType } from "@/types/dispatch";
 import { useCommentTypeStore } from "@/stores/DispatchStore";
 import { CreateCommentTypeModal } from "@/components/comment-type/CreateCommentTypeModal";
-import { ViewCommentTypeModal } from "@/components/comment-type/ViewCommentTypeModal";
-import { EditCommentTypeModal } from "@/components/comment-type/EditCommentTypeModal";
+import { CommentTypeDrawer } from "@/components/comment-type/CommentTypeDrawer";
 
 export function CommentTypeTable() {
   const columns = useMemo<MRT_ColumnDef<CommentType>[]>(
@@ -53,11 +52,10 @@ export function CommentTypeTable() {
       store={useCommentTypeStore}
       link="/comment_types"
       columns={columns}
-      TableEditModal={EditCommentTypeModal}
-      TableViewModal={ViewCommentTypeModal}
       displayDeleteModal
       deleteKey="id"
       TableCreateDrawer={CreateCommentTypeModal}
+      TableDrawer={CommentTypeDrawer}
       tableQueryKey="comment-types-table-data"
       exportModelName="CommentType"
       name="Comment Type"
