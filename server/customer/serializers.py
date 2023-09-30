@@ -331,7 +331,7 @@ class CustomerSerializer(GenericSerializer):
         )
 
         if self.context["request"].query_params.get("expand_metrics", False):
-            data["total_order_metrics"] = selectors.get_customer_order_diff(
+            data["total_shipment_metrics"] = selectors.get_customer_shipment_diff(
                 customer_id=instance.id
             )
             data["total_revenue_metrics"] = selectors.get_customer_revenue_diff(

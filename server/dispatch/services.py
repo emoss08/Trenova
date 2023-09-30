@@ -20,15 +20,15 @@ from typing import TYPE_CHECKING
 from django.utils import timezone
 
 from dispatch import models, selectors
-from order.models import AdditionalCharge, Order
-from order.selectors import sum_order_additional_charges
+from shipment.models import AdditionalCharge
+from shipment.selectors import sum_shipment_additional_charges
 
 if TYPE_CHECKING:
     from datetime import datetime
 
 
-def get_rate(*, order: Order) -> models.Rate | None:
-    """Get the rate for the order.
+def get_rate(*, shipment: Shipment) -> models.Rate | None:
+    """Get the rate for the shipment.
 
     Args:
         order(Order): The order to get the rate for.
@@ -38,52 +38,54 @@ def get_rate(*, order: Order) -> models.Rate | None:
     """
     today = timezone.now().date()
     rates = models.Rate.objects.filter(
-        customer=order.customer,
-        commodity=order.commodity,
-        order_type=order.order_type,
-        equipment_type=order.equipment_type,
-        origin_location=order.origin_location,
-        destination_location=order.destination_location,
+        customer=shipment.customer,
+        commodity=shipment.commodity,
+        shipment_type=shipment.shipment_type,
+        equipment_type=shipment.equipment_type,
+        origin_location=shipment.origin_location,
+        destination_location=shipment.destination_location,
         effective_date__lte=today,
         expiration_date__gte=today,
     )
     return rates.first() if rates.exists() else None
 
 
-def transfer_rate_details(order: Order) -> None:
-    """Transfer rate details to the order.
+def transfer_rate_details(shipment: Shipment) -> None:
+    """Transfer rate details to the shipment.
 
     Args:
-        order (Order): The order to transfer rate details to.
+        shipment (Shipment): The order to transfer rate details to.
 
     Returns:
         None: This function does not return anything.
     """
 
-    if rate := get_rate(order=order):
-        order.freight_charge_amount = rate.rate_amount
-        order.mileage = rate.distance_override
+    if rate := get_rate(shipment=shipment):
+        shipment.freight_charge_amount = rate.rate_amount
+        shipment.mileage = rate.distance_override
 
         for billing_item in selectors.get_rate_billing_table_by_rate(rate=rate):
             # Check if the charge already exists on the order
             additional_charge_exists = AdditionalCharge.objects.filter(
-                organization=order.organization,
-                order=order,
+                organization=shipment.organization,
+                shipment=shipment,
                 accessorial_charge=billing_item.accessorial_charge,
             ).exists()
 
             if not additional_charge_exists:
                 AdditionalCharge.objects.create(
-                    organization=order.organization,
-                    order=order,
+                    organization=shipment.organization,
+                    shipment=shipment,
                     accessorial_charge=billing_item.accessorial_charge,
                     charge_amount=billing_item.charge_amount,
                     unit=billing_item.unit,
                     description=billing_item.description,
-                    entered_by=order.entered_by,
+                    entered_by=shipment.entered_by,
                 )
 
-        order.other_charge_amount = sum_order_additional_charges(order=order)
+        shipment.other_charge_amount = sum_shipment_additional_charges(
+            shipment=shipment
+        )
 
 
 def feasibility_tool(
@@ -95,7 +97,7 @@ def feasibility_tool(
     destination_appointment: "datetime",
     travel_time: int,
     driver_daily_miles: int,
-    total_order_miles: int,
+    total_shipment_miles: int,
     pickup_time_window_start: "datetime",
     pickup_time_window_end: "datetime",
     delivery_time_window_start: "datetime",
@@ -115,7 +117,7 @@ def feasibility_tool(
         seventy_hour_time = 70 * 60
 
     # Check if the driver can cover the total order miles within the available days
-    if total_order_miles >= max_possible_miles:
+    if total_shipment_miles >= max_possible_miles:
         return None
 
     # Calculate the number of breaks required to complete the order
@@ -137,14 +139,14 @@ def feasibility_tool(
     breaks_duration = breaks_required * 10 * 60
 
     # Calculate the time left on the driver's 70-hour clock after taking the order
-    time_left_after_order = seventy_hour_time - total_on_duty_time_required
+    time_left_after_shipment = seventy_hour_time - total_on_duty_time_required
 
     # Check if the driver can reach the pickup location within the pickup time window
     time_until_pickup_start = (
         pickup_time_window_start - origin_appointment
     ).total_seconds() / 60
     can_reach_pickup = (
-        time_left_after_order >= time_until_pickup_start
+        time_left_after_shipment >= time_until_pickup_start
         and time_until_pickup_start <= travel_time
     )
 
@@ -160,12 +162,12 @@ def feasibility_tool(
     total_time_required = travel_time + breaks_duration + time_spent_at_pickup
 
     can_reach_delivery = (
-        time_left_after_order >= time_until_delivery_start
+        time_left_after_shipment >= time_until_delivery_start
         and time_until_delivery_start <= total_time_required
     )
 
     if can_reach_pickup and can_reach_delivery:
-        if time_left_after_order < total_time_required:
+        if time_left_after_shipment < total_time_required:
             sleeper_berth_time = on_duty_time - drive_time
             can_use_sleeper_berth = (
                 sleeper_berth_time >= 8 * 60
@@ -175,8 +177,8 @@ def feasibility_tool(
                 return None
 
         return (
-            (breaks_required, time_left_after_order)
-            if time_left_after_order >= 0
+            (breaks_required, time_left_after_shipment)
+            if time_left_after_shipment >= 0
             else None
         )
     return None

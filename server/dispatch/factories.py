@@ -103,7 +103,7 @@ class RateFactory(factory.django.DjangoModelFactory):
     effective_date = timezone.now().date()
     expiration_date = timezone.now().date() + datetime.timedelta(days=365)
     commodity = factory.SubFactory("commodities.factories.CommodityFactory")
-    order_type = factory.SubFactory("order.tests.factories.OrderTypeFactory")
+    shipment_type = factory.SubFactory("shipment.tests.factories.ShipmentTypeFactory")
     equipment_type = factory.SubFactory(
         "equipment.tests.factories.EquipmentTypeFactory"
     )

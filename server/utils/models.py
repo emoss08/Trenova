@@ -61,7 +61,7 @@ class StatusChoices(models.TextChoices):
 @final
 class RatingMethodChoices(models.TextChoices):
     """
-    Rating Method choices for Order Model
+    Rating Method choices for shipment Model
     """
 
     FLAT = "F", _("Flat Fee")

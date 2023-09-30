@@ -80,7 +80,7 @@ INSTALLED_APPS = [
     "worker",
     "dispatch",
     "location",
-    "order",
+    "shipment",
     "route",
     "billing",
     "customer",
@@ -244,12 +244,12 @@ CACHES = {
     #         },
     #     },
     # },
-    "orders": {
+    "shipments": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://127.0.0.1:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PREFIX": "orders",
+            "PREFIX": "shipments",
             "PARSER_CLASS": "redis.connection.HiredisParser",
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
@@ -419,7 +419,7 @@ CACHEOPS_DEFAULTS = {
 #
 
 CACHEOPS = {
-    "order.ordercontrol": {"ops": "all"},
+    "shipment.shipmentcontrol": {"ops": "all"},
     "invoicing.invoicecontrol": {"ops": "all"},
     "route.routecontrol": {"ops": "all"},
     "billing.billingcontrol": {"ops": "all"},
@@ -463,14 +463,14 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "customer.CustomerFuelTable",
     "customer.CustomerFuelTableDetail",
     "customer.DeliverySlot",
-    "order.OrderControl",
-    "order.OrderType",
-    "order.Order",
-    "order.OrderDocumentation",
-    "order.OrderComment",
-    "order.AdditionalCharge",
-    "order.ReasonCode",
-    "order.FormulaTemplate",
+    "shipment.ShipmentControl",
+    "shipment.ShipmentType",
+    "shipment.Shipment",
+    "shipment.ShipmentDocumentation",
+    "shipment.ShipmentComment",
+    "shipment.AdditionalCharge",
+    "shipment.ReasonCode",
+    "shipment.FormulaTemplate",
 )
 
 

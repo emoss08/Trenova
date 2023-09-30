@@ -41,7 +41,7 @@ User = settings.AUTH_USER_MODEL
 class Worker(GenericModel):
     """
     Stores the equipment information that can be used later to
-    assign an order to a movement.
+    assign an shipment to a movement.
     """
 
     @final

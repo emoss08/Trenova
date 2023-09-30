@@ -29,20 +29,20 @@ from accounts.models import JobTitle, User
 from customer.models import Customer
 from equipment.models import EquipmentType
 from location.models import Location
-from order.models import Order, OrderType
 from organization.models import Organization
+from shipment.models import ShipmentType
 from utils.helpers import get_or_create_business_unit
 
-DESCRIPTION = "GENERATED FROM CREATE TEST ORDERS COMMAND"
+DESCRIPTION = "GENERATED FROM CREATE TEST shipments COMMAND"
 
 
 class Command(BaseCommand):
     """
-    A Django management command to create a specified number of test orders.
+    A Django management command to create a specified number of test shipments.
 
-    The `Command` class provides a set of helper methods to create the necessary objects for the orders, including
-    organizations, users, locations, order types, customers, equipment types, and job titles. It then prompts the user
-    for the number of orders to create, and creates that number of orders using the created objects.
+    The `Command` class provides a set of helper methods to create the necessary objects for the shipments, including
+    organizations, users, locations, shipment types, customers, equipment types, and job titles. It then prompts the user
+    for the number of shipments to create, and creates that number of shipments using the created objects.
 
     Attributes:
         help: A string representing the command help message.
@@ -52,19 +52,19 @@ class Command(BaseCommand):
         create_system_organization: Creates a system organization with the provided name.
         create_user: Creates a new user associated with the provided organization.
         create_location: Creates two locations associated with the provided organization.
-        create_order_type: Creates a new order type associated with the provided organization.
+        create_shipment_type: Creates a new shipment type associated with the provided organization.
         create_customer: Creates a new customer associated with the provided organization.
         create_equipment_type: Creates a new equipment type associated with the provided organization.
         create_system_job_title: Creates a new job title associated with the provided organization.
         handle: The main method to be called when the command is run.
 
-    This class is a Django management command that creates a specified number of test orders. It provides a set of
-    helper methods to create the necessary objects for the orders, including organizations, users, locations, order
-    types, customers, equipment types, and job titles. It then prompts the user for the number of orders to create, and
-    creates that number of orders using the created objects.
+    This class is a Django management command that creates a specified number of test shipments. It provides a set of
+    helper methods to create the necessary objects for the shipments, including organizations, users, locations, order
+    types, customers, equipment types, and job titles. It then prompts the user for the number of shipments to create, and
+    creates that number of shipments using the created objects.
 
     The `Command` class expects no arguments. The `handle` method is the main method to be called when the command
-    is run. It prompts the user for the number of orders to create, and creates that number of orders using the
+    is run. It prompts the user for the number of shipments to create, and creates that number of shipments using the
     created objects. It then prints a success message to the console.
 
     The `add_arguments` method adds a command line argument to the command parser. This argument is used to specify the
@@ -79,8 +79,8 @@ class Command(BaseCommand):
     The `create_location` method creates two locations associated with the provided organization. It returns a tuple
     containing the two new `Location` objects.
 
-    The `create_order_type` method creates a new order type associated with the provided organization. It returns the
-    new `OrderType` object.
+    The `create_shipment_type` method creates a new shipment type associated with the provided organization. It returns the
+    new `ShipmentType` object.
 
     The `create_customer` method creates a new customer associated with the provided organization. It returns the new
     `Customer` object.
@@ -92,17 +92,17 @@ class Command(BaseCommand):
     the new `JobTitle` object.
 
     The `handle` method is the main method to be called when the command is run. It prompts the user for the number of
-    orders to create, and creates that number of orders using the created objects. It then prints a success message to
+    shipments to create, and creates that number of shipments using the created objects. It then prints a success message to
     the console.
     """
 
-    help = "Create a number of test orders."
+    help = "Create a number of test shipments."
 
     def add_arguments(self, parser: CommandParser) -> None:
         """
         The add_arguments method is called when the command is run and is responsible for adding
         arguments to the command that can be set by the user. In this case, it adds an argument that
-        allows the user to specify the name of the system organization to create orders for.
+        allows the user to specify the name of the system organization to create shipments for.
 
         Args:
             parser (CommandParser): The CommandParser object representing the command parser to add the argument to.
@@ -210,28 +210,28 @@ class Command(BaseCommand):
         return location_1, location_2
 
     @staticmethod
-    def create_order_type(organization: Organization) -> OrderType:
+    def create_shipment_type(organization: Organization) -> ShipmentType:
         """
-        Creates a new `OrderType` object associated with the specified organization.
+        Creates a new `ShipmentType` object associated with the specified organization.
 
         Args:
-            organization (Organization): The `Organization` object to associate the new order type with.
+            organization (Organization): The `Organization` object to associate the new shipment type with.
 
         Returns:
-            OrderType: The new `OrderType` object.
+            ShipmentType: The new `ShipmentType` object.
 
-        This method creates a new `OrderType` object associated with the specified organization. The new order type
-        is assigned a default description. If the order type already exists, it returns the existing order type
+        This method creates a new `ShipmentType` object associated with the specified organization. The new shipment type
+        is assigned a default description. If the shipment type already exists, it returns the existing shipment type
         instead.
         """
         defaults = {
             "description": DESCRIPTION,
             "business_unit": organization.business_unit,
         }
-        order_type, created = OrderType.objects.get_or_create(
+        shipment_type, created = ShipmentType.objects.get_or_create(
             organization=organization, name="Test Order", defaults=defaults
         )
-        return order_type
+        return shipment_type
 
     @staticmethod
     def create_customer(organization: Organization) -> Customer:
@@ -326,8 +326,8 @@ class Command(BaseCommand):
         Returns:
             None: This function does not return anything.
         """
-        order_count_answer = input("How many orders would you like to create? ")
-        order_count = int(order_count_answer)
+        shipment_count_answer = input("How many orders would you like to create? ")
+        shipment_count = int(shipment_count_answer)
         organization_name = options["organization"]
 
         with Progress() as progress:
@@ -338,7 +338,7 @@ class Command(BaseCommand):
             progress.update(prerequisite_data_task, advance=1)
             location_1, location_2 = self.create_location(organization)
             progress.update(prerequisite_data_task, advance=1)
-            order_type = self.create_order_type(organization)
+            shipment_type = self.create_shipment_type(organization)
             progress.update(prerequisite_data_task, advance=1)
             customer = self.create_customer(organization)
             progress.update(prerequisite_data_task, advance=1)
@@ -348,15 +348,15 @@ class Command(BaseCommand):
             progress.update(prerequisite_data_task, advance=1)
 
         with Progress() as progress:
-            order_creation_task = progress.add_task(
-                "[cyan]Creating orders...", total=order_count
+            shipment_creation_task = progress.add_task(
+                "[cyan]Creating orders...", total=shipment_count
             )
 
-            for _ in range(order_count):
-                Order.objects.create(
+            for _ in range(shipment_count):
+                Shipment.objects.create(
                     organization=organization,
                     business_unit=organization.business_unit,
-                    order_type=order_type,
+                    shipment_type=shipment_type,
                     customer=customer,
                     origin_location=location_1,
                     freight_charge_amount=100,
@@ -372,10 +372,10 @@ class Command(BaseCommand):
                     bol_number="123456789",
                     comment=DESCRIPTION,
                 )
-                progress.update(order_creation_task, advance=1)
+                progress.update(shipment_creation_task, advance=1)
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created {order_count} orders for {organization_name}"
+                f"Successfully created {shipment_count} orders for {organization_name}"
             )
         )

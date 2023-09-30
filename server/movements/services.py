@@ -23,17 +23,17 @@ from stops.models import Stop
 from utils.models import StopChoices
 
 if TYPE_CHECKING:
-    from order.models import Order
+    pass
 
 
 def create_initial_stops(
-    *, movement: models.Movement, order: "Order"
+    *, movement: models.Movement, shipment: "shipment"
 ) -> tuple[Stop, Stop]:
-    """Create Initial Stops for Orders
+    """Create Initial Stops for shipments
 
     Args:
         movement (Movement): The movement instance.
-        order (Order): The order instance.
+        shipment (Shipment): The order instance.
 
     Returns:
         tuple[Stop, Stop]: The origin and destination stop.
@@ -49,10 +49,10 @@ def create_initial_stops(
             movement=movement,
             sequence=1,
             stop_type=StopChoices.PICKUP,
-            location=order.origin_location,
-            address_line=order.origin_address,
-            appointment_time_window_start=order.origin_appointment_window_start,
-            appointment_time_window_end=order.origin_appointment_window_end,
+            location=shipment.origin_location,
+            address_line=shipment.origin_address,
+            appointment_time_window_start=shipment.origin_appointment_window_start,
+            appointment_time_window_end=shipment.origin_appointment_window_end,
         )
         destination_stop: Stop = Stop.objects.create(
             organization=movement.organization,
@@ -60,9 +60,9 @@ def create_initial_stops(
             movement=movement,
             sequence=2,
             stop_type=StopChoices.DELIVERY,
-            location=order.destination_location,
-            appointment_time_window_start=order.destination_appointment_window_start,
-            appointment_time_window_end=order.destination_appointment_window_end,
+            location=shipment.destination_location,
+            appointment_time_window_start=shipment.destination_appointment_window_start,
+            appointment_time_window_end=shipment.destination_appointment_window_end,
         )
 
     except IntegrityError as stop_creation_error:

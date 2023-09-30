@@ -14,46 +14,40 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-from typing import TYPE_CHECKING
 
-from backend.celery import app
-from core.exceptions import ServiceException
-from order import selectors, services
-from utils.types import ModelUUID
+import pytest
 
-if TYPE_CHECKING:
-    from celery.app.task import Task
+from organization.models import Organization
+from shipment import models
+
+pytestmark = pytest.mark.django_db
 
 
-@app.task(
-    name="consolidate_order_documentation",
-    bind=True,
-    max_retries=3,
-    default_retry_delay=60,
-    queue="medium_priority",
-)
-def consolidate_order_documentation(self: "Task", *, order_id: ModelUUID) -> None:
-    """Consolidate Order
-
-    Query the database for the Order and call the consolidate_pdf
-    service to combine the PDFs into a single PDF.
-
-    Args:
-        self (celery.app.task.Task): The task object
-        order_id (str): Order ID
-
-    Returns:
-        None: None
-
-    Raises:
-        ObjectDoesNotExist: If the Order does not exist in the database.
+def test_list(organization: Organization) -> None:
+    """
+    Test Shipment Control is created when the organization is
+    created. This process happens via signals.
     """
 
-    try:
-        if order := selectors.get_order_by_id(order_id=order_id):
-            services.combine_pdfs_service(order=order)
-        else:
-            return None
+    assert organization.shipment_control is not None
 
-    except ServiceException as exc:
-        raise self.retry(exc=exc) from exc
+
+def test_update(organization: Organization) -> None:
+    """
+    Test shipment type update
+    """
+
+    shipment_control = models.ShipmentControl.objects.get(organization=organization)
+
+    shipment_control.auto_rate_shipments = False
+    shipment_control.calculate_distance = True
+    shipment_control.enforce_customer = True
+    shipment_control.enforce_rev_code = True
+
+    shipment_control.save()
+
+    assert shipment_control is not None
+    assert not shipment_control.auto_rate_shipments
+    assert shipment_control.calculate_distance
+    assert shipment_control.enforce_customer
+    assert shipment_control.enforce_rev_code

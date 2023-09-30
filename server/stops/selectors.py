@@ -22,34 +22,34 @@ from django.db.models import Sum
 from stops.models import Stop
 
 if typing.TYPE_CHECKING:
-    from order.models import Order
+    from shipment.models import Shipment
 
 
-def get_total_piece_count_by_order(*, order: "Order") -> int:
+def get_total_piece_count_by_shipment(*, shipment: "Shipment") -> int:
     """Return the total piece count for an order
 
     Args:
-        order (Order): Order instance
+        shipment (Shipment): shipment instance
 
     Returns:
         int: Total piece counts for an order
     """
-    value: int = Stop.objects.filter(movement__order__exact=order).aggregate(
+    value: int = Stop.objects.filter(movement__shipment__exact=shipment).aggregate(
         Sum("pieces")
     )["pieces__sum"]
     return value or 0
 
 
-def get_total_weight_by_order(*, order: "Order") -> decimal.Decimal | int:
+def get_total_weight_by_shipment(*, shipment: "Shipment") -> decimal.Decimal | int:
     """Return the total weight for an order
 
     Args:
-        order (Order): Order instance
+        shipment (Shipment): shipment instance
 
     Returns:
         decimal.Decimal: Total weight for an order
     """
     value: decimal.Decimal = Stop.objects.filter(
-        movement__order__exact=order
+        movement__shipment__exact=shipment
     ).aggregate(Sum("weight"))["weight__sum"]
     return value or 0

@@ -19,6 +19,7 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
+from shipment.tests.factories import OrderFactory, ShipmentTypeFactory
 
 from accounting.tests.factories import RevenueCodeFactory
 from billing.tests.factories import (
@@ -28,7 +29,6 @@ from billing.tests.factories import (
 )
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
-from order.tests.factories import OrderFactory, OrderTypeFactory
 from organization.factories import EmailProfileFactory
 from worker.factories import WorkerFactory
 
@@ -52,11 +52,11 @@ def charge_type() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order_type() -> Generator[Any, Any, None]:
+def shipment_type() -> Generator[Any, Any, None]:
     """
-    Order Type Fixture
+    shipment type Fixture
     """
-    yield OrderTypeFactory()
+    yield ShipmentTypeFactory()
 
 
 @pytest.fixture

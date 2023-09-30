@@ -58,7 +58,7 @@ class ReportColumnFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     report = factory.SubFactory(CustomReportFactory)
     column_name = factory.Faker("word", locale="en_US")
-    column_order = 1
+    column_shipment = 1
 
 
 class ScheduledReportFactory(factory.django.DjangoModelFactory):

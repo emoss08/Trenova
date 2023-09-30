@@ -69,7 +69,7 @@ class MovementValidation:
         self.validate_worker_compare()
         self.validate_movement_worker()
         self.validate_worker_tractor_fleet()
-        self.validate_movement_order()
+        self.validate_movement_shipment()
 
         if self.errors:
             raise ValidationError(self.errors)
@@ -257,7 +257,7 @@ class MovementValidation:
             ValidationError: If the worker is not allowed to move the commodity.
         """
 
-        if not self.movement.order.hazmat:
+        if not self.movement.shipment.hazmat:
             return
 
         # Validation for the primary_worker
@@ -267,7 +267,7 @@ class MovementValidation:
                 WorkerProfile.EndorsementChoices.X,
             ]:
                 self.errors["primary_worker"] = _(
-                    "Worker must be hazmat certified to haul this order. Please try again."
+                    "Worker must be hazmat certified to haul this shipment. Please try again."
                 )
 
             if (
@@ -286,7 +286,7 @@ class MovementValidation:
                 WorkerProfile.EndorsementChoices.X,
             ]:
                 self.errors["secondary_worker"] = _(
-                    "Worker must be hazmat certified to haul this order. Please try again."
+                    "Worker must be hazmat certified to haul this shipment. Please try again."
                 )
 
             if (
@@ -410,7 +410,7 @@ class MovementValidation:
 
         if self.movement.status in [StatusChoices.IN_PROGRESS, StatusChoices.COMPLETED]:
             previous_movements = models.Movement.objects.filter(
-                order=self.movement.order, id__lt=self.movement.id
+                shipment=self.movement.shipment, id__lt=self.movement.id
             )
 
             for movement in previous_movements:

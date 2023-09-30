@@ -21,51 +21,51 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from dispatch.models import CommentType
-from order import models
 from organization.models import BusinessUnit, Organization
+from shipment import models
 
 pytestmark = pytest.mark.django_db
 
 
-def test_list(order_comment: models.OrderComment) -> None:
+def test_list(shipment_comment: models.ShipmentComment) -> None:
     """
-    Test Order list
+    Test shipment list
     """
-    assert order_comment is not None
+    assert shipment_comment is not None
 
 
 def test_create(
     organization: Organization,
     user: User,
-    order: models.Order,
+    shipment: models.Shipment,
     comment_type: CommentType,
     business_unit: BusinessUnit,
 ) -> None:
     """
-    Test Order Create
+    Test shipment Create
     """
 
-    order_comment = models.OrderComment.objects.create(
+    shipment_comment = models.ShipmentComment.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order,
+        shipment=shipment,
         comment_type=comment_type,
         comment="DONT BE SAD",
         entered_by=user,
     )
-    assert order_comment is not None
-    assert order_comment.order == order
-    assert order_comment.comment_type == comment_type
-    assert order_comment.comment == "DONT BE SAD"
-    assert order_comment.entered_by == user
+    assert shipment_comment is not None
+    assert shipment_comment.shipment == order
+    assert shipment_comment.comment_type == comment_type
+    assert shipment_comment.comment == "DONT BE SAD"
+    assert shipment_comment.entered_by == user
 
 
-def test_update(order_comment: models.OrderComment) -> None:
+def test_update(shipment_comment: models.ShipmentComment) -> None:
     """
-    Test Order update
+    Test shipment update
     """
 
-    ord_comment = models.OrderComment.objects.get(id=order_comment.id)
+    ord_comment = models.ShipmentComment.objects.get(id=shipment_comment.id)
     ord_comment.comment = "GET GLAD"
     ord_comment.save()
 
@@ -74,20 +74,22 @@ def test_update(order_comment: models.OrderComment) -> None:
 
 
 def test_get_by_id(
-    order_comment_api: Response,
-    order_api: Response,
+    shipment_comment_api: Response,
+    shipment_api: Response,
     comment_type: CommentType,
     user: User,
     api_client: APIClient,
 ) -> None:
     """
-    Test get Order Comment by ID
+    Test get shipment Comment by ID
     """
-    response = api_client.get(f"/api/order_comments/{order_comment_api.data['id']}/")
+    response = api_client.get(
+        f"/api/shipment_comments/{shipment_comment_api.data['id']}/"
+    )
     assert response.status_code == 200
     assert response.data is not None
     assert (
-        f"{response.data['order']}" == order_api.data["id"]
+        f"{response.data['order']}" == shipment_api.data["id"]
     )  # returns UUID <UUID>, convert to F-string
     assert response.data["comment_type"] == comment_type.id
     assert response.data["comment"] == "IM HAPPY YOU'RE HERE"
@@ -96,18 +98,18 @@ def test_get_by_id(
 
 def test_put(
     api_client: APIClient,
-    order_api: Response,
-    order_comment_api: Response,
+    shipment_api: Response,
+    shipment_comment_api: Response,
     comment_type: CommentType,
     user: User,
 ) -> None:
     """
-    Test put Order Comment
+    Test put shipment Comment
     """
     response = api_client.put(
-        f"/api/order_comments/{order_comment_api.data['id']}/",
+        f"/api/shipment_comments/{shipment_comment_api.data['id']}/",
         {
-            "order": f"{order_api.data['id']}",
+            "shipment": f"{shipment_api.data['id']}",
             "comment_type": f"{comment_type.id}",
             "comment": "BE GLAD IM HERE",
             "entered_by": f"{user.id}",
@@ -118,19 +120,19 @@ def test_put(
     assert response.status_code == 200
     assert response.data is not None
     assert (
-        f"{response.data['order']}" == order_api.data["id"]
+        f"{response.data['order']}" == shipment_api.data["id"]
     )  # returns UUID <UUID>, convert to F-string
     assert response.data["comment_type"] == comment_type.id
     assert response.data["comment"] == "BE GLAD IM HERE"
     assert response.data["entered_by"] == user.id
 
 
-def test_patch(api_client: APIClient, order_comment_api: Response) -> None:
+def test_patch(api_client: APIClient, shipment_comment_api: Response) -> None:
     """
-    Test patch Order Comment
+    Test patch shipment Comment
     """
     response = api_client.patch(
-        f"/api/order_comments/{order_comment_api.data['id']}/",
+        f"/api/shipment_comments/{shipment_comment_api.data['id']}/",
         {
             "comment": "DONT BE SAD GET GLAD",
         },
@@ -142,11 +144,13 @@ def test_patch(api_client: APIClient, order_comment_api: Response) -> None:
     assert response.data["comment"] == "DONT BE SAD GET GLAD"
 
 
-def test_delete(api_client: APIClient, order_comment_api: Response) -> None:
+def test_delete(api_client: APIClient, shipment_comment_api: Response) -> None:
     """
-    Test delete Order Comment
+    Test delete shipment Comment
     """
-    response = api_client.delete(f"/api/order_comments/{order_comment_api.data['id']}/")
+    response = api_client.delete(
+        f"/api/shipment_comments/{shipment_comment_api.data['id']}/"
+    )
 
     assert response.status_code == 204
     assert response.data is None

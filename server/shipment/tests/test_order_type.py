@@ -20,25 +20,25 @@ from django.urls import reverse
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
-from order import models
 from organization.models import BusinessUnit, Organization
+from shipment import models
 
 pytestmark = pytest.mark.django_db
 
 
-def test_list(order_type: models.OrderType) -> None:
+def test_list(shipment_type: models.ShipmentType) -> None:
     """
-    Test Order Type list
+    Test shipment type list
     """
-    assert order_type
+    assert shipment_type
 
 
 def test_create(organization: Organization, business_unit: BusinessUnit) -> None:
     """
-    Test Order Type Create
+    Test shipment type Create
     """
 
-    ord_type = models.OrderType.objects.create(
+    ord_type = models.ShipmentType.objects.create(
         organization=organization,
         business_unit=business_unit,
         is_active=True,
@@ -52,12 +52,12 @@ def test_create(organization: Organization, business_unit: BusinessUnit) -> None
     assert ord_type.description == "foo bar"
 
 
-def test_update(order_type: models.OrderType) -> None:
+def test_update(shipment_type: models.ShipmentType) -> None:
     """
-    Test order type update
+    Test shipment type update
     """
 
-    ord_type = models.OrderType.objects.get(id=order_type.id)
+    ord_type = models.ShipmentType.objects.get(id=shipment_type.id)
 
     ord_type.name = "Foo Bart"
 
@@ -69,18 +69,18 @@ def test_update(order_type: models.OrderType) -> None:
 
 def test_get(api_client: APIClient) -> None:
     """
-    Test get Order Type
+    Test get shipment type
     """
-    response = api_client.get("/api/order_types/")
+    response = api_client.get("/api/shipment_types/")
     assert response.status_code == 200
 
 
-def test_get_by_id(api_client: APIClient, order_type_api: Response) -> None:
+def test_get_by_id(api_client: APIClient, shipment_type_api: Response) -> None:
     """
-    Test get Order Type by id
+    Test get shipment type by id
     """
     response = api_client.get(
-        reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]})
+        reverse("order-types-detail", kwargs={"pk": shipment_type_api.data["id"]})
     )
 
     assert response.status_code == 200
@@ -90,13 +90,13 @@ def test_get_by_id(api_client: APIClient, order_type_api: Response) -> None:
 
 
 def test_put(
-    api_client: APIClient, order_type_api: Response, organization: Organization
+    api_client: APIClient, shipment_type_api: Response, organization: Organization
 ) -> None:
     """
-    Test put Order Type
+    Test put shipment type
     """
     response = api_client.put(
-        reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]}),
+        reverse("order-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
         {
             "organization": organization.id,
             "name": "New Name",
@@ -111,12 +111,12 @@ def test_put(
     assert response.data["is_active"] is False
 
 
-def test_delete(api_client: APIClient, order_type_api: Response) -> None:
+def test_delete(api_client: APIClient, shipment_type_api: Response) -> None:
     """
-    Test Delete order type
+    Test Delete shipment type
     """
     response = api_client.delete(
-        reverse("order-types-detail", kwargs={"pk": order_type_api.data["id"]}),
+        reverse("order-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
     )
 
     assert response.status_code == 204

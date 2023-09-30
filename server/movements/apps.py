@@ -33,7 +33,7 @@ class MovementsConfig(AppConfig):
             dispatch_uid="generate_initial_stops",
         )
         post_save.connect(
-            signals.update_order_status,
+            signals.update_shipment_status,
             sender="movements.Movement",
-            dispatch_uid="update_order_status",
+            dispatch_uid="update_shipment_status",
         )

@@ -156,8 +156,8 @@ def generate_edi_content(
     # Initialize the segments' list
     segments = []
 
-    # Get the EDI segments defined in the profile ordered by sequence
-    edi_segments = edi_billing_profile.segments.order_by("sequence")
+    # Get the EDI segments defined in the profile shipmented by sequence
+    edi_segments = edi_billing_profile.segments.shipment_by("sequence")
 
     # Cache for compiled regex patterns
     regex_cache = {}

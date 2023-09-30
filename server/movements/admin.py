@@ -32,7 +32,7 @@ class MovementAdmin(admin.ModelAdmin[models.Movement]):
         "organization",
         "status",
         "ref_num",
-        "order",
+        "shipment",
         "tractor",
         "primary_worker",
     )

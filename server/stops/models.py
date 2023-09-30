@@ -85,7 +85,7 @@ class QualifierCode(GenericModel):
         Returns:
             str: Qualifier Code Absolute URL
         """
-        return reverse("order:qualifier-code-detail", kwargs={"pk": self.pk})
+        return reverse("shipment:qualifier-code-detail", kwargs={"pk": self.pk})
 
 
 class Stop(GenericModel):
@@ -129,14 +129,14 @@ class Stop(GenericModel):
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
-        help_text=_("Total Piece Count of the Order"),
+        help_text=_("Total Piece Count of the shipment"),
         default=0,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
-        help_text=_("Total Weight of the Order"),
+        help_text=_("Total Weight of the shipment"),
         default=0,
     )
     address_line = models.CharField(
@@ -193,10 +193,10 @@ class Stop(GenericModel):
         )
 
     def delete(self, *args: Any, **kwargs: Any) -> ModelDelete:
-        """Override default Django delete behaviour by checking if the removal of orders is allowed by the organization.
+        """Override default Django delete behaviour by checking if the removal of shipments is allowed by the organization.
 
         Before the stop instance is deleted, this delete function checks if the organization associated with it
-        allows the removal of orders.
+        allows the removal of shipments.
 
         If the removal is not allowed, it raises a ValidationError. Error messages are marked for translation allowing
         the support of multiple languages and regional dialects.
@@ -209,12 +209,12 @@ class Stop(GenericModel):
             cannot be undone.
 
         Raises:
-            ValidationError: If the stop organization's order control configuration disallows order removal.
+            ValidationError: If the stop organization's Shipment Control configuration disallows shipment removal.
 
         Returns:
             ModelDelete: The result from the super class delete operation.
         """
-        if self.organization.order_control.remove_orders is False:
+        if self.organization.shipment_control.remove_shipments is False:
             raise ValidationError(
                 {
                     "ref_num": _(
@@ -243,10 +243,10 @@ class Stop(GenericModel):
         if self.location and not self.address_line:
             self.address_line = self.location.get_address_combination
 
-        # Set ship_date in order if stop is first stop.
+        # Set ship_date in shipment if stop is first stop.
         if self.sequence == 1 and self.arrival_time:
-            self.movement.order.ship_date = self.arrival_time.date()
-            self.movement.order.save()
+            self.movement.shipment.ship_date = self.arrival_time.date()
+            self.movement.shipment.save()
 
     def get_absolute_url(self) -> str:
         """Get the absolute url for the stop
@@ -359,7 +359,7 @@ class StopComment(GenericModel):
 class ServiceIncident(GenericModel):
     """
     Stores Service Incident information related to a
-    :model:`order.Order` and :model:`stop.Stop`.
+    :model:`shipment.Shipmentt` and :model:`stop.Stop`.
     """
 
     id = models.UUIDField(

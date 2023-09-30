@@ -26,33 +26,33 @@ from billing.tests.factories import (
 )
 from document_generator import models
 from document_generator.services import render_document
-from order.tests.factories import AdditionalChargeFactory, OrderFactory
 from organization.models import BusinessUnit, Organization
+from shipment.tests.factories import AdditionalChargeFactory, OrderFactory
 
 pytestmark = pytest.mark.django_db
 
 
 # def test_generate_document_with_line_items(organization, business_unit):
 #     # Create a sample Invoice model instance
-#     order_1 = OrderFactory()
+#     shipment_1 = OrderFactory()
 #     user = UserFactory()
 #     doc_class = DocumentClassificationFactory()
 #
-#     order_movements = order_1.movements.all()
-#     order_movements.update(status="C")
+#     shipment_movements = shipment_1.movements.all()
+#     shipment_movements.update(status="C")
 #
-#     order_1.status = "C"
-#     order_1.save()
+#     shipment_1.status = "C"
+#     shipment_1.save()
 #
 #     accessorial_charge = AccessorialChargeFactory()
 #
 #     AdditionalChargeFactory(
-#         order=order_1,
+#         shipment=shipment_1,
 #         accessorial_charge=accessorial_charge,
 #     )
 #
 #     AdditionalChargeFactory(
-#         order=order_1,
+#         shipment=shipment_1,
 #         accessorial_charge=accessorial_charge,
 #     )
 #
@@ -60,9 +60,9 @@ pytestmark = pytest.mark.django_db
 #     invoice = BillingQueue.objects.create(
 #         organization=organization,
 #         business_unit=business_unit,
-#         order=order_1,
+#         shipment=shipment_1,
 #         user=user,
-#         customer=order_1.customer,
+#         customer=shipment_1.customer,
 #     )
 #
 #     # Create a DocumentTemplate
@@ -145,13 +145,13 @@ pytestmark = pytest.mark.django_db
 #         field=date_field,  # Associate with the TemplateField
 #     )
 #
-#     # Create DocumentDataBinding for additional charges (Foreign key to the invoice.order model)
+#     # Create DocumentDataBinding for additional charges (Foreign key to the invoice.shipment model)
 #     line_items_binding = models.DocumentDataBinding.objects.create(
 #         organization=organization,
 #         business_unit=business_unit,
 #         placeholder="{invoice_line_items}",
-#         content_type=ContentType.objects.get_for_model(invoice.order),
-#         field_name="order.additional_charges",
+#         content_type=ContentType.objects.get_for_model(invoice.shipment),
+#         field_name="shipment.additional_charges",
 #         template=doc_template,
 #         is_list=True,
 #     )
@@ -222,7 +222,7 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
         css="""
             body { font-family: Arial, sans-serif; }
             table { border-collapse: collapse; width: 100%; }
-            table, th, td { border: 1px solid black; }
+            table, th, td { bshipment: 1px solid black; }
             th, td { padding: 8px 12px; }
             .logo img {
                 max-width: 200px;
@@ -234,25 +234,25 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
             }
         """,
     )
-    order_1 = OrderFactory()
+    shipment_1 = OrderFactory()
     user = UserFactory()
     doc_class = DocumentClassificationFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     accessorial_charge = AccessorialChargeFactory()
 
     AdditionalChargeFactory(
-        order=order_1,
+        shipment=shipment_1,
         accessorial_charge=accessorial_charge,
     )
 
     AdditionalChargeFactory(
-        order=order_1,
+        shipment=shipment_1,
         accessorial_charge=accessorial_charge,
     )
 
@@ -260,9 +260,9 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
     invoice = BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
         bill_type="INVOICE",
     )
 
@@ -428,13 +428,13 @@ def test_generate_document_with_styles(organization, business_unit) -> None:
         field=bill_type_field,  # Associate with the TemplateField
     )
 
-    # Create DocumentDataBinding for additional charges (Foreign key to the invoice.order model)
+    # Create DocumentDataBinding for additional charges (Foreign key to the invoice.shipment model)
     line_items_binding = models.DocumentDataBinding.objects.create(
         organization=organization,
         business_unit=business_unit,
         placeholder="{invoice_line_items}",
-        content_type=ContentType.objects.get_for_model(invoice.order),
-        field_name="order.additional_charges",
+        content_type=ContentType.objects.get_for_model(invoice.shipment),
+        field_name="shipment.additional_charges",
         template=doc_template,
         is_list=True,
     )

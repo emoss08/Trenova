@@ -23,9 +23,8 @@ from rest_framework.test import APIClient
 from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements.tests.factories import MovementFactory
-from order.models import Order
-from order.tests.factories import OrderFactory
 from organization.models import Organization
+from shipment.tests.factories import OrderFactory
 from worker.factories import WorkerFactory
 from worker.models import Worker
 
@@ -68,7 +67,7 @@ def order() -> Generator[Any, Any, None]:
 def movement_api(
     api_client: APIClient,
     organization: Organization,
-    order: Order,
+    shipment: Shipment,
     tractor: Tractor,
     worker: Worker,
 ) -> Generator[Any, Any, None]:
@@ -79,7 +78,7 @@ def movement_api(
         "/api/movements/",
         {
             "organization": f"{organization.id}",
-            "order": f"{order.id}",
+            "shipment": f"{shipment.id}",
             "primary_worker": f"{worker.id}",
             "tractor": f"{tractor.id}",
         },

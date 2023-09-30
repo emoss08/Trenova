@@ -27,8 +27,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from order.models import Order
 from organization.models import BusinessUnit, Organization
+from shipment.models import Shipment
 from utils.models import ChoiceField, GenericModel, StatusChoices
 from utils.types import ModelDelete
 
@@ -92,32 +92,34 @@ class BillingControl(GenericModel):
         A class representing the possible auto billing choices.
 
         This class inherits from the `models.TextChoices` class and defines three constants:
-        - ORDER_DELIVERY: representing a criteria stating to auto bill orders on delivery.
-        - TRANSFERRED_TO_BILL: representing a criteria stating to auto bill order when
-        orders are transferred to bill queue.
-        - CREDIT: representing a criteria stating to auto bill order when orders are
+        - Shipment_DELIVERY: representing a criteria stating to auto bill Shipments on delivery.
+        - TRANSFERRED_TO_BILL: representing a criteria stating to auto bill Shipment when
+        Shipments are transferred to bill queue.
+        - CREDIT: representing a criteria stating to auto bill Shipment when Shipments are
         marked ready to bill in the billing queue.
         """
 
-        ORDER_DELIVERY = "ORDER_DELIVERY", _("Auto Bill when order is delivered")
+        SHIPMENT_DELIVERY = "SHIPMENT_DELIVERY", _(
+            "Auto Bill when shipment is delivered"
+        )
         TRANSFERRED_TO_BILL = "TRANSFERRED_TO_BILL", _(
-            "Auto Bill when order are transferred to billing"
+            "Auto Bill when Shipment are transferred to billing"
         )
         MARKED_READY_TO_BILL = "MARKED_READY", _(
-            "Auto Bill when order is marked ready to bill in Billing Queue"
+            "Auto Bill when Shipment is marked ready to bill in Billing Queue"
         )
 
     @typing.final
-    class OrderTransferCriteriaChoices(models.TextChoices):
+    class ShipmentTransferCriteriaChoices(models.TextChoices):
         """
-        A class representing the possible order transfer choices.
+        A class representing the possible Shipment transfer choices.
 
         This class inherits from the `models.TextChoices` class and defines three constants:
-        - READY_AND_COMPLETED: representing a criteria stating the order must be `ready_to_bill`
+        - READY_AND_COMPLETED: representing a criteria stating the Shipment must be `ready_to_bill`
         & `completed` before it can be transferred to billing.
-        - COMPLETED: representing a criteria stating the order must be `completed` before it can
+        - COMPLETED: representing a criteria stating the Shipment must be `completed` before it can
         be transferred to billing.
-        - READY_TO_BILL: representing a criteria stating the order must be `ready_to_bill` before it
+        - READY_TO_BILL: representing a criteria stating the Shipment must be `ready_to_bill` before it
         can be transferred to billing.
         """
 
@@ -142,16 +144,16 @@ class BillingControl(GenericModel):
         default=False,
         help_text=_("Whether users can remove records from billing history."),
     )
-    auto_bill_orders = models.BooleanField(
-        _("Auto Bill Orders"),
+    auto_bill_shipment = models.BooleanField(
+        _("Auto Bill Shipment"),
         default=False,
-        help_text=_("Whether to automatically bill orders directly to customer"),
+        help_text=_("Whether to automatically bill shipments directly to customer"),
     )
     auto_mark_ready_to_bill = models.BooleanField(
         _("Auto Mark Ready to Bill"),
         default=False,
         help_text=_(
-            "Marks orders as ready to bill when they are delivered and meet customer billing requirements."
+            "Marks Shipments as ready to bill when they are delivered and meet customer billing requirements."
         ),
     )
     validate_customer_rates = models.BooleanField(
@@ -159,8 +161,8 @@ class BillingControl(GenericModel):
         default=False,
         help_text=_(
             "Validate rates match the customer contract in the billing queue before allowing billing. If the rates"
-            " do not match, the order will not be allowed to be billed. If the rates match, the order will be"
-            " allowed to be billed. If no contract exists for the customer, the order will be allowed to be billed."
+            " do not match, the Shipment will not be allowed to be billed. If the rates match, the Shipment will be"
+            " allowed to be billed. If no contract exists for the customer, the Shipment will be allowed to be billed."
         ),
     )
     auto_bill_criteria = ChoiceField(
@@ -170,11 +172,11 @@ class BillingControl(GenericModel):
         help_text=_("Define a criteria on when auto billing is to occur."),
         blank=True,
     )
-    order_transfer_criteria = ChoiceField(
-        _("Order Transfer Criteria"),
-        choices=OrderTransferCriteriaChoices.choices,
-        default=OrderTransferCriteriaChoices.READY_AND_COMPLETED,
-        help_text=_("Define when an order can be transferred to billing."),
+    shipment_transfer_criteria = ChoiceField(
+        _("Shipment Transfer Criteria"),
+        choices=ShipmentTransferCriteriaChoices.choices,
+        default=ShipmentTransferCriteriaChoices.READY_AND_COMPLETED,
+        help_text=_("Define when an Shipment can be transferred to billing."),
     )
     enforce_customer_billing = models.BooleanField(
         _("Enforce Customer Billing Requirements"),
@@ -222,11 +224,11 @@ class BillingControl(GenericModel):
         Raises:
             ValidationError: If billing control is not valid.
         """
-        if self.auto_bill_orders and not self.auto_bill_criteria:
+        if self.auto_bill_shipment and not self.auto_bill_criteria:
             raise ValidationError(
                 {
                     "auto_bill_criteria": _(
-                        "Auto Billing criteria is required when `Auto Bill Orders` is on. Please try again."
+                        "Auto Billing criteria is required when `Auto Bill Shipment` is on. Please try again."
                     ),
                 },
                 code="invalid_billing_control",
@@ -498,18 +500,18 @@ class BillingQueue(GenericModel):
 
     It has several fields, including:
         id (models.UUIDField): primary key and unique identifier for the billing queue.
-        order_type (models.ForeignKey): foreign key to the `OrderType` model, representing the assigned order type
+        shipment_type (models.ForeignKey): foreign key to the `ShipmentType` model, representing the assigned Shipment type
             to the billing queue.
-        order (models.ForeignKey): foreign key to the `Order` model, representing the assigned order to the billing queue.
+        Shipment (models.ForeignKey): foreign key to the `Shipment` model, representing the assigned Shipment to the billing queue.
         revenue_code (models.ForeignKey): foreign key to the `RevenueCode` model, representing the assigned revenue
             code to the billing queue.
         customer (models.ForeignKey): foreign key to the `Customer` model, representing the assigned customer
             to the billing queue.
         invoice_number (models.CharField): invoice number for the billing queue.
-        pieces (models.PositiveIntegerField): total piece count of the order.
-        weight (models.DecimalField): total weight of the order.
+        pieces (models.PositiveIntegerField): total piece count of the Shipment.
+        weight (models.DecimalField): total weight of the Shipment.
         bill_type (ChoiceField): bill type for the billing queue, with choices from the `BillTypeChoices` class.
-        ready_to_bill (models.BooleanField): Whether order is ready to be billed to the customer.
+        ready_to_bill (models.BooleanField): Whether Shipment is ready to be billed to the customer.
         bill_date (models.DateField): date the invoice was billed.
         mileage (models.DecimalField): total mileage.
         worker (models.ForeignKey): foreign key to the `Worker` model, representing the assigned worker
@@ -517,15 +519,15 @@ class BillingQueue(GenericModel):
         commodity (models.ForeignKey): foreign key to the `Commodity` model, representing the assigned commodity
             to the billing queue.
         commodity_descr (models.CharField): description of the commodity.
-        other_charge_total (models.DecimalField): other charge total for the order.
-        freight_charge_amount (models.DecimalField): freight charge amount for the order.
-        total_amount (models.DecimalField): total amount for the order.
+        other_charge_total (models.DecimalField): other charge total for the Shipment.
+        freight_charge_amount (models.DecimalField): freight charge amount for the Shipment.
+        total_amount (models.DecimalField): total amount for the Shipment.
     """
 
     @typing.final
     class BillTypeChoices(models.TextChoices):
         """
-        Status choices for Order model
+        Status choices for Shipment model
         """
 
         INVOICE = "INVOICE", _("Invoice")
@@ -540,21 +542,21 @@ class BillingQueue(GenericModel):
         editable=False,
         unique=True,
     )
-    order_type = models.ForeignKey(
-        "order.OrderType",
+    shipment_type = models.ForeignKey(
+        "shipment.ShipmentType",
         on_delete=models.RESTRICT,
-        verbose_name=_("Order Type"),
+        verbose_name=_("Shipment Type"),
         related_name="billing_queue",
-        help_text=_("Assigned order type to the billing queue"),
+        help_text=_("Assigned Shipment type to the billing queue"),
         null=True,
         blank=True,
     )
-    order = models.ForeignKey(
-        "order.Order",
+    shipment = models.ForeignKey(
+        "shipment.Shipment",
         on_delete=models.RESTRICT,
         related_name="billing_queue",
-        help_text=_("Assigned order to the billing queue"),
-        verbose_name=_("Order"),
+        help_text=_("Assigned Shipment to the billing queue"),
+        verbose_name=_("Shipment"),
     )
     revenue_code = models.ForeignKey(
         "accounting.RevenueCode",
@@ -580,14 +582,14 @@ class BillingQueue(GenericModel):
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
-        help_text=_("Total Piece Count of the Order"),
+        help_text=_("Total Piece Count of the Shipment"),
         default=0,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
-        help_text=_("Total Weight of the Order"),
+        help_text=_("Total Weight of the Shipment"),
         default=0,
     )
     bill_type = ChoiceField(
@@ -599,7 +601,7 @@ class BillingQueue(GenericModel):
     ready_to_bill = models.BooleanField(
         _("Ready to bill"),
         default=False,
-        help_text=_("Order is ready to be billed to customer."),
+        help_text=_("Shipment is ready to be billed to customer."),
     )
     bill_date = models.DateField(
         _("Billed Date"),
@@ -650,7 +652,7 @@ class BillingQueue(GenericModel):
         max_digits=19,
         decimal_places=4,
         default=0,
-        help_text=_("Other charge total for Order"),
+        help_text=_("Other charge total for Shipment"),
         blank=True,
         null=True,
     )
@@ -668,7 +670,7 @@ class BillingQueue(GenericModel):
         max_digits=19,
         decimal_places=4,
         default=0,
-        help_text=_("Total amount for Order"),
+        help_text=_("Total amount for Shipment"),
         blank=True,
         null=True,
     )
@@ -725,7 +727,7 @@ class BillingQueue(GenericModel):
         Returns:
             str: BillingQueue string representation
         """
-        return textwrap.wrap(self.order.pro_number, 50)[0]
+        return textwrap.wrap(self.shipment.pro_number, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Billing Queue absolute url
@@ -741,7 +743,7 @@ class BillingQueue(GenericModel):
         Clean method for the BillingQueue model.
 
         Raises:
-            ValidationError: If order does not meet the requirements for billing.
+            ValidationError: If Shipment does not meet the requirements for billing.
         """
         super().clean()
 
@@ -749,76 +751,78 @@ class BillingQueue(GenericModel):
 
         # TODO (WOLFRED): Think about moving this into a validation.py file, and changing it to a dictionary of errors.
 
-        # If order is already billed raise ValidationError
-        if self.order.billed:
+        # If Shipment is already billed raise ValidationError
+        if self.shipment.billed:
             errors.append(
                 _(
-                    "Order has already been billed. Please try again with a different order."
+                    "Shipment has already been billed. Please try again with a different Shipment."
                 )
             )
 
-        # If order is already transferred to billing raise ValidationError
-        # if self.order.transferred_to_billing:
+        # If Shipment is already transferred to billing raise ValidationError
+        # if self.shipment.transferred_to_billing:
         #     errors.append(
         #         _(
-        #             "Order has already been transferred to billing. Please try again with a different order."
+        #             "Shipment has already been transferred to billing. Please try again with a different Shipment."
         #         )
         #     )
 
-        # If order is voided raise ValidationError
-        if self.order.status == StatusChoices.VOIDED:
+        # If Shipment is voided raise ValidationError
+        if self.shipment.status == StatusChoices.VOIDED:
             errors.append(
-                _("Order has been voided. Please try again with a different order.")
+                _(
+                    "Shipment has been voided. Please try again with a different shipment."
+                )
             )
 
-        # If billing control `order_transfer_criteria` is `READY_AND_COMPLETE` and order `status` is not `COMPLETED`
-        # and order `ready_to_bill` is `False` raise ValidationError
+        # If billing control `shipment_transfer_criteria` is `READY_AND_COMPLETE` and Shipment `status` is not `COMPLETED`
+        # and Shipment `ready_to_bill` is `False` raise ValidationError
         if (
-            self.order.organization.billing_control.order_transfer_criteria
-            == BillingControl.OrderTransferCriteriaChoices.READY_AND_COMPLETED
-            and self.order.status != StatusChoices.COMPLETED
-            and self.order.ready_to_bill is False
+            self.shipment.organization.billing_control.shipment_transfer_criteria
+            == BillingControl.ShipmentTransferCriteriaChoices.READY_AND_COMPLETED
+            and self.shipment.status != StatusChoices.COMPLETED
+            and self.shipment.ready_to_bill is False
         ):
             errors.append(
                 _(
-                    "Order must be `COMPLETED` and `READY_TO_BILL` must be marked before transferring to billing."
+                    "Shipment must be `COMPLETED` and `READY_TO_BILL` must be marked before transferring to billing."
                     "Please try again."
                 )
             )
 
-        # If billing control `order_transfer_criteria` is `COMPLETED` and order `status` is not `COMPLETED`
+        # If billing control `shipment_transfer_criteria` is `COMPLETED` and Shipment `status` is not `COMPLETED`
         # raise ValidationError
         if (
-            self.order.organization.billing_control.order_transfer_criteria
-            == BillingControl.OrderTransferCriteriaChoices.COMPLETED
-            and self.order.status != StatusChoices.COMPLETED
+            self.shipment.organization.billing_control.shipment_transfer_criteria
+            == BillingControl.ShipmentTransferCriteriaChoices.COMPLETED
+            and self.shipment.status != StatusChoices.COMPLETED
         ):
             errors.append(
                 _(
-                    "Order must be `COMPLETED` before transferring to billing. Please try again."
+                    "Shipment must be `COMPLETED` before transferring to billing. Please try again."
                 )
             )
 
-        # if billing control `order_transfer_criteria` is `READY_TO_BILL` and order `ready_to_bill` is false
+        # if billing control `shipment_transfer_criteria` is `READY_TO_BILL` and Shipment `ready_to_bill` is false
         # raise ValidationError
         if (
-            self.order.organization.billing_control.order_transfer_criteria
-            == BillingControl.OrderTransferCriteriaChoices.READY_TO_BILL
-            and self.order.ready_to_bill is False
+            self.shipment.organization.billing_control.shipment_transfer_criteria
+            == BillingControl.ShipmentTransferCriteriaChoices.READY_TO_BILL
+            and self.shipment.ready_to_bill is False
         ):
             errors.append(
                 _(
-                    "Order must be marked `READY_TO_BILL` before transferring to billing. Please try again."
+                    "Shipment must be marked `READY_TO_BILL` before transferring to billing. Please try again."
                 )
             )
 
         if errors:
-            raise ValidationError({"order": errors})
+            raise ValidationError({"shipment": errors})
 
         # if manually entered invoice number does not start with the organization's invoice prefix
         # raise ValidationError
         if self.invoice_number and not self.invoice_number.startswith(
-            self.order.organization.invoice_control.invoice_number_prefix
+            self.shipment.organization.invoice_control.invoice_number_prefix
         ):
             raise ValidationError(
                 {
@@ -882,12 +886,12 @@ class BillingLogEntry(GenericModel):
         default=ActionChoices.TRANSFERRED,
         db_index=True,
     )
-    order = models.ForeignKey(
-        to="order.Order",
+    shipment = models.ForeignKey(
+        to="shipment.Shipment",
         on_delete=models.RESTRICT,
-        verbose_name=_("Order"),
+        verbose_name=_("Shipment"),
         related_name="billing_log_entries",
-        help_text=_("Order for the Billing Log"),
+        help_text=_("Shipment for the Billing Log"),
         blank=True,
         null=True,
     )
@@ -932,7 +936,7 @@ class BillingLogEntry(GenericModel):
             String representation for the BillingLogEntry model.
         """
         return textwrap.shorten(
-            f"{self.order.pro_number if self.order else self.invoice_number} {self.action} by {self.actor}",
+            f"{self.shipment.pro_number if self.shipment else self.invoice_number} {self.action} by {self.actor}",
             width=100,
             placeholder="...",
         )
@@ -959,21 +963,21 @@ class BillingHistory(GenericModel):
         unique=True,
         help_text=_("Unique identifier for the billing history"),
     )
-    order_type = models.ForeignKey(
-        "order.OrderType",
+    shipment_type = models.ForeignKey(
+        "shipment.ShipmentType",
         on_delete=models.RESTRICT,
-        verbose_name=_("Order Type"),
+        verbose_name=_("Shipment Type"),
         related_name="billing_history",
-        help_text=_("Assigned order type to the billing history"),
+        help_text=_("Assigned Shipment type to the billing history"),
         blank=True,
         null=True,
     )
-    order = models.ForeignKey(
-        "order.Order",
+    shipment = models.ForeignKey(
+        "shipment.Shipment",
         on_delete=models.RESTRICT,
         related_name="billing_history",
-        help_text=_("Assigned order to the billing history"),
-        verbose_name=_("Order"),
+        help_text=_("Assigned Shipment to the billing history"),
+        verbose_name=_("Shipment"),
     )
     revenue_code = models.ForeignKey(
         "accounting.RevenueCode",
@@ -999,14 +1003,14 @@ class BillingHistory(GenericModel):
     )
     pieces = models.PositiveIntegerField(
         _("Pieces"),
-        help_text=_("Total Piece Count of the Order"),
+        help_text=_("Total Piece Count of the Shipment"),
         default=0,
     )
     weight = models.DecimalField(
         _("Weight"),
         max_digits=10,
         decimal_places=2,
-        help_text=_("Total Weight of the Order"),
+        help_text=_("Total Weight of the Shipment"),
         default=0,
     )
     bill_type = ChoiceField(
@@ -1063,7 +1067,7 @@ class BillingHistory(GenericModel):
         max_digits=19,
         decimal_places=4,
         default=0,
-        help_text=_("Other charge total for Order"),
+        help_text=_("Other charge total for Shipment"),
         blank=True,
         null=True,
     )
@@ -1081,7 +1085,7 @@ class BillingHistory(GenericModel):
         max_digits=19,
         decimal_places=4,
         default=0,
-        help_text=_("Total amount for Order"),
+        help_text=_("Total amount for Shipment"),
         blank=True,
         null=True,
     )
@@ -1118,7 +1122,7 @@ class BillingHistory(GenericModel):
 
         verbose_name = _("Billing History")
         verbose_name_plural = _("Billing Histories")
-        ordering = ["order"]
+        ordering = ["shipment"]
         db_table = "billing_history"
 
     def __str__(self) -> str:
@@ -1127,7 +1131,7 @@ class BillingHistory(GenericModel):
         Returns:
             str: BillingHistory string representation
         """
-        return textwrap.wrap(self.order.pro_number, 50)[0]
+        return textwrap.wrap(self.shipment.pro_number, 50)[0]
 
     def get_absolute_url(self) -> str:
         """Billing History absolute url
@@ -1142,7 +1146,7 @@ class BillingHistory(GenericModel):
         if self.organization.billing_control.remove_billing_history is False:
             raise ValidationError(
                 {
-                    "order": _(
+                    "shipment": _(
                         "Your Organization disallows the deletion of billing history. Please try again."
                     ),
                 },
@@ -1159,11 +1163,11 @@ class BillingHistory(GenericModel):
         Raises:
             ValidationError
         """
-        if not self.order.billed:
+        if not self.shipment.billed:
             raise ValidationError(
                 {
-                    "order": _(
-                        "Order has not been billed. Please try again with a different order."
+                    "shipment": _(
+                        "Shipment has not been billed. Please try again with a different Shipment."
                     ),
                 },
             )
@@ -1179,31 +1183,31 @@ class BillingExceptionManager(models.Manager):
     instances with additional functionality.
 
     Methods:
-        - get_most_recent_exception(order)
-        - create_billing_exception(organization, exception_type, order, exception_message)
+        - get_most_recent_exception(Shipment)
+        - create_billing_exception(organization, exception_type, Shipment, exception_message)
     """
 
-    def get_most_recent_exception(self, order: Order) -> BillingException:
+    def get_most_recent_exception(self, shipment: Shipment) -> BillingException:
         """
-        Retrieve the most recent BillingException instance associated with the provided Order.
+        Retrieve the most recent BillingException instance associated with the provided Shipment.
 
         This method queries the database for the most recent `BillingException` instance associated with
-        the provided `Order`. It takes one argument:
-        - `order` (type: `Order`): The `Order` object to retrieve the most recent `BillingException` for.
+        the provided `Shipment`. It takes one argument:
+        - `shipment` (type: `Shipment`): The `Shipment` object to retrieve the most recent `BillingException` for.
 
         If a `BillingException` instance is found, it is returned. Otherwise, the method returns `None`.
 
         Args:
-            order (Order): The Order object to retrieve the most recent BillingException for.
+            shipment (Shipment): The Shipment object to retrieve the most recent BillingException for.
 
         Returns:
-            Optional[BillingException]: The most recent BillingException instance associated with the provided Order,
+            Optional[BillingException]: The most recent BillingException instance associated with the provided Shipment,
             or None if no BillingException instance is found.
 
         Raises:
             None
         """
-        return self.filter(order=order).latest("created_at")  # type: ignore
+        return self.filter(shipment=shipment).latest("created_at")  # type: ignore
 
     def create_billing_exception(
         self,
@@ -1211,7 +1215,7 @@ class BillingExceptionManager(models.Manager):
         organization: Organization,
         business_unit: BusinessUnit,
         exception_type: str,
-        order: Order,
+        shipment: Shipment,
         exception_message: str,
     ) -> BillingException:
         """
@@ -1221,7 +1225,7 @@ class BillingExceptionManager(models.Manager):
         arguments:
         - `organization` (type: `Organization`): The `Organization` object associated with the `BillingException`.
         - `exception_type` (type: `str`): A string representing the type of the `BillingException`.
-        - `order` (type: `Order`): The `Order` object associated with the `BillingException`.
+        - `shipment` (type: `Shipment`): The `Shipment` object associated with the `BillingException`.
         - `exception_message` (type: `str`): A message describing the `BillingException`.
 
         The method returns the newly created `BillingException` instance.
@@ -1230,7 +1234,7 @@ class BillingExceptionManager(models.Manager):
             organization (Organization): The Organization object associated with the BillingException.
             business_unit (BusinessUnit): The BusinessUnit object associated with the BillingException.
             exception_type (str): A string representing the type of the BillingException.
-            order (Order): The Order object associated with the BillingException.
+            shipment (Shipment): The Shipment object associated with the BillingException.
             exception_message (str): A message describing the BillingException.
 
         Returns:
@@ -1243,7 +1247,7 @@ class BillingExceptionManager(models.Manager):
             organization=organization,
             business_unit=business_unit,
             exception_type=exception_type,
-            order=order,
+            shipment=shipment,
             exception_message=exception_message,
         )
 
@@ -1255,7 +1259,7 @@ class BillingException(GenericModel):
     id: a unique identifier for the exception, generated using a UUID
     exception_type: a choice field representing the type of exception, with choices defined in the nested
     BillingExceptionChoices class
-    order: a foreign key to an order related to the exception
+    shipment: a foreign key to an shipment related to the exception
     exception_message: a text field for storing a message about the exception
     The model also has a Meta class for setting verbose names and ordering, as well as a __str__ method
     for returning a string representation of the exception. The nested BillingExceptionChoices class is
@@ -1275,11 +1279,11 @@ class BillingException(GenericModel):
         default=BillingExceptionChoices.PAPERWORK,
         help_text=_("Type of billing exception"),
     )
-    order = models.ForeignKey(
-        "order.Order",
+    shipment = models.ForeignKey(
+        "shipment.Shipment",
         on_delete=models.RESTRICT,
         related_name="billing_exception",
-        help_text=_("Assigned order to the billing exception"),
+        help_text=_("Assigned Shipment to the billing exception"),
     )
     exception_message = models.TextField(
         _("Exception Message"),
@@ -1296,7 +1300,7 @@ class BillingException(GenericModel):
 
         verbose_name = _("Billing Exception")
         verbose_name_plural = _("Billing Exceptions")
-        ordering = ("order",)
+        ordering = ("shipment",)
         db_table = "billing_exception"
 
     def __str__(self) -> str:

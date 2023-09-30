@@ -23,20 +23,21 @@ from django.utils import timezone
 
 from billing.models import BillingHistory
 from customer import models, types
-from order.models import Order
 from stops.models import Stop
 from utils.models import StatusChoices
 
 
-def get_customer_order_diff(*, customer_id: uuid.UUID) -> types.OrderDiffResponse:
-    """Calculate and return the total number of orders made and the percentage difference
+def get_customer_shipments_diff(
+    *, customer_id: uuid.UUID
+) -> types.shipmentDiffResponse:
+    """Calculate and return the total number of shipments made and the percentage difference
     in counts for a customer between the current month, the previous month and the month
     before the previous month.
 
-    This function first counts the total number of orders a customer has placed in the
+    This function first counts the total number of shipments a customer has placed in the
     current month, the previous month, and the month before the previous month.
 
-    It then calculates the percentage difference in order counts:
+    It then calculates the percentage difference in shipment counts:
     - Percent change between the current month and the previous month
     - Percent change between the previous month and the month before the previous month
 
@@ -44,17 +45,17 @@ def get_customer_order_diff(*, customer_id: uuid.UUID) -> types.OrderDiffRespons
         customer_id (uuid.UUID): The ID of the customer.
 
     Returns:
-        OrderDiffResponse: A dictionary with the following structure:
+        shipmentDiffResponse: A dictionary with the following structure:
             {
-              "total_orders": int,
+              "total_shipments": int,
               "last_month_diff": float,
               "month_before_last_diff": float,
             }
 
     Note:
         - The "last_month_diff" and "month_before_last_diff" percentages are calculated with
-          the order count of last month and month before last month as the base respectively.
-          If there were no orders in the base month, the percentage difference is considered 0.
+          the shipment count of last month and month before last month as the base respectively.
+          If there were no shipments in the base month, the percentage difference is considered 0.
     """
     now = timezone.now()
     this_month = now.month
@@ -64,40 +65,40 @@ def get_customer_order_diff(*, customer_id: uuid.UUID) -> types.OrderDiffRespons
     month_before_last = last_month - 1 if last_month != 1 else 12
     month_before_last_year = last_month_year if last_month != 1 else last_month_year - 1
 
-    this_month_orders_count = Order.objects.filter(
+    this_month_shipments_count = Shipment.objects.filter(
         customer_id=customer_id, created__month=this_month, created__year=this_year
     ).count()
 
-    last_month_orders_count = Order.objects.filter(
+    last_month_shipments_count = Shipment.objects.filter(
         customer_id=customer_id,
         created__month=last_month,
         created__year=last_month_year,
     ).count()
 
-    month_before_last_orders_count = Order.objects.filter(
+    month_before_last_shipments_count = Shipment.objects.filter(
         customer_id=customer_id,
         created__month=month_before_last,
         created__year=month_before_last_year,
     ).count()
 
     last_month_diff = (
-        abs(last_month_orders_count - this_month_orders_count)
-        / ((last_month_orders_count + this_month_orders_count) / 2)
+        abs(last_month_shipments_count - this_month_shipments_count)
+        / ((last_month_shipments_count + this_month_shipments_count) / 2)
         * 100
-        if this_month_orders_count > 0
+        if this_month_shipments_count > 0
         else 0
     )
 
     month_before_last_diff = (
-        abs(last_month_orders_count - month_before_last_orders_count)
-        / month_before_last_orders_count
+        abs(last_month_shipments_count - month_before_last_shipments_count)
+        / month_before_last_shipments_count
         * 100
-        if month_before_last_orders_count > 0
+        if month_before_last_shipments_count > 0
         else 0
     )
 
     return {
-        "total_orders": this_month_orders_count,
+        "total_shipments": this_month_shipments_count,
         "last_month_diff": round(last_month_diff, 1),
         "month_before_last_diff": round(month_before_last_diff, 1),
     }
@@ -256,8 +257,11 @@ def get_customer_on_time_performance_diff(
 
     for year, month in months:
         customer_stops = Stop.objects.filter(
-            movement__order__customer_id=customer_id,
-            movement__order__status__in=[StatusChoices.COMPLETED, StatusChoices.BILLED],
+            movement__shipment__customer_id=customer_id,
+            movement__shipment__status__in=[
+                StatusChoices.COMPLETED,
+                StatusChoices.BILLED,
+            ],
             arrival_time__year=year,
             arrival_time__month=month,
         )
@@ -333,7 +337,7 @@ def calculate_customer_total_miles(
     between the current month and the previous month.
 
     This function first sums up the total miles a customer has covered in their completed or billed
-    orders in the current and the previous month.
+    shipments in the current and the previous month.
 
     It then calculates the percentage difference in total miles covered between the current month
     and the previous month.
@@ -362,7 +366,7 @@ def calculate_customer_total_miles(
     last_month = this_month - 1 if this_month != 1 else 12
     last_month_year = this_year if this_month != 1 else this_year - 1
 
-    aggregated_miles = Order.objects.filter(
+    aggregated_miles = Shipment.objects.filter(
         customer_id=customer_id,
         status__in=[StatusChoices.COMPLETED, StatusChoices.BILLED],
     ).aggregate(
@@ -418,12 +422,12 @@ def get_customer_shipment_metrics(
     Returns:
         types.CustomerShipmentMetricsResponse: Dictionary containing the last_bill_date
         and last_shipment_date in "Month day, Year" format. None is returned
-        if the customer doesn't have any orders yet.
+        if the customer doesn't have any shipments yet.
 
     Raises:
         Do not have any exception raises
     """
-    aggregated_dates = Order.objects.filter(
+    aggregated_dates = Shipment.objects.filter(
         customer_id=customer_id,
     ).aggregate(
         last_bill_date=Max("bill_date"),

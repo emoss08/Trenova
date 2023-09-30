@@ -30,9 +30,8 @@ from billing.services import generate_invoice_number
 from billing.tests.factories import BillingQueueFactory
 from customer.factories import CustomerFactory
 from customer.models import Customer
-from order.models import Order
-from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
+from shipment.tests.factories import shipmentFactory
 from utils.models import StatusChoices
 from worker.models import Worker
 
@@ -44,28 +43,28 @@ def test_generate_invoice_number(
 ) -> None:
     """
     Test that invoice number increments by 1 for each new invoice
-    and adds the correct suffix when an order is rebilled.
+    and adds the correct suffix when an shipment is rebilled.
     """
-    order_1 = OrderFactory()
+    shipment_1 = shipmentFactory()
     user = UserFactory()
 
-    order_movements = order_1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment_1.movements.all()
+    shipment_movements.update(status="C")
 
-    order_1.status = "C"
-    order_1.save()
+    shipment_1.status = "C"
+    shipment_1.save()
 
     # Test first invoice
     invoice_1 = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
     assert (
         invoice_1.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.shipment.pro_number}".replace(
             "ORD", ""
         )
     )
@@ -73,14 +72,14 @@ def test_generate_invoice_number(
     invoice_1_cm = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
     assert (
         invoice_1_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.shipment.pro_number}".replace(
             "ORD", ""
         )
     )
@@ -88,14 +87,14 @@ def test_generate_invoice_number(
     invoice_1_next_invoice = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     assert (
         invoice_1_next_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.shipment.pro_number}A".replace(
             "ORD", ""
         )
     )
@@ -103,30 +102,30 @@ def test_generate_invoice_number(
     invoice_1_next_invoice_cm = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     assert (
         invoice_1_next_invoice_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}A".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.shipment.pro_number}A".replace(
             "ORD", ""
         )
     )
 
     invoice_1_final_invoice = models.BillingQueue.objects.create(
         organization=organization,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
         business_unit=business_unit,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     assert (
         invoice_1_final_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.shipment.pro_number}B".replace(
             "ORD", ""
         )
     )
@@ -134,15 +133,15 @@ def test_generate_invoice_number(
     invoice_1_final_invoice_cm = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order=order_1,
+        shipment=shipment_1,
         user=user,
         bill_type=models.BillingQueue.BillTypeChoices.CREDIT,
-        customer=order_1.customer,
+        customer=shipment_1.customer,
     )
 
     assert (
         invoice_1_final_invoice_cm.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.order.pro_number}B".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice_1.shipment.pro_number}B".replace(
             "ORD", ""
         )
     )
@@ -158,31 +157,31 @@ def test_invoice_number_generation(
     """
     Test that invoice number is generated for each new invoice
     """
-    order = OrderFactory()
+    shipment = shipmentFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.save()
+    shipment.status = "C"
+    shipment.save()
 
     invoice = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order_type=order.order_type,
-        order=order,
-        revenue_code=order.revenue_code,
+        shipment_type=shipment.shipment_type,
+        shipment=shipment,
+        revenue_code=shipment.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=order.commodity,
-        bol_number=order.bol_number,
+        commodity=shipment.commodity,
+        bol_number=shipment.bol_number,
         user=user,
     )
 
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.shipment.pro_number}".replace(
             "ORD", ""
         )
     )
@@ -198,32 +197,32 @@ def test_invoice_number_increments(
     """
     Test that invoice number increments by 1 for each new invoice
     """
-    order = OrderFactory()
+    shipment = shipmentFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.save()
+    shipment.status = "C"
+    shipment.save()
 
-    order_2 = OrderFactory()
+    shipment_2 = shipmentFactory()
 
-    order_2_movements = order_2.movements.all()
-    order_2_movements.update(status="C")
+    shipment_2_movements = shipment_2.movements.all()
+    shipment_2_movements.update(status="C")
 
-    order_2.status = "C"
-    order_2.save()
+    shipment_2.status = "C"
+    shipment_2.save()
 
     invoice = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order_type=order.order_type,
-        order=order,
-        revenue_code=order.revenue_code,
+        shipment_type=shipment.shipment_type,
+        shipment=shipment,
+        revenue_code=shipment.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=order.commodity,
-        bol_number=order.bol_number,
+        commodity=shipment.commodity,
+        bol_number=shipment.bol_number,
         user=user,
     )
     invoice.invoice_number = generate_invoice_number(instance=invoice)
@@ -232,13 +231,13 @@ def test_invoice_number_increments(
     second_invoice = models.BillingQueue.objects.create(
         business_unit=business_unit,
         organization=user.organization,
-        order_type=order_2.order_type,
-        order=order_2,
-        revenue_code=order_2.revenue_code,
+        shipment_type=shipment_2.shipment_type,
+        shipment=shipment_2,
+        revenue_code=shipment_2.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=order_2.commodity,
-        bol_number=order_2.bol_number,
+        commodity=shipment_2.commodity,
+        bol_number=shipment_2.bol_number,
         user=user,
     )
     second_invoice.invoice_number = generate_invoice_number(instance=second_invoice)
@@ -247,24 +246,24 @@ def test_invoice_number_increments(
     assert invoice.invoice_number is not None
     assert (
         invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.order.pro_number}A".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.shipment.pro_number}A".replace(
             "ORD", ""
         )
     )
     assert second_invoice.invoice_number is not None
     assert (
         second_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.order.pro_number}A".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.shipment.pro_number}A".replace(
             "ORD", ""
         )
     )
 
 
-def test_unbilled_order_in_billing_history(
-    order: Order, business_unit: BusinessUnit, organization: Organization
+def test_unbilled_shipments_in_billing_history(
+    shipment: Shipment, business_unit: BusinessUnit, organization: Organization
 ) -> None:
     """
-    Test ValidationError is thrown when adding an order in billing history
+    Test ValidationError is thrown when adding an shipment in billing history
     that hasn't billed.
     """
 
@@ -272,11 +271,11 @@ def test_unbilled_order_in_billing_history(
         models.BillingHistory.objects.create(
             business_unit=business_unit,
             organization=organization,
-            order=order,
+            shipment=shipment,
         )
 
-    assert excinfo.value.message_dict["order"] == [
-        "Order has not been billed. Please try again with a different order."
+    assert excinfo.value.message_dict["shipment"] == [
+        "shipment has not been billed. Please try again with a different shipment."
     ]
 
 
@@ -292,18 +291,18 @@ def test_auto_bill_criteria_required_when_auto_bill_true(
     organization: Organization,
 ) -> None:
     """
-    Test if `auto_bill_orders` is true & `auto_bill_criteria` is blank that a
+    Test if `auto_bill_shipments` is true & `auto_bill_criteria` is blank that a
     `ValidationError` is thrown.
     """
     billing_control = organization.billing_control
 
     with pytest.raises(ValidationError) as excinfo:
-        billing_control.auto_bill_orders = True
+        billing_control.auto_bill_shipments = True
         billing_control.auto_bill_criteria = None
         billing_control.full_clean()
 
     assert excinfo.value.message_dict["auto_bill_criteria"] == [
-        "Auto Billing criteria is required when `Auto Bill Orders` is on. Please try again."
+        "Auto Billing criteria is required when `Auto Bill shipments` is on. Please try again."
     ]
 
 
@@ -324,95 +323,101 @@ def test_auto_bill_criteria_choices_is_invalid(organization: Organization) -> No
     ]
 
 
-def test_get_billable_orders_completed() -> None:
+def test_get_billable_shipments_completed() -> None:
     """
-    Test that get_billable_orders returns orders that are completed and not
-    billed. When the billing_control.order_transfer_criteria is set to
+    Test that get_billable_shipments returns shipments that are completed and not
+    billed. When the billing_control.shipment_transfer_criteria is set to
     "COMPLETED".
     """
-    # create an order that is ready to bill
-    order = OrderFactory()
+    # create an shipment that is ready to bill
+    shipment = shipmentFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.billed = False
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.save()
+    shipment.status = "C"
+    shipment.billed = False
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.save()
 
-    # set the order_transfer_criteria on the organization's billing_control
-    order.organization.billing_control.order_transfer_criteria = "COMPLETED"
-    order.organization.billing_control.save()
-    billable_orders = selectors.get_billable_orders(organization=order.organization)
+    # set the shipment_transfer_criteria on the organization's billing_control
+    shipment.organization.billing_control.shipment_transfer_criteria = "COMPLETED"
+    shipment.organization.billing_control.save()
+    billable_shipments = selectors.get_billable_shipments(
+        organization=shipment.organization
+    )
 
-    for order in billable_orders:
-        assert order.status == "C"
-        assert not order.billed
-        assert not order.transferred_to_billing
-        assert order.billing_transfer_date is None
+    for shipment in billable_shipments:
+        assert shipment.status == "C"
+        assert not shipment.billed
+        assert not shipment.transferred_to_billing
+        assert shipment.billing_transfer_date is None
 
 
-def test_get_billable_orders_ready_and_completed() -> None:
+def test_get_billable_shipments_ready_and_completed() -> None:
     """
-    Test that get_billable_orders returns orders that are completed and not
-    billed. When the billing_control.order_transfer_criteria is set to
+    Test that get_billable_shipments returns shipments that are completed and not
+    billed. When the billing_control.shipment_transfer_criteria is set to
     "READY_AND_COMPLETED".
     """
-    order = OrderFactory()
+    shipment = OrderFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.billed = False
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.ready_to_bill = True
-    order.save()
+    shipment.status = "C"
+    shipment.billed = False
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.ready_to_bill = True
+    shipment.save()
 
-    # set the order_transfer_criteria on the organization's billing_control
-    order.organization.billing_control.order_transfer_criteria = "READY_AND_COMPLETED"
-    order.organization.billing_control.save()
-    billable_orders = selectors.get_billable_orders(organization=order.organization)
+    # set the shipment_transfer_criteria on the organization's billing_control
+    shipment.organization.billing_control.shipment_transfer_criteria = (
+        "READY_AND_COMPLETED"
+    )
+    shipment.organization.billing_control.save()
+    billable_shipments = selectors.get_billable_orders(
+        organization=shipment.organization
+    )
 
-    for order in billable_orders:
-        assert order.status == "C"
-        assert not order.billed
-        assert not order.transferred_to_billing
-        assert order.billing_transfer_date is None
+    for shipment in billable_orders:
+        assert shipment.status == "C"
+        assert not shipment.billed
+        assert not shipment.transferred_to_billing
+        assert shipment.billing_transfer_date is None
 
 
 def test_get_billable_orders_ready() -> None:
     """
     Test that get_billable_orders returns orders that are completed and not
-    billed. When the billing_control.order_transfer_criteria is set to
+    billed. When the billing_control.shipment_transfer_criteria is set to
     "READY_AND_COMPLETED".
     """
-    # create an order that is ready to bill
-    order = OrderFactory()
+    # create an shipment that is ready to bill
+    shipment = OrderFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.billed = False
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.ready_to_bill = True
-    order.save()
+    shipment.status = "C"
+    shipment.billed = False
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.ready_to_bill = True
+    shipment.save()
 
-    # set the order_transfer_criteria on the organization's billing_control
-    order.organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
-    order.organization.billing_control.save()
-    billable_orders = selectors.get_billable_orders(organization=order.organization)
+    # set the shipment_transfer_criteria on the organization's billing_control
+    shipment.organization.billing_control.shipment_transfer_criteria = "READY_TO_BILL"
+    shipment.organization.billing_control.save()
+    billable_orders = selectors.get_billable_orders(organization=shipment.organization)
 
-    for order in billable_orders:
-        assert order.status == "C"
-        assert not order.billed
-        assert not order.transferred_to_billing
-        assert order.billing_transfer_date is None
+    for shipment in billable_orders:
+        assert shipment.status == "C"
+        assert not shipment.billed
+        assert not shipment.transferred_to_billing
+        assert shipment.billing_transfer_date is None
 
 
 def test_get_billing_queue_information(
@@ -425,28 +430,28 @@ def test_get_billing_queue_information(
 
     customer = CustomerFactory()
 
-    order = OrderFactory()
+    shipment = OrderFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.ready_to_bill = True
-    order.status = "C"
-    order.save()
+    shipment.ready_to_bill = True
+    shipment.status = "C"
+    shipment.save()
 
     billing_queue = models.BillingQueue.objects.create(
         organization=organization,
-        order=order,
+        shipment=shipment,
         customer=customer,
         business_unit=business_unit,
     )
 
-    result = selectors.get_billing_queue_information(order=order)
+    result = selectors.get_billing_queue_information(shipment=shipment)
     assert result == billing_queue
 
 
 def test_cannot_delete_billing_history(
-    organization: Organization, order: Order, business_unit: BusinessUnit
+    organization: Organization, shipment: Shipment, business_unit: BusinessUnit
 ) -> None:
     """
     Test that if the organization has remove_billing_history as false that
@@ -455,26 +460,26 @@ def test_cannot_delete_billing_history(
     organization.billing_control.remove_billing_history = False
     organization.billing_control.save()
 
-    order.billed = True
-    order.save()
+    shipment.billed = True
+    shipment.save()
 
     billing_history = models.BillingHistory.objects.create(
         organization=organization,
-        order=order,
-        customer=order.customer,
+        shipment=shipment,
+        customer=shipment.customer,
         business_unit=business_unit,
     )
 
     with pytest.raises(ValidationError) as excinfo:
         billing_history.delete()
 
-    assert excinfo.value.message_dict["order"] == [
+    assert excinfo.value.message_dict["shipment"] == [
         "Your Organization disallows the deletion of billing history. Please try again."
     ]
 
 
 def test_can_delete_billing_history(
-    organization: Organization, order: Order, business_unit: BusinessUnit
+    organization: Organization, shipment: Shipment, business_unit: BusinessUnit
 ) -> None:
     """
     Test that if the organization has remove_billing_history as true that the billing
@@ -483,13 +488,13 @@ def test_can_delete_billing_history(
     organization.billing_control.remove_billing_history = True
     organization.billing_control.save()
 
-    order.billed = True
-    order.save()
+    shipment.billed = True
+    shipment.save()
 
     billing_history = models.BillingHistory.objects.create(
         organization=organization,
-        order=order,
-        customer=order.customer,
+        shipment=shipment,
+        customer=shipment.customer,
         business_unit=business_unit,
     )
 
@@ -499,112 +504,112 @@ def test_can_delete_billing_history(
 
 
 def test_generate_invoice_number_before_save(
-    order: Order, organization: Organization, business_unit: BusinessUnit
+    shipment: Shipment, organization: Organization, business_unit: BusinessUnit
 ) -> None:
     """
     Test that the invoice number is generated before the save method is called.
     """
 
-    order.status = StatusChoices.COMPLETED
-    order.ready_to_bill = True
+    shipment.status = StatusChoices.COMPLETED
+    shipment.ready_to_bill = True
 
     billing_queue = models.BillingQueue.objects.create(
         organization=organization,
-        order=order,
-        customer=order.customer,
+        shipment=shipment,
+        customer=shipment.customer,
         business_unit=business_unit,
     )
 
     assert (
         billing_queue.invoice_number
-        == f"{order.organization.invoice_control.invoice_number_prefix}{billing_queue.order.pro_number}".replace(
+        == f"{shipment.organization.invoice_control.invoice_number_prefix}{billing_queue.shipment.pro_number}".replace(
             "ORD", ""
         )
     )
 
 
-def test_save_order_details_to_billing_history_before_save(
-    order: Order, organization: Organization, business_unit: BusinessUnit
+def test_save_shipment_details_to_billing_history_before_save(
+    shipment: Shipment, organization: Organization, business_unit: BusinessUnit
 ) -> None:
     """
-    Test that the order details are saved to the billing history before the
+    Test that the shipment details are saved to the billing history before the
     save method is called.
     """
-    order.billed = True
-    order.save()
+    shipment.billed = True
+    shipment.save()
 
     billing_history = models.BillingHistory.objects.create(
         organization=organization,
-        order=order,
-        customer=order.customer,
+        shipment=shipment,
+        customer=shipment.customer,
         business_unit=business_unit,
     )
 
-    assert billing_history.pieces == order.pieces
-    assert billing_history.order_type == order.order_type
-    assert billing_history.weight == order.weight
-    assert billing_history.mileage == order.mileage
-    assert billing_history.revenue_code == order.revenue_code
-    assert billing_history.commodity == order.commodity
-    assert billing_history.bol_number == order.bol_number
-    assert billing_history.customer == order.customer
-    assert billing_history.other_charge_total == order.other_charge_amount
-    assert billing_history.freight_charge_amount == order.freight_charge_amount
-    assert billing_history.total_amount == order.sub_total
+    assert billing_history.pieces == shipment.pieces
+    assert billing_history.shipment_type == shipment.shipment_type
+    assert billing_history.weight == shipment.weight
+    assert billing_history.mileage == shipment.mileage
+    assert billing_history.revenue_code == shipment.revenue_code
+    assert billing_history.commodity == shipment.commodity
+    assert billing_history.bol_number == shipment.bol_number
+    assert billing_history.customer == shipment.customer
+    assert billing_history.other_charge_total == shipment.other_charge_amount
+    assert billing_history.freight_charge_amount == shipment.freight_charge_amount
+    assert billing_history.total_amount == shipment.sub_total
 
 
-def test_transfer_order_to_billing_queue(
+def test_transfer_shipment_to_billing_queue(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
     """
-    Test an order is transferred to the billing queue.
+    Test an shipment is transferred to the billing queue.
     """
 
     # TODO(Wolfred): Figure out why this test is failing. The transfer item is being created.
 
-    # set the order_transfer_criteria on the organization's billing_control
-    organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    # set the shipment_transfer_criteria on the organization's billing_control
+    organization.billing_control.shipment_transfer_criteria = "READY_TO_BILL"
     organization.billing_control.save()
 
-    order = OrderFactory(organization=organization, business_unit=business_unit)
+    shipment = OrderFactory(organization=organization, business_unit=business_unit)
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.ready_to_bill = True
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.save()
+    shipment.status = "C"
+    shipment.ready_to_bill = True
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.save()
 
     user = UserFactory(organization=organization, business_unit=business_unit)
 
     services.transfer_to_billing_queue_service(
         user_id=user.id,
-        order_pros=[order.pro_number],
+        shipment_pros=[shipment.pro_number],
         task_id=str(uuid.uuid4()),
     )
 
-    order.refresh_from_db()
-    billing_queue = models.BillingQueue.objects.get(order=order)
+    shipment.refresh_from_db()
+    billing_queue = models.BillingQueue.objects.get(shipment=shipment)
     billing_queue.refresh_from_db()
 
-    billing_log_entry = models.BillingLogEntry.objects.get(order=order)
+    billing_log_entry = models.BillingLogEntry.objects.get(shipment=shipment)
     billing_log_entry.refresh_from_db()
 
-    assert order.transferred_to_billing
-    assert order.billing_transfer_date is not None
-    assert billing_queue.order_type == order.order_type
-    assert billing_queue.weight == order.weight
-    assert billing_queue.pieces == order.pieces
-    assert billing_queue.revenue_code == order.revenue_code
-    assert billing_queue.commodity == order.commodity
-    assert billing_queue.bol_number == order.bol_number
-    assert billing_queue.customer == order.customer
+    assert shipment.transferred_to_billing
+    assert shipment.billing_transfer_date is not None
+    assert billing_queue.shipment_type == shipment.shipment_type
+    assert billing_queue.weight == shipment.weight
+    assert billing_queue.pieces == shipment.pieces
+    assert billing_queue.revenue_code == shipment.revenue_code
+    assert billing_queue.commodity == shipment.commodity
+    assert billing_queue.bol_number == shipment.bol_number
+    assert billing_queue.customer == shipment.customer
     assert billing_queue.bill_type == "INVOICE"
 
     # Check that the Billing Log Entry was created
-    assert billing_log_entry.order == order
+    assert billing_log_entry.shipment == order
 
 
 def test_bill_orders(
@@ -617,23 +622,23 @@ def test_bill_orders(
     Test that the orders are billed correctly.
     """
 
-    # set the order_transfer_criteria on the organization's billing_control
-    organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    # set the shipment_transfer_criteria on the organization's billing_control
+    organization.billing_control.shipment_transfer_criteria = "READY_TO_BILL"
     organization.billing_control.save()
 
     # Create an order from the Order Factory
-    order = OrderFactory(organization=organization, business_unit=business_unit)
+    shipment = OrderFactory(organization=organization, business_unit=business_unit)
 
     # Update the order movements to be completed
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
     # Update the order to be ready to bill
-    order.status = "C"
-    order.ready_to_bill = True
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.save()
+    shipment.status = "C"
+    shipment.ready_to_bill = True
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.save()
 
     # Create a User from the User Factory
     user = UserFactory(organization=organization, business_unit=business_unit)
@@ -641,7 +646,7 @@ def test_bill_orders(
     # transfer the order to the billing queue
     services.transfer_to_billing_queue_service(
         user_id=user.id,
-        order_pros=[order.pro_number],
+        shipment_pros=[shipment.pro_number],
         task_id=str(uuid.uuid4()),
     )
 
@@ -650,34 +655,34 @@ def test_bill_orders(
     services.bill_orders(user_id=user.id, invoices=invoices, task_id=str(uuid.uuid4()))
 
     # Query the billing history to make sure it was created.
-    billing_history = models.BillingHistory.objects.get(order=order)
+    billing_history = models.BillingHistory.objects.get(shipment=shipment)
     billing_history.refresh_from_db()
 
-    assert billing_history.order == order
-    assert billing_history.organization == order.organization
-    assert billing_history.order_type == order.order_type
-    assert billing_history.revenue_code == order.revenue_code
-    assert billing_history.customer == order.customer
-    assert billing_history.commodity == order.commodity
-    assert billing_history.bol_number == order.bol_number
+    assert billing_history.shipment == order
+    assert billing_history.organization == shipment.organization
+    assert billing_history.shipment_type == shipment.shipment_type
+    assert billing_history.revenue_code == shipment.revenue_code
+    assert billing_history.customer == shipment.customer
+    assert billing_history.commodity == shipment.commodity
+    assert billing_history.bol_number == shipment.bol_number
     assert (
         billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{shipment.pro_number}".replace(
             "ORD", ""
         )
     )
 
-    order.refresh_from_db()
-    assert order.billed is True
-    assert order.bill_date is not None
+    shipment.refresh_from_db()
+    assert shipment.billed is True
+    assert shipment.bill_date is not None
     assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
     assert (
         mail.outbox[0].body
-        == f"Please see attached invoice for invoice: {order.pro_number}"
+        == f"Please see attached invoice for invoice: {shipment.pro_number}"
     )
 
 
-def test_single_order_billing_service(
+def test_single_shipment_billing_service(
     organization: Organization,
     business_unit: BusinessUnit,
     user: User,
@@ -686,23 +691,23 @@ def test_single_order_billing_service(
     """
     Test an single order can be billed.
     """
-    # set the order_transfer_criteria on the organization's billing_control
-    organization.billing_control.order_transfer_criteria = "READY_TO_BILL"
+    # set the shipment_transfer_criteria on the organization's billing_control
+    organization.billing_control.shipment_transfer_criteria = "READY_TO_BILL"
     organization.billing_control.save()
 
     # Create an order from the Order Factory
-    order = OrderFactory(organization=organization, business_unit=business_unit)
+    shipment = OrderFactory(organization=organization, business_unit=business_unit)
 
     # Update the order movements to be completed
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
     # Update the order to be ready to bill
-    order.status = "C"
-    order.ready_to_bill = True
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.save()
+    shipment.status = "C"
+    shipment.ready_to_bill = True
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.save()
 
     # Create a User from the User Factory
     user = UserFactory(organization=organization, business_unit=business_unit)
@@ -710,56 +715,56 @@ def test_single_order_billing_service(
     # transfer the order to the billing queue
     services.transfer_to_billing_queue_service(
         user_id=user.id,
-        order_pros=[order.pro_number],
+        shipment_pros=[shipment.pro_number],
         task_id=str(uuid.uuid4()),
     )
 
     # Bill all the orders, in the billing queue.
-    invoice = models.BillingQueue.objects.get(order=order)
+    invoice = models.BillingQueue.objects.get(shipment=shipment)
     services.bill_orders(user_id=user.id, invoices=invoice, task_id=str(uuid.uuid4()))
 
     # Query the billing history to make sure it was created.
-    billing_history = models.BillingHistory.objects.get(order=order)
+    billing_history = models.BillingHistory.objects.get(shipment=shipment)
     billing_history.refresh_from_db()
 
-    assert billing_history.order == order
-    assert billing_history.organization == order.organization
-    assert billing_history.order_type == order.order_type
-    assert billing_history.revenue_code == order.revenue_code
-    assert billing_history.customer == order.customer
-    assert billing_history.commodity == order.commodity
+    assert billing_history.shipment == order
+    assert billing_history.organization == shipment.organization
+    assert billing_history.shipment_type == shipment.shipment_type
+    assert billing_history.revenue_code == shipment.revenue_code
+    assert billing_history.customer == shipment.customer
+    assert billing_history.commodity == shipment.commodity
     assert (
         billing_history.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{order.pro_number}".replace(
+        == f"{user.organization.invoice_control.invoice_number_prefix}{shipment.pro_number}".replace(
             "ORD", ""
         )
     )
-    assert billing_history.bol_number == order.bol_number
+    assert billing_history.bol_number == shipment.bol_number
 
-    order.refresh_from_db()
-    assert order.billed is True
-    assert order.bill_date is not None
+    shipment.refresh_from_db()
+    assert shipment.billed is True
+    assert shipment.bill_date is not None
     assert mail.outbox[0].subject == f"New invoice from {user.organization.name}"
     assert (
         mail.outbox[0].body
-        == f"Please see attached invoice for invoice: {order.pro_number}"
+        == f"Please see attached invoice for invoice: {shipment.pro_number}"
     )
 
 
 def test_untransfer_single_order(
     api_client: APIClient, organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    order = OrderFactory(organization=organization, business_unit=business_unit)
+    shipment = OrderFactory(organization=organization, business_unit=business_unit)
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.ready_to_bill = True
-    order.transferred_to_billing = False
-    order.billing_transfer_date = None
-    order.save()
-    BillingQueueFactory(order=order, invoice_number="INV-12345")
+    shipment.status = "C"
+    shipment.ready_to_bill = True
+    shipment.transferred_to_billing = False
+    shipment.billing_transfer_date = None
+    shipment.save()
+    BillingQueueFactory(shipment=shipment, invoice_number="INV-12345")
 
     response = api_client.post(
         reverse("untransfer-invoice"), {"invoice_numbers": "INV-12345"}, format="json"
@@ -767,9 +772,9 @@ def test_untransfer_single_order(
 
     assert response.status_code == 200
     assert response.data == {"success": "Orders untransferred successfully."}
-    order.refresh_from_db()
-    assert not order.transferred_to_billing
-    assert order.billing_transfer_date is None
+    shipment.refresh_from_db()
+    assert not shipment.transferred_to_billing
+    assert shipment.billing_transfer_date is None
 
 
 def test_untransfer_multiple_orders(
@@ -777,8 +782,8 @@ def test_untransfer_multiple_orders(
 ) -> None:
     order1 = OrderFactory(organization=organization, business_unit=business_unit)
 
-    order_movements = order1.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = order1.movements.all()
+    shipment_movements.update(status="C")
 
     order1.status = "C"
     order1.ready_to_bill = True
@@ -788,8 +793,8 @@ def test_untransfer_multiple_orders(
 
     order2 = OrderFactory(organization=organization, business_unit=business_unit)
 
-    order_movements = order2.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = order2.movements.all()
+    shipment_movements.update(status="C")
 
     order2.status = "C"
     order2.ready_to_bill = True
@@ -797,8 +802,8 @@ def test_untransfer_multiple_orders(
     order2.billing_transfer_date = None
     order2.save()
 
-    BillingQueueFactory(order=order1, invoice_number="INV-12345")
-    BillingQueueFactory(order=order2, invoice_number="INV-67890")
+    BillingQueueFactory(shipment=shipment1, invoice_number="INV-12345")
+    BillingQueueFactory(shipment=shipment2, invoice_number="INV-67890")
 
     response = api_client.post(
         reverse("untransfer-invoice"),
@@ -832,24 +837,24 @@ def test_validate_invoice_number_does_not_start_with_invoice_prefix(
     Returns:
         None: This function does return anything.
     """
-    order = OrderFactory()
+    shipment = OrderFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.save()
+    shipment.status = "C"
+    shipment.save()
 
     with pytest.raises(ValidationError) as excinfo:
         models.BillingQueue.objects.create(
             organization=user.organization,
-            order_type=order.order_type,
-            order=order,
-            revenue_code=order.revenue_code,
+            shipment_type=shipment.shipment_type,
+            shipment=shipment,
+            revenue_code=shipment.revenue_code,
             customer=customer,
             worker=worker,
-            commodity=order.commodity,
-            bol_number=order.bol_number,
+            commodity=shipment.commodity,
+            bol_number=shipment.bol_number,
             user=user,
             invoice_number="RANDOMINVOICE",
         )
@@ -879,26 +884,26 @@ def test_validate_invoice_number_does_start_with_invoice_prefix(
     Returns:
         None: This function does not return anything.
     """
-    order = OrderFactory()
+    shipment = OrderFactory()
 
-    order_movements = order.movements.all()
-    order_movements.update(status="C")
+    shipment_movements = shipment.movements.all()
+    shipment_movements.update(status="C")
 
-    order.status = "C"
-    order.save()
+    shipment.status = "C"
+    shipment.save()
 
     invoice = models.BillingQueue.objects.create(
         organization=organization,
         business_unit=business_unit,
-        order_type=order.order_type,
-        order=order,
-        revenue_code=order.revenue_code,
+        shipment_type=shipment.shipment_type,
+        shipment=shipment,
+        revenue_code=shipment.revenue_code,
         customer=customer,
         worker=worker,
-        commodity=order.commodity,
-        bol_number=order.bol_number,
+        commodity=shipment.commodity,
+        bol_number=shipment.bol_number,
         user=user,
         invoice_number="INV-000001",
     )
 
-    assert invoice.invoice_number == f"INV-{order.pro_number}".replace("ORD", "")
+    assert invoice.invoice_number == f"INV-{shipment.pro_number}".replace("ORD", "")

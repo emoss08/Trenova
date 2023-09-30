@@ -40,26 +40,26 @@ from equipment.models import EquipmentType
 from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
-from order.models import Order, OrderType
-from order.tests.factories import (
+from organization.models import Organization
+from shipment.models import ShipmentType
+from shipment.tests.factories import (
     AdditionalChargeFactory,
-    OrderCommentFactory,
-    OrderDocumentationFactory,
+    ShipmentCommentFactory,
+    ShipmentDocumentationFactory,
     OrderFactory,
-    OrderTypeFactory,
+    ShipmentTypeFactory,
     ReasonCodeFactory,
 )
-from organization.models import Organization
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def order_type() -> Generator[Any, Any, None]:
+def shipment_type() -> Generator[Any, Any, None]:
     """
-    Pytest Fixture for order Type
+    Pytest Fixture for shipment type
     """
-    yield OrderTypeFactory()
+    yield ShipmentTypeFactory()
 
 
 @pytest.fixture
@@ -87,17 +87,17 @@ def reason_code() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order_document() -> Generator[Any, Any, None]:
+def shipment_document() -> Generator[Any, Any, None]:
     """
-    Pytest Fixture for Order Documentation
+    Pytest Fixture for shipment Documentation
     """
-    yield OrderDocumentationFactory()
+    yield ShipmentDocumentationFactory()
 
 
 @pytest.fixture
 def additional_charge() -> Generator[Any, Any, None]:
     """
-    Pytest Fixture for order Type
+    Pytest Fixture for shipment type
     """
     yield AdditionalChargeFactory()
 
@@ -135,11 +135,11 @@ def equipment_type() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order_comment() -> Generator[Any, Any, None]:
+def shipment_comment() -> Generator[Any, Any, None]:
     """
-    Pytest Fixture for Order Comment
+    Pytest Fixture for shipment Comment
     """
-    yield OrderCommentFactory()
+    yield ShipmentCommentFactory()
 
 
 @pytest.fixture
@@ -167,10 +167,10 @@ def destination_location() -> Generator[Any, Any, None]:
 
 
 @pytest.fixture
-def order_api(
+def shipment_api(
     api_client: APIClient,
     organization: Organization,
-    order_type: OrderType,
+    shipment_type: ShipmentType,
     revenue_code: RevenueCode,
     origin_location: Location,
     destination_location: Location,
@@ -182,10 +182,10 @@ def order_api(
     Pytest Fixture for Reason Code
     """
     return api_client.post(
-        "/api/orders/",
+        "/api/shipments/",
         {
             "organization": f"{organization.id}",
-            "order_type": f"{order_type.id}",
+            "shipment_type": f"{shipment_type.id}",
             "revenue_code": f"{revenue_code.id}",
             "origin_location": f"{origin_location.id}",
             "origin_appointment_window_start": f"{timezone.now()}",
@@ -208,7 +208,7 @@ def additional_charge_api(
     api_client: APIClient,
     user: User,
     organization: Organization,
-    order: Order,
+    shipment: Shipment,
     accessorial_charge: AccessorialCharge,
 ) -> Generator[Any, Any, None]:
     """
@@ -218,7 +218,7 @@ def additional_charge_api(
         "/api/additional_charges/",
         {
             "organization": f"{organization.id}",
-            "order": f"{order.id}",
+            "shipment": f"{shipment.id}",
             "accessorial_charge": f"{accessorial_charge.id}",
             "charge_amount": 123.00,
             "unit": 2,
@@ -229,16 +229,16 @@ def additional_charge_api(
 
 
 @pytest.fixture
-def order_comment_api(
-    order_api: Response, user: User, comment_type: CommentType, api_client: APIClient
+def shipment_comment_api(
+    shipment_api: Response, user: User, comment_type: CommentType, api_client: APIClient
 ) -> Generator[Any, Any, None]:
     """
-    Pytest Fixture for Order Comment
+    Pytest Fixture for shipment Comment
     """
     yield api_client.post(
-        "/api/order_comments/",
+        "/api/shipment_comments/",
         {
-            "order": f"{order_api.data['id']}",
+            "shipment": f"{shipment_api.data['id']}",
             "comment_type": f"{comment_type.id}",
             "comment": "IM HAPPY YOU'RE HERE",
             "entered_by": f"{user.id}",
@@ -248,22 +248,22 @@ def order_comment_api(
 
 
 @pytest.fixture
-def order_documentation_api(
+def shipment_documentation_api(
     api_client: APIClient,
-    order: Order,
+    shipment: Shipment,
     document_classification: DocumentClassification,
     organization: Organization,
 ) -> Generator[Any, Any, None]:
     """
-    Pytest Fixture for Order Documentation
+    Pytest Fixture for shipment Documentation
     """
 
     with open("order/tests/files/dummy.pdf", "rb") as test_file:
         yield api_client.post(
-            "/api/order_documents/",
+            "/api/shipment_documents/",
             {
                 "organization": f"{organization}",
-                "order": f"{order.id}",
+                "shipment": f"{shipment.id}",
                 "document": test_file,
                 "document_class": f"{document_classification.id}",
             },
@@ -271,14 +271,14 @@ def order_documentation_api(
 
 
 @pytest.fixture
-def order_type_api(
+def shipment_type_api(
     api_client: APIClient, organization: Organization
 ) -> Generator[Any, Any, None]:
     """
-    Order Type Factory
+    shipment type Factory
     """
     yield api_client.post(
-        "/api/order_types/",
+        "/api/shipment_types/",
         {
             "organization": organization.id,
             "name": "Foo Bar",

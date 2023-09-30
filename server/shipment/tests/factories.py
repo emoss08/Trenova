@@ -24,17 +24,17 @@ from factory.fuzzy import FuzzyDecimal
 from utils.models import RatingMethodChoices
 
 
-class OrderTypeFactory(factory.django.DjangoModelFactory):
+class ShipmentTypeFactory(factory.django.DjangoModelFactory):
     """
-    OrderType factory
+    ShipmentType factory
     """
 
     class Meta:
         """
-        Metaclass for OrderTypeFactory
+        Metaclass for ShipmentTypeFactory
         """
 
-        model = "order.OrderType"
+        model = "shipment.ShipmentType"
         django_get_or_create = ("name",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
@@ -52,7 +52,7 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
         Metaclass for ReasonCodeFactory
         """
 
-        model = "order.ReasonCode"
+        model = "shipment.ReasonCode"
         django_get_or_create = ("code",)
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
@@ -67,7 +67,7 @@ class ReasonCodeFactory(factory.django.DjangoModelFactory):
 
 class OrderFactory(factory.django.DjangoModelFactory):
     """
-    Order Factory
+    shipment Factory
     """
 
     class Meta:
@@ -75,11 +75,11 @@ class OrderFactory(factory.django.DjangoModelFactory):
         Metaclass for orderFactory
         """
 
-        model = "order.Order"
+        model = "shipment.Shipment"
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    order_type = factory.SubFactory(OrderTypeFactory)
+    shipment_type = factory.SubFactory(ShipmentTypeFactory)
     status = "N"
     revenue_code = factory.SubFactory("accounting.tests.factories.RevenueCodeFactory")
     origin_location = factory.SubFactory("location.factories.LocationFactory")
@@ -99,41 +99,41 @@ class OrderFactory(factory.django.DjangoModelFactory):
     pieces = 1
 
 
-class OrderCommentFactory(factory.django.DjangoModelFactory):
+class ShipmentCommentFactory(factory.django.DjangoModelFactory):
     """
-    Order Comment Factory
+    shipment Comment Factory
     """
 
     class Meta:
         """
-        Metaclass For OrderCommentFactory
+        Metaclass For ShipmentCommentFactory
         """
 
-        model = "order.OrderComment"
+        model = "shipment.ShipmentComment"
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    order = factory.SubFactory(OrderFactory)
+    shipment = factory.SubFactory(OrderFactory)
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
     comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
 
 
-class OrderDocumentationFactory(factory.django.DjangoModelFactory):
+class ShipmentDocumentationFactory(factory.django.DjangoModelFactory):
     """
-    Order Documentation Factory
+    shipment Documentation Factory
     """
 
     class Meta:
         """
-        Metaclass for OrderDocumentationFactory
+        Metaclass for ShipmentDocumentationFactory
         """
 
-        model = "order.OrderDocumentation"
+        model = "shipment.ShipmentDocumentation"
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    order = factory.SubFactory(OrderFactory)
+    shipment = factory.SubFactory(OrderFactory)
     document = SimpleUploadedFile(
         "file.pdf", b"file_content", content_type="application/pdf"
     )
@@ -152,11 +152,11 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
         Metaclass for AdditionalChargeFactory
         """
 
-        model = "order.AdditionalCharge"
+        model = "shipment.AdditionalCharge"
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    order = factory.SubFactory(OrderFactory)
+    shipment = factory.SubFactory(OrderFactory)
     accessorial_charge = factory.SubFactory(
         "billing.tests.factories.AccessorialChargeFactory"
     )

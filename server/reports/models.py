@@ -166,7 +166,7 @@ class ReportColumn(GenericModel):
         id (UUID): The ID of the report column.
         custom_report (:model:`reports.CustomReport`): The report that the column is for.
         column_name (str): The name of the column to be displayed in the report.
-        column_order (int): The order of the column to be displayed in the report.
+        column_shipment (int): The shipment of the column to be displayed in the report.
     """
 
     id = models.UUIDField(
@@ -187,9 +187,9 @@ class ReportColumn(GenericModel):
         max_length=255,
         help_text=_("The name of the column to be displayed in the report."),
     )
-    column_order = models.PositiveIntegerField(
-        _("Column Order"),
-        help_text=_("The order of the column to be displayed in the report."),
+    column_shipment = models.PositiveIntegerField(
+        _("Column shipment"),
+        help_text=_("The shipment of the column to be displayed in the report."),
     )
 
     class Meta:
@@ -206,12 +206,12 @@ class ReportColumn(GenericModel):
 
         verbose_name = _("Report Column")
         verbose_name_plural = _("Report Columns")
-        ordering = ("column_order",)
+        ordering = ("column_shipment",)
         db_table = "report_column"
         constraints = [
             models.UniqueConstraint(
-                fields=["custom_report", "column_name", "column_order"],
-                name="unique_report_column_name_order",
+                fields=["custom_report", "column_name", "column_shipment"],
+                name="unique_report_column_name_shipment",
             )
         ]
 

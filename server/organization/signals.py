@@ -25,7 +25,6 @@ from django.dispatch import Signal, receiver
 from billing.models import BillingControl
 from dispatch.models import DispatchControl, FeasibilityToolControl
 from invoicing.models import InvoiceControl
-from order.models import OrderControl
 from organization import models
 from organization.models import EmailControl
 from organization.services.psql_triggers import drop_trigger_and_function
@@ -35,6 +34,7 @@ from organization.services.table_change import (
     set_trigger_name_requirements,
 )
 from route.models import RouteControl
+from shipment.models import ShipmentControl
 
 restart_psql_listener_signal = Signal()
 
@@ -67,16 +67,16 @@ def create_dispatch_control(
         )
 
 
-def create_order_control(
+def create_shipment_control(
     sender: models.Organization,
     instance: models.Organization,
     created: bool,
     **kwargs: Any,
 ) -> None:
-    """Create an OrderControl model instance for a new Organization model instance.
+    """Create an ShipmentControl model instance for a new Organization model instance.
 
     This function is called as a signal when an Organization model instance is saved.
-    If a new Organization instance is created, it creates an OrderControl model
+    If a new Organization instance is created, it creates an ShipmentControl model
     instance with the organization reference.
 
     Args:
@@ -89,7 +89,7 @@ def create_order_control(
         None: This function does not return anything.
     """
     if created:
-        OrderControl.objects.create(
+        ShipmentControl.objects.create(
             organization=instance, business_unit=instance.business_unit
         )
 

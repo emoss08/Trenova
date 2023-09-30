@@ -23,9 +23,9 @@ from django.utils import timezone
 from dispatch import models, utils
 from dispatch.factories import FleetCodeFactory
 from equipment.tests.factories import TractorFactory
-from order.selectors import get_order_movements, get_order_stops
-from order.tests.factories import OrderFactory
 from organization.models import BusinessUnit, Organization
+from shipment.selectors import get_shipment_movements, get_shipment_stops
+from shipment.tests.factories import OrderFactory
 from worker.factories import WorkerFactory
 from worker.models import WorkerHOS
 
@@ -54,15 +54,15 @@ def test_feasibility_tool_eligible_driver(
         business_unit=business_unit,
     )
 
-    order = OrderFactory()
-    movements = get_order_movements(order=order)
+    shipment = OrderFactory()
+    movements = get_shipment_movements(shipment=shipment)
 
     for movement in movements:
         movement.primary_worker = worker
         movement.tractor = tractor
         movement.save()
 
-    stops = get_order_stops(order=order)
+    stops = get_shipment_stops(shipment=shipment)
 
     for stop in stops:
         if stop.sequence == 1:
@@ -128,7 +128,7 @@ def test_feasibility_tool_eligible_driver(
         pickup_time_window_start=pickup_time_window_start,
         travel_time=travel_time,
         workers_hos=workers_hos,
-        total_order_miles=100,
+        total_shipment_miles=100,
         last_reset_date=worker_hos.last_reset_date,
     )
 
@@ -138,7 +138,7 @@ def test_feasibility_tool_eligible_driver(
 def test_feasibility_tool_not_eligible(
     organization: Organization, business_unit: BusinessUnit
 ) -> None:
-    """Test Driver not eligible for order.
+    """Test Driver not eligible for shipment.
 
     Args:
         organization (Organization): Organization object
@@ -152,15 +152,15 @@ def test_feasibility_tool_not_eligible(
         organization=organization, fleet=fleet, primary_worker=worker
     )
 
-    order = OrderFactory()
-    movements = get_order_movements(order=order)
+    shipment = OrderFactory()
+    movements = get_shipment_movements(shipment=shipment)
 
     for movement in movements:
         movement.primary_worker = worker
         movement.tractor = tractor
         movement.save()
 
-    stops = get_order_stops(order=order)
+    stops = get_shipment_stops(shipment=shipment)
 
     for stop in stops:
         if stop.sequence == 1:
@@ -213,15 +213,15 @@ def test_feasibility_tool_not_eligible(
 
     # Call the get_eligible_drivers function
     eligible_workers_hos, ineligible_workers_hos = utils.get_eligible_drivers(
-        delivery_time_window_start=order.destination_appointment_window_start,
-        destination_appointment=order.destination_appointment_window_start,
+        delivery_time_window_start=shipment.destination_appointment_window_start,
+        destination_appointment=shipment.destination_appointment_window_start,
         organization=organization,
-        origin_appointment=order.origin_appointment_window_start,
-        pickup_time_window_end=order.origin_appointment_window_start,
-        pickup_time_window_start=order.origin_appointment_window_end,
+        origin_appointment=shipment.origin_appointment_window_start,
+        pickup_time_window_end=shipment.origin_appointment_window_start,
+        pickup_time_window_start=shipment.origin_appointment_window_end,
         travel_time=travel_time,
         workers_hos=workers_hos,
-        total_order_miles=100,
+        total_shipment_miles=100,
         last_reset_date=worker_hos.last_reset_date,
     )
 

@@ -65,7 +65,7 @@ def generate_excel_report_as_file(report: models.CustomReport) -> io.BytesIO:
     if not model:
         raise exceptions.InvalidTableException("Invalid table name.")
 
-    columns = report.columns.all().order_by("column_order")
+    columns = report.columns.all().shipment_by("column_shipment")
 
     wb = Workbook()
     ws = wb.active

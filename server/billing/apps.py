@@ -33,9 +33,9 @@ class BillingConfig(AppConfig):
             dispatch_uid="generate_invoice_number_billing_queue",
         )
         pre_save.connect(
-            signals.transfer_order_details_to_billing_queue,
+            signals.transfer_shipments_details_to_billing_queue,
             sender="billing.BillingQueue",
-            dispatch_uid="transfer_order_details_billing_queue",
+            dispatch_uid="transfer_shipments_details_billing_queue",
         )
 
         # Billing History
@@ -45,7 +45,7 @@ class BillingConfig(AppConfig):
             dispatch_uid="save_invoice_number_billing_history",
         )
         pre_save.connect(
-            signals.transfer_order_details_to_billing_history,
+            signals.transfer_shipments_details_to_billing_history,
             sender="billing.BillingHistory",
-            dispatch_uid="transfer_order_details_billing_history",
+            dispatch_uid="transfer_shipments_details_billing_history",
         )

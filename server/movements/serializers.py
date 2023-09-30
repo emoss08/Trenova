@@ -30,10 +30,10 @@ class MovementSerializer(GenericSerializer):
     """
 
     class Meta:
-        """Metaclass for OrderSerializer
+        """Metaclass for shipmentserializer
 
         Attributes:
-            model (models.Order): The model that the serializer is for.
+            model (models.Shipment): The model that the serializer is for.
         """
 
         model = models.Movement

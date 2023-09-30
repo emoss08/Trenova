@@ -87,7 +87,7 @@ class StopCommentSerializer(GenericSerializer):
         """Metaclass for the `StopCommentSerializer` class
 
         Attributes:
-            model (models.Order): The model that the serializer is for.
+            model (models.Shipment): The model that the serializer is for.
             extra_fields (tuple): A tuple of extra fields that should be included
             in the serialized representation of the model.
         """

@@ -18,9 +18,9 @@
 from typing import Any, TypeAlias
 
 from geopy.distance import geodesic
+from shipment.models import Shipment
 
 from integration.services import google_distance_matrix_service
-from order.models import Order
 from route import models
 from route.models import RouteControl
 
@@ -30,17 +30,17 @@ Coordinates: TypeAlias = (
 
 
 def generate_route(
-    *, order: Order, distance: float, method: str, duration: float | None
+    *, shipment: Shipment, distance: float, method: str, duration: float | None
 ) -> None:
     """
-    Generate a new Route object for an order.
+    Generate a new Route object for a Shipment.
 
-    This function takes an instance of the Order model representing an order, as well as the distance,
+    This function takes an instance of the Shipment model representing an Shipment, as well as the distance,
     method, and duration of the new Route object, and creates a new Route object in the database using
     the organization, origin_location, destination_location, total_mileage, duration, and distance_method attributes.
 
     Args:
-        order: An instance of the Order model representing an order to generate a new Route object for.
+        shipment: An instance of the Shipment model representing a shipment to generate a new Route object for.
         distance: A float representing the total distance of the new Route object in miles.
         method: A string representing the method used to calculate the distance ('Google' or 'Monta').
         duration: A string representing the duration of the new Route object in hours, or None if the method is 'Monta'.
@@ -51,40 +51,40 @@ def generate_route(
 
     # Create a new Route object in the database or update an existing Route object
     models.Route.objects.update_or_create(
-        organization=order.organization,
-        origin_location=order.origin_location,
-        destination_location=order.destination_location,
+        organization=shipment.organization,
+        origin_location=shipment.origin_location,
+        destination_location=shipment.destination_location,
         total_mileage=distance,
         duration=duration,
         distance_method=method,
     )
 
 
-def get_coordinates(*, order: Order) -> Coordinates:
+def get_coordinates(*, shipment: Shipment) -> Coordinates:
     """
-    Retrieve the latitude and longitude coordinates for an order's origin and destination locations.
+    Retrieve the latitude and longitude coordinates for a Shipment's origin and destination locations.
 
-    This function takes an instance of the Order model representing an order and retrieves the latitude
-    and longitude coordinates for the order's origin and destination locations. The function returns a
+    This function takes an instance of the Shipment model representing a Shipment and retrieves the latitude
+    and longitude coordinates for the Shipment's origin and destination locations. The function returns a
     tuple containing two tuples, each representing a pair of latitude and longitude coordinates for the two points.
 
     Args:
-        order: An instance of the Order model representing an order to retrieve the coordinates for.
+        shipment: An instance of the Shipment model representing a shipment to retrieve the coordinates for.
 
     Returns:
         A tuple containing two tuples, each representing a pair of latitude and longitude coordinates for
-        the order's origin and destination locations.
+        the Shipment's origin and destination locations.
     """
 
-    # Return None if the order does not have an origin or destination location
-    if not order.origin_location or not order.destination_location:
+    # Return None if the Shipment does not have an origin or destination location
+    if not shipment.origin_location or not shipment.destination_location:
         return None
 
-    # Get the latitude and longitude coordinates for the order's origin and destination locations
-    point_1 = (order.origin_location.latitude, order.origin_location.longitude)
+    # Get the latitude and longitude coordinates for the shipment's origin and destination locations
+    point_1 = (shipment.origin_location.latitude, shipment.origin_location.longitude)
     point_2 = (
-        order.destination_location.latitude,
-        order.destination_location.longitude,
+        shipment.destination_location.latitude,
+        shipment.destination_location.longitude,
     )
 
     # Return the coordinates
@@ -98,20 +98,22 @@ def calculate_distance(
     point_2: tuple[float | None, float | None] | Any,
 ) -> tuple[float, float, str]:
     """
-    Calculate the distance and duration between two points on the Earth's surface using the Haversine formula or the Google Distance
-    Matrix API.
+    Calculate the distance and duration between two points on the Earth's surface using the Haversine formula or the
+    Google Distance Matrix API.
 
-    This function takes an instance of the Organization model representing the organization associated with the order, as well
-    as two tuples representing the latitude and longitude coordinates of the two points to calculate the distance between.
-    The function first retrieves the organization's route_control attribute to determine which method to use for calculating
-    the distance. If the distance_method is set to GOOGLE, the function uses the Google Distance Matrix API to retrieve the
-    distance and duration between the two points. Otherwise, the function calculates the distance using the geodesic() function
-    from the geopy library, which implements the Haversine formula.
+    This function takes an instance of the Organization model representing the organization associated with the Shipment,
+    as well as two tuples representing the latitude and longitude coordinates of the two points to calculate the distance
+    between. The function first retrieves the organization's route_control attribute to determine which method to use
+    for calculating the distance. If the distance_method is set to GOOGLE, the function uses the Google Distance Matrix
+    API to retrieve the distance and duration between the two points. Otherwise, the function calculates the distance
+    using the geodesic() function from the geopy library, which implements the Haversine formula.
 
     Args:
         route_control (RouteControl): An instance of the Organization's RouteControl object.
-        point_1 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude and longitude of the first point.
-        point_2 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude and longitude of the second point.
+        point_1 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude
+        and longitude of the first point.
+        point_2 (Union[Tuple[Optional[Float], Optional[Float]], Any]): A tuple of two floats representing the latitude
+        and longitude of the second point.
 
     Returns:
         A tuple containing three values: a float representing the distance between the two points in miles, a string
@@ -141,41 +143,41 @@ def calculate_distance(
     return distance_miles, duration_hours, method
 
 
-def get_order_mileage(*, order: Order) -> float | None:
+def get_shipment_mileage(*, shipment: Shipment) -> float | None:
     """
-    Get the total mileage for an order's route or calculate the distance between two locations.
+    Get the total mileage for a shipment's route or calculate the distance between two locations.
 
     This function attempts to retrieve a Route object from the database that matches the organization,
-    origin_location, and destination_location of the order. If a Route object is found, the function
+    origin_location, and destination_location of the shipment. If a Route object is found, the function
     returns the total_mileage attribute of the object.
 
-    If a Route object is not found, the function calculates the distance between the order's origin and
+    If a Route object is not found, the function calculates the distance between the shipment's origin and
     destination locations using the get_coordinates() and calculate_distance() functions. After calculating
     the distance, the function checks the organization's route_control attribute to determine if a new
     Route object should be generated using the generate_route() function. If generate_routes is True,
     the function generates a new Route object and stores it in the database.
 
     Args:
-        order: An instance of the Order model representing an order to get the mileage for.
+        shipment: An instance of the Shipment model representing a shipment to get the mileage for.
 
     Returns:
-        A float representing the total mileage for the order's route if a route exists, or the calculated
-        distance between the order's origin and destination locations.
+        A float representing the total mileage for the shipment's route if a route exists, or the calculated
+        distance between the shipment's origin and destination locations.
     """
 
     # Get the organization's RouteControl object
-    route_control = order.organization.route_control
+    route_control = shipment.organization.route_control
 
     try:
         route = models.Route.objects.get(
-            organization=order.organization,
-            origin_location=order.origin_location,
-            destination_location=order.destination_location,
+            organization=shipment.organization,
+            origin_location=shipment.origin_location,
+            destination_location=shipment.destination_location,
         )
         return route.total_mileage
     except models.Route.DoesNotExist:
         # Get coordinates for two points.
-        point_1, point_2 = get_coordinates(order=order)
+        point_1, point_2 = get_coordinates(shipment=shipment)
 
         if not point_1 or not point_2:
             return 0
@@ -188,7 +190,7 @@ def get_order_mileage(*, order: Order) -> float | None:
         # Generate a route that can be used moving forward.
         if route_control.generate_routes:
             generate_route(
-                order=order, distance=distance, method=method, duration=duration
+                shipment=shipment, distance=distance, method=method, duration=duration
             )
 
         return distance

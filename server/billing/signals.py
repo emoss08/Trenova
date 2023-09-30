@@ -33,14 +33,14 @@ def save_invoice_number_on_billing_history(
     Returns:
         None: This function does not return anything
     """
-    if billing_queue := get_billing_queue_information(order=instance.order):
+    if billing_queue := get_billing_queue_information(shipment=instance.shipment):
         instance.invoice_number = billing_queue.invoice_number
 
 
-def transfer_order_details_to_billing_history(
+def transfer_shipments_details_to_billing_history(
     instance: models.BillingHistory, **kwargs: Any
 ) -> None:
-    """Transfers the order details to the billing history
+    """Transfers the shipment details to the billing history
 
     Args:
         instance (models.BillingHistory): Billing History instance
@@ -49,7 +49,7 @@ def transfer_order_details_to_billing_history(
     Returns:
         None: This function does not return anything
     """
-    utils.transfer_order_details(obj=instance)
+    utils.transfer_shipments_details(obj=instance)
 
 
 def generate_invoice_number_on_billing_queue(
@@ -65,10 +65,10 @@ def generate_invoice_number_on_billing_queue(
         )
 
 
-def transfer_order_details_to_billing_queue(
+def transfer_shipments_details_to_billing_queue(
     instance: models.BillingQueue, **kwargs: Any
 ) -> None:
-    """Transfers the order details to the billing queue
+    """Transfers the shipment details to the billing queue
 
     Args:
         instance (models.BillingQueue): Billing Queue instance
@@ -77,4 +77,4 @@ def transfer_order_details_to_billing_queue(
     Returns:
         None: This function does not return anything
     """
-    utils.transfer_order_details(obj=instance)
+    utils.transfer_shipments_details(obj=instance)

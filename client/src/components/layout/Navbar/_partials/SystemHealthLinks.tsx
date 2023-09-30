@@ -96,6 +96,11 @@ export const adminNavLinks = [
             permission: "view_emailcontrol",
           },
           {
+            label: "Route Controls",
+            link: "/admin/control-files#route-controls",
+            permission: "view_routecontrol",
+          },
+          {
             label: "Feasibility Controls",
             link: "/admin/control-files#feasibility-tool-controls",
             permission: "view_feasibilitytoolcontrol",

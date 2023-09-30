@@ -30,7 +30,7 @@ from utils.types import ModelDelete
 
 class Movement(GenericModel):
     """
-    Stores movement information related to a :model:`order.Order`.
+    Stores movement information related to a :model:`shipment.Shipment`.
     """
 
     id = models.UUIDField(
@@ -51,12 +51,12 @@ class Movement(GenericModel):
         default=StatusChoices.NEW,
         help_text=_("Status of the Movement"),
     )
-    order = models.ForeignKey(
-        "order.Order",
+    shipment = models.ForeignKey(
+        "shipment.Shipment",
         on_delete=models.PROTECT,
         related_name="movements",
         related_query_name="movement",
-        verbose_name=_("Order"),
+        verbose_name=_("shipment"),
         help_text=_("Order of the Movement"),
     )
     tractor = models.ForeignKey(
@@ -162,7 +162,7 @@ class Movement(GenericModel):
         Returns:
             ModelDelete: tuple[int, dict[str, int]]
         """
-        if self.organization.order_control.remove_orders is False:
+        if self.organization.shipment_control.remove_shipments is False:
             raise ValidationError(
                 {
                     "ref_num": _(

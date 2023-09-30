@@ -34,7 +34,6 @@ from customer.factories import CustomerFactory
 from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
-from order.tests.factories import OrderTypeFactory
 from organization.models import BusinessUnit, Organization
 
 pytestmark = pytest.mark.django_db
@@ -51,7 +50,7 @@ class RateBase(BaseModel):
     effective_date: datetime.date
     expiration_date: datetime.date
     commodity_id: uuid.UUID | None
-    order_type_id: uuid.UUID | None
+    shipment_type_id: uuid.UUID | None
     equipment_type_id: uuid.UUID | None
 
 
@@ -83,7 +82,7 @@ def test_create_schema() -> None:
         effective_date=timezone.now().date(),
         expiration_date=timezone.now().date(),
         commodity_id=uuid.uuid4(),
-        order_type_id=uuid.uuid4(),
+        shipment_type_id=uuid.uuid4(),
         equipment_type_id=uuid.uuid4(),
     )
 
@@ -95,7 +94,7 @@ def test_create_schema() -> None:
     assert rate["effective_date"] is not None
     assert rate["expiration_date"] is not None
     assert rate["commodity_id"] is not None
-    assert rate["order_type_id"] is not None
+    assert rate["shipment_type_id"] is not None
     assert rate["equipment_type_id"] is not None
 
 
@@ -111,7 +110,7 @@ def test_update_schema() -> None:
         effective_date=timezone.now().date(),
         expiration_date=timezone.now().date(),
         commodity_id=uuid.uuid4(),
-        order_type_id=uuid.uuid4(),
+        shipment_type_id=uuid.uuid4(),
         equipment_type_id=uuid.uuid4(),
     )
 
@@ -124,7 +123,7 @@ def test_update_schema() -> None:
     assert rate["effective_date"] is not None
     assert rate["expiration_date"] is not None
     assert rate["commodity_id"] is not None
-    assert rate["order_type_id"] is not None
+    assert rate["shipment_type_id"] is not None
     assert rate["equipment_type_id"] is not None
 
 
@@ -140,7 +139,7 @@ def test_delete_schema() -> None:
             effective_date=timezone.now().date(),
             expiration_date=timezone.now().date(),
             commodity_id=uuid.uuid4(),
-            order_type_id=uuid.uuid4(),
+            shipment_type_id=uuid.uuid4(),
             equipment_type_id=uuid.uuid4(),
         ),
         RateBase(
@@ -150,7 +149,7 @@ def test_delete_schema() -> None:
             effective_date=timezone.now().date(),
             expiration_date=timezone.now().date(),
             commodity_id=uuid.uuid4(),
-            order_type_id=uuid.uuid4(),
+            shipment_type_id=uuid.uuid4(),
             equipment_type_id=uuid.uuid4(),
         ),
     ]
@@ -183,7 +182,7 @@ def test_list(rate: models.Rate) -> None:
 def test_rate_create(organization: Organization, business_unit: BusinessUnit) -> None:
     customer = CustomerFactory()
     commodity = CommodityFactory()
-    order_type = OrderTypeFactory()
+    shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
 
     rate = models.Rate.objects.create(
@@ -193,7 +192,7 @@ def test_rate_create(organization: Organization, business_unit: BusinessUnit) ->
         effective_date=timezone.now().date(),
         expiration_date=timezone.now().date(),
         commodity=commodity,
-        order_type=order_type,
+        shipment_type=shipment_type,
         equipment_type=equipment_type,
         comments="Test Rate",
     )
@@ -203,7 +202,7 @@ def test_rate_create(organization: Organization, business_unit: BusinessUnit) ->
     assert rate.rate_number == "R00001"
     assert rate.customer == customer
     assert rate.commodity == commodity
-    assert rate.order_type == order_type
+    assert rate.shipment_type == shipment_type
     assert rate.equipment_type == equipment_type
     assert rate.comments == "Test Rate"
 
@@ -214,12 +213,12 @@ def test_rate_update(rate: models.Rate) -> None:
     """
     customer = CustomerFactory()
     commodity = CommodityFactory()
-    order_type = OrderTypeFactory()
+    shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
 
     rate.customer = customer
     rate.commodity = commodity
-    rate.order_type = order_type
+    rate.shipment_type = shipment_type
     rate.equipment_type = equipment_type
     rate.comments = "Test Rate Update"
 
@@ -228,7 +227,7 @@ def test_rate_update(rate: models.Rate) -> None:
     assert rate is not None
     assert rate.customer == customer
     assert rate.commodity == commodity
-    assert rate.order_type == order_type
+    assert rate.shipment_type == shipment_type
     assert rate.equipment_type == equipment_type
     assert rate.comments == "Test Rate Update"
 
@@ -248,7 +247,7 @@ def test_rate_api_create(api_client: APIClient, organization: Organization) -> N
     """
     customer = CustomerFactory()
     commodity = CommodityFactory()
-    order_type = OrderTypeFactory()
+    shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
 
     data = {
@@ -257,7 +256,7 @@ def test_rate_api_create(api_client: APIClient, organization: Organization) -> N
         "effective_date": timezone.now().date(),
         "expiration_date": timezone.now().date(),
         "commodity": commodity.id,
-        "order_type": order_type.id,
+        "shipment_type": shipment_type.id,
         "equipment_type": equipment_type.id,
         "comments": "Test Rate",
     }
@@ -277,7 +276,7 @@ def test_rate_api_create_with_tables(
     """
     customer = CustomerFactory()
     commodity = CommodityFactory()
-    order_type = OrderTypeFactory()
+    shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
     accessorial_charge = AccessorialChargeFactory()
 
@@ -289,7 +288,7 @@ def test_rate_api_create_with_tables(
             "effective_date": timezone.now().date(),
             "expiration_date": timezone.now().date(),
             "commodity": commodity.id,
-            "order_type": order_type.id,
+            "shipment_type": shipment_type.id,
             "equipment_type": equipment_type.id,
             "comments": "Test Rate 01",
             "rate_billing_tables": [
@@ -332,7 +331,7 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     """
     customer = CustomerFactory()
     commodity = CommodityFactory()
-    order_type = OrderTypeFactory()
+    shipment_type = ShipmentTypeFactory()
     equipment_type = EquipmentTypeFactory()
     accessorial_charge = AccessorialChargeFactory()
     rate = models.Rate.objects.get(id=rate_api.data["id"])
@@ -343,7 +342,7 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     data = {
         "customer": customer.id,
         "commodity": commodity.id,
-        "order_type": order_type.id,
+        "shipment_type": shipment_type.id,
         "equipment_type": equipment_type.id,
         "comments": "Test Rate Update",
         "rate_billing_tables": [
@@ -375,7 +374,7 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     assert models.Rate.objects.count() == 1
     assert models.Rate.objects.get().customer.id == data["customer"]
     assert models.Rate.objects.get().commodity.id == data["commodity"]
-    assert models.Rate.objects.get().order_type.id == data["order_type"]
+    assert models.Rate.objects.get().shipment_type.id == data["shipment_type"]
     assert models.Rate.objects.get().equipment_type.id == data["equipment_type"]
     assert models.Rate.objects.get().comments == data["comments"]
     assert (

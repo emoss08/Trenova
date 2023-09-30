@@ -37,7 +37,7 @@ def generate_excel_report(request: HttpRequest, report_id: str) -> HttpResponse:
     """
     # Get the report and related columns
     report = models.CustomReport.objects.get(pk=report_id)
-    columns = report.columns.all().order_by("column_order")
+    columns = report.columns.all().shipment_by("column_shipment")
 
     # Get the model by table name
     model = services.get_model_by_table_name(report.table)

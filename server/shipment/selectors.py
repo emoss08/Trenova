@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 from django.db.models.aggregates import Sum
 
 from movements.models import Movement
-from order import models
+from shipment import models
 from stops.models import Stop
 
 if TYPE_CHECKING:
@@ -29,58 +29,58 @@ if TYPE_CHECKING:
     from utils.types import ModelUUID
 
 
-def get_order_by_id(*, order_id: "ModelUUID") -> models.Order | None:
-    """Get an Order model instance by its ID.
+def get_shipment_by_id(*, shipment_id: "ModelUUID") -> models.Shipment | None:
+    """Get an shipment model instance by its ID.
 
     Args:
-        order_id (str): The ID of the order.
+        shipment_id (str): The ID of the shipment.
 
     Returns:
-        models.Order: The Order model instance.
+        models.Shipment: The shipment model instance.
     """
     try:
-        return models.Order.objects.get(pk__exact=order_id)
-    except models.Order.DoesNotExist:
+        return models.Shipment.objects.get(pk__exact=shipment_id)
+    except models.Shipment.DoesNotExist:
         return None
 
 
-def get_order_movements(*, order: models.Order) -> "QuerySet[Movement]":
-    """Get the movements of an order.
+def get_shipment_movements(*, shipment: models.Shipment) -> "QuerySet[Movement]":
+    """Get the movements of an shipment.
 
     Args:
-        order (models.Order): The order.
+        shipment (models.Shipment): The shipment.
 
     Returns:
-        QuerySet[Movement]: QuerySet of the movements of the order.
+        QuerySet[Movement]: QuerySet of the movements of the shipment.
     """
-    return Movement.objects.filter(order=order)
+    return Movement.objects.filter(shipment=shipment)
 
 
-def get_order_stops(*, order: models.Order) -> "QuerySet[Stop]":
-    """Get the stops of an order.
+def get_shipment_stops(*, shipment: models.Shipment) -> "QuerySet[Stop]":
+    """Get the stops of an shipment.
 
     Args:
-        order (models.Order): The order.
+        shipment (models.Shipment): The shipment.
 
     Returns:
-        QuerySett[Stop]: QuerySet of the stops of the order.
+        QuerySett[Stop]: QuerySet of the stops of the shipment.
     """
-    movements = get_order_movements(order=order)
+    movements = get_shipment_movements(shipment=shipment)
     return Stop.objects.filter(movement__in=movements).select_related("movement")
 
 
-def sum_order_additional_charges(*, order: models.Order) -> float:
-    """Sum the additional charges of an order.
+def sum_shipment_additional_charges(*, shipment: models.Shipment) -> float:
+    """Sum the additional charges of an shipment.
 
     Args:
-        order (models.Order): The order.
+        shipment (models.Shipment): The shipment.
 
     Returns:
         float: The sum of the additional charges.
     """
     # Calculate the sum of sub_total for each additional charge associated with the order
     additional_charges_total = models.AdditionalCharge.objects.filter(
-        order=order
+        shipment=shipment
     ).aggregate(total=Sum("sub_total"))["total"]
 
     # If there are no additional charges associated with the order, return 0

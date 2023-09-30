@@ -133,7 +133,7 @@ class DispatchControlViewSet(viewsets.ModelViewSet):
             "dupe_trailer_check",
             "deadhead_target",
             "driver_assign",
-            "prev_orders_on_hold",
+            "prev_shipments_on_hold",
             "regulatory_check",
             "tractor_worker_fleet_constraint",
         )
@@ -159,7 +159,7 @@ class RateViewSet(viewsets.ModelViewSet):
         "rate_number",
         "customer__code",
         "customer__name",
-        "order_type__name",
+        "shipment_type__name",
         "equipment_type__name",
         "origin_location__code",
         "destination_location__code",
@@ -205,7 +205,7 @@ class RateViewSet(viewsets.ModelViewSet):
             "effective_date",
             "expiration_date",
             "commodity_id",
-            "order_type_id",
+            "shipment_type_id",
             "origin_location_id",
             "destination_location_id",
             "rate_method",
@@ -221,15 +221,15 @@ class RateViewSet(viewsets.ModelViewSet):
 class FeasibilityToolControlViewSet(viewsets.ModelViewSet):
     """A viewset for viewing and editing FeasibilityToolControl in the system.
 
-    The viewset provides default operations for creating, updating Order Control,
+    The viewset provides default operations for creating, updating Shipment Control,
     as well as listing and retrieving Feasibility Tool Control. It uses the ``FeasibilityToolControlSerializer``
-    class to convert the order control instance to and from JSON-formatted data.
+    class to convert the Shipment Control instance to and from JSON-formatted data.
 
     Only admin users are allowed to access the views provided by this viewset.
 
     Attributes:
         queryset (QuerySet): A queryset of FeasibilityToolControl objects that will be used to
-        retrieve and update OrderControl objects.
+        retrieve and update ShipmentControl objects.
 
         serializer_class (FeasibilityToolControlSerializer): A serializer class that will be used to
         convert FeasibilityToolControl objects to and from JSON-formatted data.
