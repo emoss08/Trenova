@@ -289,6 +289,7 @@ ALLOWED_MODELS = {
         "app_label": "equipment",
         "allowed_fields": [
             {"value": "organization__name", "label": "Organization Name"},
+            {"value": "status", "label": "Status"},
             {"value": "name", "label": "Name"},
             {"value": "description", "label": "Description"},
             {"value": "created", "label": "Created"},

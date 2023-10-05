@@ -79,7 +79,7 @@ def get_crontab_schedule(
     else:
         raise exceptions.InvalidScheduleTypeException("Invalid schedule type.")
 
-    schedule, created = CrontabSchedule.objects.get_or_create(**schedule_filters)
+    schedule, _ = CrontabSchedule.objects.get_or_create(**schedule_filters)
     return schedule, "crontab"
 
 
@@ -118,7 +118,8 @@ def generate_pdf(
 
     elements = []
 
-    # Add organization logo to top left corner of the PDF, if it exists. Otherwise, add organization name same place, in black text.
+    # Add organization logo to top left corner of the PDF, if it exists. Otherwise, add organization name same place,
+    # in black text.
     organization = get_object_or_404(Organization, id=organization_id)
 
     if organization.logo:

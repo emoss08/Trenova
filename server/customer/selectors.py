@@ -23,9 +23,9 @@ from django.utils import timezone
 
 from billing.models import BillingHistory
 from customer import models, types
+from shipment.models import Shipment
 from stops.models import Stop
 from utils.models import StatusChoices
-from shipment.models import Shipment
 
 
 def get_customer_shipments_diff(

@@ -34,6 +34,11 @@ class OrganizationConfig(AppConfig):
             dispatch_uid="create_dispatch_control",
         )
         post_save.connect(
+            signals.create_accounting_control,
+            sender="organization.Organization",
+            dispatch_uid="create_accounting_control",
+        )
+        post_save.connect(
             signals.create_shipment_control,
             sender="organization.Organization",
             dispatch_uid="create_shipment_control",

@@ -41,14 +41,14 @@ from equipment.tests.factories import EquipmentTypeFactory
 from location.factories import LocationFactory
 from location.models import Location
 from organization.models import Organization
-from shipment.models import ShipmentType, Shipment
+from shipment.models import Shipment, ShipmentType
 from shipment.tests.factories import (
     AdditionalChargeFactory,
+    ReasonCodeFactory,
     ShipmentCommentFactory,
     ShipmentDocumentationFactory,
-    ShipmentTypeFactory,
-    ReasonCodeFactory,
     ShipmentFactory,
+    ShipmentTypeFactory,
 )
 
 pytestmark = pytest.mark.django_db

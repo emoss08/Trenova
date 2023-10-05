@@ -18,11 +18,11 @@
 from typing import Any, TypeAlias
 
 from geopy.distance import geodesic
-from shipment.models import Shipment
 
 from integration.services import google_distance_matrix_service
 from route import models
 from route.models import RouteControl
+from shipment.models import Shipment
 
 Coordinates: TypeAlias = (
     tuple[tuple[float | None, float | None], tuple[float | None, float | None]] | None

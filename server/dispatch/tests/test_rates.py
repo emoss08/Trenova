@@ -35,6 +35,7 @@ from dispatch import factories, models
 from dispatch.factories import RateBillingTableFactory
 from equipment.tests.factories import EquipmentTypeFactory
 from organization.models import BusinessUnit, Organization
+from shipment.tests.factories import ShipmentTypeFactory
 
 pytestmark = pytest.mark.django_db
 
@@ -335,7 +336,7 @@ def test_rate_api_update(api_client: APIClient, rate_api: Response) -> None:
     equipment_type = EquipmentTypeFactory()
     accessorial_charge = AccessorialChargeFactory()
     rate = models.Rate.objects.get(id=rate_api.data["id"])
-    billing_table = RateBillingTableFactory(
+    RateBillingTableFactory(
         rate=rate,
     )
 

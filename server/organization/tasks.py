@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    queue="medium_priority",
+    # queue="medium_priority",
 )
 def table_change_alerts(self: "Task") -> None:
     """A Celery task that listens for table change notifications from a PostgreSQL database and retries on errors.
@@ -50,6 +50,9 @@ def table_change_alerts(self: "Task") -> None:
     Raises:
         None.
     """
+
+    # TODO(WOLFRED): Remove this task, this will run in a separate service.
+
     try:
         call_command("psql_listener")
     except CommandCallException as exc:

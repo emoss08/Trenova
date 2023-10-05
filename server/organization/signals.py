@@ -22,6 +22,7 @@ from django.db import connections
 from django.db.models.signals import post_migrate
 from django.dispatch import Signal, receiver
 
+from accounting.models import AccountingControl
 from billing.models import BillingControl
 from dispatch.models import DispatchControl, FeasibilityToolControl
 from invoicing.models import InvoiceControl
@@ -63,6 +64,34 @@ def create_dispatch_control(
 
     if created:
         DispatchControl.objects.create(
+            organization=instance, business_unit=instance.business_unit
+        )
+
+
+def create_accounting_control(
+    sender: models.Organization,
+    instance: models.Organization,
+    created: bool,
+    **kwargs: Any,
+) -> None:
+    """Create a AccountingControl model instance for a new Organization model instance.
+
+    This function is called as a signal when an Organization model instance is saved.
+    If a new Organization instance is created, it creates a AccountingControl model
+    instance with the organization reference.
+
+    Args:
+        sender (models.Organization): The class of the sending instance.
+        instance (models.Organization): The instance of the Organization model being saved.
+        created (bool): True if a new record was created, False otherwise.
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        None: This function does not return anything.
+    """
+
+    if created:
+        AccountingControl.objects.create(
             organization=instance, business_unit=instance.business_unit
         )
 

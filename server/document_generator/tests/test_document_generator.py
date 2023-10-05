@@ -27,7 +27,7 @@ from billing.tests.factories import (
 from document_generator import models
 from document_generator.services import render_document
 from organization.models import BusinessUnit, Organization
-from shipment.tests.factories import AdditionalChargeFactory
+from shipment.tests.factories import AdditionalChargeFactory, ShipmentFactory
 
 pytestmark = pytest.mark.django_db
 

@@ -354,6 +354,8 @@ def test_generate_edi_document(
     # Assert that BIG and N3 segments are in the document
     assert "N3*" in document
 
+    print(document)
+
 
 def test_generate_edi_content_validation_regex(
     organization: Organization, business_unit: BusinessUnit

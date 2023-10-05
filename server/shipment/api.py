@@ -53,7 +53,7 @@ class ShipmentControlViewSet(viewsets.ModelViewSet):
         ).only(
             "id",
             "organization_id",
-            "auto_rate_shipments",
+            "auto_rate_shipment",
             "calculate_distance",
             "enforce_rev_code",
             "enforce_voided_comm",
@@ -63,7 +63,7 @@ class ShipmentControlViewSet(viewsets.ModelViewSet):
             "auto_shipment_total",
             "enforce_origin_destination",
             "check_for_duplicate_bol",
-            "remove_shipments",
+            "remove_shipment",
         )
         return queryset
 

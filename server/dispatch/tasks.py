@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     max_retries=3,
     default_retry_delay=60 * 60 * 24,
     base=Singleton,
-    queue="medium_priority",
+    # queue="medium_priority",
 )
 def send_expired_rates_notification(self: "Task") -> None:
     """Send expired rates notification
