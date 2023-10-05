@@ -24,12 +24,13 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from organization.models import BusinessUnit, Organization
 from shipment.models import Shipment
-from utils.models import ChoiceField, GenericModel, StatusChoices
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices, StatusChoices
 from utils.types import ModelDelete
 
 
@@ -231,7 +232,7 @@ class BillingControl(GenericModel):
                         "Auto Billing criteria is required when `Auto Bill Shipment` is on. Please try again."
                     ),
                 },
-                code="invalid_billing_control",
+                code="invalid",
             )
 
 
@@ -263,6 +264,12 @@ class ChargeType(GenericModel):
         editable=False,
         unique=True,
     )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the charge type."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -286,8 +293,9 @@ class ChargeType(GenericModel):
         db_table = "charge_type"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
-                name="unique_charge_type_name_per_organization",
+                Lower("name"),
+                "organization",
+                name="unique_charge_type_organization",
             )
         ]
 
@@ -339,6 +347,12 @@ class AccessorialCharge(GenericModel):
         editable=False,
         unique=True,
     )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the charge type."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     code = models.CharField(
         _("Code"),
         max_length=50,
@@ -377,8 +391,9 @@ class AccessorialCharge(GenericModel):
         db_table = "accessorial_charge"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
-                name="unique_other_charge_code_per_organization",
+                Lower("code"),
+                "organization",
+                name="unique_accesorial_charge_organization",
             )
         ]
 
@@ -432,8 +447,9 @@ class DocumentClassification(GenericModel):
         db_table = "document_classification"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
-                name="unique_document_classification_name_organization",
+                Lower("name"),
+                "organization",
+                name="unique_document_class_organization",
             )
         ]
 
@@ -1114,6 +1130,9 @@ class BillingHistory(GenericModel):
         blank=True,
         null=True,
     )
+    payment_received = models.BooleanField(
+        verbose_name=_("Payment Received"), default=False
+    )
 
     class Meta:
         """
@@ -1323,3 +1342,84 @@ class BillingException(GenericModel):
             `/billing_control/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
         """
         return reverse("billing-exception-detail", kwargs={"pk": self.pk})
+
+
+class InvoicePaymentDetail(GenericModel):
+    """The InvoicePaymentDetail model is used to store information about a payment for an invoice.
+
+    It has several fields, including:
+    id: a unique identifier for the payment, generated using a UUID
+    invoice: a foreign key to an invoice related to the payment
+    check_number: a text field for storing the check number for the payment
+    payment_amount: a decimal field for storing the payment amount
+    payment_date: a date field for storing the date the payment was received
+    payment_method: a text field for storing the payment method used
+    The model also has a Meta class for setting verbose names and ordering, as well as a __str__ method
+    for returning a string representation of the payment.
+    """
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+    invoice = models.ForeignKey(
+        BillingHistory,
+        on_delete=models.PROTECT,
+        help_text=_("Invoice for the payment."),
+        verbose_name=_("Invoice"),
+    )
+    check_number = models.CharField(
+        verbose_name=_("Check Number"),
+        help_text=_("Check number for the payment."),
+        max_length=100,
+        blank=True,
+    )
+    payment_amount = models.DecimalField(
+        verbose_name=_("Payment Amount"),
+        help_text=_("Payment amount received."),
+        max_digits=10,
+        decimal_places=2,
+    )
+    payment_date = models.DateField(
+        verbose_name=_("Payment Date"),
+        help_text=_("Date payment was received."),
+    )
+    payment_method = models.CharField(
+        verbose_name=_("Payment Method"),
+        help_text=_("Payment method used."),
+        max_length=100,
+    )
+
+    class Meta:
+        """
+        Metaclass for the InvoicePaymentDetail model.
+        """
+
+        verbose_name = _("Invoice Payment Detail")
+        verbose_name_plural = _("Invoice Payment Details")
+        ordering = ("invoice",)
+        db_table = "invoice_payment_detail"
+        db_table_comment = "Table for storing invoice payment details."
+
+    def __str__(self) -> str:
+        """String Representation of the InvoicePaymentDetail model
+
+        Returns:
+            str: InvoicePaymentDetail string representation
+        """
+        return textwrap.shorten(
+            f"{self.invoice} - {self.payment_amount}",
+            width=50,
+            placeholder="...",
+        )
+
+    def get_absolute_url(self) -> str:
+        """Invoice Payment Detail absolute url
+
+        Returns:
+            Absolute url for the invoice payment detail object. For example,
+            `/invoice_payment_detail/edd1e612-cdd4-43d9-b3f3-bc099872088b/'
+        """
+        return reverse("invoice-payment-detail-detail", kwargs={"pk": self.pk})
