@@ -41,7 +41,6 @@
     "react-query": "^3.39.3",
     "react-router-dom": "^6.16.0",
     "typed.js": "^2.0.16",
-    "use-debounce": "^9.0.4",
     "vite": "^4.4.9",
     "yup": "^1.2.0",
     "zustand": "^4.4.1"

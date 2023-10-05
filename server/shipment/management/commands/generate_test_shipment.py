@@ -30,7 +30,7 @@ from customer.models import Customer
 from equipment.models import EquipmentType
 from location.models import Location
 from organization.models import Organization
-from shipment.models import ShipmentType, Shipment, ServiceType
+from shipment.models import ServiceType, Shipment, ShipmentType
 from utils.helpers import get_or_create_business_unit
 
 DESCRIPTION = "GENERATED FROM CREATE TEST SHIPMENTS COMMAND"
@@ -282,7 +282,7 @@ class Command(BaseCommand):
             "business_unit": organization.business_unit,
         }
         equipment_type, created = EquipmentType.objects.get_or_create(
-            organization=organization, name="test", defaults=defaults
+            organization=organization, name="systemgen", defaults=defaults
         )
         return equipment_type
 
@@ -351,7 +351,7 @@ class Command(BaseCommand):
         Returns:
             None: This function does not return anything.
         """
-        shipment_count_answer = input("How many orders would you like to create? ")
+        shipment_count_answer = input("How many shipments would you like to create? ")
         shipment_count = int(shipment_count_answer)
         organization_name = options["organization"]
 
@@ -376,7 +376,7 @@ class Command(BaseCommand):
 
         with Progress() as progress:
             shipment_creation_task = progress.add_task(
-                "[cyan]Creating orders...", total=shipment_count
+                "[cyan]Creating shipments...", total=shipment_count
             )
 
             for _ in range(shipment_count):
@@ -404,6 +404,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Successfully created {shipment_count} orders for {organization_name}"
+                f"Successfully created {shipment_count} shipments for {organization_name}"
             )
         )
