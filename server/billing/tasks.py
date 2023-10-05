@@ -37,7 +37,7 @@ if TYPE_CHECKING:
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
-    queue="high_priority",
+    # queue="high_priority",
 )
 def automate_mass_shipments_billing(self: "Task") -> str:
     """Automated Mass Billing Tasks that uses system user to bill shipments.
@@ -56,11 +56,11 @@ def automate_mass_shipments_billing(self: "Task") -> str:
     """
 
     # TODO: Remove this once we have a better way to get the system user
-    system_user = User.objects.get(username="sys")
+    system_user = User.objects.get(username="monta")
 
     # Get the organizations that have auto bill shipments enabled
     organizations: QuerySet[Organization] = Organization.objects.filter(
-        billing_control__auto_bill_shipments=True
+        billing_control__auto_bill_shipment=True
     )
     results = []
 
@@ -81,7 +81,10 @@ def automate_mass_shipments_billing(self: "Task") -> str:
 
 
 @shared_task(
-    name="transfer_to_billing_task", bind=True, base=Singleton, queue="high_priority"
+    name="transfer_to_billing_task",
+    bind=True,
+    base=Singleton,
+    # queue="high_priority"
 )
 def transfer_to_billing_task(
     self: "Task", *, user_id: str, shipment_pros: list[str]
@@ -121,13 +124,30 @@ def transfer_to_billing_task(
         raise self.retry(exc=exc) from exc
 
 
+# @shared_task(
+#     name="transfer_to_billing_task",
+#     bind=True,
+#     base=Singleton,
+#     # queue="high_priority"
+# )
+# def transfer_to_billing_task(
+#     self: "Task", *, user_id: str, shipment_pros: list[str] | None
+# ) -> None:
+#     try:
+#         services.transfer_to_billing_queue_service(
+#             user_id=user_id, shipment_pros=shipment_pros, task_id=str(self.request.id)
+#         )
+#     except ServiceException as exc:
+#         raise self.retry(exc=exc) from exc
+
+
 @shared_task(
     name="bill_invoice_task",
     bind=True,
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
-    queue="high_priority",
+    # queue="high_priority",
 )
 def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -> None:
     """Bill Order
@@ -164,7 +184,7 @@ def bill_invoice_task(self: "Task", user_id: ModelUUID, invoice_id: ModelUUID) -
     max_retries=3,
     default_retry_delay=60,
     base=Singleton,
-    queue="high_priority",
+    # queue="high_priority",
 )
 def mass_shipments_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
     """Bill Order
@@ -183,5 +203,33 @@ def mass_shipments_bill_task(self: "Task", *, user_id: ModelUUID) -> None:
         services.mass_shipments_billing_service(
             user_id=user_id, task_id=str(self.request.id)
         )
+    except ServiceException as exc:
+        raise self.retry(exc=exc) from exc
+
+
+@shared_task(
+    name="mark_shipment_as_paid_task",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    base=Singleton,
+)
+def mark_shipment_as_paid_task(self: "Task") -> None:
+    try:
+        # Get all paid invoice numbers from InvoicePaymentDetail
+        paid_invoice_numbers = selectors.get_paid_invoices().values_list(
+            "invoice", flat=True
+        )
+
+        # Get all unpaid invoices from BillingHistory
+        unpaid_invoices = selectors.get_unpaid_invoices()
+
+        # Update the payment_received field to True for all unpaid invoices that are in the paid_invoice_numbers list
+        unpaid_invoices.filter(id__in=paid_invoice_numbers).update(
+            payment_received=True
+        )
+
+        print("unpaid invoices", unpaid_invoices)
+
     except ServiceException as exc:
         raise self.retry(exc=exc) from exc

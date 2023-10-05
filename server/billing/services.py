@@ -36,10 +36,10 @@ from shipment.models import Shipment
 from utils.helpers import get_pk_value
 from utils.services.pdf import UUIDEncoder
 from utils.types import (
+    BilledShipments,
     BillingClientActions,
     BillingClientSessionResponse,
     ModelUUID,
-    BilledShipments
 )
 
 logger = logging.getLogger("billing_client")
@@ -106,7 +106,7 @@ def generate_invoice_number(
 
 @transaction.atomic
 def transfer_to_billing_queue_service(
-    *, user_id: "ModelUUID", shipment_pros: list[str], task_id: str
+    *, user_id: "ModelUUID", shipment_pros: list[str] | None = None, task_id: str
 ) -> str:
     """Atomically transfers eligible shipments to the billing queue, logs the transfer,
     and returns a success message. If any part of the operation fails, all changes are rolled back.
@@ -134,9 +134,12 @@ def transfer_to_billing_queue_service(
     billing_control = user.organization.billing_control
 
     # Get the billable shipments
-    shipments = selectors.get_billable_shipments(
-        organization=user.organization, shipment_pros=shipment_pros
-    )
+    if shipment_pros:
+        shipments = selectors.get_billable_shipments(
+            organization=user.organization, shipment_pros=shipment_pros
+        )
+    else:
+        shipments = selectors.get_billable_shipments(organization=user.organization)
 
     # If there are no shipments, raise an BillingException
     if not shipments:
@@ -373,11 +376,15 @@ def ready_to_bill_service(shipments: QuerySet[Shipment]) -> None:
         organization = shipment.organization
 
         if organization.billing_control.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(user=shipment.created_by, invoice=shipment):
+            if utils.check_billing_requirements(
+                user=shipment.created_by, invoice=shipment
+            ):
                 shipment.ready_to_bill = True
                 shipment.save()
         elif shipment.customer.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(user=shipment.created_by, invoice=shipment):
+            if utils.check_billing_requirements(
+                user=shipment.created_by, invoice=shipment
+            ):
                 shipment.ready_to_bill = True
                 shipment.save()
 
