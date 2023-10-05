@@ -23,6 +23,7 @@ import {
   EquipmentTypeFormValues,
 } from "@/types/equipment";
 import { EquipmentClassChoiceProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types";
 
 Yup.addMethod<StringSchema>(
   Yup.string,
@@ -68,6 +69,7 @@ export const equipmentTypeDetailSchema: ObjectSchema<EquipmentTypeDetailFormValu
 
 export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string()
       .required("Name is required")
       .max(50, "Name cannot be more than 50 characters"),
@@ -85,6 +87,7 @@ export const equipmentTypeSchema: ObjectSchema<EquipmentTypeFormValues> =
 
 export const equipManufacturerSchema: ObjectSchema<EquipmentManufacturerFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string()
       .required("Name is required")
       .max(50, "Name cannot be more than 50 characters"),

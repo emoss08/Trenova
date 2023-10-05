@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { ObjectSchema } from "yup";
 import * as Yup from "yup";
+import { ObjectSchema } from "yup";
 import {
   CommodityFormValues,
   HazardousMaterialFormValues,
@@ -43,10 +43,17 @@ export const hazardousMaterialSchema: ObjectSchema<HazardousMaterialFormValues> 
 
 export const commoditySchema: ObjectSchema<CommodityFormValues> =
   Yup.object().shape({
-    name: Yup.string().required("Name is required"),
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    name: Yup.string()
+      .max(100, "Name cannot be longer than 100 characters long.")
+      .required("Name is required"),
     description: Yup.string().notRequired(),
-    minTemp: Yup.number().notRequired(),
-    maxTemp: Yup.number().notRequired(),
+    minTemp: Yup.number()
+      .max(10, "Maximum temperature cannot be more than 10 digits long.")
+      .notRequired(),
+    maxTemp: Yup.number()
+      .max(10, "Maximum temperature cannot be more than 10 digits long.")
+      .notRequired(),
     setPointTemp: Yup.number().notRequired(),
     unitOfMeasure: Yup.string<UnitOfMeasureChoiceProps>().notRequired(),
     hazmat: Yup.string().notRequired(),
