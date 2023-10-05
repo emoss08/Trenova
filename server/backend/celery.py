@@ -34,7 +34,7 @@ from celery import Celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 
-app = Celery("backend", broker="amqp://monta:monta@localhost:5672//")
+app = Celery("backend")
 
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
