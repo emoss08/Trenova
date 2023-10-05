@@ -21,7 +21,7 @@ django-localflavor==4.0
 django-nested-inline==0.4.6
 django-notifications-hq==1.8.2
 django-phonenumber-field==7.1.0
-django-redis==5.3.0
+django-redis==5.4.0
 django-silk==5.0.4
 django-stubs-ext==4.2.2
 djangorestframework~=3.14.0
@@ -33,10 +33,10 @@ googlemaps==4.10.0
 hiredis==2.2.3
 openpyxl==3.1.2
 pandas==2.1.1
-phonenumbers==8.13.21
+phonenumbers==8.13.22
 Pillow==10.0.1
 psutil==5.9.5
-psycopg2==2.9.8
+psycopg2==2.9.9
 psycopg2cffi==2.9.0
 pypdf==3.16.2
 pytz==2023.3.post1
@@ -44,8 +44,8 @@ pyx12==2.3.3
 redis==5.0.1
 reportlab<=4.0.0
 requests==2.31.0
-rich==13.5.3
-weasyprint==60.0
+rich==13.6.0
+weasyprint==60.1
 whitenoise==6.5.0
 xhtml2pdf==0.2.11
 cssutils==2.7.1
