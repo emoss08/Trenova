@@ -54,7 +54,6 @@ function EditEquipManufacturerForm({
     TableStoreProps<EquipmentManufacturer>
   >(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -66,6 +65,7 @@ function EditEquipManufacturerForm({
       errorMessage: "Failed to update equipment manufacturer.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

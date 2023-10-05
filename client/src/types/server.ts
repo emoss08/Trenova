@@ -128,4 +128,7 @@ export type API_ENDPOINTS =
   | "/generate_report/"
   | "/user/notifications/"
   | "/billing/shipments_ready/"
-  | "/sessions/kick/";
+  | "/tags/"
+  | "/finance_transactions/"
+  | "/reconciliation_queue/"
+  | "/accounting_control/";

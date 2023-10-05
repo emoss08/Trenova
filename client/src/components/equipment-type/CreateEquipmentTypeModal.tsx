@@ -223,7 +223,6 @@ function ModalBody() {
     TableStoreProps<EquipmentType>
   >(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -235,6 +234,7 @@ function ModalBody() {
       errorMessage: "Failed to create Equipment Type",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

@@ -395,7 +395,6 @@ export function CreateRateModal() {
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<Rate>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -407,6 +406,7 @@ export function CreateRateModal() {
       errorMessage: "Failed to create rate.",
     },
     () => setLoading(false),
+    store,
   );
 
   type ErrorCountType = (tab: string | null) => number;

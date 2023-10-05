@@ -18,7 +18,7 @@ import { useQuery, useQueryClient } from "react-query";
 import { getGLAccounts } from "@/services/AccountingRequestService";
 import { GeneralLedgerAccount } from "@/types/accounting";
 
-export function useGLAccounts(show: boolean) {
+export function useGLAccounts(show?: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({

@@ -92,7 +92,6 @@ function CreateChargeTypeModalForm() {
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<ChargeType>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -104,6 +103,7 @@ function CreateChargeTypeModalForm() {
       errorMessage: "Failed to create charge type",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

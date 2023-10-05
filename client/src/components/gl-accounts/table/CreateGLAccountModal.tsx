@@ -295,7 +295,6 @@ const CreateGLAccountModalForm = forwardRef<
       TableStoreProps<GeneralLedgerAccount>
     >(
       form,
-      store,
       notifications,
       {
         method: "POST",
@@ -307,6 +306,7 @@ const CreateGLAccountModalForm = forwardRef<
         errorMessage: "Failed to create general ledger account.",
       },
       () => setLoading(false),
+      store,
     );
 
     const submitForm = (values: FormValues) => {

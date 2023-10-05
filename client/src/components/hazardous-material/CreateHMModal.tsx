@@ -132,7 +132,6 @@ export function CreateHMModalForm() {
     TableStoreProps<HazardousMaterial>
   >(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -144,6 +143,7 @@ export function CreateHMModalForm() {
       errorMessage: "Failed to create hazardous material.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

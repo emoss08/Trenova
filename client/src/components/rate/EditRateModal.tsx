@@ -402,7 +402,6 @@ export function EditRateModalBody({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<Rate>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -414,6 +413,7 @@ export function EditRateModalBody({
       errorMessage: "Failed to update rate.",
     },
     () => setLoading(false),
+    store,
   );
 
   type ErrorCountType = (tab: string | null) => number;

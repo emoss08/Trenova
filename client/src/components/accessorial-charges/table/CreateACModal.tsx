@@ -128,7 +128,6 @@ export function CreateACModalForm() {
     TableStoreProps<AccessorialCharge>
   >(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -140,6 +139,7 @@ export function CreateACModalForm() {
       errorMessage: "Failed to create accessorial charge.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {
