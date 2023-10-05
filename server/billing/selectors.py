@@ -27,8 +27,8 @@ from utils.models import StatusChoices
 if TYPE_CHECKING:
     from accounts.models import User
     from organization.models import Organization
-    from utils.types import ModelUUID
     from shipment.models import Shipment
+    from utils.types import ModelUUID
 
 
 def get_billable_shipments(
@@ -113,7 +113,7 @@ def get_billing_queue(
             organization=user.organization,
             recipient=user,
             level="info",
-            verb="shipment Billing Exception",
+            verb="Shipment Billing Exception",
             description=f"No shipments in the billing queue for task: {task_id}",
         )
     return billing_queue
@@ -161,3 +161,63 @@ def get_billing_history_by_customer_id(
         QuerySet[models.BillingHistory]: A queryset of BillingHistory objects.
     """
     return models.BillingHistory.objects.filter(customer_id__exact=customer_id)
+
+
+def get_unpaid_invoices() -> QuerySet[models.BillingHistory]:
+    """Get all the unpaid invoices from the Billing History.
+
+    This function returns a QuerySet containing all the Billing History model objects that have not received payment yet.
+    The filter applies on 'payment_received' attribute of objects, if it's False then it's deemed as unpaid invoice.
+
+    Returns:
+        QuerySet[models.BillingHistory]: A QuerySet containing all the unpaid invoices.
+    """
+    return models.BillingHistory.objects.filter(payment_received=False)
+
+
+def get_paid_invoices() -> QuerySet[models.InvoicePaymentDetail]:
+    """Get all the paid invoices from the Invoice Payment Detail.
+
+    This function returns a QuerySet containing all the Invoice Payment Detail model objects where payment has been received.
+    An invoice is classified as paid if the 'payment_date' and 'payment_amount' attributes are not null which essentially mean a payment has been made.
+
+    Returns:
+        QuerySet[models.InvoicePaymentDetail]: A QuerySet containing all the paid invoices.
+    """
+    return models.InvoicePaymentDetail.objects.filter(
+        payment_date__isnull=False, payment_amount__isnull=False
+    )
+
+
+def get_shipment_bill_hist(*, shipment: "Shipment") -> models.BillingHistory | None:
+    """Retrieves a queryset of BillingHistory objects by their shipment.
+
+    Args:
+        shipment (Shipment): The shipment for which to retrieve billing history.
+
+    Returns:
+        QuerySet[models.BillingHistory]: A queryset of BillingHistory objects.
+    """
+
+    try:
+        return models.BillingHistory.objects.get(shipment=shipment)
+    except models.BillingHistory.DoesNotExist:
+        return None
+
+
+def get_invoice_payment_detail(
+    *, invoice: models.BillingHistory
+) -> models.InvoicePaymentDetail | None:
+    """Retrieves a queryset of BillingHistory objects by their shipment.
+
+    Args:
+        invoice (models.BillingHistory): The shipment for which to retrieve billing history.
+
+    Returns:
+        QuerySet[models.InvoicePaymentDetail]: A queryset of BillingHistory objects.
+    """
+
+    try:
+        return models.InvoicePaymentDetail.objects.get(invoice=invoice)
+    except models.InvoicePaymentDetail.DoesNotExist:
+        return None
