@@ -27,6 +27,7 @@ from billing.models import (
     BillingQueue,
     ChargeType,
     DocumentClassification,
+    InvoicePaymentDetail,
 )
 from utils.admin import GenericAdmin
 
@@ -220,3 +221,19 @@ class AccessorialChargeAdmin(GenericAdmin[AccessorialCharge]):
         "method",
     )
     search_fields = ("code",)
+
+
+@admin.register(InvoicePaymentDetail)
+class InvoicePaymentDetailAdmin(GenericAdmin[InvoicePaymentDetail]):
+    """
+    Invoice Payment Detail Admin
+    """
+
+    model: type[InvoicePaymentDetail] = InvoicePaymentDetail
+    list_display = (
+        "invoice",
+        "payment_date",
+        "payment_amount",
+        "payment_method",
+    )
+    search_fields = ("invoice",)
