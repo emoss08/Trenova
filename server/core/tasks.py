@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     bind=True,
     max_retries=3,
     default_retry_delay=60,
-    queue="low_priority",
+    # queue="low_priority",
 )
 def delete_audit_log_records(self: "Task") -> str:
     """Delete audit log records older than 30 days.
@@ -50,6 +50,8 @@ def delete_audit_log_records(self: "Task") -> str:
     Returns:
         str: The message "Audit log records deleted." upon successful completion of the task.
     """
+
+    # TODO(WOLFRED): Expand this out as we will most likely need to implement system retention policies.
 
     cutoff_date = timezone.now() - datetime.timedelta(days=30)
     formatted_date = cutoff_date.strftime("%Y-%m-%d")
