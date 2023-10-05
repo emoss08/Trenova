@@ -66,6 +66,8 @@ router.register(
 router.register(
     r"division_codes", accounting_api.DivisionCodeViewSet, basename="division-codes"
 )
+router.register(r"tags", accounting_api.TagViewSet, basename="tags")
+
 
 # Organization Routing
 router.register(r"organizations", org_api.OrganizationViewSet, basename="organization")
