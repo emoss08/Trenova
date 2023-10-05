@@ -17,9 +17,8 @@
 
 import React from "react";
 import { IconAlertTriangle } from "@tabler/icons-react";
-import { Textarea } from "@mantine/core";
-import { TextareaProps } from "@mantine/core/lib/Textarea/Textarea";
 import { UseFormReturnType } from "@mantine/form";
+import { Textarea, TextareaProps } from "@mantine/core";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface ValidatedTextInputProps<TFormValues>
@@ -33,15 +32,18 @@ export function ValidatedTextArea<TFormValues extends object>({
   name,
   ...rest
 }: Omit<ValidatedTextInputProps<TFormValues>, "onContextMenu">) {
+  // 1. Optimize the Style Creation
   const { classes } = useFormStyles();
   const error = form.errors[name as string];
+
+  // 2. Reduce Component Complexity
+  const inputProps = form.getInputProps(name as string);
 
   return (
     <Textarea
       {...rest}
-      {...form.getInputProps(name as string)}
-      error={error}
       className={classes.fields}
+      error={error}
       autosize
       minRows={2}
       variant="filled"
@@ -54,6 +56,7 @@ export function ValidatedTextArea<TFormValues extends object>({
           />
         )
       }
+      {...inputProps}
     />
   );
 }
