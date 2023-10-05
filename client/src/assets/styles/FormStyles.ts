@@ -47,17 +47,25 @@ export const useFormStyles = createStyles((theme) => {
             ? theme.fn.rgba(theme.colors.red[8], 0.15)
             : theme.colors.red[2],
       },
-      "& textarea[data-invalid=true]": {
+      // mantine file input
+      "& .mantine-FileInput-input": {
+        backgroundColor:
+          theme.colorScheme === "dark"
+            ? theme.colors.dark[6]
+            : theme.colors.gray[1],
+      },
+      // mantine file input error
+      "& .mantine-FileInput-input[data-invalid=true]": {
         backgroundColor:
           theme.colorScheme === "dark"
             ? theme.fn.rgba(theme.colors.red[8], 0.15)
             : theme.colors.red[2],
       },
-      "& .mantine-MultiSelect-wrapper": {
+      "& textarea[data-invalid=true]": {
         backgroundColor:
           theme.colorScheme === "dark"
-            ? theme.colors.dark[6]
-            : theme.colors.gray[1],
+            ? theme.fn.rgba(theme.colors.red[8], 0.15)
+            : theme.colors.red[2],
       },
     },
     control: {
