@@ -36,10 +36,10 @@ from shipment.models import Shipment
 from utils.helpers import get_pk_value
 from utils.services.pdf import UUIDEncoder
 from utils.types import (
+    BilledShipments,
     BillingClientActions,
     BillingClientSessionResponse,
     ModelUUID,
-    BilledShipments
 )
 
 logger = logging.getLogger("billing_client")
@@ -373,11 +373,15 @@ def ready_to_bill_service(shipments: QuerySet[Shipment]) -> None:
         organization = shipment.organization
 
         if organization.billing_control.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(user=shipment.created_by, invoice=shipment):
+            if utils.check_billing_requirements(
+                user=shipment.created_by, invoice=shipment
+            ):
                 shipment.ready_to_bill = True
                 shipment.save()
         elif shipment.customer.auto_mark_ready_to_bill:
-            if utils.check_billing_requirements(user=shipment.created_by, invoice=shipment):
+            if utils.check_billing_requirements(
+                user=shipment.created_by, invoice=shipment
+            ):
                 shipment.ready_to_bill = True
                 shipment.save()
 

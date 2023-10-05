@@ -19,7 +19,6 @@ from collections.abc import Generator
 from typing import Any
 
 import pytest
-from shipment.tests.factories import OrderFactory, ShipmentTypeFactory
 
 from accounting.tests.factories import RevenueCodeFactory
 from billing.tests.factories import (
@@ -30,7 +29,7 @@ from billing.tests.factories import (
 from commodities.factories import CommodityFactory
 from customer.factories import CustomerFactory
 from organization.factories import EmailProfileFactory
-from shipment.tests.factories import ShipmentTypeFactory
+from shipment.tests.factories import OrderFactory, ShipmentTypeFactory
 from worker.factories import WorkerFactory
 
 pytestmark = pytest.mark.django_db
