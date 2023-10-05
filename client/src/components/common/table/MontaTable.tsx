@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
   MantineReactTable,
   MRT_ColumnDef,
@@ -87,16 +87,6 @@ export function MontaTable<
   });
   const [rowSelection, setRowSelection] = useState<MRT_RowSelectionState>({});
 
-  const cellProps = useCallback(
-    () => ({
-      sx: {
-        backgroundColor:
-          theme.colorScheme === "dark" ? theme.colors.dark[7] : "white",
-      },
-    }),
-    [theme.colorScheme, theme.colors.dark],
-  );
-
   const useGetTableData = () => {
     const fetchURL = new URL(`${API_URL}${link}/`);
 
@@ -136,15 +126,14 @@ export function MontaTable<
     getRowId: (row) => row.id,
     enableRowSelection: true,
     icons: montaTableIcons,
-    // enableRowActions: true,
     positionActionsColumn: "last",
-    // renderRowActions: ({ row }) => (
-    //   <MontaTableActionMenu store={store} data={row.original} />
-    // ),
     mantinePaperProps: {
       sx: { overflow: "visible" },
       shadow: "none",
       withBorder: false,
+    },
+    mantineBottomToolbarProps: {
+      sx: { overflow: "visible" },
     },
     mantineTableHeadRowProps: {
       sx: { overflow: "visible", boxShadow: "none" },
