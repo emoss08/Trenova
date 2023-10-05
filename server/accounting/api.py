@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import viewsets, permissions
+from rest_framework import permissions, viewsets
 
 from accounting import models, serializers
 from core.permissions import CustomObjectPermissions

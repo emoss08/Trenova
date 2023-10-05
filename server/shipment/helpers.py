@@ -34,7 +34,7 @@ FORMULA_ALLOWED_VARIABLES = [
 ]
 
 
-def extract_variable_from_formula(*, formula: str) -> typing.List[str]:
+def extract_variable_from_formula(*, formula: str) -> list[str]:
     """Extract the variables from a given mathematical formula.
 
     This function tokenizes the input formula using Python's tokenize module. It
