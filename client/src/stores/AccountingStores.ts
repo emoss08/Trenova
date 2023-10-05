@@ -24,14 +24,13 @@ import {
 } from "@/types/accounting";
 
 export const divisionCodeTableStore = createGlobalStore<
-  Omit<TableStoreProps<DivisionCode>, "drawerOpen">
+  TableStoreProps<DivisionCode>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,
@@ -43,14 +42,13 @@ export const divisionCodeTableStore = createGlobalStore<
 });
 
 export const revenueCodeTableStore = createGlobalStore<
-  Omit<TableStoreProps<RevenueCode>, "drawerOpen">
+  TableStoreProps<RevenueCode>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,
@@ -62,14 +60,13 @@ export const revenueCodeTableStore = createGlobalStore<
 });
 
 export const generalLedgerTableStore = createGlobalStore<
-  Omit<TableStoreProps<GeneralLedgerAccount>, "drawerOpen">
+  TableStoreProps<GeneralLedgerAccount>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   exportModalOpen: false,

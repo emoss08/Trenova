@@ -16,9 +16,9 @@
  */
 
 import React, { Suspense } from "react";
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { useFleetCodeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
@@ -29,9 +29,98 @@ import { SelectInput } from "@/components/common/fields/SelectInput";
 import { TChoiceProps } from "@/types";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { useUsers } from "@/hooks/useUsers";
-import { yesAndNoChoicesBoolean } from "@/lib/constants";
+import { statusChoices } from "@/lib/constants";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+
+export function FleetCodeForm({
+  form,
+  users,
+  isUsersLoading,
+  isUsersError,
+  isEdit,
+}: {
+  form: UseFormReturnType<FormValues>;
+  users: ReadonlyArray<TChoiceProps>;
+  isUsersLoading: boolean;
+  isUsersError: boolean;
+  isEdit: boolean;
+}) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the Fleet Code"
+          form={form}
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="code"
+          label="Code"
+          placeholder="Code"
+          description="Unique Code of the Fleet Code"
+          withAsterisk
+          disabled={isEdit}
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        name="description"
+        label="Description"
+        description="Description of the Fleet Code"
+        placeholder="Description"
+        withAsterisk
+      />
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <ValidatedNumberInput<FormValues>
+          form={form}
+          name="revenueGoal"
+          label="Revenue Goal"
+          placeholder="Revenue Goal"
+          precision={2}
+          withAsterisk
+          description="Revenue goal for Fleet Code"
+        />
+        <ValidatedNumberInput<FormValues>
+          form={form}
+          name="deadheadGoal"
+          label="Deadhead Goal"
+          placeholder="Deadhead Goal"
+          precision={2}
+          withAsterisk
+          description="Deadhead goal for Fleet Code"
+        />
+        <ValidatedNumberInput<FormValues>
+          form={form}
+          name="mileageGoal"
+          label="Mileage Goal"
+          placeholder="Mileage Goal"
+          precision={2}
+          withAsterisk
+          description="Mileage goal for Fleet Code"
+        />
+        <SelectInput<FormValues>
+          form={form}
+          name="manager"
+          label="Manager"
+          placeholder="Manager"
+          description="Manger of the Fleet Code"
+          data={users}
+          isLoading={isUsersLoading}
+          isError={isUsersError}
+        />
+      </SimpleGrid>
+    </div>
+  );
+}
 
 export function CreateFleetCodeModalForm({
   users,
@@ -48,9 +137,9 @@ export function CreateFleetCodeModalForm({
   const form = useForm<FormValues>({
     validate: yupResolver(fleetCodeSchema),
     initialValues: {
+      status: "A",
       code: "",
       description: "",
-      isActive: true,
       revenueGoal: 0.0,
       deadheadGoal: 0.0,
       mileageGoal: 0.0,
@@ -58,10 +147,7 @@ export function CreateFleetCodeModalForm({
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<FleetCode>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<FleetCode>>(
     form,
     store,
     notifications,
@@ -84,78 +170,18 @@ export function CreateFleetCodeModalForm({
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<FormValues>
-            form={form}
-            name="isActive"
-            label="Is Active"
-            description="Is this Fleet Code active?"
-            withAsterisk
-            data={yesAndNoChoicesBoolean}
-          />
-          <ValidatedTextInput<FormValues>
-            form={form}
-            name="code"
-            label="Code"
-            placeholder="Code"
-            description="Unique Code of the Fleet Code"
-            withAsterisk
-          />
-        </SimpleGrid>
-        <ValidatedTextArea<FormValues>
-          form={form}
-          name="description"
-          label="Description"
-          description="Description of the Fleet Code"
-          placeholder="Description"
-          withAsterisk
-        />
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ValidatedNumberInput<FormValues>
-            form={form}
-            name="revenueGoal"
-            label="Revenue Goal"
-            placeholder="Revenue Goal"
-            precision={2}
-            withAsterisk
-            description="Revenue goal for Fleet Code"
-          />
-          <ValidatedNumberInput<FormValues>
-            form={form}
-            name="deadheadGoal"
-            label="Deadhead Goal"
-            placeholder="Deadhead Goal"
-            precision={2}
-            withAsterisk
-            description="Deadhead goal for Fleet Code"
-          />
-          <ValidatedNumberInput<FormValues>
-            form={form}
-            name="mileageGoal"
-            label="Mileage Goal"
-            placeholder="Mileage Goal"
-            precision={2}
-            withAsterisk
-            description="Mileage goal for Fleet Code"
-          />
-          <SelectInput<FormValues>
-            form={form}
-            name="manager"
-            label="Manager"
-            placeholder="Manager"
-            description="Manger of the Fleet Code"
-            data={users}
-            isLoading={isUsersLoading}
-            isError={isUsersError}
-          />
-        </SimpleGrid>
-        <Group position="right" mt="md">
-          <Button type="submit" className={classes.control} loading={loading}>
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <FleetCodeForm
+        form={form}
+        isUsersError={isUsersError}
+        isUsersLoading={isUsersLoading}
+        users={users}
+        isEdit={false}
+      />
+      <Group position="right" mt="md">
+        <Button type="submit" className={classes.control} loading={loading}>
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

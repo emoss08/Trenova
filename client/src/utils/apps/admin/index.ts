@@ -36,8 +36,8 @@ const DispatchControlContent = lazy(
 const InvoiceControlContent = lazy(
   () => import("../../../components/control-files/InvoiceControl"),
 );
-const OrderControlContent = lazy(
-  () => import("../../../components/control-files/OrderControl"),
+const ShipmentControlContent = lazy(
+  () => import("../../../components/control-files/ShipmentControl"),
 );
 const EmailControlContent = lazy(
   () => import("../../../components/control-files/EmailControl"),
@@ -71,9 +71,9 @@ export const controlFileData: NavLinks[] = [
   },
   {
     icon: faBox,
-    label: "Order Controls",
-    description: "Administer and Manage Order Procedures",
-    component: OrderControlContent,
+    label: "Shipment Controls",
+    description: "Administer and Manage Shipment Procedures",
+    component: ShipmentControlContent,
   },
   {
     icon: faInbox,

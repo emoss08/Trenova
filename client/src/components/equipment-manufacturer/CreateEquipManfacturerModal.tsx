@@ -15,8 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 import React from "react";
-import { useForm, yupResolver } from "@mantine/form";
-import { Box, Button, Group, Modal } from "@mantine/core";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
   EquipmentManufacturer,
@@ -29,6 +29,49 @@ import { equipManufacturerSchema } from "@/lib/schemas/EquipmentSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
 import { TableStoreProps } from "@/types/tables";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { statusChoices } from "@/lib/constants";
+
+export function EquipmentManufacturerForm({
+  form,
+}: {
+  form: UseFormReturnType<FormValues>;
+}): React.ReactElement {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the Equipment Manufacturer"
+          form={form}
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="name"
+          label="Name"
+          placeholder="Name"
+          description="Unique name for the Equipment Manufacturer"
+          maxLength={50}
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        name="description"
+        label="Description"
+        description="Description of the equipment manufacturer."
+        placeholder="Description"
+      />
+    </div>
+  );
+}
 
 function EquipManufacturerBody() {
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -37,6 +80,7 @@ function EquipManufacturerBody() {
   const form = useForm<FormValues>({
     validate: yupResolver(equipManufacturerSchema),
     initialValues: {
+      status: "A",
       name: "",
       description: "",
     },
@@ -44,7 +88,7 @@ function EquipManufacturerBody() {
 
   const mutation = useCustomMutation<
     FormValues,
-    Omit<TableStoreProps<EquipmentManufacturer>, "drawerOpen">
+    TableStoreProps<EquipmentManufacturer>
   >(
     form,
     store,
@@ -68,24 +112,8 @@ function EquipManufacturerBody() {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          description="Unique name for the equipment manufacturer."
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          name="description"
-          label="Description"
-          description="Description of the equipment manufacturer."
-          placeholder="Description"
-        />
-      </Box>
       <Group position="right" mt="md">
+        <EquipmentManufacturerForm form={form} />
         <Button type="submit" className={classes.control} loading={loading}>
           Submit
         </Button>

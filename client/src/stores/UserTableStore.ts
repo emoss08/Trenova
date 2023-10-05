@@ -19,15 +19,12 @@ import { JobTitle, User } from "@/types/accounts";
 import { createGlobalStore } from "@/lib/useGlobalStore";
 import { TableStoreProps } from "@/types/tables";
 
-export const userTableStore = createGlobalStore<
-  Omit<TableStoreProps<User>, "drawerOpen">
->({
+export const userTableStore = createGlobalStore<TableStoreProps<User>>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   createModalOpen: false,
@@ -38,15 +35,12 @@ export const userTableStore = createGlobalStore<
   errorCount: 0,
 });
 
-export const jobTitleTableStore = createGlobalStore<
-  Omit<TableStoreProps<JobTitle>, "drawerOpen">
->({
+export const jobTitleTableStore = createGlobalStore<TableStoreProps<JobTitle>>({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   createModalOpen: false,

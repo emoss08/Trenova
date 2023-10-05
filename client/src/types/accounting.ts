@@ -16,13 +16,13 @@
  */
 
 import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "@/types/organization";
 import {
   AccountClassificationChoiceProps,
   AccountSubTypeChoiceProps,
   AccountTypeChoiceProps,
   CashFlowTypeChoiceProps,
 } from "@/lib/choices";
-import { BaseModel } from "@/types/organization";
 
 /** Types for Division Codes */
 export interface DivisionCode extends BaseModel {
@@ -34,6 +34,17 @@ export interface DivisionCode extends BaseModel {
   cashAccount?: string | null;
   expenseAccount?: string | null;
 }
+
+export interface Tag extends BaseModel {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export type TagFormValues = Omit<
+  Tag,
+  "id" | "organization" | "created" | "modified"
+>;
 
 export type DivisionCodeFormValues = Omit<
   DivisionCode,
@@ -50,11 +61,32 @@ export interface GeneralLedgerAccount extends BaseModel {
   cashFlowType?: CashFlowTypeChoiceProps | "" | null;
   accountSubType?: AccountSubTypeChoiceProps | "" | null;
   accountClassification?: AccountClassificationChoiceProps | "" | null;
+  balance: number;
+  openingBalance: number;
+  closingBalance: number;
+  parentAccount?: string | null;
+  isReconciled: boolean;
+  dateOpened: Date;
+  dateClosed?: Date | null;
+  notes?: string | null;
+  owner?: string | null;
+  isTaxRelevant: boolean;
+  attachment?: any | null;
+  interestRate?: number | null;
+  tags?: string[] | null | "";
 }
 
 export type GLAccountFormValues = Omit<
   GeneralLedgerAccount,
-  "organization" | "created" | "modified" | "id"
+  | "organization"
+  | "created"
+  | "modified"
+  | "id"
+  | "dateOpened"
+  | "dateClosed"
+  | "openingBalance"
+  | "closingBalance"
+  | "balance"
 >;
 
 /** Types for Revenue Codes */

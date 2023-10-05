@@ -21,8 +21,7 @@ import { Badge } from "@mantine/core";
 import { divisionCodeTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { CreateDCModal } from "@/components/division-codes/table/CreateDCModal";
-import { EditDCModal } from "@/components/division-codes/table/EditDCModal";
-import { ViewDCModal } from "@/components/division-codes/table/ViewDCModal";
+import { DCDrawer } from "@/components/division-codes/table/DCDrawer";
 import { DivisionCode } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 
@@ -69,10 +68,9 @@ export function DivisionCodeTable() {
       store={divisionCodeTableStore}
       link="/division_codes"
       columns={columns}
-      TableEditModal={EditDCModal}
-      TableViewModal={ViewDCModal}
       displayDeleteModal
       TableCreateDrawer={CreateDCModal}
+      TableDrawer={DCDrawer}
       tableQueryKey="division-code-table-data"
       exportModelName="DivisionCode"
       name="Division Code"

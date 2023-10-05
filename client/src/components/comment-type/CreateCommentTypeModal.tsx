@@ -16,9 +16,9 @@
  */
 
 import React from "react";
-import { Box, Button, Group, Modal } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { useCommentTypeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
@@ -30,6 +30,51 @@ import {
 import { commentTypeSchema } from "@/lib/schemas/DispatchSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { statusChoices } from "@/lib/constants";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+
+export function CommentTypeForm({
+  form,
+}: {
+  form: UseFormReturnType<FormValues>;
+}) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the Comment Type"
+          form={form}
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="name"
+          label="Name"
+          maxLength={10}
+          placeholder="Name"
+          description="Name of the Comment Type"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        name="description"
+        label="Description"
+        maxLength={100}
+        description="Description of the Comment Type"
+        placeholder="Description"
+        withAsterisk
+      />
+    </div>
+  );
+}
 
 function CreateCommentTypeModalForm() {
   const { classes } = useFormStyles();
@@ -38,6 +83,7 @@ function CreateCommentTypeModalForm() {
   const form = useForm<FormValues>({
     validate: yupResolver(commentTypeSchema),
     initialValues: {
+      status: "A",
       name: "",
       description: "",
     },
@@ -66,29 +112,12 @@ function CreateCommentTypeModalForm() {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          description="Unique Name of the comment type"
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          name="description"
-          label="Description"
-          description="Description of the comment type."
-          placeholder="Description"
-          withAsterisk
-        />
-        <Group position="right" mt="md">
-          <Button type="submit" className={classes.control} loading={loading}>
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <CommentTypeForm form={form} />
+      <Group position="right" mt="md">
+        <Button type="submit" className={classes.control} loading={loading}>
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

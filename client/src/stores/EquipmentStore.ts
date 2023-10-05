@@ -20,14 +20,13 @@ import { TableStoreProps } from "@/types/tables";
 import { EquipmentManufacturer, EquipmentType } from "@/types/equipment";
 
 export const useEquipTypeTableStore = createGlobalStore<
-  Omit<TableStoreProps<EquipmentType>, "drawerOpen">
+  TableStoreProps<EquipmentType>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
+  drawerOpen: false,
   selectedRecord: null,
   globalFilter: "",
   createModalOpen: false,
@@ -39,15 +38,14 @@ export const useEquipTypeTableStore = createGlobalStore<
 });
 
 export const useEquipManufacturerTableStore = createGlobalStore<
-  Omit<TableStoreProps<EquipmentManufacturer>, "drawerOpen">
+  TableStoreProps<EquipmentManufacturer>
 >({
   pagination: {
     pageIndex: 0,
     pageSize: 10,
   },
-  viewModalOpen: false,
-  editModalOpen: false,
   selectedRecord: null,
+  drawerOpen: false,
   globalFilter: "",
   createModalOpen: false,
   exportModalOpen: false,

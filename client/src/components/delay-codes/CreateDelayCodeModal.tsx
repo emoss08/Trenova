@@ -16,9 +16,9 @@
  */
 
 import React from "react";
-import { Box, Button, Group, Modal } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { useDelayCodeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
@@ -28,6 +28,56 @@ import { delayCodeSchema } from "@/lib/schemas/DispatchSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { statusChoices } from "@/lib/constants";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+
+export function DelayCodeForm({
+  form,
+}: {
+  form: UseFormReturnType<FormValues>;
+}) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the delay code"
+          form={form}
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="code"
+          label="Code"
+          maxLength={4}
+          placeholder="Code"
+          description="Unique Code of the delay code"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        name="description"
+        label="Description"
+        description="Description of the delay code."
+        placeholder="Description"
+        withAsterisk
+      />
+      <SwitchInput<FormValues>
+        form={form}
+        name="fCarrierOrDriver"
+        label="F. Carrier/Driver"
+        description="Fault of carrier or driver?"
+      />
+    </div>
+  );
+}
 
 export function CreateDelayCodeModalForm() {
   const { classes } = useFormStyles();
@@ -36,16 +86,14 @@ export function CreateDelayCodeModalForm() {
   const form = useForm<FormValues>({
     validate: yupResolver(delayCodeSchema),
     initialValues: {
+      status: "A",
       code: "",
       description: "",
       fCarrierOrDriver: false,
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<DelayCode>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<DelayCode>>(
     form,
     store,
     notifications,
@@ -68,35 +116,12 @@ export function CreateDelayCodeModalForm() {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="code"
-          label="Code"
-          placeholder="Code"
-          description="Unique Code of the delay code"
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          name="description"
-          label="Description"
-          description="Description of the delay code."
-          placeholder="Description"
-          withAsterisk
-        />
-        <SwitchInput<FormValues>
-          form={form}
-          name="fCarrierOrDriver"
-          label="F. Carrier/Driver"
-          description="Fault of carrier or driver?"
-        />
-        <Group position="right" mt="md">
-          <Button type="submit" className={classes.control} loading={loading}>
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <DelayCodeForm form={form} />
+      <Group position="right" mt="md">
+        <Button type="submit" className={classes.control} loading={loading}>
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

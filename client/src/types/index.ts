@@ -93,6 +93,7 @@ export type QueryKeys =
   | "revenueCodes"
   | "routeControl"
   | "locations"
-  | "orderTypes"
-  | "orderControl"
+  | "tags"
+  | "shipmentTypes"
+  | "shipmentControl"
   | "users";

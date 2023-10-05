@@ -21,6 +21,7 @@ import {
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
 import { BaseModel } from "@/types/organization";
+import { StatusChoiceProps } from "@/types/index";
 
 /** Types for Billing Control */
 export interface BillingControl extends BaseModel {
@@ -42,6 +43,7 @@ export type BillingControlFormValues = Omit<
 /** Types for Charge Type */
 export interface ChargeType extends BaseModel {
   id: string;
+  status: StatusChoiceProps;
   name: string;
   description?: string | null;
 }
@@ -54,6 +56,7 @@ export type ChargeTypeFormValues = Omit<
 /** Types for Accessorial Charge */
 export interface AccessorialCharge extends BaseModel {
   id: string;
+  status: StatusChoiceProps;
   code: string;
   description?: string | null;
   isDetention: boolean;

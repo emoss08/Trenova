@@ -24,11 +24,10 @@ export function useHazardousMaterial(show: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["hazardousMaterials" as QueryKeys],
+    queryKey: ["hazardousMaterials"] as QueryKeys[],
     queryFn: async () => getHazardousMaterials(),
     enabled: show,
-    initialData: () =>
-      queryClient.getQueryData("hazardousMaterials" as QueryKeys),
+    initialData: () => queryClient.getQueryData("hazardousMaterials"),
     staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,

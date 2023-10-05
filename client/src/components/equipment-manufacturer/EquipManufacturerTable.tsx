@@ -17,16 +17,40 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { EquipmentManufacturer } from "@/types/equipment";
 import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
 import { CreateEquipManufacturerModal } from "@/components/equipment-manufacturer/CreateEquipManfacturerModal";
-import { EditEMModal } from "@/components/equipment-manufacturer/EditEquipManufacturerModal";
-import { ViewEMModal } from "@/components/equipment-manufacturer/ViewEquipManufacturerModal";
+import { EquipManufacturerDrawer } from "@/components/equipment-manufacturer/EquipManufacturerDrawer";
+import { TChoiceProps } from "@/types";
 
 export function EquipManufacturerTable() {
   const columns = useMemo<MRT_ColumnDef<EquipmentManufacturer>[]>(
     () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] as TChoiceProps[],
+        },
+        filterVariant: "select",
+      },
       {
         accessorKey: "name", // access nested data with dot notation
         header: "Name",
@@ -44,10 +68,9 @@ export function EquipManufacturerTable() {
       store={store}
       link="/equipment_manufacturers"
       columns={columns}
-      TableEditModal={EditEMModal}
-      TableViewModal={ViewEMModal}
       displayDeleteModal
       TableCreateDrawer={CreateEquipManufacturerModal}
+      TableDrawer={EquipManufacturerDrawer}
       tableQueryKey="equipment-manufacturer-table-data"
       exportModelName="EquipmentManufacturer"
       name="Equipment Manufacturer"

@@ -15,17 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  Box,
-  Button,
-  Drawer,
-  Group,
-  Select,
-  SimpleGrid,
-  Switch,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
+import { Button, Drawer, Group } from "@mantine/core";
 import React from "react";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
@@ -35,14 +25,10 @@ import {
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { fuelMethodChoices } from "@/utils/apps/billing";
 import { accessorialChargeSchema as Schema } from "@/lib/schemas/BillingSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { SelectInput } from "@/components/common/fields/SelectInput";
-import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { ACForm } from "@/components/accessorial-charges/table/CreateACModal";
 
 function EditACModalForm({
   accessorialCharge,
@@ -57,6 +43,7 @@ function EditACModalForm({
   const form = useForm<FormValues>({
     validate: yupResolver(Schema),
     initialValues: {
+      status: accessorialCharge.status,
       code: accessorialCharge.code,
       description: accessorialCharge.description || "",
       isDetention: accessorialCharge.isDetention,
@@ -91,205 +78,56 @@ function EditACModalForm({
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          className={classes.fields}
-          name="code"
-          label="Code"
-          description="Code for the accessorial charge."
-          placeholder="Code"
-          variant="filled"
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          className={classes.fields}
-          name="description"
-          label="Description"
-          description="Description of the accessorial charge."
-          placeholder="Description"
-          variant="filled"
-        />
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ValidatedTextInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="chargeAmount"
-            label="Charge Amount"
-            placeholder="Charge Amount"
-            description="Charge amount for the accessorial charge."
-            variant="filled"
-            withAsterisk
-          />
-          <SelectInput<FormValues>
-            form={form}
-            data={fuelMethodChoices}
-            className={classes.fields}
-            name="method"
-            label="Fuel Method"
-            description="Method for calculating the other charge."
-            placeholder="Fuel Method"
-            variant="filled"
-          />
-          <SwitchInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="isDetention"
-            label="Detention"
-            description="Is detention charge?"
-            placeholder="Detention"
-            variant="filled"
-          />
-        </SimpleGrid>
-        <Group position="right" mt="md">
-          <Button
-            variant="subtle"
-            onClick={onCancel}
-            color="gray"
-            type="button"
-            className={classes.control}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="white"
-            type="submit"
-            className={classes.control}
-            loading={loading}
-          >
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <ACForm form={form} />
+      <Group position="right" mt="md">
+        <Button
+          variant="subtle"
+          onClick={onCancel}
+          color="gray"
+          type="button"
+          className={classes.control}
+        >
+          Cancel
+        </Button>
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }
 
-function ViewACModalForm({
-  accessorialCharge,
-  onEditClick,
-}: {
-  accessorialCharge: AccessorialCharge;
-  onEditClick: () => void;
-}) {
-  const { classes } = useFormStyles();
-
-  return (
-    <Box className={classes.div}>
-      <TextInput
-        className={classes.fields}
-        name="code"
-        label="Code"
-        description="Code for the accessorial charge."
-        placeholder="Code"
-        variant="filled"
-        readOnly
-        value={accessorialCharge.code}
-      />
-      <Textarea
-        className={classes.fields}
-        name="description"
-        label="Description"
-        description="Description of the accessorial charge."
-        placeholder="Description"
-        variant="filled"
-        readOnly
-        value={accessorialCharge.description || ""}
-      />
-      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-        <TextInput
-          className={classes.fields}
-          name="charge_amount"
-          label="Charge Amount"
-          placeholder="Charge Amount"
-          description="Charge amount for the accessorial charge."
-          variant="filled"
-          readOnly
-          value={accessorialCharge.chargeAmount}
-        />
-        <Select
-          data={fuelMethodChoices}
-          className={classes.fields}
-          name="method"
-          label="Fuel Method"
-          description="Method for calculating the other charge."
-          placeholder="Fuel Method"
-          variant="filled"
-          readOnly
-          value={accessorialCharge.method}
-        />
-        <Switch
-          className={classes.fields}
-          name="is_detention"
-          label="Detention"
-          description="Is detention charge?"
-          placeholder="Detention"
-          variant="filled"
-          readOnly
-          checked={accessorialCharge.isDetention}
-        />
-      </SimpleGrid>
-      <Group position="right" mt="md" spacing="xs">
-        <Button
-          variant="subtle"
-          type="submit"
-          onClick={onEditClick}
-          className={classes.control}
-        >
-          Edit
-        </Button>
-        <Button
-          color="red"
-          type="submit"
-          onClick={() => {
-            store.set("drawerOpen", false);
-            store.set("deleteModalOpen", true);
-          }}
-          className={classes.control}
-        >
-          Remove
-        </Button>
-      </Group>
-    </Box>
-  );
-}
-
 export function ACDrawer(): React.ReactElement {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [showViewModal, setShowViewModal] = store.use("drawerOpen");
+  const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
   const [accessorialCharge] = store.use("selectedRecord");
+  const onCancel = () => store.set("drawerOpen", false);
 
-  const toggleEditMode = () => {
-    setIsEditing((prev) => !prev);
-  };
   return (
     <Drawer.Root
       position="right"
-      opened={showViewModal}
-      onClose={() => setShowViewModal(false)}
+      opened={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
     >
       <Drawer.Overlay />
       <Drawer.Content>
         <Drawer.Header>
           <Drawer.Title>
-            {isEditing ? "Edit Accessorial Charge" : "View Accessorial Charge"}
+            Edit Accessorial Charge:{" "}
+            {accessorialCharge && accessorialCharge.code}
           </Drawer.Title>
           <Drawer.CloseButton />
         </Drawer.Header>
         <Drawer.Body>
-          {accessorialCharge && isEditing ? (
+          {accessorialCharge && (
             <EditACModalForm
               accessorialCharge={accessorialCharge}
-              onCancel={toggleEditMode}
+              onCancel={onCancel}
             />
-          ) : (
-            accessorialCharge && (
-              <ViewACModalForm
-                accessorialCharge={accessorialCharge}
-                onEditClick={toggleEditMode}
-              />
-            )
           )}
         </Drawer.Body>
       </Drawer.Content>

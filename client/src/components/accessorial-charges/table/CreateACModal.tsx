@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { accessorialChargeTableStore as store } from "@/stores/BillingStores";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import {
@@ -33,6 +33,79 @@ import { fuelMethodChoices } from "@/utils/apps/billing";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { statusChoices } from "@/lib/constants";
+
+export function ACForm({ form }: { form: UseFormReturnType<FormValues> }) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the accessorial charge"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          className={classes.fields}
+          name="code"
+          label="Code"
+          description="Code for the accessorial charge"
+          placeholder="Code"
+          variant="filled"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        className={classes.fields}
+        name="description"
+        label="Description"
+        description="Description of the accessorial charge"
+        placeholder="Description"
+        variant="filled"
+      />
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <ValidatedTextInput<FormValues>
+          form={form}
+          className={classes.fields}
+          name="chargeAmount"
+          label="Charge Amount"
+          placeholder="Charge Amount"
+          description="Charge amount for the accessorial charge"
+          variant="filled"
+          withAsterisk
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={fuelMethodChoices}
+          className={classes.fields}
+          name="method"
+          label="Fuel Method"
+          description="Method for calculating the accessorial charge"
+          placeholder="Fuel Method"
+          variant="filled"
+          withAsterisk
+        />
+        <SwitchInput<FormValues>
+          form={form}
+          className={classes.fields}
+          name="isDetention"
+          label="Detention"
+          description="Is this a detention charge?"
+          placeholder="Detention"
+          variant="filled"
+        />
+      </SimpleGrid>
+    </div>
+  );
+}
 
 export function CreateACModalForm() {
   const { classes } = useFormStyles();
@@ -41,10 +114,11 @@ export function CreateACModalForm() {
   const form = useForm<FormValues>({
     validate: yupResolver(Schema),
     initialValues: {
+      status: "A",
       code: "",
       description: "",
       isDetention: false,
-      chargeAmount: 0,
+      chargeAmount: 1,
       method: "D",
     },
   });
@@ -75,69 +149,17 @@ export function CreateACModalForm() {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          className={classes.fields}
-          name="code"
-          label="Code"
-          description="Code for the accessorial charge"
-          placeholder="Code"
-          variant="filled"
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          className={classes.fields}
-          name="description"
-          label="Description"
-          description="Description of the accessorial charge"
-          placeholder="Description"
-          variant="filled"
-        />
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ValidatedTextInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="chargeAmount"
-            label="Charge Amount"
-            placeholder="Charge Amount"
-            description="Charge amount for the accessorial charge"
-            variant="filled"
-            withAsterisk
-          />
-          <SelectInput<FormValues>
-            form={form}
-            data={fuelMethodChoices}
-            className={classes.fields}
-            name="method"
-            label="Fuel Method"
-            description="Method for calculating the accessorial charge"
-            placeholder="Fuel Method"
-            variant="filled"
-            withAsterisk
-          />
-          <SwitchInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="isDetention"
-            label="Detention"
-            description="Is this a detention charge?"
-            placeholder="Detention"
-            variant="filled"
-          />
-        </SimpleGrid>
-        <Group position="right" mt="md">
-          <Button
-            color="white"
-            type="submit"
-            className={classes.control}
-            loading={loading}
-          >
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <ACForm form={form} />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

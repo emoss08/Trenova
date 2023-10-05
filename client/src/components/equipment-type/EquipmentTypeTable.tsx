@@ -17,16 +17,40 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { EquipmentType } from "@/types/equipment";
 import { useEquipTypeTableStore } from "@/stores/EquipmentStore";
 import { CreateEquipmentTypeModal } from "@/components/equipment-type/CreateEquipmentTypeModal";
-import { ViewEquipmentTypeModal } from "@/components/equipment-type/ViewEquipmentTypeModal";
-import { EditEquipmentTypeModal } from "@/components/equipment-type/EditEquipmentTypeModal";
+import { EquipmentTypeDrawer } from "@/components/equipment-type/EquipmentTypeDrawer";
+import { TChoiceProps } from "@/types";
 
 export function EquipmentTypeTable() {
   const columns = useMemo<MRT_ColumnDef<EquipmentType>[]>(
     () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] as TChoiceProps[],
+        },
+        filterVariant: "select",
+      },
       {
         accessorKey: "name", // access nested data with dot notation
         header: "Name",
@@ -49,10 +73,9 @@ export function EquipmentTypeTable() {
       store={useEquipTypeTableStore}
       link="/equipment_types"
       columns={columns}
-      TableEditModal={EditEquipmentTypeModal}
-      TableViewModal={ViewEquipmentTypeModal}
       displayDeleteModal
       TableCreateDrawer={CreateEquipmentTypeModal}
+      TableDrawer={EquipmentTypeDrawer}
       tableQueryKey="equipment-type-table-data"
       exportModelName="EquipmentType"
       name="Equipment Type"

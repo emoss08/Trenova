@@ -24,12 +24,34 @@ import { TChoiceProps } from "@/types";
 import { DelayCode } from "@/types/dispatch";
 import { useDelayCodeStore } from "@/stores/DispatchStore";
 import { CreateDelayCodeModal } from "@/components/delay-codes/CreateDelayCodeModal";
-import { ViewDelayCodeModal } from "@/components/delay-codes/ViewDelayCodeModal";
-import { EditDelayCodeModal } from "@/components/delay-codes/EditDelayCodeModal";
+import { DelayCodeDrawer } from "@/components/delay-codes/DelayCodeDrawer";
 
 export function DelayCodeTable() {
   const columns = useMemo<MRT_ColumnDef<DelayCode>[]>(
     () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] satisfies ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
       {
         accessorKey: "code",
         header: "Code",
@@ -76,11 +98,10 @@ export function DelayCodeTable() {
       store={useDelayCodeStore}
       link="/delay_codes"
       columns={columns}
-      TableEditModal={EditDelayCodeModal}
-      TableViewModal={ViewDelayCodeModal}
       displayDeleteModal
       deleteKey="code"
       TableCreateDrawer={CreateDelayCodeModal}
+      TableDrawer={DelayCodeDrawer}
       tableQueryKey="delay-code-table-data"
       exportModelName="DelayCode"
       name="Delay Code"

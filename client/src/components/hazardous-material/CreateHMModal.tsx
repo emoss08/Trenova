@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import {
@@ -33,6 +33,82 @@ import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { HazardousClassChoices, PackingGroupChoices } from "@/lib/choices";
+
+export function HMForm({ form }: { form: UseFormReturnType<FormValues> }) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={statusChoices}
+          className={classes.fields}
+          name="status"
+          label="Status"
+          placeholder="Status"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          className={classes.fields}
+          name="name"
+          label="Name"
+          placeholder="Name"
+          variant="filled"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        className={classes.fields}
+        name="description"
+        label="Description"
+        placeholder="Description"
+        variant="filled"
+      />
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={HazardousClassChoices}
+          className={classes.fields}
+          name="hazardClass"
+          label="Hazard Class"
+          placeholder="Hazard Class"
+          variant="filled"
+          withAsterisk
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={PackingGroupChoices}
+          className={classes.fields}
+          name="packingGroup"
+          label="Packing Group"
+          placeholder="Packing Group"
+          variant="filled"
+          clearable
+        />
+      </SimpleGrid>
+      <ValidatedTextInput<FormValues>
+        form={form}
+        className={classes.fields}
+        name="ergNumber"
+        label="ERG Number"
+        placeholder="ERG Number"
+        variant="filled"
+      />
+      <ValidatedTextArea<FormValues>
+        form={form}
+        className={classes.fields}
+        name="properShippingName"
+        label="Proper Shipping Name"
+        placeholder="Proper Shipping Name"
+        variant="filled"
+      />
+    </div>
+  );
+}
 
 export function CreateHMModalForm() {
   const { classes } = useFormStyles();
@@ -53,7 +129,7 @@ export function CreateHMModalForm() {
 
   const mutation = useCustomMutation<
     FormValues,
-    Omit<TableStoreProps<HazardousMaterial>, "drawerOpen">
+    TableStoreProps<HazardousMaterial>
   >(
     form,
     store,
@@ -77,87 +153,17 @@ export function CreateHMModalForm() {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<FormValues>
-              form={form}
-              data={statusChoices}
-              className={classes.fields}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextInput<FormValues>
-              form={form}
-              className={classes.fields}
-              name="name"
-              label="Name"
-              placeholder="Name"
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <ValidatedTextArea<FormValues>
-            form={form}
-            className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
-            variant="filled"
-          />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<FormValues>
-              form={form}
-              data={HazardousClassChoices}
-              className={classes.fields}
-              name="hazardClass"
-              label="Hazard Class"
-              placeholder="Hazard Class"
-              variant="filled"
-              withAsterisk
-            />
-            <SelectInput<FormValues>
-              form={form}
-              data={PackingGroupChoices}
-              className={classes.fields}
-              name="packingGroup"
-              label="Packing Group"
-              placeholder="Packing Group"
-              variant="filled"
-              clearable
-            />
-          </SimpleGrid>
-          <ValidatedTextInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="ergNumber"
-            label="ERG Number"
-            placeholder="ERG Number"
-            variant="filled"
-          />
-          <ValidatedTextArea<FormValues>
-            form={form}
-            className={classes.fields}
-            name="properShippingName"
-            label="Proper Shipping Name"
-            placeholder="Proper Shipping Name"
-            variant="filled"
-          />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
-      </Box>
+      <HMForm form={form} />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

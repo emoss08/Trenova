@@ -15,25 +15,29 @@
  * Grant, and not modifying the license in any other way.
  */
 
-export type OrderControl = {
+import { BaseModel } from "./organization";
+
+export interface ShipmentControl extends BaseModel {
   id: string;
-  organization: string;
-  autoRateOrders: boolean;
+  autoRateShipment: boolean;
   calculateDistance: boolean;
   enforceRevCode: boolean;
   enforceVoidedComm: boolean;
   generateRoutes: boolean;
   enforceCommodity: boolean;
   autoSequenceStops: boolean;
-  autoOrderTotal: boolean;
+  autoShipmentTotal: boolean;
   enforceOriginDestination: boolean;
   checkForDuplicateBol: boolean;
-  removeOrders: boolean;
-};
+  removeShipment: boolean;
+}
 
-export type OrderControlFormValues = Omit<OrderControl, "id" | "organization">;
+export type ShipmentControlFormValues = Omit<
+  ShipmentControl,
+  "id" | "organization" | "created" | "modified"
+>;
 
-export type Order = {
+export type Shipment = {
   mileage: number;
   comment: string;
   proNumber: string;

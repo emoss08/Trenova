@@ -23,7 +23,7 @@ import { Customer } from "@/types/customer";
 import { CustomerStats } from "@/components/customer/view/_partials/CustomerStats";
 import { CustomerBillingHistoryTable } from "@/components/customer/view/_partials/CustomerBillingHistoryTable";
 import { usePageStyles } from "@/assets/styles/PageStyles";
-import { USDollarFormat } from "@/lib/constants";
+import { USDollarFormat } from "@/lib/utils";
 
 CustomerOverviewTab.defaultProps = {
   customer: null,

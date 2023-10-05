@@ -20,12 +20,11 @@ import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
 import { generalLedgerTableStore } from "@/stores/AccountingStores";
 import { MontaTable } from "@/components/common/table/MontaTable";
-import { EditGLAccountModal } from "@/components/gl-accounts/table/EditGLAccountModal";
-import { ViewGLAccountModal } from "@/components/gl-accounts/table/ViewGLAccountModal";
 import { CreateGLAccountModal } from "@/components/gl-accounts/table/CreateGLAccountModal";
 import { GeneralLedgerAccount } from "@/types/accounting";
 import { IChoiceProps, StatusChoiceProps } from "@/types";
 import { truncateText } from "@/lib/utils";
+import { GLAccountDrawer } from "@/components/gl-accounts/table/GLAccountDrawer";
 
 function StatusBadge({ status }: { status: string }) {
   return (
@@ -80,10 +79,9 @@ export function GLAccountTable() {
       store={generalLedgerTableStore}
       link="/gl_accounts"
       columns={columns}
-      TableEditModal={EditGLAccountModal}
-      TableViewModal={ViewGLAccountModal}
       displayDeleteModal
       TableCreateDrawer={CreateGLAccountModal}
+      TableDrawer={GLAccountDrawer}
       tableQueryKey="gl-account-table-data"
       exportModelName="GeneralLedgerAccount"
       name="GL Account"

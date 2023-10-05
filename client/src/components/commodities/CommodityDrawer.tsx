@@ -16,16 +16,7 @@
  */
 
 import React from "react";
-import {
-  Box,
-  Button,
-  Drawer,
-  Group,
-  Select,
-  SimpleGrid,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
+import { Button, Drawer, Group } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { commodityTableStore as store } from "@/stores/CommodityStore";
@@ -35,18 +26,11 @@ import {
 } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { yesAndNoChoices } from "@/lib/constants";
-import { UnitOfMeasureChoices } from "@/lib/choices";
 import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import {
-  SelectInput,
-  ViewSelectInput,
-} from "@/components/common/fields/SelectInput";
 import { useHazardousMaterial } from "@/hooks/useHazardousMaterial";
+import { CommodityForm } from "@/components/commodities/CreateCommodityModal";
 
 type EditCommodityModalFormProps = {
   commodity: Commodity;
@@ -69,6 +53,7 @@ function EditCommodityModalForm({
   const form = useForm<FormValues>({
     validate: yupResolver(commoditySchema),
     initialValues: {
+      status: commodity.status,
       name: commodity.name,
       description: commodity.description,
       minTemp: commodity.minTemp,
@@ -112,224 +97,39 @@ function EditCommodityModalForm({
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <Box>
-          <ValidatedTextInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="name"
-            label="Name"
-            placeholder="Name"
-            variant="filled"
-            withAsterisk
-          />
-          <ValidatedTextArea<FormValues>
-            form={form}
-            className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
-            variant="filled"
-          />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <ValidatedTextInput<FormValues>
-              form={form}
-              className={classes.fields}
-              name="minTemp"
-              label="Min Temp"
-              placeholder="Min Temp"
-              variant="filled"
-            />
-            <ValidatedTextInput<FormValues>
-              form={form}
-              className={classes.fields}
-              name="maxTemp"
-              label="Max Temp"
-              placeholder="Max Temp"
-              variant="filled"
-            />
-          </SimpleGrid>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<FormValues>
-              className={classes.fields}
-              data={selectHazmatData || []}
-              isError={isErrors}
-              isLoading={isLoading}
-              name="hazmat"
-              placeholder="Hazardous Material"
-              label="Hazardous Material"
-              form={form}
-              variant="filled"
-              clearable
-            />
-            <SelectInput<FormValues>
-              className={classes.fields}
-              data={yesAndNoChoices}
-              name="isHazmat"
-              label="Is Hazmat"
-              placeholder="Is Hazmat"
-              form={form}
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <SelectInput<FormValues>
-            className={classes.fields}
-            data={UnitOfMeasureChoices}
-            name="unitOfMeasure"
-            placeholder="Unit of Measure"
-            label="Unit of Measure"
-            form={form}
-            variant="filled"
-          />
-          <Group position="right" mt="md">
-            <Button
-              variant="subtle"
-              onClick={onCancel}
-              color="gray"
-              type="button"
-              className={classes.control}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
-      </Box>
+      <CommodityForm
+        form={form}
+        selectHazmatData={selectHazmatData}
+        isLoading={isLoading}
+        isError={isErrors}
+      />
+      <Group position="right" mt="md">
+        <Button
+          variant="subtle"
+          onClick={onCancel}
+          color="gray"
+          type="button"
+          className={classes.control}
+        >
+          Cancel
+        </Button>
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }
 
-type ViewCommodityModalFormProps = {
-  commodity: Commodity;
-  selectHazmatData: TChoiceProps[];
-  onEditClick: () => void;
-};
-
-function ViewCommodityModalForm({
-  commodity,
-  selectHazmatData,
-  onEditClick,
-}: ViewCommodityModalFormProps) {
-  const { classes } = useFormStyles();
-
-  return (
-    <Box className={classes.div}>
-      <Box>
-        <TextInput
-          className={classes.fields}
-          value={commodity.name}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          readOnly
-          variant="filled"
-          withAsterisk
-        />
-        <Textarea
-          className={classes.fields}
-          name="description"
-          label="Description"
-          placeholder="Description"
-          readOnly
-          variant="filled"
-          value={commodity.description || ""}
-        />
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <TextInput
-            className={classes.fields}
-            name="minTemp"
-            label="Min Temp"
-            placeholder="Min Temp"
-            readOnly
-            variant="filled"
-            value={commodity.minTemp || ""}
-          />
-          <TextInput
-            className={classes.fields}
-            name="maxTemp"
-            label="Max Temp"
-            placeholder="Max Temp"
-            readOnly
-            variant="filled"
-            value={commodity.maxTemp || ""}
-          />
-        </SimpleGrid>
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <ViewSelectInput
-            className={classes.fields}
-            data={selectHazmatData || []}
-            placeholder="Hazardous Material"
-            label="Hazardous Material"
-            variant="filled"
-            value={commodity.hazmat || ""}
-            readOnly
-            clearable
-          />
-          <Select
-            className={classes.fields}
-            data={yesAndNoChoices}
-            name="isHazmat"
-            label="Is Hazmat"
-            placeholder="Is Hazmat"
-            variant="filled"
-            value={commodity.isHazmat || ""}
-            readOnly
-            withAsterisk
-          />
-        </SimpleGrid>
-        <Select
-          className={classes.fields}
-          data={UnitOfMeasureChoices}
-          name="unitOfMeasure"
-          placeholder="Unit of Measure"
-          label="Unit of Measure"
-          value={commodity.unitOfMeasure || ""}
-          readOnly
-          variant="filled"
-        />
-        <Group position="right" mt="md" spacing="xs">
-          <Button
-            variant="subtle"
-            type="submit"
-            onClick={onEditClick}
-            className={classes.control}
-          >
-            Edit
-          </Button>
-          <Button
-            color="red"
-            type="submit"
-            onClick={() => {
-              store.set("drawerOpen", false);
-              store.set("deleteModalOpen", true);
-            }}
-            className={classes.control}
-          >
-            Remove
-          </Button>
-        </Group>
-      </Box>
-    </Box>
-  );
-}
-
 export function CommodityDrawer() {
-  const [isEditing, setIsEditing] = React.useState(false);
   const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
   const [commodity] = store.use("selectedRecord");
-
-  const toggleEditMode = () => {
-    setIsEditing((prev) => !prev);
-  };
-
+  const onCancel = () => store.set("drawerOpen", false);
   const { selectHazardousMaterials, isLoading, isError } =
     useHazardousMaterial(drawerOpen);
 
@@ -343,27 +143,19 @@ export function CommodityDrawer() {
       <Drawer.Content>
         <Drawer.Header>
           <Drawer.Title>
-            {isEditing ? "Edit Commodity" : "View Commodity"}
+            Edit Commodity: {commodity && commodity.name}
           </Drawer.Title>
           <Drawer.CloseButton />
         </Drawer.Header>
         <Drawer.Body>
-          {commodity && isEditing ? (
+          {commodity && (
             <EditCommodityModalForm
               isLoading={isLoading}
               isErrors={isError}
               commodity={commodity}
               selectHazmatData={selectHazardousMaterials}
-              onCancel={toggleEditMode}
+              onCancel={onCancel}
             />
-          ) : (
-            commodity && (
-              <ViewCommodityModalForm
-                commodity={commodity}
-                selectHazmatData={selectHazardousMaterials}
-                onEditClick={toggleEditMode}
-              />
-            )
           )}
         </Drawer.Body>
       </Drawer.Content>

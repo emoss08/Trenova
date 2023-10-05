@@ -20,8 +20,7 @@ import { MRT_ColumnDef } from "mantine-react-table";
 import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { jobTitleTableStore } from "@/stores/UserTableStore";
-import { EditJobTitleModal } from "@/components/job-title/table/EditJobTitleModal";
-import { ViewJobTitleModal } from "@/components/job-title/table/ViewJobTitleModal";
+import { JobTitleDrawer } from "@/components/job-title/table/JobTitleDrawer";
 import { CreateJobTitleModal } from "@/components/job-title/table/CreateJobTitleModal";
 import { JobTitle } from "@/types/accounts";
 import { TChoiceProps } from "@/types";
@@ -73,10 +72,9 @@ export function JobTitleTable() {
       store={jobTitleTableStore}
       link="/job_titles"
       columns={columns}
-      TableEditModal={EditJobTitleModal}
-      TableViewModal={ViewJobTitleModal}
       displayDeleteModal
       TableCreateDrawer={CreateJobTitleModal}
+      TableDrawer={JobTitleDrawer}
       tableQueryKey="job-title-table-data"
       exportModelName="JobTitle"
       name="Job Title"

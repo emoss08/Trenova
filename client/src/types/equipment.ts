@@ -16,6 +16,8 @@
  */
 
 import { EquipmentClassChoiceProps } from "@/lib/choices";
+import { StatusChoiceProps } from "@/types/index";
+import { BaseModel } from "./organization";
 
 export type EquipmentTypeDetail = {
   id: string;
@@ -31,17 +33,14 @@ export type EquipmentTypeDetail = {
   exemptFromTolls: boolean;
 };
 
-export type EquipmentType = {
-  organization: string;
-  businessUnit: string;
+export interface EquipmentType extends BaseModel {
   id: string;
+  status: StatusChoiceProps;
   name: string;
   description?: string | null;
   costPerMile: string;
-  created: string;
-  modified: string;
   equipmentTypeDetails: EquipmentTypeDetail;
-};
+}
 
 export type EquipmentTypeDetailFormValues = Omit<
   EquipmentTypeDetail,
@@ -50,22 +49,19 @@ export type EquipmentTypeDetailFormValues = Omit<
 
 export type EquipmentTypeFormValues = Pick<
   EquipmentType,
-  "name" | "description" | "costPerMile"
+  "name" | "description" | "costPerMile" | "status"
 > & {
   equipmentTypeDetails: EquipmentTypeDetailFormValues;
 };
 
-export type EquipmentManufacturer = {
-  organization: string;
-  businessUnit: string;
+export interface EquipmentManufacturer extends BaseModel {
   id: string;
+  status: StatusChoiceProps;
   name: string;
   description?: string | null;
-  created: string;
-  modified: string;
-};
+}
 
 export type EquipmentManufacturerFormValues = Pick<
   EquipmentManufacturer,
-  "name" | "description"
+  "name" | "description" | "status"
 >;

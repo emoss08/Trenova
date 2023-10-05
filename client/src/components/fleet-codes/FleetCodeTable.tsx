@@ -24,8 +24,7 @@ import { TChoiceProps } from "@/types";
 import { FleetCode } from "@/types/dispatch";
 import { useFleetCodeStore } from "@/stores/DispatchStore";
 import { CreateFleetCodeModal } from "@/components/fleet-codes/CreateFleetCodeModal";
-import { ViewFleetCodeModal } from "@/components/fleet-codes/ViewFleetCodeModal";
-import { EditFleetCodeModal } from "@/components/fleet-codes/EditFleetCodeModal";
+import { FleetCodeDrawer } from "@/components/fleet-codes/FleetCodeDrawer";
 
 export function FleetCodeTable() {
   const columns: MRT_ColumnDef<FleetCode>[] = useMemo<
@@ -78,11 +77,10 @@ export function FleetCodeTable() {
       store={useFleetCodeStore}
       link="/fleet_codes"
       columns={columns}
-      TableEditModal={EditFleetCodeModal}
-      TableViewModal={ViewFleetCodeModal}
       displayDeleteModal
       deleteKey="code"
       TableCreateDrawer={CreateFleetCodeModal}
+      TableDrawer={FleetCodeDrawer}
       tableQueryKey="fleet-code-table-data"
       exportModelName="FleetCode"
       name="Fleet Code"

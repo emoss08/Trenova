@@ -15,13 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { JobTitle, JobTitleFormValues } from "@/types/accounts";
+import { JobTitle, JobTitleFormValues as FormValues } from "@/types/accounts";
 import { jobTitleSchema } from "@/lib/schemas/AccountsSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/lib/constants";
@@ -31,11 +31,63 @@ import { jobFunctionChoices } from "@/lib/choices";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 
-function CreateJobTitleModalForm(): React.ReactElement {
+export function JobTitleForm({
+  form,
+}: {
+  form: UseFormReturnType<FormValues>;
+}) {
   const { classes } = useFormStyles();
-  const [loading, setLoading] = React.useState<boolean>(false);
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={statusChoices}
+          description="Status of the Job Title"
+          name="status"
+          label="Status"
+          placeholder="Status"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          description="Name of the Job Title"
+          name="name"
+          label="Name"
+          placeholder="Name"
+          variant="filled"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        description="Description of the Job Title"
+        name="description"
+        label="Description"
+        placeholder="Description"
+        variant="filled"
+      />
+      <SelectInput<FormValues>
+        form={form}
+        data={jobFunctionChoices}
+        description="Job Function of the Job Title"
+        name="jobFunction"
+        label="Job Function"
+        placeholder="Job Function"
+        variant="filled"
+        clearable
+        withAsterisk
+      />
+    </div>
+  );
+}
 
-  const form = useForm<JobTitleFormValues>({
+function CreateJobTitleModalForm(): React.ReactElement {
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const { classes } = useFormStyles();
+
+  const form = useForm<FormValues>({
     validate: yupResolver(jobTitleSchema),
     initialValues: {
       status: "A",
@@ -45,10 +97,7 @@ function CreateJobTitleModalForm(): React.ReactElement {
     },
   });
 
-  const mutation = useCustomMutation<
-    JobTitleFormValues,
-    Omit<TableStoreProps<JobTitle>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<JobTitle>>(
     form,
     store,
     notifications,
@@ -64,67 +113,24 @@ function CreateJobTitleModalForm(): React.ReactElement {
     () => setLoading(false),
   );
 
-  const submitForm = (values: JobTitleFormValues) => {
+  const submitForm = (values: FormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<JobTitleFormValues>
-              form={form}
-              data={statusChoices}
-              className={classes.fields}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextInput<JobTitleFormValues>
-              form={form}
-              className={classes.fields}
-              name="name"
-              label="Name"
-              placeholder="Name"
-              variant="filled"
-              withAsterisk
-            />
-          </SimpleGrid>
-          <ValidatedTextArea<JobTitleFormValues>
-            form={form}
-            className={classes.fields}
-            name="description"
-            label="Description"
-            placeholder="Description"
-            variant="filled"
-          />
-          <SelectInput<JobTitleFormValues>
-            form={form}
-            data={jobFunctionChoices}
-            className={classes.fields}
-            name="jobFunction"
-            label="Job Function"
-            placeholder="Job Function"
-            variant="filled"
-            clearable
-            withAsterisk
-          />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
-      </Box>
+      <JobTitleForm form={form} />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, Skeleton } from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
 import React, { Suspense } from "react";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { chargeTypeTableStore as store } from "@/stores/BillingStores";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import {
@@ -26,10 +26,56 @@ import {
   ChargeTypeFormValues as FormValues,
 } from "@/types/billing";
 import { chargeTypeSchema } from "@/lib/schemas/BillingSchema";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { SelectInput } from "@/components/common/fields/SelectInput";
+import { statusChoices } from "@/lib/constants";
+import { ValidatedTextInput } from "@/components/common/fields/TextInput";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+
+export function ChargeTypeForm({
+  form,
+}: {
+  form: UseFormReturnType<FormValues>;
+}) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the Charge Type"
+          form={form}
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          className={classes.fields}
+          name="name"
+          description="Unique name for the Charge Type"
+          label="Name"
+          placeholder="Name"
+          variant="filled"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        className={classes.fields}
+        name="description"
+        description="Description of the Charge Type"
+        label="Description"
+        placeholder="Description"
+        variant="filled"
+      />
+    </div>
+  );
+}
 
 function CreateChargeTypeModalForm() {
   const { classes } = useFormStyles();
@@ -38,15 +84,13 @@ function CreateChargeTypeModalForm() {
   const form = useForm<FormValues>({
     validate: yupResolver(chargeTypeSchema),
     initialValues: {
+      status: "A",
       name: "",
       description: "",
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<ChargeType>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<ChargeType>>(
     form,
     store,
     notifications,
@@ -57,7 +101,7 @@ function CreateChargeTypeModalForm() {
       queryKeysToInvalidate: ["charge-type-table-data"],
       additionalInvalidateQueries: ["chargeTypes"],
       closeModal: true,
-      errorMessage: "Failed to create charge type.",
+      errorMessage: "Failed to create charge type",
     },
     () => setLoading(false),
   );
@@ -69,35 +113,17 @@ function CreateChargeTypeModalForm() {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          className={classes.fields}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          variant="filled"
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          className={classes.fields}
-          name="description"
-          label="Description"
-          placeholder="Description"
-          variant="filled"
-        />
-        <Group position="right" mt="md">
-          <Button
-            color="white"
-            type="submit"
-            className={classes.control}
-            loading={loading}
-          >
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <ChargeTypeForm form={form} />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }

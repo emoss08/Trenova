@@ -39,7 +39,7 @@ import { useEquipTypeTableStore as store } from "@/stores/EquipmentStore";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { EquipmentClassChoices } from "@/lib/choices";
-import { yesAndNoChoicesBoolean } from "@/lib/constants";
+import { statusChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { TableStoreProps } from "@/types/tables";
 
 export function EquipmentTypeDetailForm({
@@ -50,7 +50,7 @@ export function EquipmentTypeDetailForm({
   const { classes } = useFormStyles();
 
   return (
-    <Box className={classes.div}>
+    <div className={classes.div}>
       <div
         style={{
           textAlign: "center",
@@ -72,7 +72,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.equipmentClass"
           label="Equipment Class"
           placeholder="Equipment Class"
-          description="Equipment Class associated with the equipment type."
+          description="Equipment Class associated with the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -80,7 +80,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.fixedCost"
           label="Fixed Cost"
           placeholder="Fixed Cost"
-          description="Fixed cost to operate the equipment type."
+          description="Fixed cost to operate the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -88,7 +88,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.variableCost"
           label="Variable Cost"
           placeholder="Variable Cost"
-          description="Variable cost to operate the equipment type."
+          description="Variable cost to operate the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -96,7 +96,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.height"
           label="Height"
           placeholder="Height"
-          description="Height of the equipment type."
+          description="Height of the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -104,7 +104,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.weight"
           label="Weight"
           placeholder="Weight"
-          description="Weight of the equipment type."
+          description="Weight of the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -112,7 +112,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.length"
           label="Length"
           placeholder="Length"
-          description="Length of the equipment type."
+          description="Length of the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -120,7 +120,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.width"
           label="Width"
           placeholder="Width"
-          description="Current Width of the equipment type."
+          description="Current Width of the Equipment Type"
           withAsterisk
         />
         <ValidatedTextInput<FormValues>
@@ -128,7 +128,7 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.idlingFuelUsage"
           label="Idling Fuel Usage"
           placeholder="Idling Fuel Usage"
-          description="Idling fuel usage of the equipment type."
+          description="Idling fuel usage of the Equipment Type"
           withAsterisk
         />
         <SelectInput<FormValues>
@@ -137,11 +137,11 @@ export function EquipmentTypeDetailForm({
           name="equipmentTypeDetails.exemptFromTolls"
           label="Exempt From Tolls"
           placeholder="Exempt From Tolls"
-          description="Exempt from tolls of the equipment type."
+          description="Exempt from tolls of the Equipment Type"
           withAsterisk
         />
       </SimpleGrid>
-    </Box>
+    </div>
   );
 }
 
@@ -155,28 +155,38 @@ export function EquipmentTypeForm({
   return (
     <Box className={classes.div}>
       <SimpleGrid cols={2} breakpoints={[{ maxWidth: "lg", cols: 1 }]}>
+        <SelectInput<FormValues>
+          data={statusChoices}
+          name="status"
+          placeholder="Status"
+          label="Status"
+          description="Status of the Equipment Type"
+          form={form}
+          variant="filled"
+          withAsterisk
+        />
         <ValidatedTextInput<FormValues>
           form={form}
           name="name"
           label="Name"
           placeholder="Name"
-          description="Unique name for the equipment type."
-          withAsterisk
-        />
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="costPerMile"
-          label="Cost Per Mile"
-          placeholder="Cost Per Mile"
-          description="Cost per mile to operate the equipment type."
+          description="Unique name for the Equipment Type"
           withAsterisk
         />
       </SimpleGrid>
+      <ValidatedTextInput<FormValues>
+        form={form}
+        name="costPerMile"
+        label="Cost Per Mile"
+        placeholder="Cost Per Mile"
+        description="Cost per mile to operate the Equipment Type"
+        withAsterisk
+      />
       <ValidatedTextArea<FormValues>
         form={form}
         name="description"
         label="Description"
-        description="Description of the equipment type."
+        description="Description of the Equipment Type"
         placeholder="Description"
       />
     </Box>
@@ -190,6 +200,7 @@ function ModalBody() {
   const form = useForm<FormValues>({
     validate: yupResolver(equipmentTypeSchema),
     initialValues: {
+      status: "A",
       name: "",
       description: "",
       costPerMile: "0.00",
@@ -209,7 +220,7 @@ function ModalBody() {
 
   const mutation = useCustomMutation<
     FormValues,
-    Omit<TableStoreProps<EquipmentType>, "drawerOpen">
+    TableStoreProps<EquipmentType>
   >(
     form,
     store,
@@ -221,7 +232,7 @@ function ModalBody() {
       queryKeysToInvalidate: ["equipment-type-table-data"],
       additionalInvalidateQueries: ["equipmentTypes"],
       closeModal: true,
-      errorMessage: "Failed to create equipment type.",
+      errorMessage: "Failed to create Equipment Type",
     },
     () => setLoading(false),
   );
