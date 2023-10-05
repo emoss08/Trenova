@@ -20,8 +20,20 @@ import { Center, FileInput, FileInputProps, Group, rem } from "@mantine/core";
 import { IconAlertTriangle, IconPhoto } from "@tabler/icons-react";
 import { UseFormReturnType } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
+import { InputFieldNameProp } from "@/types";
 
-function Value({ file }: { file: File }) {
+function Value({ file }: { file: File | string }) {
+  let displayValue: string;
+
+  if (file instanceof File) {
+    // This is an actual file object
+    displayValue = file.name;
+  } else {
+    // This is a URL string
+    const urlParts = file.split("/");
+    displayValue = urlParts[urlParts.length - 1] || "Unknown File"; // Taking the last part of the URL as the file name
+  }
+
   return (
     <Center
       inline
@@ -45,7 +57,7 @@ function Value({ file }: { file: File }) {
           display: "inline-block",
         }}
       >
-        {file.type}
+        {displayValue}
       </span>
     </Center>
   );
@@ -68,7 +80,7 @@ const ValueComponent: FileInputProps["valueComponent"] = ({ value }) => {
 interface ValidatedFileInputProps<TFormValues>
   extends Omit<FileInputProps, "form" | "name"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
-  name: keyof TFormValues;
+  name: InputFieldNameProp<TFormValues>;
 }
 
 export function ValidatedFileInput<TFormValues extends object>({
@@ -84,7 +96,9 @@ export function ValidatedFileInput<TFormValues extends object>({
       {...rest}
       {...form.getInputProps(name as string)}
       error={error}
+      variant="filled"
       className={classes.fields}
+      placeholder={rest.placeholder || "Select file"}
       rightSection={
         error && (
           <IconAlertTriangle
