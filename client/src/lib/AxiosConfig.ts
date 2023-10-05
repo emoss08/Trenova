@@ -15,9 +15,54 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import axios from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { API_URL } from "@/lib/constants";
 import { getCookie } from "@/lib/auth";
+import { API_ENDPOINTS } from "@/types/server";
+
+declare module "axios" {
+  interface Axios {
+    get<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    delete<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    head<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    options<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    post<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      data?: D,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    put<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      data?: D,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    patch<T = any, R = AxiosResponse<T>, D = any>(
+      url: API_ENDPOINTS,
+      data?: D,
+      config?: AxiosRequestConfig<D>,
+    ): Promise<R>;
+
+    // ... augment other methods as needed
+  }
+}
 
 /**
  * Axios request interceptor.
@@ -57,7 +102,4 @@ axios.interceptors.request.use(
 //   },
 // );
 
-/**
- * Exporting the configured Axios instance.
- */
 export default axios;
