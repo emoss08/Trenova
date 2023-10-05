@@ -60,15 +60,56 @@ export function useCustomMutation<T, K>(
   );
 }
 
-function executeApiMethod(
+async function executeApiMethod(
   method: MutationOptions["method"],
   path: string,
   data?: any,
 ): Promise<AxiosResponse> {
-  const axiosConfig = { method, url: path, data };
-  return axios(axiosConfig);
+  const fileData = extractFileFromData(data);
+
+  // Send the JSON data first (this assumes no file in the payload)
+  const axiosConfig = {
+    method,
+    url: path,
+    data: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  };
+
+  const response = await axios(axiosConfig);
+
+  // If there's a file to send and the JSON data was sent successfully
+  if (fileData) {
+    const newPath = method === "POST" ? `${path}${response.data.id}/` : path;
+    await sendFileData(newPath, fileData);
+  }
+
+  return response;
+}
+function extractFileFromData(
+  data: any,
+): { fieldName: string; file: File | Blob } | null {
+  // eslint-disable-next-line no-restricted-syntax
+  for (const key of Object.keys(data)) {
+    if (data[key] instanceof File || data[key] instanceof Blob) {
+      const file = data[key];
+      // eslint-disable-next-line no-param-reassign
+      delete data[key];
+      return { fieldName: key, file };
+    }
+  }
+  return null;
 }
 
+function sendFileData(
+  path: string,
+  fileData: { fieldName: string; file: File | Blob },
+) {
+  const formData = new FormData();
+  formData.append(fileData.fieldName, fileData.file);
+  return axios.patch(path, formData);
+}
 function handleSuccess<K>(
   options: MutationOptions,
   notifications: NotificationsEvents,
@@ -127,7 +168,7 @@ function showNotification(
     color,
     withCloseButton: true,
     icon: <FontAwesomeIcon icon={icon} />,
-    autoClose: 10_000,
+    autoClose: 2_000,
   });
 }
 
