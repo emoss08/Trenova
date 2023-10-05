@@ -72,7 +72,7 @@ class BillingControlViewSet(viewsets.ModelViewSet):
             "remove_billing_history",
             "validate_customer_rates",
             "auto_bill_criteria",
-            "auto_bill_shipments",
+            "auto_bill_shipment",
             "enforce_customer_billing",
             "organization_id",
         )
