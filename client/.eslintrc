@@ -31,6 +31,7 @@
     "HTMLButtonElement": true,
     "WebSocket": true,
     "HTMLInputElement": true,
+    "HTMLFormElement": true,
     "HTMLDivElement": true,
     "File": true
   },
