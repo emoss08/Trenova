@@ -23,7 +23,15 @@ from django.http import HttpRequest
 
 from utils.admin import GenericAdmin
 
-from .models import DivisionCode, GeneralLedgerAccount, RevenueCode
+from .models import (
+    AccountingControl,
+    DivisionCode,
+    FinancialTransaction,
+    GeneralLedgerAccount,
+    ReconciliationQueue,
+    RevenueCode,
+    Tag,
+)
 
 
 @admin.register(GeneralLedgerAccount)
@@ -34,12 +42,14 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
 
     model: type[GeneralLedgerAccount] = GeneralLedgerAccount
     list_display: tuple[str, ...] = (
-        "id",
         "account_number",
         "description",
+        "cash_flow_type",
+        "account_sub_type",
+        "account_classification",
     )
     search_fields: tuple[str, ...] = (
-        "id",
+        "account_number",
         "description",
     )
 
@@ -62,10 +72,8 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
             Type[ModelForm[Any]]: Form Class's
         """
         form = super().get_form(request, obj, **kwargs)
-        form.base_fields["account_number"].widget.attrs[
-            "placeholder"
-        ] = "0000-0000-0000-0000"
-        form.base_fields["account_number"].widget.attrs["value"] = "0000-0000-0000-0000"
+        form.base_fields["account_number"].widget.attrs["placeholder"] = "0000-00"
+        form.base_fields["account_number"].widget.attrs["value"] = "0000-00"
         return form
 
 
@@ -100,4 +108,80 @@ class DivisionCodeAdmin(GenericAdmin[DivisionCode]):
     search_fields: tuple[str, ...] = (
         "code",
         "description",
+    )
+
+
+@admin.register(Tag)
+class TagAdmin(GenericAdmin[Tag]):
+    """
+    Tag Admin
+    """
+
+    model: type[Tag] = Tag
+    list_display: tuple[str, ...] = (
+        "name",
+        "description",
+    )
+    search_fields: tuple[str, ...] = (
+        "name",
+        "description",
+    )
+
+
+@admin.register(FinancialTransaction)
+class FinancialTransactionAdmin(GenericAdmin[FinancialTransaction]):
+    """
+    FinancialTransaction Admin
+    """
+
+    model: type[FinancialTransaction] = FinancialTransaction
+    list_display: tuple[str, ...] = (
+        "transaction_number",
+        "transaction_type",
+        "amount",
+    )
+    search_fields: tuple[str, ...] = ("shipment__pro_number",)
+
+
+@admin.register(AccountingControl)
+class AccountingControlAdmin(GenericAdmin[AccountingControl]):
+    """
+    Billing Control Admin
+    """
+
+    model = AccountingControl
+    list_display = ("organization", "auto_create_journal_entries")
+    search_fields = ("organization", "auto_create_journal_entries")
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: AccountingControl | None = None
+    ) -> bool:
+        """Has Deleted Permission
+
+        Args:
+            request (HttpRequest): Request Object
+            obj (Optional[AccountingControl]): Accounting Control Object
+
+        Returns:
+            bool: True if the user has permission to delete the given object, False otherwise.
+        """
+        return False
+
+
+@admin.register(ReconciliationQueue)
+class ReconciliationQueueAdmin(GenericAdmin[ReconciliationQueue]):
+    """
+    ReconciliationQueue Admin
+    """
+
+    model: type[ReconciliationQueue] = ReconciliationQueue
+    list_display: tuple[str, ...] = (
+        "shipment",
+        "resolved",
+        "reason",
+        "resolved_by",
+    )
+    search_fields: tuple[str, ...] = (
+        "date_added",
+        "reason",
     )

@@ -34,7 +34,7 @@ class GeneralLedgerAccountFactory(factory.django.DjangoModelFactory):
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
     account_number = factory.Faker(
         "numerify",
-        text="####-####-####-####",
+        text="####-##",
     )
     account_type = factory.Faker(
         "random_element",

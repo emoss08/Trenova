@@ -15,7 +15,7 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from django.db.models import QuerySet
+from django.db.models import Prefetch, QuerySet
 from rest_framework import viewsets
 
 from accounting import models, serializers
@@ -58,18 +58,39 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
         Returns:
             QuerySet[models.GeneralLedgerAccount]: A queryset of generalledgeraccount objects
         """
-        queryset = self.queryset.filter(
-            organization_id=self.request.user.organization_id  # type: ignore
-        ).only(
-            "organization_id",
-            "id",
-            "cash_flow_type",
-            "account_number",
-            "description",
-            "account_type",
-            "account_sub_type",
-            "account_classification",
-            "status",
+        queryset = (
+            self.queryset.filter(
+                organization_id=self.request.user.organization_id  # type: ignore
+            )
+            .prefetch_related(
+                Prefetch(
+                    "tags",
+                    queryset=models.Tag.objects.only("id", "name", "description"),
+                ),
+            )
+            .only(
+                "organization_id",
+                "id",
+                "status",
+                "account_number",
+                "description",
+                "account_type",
+                "cash_flow_type",
+                "account_sub_type",
+                "account_classification",
+                "balance",
+                "opening_balance",
+                "closing_balance",
+                "parent_account",
+                "is_reconciled",
+                "date_opened",
+                "date_closed",
+                "notes",
+                "owner",
+                "is_tax_relevant",
+                "attachment",
+                "interest_rate",
+            )
         )
         return queryset
 
@@ -153,6 +174,41 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
             "cash_account_id",
             "ap_account_id",
             "expense_account_id",
+        )
+
+        return queryset
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    """
+    Tag ViewSet
+    """
+
+    serializer_class = serializers.TagSerializer
+    queryset = models.Tag.objects.all()
+    search_fields = ("name",)
+    permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("name",)
+
+    def get_queryset(self) -> QuerySet[models.DivisionCode]:
+        """
+        The get_queryset function is used to filter the queryset based on the user's organization.
+        This is done by adding a filter to the queryset that only returns DivisionCodes with an
+        organization_id equal to that of the current user. This ensures that users can only see
+        DivisionCodes belonging to their own organization.
+
+        Args:
+            self: Refer to the current instance of a class
+
+        Returns:
+            QuerySet[models.DivisionCode]: A queryset of Division Code objects
+        """
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "name",
+            "description",
         )
 
         return queryset

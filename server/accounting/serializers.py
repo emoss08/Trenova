@@ -22,6 +22,30 @@ from accounting import models
 from utils.serializers import GenericSerializer
 
 
+class TagSerializer(GenericSerializer):
+    """A serializer class for the Tag model.
+
+    This serializer is used to convert the Tag model instance into a Python
+    dictionary format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    See Also:
+        GenericSerializer: A generic serializer class that provides the
+        functionality for the serializer.
+    """
+
+    class Meta:
+        """
+        Metaclass for TagSerializer
+
+        Attributes:
+            model (models.Tag): The model that the serializer
+            is for.
+        """
+
+        model = models.Tag
+
+
 class GeneralLedgerAccountSerializer(GenericSerializer):
     """A serializer class for the GeneralLedgerAccount model.
 
@@ -44,6 +68,7 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
+        extra_fields = ("tags",)
 
     def validate_account_number(self, value: str) -> str:
         """Validate account number does not exist for the organization. Will only apply to
