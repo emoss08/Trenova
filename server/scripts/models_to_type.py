@@ -54,6 +54,12 @@ TYPE_MAP = {
 }
 
 
+# Function to convert snake_case to camelCase
+def snake_to_camel(snake_str: str) -> str:
+    components = snake_str.split("_")
+    return components[0] + "".join(x.title() for x in components[1:])
+
+
 class ModelVisitor(ast.NodeVisitor):
     def __init__(self):
         self.models = {}
@@ -90,14 +96,17 @@ class ModelVisitor(ast.NodeVisitor):
                                 ):
                                     is_blankable = True
 
-                            ts_type = TYPE_MAP.get(field_type)
-
-                            if ts_type:
+                            if ts_type := TYPE_MAP.get(field_type):
                                 if is_nullable:
                                     ts_type += " | null"
                                 if is_blankable:
                                     field_name += "?"
-                                fields.append((field_name, ts_type))
+                                camel_case_name = snake_to_camel(
+                                    field_name
+                                )  # Convert to camelCase
+                                fields.append(
+                                    (camel_case_name, ts_type)
+                                )  # Use camelCase name
 
         if fields:
             self.models[node.name] = fields

@@ -24,6 +24,24 @@ from factory.fuzzy import FuzzyDecimal
 from utils.models import RatingMethodChoices
 
 
+class ServiceTypeFactory(factory.django.DjangoModelFactory):
+    """
+    ServiceType Factory
+    """
+
+    class Meta:
+        """
+        Metaclass for ServiceTypeFactory
+        """
+
+        model = "shipment.ServiceType"
+
+    business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
+    organization = factory.SubFactory("organization.factories.OrganizationFactory")
+    code = factory.Faker("pystr", max_chars=4)
+    description = factory.Faker("text", locale="en_US", max_nb_chars=100)
+
+
 class ShipmentTypeFactory(factory.django.DjangoModelFactory):
     """
     ShipmentType factory
@@ -72,7 +90,7 @@ class ShipmentFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         """
-        Metaclass for orderFactory
+        Metaclass for ShipmentFactory
         """
 
         model = "shipment.Shipment"
@@ -86,6 +104,7 @@ class ShipmentFactory(factory.django.DjangoModelFactory):
     origin_appointment_window_start = timezone.now()
     origin_appointment_window_end = timezone.now()
     destination_location = factory.SubFactory("location.factories.LocationFactory")
+    service_type = factory.SubFactory(ServiceTypeFactory)
     rate_method = RatingMethodChoices.FLAT
     freight_charge_amount = FuzzyDecimal(10, 1000000, 4)
     destination_appointment_window_start = timezone.now() + timedelta(days=1)
@@ -113,7 +132,7 @@ class ShipmentCommentFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    shipment = factory.SubFactory(OrderFactory)
+    shipment = factory.SubFactory(ShipmentFactory)
     comment_type = factory.SubFactory("dispatch.factories.CommentTypeFactory")
     comment = factory.Faker("text", locale="en_US", max_nb_chars=100)
     entered_by = factory.SubFactory("accounts.tests.factories.UserFactory")
@@ -133,7 +152,7 @@ class ShipmentDocumentationFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    shipment = factory.SubFactory(OrderFactory)
+    shipment = factory.SubFactory(ShipmentFactory)
     document = SimpleUploadedFile(
         "file.pdf", b"file_content", content_type="application/pdf"
     )
@@ -156,7 +175,7 @@ class AdditionalChargeFactory(factory.django.DjangoModelFactory):
 
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    shipment = factory.SubFactory(OrderFactory)
+    shipment = factory.SubFactory(ShipmentFactory)
     accessorial_charge = factory.SubFactory(
         "billing.tests.factories.AccessorialChargeFactory"
     )

@@ -162,7 +162,7 @@ def get_model_columns_api(request: Request) -> Response:
     except KeyError:
         return Response(
             {"error": f"Not allowed to generate reports for model: {model_name}"},
-            status=400,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     # No need to handle related fields separately anymore

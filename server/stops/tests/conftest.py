@@ -21,7 +21,6 @@ from typing import Any
 import pytest
 from django.utils import timezone
 from rest_framework.test import APIClient
-from shipment.tests.factories import OrderFactory, ShipmentTypeFactory
 
 from accounting.tests.factories import RevenueCodeFactory
 from customer.factories import CustomerFactory
@@ -31,7 +30,7 @@ from location.models import Location
 from movements.models import Movement
 from movements.tests.factories import MovementFactory
 from organization.models import Organization
-from shipment.tests.factories import ShipmentTypeFactory
+from shipment.tests.factories import ShipmentFactory, ShipmentTypeFactory
 from stops import models
 from stops.tests.factories import StopFactory
 

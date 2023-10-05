@@ -24,7 +24,8 @@ from equipment.models import Tractor
 from equipment.tests.factories import TractorFactory
 from movements.tests.factories import MovementFactory
 from organization.models import Organization
-from shipment.tests.factories import OrderFactory
+from shipment.models import Shipment
+from shipment.tests.factories import ShipmentFactory
 from worker.factories import WorkerFactory
 from worker.models import Worker
 

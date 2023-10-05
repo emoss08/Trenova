@@ -64,6 +64,7 @@ class DelayCodeViewSet(viewsets.ModelViewSet):
             organization_id=self.request.user.organization_id  # type: ignore
         ).only(
             "organization_id",
+            "status",
             "code",
             "description",
             "f_carrier_or_driver",
@@ -84,9 +85,9 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
 
     queryset = models.FleetCode.objects.all()
     serializer_class = serializers.FleetCodeSerializer
-    filterset_fields = ("is_active",)
+    filterset_fields = ("status",)
     permission_classes = [CustomObjectPermissions]
-    search_fields = ("code", "description", "is_active", "manager__username")
+    search_fields = ("code", "description", "status", "manager__username")
 
     def get_queryset(self) -> QuerySet[models.FleetCode]:
         queryset = self.queryset.filter(
@@ -95,7 +96,7 @@ class FleetCodeViewSet(viewsets.ModelViewSet):
             "organization_id",
             "code",
             "description",
-            "is_active",
+            "status",
             "revenue_goal",
             "deadhead_goal",
             "manager_id",
@@ -154,7 +155,7 @@ class RateViewSet(viewsets.ModelViewSet):
     queryset = models.Rate.objects.all()
     serializer_class = serializers.RateSerializer
     permission_classes = [CustomObjectPermissions]
-    filterset_fields = ("is_active",)
+    filterset_fields = ("status",)
     search_fields = (
         "rate_number",
         "customer__code",
@@ -164,7 +165,7 @@ class RateViewSet(viewsets.ModelViewSet):
         "origin_location__code",
         "destination_location__code",
         "rate_method",
-        "is_active",
+        "status",
     )
 
     @action(detail=False, methods=["get"])
@@ -200,7 +201,7 @@ class RateViewSet(viewsets.ModelViewSet):
         ).only(
             "id",
             "rate_number",
-            "is_active",
+            "status",
             "customer_id",
             "effective_date",
             "expiration_date",

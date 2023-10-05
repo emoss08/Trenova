@@ -23,11 +23,11 @@ from stops.models import Stop
 from utils.models import StopChoices
 
 if TYPE_CHECKING:
-    pass
+    from shipment.models import Shipment
 
 
 def create_initial_stops(
-    *, movement: models.Movement, shipment: "shipment"
+    *, movement: models.Movement, shipment: "Shipment"
 ) -> tuple[Stop, Stop]:
     """Create Initial Stops for shipments
 
