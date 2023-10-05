@@ -297,7 +297,7 @@ def test_auto_bill_criteria_required_when_auto_bill_true(
     billing_control = organization.billing_control
 
     with pytest.raises(ValidationError) as excinfo:
-        billing_control.auto_bill_shipments = True
+        billing_control.auto_bill_shipment = True
         billing_control.auto_bill_criteria = None
         billing_control.full_clean()
 
