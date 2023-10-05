@@ -18,6 +18,7 @@
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
 import {
+  AccountingControlFormValues,
   DivisionCodeFormValues,
   GLAccountFormValues,
   RevenueCodeFormValues,
@@ -27,7 +28,9 @@ import {
   AccountClassificationChoiceProps,
   AccountSubTypeChoiceProps,
   AccountTypeChoiceProps,
+  AutomaticJournalEntryChoiceType,
   CashFlowTypeChoiceProps,
+  ThresholdActionChoiceType,
 } from "../choices";
 
 export const revenueCodeSchema: ObjectSchema<RevenueCodeFormValues> =
@@ -88,4 +91,42 @@ export const divisionCodeSchema: ObjectSchema<DivisionCodeFormValues> =
     apAccount: Yup.string().notRequired(),
     cashAccount: Yup.string().notRequired(),
     expenseAccount: Yup.string().notRequired(),
+  });
+
+export const accountingControlSchema: ObjectSchema<AccountingControlFormValues> =
+  Yup.object().shape({
+    autoCreateJournalEntries: Yup.boolean().required(
+      "Automatically Create Journal Entries must be yes or no",
+    ),
+    journalEntryCriteria:
+      Yup.string<AutomaticJournalEntryChoiceType>().required(
+        "Journal Entry Criteria is required",
+      ),
+    restrictManualJournalEntries: Yup.boolean().required(
+      "Restrict Manual Journal Entries must be yes or no",
+    ),
+    requireJournalEntryApproval: Yup.boolean().required(
+      "Require Journal Entry Approval must be yes or no",
+    ),
+    defaultRevenueAccount: Yup.string().notRequired(),
+    defaultExpenseAccount: Yup.string().notRequired(),
+    enableReconciliationNotifications: Yup.boolean().required(
+      "Enable Reconciliation Notifications must be yes or no",
+    ),
+    reconciliationNotificationRecipients: Yup.array().of(
+      Yup.string().required(
+        "Reconciliation Notification Recipients is required",
+      ),
+    ),
+    reconciliationThreshold: Yup.number().required(
+      "Reconciliation Threshold is required",
+    ),
+    reconciliationThresholdAction:
+      Yup.string<ThresholdActionChoiceType>().required(
+        "Reconciliation Threshold Action is required",
+      ),
+    haltOnPendingReconciliation: Yup.boolean().required(
+      "Halt on Pending Reconciliation must be yes or no",
+    ),
+    criticalProcesses: Yup.string().notRequired(),
   });

@@ -68,7 +68,6 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         """
 
         model = models.GeneralLedgerAccount
-        extra_fields = ("tags",)
 
     def validate_account_number(self, value: str) -> str:
         """Validate account number does not exist for the organization. Will only apply to
@@ -227,3 +226,71 @@ class DivisionCodeSerializer(GenericSerializer):
             )
 
         return value
+
+
+class FinancialTransactionSerializer(GenericSerializer):
+    """A serializer class for the FinancialTransaction model.
+
+    This serializer is used to convert the FinancialTransaction model instance into a Python
+    dictionary format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    See Also:
+        GenericSerializer: A generic serializer class that provides the
+        functionality for the serializer.
+    """
+
+    class Meta:
+        """
+        Metaclass for FinancialTransactionSerializer
+
+        Attributes:
+            model (models.FinancialTransaction): The model that the serializer
+            is for.
+        """
+
+        model = models.FinancialTransaction
+
+
+class ReconciliationQueueSerializer(GenericSerializer):
+    """A serializer class for the ReconciliationQueue model.
+
+    This serializer is used to convert the ReconciliationQueue model instance into a Python
+    dictionary format that can be rendered into a JSON response. It also defines the fields
+    that should be included in the serialized representation of the model.
+
+    See Also:
+        GenericSerializer: A generic serializer class that provides the
+        functionality for the serializer.
+    """
+
+    class Meta:
+        """
+        Metaclass for ReconciliationQueueSerializer
+
+        Attributes:
+            model (models.ReconciliationQueue): The model that the serializer
+            is for.
+        """
+
+        model = models.ReconciliationQueue
+
+
+class AccountingControlSerializer(GenericSerializer):
+    """A serializer for the AccountingControl model.
+
+    The serializer provides default operations for creating, updating, and deleting
+    Dispatch Control, as well as listing and retrieving Accounting Control. It uses the
+    `AccountingControl` model to convert the accounting control instances to and from
+    JSON-formatted data.
+
+    Only authenticated users are allowed to access the view provided by this serializer.
+    Filtering is also available, with the ability to filter by ID, and name.
+    """
+
+    class Meta:
+        """
+        A class representing the metadata for the `AccountingControlSerializer` class.
+        """
+
+        model = models.AccountingControl

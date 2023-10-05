@@ -181,8 +181,6 @@ class AccountingControl(GenericModel):
         ),
         related_name="reconciliation_notifications",
     )
-
-    # 2. Setting thresholds for some automated processes based on the frequency of reconciliation tasks.
     reconciliation_threshold = models.PositiveIntegerField(
         verbose_name=_("Reconciliation Threshold"),
         default=50,
@@ -966,21 +964,7 @@ class FinancialTransaction(GenericModel):
             None: this function does not return anything.
         """
         if not self.transaction_number:
-            current_date = timezone.now().date().strftime("%Y%m%d")
-
-            if last_transaction := (
-                self.__class__.objects.filter(
-                    transaction_number__startswith=current_date
-                )
-                .order_by("-transaction_number")
-                .first()
-            ):
-                last_seq_num = int(last_transaction.transaction_number.split("-")[-1])
-                new_seq_num = str(last_seq_num + 1).zfill(3)
-            else:
-                new_seq_num = "001"
-
-            self.transaction_number = f"{current_date}-{new_seq_num}"
+            self.generate_transaction_number()
 
         super().save(*args, **kwargs)
 
@@ -991,6 +975,21 @@ class FinancialTransaction(GenericModel):
             str: FinancialTransaction absolute url
         """
         return reverse("financial-transaction-detail", kwargs={"pk": self.pk})
+
+    def generate_transaction_number(self) -> None:
+        current_date = timezone.now().date().strftime("%Y%m%d")
+
+        if last_transaction := (
+            self.__class__.objects.filter(transaction_number__startswith=current_date)
+            .order_by("-transaction_number")
+            .first()
+        ):
+            last_seq_num = int(last_transaction.transaction_number.split("-")[-1])
+            new_seq_num = str(last_seq_num + 1).zfill(3)
+        else:
+            new_seq_num = "001"
+
+        self.transaction_number = f"{current_date}-{new_seq_num}"
 
 
 class ReconciliationQueue(GenericModel):
