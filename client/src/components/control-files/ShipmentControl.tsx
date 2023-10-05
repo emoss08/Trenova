@@ -31,37 +31,37 @@ import { notifications } from "@mantine/notifications";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useForm, yupResolver } from "@mantine/form";
-import { getOrderControl } from "@/services/OrganizationRequestService";
+import { getShipmentControl } from "@/services/OrganizationRequestService";
 import { usePageStyles } from "@/assets/styles/PageStyles";
-import { OrderControl, OrderControlFormValues } from "@/types/order";
+import { ShipmentControl, ShipmentControlFormValues } from "@/types/order";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { orderControlSchema } from "@/lib/schemas/OrderSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { shipmentControlSchema } from "@/lib/schemas/OrderSchema";
 
 interface Props {
-  orderControl: OrderControl;
+  shipmentControl: ShipmentControl;
 }
 
-function OrderControlForm({ orderControl }: Props) {
+function ShipmentControlForm({ shipmentControl }: Props) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    (values: OrderControlFormValues) =>
-      axios.put(`/order_control/${orderControl.id}/`, values),
+    (values: ShipmentControlFormValues) =>
+      axios.put(`/shipment_control/${shipmentControl.id}/`, values),
     {
       onSuccess: () => {
         queryClient
           .invalidateQueries({
-            queryKey: ["orderControl"],
+            queryKey: ["shipmentControl"],
           })
           .then(() => {
             notifications.show({
               title: "Success",
-              message: "Order Control updated successfully",
+              message: "Shipment Control updated successfully",
               color: "green",
               withCloseButton: true,
               icon: <FontAwesomeIcon icon={faCheck} />,
@@ -92,24 +92,24 @@ function OrderControlForm({ orderControl }: Props) {
     },
   );
 
-  const form = useForm<OrderControlFormValues>({
-    validate: yupResolver(orderControlSchema),
+  const form = useForm<ShipmentControlFormValues>({
+    validate: yupResolver(shipmentControlSchema),
     initialValues: {
-      autoRateOrders: orderControl.autoRateOrders,
-      calculateDistance: orderControl.calculateDistance,
-      enforceRevCode: orderControl.enforceRevCode,
-      enforceVoidedComm: orderControl.enforceVoidedComm,
-      generateRoutes: orderControl.generateRoutes,
-      enforceCommodity: orderControl.enforceCommodity,
-      autoSequenceStops: orderControl.autoSequenceStops,
-      autoOrderTotal: orderControl.autoOrderTotal,
-      enforceOriginDestination: orderControl.enforceOriginDestination,
-      checkForDuplicateBol: orderControl.checkForDuplicateBol,
-      removeOrders: orderControl.removeOrders,
+      autoRateShipment: shipmentControl.autoRateShipment,
+      calculateDistance: shipmentControl.calculateDistance,
+      enforceRevCode: shipmentControl.enforceRevCode,
+      enforceVoidedComm: shipmentControl.enforceVoidedComm,
+      generateRoutes: shipmentControl.generateRoutes,
+      enforceCommodity: shipmentControl.enforceCommodity,
+      autoSequenceStops: shipmentControl.autoSequenceStops,
+      autoShipmentTotal: shipmentControl.autoShipmentTotal,
+      enforceOriginDestination: shipmentControl.enforceOriginDestination,
+      checkForDuplicateBol: shipmentControl.checkForDuplicateBol,
+      removeShipment: shipmentControl.removeShipment,
     },
   });
 
-  const handleSubmit = (values: OrderControlFormValues) => {
+  const handleSubmit = (values: ShipmentControlFormValues) => {
     setLoading(true);
     mutation.mutate(values);
   };
@@ -119,75 +119,75 @@ function OrderControlForm({ orderControl }: Props) {
       <Box className={classes.div}>
         <Box>
           <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
-              name="autoRateOrders"
-              label="Auto Rate Orders"
-              description="Automatically rate orders when they are created"
+              name="autoRateShipment"
+              label="Auto Rate Shipments"
+              description="Automatically rate shipments when they are created"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="calculateDistance"
               label="Auto Calculate Distance"
               description="Automatically Calculate distance between stops"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="enforceRevCode"
               label="Enforce Rev Code"
-              description="Enforce rev code code when entering an order."
+              description="Enforce rev code code when entering an shipment"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="generateRoutes"
               label="Auto Generate Routes"
-              description="Automatically generate routing information for the order."
+              description="Automatically generate routing information for the shipment"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="enforceCommodity"
               label="Enforce Commodity"
-              description="Enforce the commodity input on the entry of an order."
+              description="Enforce the commodity input on the entry of an shipment"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="autoSequenceStops"
               label="Auto Sequence Stops"
-              description="Auto Sequence stops for the order and movements."
+              description="Auto Sequence stops for the shipment and movements"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
-              name="autoOrderTotal"
-              label="Auto Total Orders"
-              description="Automate the order total amount calculation."
+              name="autoShipmentTotal"
+              label="Auto Total Shipments"
+              description="Automate the shipment total amount calculation"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="enforceOriginDestination"
               label="Enforce Origin Destination"
-              description="Compare and validate that origin and destination are not the same."
+              description="Compare and validate that origin and destination are not the same"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
               name="checkForDuplicateBol"
               label="Check for Duplicate BOL"
-              description="Check for duplicate BOL numbers when entering an order."
+              description="Check for duplicate BOL numbers when entering an shipment"
             />
-            <SwitchInput<OrderControlFormValues>
+            <SwitchInput<ShipmentControlFormValues>
               form={form}
               className={classes.fields}
-              name="removeOrders"
-              label="Allow Order Removal"
-              description="Ability to remove orders from system. This will disallow the removal of Orders, Movements and Stops."
+              name="removeShipment"
+              label="Allow Shipment Removal"
+              description="Ability to remove shipments from system. This will disallow the removal of Shipments, Movements and Stops"
             />
           </SimpleGrid>
           <Group position="right" mt="md">
@@ -206,32 +206,32 @@ function OrderControlForm({ orderControl }: Props) {
   );
 }
 
-export default function OrderControlPage() {
+export default function ShipmentControlPage() {
   const { classes } = usePageStyles();
   const queryClient = useQueryClient();
 
-  const { data: orderControlData, isLoading: isOrderControlDataLoading } =
+  const { data: shipmentControlData, isLoading: isShipmentControlLoading } =
     useQuery({
-      queryKey: ["orderControl"],
-      queryFn: () => getOrderControl(),
-      initialData: () => queryClient.getQueryData(["orderControl"]),
+      queryKey: ["shipmentControl"],
+      queryFn: () => getShipmentControl(),
+      initialData: () => queryClient.getQueryData(["shipmentControl"]),
       staleTime: Infinity,
     });
 
-  // Store first element of orderControlData in variable
-  const orderControlDataArray = orderControlData?.[0];
+  // Store first element of shipmentControlData in variable
+  const shipmentControlDataArray = shipmentControlData?.[0];
 
-  return isOrderControlDataLoading ? (
+  return isShipmentControlLoading ? (
     <Skeleton height={400} />
   ) : (
     <Card className={classes.card}>
       <Text fz="xl" fw={700} className={classes.text}>
-        Order Controls
+        Shipment Controls
       </Text>
 
       <Divider my={10} />
-      {orderControlDataArray && (
-        <OrderControlForm orderControl={orderControlDataArray} />
+      {shipmentControlDataArray && (
+        <ShipmentControlForm shipmentControl={shipmentControlDataArray} />
       )}
     </Card>
   );

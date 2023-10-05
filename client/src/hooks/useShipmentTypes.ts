@@ -15,27 +15,28 @@
  * Grant, and not modifying the license in any other way.
  */
 import { useQuery, useQueryClient } from "react-query";
-import { getOrderTypes } from "@/services/OrderRequestService";
+import { getShipmentTypes } from "@/services/OrderRequestService";
 import { OrderType } from "@/types/order";
+import { QueryKeys } from "@/types";
 
-export function useOrderTypes(show: boolean) {
+export function useShipmentTypes(show: boolean) {
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, isFetched } = useQuery({
-    queryKey: ["orderTypes"],
-    queryFn: async () => getOrderTypes(),
+    queryKey: ["shipmentTypes"] as QueryKeys[],
+    queryFn: async () => getShipmentTypes(),
     enabled: show,
-    initialData: () => queryClient.getQueryData("orderTypes"),
+    initialData: () => queryClient.getQueryData("shipmentTypes" as QueryKeys),
     staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,
   });
 
-  const selectOrderType =
+  const selectShipmentType =
     data?.map((item: OrderType) => ({
       value: item.id,
       label: item.name,
     })) || [];
 
-  return { selectOrderType, isLoading, isError, isFetched };
+  return { selectShipmentType, isLoading, isError, isFetched };
 }

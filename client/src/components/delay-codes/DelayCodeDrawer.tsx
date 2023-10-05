@@ -16,36 +16,38 @@
  */
 
 import React from "react";
-import { Box, Button, Group, Modal } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
+import { Button, Drawer, Group } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { DelayCode, DelayCodeFormValues as FormValues } from "@/types/dispatch";
 import { useDelayCodeStore as store } from "@/stores/DispatchStore";
 import { delayCodeSchema } from "@/lib/schemas/DispatchSchema";
-import { DelayCode, DelayCodeFormValues as FormValues } from "@/types/dispatch";
-import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { DelayCodeForm } from "@/components/delay-codes/CreateDelayCodeModal";
 
-function EditDelayCodeModalForm({ delayCode }: { delayCode: DelayCode }) {
+function EditDelayCodeModalForm({
+  delayCode,
+  onCancel,
+}: {
+  delayCode: DelayCode;
+  onCancel: () => void;
+}) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
 
   const form = useForm<FormValues>({
     validate: yupResolver(delayCodeSchema),
     initialValues: {
+      status: delayCode.status,
       code: delayCode.code,
       description: delayCode.description,
       fCarrierOrDriver: delayCode.fCarrierOrDriver,
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<DelayCode>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<DelayCode>>(
     form,
     store,
     notifications,
@@ -68,56 +70,57 @@ function EditDelayCodeModalForm({ delayCode }: { delayCode: DelayCode }) {
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="code"
-          label="Code"
-          placeholder="Code"
-          description="Unique Code of the delay code"
-          withAsterisk
-          disabled
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          name="description"
-          label="Description"
-          description="Description of the delay code."
-          placeholder="Description"
-          withAsterisk
-        />
-        <SwitchInput<FormValues>
-          form={form}
-          name="fCarrierOrDriver"
-          label="F. Carrier/Driver"
-          description="Fault of carrier or driver?"
-        />
+      <div className={classes.div}>
+        <DelayCodeForm form={form} />
         <Group position="right" mt="md">
-          <Button type="submit" className={classes.control} loading={loading}>
+          <Button
+            variant="subtle"
+            onClick={onCancel}
+            color="gray"
+            type="button"
+            className={classes.control}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="white"
+            type="submit"
+            className={classes.control}
+            loading={loading}
+          >
             Submit
           </Button>
         </Group>
-      </Box>
+      </div>
     </form>
   );
 }
 
-export function EditDelayCodeModal() {
-  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+export function DelayCodeDrawer() {
+  const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
   const [delayCode] = store.use("selectedRecord");
+  const onCancel = () => setDrawerOpen(false);
 
   return (
-    <Modal.Root opened={showEditModal} onClose={() => setShowEditModal(false)}>
-      <Modal.Overlay />
-      <Modal.Content>
-        <Modal.Header>
-          <Modal.Title>Edit Delay Code</Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
-          {delayCode && <EditDelayCodeModalForm delayCode={delayCode} />}
-        </Modal.Body>
-      </Modal.Content>
-    </Modal.Root>
+    <Drawer.Root
+      position="right"
+      opened={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+    >
+      <Drawer.Overlay />
+      <Drawer.Content>
+        <Drawer.Header>
+          <Drawer.Title>
+            Edit Delay Code: {delayCode && delayCode.code}
+          </Drawer.Title>
+          <Drawer.CloseButton />
+        </Drawer.Header>
+        <Drawer.Body>
+          {delayCode && (
+            <EditDelayCodeModalForm delayCode={delayCode} onCancel={onCancel} />
+          )}
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   );
 }
