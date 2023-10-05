@@ -59,6 +59,7 @@ export function ValidatedMultiSelect<TFormValues extends object>({
       {...form.getInputProps(name as string)}
       data={validatedData}
       error={error}
+      variant="filled"
       styles={{
         label: {
           marginTop: rem(5),
@@ -68,8 +69,11 @@ export function ValidatedMultiSelect<TFormValues extends object>({
             theme.colorScheme === "dark"
               ? theme.colors.dark[6]
               : theme.colors.gray[1],
-          "& [data-invalid=true]": {
-            borderColor: theme.colors.red[6],
+          "&[data-invalid=true]": {
+            backgroundColor:
+              theme.colorScheme === "dark"
+                ? theme.fn.rgba(theme.colors.red[8], 0.15)
+                : theme.colors.red[2],
           },
         },
       }}
