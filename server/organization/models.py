@@ -21,6 +21,7 @@ from typing import Any, final
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -367,7 +368,8 @@ class Depot(TimeStampedModel):
         db_table = "depot"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_depot_name_organization",
             )
         ]
@@ -1033,7 +1035,8 @@ class TableChangeAlert(TimeStampedModel):
         db_table = "table_change_alert"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_name_organization_table_change_alert",
             )
         ]
@@ -1157,7 +1160,8 @@ class NotificationType(TimeStampedModel):
         db_table = "notification_type"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_name_organization_notification_type",
             )
         ]

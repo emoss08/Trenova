@@ -21,6 +21,7 @@ from typing import Any, final
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -203,6 +204,12 @@ class Commodity(GenericModel):
         editable=False,
         unique=True,
     )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Commodity"),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     name = models.CharField(
         _("Name"),
         max_length=100,
@@ -270,8 +277,9 @@ class Commodity(GenericModel):
         db_table = "commodity"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
-                name="unique_commodity_name_organization",
+                Lower("name"),
+                "organization",
+                name="unique_commodity_organization",
             )
         ]
 

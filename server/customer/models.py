@@ -22,6 +22,7 @@ from typing import Any, final
 from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -142,8 +143,9 @@ class Customer(GenericModel):
         db_table = "customer"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
-                name="unique_customer_code_organization",
+                Lower("code"),
+                "organization",
+                name="unique_customer_organization",
             )
         ]
 
@@ -418,7 +420,8 @@ class CustomerRuleProfile(GenericModel):
         db_table = "customer_rule_profile"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_customer_rule_profile_organization",
             )
         ]
@@ -775,7 +778,8 @@ class CustomerFuelTable(GenericModel):
         db_table = "customer_fuel_table"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_customer_fuel_table_name_organization",
             )
         ]

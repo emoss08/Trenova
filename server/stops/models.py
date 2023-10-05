@@ -24,6 +24,7 @@ from typing import Any
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -66,7 +67,8 @@ class QualifierCode(GenericModel):
         db_table = "qualifier_code"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_qualifier_code_organization",
             )
         ]

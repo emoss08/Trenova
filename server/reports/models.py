@@ -21,6 +21,7 @@ from typing import final
 
 import pytz
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -137,7 +138,7 @@ class CustomReport(GenericModel):
         db_table = "custom_report"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"], name="unique_report_name_organization"
+                Lower("name"), "organization", name="unique_report_name_organization"
             )
         ]
 

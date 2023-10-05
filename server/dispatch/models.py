@@ -22,12 +22,18 @@ from typing import Any, final
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from organization.models import Organization
-from utils.models import ChoiceField, GenericModel, RatingMethodChoices
+from utils.models import (
+    ChoiceField,
+    GenericModel,
+    PrimaryStatusChoices,
+    RatingMethodChoices,
+)
 
 User = settings.AUTH_USER_MODEL
 
@@ -205,6 +211,12 @@ class DelayCode(GenericModel):
             Returns the URL for the DelayCode instance's detail view.
     """
 
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the delay code."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     code = models.CharField(
         _("Delay Code"),
         max_length=4,
@@ -233,7 +245,8 @@ class DelayCode(GenericModel):
         db_table = "delay_code"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_delay_code_organization",
             )
         ]
@@ -273,7 +286,7 @@ class FleetCode(GenericModel):
             service incident.".
         description (CharField): Description for the fleet code.
             Has a max length of 100 characters and help text of "Description for the fleet code.".
-        is_active (BooleanField): Whether the fleet code is active.
+        status (ChoiceField): Whether the fleet code is active.
             Has a default value of True and help text of "Is the fleet code active.".
         revenue_goal (DecimalField): Revenue goal for the fleet code.
             Has a maximum of 10 digits, 2 decimal places, a default value of 0.00, and help text of "Revenue goal for
@@ -293,6 +306,12 @@ class FleetCode(GenericModel):
             Returns the URL for this object's detail view.
     """
 
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the general ledger account."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     code = models.CharField(
         _("Fleet Code"),
         max_length=4,
@@ -303,11 +322,6 @@ class FleetCode(GenericModel):
         _("Description"),
         max_length=100,
         help_text=_("Description for the fleet code."),
-    )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("Is the fleet code active."),
     )
     revenue_goal = models.DecimalField(
         _("Revenue Goal"),
@@ -346,11 +360,12 @@ class FleetCode(GenericModel):
 
         verbose_name = _("Fleet Code")
         verbose_name_plural = _("Fleet Codes")
-        ordering: list[str] = ["code"]
+        ordering = ["code"]
         db_table = "fleet_code"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_fleet_code_organization",
             )
         ]
@@ -402,9 +417,15 @@ class CommentType(GenericModel):
         editable=False,
         unique=True,
     )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the comment type."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     name = models.CharField(
         _("Name"),
-        max_length=50,
+        max_length=10,
         help_text=_("Comment type name"),
     )
     description = models.CharField(
@@ -426,7 +447,8 @@ class CommentType(GenericModel):
         db_table = "comment_type"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_comment_type_name_organization",
             )
         ]
@@ -495,10 +517,11 @@ class Rate(GenericModel):
         editable=False,
         unique=True,
     )
-    is_active = models.BooleanField(
-        _("Is Active"),
-        default=True,
-        help_text=_("Is the rate active."),
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the rate."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     rate_number = models.CharField(
         _("Rate Number"),
@@ -607,7 +630,8 @@ class Rate(GenericModel):
         db_table = "rate"
         constraints = [
             models.UniqueConstraint(
-                fields=["rate_number", "organization"],
+                Lower("rate_number"),
+                "organization",
                 name="unique_rate_number_organization",
             )
         ]
@@ -673,7 +697,7 @@ class Rate(GenericModel):
         Returns:
             str: A unique rate number for a Rate instance, formatted as "R{count:05d}".
         """
-        if code := cls.objects.shipment_by("-rate_number").first():
+        if code := cls.objects.order_by("-rate_number").first():
             return f"R{int(code.rate_number[1:]) + 1:05d}"
         return "R00001"
 
@@ -761,6 +785,24 @@ class RateBillingTable(GenericModel):
         return textwrap.shorten(
             f"{self.rate}, {self.accessorial_charge}", width=50, placeholder="..."
         )
+
+    def clean(self) -> None:
+        """Clean the RateBillingTable instance.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        if self.accessorial_charge.status == PrimaryStatusChoices.INACTIVE:
+            raise ValidationError(
+                {
+                    "accessorial_charge": _(
+                        "The accessorial charge is inactive. Please select an active accessorial charge and try again."
+                    ),
+                },
+                code="invalid",
+            )
+
+        super().clean()
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
