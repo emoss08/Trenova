@@ -27,6 +27,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -39,27 +40,16 @@ User = settings.AUTH_USER_MODEL
 def shipment_documentation_upload_to(
     instance: ShipmentDocumentation, filename: str
 ) -> str:
-    """Returns the path to upload the shipment documentation to.
-
-    Upload the shipment documentation to the shipment documentation directory
-    and name the file with the shipment id and the filename.
+    """Uploads the Shipment Documentation to the correct location.
 
     Args:
-        instance (ShipmentDocumentation): The instance of the Shipment.
-        filename (str): The name of the file.
+        instance (ShipmentDocumentation): The Shipment Documentation instance.
+        filename (str): The filename of the Shipment Documentation.
 
     Returns:
-        Upload path for the shipment documentation to be stored. For example.
-
-        `shipment/docs/M000123/invoice-12341.pdf`
-
-        Upload path is always a string. If the file is not uploaded, the
-        upload path will be an empty string.
-
-    See Also:
-        `ShipmentDocumentation`: The model that this function is used for.
+        str: The path to the Shipment Documentation.
     """
-    return f"shipment/docs/{instance.shipment.pro_number}/{filename}"
+    return f"{instance.organization_id}/shipment/docs/{instance.shipment_id}/{filename}"
 
 
 class ShipmentControl(GenericModel):
@@ -255,7 +245,8 @@ class ShipmentType(GenericModel):
         db_table = "shipment_type"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_shipment_type_name",
             )
         ]
@@ -332,7 +323,8 @@ class ServiceType(GenericModel):
         db_table = "service_type"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_service_type_code",
             )
         ]
@@ -388,6 +380,8 @@ class Shipment(GenericModel):
         verbose_name=_("Service type"),
         related_name="shipments",
         related_query_name="shipment",
+        blank=True,
+        null=True,
         help_text=_("Service type of the Shipment"),
     )
     status = ChoiceField(
@@ -675,7 +669,8 @@ class Shipment(GenericModel):
         db_table = "shipment"
         constraints = [
             models.UniqueConstraint(
-                fields=["pro_number", "organization"],
+                Lower("pro_number"),
+                "organization",
                 name="unique_shipment_number_per_organization",
             )
         ]
@@ -763,6 +758,7 @@ class Shipment(GenericModel):
             handle_voided_shipment(shipment=self)
 
         self.calculate_other_charge_amount()
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
@@ -1156,7 +1152,8 @@ class ReasonCode(GenericModel):
         db_table = "reason_code"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_reason_code_organization",
             )
         ]

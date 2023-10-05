@@ -20,6 +20,7 @@ import uuid
 from typing import Any
 
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -56,11 +57,12 @@ class LocationCategory(GenericModel):
 
         verbose_name = _("Location Category")
         verbose_name_plural = _("Location Categories")
-        ordering: tuple[str, ...] = ("name",)
+        ordering = ("name",)
         db_table = "location_category"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_location_category_name_organization",
             )
         ]
@@ -189,7 +191,8 @@ class Location(GenericModel):
         db_table = "location"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_location_code_organization",
             )
         ]

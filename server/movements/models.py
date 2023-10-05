@@ -21,6 +21,7 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -100,7 +101,8 @@ class Movement(GenericModel):
         db_table = "movement"
         constraints = [
             models.UniqueConstraint(
-                fields=["ref_num", "organization"],
+                Lower("ref_num"),
+                "organization",
                 name="unique_movement_ref_num_organization",
             )
         ]

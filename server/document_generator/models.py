@@ -20,6 +20,7 @@ import uuid
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from djmoney.money import Money
@@ -192,7 +193,6 @@ class DocumentTemplateVersion(GenericModel):
     change_reason = models.TextField(
         verbose_name=_("Change Reason"),
         help_text=_("The reason for the change in the template."),
-        null=True,
         blank=True,
     )
 
@@ -344,7 +344,8 @@ class DocumentTheme(GenericModel):
         db_table = "document_theme"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_document_theme_per_organization",
             )
         ]
@@ -498,18 +499,15 @@ class DocumentDataBinding(GenericModel):
         verbose_name=_("Conditional Field"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_(
             "Name of the field to check for a condition. If set, it will be used to determine if the binding"
             " should be rendered."
         ),
     )
-
     conditional_value = models.CharField(
         verbose_name=_("Conditional Value"),
         max_length=255,
         blank=True,
-        null=True,
         help_text=_(
             "Value to check against the conditional_field. If they match, the binding will be rendered."
         ),

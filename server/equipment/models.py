@@ -21,12 +21,13 @@ from typing import final
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from localflavor.us.models import USStateField
 
 from equipment.validators import us_vin_number_validator
-from utils.models import ChoiceField, GenericModel
+from utils.models import ChoiceField, GenericModel, PrimaryStatusChoices
 from worker.models import Worker
 
 
@@ -41,6 +42,12 @@ class EquipmentType(GenericModel):
         default=uuid.uuid4,
         editable=False,
         unique=True,
+    )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the Customer."),
+        default=PrimaryStatusChoices.ACTIVE,
     )
     name = models.CharField(
         _("Name"),
@@ -67,7 +74,8 @@ class EquipmentType(GenericModel):
         db_table = "equipment_type"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_equipment_type_name_organization",
             )
         ]
@@ -226,6 +234,12 @@ class EquipmentManufacturer(GenericModel):
         editable=False,
         unique=True,
     )
+    status = ChoiceField(
+        _("Status"),
+        choices=PrimaryStatusChoices.choices,
+        help_text=_("Status of the equipment manufacturer."),
+        default=PrimaryStatusChoices.ACTIVE,
+    )
     name = models.CharField(
         _("Name"),
         max_length=50,
@@ -248,7 +262,8 @@ class EquipmentManufacturer(GenericModel):
         db_table = "equipment_manufacturer"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
+                Lower("name"),
+                "organization",
                 name="unique_equipment_manufacturer_organization",
             )
         ]
@@ -481,7 +496,8 @@ class Tractor(GenericModel):
         db_table = "tractor"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_tractor_code_organization",
             )
         ]
@@ -699,7 +715,8 @@ class Trailer(GenericModel):
         db_table = "trailer"
         constraints = [
             models.UniqueConstraint(
-                fields=["code", "organization"],
+                Lower("code"),
+                "organization",
                 name="unique_trailer_code_organization",
             )
         ]
