@@ -26,6 +26,7 @@ import {
   RateFormValues,
 } from "@/types/dispatch";
 import { TRateMethodChoices } from "@/lib/constants";
+import { StatusChoiceProps } from "@/types";
 
 export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
   Yup.object().shape({
@@ -51,6 +52,7 @@ export const dispatchControlSchema: ObjectSchema<DispatchControlFormValues> =
 
 export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     code: Yup.string()
       .required("Name is required")
       .max(4, "Code cannot be more than 4 characters"),
@@ -62,10 +64,10 @@ export const delayCodeSchema: ObjectSchema<DelayCodeFormValues> =
 
 export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     code: Yup.string()
       .required("Name is required")
       .max(4, "Code cannot be more than 4 characters"),
-    isActive: Yup.boolean().required("Active is required"),
     revenueGoal: Yup.number()
       .required("Revenue Goal is required")
       .test(
@@ -110,8 +112,9 @@ export const fleetCodeSchema: ObjectSchema<FleetCodeFormValues> =
 
 export const commentTypeSchema: ObjectSchema<CommentTypeFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string()
-      .max(50, "Name cannot be more than 50 characters")
+      .max(10, "Name cannot be more than 10 characters")
       .required("Name is required"),
     description: Yup.string()
       .max(100, "Description cannot be more than 100 characters")

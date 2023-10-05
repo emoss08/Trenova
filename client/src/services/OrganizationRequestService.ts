@@ -26,7 +26,7 @@ import {
 import { BillingControl } from "@/types/billing";
 import { DispatchControl } from "@/types/dispatch";
 import { InvoiceControl } from "@/types/invoicing";
-import { OrderControl } from "@/types/order";
+import { ShipmentControl } from "@/types/order";
 import { RouteControl } from "@/types/route";
 
 /**
@@ -123,8 +123,10 @@ export async function getInvoiceControl(): Promise<InvoiceControl[]> {
  * @returns A promise that resolves to an array of order control.
  * @note This should only return one result.
  */
-export async function getOrderControl(): Promise<OrderControl[]> {
-  const response = await axios.get("/order_control/");
+export async function getShipmentControl(): Promise<
+  ReadonlyArray<ShipmentControl>
+> {
+  const response = await axios.get("/shipment_control/");
   return response.data.results;
 }
 

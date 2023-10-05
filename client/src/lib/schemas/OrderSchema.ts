@@ -17,11 +17,11 @@
 
 import * as Yup from "yup";
 import { ObjectSchema } from "yup";
-import { OrderControlFormValues } from "@/types/order";
+import { ShipmentControlFormValues } from "@/types/order";
 
-export const orderControlSchema: ObjectSchema<OrderControlFormValues> =
+export const shipmentControlSchema: ObjectSchema<ShipmentControlFormValues> =
   Yup.object().shape({
-    autoRateOrders: Yup.boolean().required("Auto Rate Orders is required"),
+    autoRateShipment: Yup.boolean().required("Auto Rate Shipments is required"),
     calculateDistance: Yup.boolean().required("Calculate Distance is required"),
     enforceRevCode: Yup.boolean().required("Enforce Rev Code is required"),
     enforceVoidedComm: Yup.boolean().required(
@@ -32,12 +32,14 @@ export const orderControlSchema: ObjectSchema<OrderControlFormValues> =
     autoSequenceStops: Yup.boolean().required(
       "Auto Sequence Stops is required",
     ),
-    autoOrderTotal: Yup.boolean().required("Auto Order Total is required"),
+    autoShipmentTotal: Yup.boolean().required(
+      "Auto Shipment Total is required",
+    ),
     enforceOriginDestination: Yup.boolean().required(
       "Enforce Origin Destination is required",
     ),
     checkForDuplicateBol: Yup.boolean().required(
       "Check for Duplicate BOL is required",
     ),
-    removeOrders: Yup.boolean().required("Remove Orders is required"),
+    removeShipment: Yup.boolean().required("Remove Shipment is required"),
   });

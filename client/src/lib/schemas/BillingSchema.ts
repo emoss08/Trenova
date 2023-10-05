@@ -27,10 +27,14 @@ import {
   FuelMethodChoicesProps,
   OrderTransferCriteriaChoicesProps,
 } from "@/utils/apps/billing";
+import { StatusChoiceProps } from "@/types";
 
 export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> =
   Yup.object().shape({
-    code: Yup.string().required("Code is required"),
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
+    code: Yup.string()
+      .max(10, "Code must be less than 10 characters.")
+      .required("Code is required"),
     description: Yup.string().notRequired(),
     isDetention: Yup.boolean().required("Detention is required"),
     chargeAmount: Yup.number()
@@ -41,6 +45,7 @@ export const accessorialChargeSchema: ObjectSchema<AccessorialChargeFormValues> 
 
 export const chargeTypeSchema: ObjectSchema<ChargeTypeFormValues> =
   Yup.object().shape({
+    status: Yup.string<StatusChoiceProps>().required("Status is required"),
     name: Yup.string()
       .max(50, "Name must be less than 50 characters.")
       .required("Name is required"),

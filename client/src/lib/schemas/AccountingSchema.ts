@@ -47,10 +47,12 @@ export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
       .required("Code is required")
       .test(
         "account_number_format",
-        "Account number must be in the format 0000-0000-0000-0000",
+        "Account number must be in the format 0000-00",
         (value) => {
-          if (!value) return false;
-          const regex = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/;
+          if (!value) {
+            return false;
+          }
+          const regex = /^\d{4}-\d{2}$/;
           return regex.test(value);
         },
       ),
@@ -64,6 +66,14 @@ export const glAccountSchema: ObjectSchema<GLAccountFormValues> =
     accountSubType: Yup.string<AccountSubTypeChoiceProps>().notRequired(),
     accountClassification:
       Yup.string<AccountClassificationChoiceProps>().notRequired(),
+    parentAccount: Yup.string().notRequired(),
+    isReconciled: Yup.boolean().required("Reconciled is required"),
+    notes: Yup.string().notRequired(),
+    owner: Yup.string().notRequired(),
+    isTaxRelevant: Yup.boolean().required("Tax relevant is required"),
+    attachment: Yup.mixed().notRequired(),
+    interestRate: Yup.number().notRequired(),
+    tags: Yup.array().notRequired(),
   });
 
 export const divisionCodeSchema: ObjectSchema<DivisionCodeFormValues> =

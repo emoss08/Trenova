@@ -21,7 +21,7 @@ import { OrderType } from "@/types/order";
  * Fetches order types from the server.
  * @returns A promise that resolves to an array of order types.
  */
-export async function getOrderTypes(): Promise<ReadonlyArray<OrderType>> {
-  const response = await axios.get("/order_types/");
+export async function getShipmentTypes(): Promise<ReadonlyArray<OrderType>> {
+  const response = await axios.get("/shipment_types/");
   return response.data.results;
 }
