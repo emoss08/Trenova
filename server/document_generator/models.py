@@ -23,7 +23,6 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from djmoney.money import Money
 
 from utils.models import GenericModel
 
@@ -636,7 +635,4 @@ class DocumentTableColumnBinding(GenericModel):
         """
         from document_generator.helpers import get_nested_attr
 
-        value = get_nested_attr(obj=instance, attr=self.field_name)
-        if isinstance(value, Money):
-            return f"{value.amount} {value.currency}"
-        return value
+        return get_nested_attr(obj=instance, attr=self.field_name)
