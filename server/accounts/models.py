@@ -29,6 +29,7 @@ from django.contrib.auth.models import (
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.db import models
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -122,8 +123,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name="users",
         related_query_name="user",
         verbose_name=_("Business Unit"),
-        # null=True,
-        # blank=True,
     )
     organization = models.ForeignKey(
         "organization.Organization",
@@ -131,7 +130,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name="users",
         related_query_name="user",
         verbose_name=_("Organization"),
-        # null=True,
     )
     department = models.ForeignKey(
         "organization.Department",
@@ -502,12 +500,13 @@ class JobTitle(GenericModel):
 
         verbose_name = _("Job Title")
         verbose_name_plural = _("Job Titles")
-        ordering: list[str] = ["name"]
+        ordering = ["name"]
         db_table = "job_title"
         constraints = [
             models.UniqueConstraint(
-                fields=["name", "organization"],
-                name="unique_name_job_title",
+                Lower("name"),
+                "organization",
+                name="unique_job_title_organization",
             )
         ]
 
