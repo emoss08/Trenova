@@ -20,15 +20,14 @@ import {
   Box,
   Button,
   Divider,
+  Drawer,
   Group,
-  Modal,
   SimpleGrid,
   Tabs,
   Text,
   useMantineTheme,
 } from "@mantine/core";
 import React from "react";
-import { useMediaQuery } from "@mantine/hooks";
 import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useRateStore as store } from "@/stores/DispatchStore";
@@ -49,7 +48,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import { useCommodities } from "@/hooks/useCommodities";
 import { useLocations } from "@/hooks/useLocations";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
-import { useOrderTypes } from "@/hooks/useOrderTypes";
+import { useShipmentTypes } from "@/hooks/useShipmentTypes";
 import { useAccessorialCharges } from "@/hooks/useAccessorialCharges";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
@@ -176,9 +175,9 @@ type Props = {
   commodities: ReadonlyArray<TChoiceProps>;
   isCommoditiesLoading: boolean;
   isCommoditiesError: boolean;
-  orderTypes: ReadonlyArray<TChoiceProps>;
-  isOrderTypesLoading: boolean;
-  isOrderTypesError: boolean;
+  shipmentTypes: ReadonlyArray<TChoiceProps>;
+  isShipmentTypeLoading: boolean;
+  isShipmentTypeError: boolean;
   equipmentTypes: ReadonlyArray<TChoiceProps>;
   isEquipmentTypesLoading: boolean;
   isEquipmentTypesError: boolean;
@@ -195,9 +194,9 @@ function EditRateModalForm({
   commodities,
   isCommoditiesLoading,
   isCommoditiesError,
-  orderTypes,
-  isOrderTypesLoading,
-  isOrderTypesError,
+  shipmentTypes,
+  isShipmentTypeLoading,
+  isShipmentTypeError,
   equipmentTypes,
   isEquipmentTypesLoading,
   isEquipmentTypesError,
@@ -319,9 +318,9 @@ function EditRateModalForm({
           label="Order Type"
           placeholder="Order Type"
           description="Order Type associated with this Rate"
-          data={orderTypes}
-          isLoading={isOrderTypesLoading}
-          isError={isOrderTypesError}
+          data={shipmentTypes}
+          isLoading={isShipmentTypeLoading}
+          isError={isShipmentTypeError}
         />
         <SelectInput<FormValues>
           form={form}
@@ -369,13 +368,16 @@ function EditRateModalForm({
 
 export function EditRateModalBody({
   rate,
-  showEditModal,
+  drawerOpen,
+  onCancel,
 }: {
   rate: Rate;
-  showEditModal: boolean;
+  drawerOpen: boolean;
+  onCancel: () => void;
 }) {
   const [activeTab, setActiveTab] = React.useState<string | null>("overview");
   const [loading, setLoading] = React.useState(false);
+  const { classes } = useFormStyles();
 
   const form = useForm<FormValues>({
     validate: yupResolver(rateSchema),
@@ -398,10 +400,7 @@ export function EditRateModalBody({
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<Rate>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<Rate>>(
     form,
     store,
     notifications,
@@ -441,37 +440,37 @@ export function EditRateModalBody({
     selectCustomersData,
     isLoading: isCustomersLoading,
     isError: isCustomersError,
-  } = useCustomers(showEditModal);
+  } = useCustomers(drawerOpen);
 
   const {
     selectCommodityData,
     isLoading: isCommoditiesLoading,
     isError: isCommoditiesError,
-  } = useCommodities(showEditModal);
+  } = useCommodities(drawerOpen);
 
   const {
     selectLocationData,
     isLoading: isLocationsLoading,
     isError: isLocationsError,
-  } = useLocations(showEditModal);
+  } = useLocations(drawerOpen);
 
   const {
     selectEquipmentType,
     isLoading: isEquipmentTypesLoading,
     isError: isEquipmentTypesError,
-  } = useEquipmentTypes(showEditModal);
+  } = useEquipmentTypes(drawerOpen);
 
   const {
-    selectOrderType,
-    isLoading: isOrderTypesLoading,
-    isError: isOrderTypesError,
-  } = useOrderTypes(showEditModal);
+    selectShipmentType,
+    isLoading: isShipmentTypeLoading,
+    isError: isShipmentTypeError,
+  } = useShipmentTypes(drawerOpen);
 
   const {
     selectAccessorialChargeData,
     isLoading: isAccessorialChargesLoading,
     isError: isAccessorialChargesError,
-  } = useAccessorialCharges(showEditModal);
+  } = useAccessorialCharges(drawerOpen);
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
@@ -523,9 +522,9 @@ export function EditRateModalBody({
             equipmentTypes={selectEquipmentType}
             isEquipmentTypesLoading={isEquipmentTypesLoading}
             isEquipmentTypesError={isEquipmentTypesError}
-            orderTypes={selectOrderType}
-            isOrderTypesError={isOrderTypesError}
-            isOrderTypesLoading={isOrderTypesLoading}
+            shipmentTypes={selectShipmentType}
+            isShipmentTypeError={isShipmentTypeError}
+            isShipmentTypeLoading={isShipmentTypeLoading}
             form={form}
           />
         </Tabs.Panel>
@@ -539,7 +538,21 @@ export function EditRateModalBody({
         </Tabs.Panel>
       </Tabs>
       <Group position="right" mt="md">
-        <Button type="submit" loading={loading}>
+        <Button
+          variant="subtle"
+          onClick={onCancel}
+          color="gray"
+          type="button"
+          className={classes.control}
+        >
+          Cancel
+        </Button>
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
           Submit
         </Button>
       </Group>
@@ -547,37 +560,36 @@ export function EditRateModalBody({
   );
 }
 
-export function EditRateModal() {
-  const [showEditModal, setShowEditModal] = store.use("editModalOpen");
+export function RateDrawer() {
+  const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
   const [rate] = store.use("selectedRecord");
-  const isMobile = useMediaQuery("(max-width: 50em)");
+  const onCancel = () => setDrawerOpen(false);
 
   return (
-    <Modal.Root
-      opened={showEditModal}
-      onClose={() => setShowEditModal(false)}
-      fullScreen={isMobile}
-      transitionProps={{ transition: "fade", duration: 200 }}
-      styles={{
-        content: {
-          minWidth: "60%",
-        },
-      }}
+    <Drawer.Root
+      position="right"
+      opened={drawerOpen}
+      onClose={() => setDrawerOpen(false)}
+      size="60%"
     >
-      <Modal.Overlay />
-      <Modal.Content>
-        <Modal.Header>
-          <Modal.Title>Edit Rate</Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
+      <Drawer.Overlay />
+      <Drawer.Content>
+        <Drawer.Header>
+          <Drawer.Title>Edit Rate: {rate && rate.rateNumber}</Drawer.Title>
+          <Drawer.CloseButton />
+        </Drawer.Header>
+        <Drawer.Body>
           {rate ? (
-            <EditRateModalBody rate={rate} showEditModal={showEditModal} />
+            <EditRateModalBody
+              rate={rate}
+              drawerOpen={drawerOpen}
+              onCancel={onCancel}
+            />
           ) : (
             <Text>Rate not found</Text>
           )}
-        </Modal.Body>
-      </Modal.Content>
-    </Modal.Root>
+        </Drawer.Body>
+      </Drawer.Content>
+    </Drawer.Root>
   );
 }

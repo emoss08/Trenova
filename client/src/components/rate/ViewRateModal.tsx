@@ -41,7 +41,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import { useCommodities } from "@/hooks/useCommodities";
 import { useLocations } from "@/hooks/useLocations";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
-import { useOrderTypes } from "@/hooks/useOrderTypes";
+import { useShipmentTypes } from "@/hooks/useShipmentTypes";
 import { ViewSelectInput } from "@/components/common/fields/SelectInput";
 
 function ViewRateBillingTableModal({
@@ -320,7 +320,7 @@ export function ViewRateModal() {
 
   const { selectEquipmentType } = useEquipmentTypes(showViewModal);
 
-  const { selectOrderType } = useOrderTypes(showViewModal);
+  const { selectShipmentType } = useShipmentTypes(showViewModal);
 
   const { selectAccessorialChargeData } = useAccessorialCharges(showViewModal);
 

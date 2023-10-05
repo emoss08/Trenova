@@ -15,10 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { Box, Button, Group, Modal, SimpleGrid, Skeleton } from "@mantine/core";
-import React, { Suspense } from "react";
+import { Button, createStyles, Group, Modal, SimpleGrid } from "@mantine/core";
+import React, { forwardRef } from "react";
 import { notifications } from "@mantine/notifications";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { generalLedgerTableStore as store } from "@/stores/AccountingStores";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import {
@@ -29,7 +29,6 @@ import { glAccountSchema } from "@/lib/schemas/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import {
   accountClassificationChoices,
   accountSubTypeChoices,
@@ -38,160 +37,372 @@ import {
 } from "@/lib/choices";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { TChoiceProps } from "@/types";
+import { useUsers } from "@/hooks/useUsers";
+import { useTags } from "@/hooks/useTags";
+import { useGLAccounts } from "@/hooks/useGLAccounts";
+import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { ValidatedMultiSelect } from "@/components/common/fields/MultiSelect";
+import { SwitchInput } from "@/components/common/fields/SwitchInput";
+import { ValidatedFileInput } from "@/components/common/fields/FileInput";
 
-function CreateGLAccountModalForm(): React.ReactElement {
+const useStyles = createStyles((theme) => ({
+  modalContent: {
+    display: "flex",
+    flexDirection: "column",
+    height: "100%", // This ensures the content stretches the full height of the modal
+  },
+  modalBody: {
+    overflowY: "auto",
+    flexGrow: 1, // This ensures the body takes all available space
+  },
+  stickyButtonGroup: {
+    marginTop: theme.spacing.md,
+    alignSelf: "flex-end",
+    position: "sticky",
+    bottom: 0,
+    zIndex: 1, // Ensuring the button stays above the content
+    backgroundColor: "inherit", // To match the modal's background (can adjust as necessary)
+    marginBottom: theme.spacing.md,
+    marginRight: theme.spacing.md,
+  },
+}));
+
+export function GLAccountForm({
+  form,
+  users,
+  isUsersLoading,
+  isUsersError,
+  tags,
+  isTagsLoading,
+  isTagsError,
+  glAccounts,
+  isGLAccountsError,
+  isGLAccountsLoading,
+}: {
+  form: UseFormReturnType<FormValues>;
+  users: TChoiceProps[];
+  isUsersLoading: boolean;
+  isUsersError: boolean;
+  tags: TChoiceProps[];
+  isTagsLoading: boolean;
+  isTagsError: boolean;
+  glAccounts: TChoiceProps[];
+  isGLAccountsLoading: boolean;
+  isGLAccountsError: boolean;
+}) {
   const { classes } = useFormStyles();
-  const [loading, setLoading] = React.useState<boolean>(false);
-
-  const form = useForm<FormValues>({
-    validate: yupResolver(glAccountSchema),
-    initialValues: {
-      status: "A",
-      accountNumber: "0000-0000-0000-0000", // TODO(WOLFRED): Instead get the next account number from the backend
-      description: "",
-      accountType: "",
-      cashFlowType: "",
-      accountSubType: "",
-      accountClassification: "",
-    },
-  });
-
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<GeneralLedgerAccount>, "drawerOpen">
-  >(
-    form,
-    store,
-    notifications,
-    {
-      method: "POST",
-      path: "/gl_accounts/",
-      successMessage: "General Ledger Account created successfully.",
-      queryKeysToInvalidate: ["gl-account-table-data"],
-      additionalInvalidateQueries: ["glAccounts"],
-      closeModal: true,
-      errorMessage: "Failed to create general ledger account.",
-    },
-    () => setLoading(false),
-  );
-
-  const submitForm = (values: FormValues) => {
-    setLoading(true);
-    mutation.mutate(values);
-  };
 
   return (
-    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<FormValues>
-            form={form}
-            data={statusChoices}
-            className={classes.fields}
-            name="status"
-            label="Status"
-            placeholder="Status"
-            variant="filled"
-            withAsterisk
-          />
-          <ValidatedTextInput<FormValues>
-            form={form}
-            className={classes.fields}
-            name="accountNumber"
-            label="Account Number"
-            placeholder="Account Number"
-            variant="filled"
-            withAsterisk
-          />
-        </SimpleGrid>
-        <ValidatedTextArea<FormValues>
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
           form={form}
-          className={classes.fields}
-          name="description"
-          label="Description"
-          placeholder="Description"
+          data={statusChoices}
+          name="status"
+          label="Status"
+          description="Status of the account"
+          placeholder="Status"
           variant="filled"
           withAsterisk
         />
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<FormValues>
-            form={form}
-            data={accountTypeChoices}
-            className={classes.fields}
-            name="accountType"
-            label="Account Type"
-            placeholder="AP Account"
-            variant="filled"
-            withAsterisk
-            clearable
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="accountNumber"
+          description="The account number of the account"
+          label="Account Number"
+          placeholder="Account Number"
+          variant="filled"
+          withAsterisk
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        mb={10}
+        form={form}
+        name="description"
+        description="The description of the account"
+        label="Description"
+        placeholder="Description"
+        variant="filled"
+        withAsterisk
+      />
+      <SimpleGrid cols={3} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={accountTypeChoices}
+          name="accountType"
+          label="Account Type"
+          description="The type of the account"
+          placeholder="AP Account"
+          variant="filled"
+          withAsterisk
+          clearable
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={cashFlowTypeChoices}
+          name="cashFlowType"
+          description="The cash flow type of the account"
+          label="Cash Flow Type"
+          placeholder="Cash Flow Type"
+          variant="filled"
+          clearable
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={accountSubTypeChoices}
+          name="accountSubType"
+          description="The sub type of the account"
+          label="Account Sub Type"
+          placeholder="Account Sub Type"
+          variant="filled"
+          clearable
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={accountClassificationChoices}
+          name="accountClassification"
+          description="The classification of the account"
+          label="Account Classification"
+          placeholder="Account Classification"
+          variant="filled"
+          clearable
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={glAccounts}
+          isLoading={isGLAccountsLoading}
+          isError={isGLAccountsError}
+          name="parentAccount"
+          description="Parent account for hierarchical accounting"
+          label="Parent Account"
+          placeholder="Parent Account"
+          variant="filled"
+        />
+        <ValidatedFileInput<FormValues>
+          form={form}
+          name="attachment"
+          description="Attach relevant documents or receipts"
+          label="Attachment"
+          placeholder="Attach File"
+        />
+        <SelectInput<FormValues>
+          form={form}
+          name="owner"
+          data={users}
+          isError={isUsersError}
+          isLoading={isUsersLoading}
+          label="Owner"
+          placeholder="Owner"
+          description="User responsible for the account"
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="interestRate"
+          description="Interest rate associated with the account"
+          label="Interest Rate"
+          placeholder="Interest Rate"
+          variant="filled"
+        />
+        <ValidatedMultiSelect<FormValues>
+          form={form}
+          name="tags"
+          data={tags}
+          isError={isTagsError}
+          isLoading={isTagsLoading}
+          description="Tags or labels associated with the account"
+          label="Tags"
+          placeholder="Tags"
+        />
+        <SwitchInput<FormValues>
+          form={form}
+          name="isTaxRelevant"
+          label="Is Tax Relevant"
+          description="Indicates if the account is relevant for tax calculations"
+        />
+        <SwitchInput<FormValues>
+          form={form}
+          name="isReconciled"
+          label="Is Reconciled"
+          description="Indicates if the account is reconciled"
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        name="notes"
+        description="Additional notes or comments for the account"
+        label="Notes"
+        placeholder="Notes"
+        variant="filled"
+      />
+    </div>
+  );
+}
+
+const CreateGLAccountModalForm = forwardRef<
+  HTMLFormElement,
+  {
+    setLoading: (loading: boolean) => void;
+    users: TChoiceProps[];
+    isUsersLoading: boolean;
+    isUsersError: boolean;
+    tags: TChoiceProps[];
+    isTagsLoading: boolean;
+    isTagsError: boolean;
+    glAccounts: TChoiceProps[];
+    isGLAccountsLoading: boolean;
+    isGLAccountsError: boolean;
+  }
+>(
+  (
+    {
+      setLoading,
+      users,
+      isUsersLoading,
+      isUsersError,
+      tags,
+      isTagsError,
+      isTagsLoading,
+      glAccounts,
+      isGLAccountsLoading,
+      isGLAccountsError,
+    },
+    ref,
+  ) => {
+    const form = useForm<FormValues>({
+      validate: yupResolver(glAccountSchema),
+      initialValues: {
+        status: "A",
+        accountNumber: "0000-00",
+        description: "",
+        accountType: "",
+        cashFlowType: "",
+        accountSubType: "",
+        accountClassification: "",
+        parentAccount: "",
+        isReconciled: false,
+        notes: "",
+        owner: "",
+        isTaxRelevant: false,
+        attachment: null,
+        interestRate: 0,
+        tags: [],
+      },
+    });
+
+    const mutation = useCustomMutation<
+      FormValues,
+      TableStoreProps<GeneralLedgerAccount>
+    >(
+      form,
+      store,
+      notifications,
+      {
+        method: "POST",
+        path: "/gl_accounts/",
+        successMessage: "General Ledger Account created successfully.",
+        queryKeysToInvalidate: ["gl-account-table-data"],
+        additionalInvalidateQueries: ["glAccounts"],
+        closeModal: true,
+        errorMessage: "Failed to create general ledger account.",
+      },
+      () => setLoading(false),
+    );
+
+    const submitForm = (values: FormValues) => {
+      setLoading(true);
+      mutation.mutate(values);
+    };
+
+    return (
+      <form ref={ref} onSubmit={form.onSubmit((values) => submitForm(values))}>
+        <GLAccountForm
+          form={form}
+          users={users}
+          isUsersError={isUsersError}
+          isUsersLoading={isUsersLoading}
+          tags={tags}
+          isTagsError={isTagsError}
+          isTagsLoading={isTagsLoading}
+          glAccounts={glAccounts}
+          isGLAccountsLoading={isGLAccountsLoading}
+          isGLAccountsError={isGLAccountsError}
+        />
+      </form>
+    );
+  },
+);
+
+CreateGLAccountModalForm.displayName = "CreateGLAccountModalForm";
+
+export function CreateGLAccountModal(): React.ReactElement {
+  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
+  const { classes } = useStyles();
+  const { classes: formStyles } = useFormStyles();
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  const {
+    selectUsersData,
+    isError: usersError,
+    isLoading: usersLoading,
+  } = useUsers(showCreateModal);
+
+  const {
+    selectTags,
+    isError: tagsError,
+    isLoading: tagsLoading,
+  } = useTags(showCreateModal);
+
+  const {
+    selectGLAccounts,
+    isError: glAccountsError,
+    isLoading: glAccountsLoading,
+  } = useGLAccounts(showCreateModal);
+
+  const handleButtonClick = () => {
+    if (formRef.current) {
+      formRef.current.requestSubmit();
+    }
+  };
+  return (
+    <Modal.Root
+      opened={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      size="50%"
+    >
+      <Modal.Overlay />
+      <Modal.Content className={classes.modalContent}>
+        <Modal.Header>
+          <Modal.Title>Create GL Account</Modal.Title>
+          <Modal.CloseButton />
+        </Modal.Header>
+        <Modal.Body className={classes.modalBody}>
+          <CreateGLAccountModalForm
+            ref={formRef}
+            setLoading={setLoading}
+            users={selectUsersData}
+            isUsersLoading={usersLoading}
+            isUsersError={usersError}
+            tags={selectTags}
+            isTagsLoading={tagsLoading}
+            isTagsError={tagsError}
+            glAccounts={selectGLAccounts}
+            isGLAccountsLoading={glAccountsLoading}
+            isGLAccountsError={glAccountsError}
           />
-          <SelectInput<FormValues>
-            form={form}
-            data={cashFlowTypeChoices}
-            className={classes.fields}
-            name="cashFlowType"
-            label="Cash Flow Type"
-            placeholder="Cash Flow Type"
-            variant="filled"
-            clearable
-          />
-        </SimpleGrid>
-        <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-          <SelectInput<FormValues>
-            form={form}
-            data={accountSubTypeChoices}
-            className={classes.fields}
-            name="accountSubType"
-            label="Account Sub Type"
-            placeholder="Account Sub Type"
-            variant="filled"
-            clearable
-          />
-          <SelectInput<FormValues>
-            form={form}
-            data={accountClassificationChoices}
-            className={classes.fields}
-            name="accountClassification"
-            label="Account Classification"
-            placeholder="Account Classification"
-            variant="filled"
-            clearable
-          />
-        </SimpleGrid>
-        <Group position="right" mt="md">
+        </Modal.Body>
+        <Group position="right" mt="md" className={classes.stickyButtonGroup}>
           <Button
             color="white"
             type="submit"
-            className={classes.control}
+            onClick={handleButtonClick}
+            className={formStyles.control}
             loading={loading}
           >
             Submit
           </Button>
         </Group>
-      </Box>
-    </form>
-  );
-}
-
-export function CreateGLAccountModal(): React.ReactElement {
-  const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
-
-  return (
-    <Modal.Root
-      opened={showCreateModal}
-      onClose={() => setShowCreateModal(false)}
-    >
-      <Modal.Overlay />
-      <Modal.Content>
-        <Modal.Header>
-          <Modal.Title>Create GL Account</Modal.Title>
-          <Modal.CloseButton />
-        </Modal.Header>
-        <Modal.Body>
-          <Suspense fallback={<Skeleton height={400} />}>
-            <CreateGLAccountModalForm />
-          </Suspense>
-        </Modal.Body>
       </Modal.Content>
     </Modal.Root>
   );

@@ -17,17 +17,41 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
-import { Text } from "@mantine/core";
+import { Badge, Text } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { truncateText } from "@/lib/utils";
 import { CommentType } from "@/types/dispatch";
 import { useCommentTypeStore } from "@/stores/DispatchStore";
 import { CreateCommentTypeModal } from "@/components/comment-type/CreateCommentTypeModal";
 import { CommentTypeDrawer } from "@/components/comment-type/CommentTypeDrawer";
+import { TChoiceProps } from "@/types";
 
 export function CommentTypeTable() {
   const columns = useMemo<MRT_ColumnDef<CommentType>[]>(
     () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] satisfies ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
       {
         accessorKey: "name",
         header: "Name",

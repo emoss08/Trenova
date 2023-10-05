@@ -37,7 +37,7 @@ import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { TChoiceProps } from "@/types";
-import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
+import { rateMethodChoices, statusChoices } from "@/lib/constants";
 import { useCustomers } from "@/hooks/useCustomers";
 import {
   Rate,
@@ -51,7 +51,7 @@ import { useLocations } from "@/hooks/useLocations";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { getNewRateNumber } from "@/services/DispatchRequestService";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
-import { useOrderTypes } from "@/hooks/useOrderTypes";
+import { useShipmentTypes } from "@/hooks/useShipmentTypes";
 import { useAccessorialCharges } from "@/hooks/useAccessorialCharges";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
@@ -224,12 +224,13 @@ function CreateRateModalForm({
       <SimpleGrid cols={4} breakpoints={[{ maxWidth: "lg", cols: 1 }]}>
         <SelectInput<FormValues>
           form={form}
-          name="isActive"
-          label="Is Active"
-          description="Is this Rate active?"
-          placeholder="Is Active"
+          data={statusChoices}
+          description="Status of Rate"
+          name="status"
+          label="Status"
+          placeholder="Status"
+          variant="filled"
           withAsterisk
-          data={yesAndNoChoicesBoolean}
         />
         <ValidatedTextInput<FormValues>
           form={form}
@@ -392,10 +393,7 @@ export function CreateRateModal() {
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<Rate>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<Rate>>(
     form,
     store,
     notifications,
@@ -457,10 +455,10 @@ export function CreateRateModal() {
   } = useEquipmentTypes(showCreateModal);
 
   const {
-    selectOrderType,
+    selectShipmentType,
     isLoading: isOrderTypesLoading,
     isError: isOrderTypesError,
-  } = useOrderTypes(showCreateModal);
+  } = useShipmentTypes(showCreateModal);
 
   const {
     selectAccessorialChargeData,
@@ -553,7 +551,7 @@ export function CreateRateModal() {
                   equipmentTypes={selectEquipmentType}
                   isEquipmentTypesLoading={isEquipmentTypesLoading}
                   isEquipmentTypesError={isEquipmentTypesError}
-                  orderTypes={selectOrderType}
+                  orderTypes={selectShipmentType}
                   isOrderTypesError={isOrderTypesError}
                   isOrderTypesLoading={isOrderTypesLoading}
                   form={form}

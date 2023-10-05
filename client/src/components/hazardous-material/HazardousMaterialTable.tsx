@@ -21,8 +21,7 @@ import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { hazardousMaterialTableStore } from "@/stores/CommodityStore";
 import { CreateHMModal } from "@/components/hazardous-material/CreateHMModal";
-import { ViewHMModal } from "@/components/hazardous-material/ViewHMModal";
-import { EditHMModal } from "@/components/hazardous-material/EditHMModal";
+import { HMDrawer } from "@/components/hazardous-material/HMDrawer";
 import { HazardousMaterial } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 
@@ -68,10 +67,9 @@ export function HazardousMaterialTable() {
       store={hazardousMaterialTableStore}
       link="/hazardous_materials"
       columns={columns}
-      TableEditModal={EditHMModal}
-      TableViewModal={ViewHMModal}
       displayDeleteModal
       TableCreateDrawer={CreateHMModal}
+      TableDrawer={HMDrawer}
       tableQueryKey="hazardous-material-table-data"
       exportModelName="HazardousMaterial"
       name="Hazardous Material"

@@ -23,9 +23,10 @@ import { modals } from "@mantine/modals";
 import { useContextMenu } from "mantine-contextmenu";
 import axios from "@/lib/AxiosConfig";
 import { montaTableIcons } from "@/components/common/table/Icons";
-import { API_URL, USDollarFormat } from "@/lib/constants";
+import { API_URL } from "@/lib/constants";
 import { paymentRecordsTableStore } from "@/stores/CustomerStore";
 import { BillingHistory } from "@/types/billing";
+import { USDollarFormat } from "@/lib/utils";
 
 type Props = {
   id: string;

@@ -17,15 +17,40 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { chargeTypeTableStore } from "@/stores/BillingStores";
 import { CreateChargeTypeModal } from "@/components/charge-types/table/CreateChargeTypeModal";
 import { ChargeType } from "@/types/billing";
 import { ChargeTypeDrawer } from "@/components/charge-types/table/ChargeTypeDrawer";
+import { TChoiceProps } from "@/types";
 
 export function ChargeTypeTable() {
   const columns = useMemo<MRT_ColumnDef<ChargeType>[]>(
     () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] satisfies ReadonlyArray<TChoiceProps>,
+        },
+        filterVariant: "select",
+      },
       {
         accessorKey: "name", // access nested data with dot notation
         header: "Name",

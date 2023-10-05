@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Box, Button, Drawer, Group, Textarea, TextInput } from "@mantine/core";
+import { Button, Drawer, Group } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { useFormStyles } from "@/assets/styles/FormStyles";
@@ -28,8 +28,7 @@ import { useCommentTypeStore as store } from "@/stores/DispatchStore";
 import { commentTypeSchema } from "@/lib/schemas/DispatchSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
-import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
+import { CommentTypeForm } from "@/components/comment-type/CreateCommentTypeModal";
 
 function EditCommentTypeModalForm({
   commentType,
@@ -44,6 +43,7 @@ function EditCommentTypeModalForm({
   const form = useForm<FormValues>({
     validate: yupResolver(commentTypeSchema),
     initialValues: {
+      status: "A",
       name: commentType.name,
       description: commentType.description,
     },
@@ -72,111 +72,34 @@ function EditCommentTypeModalForm({
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          description="Unique Name of the Comment Type"
-          withAsterisk
-        />
-        <ValidatedTextArea<FormValues>
-          form={form}
-          name="description"
-          label="Description"
-          description="Description of the Comment Type"
-          placeholder="Description"
-          withAsterisk
-        />
-        <Group position="right" mt="md">
-          <Button
-            variant="subtle"
-            onClick={onCancel}
-            color="gray"
-            type="button"
-            className={classes.control}
-          >
-            Cancel
-          </Button>
-          <Button
-            color="white"
-            type="submit"
-            className={classes.control}
-            loading={loading}
-          >
-            Submit
-          </Button>
-        </Group>
-      </Box>
+      <CommentTypeForm form={form} />
+      <Group position="right" mt="md">
+        <Button
+          variant="subtle"
+          onClick={onCancel}
+          color="gray"
+          type="button"
+          className={classes.control}
+        >
+          Cancel
+        </Button>
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }
 
-function CommentTypeViewForm({
-  commentType,
-  onEditClick,
-}: {
-  commentType: CommentType;
-  onEditClick: () => void;
-}) {
-  const { classes } = useFormStyles();
-
-  return (
-    <Box className={classes.div}>
-      <TextInput
-        className={classes.fields}
-        value={commentType.name}
-        name="name"
-        label="Name"
-        placeholder="Name"
-        readOnly
-        variant="filled"
-        withAsterisk
-      />
-      <Textarea
-        className={classes.fields}
-        name="description"
-        label="Description"
-        placeholder="Description"
-        readOnly
-        variant="filled"
-        value={commentType.description || ""}
-        withAsterisk
-      />
-      <Group position="right" mt="md" spacing="xs">
-        <Button
-          variant="subtle"
-          type="submit"
-          onClick={onEditClick}
-          className={classes.control}
-        >
-          Edit
-        </Button>
-        <Button
-          color="red"
-          type="submit"
-          onClick={() => {
-            store.set("drawerOpen", false);
-            store.set("deleteModalOpen", true);
-          }}
-          className={classes.control}
-        >
-          Remove
-        </Button>
-      </Group>
-    </Box>
-  );
-}
-
 export function CommentTypeDrawer() {
-  const [isEditing, setIsEditing] = React.useState(false);
   const [drawerOpen, setDrawerOpen] = store.use("drawerOpen");
   const [commentType] = store.use("selectedRecord");
-
-  const toggleEditMode = () => {
-    setIsEditing((prev) => !prev);
-  };
+  const onCancel = () => store.set("drawerOpen", false);
 
   return (
     <Drawer.Root
@@ -188,23 +111,16 @@ export function CommentTypeDrawer() {
       <Drawer.Content>
         <Drawer.Header>
           <Drawer.Title>
-            {isEditing ? "Edit Charge Type" : "View Charge Type"}
+            Edit Comment Type: {commentType && commentType.name}
           </Drawer.Title>
           <Drawer.CloseButton />
         </Drawer.Header>
         <Drawer.Body>
-          {commentType && isEditing ? (
+          {commentType && (
             <EditCommentTypeModalForm
               commentType={commentType}
-              onCancel={toggleEditMode}
+              onCancel={onCancel}
             />
-          ) : (
-            commentType && (
-              <CommentTypeViewForm
-                commentType={commentType}
-                onEditClick={toggleEditMode}
-              />
-            )
           )}
         </Drawer.Body>
       </Drawer.Content>

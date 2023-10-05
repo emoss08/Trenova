@@ -17,17 +17,41 @@
 
 import React, { useMemo } from "react";
 import { MRT_ColumnDef } from "mantine-react-table";
+import { Badge } from "@mantine/core";
 import { MontaTable } from "@/components/common/table/MontaTable";
 import { Rate } from "@/types/dispatch";
 import { useRateStore } from "@/stores/DispatchStore";
 import { CreateRateModal } from "@/components/rate/CreateRateModal";
-import { ViewRateModal } from "@/components/rate/ViewRateModal";
-import { EditRateModal } from "@/components/rate/EditRateModal";
+import { RateDrawer } from "@/components/rate/EditRateModal";
 import { USDollarFormat } from "@/lib/utils";
+import { TChoiceProps } from "@/types";
 
 export function RateTable() {
-  const columns: MRT_ColumnDef<Rate>[] = useMemo<MRT_ColumnDef<Rate>[]>(
+  const columns = useMemo<MRT_ColumnDef<Rate>[]>(
     () => [
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        filterFn: "equals",
+        Cell: ({ cell }) => (
+          <Badge
+            color={cell.getValue() === "A" ? "green" : "red"}
+            variant="filled"
+            radius="xs"
+          >
+            {cell.getValue() === "A" ? "Active" : "Inactive"}
+          </Badge>
+        ),
+        mantineFilterSelectProps: {
+          data: [
+            { value: "", label: "All" },
+            { value: "A", label: "Active" },
+            { value: "I", label: "Inactive" },
+          ] as TChoiceProps[],
+        },
+        filterVariant: "select",
+      },
       {
         accessorKey: "rateNumber",
         header: "Rate Number",
@@ -58,11 +82,10 @@ export function RateTable() {
       store={useRateStore}
       link="/rates"
       columns={columns}
-      TableEditModal={EditRateModal}
-      TableViewModal={ViewRateModal}
       displayDeleteModal
       deleteKey="id"
       TableCreateDrawer={CreateRateModal}
+      TableDrawer={RateDrawer}
       tableQueryKey="rate-table-data"
       exportModelName="Rate"
       name="Rate"

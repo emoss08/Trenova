@@ -41,6 +41,7 @@ export type HazardousMaterialFormValues = Omit<
 
 export interface Commodity extends BaseModel {
   id: string;
+  status: StatusChoiceProps;
   name: string;
   description?: string | null;
   minTemp?: number | null;

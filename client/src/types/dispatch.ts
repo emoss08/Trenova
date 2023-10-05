@@ -17,6 +17,7 @@
 
 import { TRateMethodChoices } from "@/lib/constants";
 import { BaseModel } from "./organization";
+import { StatusChoiceProps } from "@/types/index";
 
 export type DispatchControl = {
   id: string;
@@ -39,6 +40,7 @@ export type DispatchControlFormValues = Omit<
 >;
 
 export interface DelayCode extends BaseModel {
+  status: StatusChoiceProps;
   code: string;
   description: string;
   fCarrierOrDriver: boolean;
@@ -50,9 +52,9 @@ export type DelayCodeFormValues = Omit<
 >;
 
 export interface FleetCode extends BaseModel {
+  status: StatusChoiceProps;
   code: string;
   description: string;
-  isActive: boolean;
   revenueGoal: number;
   deadheadGoal: number;
   mileageGoal: number;
@@ -67,6 +69,7 @@ export type FleetCodeFormValues = Omit<
 export interface CommentType extends BaseModel {
   id: string;
   name: string;
+  status: StatusChoiceProps;
   description: string;
   created: string;
   modified: string;

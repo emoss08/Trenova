@@ -15,25 +15,14 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import {
-  Box,
-  Button,
-  Group,
-  Modal,
-  SimpleGrid,
-  Skeleton,
-  Stack,
-} from "@mantine/core";
+import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import React from "react";
-import { useQuery, useQueryClient } from "react-query";
-import { useForm, yupResolver } from "@mantine/form";
+import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { divisionCodeTableStore as store } from "@/stores/AccountingStores";
-import { getGLAccounts } from "@/services/AccountingRequestService";
 import {
   DivisionCode,
   DivisionCodeFormValues as FormValues,
-  GeneralLedgerAccount,
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
@@ -44,11 +33,104 @@ import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
+import { useGLAccounts } from "@/hooks/useGLAccounts";
+
+export function DCForm({
+  selectGlAccountData,
+  isError,
+  isLoading,
+  form,
+}: {
+  selectGlAccountData: TChoiceProps[];
+  isError: boolean;
+  isLoading: boolean;
+  form: UseFormReturnType<FormValues>;
+}) {
+  const { classes } = useFormStyles();
+
+  return (
+    <div className={classes.div}>
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={statusChoices}
+          name="status"
+          description="Status of the Division Code"
+          label="Status"
+          placeholder="Status"
+          variant="filled"
+          withAsterisk
+        />
+        <ValidatedTextInput<FormValues>
+          form={form}
+          name="code"
+          description="Unique code for the Division Code"
+          label="Code"
+          placeholder="Code"
+          variant="filled"
+          withAsterisk
+          maxLength={4}
+        />
+      </SimpleGrid>
+      <ValidatedTextArea<FormValues>
+        form={form}
+        name="description"
+        description="Description of the Division Code"
+        label="Description"
+        placeholder="Description"
+        variant="filled"
+        withAsterisk
+      />
+      <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
+        <SelectInput<FormValues>
+          form={form}
+          data={selectGlAccountData}
+          isError={isError}
+          isLoading={isLoading}
+          name="apAccount"
+          description="Associated AP account for Division Code"
+          label="AP Account"
+          placeholder="AP Account"
+          variant="filled"
+          clearable
+        />
+        <SelectInput<FormValues>
+          form={form}
+          data={selectGlAccountData}
+          isError={isError}
+          isLoading={isLoading}
+          description="Associated cash account for Division Code"
+          name="cashAccount"
+          label="Cash Account"
+          placeholder="Cash Account"
+          variant="filled"
+          clearable
+        />
+      </SimpleGrid>
+      <SelectInput<FormValues>
+        form={form}
+        data={selectGlAccountData}
+        isError={isError}
+        isLoading={isLoading}
+        name="expenseAccount"
+        description="Associated expense account for Division Code"
+        label="Expense Account"
+        placeholder="Expense Account"
+        variant="filled"
+        clearable
+      />
+    </div>
+  );
+}
 
 function CreateDCModalForm({
   selectGlAccountData,
+  isError,
+  isLoading,
 }: {
   selectGlAccountData: TChoiceProps[];
+  isError: boolean;
+  isLoading: boolean;
 }) {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
@@ -65,10 +147,7 @@ function CreateDCModalForm({
     },
   });
 
-  const mutation = useCustomMutation<
-    FormValues,
-    Omit<TableStoreProps<DivisionCode>, "drawerOpen">
-  >(
+  const mutation = useCustomMutation<FormValues, TableStoreProps<DivisionCode>>(
     form,
     store,
     notifications,
@@ -91,98 +170,30 @@ function CreateDCModalForm({
 
   return (
     <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <Box className={classes.div}>
-        <Box>
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<FormValues>
-              form={form}
-              data={statusChoices}
-              name="status"
-              label="Status"
-              placeholder="Status"
-              variant="filled"
-              withAsterisk
-            />
-            <ValidatedTextInput<FormValues>
-              form={form}
-              name="code"
-              label="Code"
-              placeholder="Code"
-              variant="filled"
-              withAsterisk
-              maxLength={4}
-            />
-          </SimpleGrid>
-          <ValidatedTextArea<FormValues>
-            form={form}
-            name="description"
-            label="Description"
-            placeholder="Description"
-            variant="filled"
-            withAsterisk
-          />
-          <SimpleGrid cols={2} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-            <SelectInput<FormValues>
-              form={form}
-              data={selectGlAccountData}
-              name="apAccount"
-              label="AP Account"
-              placeholder="AP Account"
-              variant="filled"
-              clearable
-            />
-            <SelectInput<FormValues>
-              form={form}
-              data={selectGlAccountData}
-              name="cashAccount"
-              label="Cash Account"
-              placeholder="Cash Account"
-              variant="filled"
-              clearable
-            />
-          </SimpleGrid>
-          <SelectInput<FormValues>
-            form={form}
-            data={selectGlAccountData}
-            name="expenseAccount"
-            label="Expense Account"
-            placeholder="Expense Account"
-            variant="filled"
-            clearable
-          />
-          <Group position="right" mt="md">
-            <Button
-              color="white"
-              type="submit"
-              className={classes.control}
-              loading={loading}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Box>
-      </Box>
+      <DCForm
+        selectGlAccountData={selectGlAccountData}
+        isError={isError}
+        isLoading={isLoading}
+        form={form}
+      />
+      <Group position="right" mt="md">
+        <Button
+          color="white"
+          type="submit"
+          className={classes.control}
+          loading={loading}
+        >
+          Submit
+        </Button>
+      </Group>
     </form>
   );
 }
 
 export function CreateDCModal(): React.ReactElement {
   const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
-  const queryClient = useQueryClient();
-
-  const { data: glAccountData, isLoading: isGLAccountDataLoading } = useQuery({
-    queryKey: "gl-account-data",
-    queryFn: () => getGLAccounts(),
-    enabled: showCreateModal,
-    initialData: () => queryClient.getQueryData("gl-account"),
-    staleTime: Infinity,
-  });
-
-  const selectGlAccountData =
-    glAccountData?.map((glAccount: GeneralLedgerAccount) => ({
-      value: glAccount.id,
-      label: glAccount.accountNumber,
-    })) || [];
+  const { selectGLAccounts, isError, isLoading } =
+    useGLAccounts(showCreateModal);
 
   return (
     <Modal.Root
@@ -196,13 +207,11 @@ export function CreateDCModal(): React.ReactElement {
           <Modal.CloseButton />
         </Modal.Header>
         <Modal.Body>
-          {isGLAccountDataLoading ? (
-            <Stack>
-              <Skeleton height={400} />
-            </Stack>
-          ) : (
-            <CreateDCModalForm selectGlAccountData={selectGlAccountData} />
-          )}
+          <CreateDCModalForm
+            selectGlAccountData={selectGLAccounts}
+            isLoading={isLoading}
+            isError={isError}
+          />
         </Modal.Body>
       </Modal.Content>
     </Modal.Root>
