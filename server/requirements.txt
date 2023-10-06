@@ -23,11 +23,11 @@ django-model-utils==4.3.1
 django-nested-inline==0.4.6
 django-notifications-hq==1.8.2
 django-phonenumber-field==7.2.0
-djangorestframework-camel-case==1.4.2
 django-redis==5.4.0
 django-silk==5.0.4
 django-stubs-ext==4.2.2
 djangorestframework~=3.14.0
+djangorestframework-camel-case==1.4.2
 drf-nested-routers==0.93.4
 drf-spectacular==0.26.5
 drf-standardized-errors[openapi]==0.12.5
