@@ -289,10 +289,14 @@ class TransactionService:
 
         billed_shipment = get_shipment_bill_hist(shipment=shipment)
 
-        if (
-            billed_shipment.exists()
-            and billed_shipment.total_amount != shipment.sub_total
-        ):
+        if billed_shipment is None:
+            return (
+                True,
+                f"Transaction {f_transaction.transaction_number}: No billed shipment found for Shipment: "
+                f"{shipment.pro_number}.",
+            )
+
+        if billed_shipment.total_amount != shipment.sub_total:
             return (
                 True,
                 f"Transaction {f_transaction.transaction_number}: Amount discrepancy detected for "
@@ -301,8 +305,9 @@ class TransactionService:
             )
 
         invoice = get_invoice_payment_detail(invoice=billed_shipment)
+
         if (
-            invoice.exists()
+            invoice is not None
             and billed_shipment.total_amount
             and invoice.payment_amount != billed_shipment.total_amount
         ):

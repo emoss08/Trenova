@@ -70,7 +70,7 @@ def test_create_schema() -> None:
     gl_account_create = GeneralAccountLedgerAccountCreate(
         organization_id=uuid.uuid4(),
         status="A",
-        account_number="1234-1234-1234-1234",
+        account_number="1234-12",
         description="Description",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
         cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
@@ -82,7 +82,7 @@ def test_create_schema() -> None:
 
     assert gl_account is not None
     assert gl_account["status"] == "A"
-    assert gl_account["account_number"] == "1234-1234-1234-1234"
+    assert gl_account["account_number"] == "1234-12"
     assert gl_account["description"] == "Description"
     assert (
         gl_account["account_type"]
@@ -111,7 +111,7 @@ def test_update_schema() -> None:
         id=uuid.uuid4(),
         organization_id=uuid.uuid4(),
         status="A",
-        account_number="1234-1234-1234-1234",
+        account_number="1234-12",
         description="Description",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
         cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
@@ -123,7 +123,7 @@ def test_update_schema() -> None:
 
     assert gl_account is not None
     assert gl_account["status"] == "A"
-    assert gl_account["account_number"] == "1234-1234-1234-1234"
+    assert gl_account["account_number"] == "1234-12"
     assert gl_account["description"] == "Description"
     assert (
         gl_account["account_type"]
@@ -152,7 +152,7 @@ def test_delete_schema() -> None:
         GeneralLedgerAccountBase(
             organization_id=uuid.uuid4(),
             status="A",
-            account_number="1234-1234-1234-1234",
+            account_number="1234-12",
             description="Description 1",
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
             cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
@@ -162,7 +162,7 @@ def test_delete_schema() -> None:
         GeneralLedgerAccountBase(
             organization_id=uuid.uuid4(),
             status="A",
-            account_number="1234-1234-1234-1235",
+            account_number="1234-12",
             description="Description 2",
             account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
             cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
@@ -179,8 +179,8 @@ def test_delete_schema() -> None:
 
     assert len(gl_accounts) == 2
     assert len(gl_account_store) == 1
-    assert gl_accounts[0].account_number == "1234-1234-1234-1234"
-    assert gl_account_store[0].account_number == "1234-1234-1234-1235"
+    assert gl_accounts[0].account_number == "1234-12"
+    assert gl_account_store[0].account_number == "1234-12"
 
 
 def test_gl_account_get_absolute_url(
@@ -221,7 +221,7 @@ def test_create(organization: Organization, business_unit: BusinessUnit) -> None
     gl_account = models.GeneralLedgerAccount.objects.create(
         organization=organization,
         business_unit=business_unit,
-        account_number="1234-1234-1234-1234",
+        account_number="1234-12",
         account_type=models.GeneralLedgerAccount.AccountTypeChoices.ASSET,
         description="Another Description",
         cash_flow_type=models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING,
@@ -230,16 +230,16 @@ def test_create(organization: Organization, business_unit: BusinessUnit) -> None
     )
 
     assert gl_account is not None
-    assert gl_account.account_number == "1234-1234-1234-1234"
+    assert gl_account.account_number == "1234-12"
 
 
 def test_update(general_ledger_account: GeneralLedgerAccount) -> None:
     """
     Test general ledger account update
     """
-    general_ledger_account.account_number = "1234-1234-1234-1234"
+    general_ledger_account.account_number = "1234-12"
     general_ledger_account.save()
-    assert general_ledger_account.account_number == "1234-1234-1234-1234"
+    assert general_ledger_account.account_number == "1234-12"
 
 
 def test_api_get(api_client: APIClient) -> None:
@@ -279,7 +279,7 @@ def test_api_put(
         ),
         {
             "organization": organization.id,
-            "account_number": "2345-2345-2345-2345",
+            "account_number": "2345-23",
             "description": "Another Test Description",
             "account_type": f"{models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE}",
             "cash_flow_type": f"{models.GeneralLedgerAccount.CashFlowTypeChoices.FINANCING}",
@@ -288,7 +288,7 @@ def test_api_put(
         },
     )
     assert response.status_code == 200
-    assert response.data["account_number"] == "2345-2345-2345-2345"
+    assert response.data["account_number"] == "2345-23"
     assert (
         response.data["account_type"]
         == models.GeneralLedgerAccount.AccountTypeChoices.EXPENSE
@@ -330,11 +330,14 @@ def test_account_number(general_ledger_account: GeneralLedgerAccount) -> None:
     """
 
     with pytest.raises(ValidationError) as excinfo:
-        general_ledger_account.account_number = "00000-2323411-124141"
+        general_ledger_account.account_number = "00000-23"
         general_ledger_account.full_clean()
 
+    print(excinfo.value.message_dict)
+
     assert excinfo.value.message_dict["account_number"] == [
-        "Account number must be in the format 0000-0000-0000-0000."
+        "Account number must be in the format XXXX-XX.",
+        "Ensure this value has at most 7 characters (it has 8).",
     ]
 
 
@@ -343,12 +346,15 @@ def test_unique_account_numer(general_ledger_account: GeneralLedgerAccount) -> N
     Test creating a General Ledger account with the same account number
     throws ValidationError.
     """
-    general_ledger_account.account_number = "1234-1234-1234-1234"
+    general_ledger_account.account_number = "1234-12"
     general_ledger_account.save()
 
-    with pytest.raises(ValidationError) as excinfo:
-        GeneralLedgerAccountFactory(account_number="1234-1234-1234-1234")
+    print(general_ledger_account.account_number)
 
-    assert excinfo.value.message_dict["account_number"] == [
-        "An account with this account number already exists. Please try again."
+    with pytest.raises(ValidationError) as excinfo:
+        GeneralLedgerAccountFactory(account_number="1234-12")
+
+    print(excinfo.value.message_dict)
+    assert excinfo.value.message_dict["__all__"] == [
+        "Constraint “unique_gl_account_organization” is violated."
     ]

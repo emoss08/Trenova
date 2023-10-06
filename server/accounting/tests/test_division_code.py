@@ -322,7 +322,7 @@ def test_api_put(
         {
             "organization": organization.id,
             "status": "A",
-            "account_number": "7000-0000-0000-0000",
+            "account_number": "7000-00",
             "description": "Foo bar",
             "account_type": "ASSET",
             "account_classification": "CASH",

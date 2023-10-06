@@ -33,7 +33,7 @@ class MovementFactory(factory.django.DjangoModelFactory):
     id = factory.Faker("uuid4")
     business_unit = factory.SubFactory("organization.factories.BusinessUnitFactory")
     organization = factory.SubFactory("organization.factories.OrganizationFactory")
-    shipment = factory.SubFactory("shipment.tests.factories.shipmentFactory")
+    shipment = factory.SubFactory("shipment.tests.factories.ShipmentFactory")
     tractor = factory.SubFactory("equipment.tests.factories.TractorFactory")
     primary_worker = factory.SubFactory("worker.factories.WorkerFactory")
     secondary_worker = factory.SubFactory("worker.factories.WorkerFactory")

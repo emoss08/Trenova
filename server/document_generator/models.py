@@ -136,8 +136,8 @@ class DocumentTemplate(GenericModel):
             save_template_version(
                 template=self,
                 new_content=self.content,
-                user=self.user_id,
-                change_reason=None,
+                user=self.user,
+                change_reason="",
                 organization=self.organization,
                 business_unit=self.business_unit,
             )

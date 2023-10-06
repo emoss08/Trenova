@@ -46,7 +46,6 @@ class GeneralLedgerAccountViewSet(viewsets.ModelViewSet):
         "account_classification",
     )
     permission_classes = [CustomObjectPermissions]
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.GeneralLedgerAccount]:
         """The get_queryset function is used to filter the queryset by organization_id.
@@ -109,7 +108,6 @@ class RevenueCodeViewSet(viewsets.ModelViewSet):
         "revenue_account",
     )
     permission_classes = [CustomObjectPermissions]
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.RevenueCode]:
         """The get_queryset function is used to filter the queryset by organization_id.
@@ -151,7 +149,6 @@ class DivisionCodeViewSet(viewsets.ModelViewSet):
         "ap_account",
         "expense_account",
     )
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.DivisionCode]:
         """
@@ -192,7 +189,6 @@ class TagViewSet(viewsets.ModelViewSet):
     search_fields = ("name",)
     permission_classes = [CustomObjectPermissions]
     filterset_fields = ("name",)
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.Tag]:
         """
@@ -228,7 +224,6 @@ class FinancialTransactionViewSet(viewsets.ModelViewSet):
     search_fields = ("transaction_number",)
     permission_classes = [CustomObjectPermissions]
     filterset_fields = ("transaction_number",)
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.FinancialTransaction]:
         """
@@ -272,7 +267,6 @@ class ReconciliationQueueViewSet(viewsets.ModelViewSet):
     search_fields = ("transaction_number",)
     permission_classes = [CustomObjectPermissions]
     filterset_fields = ("transaction_number",)
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
 
     def get_queryset(self) -> QuerySet[models.ReconciliationQueue]:
         """
