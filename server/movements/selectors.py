@@ -14,20 +14,3 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
-
-from movements import models
-
-
-def get_movement_by_id(*, movement_id: str) -> models.Movement | None:
-    """Get a movement model instance by its ID.
-
-    Args:
-        movement_id (str): The ID of the movement.
-
-    Returns:
-        models.Shipment: The shipment model instance.
-    """
-    try:
-        return models.Movement.objects.get(pk__exact=movement_id)
-    except models.Movement.DoesNotExist:
-        return None

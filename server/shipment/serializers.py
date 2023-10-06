@@ -85,7 +85,7 @@ class ShipmentTypeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.ShipmentType):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -139,7 +139,7 @@ class ReasonCodeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.ReasonCode):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

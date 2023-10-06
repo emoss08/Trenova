@@ -416,6 +416,12 @@ class UserLogoutView(views.APIView):
             A response object with the status code 200
 
         """
+        if request.user.is_anonymous:
+            return response.Response(
+                {"message": "User is not logged in."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         user = request.user
         logout(request)
         user.online = False

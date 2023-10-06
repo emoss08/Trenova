@@ -96,7 +96,7 @@ class DepotSerializer(serializers.ModelSerializer):
             serializers.ValidationError: If the depot with the given name already exists in the
              organization.
         """
-        organization = super().get_organization
+        organization = self.get_organization
 
         queryset = models.Depot.objects.filter(
             organization=organization,
@@ -104,7 +104,7 @@ class DepotSerializer(serializers.ModelSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Depot):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -258,7 +258,7 @@ class TableChangeAlertSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.TableChangeAlert):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -306,7 +306,7 @@ class NotificationTypeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.NotificationType):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

@@ -23,9 +23,9 @@ class FormulaVariables(typing.TypedDict):
     A dictionary of variables that can be used in a formula.
     """
 
-    freight_charge: decimal.Decimal
-    other_charge: int
-    mileage: float
+    freight_charge: decimal.Decimal | None
+    other_charge: decimal.Decimal | None
+    mileage: float | None
     weight: decimal.Decimal | int
     stops: int
     rating_units: int

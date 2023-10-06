@@ -22,7 +22,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from movements import models
-from movements.selectors import get_movement_by_id
 from utils.models import StatusChoices
 from worker.models import WorkerProfile
 
@@ -424,9 +423,9 @@ class MovementValidation:
                     )
 
     def validate_voided_movement(self) -> None:
-        movement = get_movement_by_id(movement_id=self.movement.id)
+        movement = self.movement
 
-        if not movement:
+        if not movement.exists():
             return None
 
         if movement.status == StatusChoices.VOIDED:

@@ -87,7 +87,7 @@ class GeneralLedgerAccountSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.GeneralLedgerAccount):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -169,7 +169,7 @@ class RevenueCodeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.RevenueCode):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -217,7 +217,7 @@ class DivisionCodeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.DivisionCode):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

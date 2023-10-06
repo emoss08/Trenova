@@ -40,9 +40,8 @@ class ScheduleType(models.TextChoices):
     MONTHLY = "MONTHLY", _("Monthly")
 
 
-class Weekday(models.Model):
-    """
-    Stores the weekdays for a weekly scheduled report.
+class Weekday(models.Model):  # type: ignore
+    """Stores the weekdays for a weekly scheduled report.
 
     Attributes:
         name (str): The name of the weekday.

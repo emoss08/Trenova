@@ -146,7 +146,7 @@ class CustomerFuelTableSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.CustomerFuelTable):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -246,7 +246,7 @@ class CustomerRuleProfileSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.CustomerRuleProfile):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -304,7 +304,7 @@ class CustomerSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Customer):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -331,7 +331,7 @@ class CustomerSerializer(GenericSerializer):
         )
 
         if self.context["request"].query_params.get("expand_metrics", False):
-            data["total_shipment_metrics"] = selectors.get_customer_shipment_diff(
+            data["total_shipment_metrics"] = selectors.get_customer_shipments_diff(
                 customer_id=instance.id
             )
             data["total_revenue_metrics"] = selectors.get_customer_revenue_diff(

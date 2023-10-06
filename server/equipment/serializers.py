@@ -82,7 +82,7 @@ class EquipmentTypeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.EquipmentType):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -189,7 +189,7 @@ class EquipmentManufacturerSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.EquipmentManufacturer):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -239,7 +239,7 @@ class TractorSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Tractor):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -289,7 +289,7 @@ class TrailerSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Trailer):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -340,7 +340,7 @@ class EquipmentMaintenancePlanSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.EquipmentMaintenancePlan):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

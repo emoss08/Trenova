@@ -20,7 +20,6 @@ from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from stops import models
-from stops.selectors import get_stop_by_id
 from utils.models import StatusChoices
 
 
@@ -184,14 +183,14 @@ class StopValidation:
         #             "Appointment time must be before next stop. Please try again."
         #         )
 
-    def ensure_location(self):
+    def ensure_location(self) -> None:
         """Ensure location is entered
 
         Ensure that either location or address_line is entered.
         If neither is entered, raise a validation error.
 
         Returns:
-
+            None: This function does not return anything
         """
         if not self.instance.location and not self.instance.address_line:
             self.errors["location"] = _(
@@ -199,9 +198,14 @@ class StopValidation:
             )
 
     def validate_voided_stop(self) -> None:
-        stop = get_stop_by_id(stop_id=self.instance.id)
+        """Validate a voided stop
 
-        if not stop:
+        Returns:
+            None: This function does not return anything
+        """
+        stop = self.instance
+
+        if not stop.exists():
             return None
 
         if stop.status == StatusChoices.VOIDED:

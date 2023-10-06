@@ -74,7 +74,7 @@ class CommoditySerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Commodity):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
