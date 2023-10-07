@@ -91,7 +91,6 @@ function EquipManufacturerBody() {
     TableStoreProps<EquipmentManufacturer>
   >(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -103,6 +102,7 @@ function EquipManufacturerBody() {
       errorMessage: "Failed to create equipment manufacturer.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

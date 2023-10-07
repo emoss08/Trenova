@@ -46,7 +46,7 @@ def test_shipment_control_creation(organization: models.Organization) -> None:
     """
     Test dispatch control is created from create_shipment_control post_save signal
     """
-    assert organization.shipment_control.auto_rate_shipments is True
+    assert organization.shipment_control.auto_rate_shipment is True
     assert organization.shipment_control.organization == organization
 
 

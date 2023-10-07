@@ -19,7 +19,7 @@ import { useQuery, useQueryClient } from "react-query";
 import { getUsers } from "@/services/UserRequestService";
 import { User } from "@/types/accounts";
 
-export function useUsers(show: boolean) {
+export function useUsers(show?: boolean) {
   const queryClient = useQueryClient();
 
   /** Get users for the select input */

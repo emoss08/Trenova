@@ -17,6 +17,7 @@
 
 import axios from "@/lib/AxiosConfig";
 import {
+  AccountingControl,
   DivisionCode,
   GeneralLedgerAccount,
   RevenueCode,
@@ -85,5 +86,15 @@ export async function getRevenueCodeDetail(id: string): Promise<RevenueCode> {
  */
 export async function getTags(): Promise<Tag[]> {
   const response = await axios.get("/tags/");
+  return response.data.results;
+}
+
+/**
+ * Fetches accounting control from the server.
+ * @returns A promise that resolves to an array of accounting control.
+ * @note This should only return one result.
+ */
+export async function getAccountingControl(): Promise<AccountingControl[]> {
+  const response = await axios.get("/accounting_control/");
   return response.data.results;
 }

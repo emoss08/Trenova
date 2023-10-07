@@ -45,7 +45,7 @@ def generate_excel_report(request: HttpRequest, report_id: str) -> HttpResponse:
         return HttpResponse("Model not found", status=404)
 
     # Query the model to get the data
-    queryset = model.objects.all()
+    queryset = model.objects.all()  # type: ignore
 
     # Create a new workbook and add a worksheet
     wb = Workbook()

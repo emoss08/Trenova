@@ -41,10 +41,10 @@ const DEFAULT_ERROR_MESSAGE = "An error occurred.";
 
 export function useCustomMutation<T, K>(
   form: UseFormReturnType<T>,
-  store: StoreType<K>,
   notifications: NotificationsEvents,
   options: MutationOptions,
   onMutationSettled?: () => void,
+  store?: StoreType<K>,
 ) {
   const queryClient = useQueryClient();
 
@@ -114,7 +114,7 @@ function handleSuccess<K>(
   options: MutationOptions,
   notifications: NotificationsEvents,
   queryClient: QueryClient,
-  store: StoreType<K>,
+  store?: StoreType<K>,
 ) {
   const notifySuccess = () => {
     showNotification(
@@ -137,7 +137,7 @@ function handleSuccess<K>(
 
   const modalKey = options.method === "POST" ? "createModalOpen" : "drawerOpen";
   if (options.closeModal) {
-    store.set(modalKey as keyof K, false as any);
+    store && store.set(modalKey as keyof K, false as any);
   }
 }
 

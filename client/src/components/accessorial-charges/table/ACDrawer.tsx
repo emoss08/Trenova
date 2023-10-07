@@ -57,7 +57,6 @@ function EditACModalForm({
     TableStoreProps<AccessorialCharge>
   >(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -69,6 +68,7 @@ function EditACModalForm({
       errorMessage: "Failed to update accessorial charge.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

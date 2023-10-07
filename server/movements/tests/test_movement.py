@@ -277,6 +277,8 @@ def test_primary_worker_mvr_due_date() -> None:
     with pytest.raises(ValidationError) as excinfo:
         MovementFactory(organization=worker.organization, primary_worker=worker)
 
+    print("Excinfo", excinfo.value.message_dict)
+
     assert excinfo.value.message_dict["primary_worker"] == [
         "Cannot assign a worker with an expired MVR. Please update the worker's profile and try again."
     ]

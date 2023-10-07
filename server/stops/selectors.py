@@ -53,18 +53,3 @@ def get_total_weight_by_shipment(*, shipment: "Shipment") -> decimal.Decimal | i
         movement__shipment__exact=shipment
     ).aggregate(Sum("weight"))["weight__sum"]
     return value or 0
-
-
-def get_stop_by_id(*, stop_id: str) -> Stop | None:
-    """Get a stop model instance by its ID.
-
-    Args:
-        stop_id (str): The ID of the stop.
-
-    Returns:
-        models.Stop: The stop model instance.
-    """
-    try:
-        return Stop.objects.get(pk__exact=stop_id)
-    except Stop.DoesNotExist:
-        return None

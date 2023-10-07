@@ -100,7 +100,6 @@ class BillingQueueViewSet(viewsets.ModelViewSet):
         "revenue_code__code",
         "shipment_type",
     )
-    http_method_names = ["get", "put", "patch", "post", "head", "options"]
     permission_classes = [CustomObjectPermissions]
 
     def get_queryset(self) -> QuerySet[models.BillingQueue]:

@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import React, { Suspense } from "react";
 import {
   Badge,
   Box,
@@ -23,21 +23,16 @@ import {
   Divider,
   Group,
   Modal,
-  SimpleGrid,
   Tabs,
-  Text,
   useMantineTheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
 import { useMediaQuery } from "@mantine/hooks";
 import { useRateStore as store } from "@/stores/DispatchStore";
-import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
-import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { TChoiceProps } from "@/types";
-import { rateMethodChoices, statusChoices } from "@/lib/constants";
 import { useCustomers } from "@/hooks/useCustomers";
 import {
   Rate,
@@ -46,34 +41,13 @@ import {
 } from "@/types/dispatch";
 import { rateSchema } from "@/lib/schemas/DispatchSchema";
 import { useCommodities } from "@/hooks/useCommodities";
-import { ValidatedDateInput } from "@/components/common/fields/DateInput";
 import { useLocations } from "@/hooks/useLocations";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
-import { getNewRateNumber } from "@/services/DispatchRequestService";
 import { useEquipmentTypes } from "@/hooks/useEquipmentType";
 import { useShipmentTypes } from "@/hooks/useShipmentTypes";
 import { useAccessorialCharges } from "@/hooks/useAccessorialCharges";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
-
-type Props = {
-  customers: ReadonlyArray<TChoiceProps>;
-  isCustomersLoading: boolean;
-  isCustomersError: boolean;
-  commodities: ReadonlyArray<TChoiceProps>;
-  isCommoditiesLoading: boolean;
-  isCommoditiesError: boolean;
-  orderTypes: ReadonlyArray<TChoiceProps>;
-  isOrderTypesLoading: boolean;
-  isOrderTypesError: boolean;
-  equipmentTypes: ReadonlyArray<TChoiceProps>;
-  isEquipmentTypesLoading: boolean;
-  isEquipmentTypesError: boolean;
-  locations: ReadonlyArray<TChoiceProps>;
-  isLocationsLoading: boolean;
-  isLocationsError: boolean;
-  form: UseFormReturnType<FormValues>;
-};
 
 function CreateRateBillingTableForm({
   accessorialCharges,
@@ -185,187 +159,6 @@ function CreateRateBillingTableForm({
   );
 }
 
-function CreateRateModalForm({
-  customers,
-  isCustomersLoading,
-  isCustomersError,
-  commodities,
-  isCommoditiesLoading,
-  isCommoditiesError,
-  orderTypes,
-  isOrderTypesLoading,
-  isOrderTypesError,
-  equipmentTypes,
-  isEquipmentTypesLoading,
-  isEquipmentTypesError,
-  locations,
-  isLocationsLoading,
-  isLocationsError,
-  form,
-}: Props) {
-  const { classes } = useFormStyles();
-
-  const fetchRate = React.useCallback(async () => {
-    try {
-      const rateNumber = await getNewRateNumber();
-      form.setFieldValue("rateNumber", rateNumber);
-    } catch (err) {
-      console.error("Error fetching rate number:", err);
-    }
-  }, []);
-
-  // fetch rate number and assign it to rateNumber field once when component mounts
-  React.useEffect(() => {
-    fetchRate();
-  }, [fetchRate]);
-
-  return (
-    <Box className={classes.div}>
-      <SimpleGrid cols={4} breakpoints={[{ maxWidth: "lg", cols: 1 }]}>
-        <SelectInput<FormValues>
-          form={form}
-          data={statusChoices}
-          description="Status of Rate"
-          name="status"
-          label="Status"
-          placeholder="Status"
-          variant="filled"
-          withAsterisk
-        />
-        <ValidatedTextInput<FormValues>
-          form={form}
-          name="rateNumber"
-          label="Rate Number"
-          placeholder="Rate Number"
-          description="Unique Number for Rate"
-          disabled
-          withAsterisk
-        />
-      </SimpleGrid>
-      <Box my={10}>
-        {" "}
-        {/** Move into */}
-        <div className="flex flex-col items-center justify-center text-center">
-          <Text fw={400} fz="lg" className={classes.text}>
-            Rate Details
-          </Text>
-        </div>
-        <Divider my={5} variant="dashed" />
-      </Box>
-      <SimpleGrid cols={4} breakpoints={[{ maxWidth: "sm", cols: 1 }]}>
-        <SelectInput<FormValues>
-          form={form}
-          name="customer"
-          label="Customer"
-          placeholder="Customer"
-          description="Customer associated with this Rate"
-          data={customers} // TODO(WOLFRED): add context menu's or add creatable to select fields
-          isLoading={isCustomersLoading}
-          isError={isCustomersError}
-        />
-        <SelectInput<FormValues>
-          form={form}
-          name="commodity"
-          label="Commodity"
-          placeholder="Commodity"
-          description="Commodity associated with this Rate"
-          data={commodities}
-          isLoading={isCommoditiesLoading}
-          isError={isCommoditiesError}
-        />
-        <ValidatedDateInput<FormValues>
-          form={form}
-          name="effectiveDate"
-          label="Effective Date"
-          placeholder="Effective Date"
-          description="Effective Date for Rate"
-          withAsterisk
-        />
-        <ValidatedDateInput<FormValues>
-          form={form}
-          name="expirationDate"
-          label="Expiration Date"
-          placeholder="Expiration Date"
-          description="Expiration Date for Rate"
-          withAsterisk
-        />
-        <SelectInput<FormValues>
-          form={form}
-          name="originLocation"
-          label="Origin Location"
-          placeholder="Origin Location"
-          description="Origin Location associated with this Rate"
-          data={locations}
-          isLoading={isLocationsLoading}
-          isError={isLocationsError}
-        />
-        <SelectInput<FormValues>
-          form={form}
-          name="destinationLocation"
-          label="Destination Location"
-          placeholder="Destination Location"
-          description="Dest. Location associated with this Rate"
-          data={locations}
-          isLoading={isLocationsLoading}
-          isError={isLocationsError}
-        />
-        <SelectInput<FormValues>
-          form={form}
-          name="equipmentType"
-          label="Equipment Type"
-          placeholder="Equipment Type"
-          description="Equipment Type associated with this Rate"
-          data={equipmentTypes}
-          isLoading={isEquipmentTypesLoading}
-          isError={isEquipmentTypesError}
-        />
-        <SelectInput<FormValues>
-          form={form}
-          name="orderType"
-          label="Order Type"
-          placeholder="Order Type"
-          description="Order Type associated with this Rate"
-          data={orderTypes}
-          isLoading={isOrderTypesLoading}
-          isError={isOrderTypesError}
-        />
-        <SelectInput<FormValues>
-          form={form}
-          name="rateMethod"
-          label="Rate Method"
-          placeholder="Rate Method"
-          description="Rate Method associated with this Rate"
-          data={rateMethodChoices}
-          withAsterisk
-        />
-        <ValidatedNumberInput<FormValues>
-          form={form}
-          name="rateAmount"
-          label="Rate Amount"
-          placeholder="Rate Amount"
-          description="Rate Amount associated with this Rate"
-          withAsterisk
-        />
-        <ValidatedNumberInput<FormValues>
-          form={form}
-          name="distanceOverride"
-          label="Distance Override"
-          placeholder="Distance Override"
-          description="Dist. Override associated with this Rate"
-          withAsterisk
-        />
-      </SimpleGrid>
-      <ValidatedTextArea<FormValues>
-        form={form}
-        name="comments"
-        label="Comments"
-        description="Additional Comments for Rate"
-        placeholder="Comments"
-      />
-    </Box>
-  );
-}
-
 export function CreateRateModal() {
   const [showCreateModal, setShowCreateModal] = store.use("createModalOpen");
   const [activeTab, setActiveTab] = React.useState<string | null>("overview");
@@ -395,7 +188,6 @@ export function CreateRateModal() {
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<Rate>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -407,6 +199,7 @@ export function CreateRateModal() {
       errorMessage: "Failed to create rate.",
     },
     () => setLoading(false),
+    store,
   );
 
   type ErrorCountType = (tab: string | null) => number;
@@ -465,6 +258,8 @@ export function CreateRateModal() {
     isLoading: isAccessorialChargesLoading,
     isError: isAccessorialChargesError,
   } = useAccessorialCharges(showCreateModal);
+
+  const RateFormContent = React.lazy(() => import("./RateForm"));
 
   return (
     <Modal.Root
@@ -538,24 +333,26 @@ export function CreateRateModal() {
                 </Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="overview" pt="xs">
-                <CreateRateModalForm
-                  customers={selectCustomersData}
-                  isCustomersLoading={isCustomersLoading}
-                  isCustomersError={isCustomersError}
-                  commodities={selectCommodityData}
-                  isCommoditiesLoading={isCommoditiesLoading}
-                  isCommoditiesError={isCommoditiesError}
-                  locations={selectLocationData}
-                  isLocationsLoading={isLocationsLoading}
-                  isLocationsError={isLocationsError}
-                  equipmentTypes={selectEquipmentType}
-                  isEquipmentTypesLoading={isEquipmentTypesLoading}
-                  isEquipmentTypesError={isEquipmentTypesError}
-                  orderTypes={selectShipmentType}
-                  isOrderTypesError={isOrderTypesError}
-                  isOrderTypesLoading={isOrderTypesLoading}
-                  form={form}
-                />
+                <Suspense fallback={<div>Loading...</div>}>
+                  <RateFormContent
+                    customers={selectCustomersData}
+                    isCustomersLoading={isCustomersLoading}
+                    isCustomersError={isCustomersError}
+                    commodities={selectCommodityData}
+                    isCommoditiesLoading={isCommoditiesLoading}
+                    isCommoditiesError={isCommoditiesError}
+                    locations={selectLocationData}
+                    isLocationsLoading={isLocationsLoading}
+                    isLocationsError={isLocationsError}
+                    equipmentTypes={selectEquipmentType}
+                    isEquipmentTypesLoading={isEquipmentTypesLoading}
+                    isEquipmentTypesError={isEquipmentTypesError}
+                    orderTypes={selectShipmentType}
+                    isOrderTypesError={isOrderTypesError}
+                    isOrderTypesLoading={isOrderTypesLoading}
+                    form={form}
+                  />
+                </Suspense>
               </Tabs.Panel>
               <Tabs.Panel value="rate-billing-table" pt="xs">
                 <CreateRateBillingTableForm

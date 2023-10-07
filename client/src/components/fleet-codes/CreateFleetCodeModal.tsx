@@ -149,7 +149,6 @@ export function CreateFleetCodeModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<FleetCode>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -161,6 +160,7 @@ export function CreateFleetCodeModalForm({
       errorMessage: "Failed to create fleet code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

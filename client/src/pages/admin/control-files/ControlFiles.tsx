@@ -21,7 +21,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/common/NavBar";
 import { controlFileData } from "@/utils/apps/admin";
 
-function ControlFiles() {
+export default function ControlFiles() {
   const location = useLocation();
   const navigate = useNavigate();
   const initialTabLabel = location.hash.substring(1).replace(/-/g, " ");
@@ -66,5 +66,3 @@ function ControlFiles() {
     </Grid>
   );
 }
-
-export default ControlFiles;

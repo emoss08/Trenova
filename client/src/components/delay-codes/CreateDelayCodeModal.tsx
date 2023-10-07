@@ -95,7 +95,6 @@ export function CreateDelayCodeModalForm() {
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<DelayCode>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -107,6 +106,7 @@ export function CreateDelayCodeModalForm() {
       errorMessage: "Failed to create delay code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

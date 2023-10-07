@@ -89,7 +89,7 @@ def test_get_by_id(
     assert response.status_code == 200
     assert response.data is not None
     assert (
-        f"{response.data['order']}" == shipment_api.data["id"]
+        f"{response.data['shipment']}" == shipment_api.data["id"]
     )  # returns UUID <UUID>, convert to F-string
     assert response.data["comment_type"] == comment_type.id
     assert response.data["comment"] == "IM HAPPY YOU'RE HERE"
@@ -120,7 +120,7 @@ def test_put(
     assert response.status_code == 200
     assert response.data is not None
     assert (
-        f"{response.data['order']}" == shipment_api.data["id"]
+        f"{response.data['shipment']}" == shipment_api.data["id"]
     )  # returns UUID <UUID>, convert to F-string
     assert response.data["comment_type"] == comment_type.id
     assert response.data["comment"] == "BE GLAD IM HERE"

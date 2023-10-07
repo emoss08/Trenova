@@ -51,7 +51,6 @@ function EditCommentTypeModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<CommentType>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -63,6 +62,7 @@ function EditCommentTypeModalForm({
       errorMessage: "Failed to update comment type.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

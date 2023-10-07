@@ -19,6 +19,7 @@ import pytest
 from rest_framework.response import Response
 from rest_framework.test import APIClient
 
+from accounts.tests.factories import JobTitleFactory
 from billing import models
 from organization.models import BusinessUnit, Organization
 
@@ -112,10 +113,12 @@ def test_delete(api_client: APIClient, charge_type_api: Response) -> None:
     assert response.data is None
 
 
-def test_post_with_unique_name(api_client, job_title: models.JobTitle) -> None:
+def test_post_with_unique_name(api_client: APIClient) -> None:
     """
     Test posting a job title with the same name throws serializer.ValidationError.
     """
+    job_title = JobTitleFactory()
+
     job_title.name = "test"
     job_title.save()
 
@@ -131,5 +134,5 @@ def test_post_with_unique_name(api_client, job_title: models.JobTitle) -> None:
     assert response.data["type"] == "validationError"
     assert (
         response.data["errors"][0]["detail"]
-        == "Charge Type with this name already exists. Please try again."
+        == "Job Title with this name already exists. Please try again."
     )

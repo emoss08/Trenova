@@ -21,7 +21,9 @@ import {
   AccountClassificationChoiceProps,
   AccountSubTypeChoiceProps,
   AccountTypeChoiceProps,
+  AutomaticJournalEntryChoiceType,
   CashFlowTypeChoiceProps,
+  ThresholdActionChoiceType,
 } from "@/lib/choices";
 
 /** Types for Division Codes */
@@ -108,4 +110,27 @@ export type RevenueCodeFormValues = Omit<
   | "expAccountNum"
   | "created"
   | "modified"
+>;
+
+/** Types for Accounting Control */
+export interface AccountingControl extends BaseModel {
+  id: string;
+  organization: string;
+  autoCreateJournalEntries: boolean;
+  journalEntryCriteria: AutomaticJournalEntryChoiceType;
+  restrictManualJournalEntries: boolean;
+  requireJournalEntryApproval: boolean;
+  defaultRevenueAccount?: string | null;
+  defaultExpenseAccount?: string | null;
+  enableReconciliationNotifications: boolean;
+  reconciliationNotificationRecipients?: string[] | null;
+  reconciliationThreshold: number;
+  reconciliationThresholdAction: ThresholdActionChoiceType;
+  haltOnPendingReconciliation: boolean;
+  criticalProcesses?: string | null;
+}
+
+export type AccountingControlFormValues = Omit<
+  AccountingControl,
+  "id" | "organization" | "created" | "modified"
 >;

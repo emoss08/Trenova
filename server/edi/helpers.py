@@ -278,7 +278,7 @@ def _get_actual_field(
 
     # Otherwise, continue with the next model
     return _get_actual_field(
-        model=current_field.related_model, fields_chain=fields_chain[1:]
+        model=current_field.related_model, fields_chain=fields_chain[1:]  # type: ignore
     )
 
 

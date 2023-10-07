@@ -99,7 +99,6 @@ function CreateJobTitleModalForm(): React.ReactElement {
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<JobTitle>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -111,6 +110,7 @@ function CreateJobTitleModalForm(): React.ReactElement {
       errorMessage: "Failed to create job title.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

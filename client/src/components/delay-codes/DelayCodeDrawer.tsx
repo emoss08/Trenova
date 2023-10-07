@@ -49,7 +49,6 @@ function EditDelayCodeModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<DelayCode>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -61,6 +60,7 @@ function EditDelayCodeModalForm({
       errorMessage: "Failed to update delay code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

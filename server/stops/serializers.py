@@ -64,7 +64,7 @@ class QualifierCodeSerializer(GenericSerializer):
 
         # Exclude the current instance if updating
         if self.instance:
-            queryset = queryset.exclude(pk=self.instance.pk)
+            queryset = queryset.exclude(pk=self.instance.pk)  # type: ignore
 
         if queryset.exists():
             raise serializers.ValidationError(

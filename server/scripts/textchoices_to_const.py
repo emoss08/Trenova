@@ -91,4 +91,9 @@ def find_and_convert_choices(directory: str) -> None:
             f.close()
 
 
-find_and_convert_choices("../commodities")
+if __name__ == "__main__":
+    accounting_directory = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "accounting"
+    )
+    print(f"Searching for Django TextChoices in {accounting_directory}")
+    find_and_convert_choices(accounting_directory)

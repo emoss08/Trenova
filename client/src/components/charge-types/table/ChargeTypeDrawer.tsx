@@ -53,7 +53,6 @@ function EditChargeTypeModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<ChargeType>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -65,6 +64,7 @@ function EditChargeTypeModalForm({
       errorMessage: "Failed to update charge type.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

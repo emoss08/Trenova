@@ -96,4 +96,7 @@ export type QueryKeys =
   | "tags"
   | "shipmentTypes"
   | "shipmentControl"
+  | "accountingControl"
+  | "financeTransaction"
+  | "reconciliationQueue"
   | "users";

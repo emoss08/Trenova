@@ -64,7 +64,6 @@ export function EditDCModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<DivisionCode>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -76,6 +75,7 @@ export function EditDCModalForm({
       errorMessage: "Failed to updated division code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

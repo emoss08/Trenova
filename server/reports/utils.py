@@ -198,7 +198,7 @@ def generate_report(
 
     # Create the queryset
     queryset = (
-        model.objects.filter(organization_id=user.organization_id)
+        model.objects.filter(organization_id=user.organization_id)  # type: ignore
         .select_related(*related_fields)
         .values(*columns)
     )
