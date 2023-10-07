@@ -20,6 +20,7 @@ import {
   faBuildingColumns,
   faFileInvoiceDollar,
   faInbox,
+  faMoneyBillTransfer,
   faTruckClock,
   faTruckFast,
 } from "@fortawesome/pro-duotone-svg-icons";
@@ -48,11 +49,20 @@ const RouteControlContent = lazy(
 const FeasibilityToolControlContent = lazy(
   () => import("../../../components/control-files/FeasibilityControl"),
 );
+const AccountingControlContent = lazy(
+  () => import("../../../components/control-files/AccountingControl"),
+);
 
 // TODO(Wolfred): Add permissions to control files to restrict access to certain users
 export const controlFileData: NavLinks[] = [
   {
     icon: faBuildingColumns,
+    label: "Accounting Controls",
+    description: "Control and Oversee Accounting Processes",
+    component: AccountingControlContent,
+  },
+  {
+    icon: faMoneyBillTransfer,
     label: "Billing Controls",
     description: "Control and Monitor Billing Processes",
     component: BillingControlContent,

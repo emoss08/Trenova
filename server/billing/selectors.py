@@ -198,7 +198,6 @@ def get_shipment_bill_hist(*, shipment: "Shipment") -> models.BillingHistory | N
     Returns:
         QuerySet[models.BillingHistory]: A queryset of BillingHistory objects.
     """
-
     try:
         return models.BillingHistory.objects.get(shipment=shipment)
     except models.BillingHistory.DoesNotExist:
@@ -216,7 +215,6 @@ def get_invoice_payment_detail(
     Returns:
         QuerySet[models.InvoicePaymentDetail]: A queryset of BillingHistory objects.
     """
-
     try:
         return models.InvoicePaymentDetail.objects.get(invoice=invoice)
     except models.InvoicePaymentDetail.DoesNotExist:

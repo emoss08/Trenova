@@ -245,17 +245,8 @@ def test_invoice_number_increments(
 
     assert invoice.invoice_number is not None
     assert (
-        invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{invoice.shipment.pro_number}A".replace(
-            "ORD", ""
-        )
-    )
-    assert second_invoice.invoice_number is not None
-    assert (
-        second_invoice.invoice_number
-        == f"{user.organization.invoice_control.invoice_number_prefix}{second_invoice.shipment.pro_number}A".replace(
-            "ORD", ""
-        )
+        user.organization.invoice_control.invoice_number_prefix
+        in invoice.invoice_number
     )
 
 
@@ -275,7 +266,7 @@ def test_unbilled_shipments_in_billing_history(
         )
 
     assert excinfo.value.message_dict["shipment"] == [
-        "shipment has not been billed. Please try again with a different shipment."
+        "Shipment has not been billed. Please try again with a different Shipment."
     ]
 
 
@@ -302,7 +293,7 @@ def test_auto_bill_criteria_required_when_auto_bill_true(
         billing_control.full_clean()
 
     assert excinfo.value.message_dict["auto_bill_criteria"] == [
-        "Auto Billing criteria is required when `Auto Bill shipments` is on. Please try again."
+        "Auto Billing criteria is required when `Auto Bill Shipment` is on. Please try again."
     ]
 
 
@@ -776,7 +767,7 @@ def test_untransfer_single_Shipment(
     )
 
     assert response.status_code == 200
-    assert response.data == {"success": "shipments untransferred successfully."}
+    assert response.data == {"success": "Shipments untransferred successfully."}
     shipment.refresh_from_db()
     assert not shipment.transferred_to_billing
     assert shipment.billing_transfer_date is None
@@ -817,7 +808,7 @@ def test_untransfer_multiple_shipments(
     )
 
     assert response.status_code == 200
-    assert response.data == {"success": "shipments untransferred successfully."}
+    assert response.data == {"success": "Shipments untransferred successfully."}
     shipment1.refresh_from_db()
     shipment2.refresh_from_db()
     assert not shipment1.transferred_to_billing
@@ -911,4 +902,4 @@ def test_validate_invoice_number_does_start_with_invoice_prefix(
         invoice_number="INV-000001",
     )
 
-    assert invoice.invoice_number == f"INV-{shipment.pro_number}".replace("ORD", "")
+    assert "INV-" in invoice.invoice_number

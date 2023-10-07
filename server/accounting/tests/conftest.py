@@ -95,7 +95,7 @@ def gl_account_api(api_client, organization) -> Generator[Any, Any, None]:
         reverse("gl-accounts-list"),
         {
             "organization": organization.id,
-            "account_number": "1234-1234-1234-1234",
+            "account_number": "1234-12",
             "account_type": GeneralLedgerAccount.AccountTypeChoices.REVENUE,
             "description": "Test General Ledger Account",
         },

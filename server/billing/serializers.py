@@ -204,7 +204,7 @@ class AccessorialChargeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.AccessorialCharge):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -253,7 +253,7 @@ class DocumentClassificationSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.DocumentClassification):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

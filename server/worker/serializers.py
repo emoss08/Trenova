@@ -131,7 +131,7 @@ class WorkerSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Worker):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

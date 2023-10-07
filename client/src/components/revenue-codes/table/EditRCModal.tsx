@@ -71,10 +71,9 @@ export function EditRCModalForm({
 
   const mutation = useCustomMutation<
     RevenueCodeFormValues,
-    Omit<TableStoreProps<RevenueCode>, "drawerOpen">
+    TableStoreProps<RevenueCode>
   >(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -86,6 +85,7 @@ export function EditRCModalForm({
       errorMessage: "Failed to update revenue code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: RevenueCodeFormValues) => {

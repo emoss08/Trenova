@@ -67,6 +67,15 @@ router.register(
     r"division_codes", accounting_api.DivisionCodeViewSet, basename="division-codes"
 )
 router.register(r"tags", accounting_api.TagViewSet, basename="tags")
+router.register(
+    r"finance_transactions", accounting_api.FinancialTransactionViewSet, basename="tags"
+)
+router.register(
+    r"reconciliation_queue", accounting_api.ReconciliationQueueViewSet, basename="tags"
+)
+router.register(
+    r"accounting_control", accounting_api.AccountingControlViewSet, basename="tags"
+)
 
 
 # Organization Routing

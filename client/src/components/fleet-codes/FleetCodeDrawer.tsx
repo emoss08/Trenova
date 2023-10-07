@@ -60,7 +60,6 @@ function EditFleetCodeModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<FleetCode>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -72,6 +71,7 @@ function EditFleetCodeModalForm({
       errorMessage: "Failed to update fleet code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

@@ -96,7 +96,7 @@ class ModelVisitor(ast.NodeVisitor):
                                 ):
                                     is_blankable = True
 
-                            if ts_type := TYPE_MAP.get(field_type):
+                            if ts_type := TYPE_MAP.get(field_type):  # type: ignore
                                 if is_nullable:
                                     ts_type += " | null"
                                 if is_blankable:

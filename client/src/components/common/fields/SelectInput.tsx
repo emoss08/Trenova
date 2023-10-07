@@ -28,7 +28,7 @@ SelectInput.defaultProps = {
   isError: false,
 };
 
-interface ValidatedSelectInputProps<TFormValues>
+export interface ValidatedSelectInputProps<TFormValues>
   extends Omit<SelectProps, "form" | "name" | "data"> {
   form: UseFormReturnType<TFormValues, (values: TFormValues) => TFormValues>;
   name: InputFieldNameProp<TFormValues>;

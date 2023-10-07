@@ -16,7 +16,7 @@
 # --------------------------------------------------------------------------------------------------
 
 from django.db.models import Prefetch, QuerySet
-from rest_framework import viewsets
+from rest_framework import permissions, viewsets
 
 from accounting import models, serializers
 from core.permissions import CustomObjectPermissions
@@ -190,7 +190,7 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = [CustomObjectPermissions]
     filterset_fields = ("name",)
 
-    def get_queryset(self) -> QuerySet[models.DivisionCode]:
+    def get_queryset(self) -> QuerySet[models.Tag]:
         """
         The get_queryset function is used to filter the queryset based on the user's organization.
         This is done by adding a filter to the queryset that only returns DivisionCodes with an
@@ -211,4 +211,126 @@ class TagViewSet(viewsets.ModelViewSet):
             "description",
         )
 
+        return queryset
+
+
+class FinancialTransactionViewSet(viewsets.ModelViewSet):
+    """
+    FinancialTransaction ViewSet
+    """
+
+    serializer_class = serializers.FinancialTransactionSerializer
+    queryset = models.FinancialTransaction.objects.all()
+    search_fields = ("transaction_number",)
+    permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("transaction_number",)
+
+    def get_queryset(self) -> QuerySet[models.FinancialTransaction]:
+        """
+        The get_queryset function is used to filter the queryset based on the user's organization.
+        This is done by adding a filter to the queryset that only returns DivisionCodes with an
+        organization_id equal to that of the current user. This ensures that users can only see
+        DivisionCodes belonging to their own organization.
+
+        Args:
+            self: Refer to the current instance of a class
+
+        Returns:
+            QuerySet[models.FinancialTransaction]: A queryset of Division Code objects
+        """
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "transaction_number",
+            "amount",
+            "transaction_type",
+            "date_created",
+            "ledger_account_id",
+            "shipment_id",
+            "status",
+            "created_by_id",
+            "description",
+            "external_reference",
+        )
+
+        return queryset
+
+
+class ReconciliationQueueViewSet(viewsets.ModelViewSet):
+    """
+    ReconciliationQueue ViewSet
+    """
+
+    serializer_class = serializers.ReconciliationQueueSerializer
+    queryset = models.ReconciliationQueue.objects.all()
+    search_fields = ("transaction_number",)
+    permission_classes = [CustomObjectPermissions]
+    filterset_fields = ("transaction_number",)
+
+    def get_queryset(self) -> QuerySet[models.ReconciliationQueue]:
+        """
+        The get_queryset function is used to filter the queryset based on the user's organization.
+        This is done by adding a filter to the queryset that only returns DivisionCodes with an
+        organization_id equal to that of the current user. This ensures that users can only see
+        DivisionCodes belonging to their own organization.
+
+        Args:
+            self: Refer to the current instance of a class
+
+        Returns:
+            QuerySet[models.ReconciliationQueue]: A queryset of Division Code objects
+        """
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "shipment_id",
+            "reason",
+            "date_added",
+            "financial_transaction_id",
+            "resolved",
+            "resolved_by_id",
+            "date_resolved",
+            "notes",
+        )
+
+        return queryset
+
+
+class AccountingControlViewSet(viewsets.ModelViewSet):
+    """A viewset for viewing and editing Accounting Control in the system.
+
+    The viewset provides default operations for updating, as well as listing and retrieving
+    Accounting Control. It uses the `AccountingControlSerializer` class to convert the Accounting
+    Control instances to and from JSON-formatted data.
+
+    Only get, put, patch, head and options HTTP methods are allowed when using this viewset.
+    Only Admin users are allowed to access the views provided by this viewset.
+    """
+
+    queryset = models.AccountingControl.objects.all()
+    serializer_class = serializers.AccountingControlSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ["get", "put", "patch", "head", "options"]
+
+    def get_queryset(self) -> QuerySet[models.AccountingControl]:
+        queryset = self.queryset.filter(
+            organization_id=self.request.user.organization_id  # type: ignore
+        ).only(
+            "id",
+            "organization_id",
+            "auto_create_journal_entries",
+            "journal_entry_criteria",
+            "restrict_manual_journal_entries",
+            "require_journal_entry_approval",
+            "default_revenue_account",
+            "default_expense_account",
+            "enable_reconciliation_notifications",
+            "reconciliation_notification_recipients",
+            "reconciliation_threshold",
+            "reconciliation_threshold_action",
+            "halt_on_pending_reconciliation",
+            "critical_processes",
+        )
         return queryset

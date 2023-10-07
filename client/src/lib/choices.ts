@@ -322,3 +322,53 @@ export const HazardousClassChoices = [
     label: "Division 9: Miscellaneous Hazardous Substances and Articles",
   },
 ] satisfies ReadonlyArray<IChoiceProps<HazardousClassChoiceProps>>;
+
+/* Transaction Type Choice Type */
+export type TransactionTypeChoiceType = "REVENUE" | "EXPENSE";
+export const transactionTypeChoices = [
+  { value: "REVENUE", label: "Revenue" },
+  { value: "EXPENSE", label: "Expense" },
+] satisfies ReadonlyArray<IChoiceProps<TransactionTypeChoiceType>>;
+
+/* Transaction Status Choice Type */
+export type TransactionStatusChoiceType =
+  | "PENDING"
+  | "COMPLETED"
+  | "FAILED"
+  | "PENDING_RECON";
+
+export const transactionStatusChoices = [
+  { value: "PENDING", label: "Pending" },
+  { value: "PENDING_RECON", label: "Pending Reconciliation" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "FAILED", label: "Failed" },
+] satisfies ReadonlyArray<IChoiceProps<TransactionStatusChoiceType>>;
+
+/* Threshold Action Choice Type */
+export type ThresholdActionChoiceType = "HALT" | "WARN";
+export const thresholdActionChoices = [
+  { value: "HALT", label: "Halt" },
+  { value: "WARN", label: "Warn" },
+] satisfies ReadonlyArray<IChoiceProps<ThresholdActionChoiceType>>;
+
+/** Automatic Journal Entry Choices */
+export type AutomaticJournalEntryChoiceType =
+  | "ON_SHIPMENT_BILL"
+  | "ON_RECEIPT_OF_PAYMENT"
+  | "ON_EXPENSE_RECOGNITION"
+  | "";
+
+export const automaticJournalEntryChoices = [
+  {
+    value: "ON_SHIPMENT_BILL",
+    label: "Auto create entry when shipment is billed",
+  },
+  {
+    value: "ON_RECEIPT_OF_PAYMENT",
+    label: "Auto create entry on receipt of payment",
+  },
+  {
+    value: "ON_EXPENSE_RECOGNITION",
+    label: "Auto create entry when an expense is recognized",
+  },
+] satisfies ReadonlyArray<IChoiceProps<AutomaticJournalEntryChoiceType>>;

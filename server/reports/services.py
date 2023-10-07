@@ -60,7 +60,7 @@ def generate_excel_report_as_file(report: models.CustomReport) -> io.BytesIO:
     columns, and populates the data rows by iterating through the data model object.
     The generated Excel file is saved to a BytesIO object which is then returned to the caller.
     """
-    model: type[Model] | type[Model] | None = get_model_by_table_name(report.table)
+    model = get_model_by_table_name(report.table)
 
     if not model:
         raise exceptions.InvalidTableException("Invalid table name.")
@@ -74,7 +74,7 @@ def generate_excel_report_as_file(report: models.CustomReport) -> io.BytesIO:
         col_letter = get_column_letter(index + 1)
         ws[f"{col_letter}1"] = column.column_name
 
-    for row, obj in enumerate(model.objects.all(), start=2):
+    for row, obj in enumerate(model.objects.all(), start=2):  # type: ignore
         for index, column in enumerate(columns):
             col_letter = get_column_letter(index + 1)
             ws[f"{col_letter}{row}"] = getattr(obj, column.column_name)

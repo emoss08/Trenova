@@ -104,7 +104,7 @@ class BillingHistoryAdmin(GenericAdmin[BillingHistory]):
 
 
 @admin.register(BillingLogEntry)
-class BillingLogEntry(GenericAdmin[BillingLogEntry]):
+class BillingLogEntryAdmin(GenericAdmin[BillingLogEntry]):
     """
     Billing Transfer Log Admin
     """

@@ -61,6 +61,10 @@ class TransactionService:
             if shipment.revenue_code
             else control.default_revenue_account
         )
+
+        if not revenue_account:
+            raise ValueError("No revenue account found for shipment.")
+
         f_transaction = cls._create_financial_transaction(
             shipment=shipment, revenue_account=revenue_account
         )
@@ -285,7 +289,14 @@ class TransactionService:
 
         billed_shipment = get_shipment_bill_hist(shipment=shipment)
 
-        if billed_shipment and billed_shipment.total_amount != shipment.sub_total:
+        if billed_shipment is None:
+            return (
+                True,
+                f"Transaction {f_transaction.transaction_number}: No billed shipment found for Shipment: "
+                f"{shipment.pro_number}.",
+            )
+
+        if billed_shipment.total_amount != shipment.sub_total:
             return (
                 True,
                 f"Transaction {f_transaction.transaction_number}: Amount discrepancy detected for "
@@ -294,7 +305,12 @@ class TransactionService:
             )
 
         invoice = get_invoice_payment_detail(invoice=billed_shipment)
-        if invoice and invoice.payment_amount != billed_shipment.total_amount:
+
+        if (
+            invoice is not None
+            and billed_shipment.total_amount
+            and invoice.payment_amount != billed_shipment.total_amount
+        ):
             payment_diff = invoice.payment_amount - billed_shipment.total_amount
             return (
                 True,

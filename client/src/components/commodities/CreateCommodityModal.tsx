@@ -163,7 +163,6 @@ export function CreateCommodityModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<Commodity>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -175,6 +174,7 @@ export function CreateCommodityModalForm({
       errorMessage: "Failed to create commodity.",
     },
     () => setLoading(false),
+    store,
   );
 
   React.useEffect(() => {

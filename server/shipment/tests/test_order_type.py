@@ -80,7 +80,7 @@ def test_get_by_id(api_client: APIClient, shipment_type_api: Response) -> None:
     Test get shipment type by id
     """
     response = api_client.get(
-        reverse("order-types-detail", kwargs={"pk": shipment_type_api.data["id"]})
+        reverse("shipment-types-detail", kwargs={"pk": shipment_type_api.data["id"]})
     )
 
     assert response.status_code == 200
@@ -96,7 +96,7 @@ def test_put(
     Test put shipment type
     """
     response = api_client.put(
-        reverse("order-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
+        reverse("shipment-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
         {
             "organization": organization.id,
             "name": "New Name",
@@ -116,7 +116,7 @@ def test_delete(api_client: APIClient, shipment_type_api: Response) -> None:
     Test Delete shipment type
     """
     response = api_client.delete(
-        reverse("order-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
+        reverse("shipment-types-detail", kwargs={"pk": shipment_type_api.data["id"]}),
     )
 
     assert response.status_code == 204

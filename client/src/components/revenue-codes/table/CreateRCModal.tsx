@@ -58,10 +58,9 @@ function CreateRCModalForm({
 
   const mutation = useCustomMutation<
     RevenueCodeFormValues,
-    Omit<TableStoreProps<RevenueCode>, "drawerOpen">
+    TableStoreProps<RevenueCode>
   >(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -73,6 +72,7 @@ function CreateRCModalForm({
       errorMessage: "Failed to create revenue code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: RevenueCodeFormValues) => {

@@ -149,7 +149,6 @@ function CreateDCModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<DivisionCode>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -161,6 +160,7 @@ function CreateDCModalForm({
       errorMessage: "Failed to create division code.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

@@ -67,7 +67,7 @@ class CommentTypeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.CommentType):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -122,7 +122,7 @@ class DelayCodeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.DelayCode):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -177,7 +177,7 @@ class FleetCodeSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.FleetCode):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():
@@ -290,7 +290,7 @@ class RateSerializer(GenericSerializer):
         )
 
         # Exclude the current instance if updating
-        if self.instance:
+        if self.instance and isinstance(self.instance, models.Rate):
             queryset = queryset.exclude(pk=self.instance.pk)
 
         if queryset.exists():

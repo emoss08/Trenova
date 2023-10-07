@@ -49,7 +49,6 @@ export function EditJobTitleModalForm({
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<JobTitle>>(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -61,6 +60,7 @@ export function EditJobTitleModalForm({
       errorMessage: "Failed to update job title.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {

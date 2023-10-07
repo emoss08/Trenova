@@ -223,7 +223,7 @@ def test_delete_equipment_type(
     assert response.status_code == 204
 
 
-def test_unique_name_constrain(organization: Organization) -> None:
+def test_unique_name_constraint(organization: Organization) -> None:
     models.EquipmentType(
         name="test", business_unit=organization.business_unit, organization=organization
     ).save()
@@ -236,5 +236,5 @@ def test_unique_name_constrain(organization: Organization) -> None:
 
     assert (
         excinfo.value.message_dict["__all__"][0]
-        == "Equipment Type with this Name and Organization already exists."
+        == "Constraint “unique_equipment_type_name_organization” is violated."
     )

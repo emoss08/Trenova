@@ -21,26 +21,17 @@ from django.contrib import admin
 from django.forms import ModelForm
 from django.http import HttpRequest
 
+from accounting import models
 from utils.admin import GenericAdmin
 
-from .models import (
-    AccountingControl,
-    DivisionCode,
-    FinancialTransaction,
-    GeneralLedgerAccount,
-    ReconciliationQueue,
-    RevenueCode,
-    Tag,
-)
 
-
-@admin.register(GeneralLedgerAccount)
-class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
+@admin.register(models.GeneralLedgerAccount)
+class GeneralLedgerAccountAdmin(GenericAdmin[models.GeneralLedgerAccount]):
     """
     General Ledger Account Admin
     """
 
-    model: type[GeneralLedgerAccount] = GeneralLedgerAccount
+    model = models.GeneralLedgerAccount
     list_display: tuple[str, ...] = (
         "account_number",
         "description",
@@ -56,10 +47,10 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
     def get_form(
         self,
         request: HttpRequest,
-        obj: GeneralLedgerAccount | None = None,
+        obj: models.GeneralLedgerAccount | None = None,
         change: bool = False,
         **kwargs: Any,
-    ) -> type[ModelForm[GeneralLedgerAccount]]:
+    ) -> type[ModelForm[models.GeneralLedgerAccount]]:
         """Get Form for Model
 
         Args:
@@ -77,13 +68,13 @@ class GeneralLedgerAccountAdmin(GenericAdmin[GeneralLedgerAccount]):
         return form
 
 
-@admin.register(RevenueCode)
-class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
+@admin.register(models.RevenueCode)
+class RevenueCodeAdmin(GenericAdmin[models.RevenueCode]):
     """
     Revenue Code Admin
     """
 
-    model: type[RevenueCode] = RevenueCode
+    model = models.RevenueCode
     list_display: tuple[str, ...] = (
         "code",
         "description",
@@ -94,13 +85,13 @@ class RevenueCodeAdmin(GenericAdmin[RevenueCode]):
     )
 
 
-@admin.register(DivisionCode)
-class DivisionCodeAdmin(GenericAdmin[DivisionCode]):
+@admin.register(models.DivisionCode)
+class DivisionCodeAdmin(GenericAdmin[models.DivisionCode]):
     """
     Division Code Admin
     """
 
-    model: type[DivisionCode] = DivisionCode
+    model = models.DivisionCode
     list_display: tuple[str, ...] = (
         "code",
         "description",
@@ -111,13 +102,13 @@ class DivisionCodeAdmin(GenericAdmin[DivisionCode]):
     )
 
 
-@admin.register(Tag)
-class TagAdmin(GenericAdmin[Tag]):
+@admin.register(models.Tag)
+class TagAdmin(GenericAdmin[models.Tag]):
     """
     Tag Admin
     """
 
-    model: type[Tag] = Tag
+    model = models.Tag
     list_display: tuple[str, ...] = (
         "name",
         "description",
@@ -128,13 +119,13 @@ class TagAdmin(GenericAdmin[Tag]):
     )
 
 
-@admin.register(FinancialTransaction)
-class FinancialTransactionAdmin(GenericAdmin[FinancialTransaction]):
+@admin.register(models.FinancialTransaction)
+class FinancialTransactionAdmin(GenericAdmin[models.FinancialTransaction]):
     """
     FinancialTransaction Admin
     """
 
-    model: type[FinancialTransaction] = FinancialTransaction
+    model = models.FinancialTransaction
     list_display: tuple[str, ...] = (
         "transaction_number",
         "transaction_type",
@@ -143,18 +134,18 @@ class FinancialTransactionAdmin(GenericAdmin[FinancialTransaction]):
     search_fields: tuple[str, ...] = ("shipment__pro_number",)
 
 
-@admin.register(AccountingControl)
-class AccountingControlAdmin(GenericAdmin[AccountingControl]):
+@admin.register(models.AccountingControl)
+class AccountingControlAdmin(GenericAdmin[models.AccountingControl]):
     """
     Billing Control Admin
     """
 
-    model = AccountingControl
+    model = models.AccountingControl
     list_display = ("organization", "auto_create_journal_entries")
     search_fields = ("organization", "auto_create_journal_entries")
 
     def has_delete_permission(
-        self, request: HttpRequest, obj: AccountingControl | None = None
+        self, request: HttpRequest, obj: models.AccountingControl | None = None
     ) -> bool:
         """Has Deleted Permission
 
@@ -168,13 +159,13 @@ class AccountingControlAdmin(GenericAdmin[AccountingControl]):
         return False
 
 
-@admin.register(ReconciliationQueue)
-class ReconciliationQueueAdmin(GenericAdmin[ReconciliationQueue]):
+@admin.register(models.ReconciliationQueue)
+class ReconciliationQueueAdmin(GenericAdmin[models.ReconciliationQueue]):
     """
     ReconciliationQueue Admin
     """
 
-    model: type[ReconciliationQueue] = ReconciliationQueue
+    model = models.ReconciliationQueue
     list_display: tuple[str, ...] = (
         "shipment",
         "resolved",

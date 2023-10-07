@@ -355,348 +355,348 @@ CACHEOPS_DEFAULTS = {
 }
 
 # Logging Configurations
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
-        "verbose": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]"
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-        "accounting": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/accounting/accounting.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "accounts": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/accounts/accounts.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "billing": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/billing/billing.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "commodities": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/commodities/commodities.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "core": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/core/core.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "customer": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/customer/customer.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "dispatch": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/dispatch/dispatch.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "document_generator": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/document_generator/document_generator.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "edi": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/edi/edi.log",  # EDI will probably require different loggers for each EDI type
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "equipment": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/equipment/equipment.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "fuel": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/fuel/fuel.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "invoicing": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/invoicing/invoicing.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "integration": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/integration/integration.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "location": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/location/location.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "movements": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/movements/movements.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "organization": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/organization/organization.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "plugin": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/plugin/plugin.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "reports": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/reports/reports.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "route": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/route/route.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "shipment": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/shipment/shipment.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "stops": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/stops/stops.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "worker": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/worker/worker.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-        "kafka": {
-            "level": "DEBUG",
-            "class": "logging.handlers.TimedRotatingFileHandler",
-            "filename": "logs/kafka/kafka.log",
-            "when": "midnight",
-            "interval": 1,  # 1 day
-            "backupCount": 7,  # 7 days
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "WARNING",
-    },
-    "loggers": {
-        "accounting": {
-            "handlers": ["accounting"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "accounts": {
-            "handlers": ["accounts"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "commodities": {
-            "handlers": ["commodities"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "core": {
-            "handlers": ["core"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "customer": {
-            "handlers": ["customer"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "dispatch": {
-            "handlers": ["dispatch"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "document_generator": {
-            "handlers": ["document_generator"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "edi": {
-            "handlers": ["edi"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "equipment": {
-            "handlers": ["equipment"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "fuel": {
-            "handlers": ["fuel"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "integration": {
-            "handlers": ["integration"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "invoicing": {
-            "handlers": ["invoicing"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "location": {
-            "handlers": ["location"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "movements": {
-            "handlers": ["movements"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "organization": {
-            "handlers": ["organization"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "plugin": {
-            "handlers": ["plugin"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "reports": {
-            "handlers": ["reports"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "route": {
-            "handlers": ["route"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "shipment": {
-            "handlers": ["shipment"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "stops": {
-            "handlers": ["stops"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "worker": {
-            "handlers": ["worker"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "kafka": {
-            "handlers": ["kafka"],
-            "level": "DEBUG",
-            "propagate": False,
-            "formatter": "verbose",
-        },
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": True,
-        },
-    },
-}
+# LOGGING = {
+#     "version": 1,
+#     "disable_existing_loggers": False,
+#     "formatters": {
+#         "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+#         "verbose": {
+#             "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s [%(filename)s:%(lineno)s - %(funcName)s()]"
+#         },
+#     },
+#     "handlers": {
+#         "console": {
+#             "class": "logging.StreamHandler",
+#         },
+#         "accounting": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/accounting/accounting.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "accounts": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/accounts/accounts.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "billing": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/billing/billing.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "commodities": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/commodities/commodities.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "core": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/core/core.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "customer": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/customer/customer.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "dispatch": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/dispatch/dispatch.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "document_generator": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/document_generator/document_generator.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "edi": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/edi/edi.log",  # EDI will probably require different loggers for each EDI type
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "equipment": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/equipment/equipment.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "fuel": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/fuel/fuel.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "invoicing": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/invoicing/invoicing.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "integration": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/integration/integration.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "location": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/location/location.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "movements": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/movements/movements.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "organization": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/organization/organization.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "plugin": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/plugin/plugin.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "reports": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/reports/reports.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "route": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/route/route.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "shipment": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/shipment/shipment.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "stops": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/stops/stops.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "worker": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/worker/worker.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#         "kafka": {
+#             "level": "DEBUG",
+#             "class": "logging.handlers.TimedRotatingFileHandler",
+#             "filename": "logs/kafka/kafka.log",
+#             "when": "midnight",
+#             "interval": 1,  # 1 day
+#             "backupCount": 7,  # 7 days
+#         },
+#     },
+#     "root": {
+#         "handlers": ["console"],
+#         "level": "WARNING",
+#     },
+#     "loggers": {
+#         "accounting": {
+#             "handlers": ["accounting"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "accounts": {
+#             "handlers": ["accounts"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "commodities": {
+#             "handlers": ["commodities"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "core": {
+#             "handlers": ["core"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "customer": {
+#             "handlers": ["customer"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "dispatch": {
+#             "handlers": ["dispatch"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "document_generator": {
+#             "handlers": ["document_generator"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "edi": {
+#             "handlers": ["edi"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "equipment": {
+#             "handlers": ["equipment"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "fuel": {
+#             "handlers": ["fuel"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "integration": {
+#             "handlers": ["integration"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "invoicing": {
+#             "handlers": ["invoicing"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "location": {
+#             "handlers": ["location"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "movements": {
+#             "handlers": ["movements"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "organization": {
+#             "handlers": ["organization"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "plugin": {
+#             "handlers": ["plugin"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "reports": {
+#             "handlers": ["reports"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "route": {
+#             "handlers": ["route"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "shipment": {
+#             "handlers": ["shipment"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "stops": {
+#             "handlers": ["stops"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "worker": {
+#             "handlers": ["worker"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "kafka": {
+#             "handlers": ["kafka"],
+#             "level": "DEBUG",
+#             "propagate": False,
+#             "formatter": "verbose",
+#         },
+#         "django": {
+#             "handlers": ["console"],
+#             "level": "INFO",
+#             "propagate": True,
+#         },
+#     },
+# }
 
 # Cache Ops settings
 CACHEOPS = {

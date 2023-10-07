@@ -14,6 +14,7 @@
 #  Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use     -
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
+
 import datetime
 import decimal
 
@@ -481,11 +482,12 @@ def test_shipment_pro_number_increments(
     """
     Test shipment pro_number increments by one.
     """
+    today = datetime.datetime.now().strftime("%y%m%d")
 
     shipment_2 = ShipmentFactory(organization=organization)
 
-    assert shipment.pro_number == "ORD000001"
-    assert shipment_2.pro_number == "ORD000002"
+    assert shipment.pro_number == f"{today}-0001"
+    assert shipment_2.pro_number == f"{today}-0002"
 
 
 def test_set_total_piece_and_weight_signal(
@@ -571,10 +573,10 @@ def test_validate_destination_appointment_window_start_not_after_end(
 def test_validate_appointment_window_against_customer_delivery_slots(
     shipment: models.Shipment, delivery_slot: DeliverySlot
 ) -> None:
-    """Test that the appointment window for an shipment must fall within the customer's allowed delivery slots.
+    """Test that the appointment window for a shipment must fall within the customer's allowed delivery slots.
 
     Args:
-        order (models.Shipment): Order object.
+        shipment (models.Shipment): Shipment object.
         delivery_slot (models.DeliverySlot): DeliverySlot object (fixture might need to be created).
 
     Returns:
@@ -737,7 +739,7 @@ def test_calculate_shipment_other_total(shipment: models.Shipment) -> None:
     Defaults to shipment.freight_charge_amount * shipment.rating_units + shipment.other_charge_amount
 
     Args:
-        Shipment(models.Shipment): shipment object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -756,7 +758,7 @@ def test_temperature_differential(shipment: models.Shipment) -> None:
     """Test calculate shipment ``temperature_differential`` function.
 
     Args:
-        Shipment(models.Shipment): shipment object.
+        shipment (models.Shipment): shipment object.
 
     Returns:
         None: This function does not return anything.
@@ -814,7 +816,7 @@ def test_validate_formula_variables(
         business_unit(BusinessUnit): BusinessUnit object.
 
     Returns:
-        None: This function does not return anything.
+        None: This function does not return anything.dis
     """
 
     with pytest.raises(ValidationError) as excinfo:

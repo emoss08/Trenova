@@ -58,7 +58,6 @@ function EditHMModalForm({
     TableStoreProps<HazardousMaterial>
   >(
     form,
-    store,
     notifications,
     {
       method: "PUT",
@@ -70,6 +69,7 @@ function EditHMModalForm({
       errorMessage: "Failed to create hazardous material.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {
