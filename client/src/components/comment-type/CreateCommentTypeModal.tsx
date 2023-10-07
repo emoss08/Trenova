@@ -18,7 +18,7 @@
 import React from "react";
 import { Button, Group, Modal, SimpleGrid } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useForm, UseFormReturnType, yupResolver } from "@mantine/form";
+import { UseFormReturnType, yupResolver } from "@mantine/form";
 import { useCommentTypeStore as store } from "@/stores/DispatchStore";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
@@ -32,6 +32,10 @@ import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { statusChoices } from "@/lib/constants";
 import { SelectInput } from "@/components/common/fields/SelectInput";
+import {
+  CommentTypeFormProvider,
+  useCommentTypeForm,
+} from "@/lib/form-context";
 
 export function CommentTypeForm({
   form,
@@ -80,7 +84,7 @@ function CreateCommentTypeModalForm() {
   const { classes } = useFormStyles();
   const [loading, setLoading] = React.useState<boolean>(false);
 
-  const form = useForm<FormValues>({
+  const form = useCommentTypeForm({
     validate: yupResolver(commentTypeSchema),
     initialValues: {
       status: "A",
@@ -91,7 +95,6 @@ function CreateCommentTypeModalForm() {
 
   const mutation = useCustomMutation<FormValues, TableStoreProps<CommentType>>(
     form,
-    store,
     notifications,
     {
       method: "POST",
@@ -103,6 +106,7 @@ function CreateCommentTypeModalForm() {
       errorMessage: "Failed to create comment type.",
     },
     () => setLoading(false),
+    store,
   );
 
   const submitForm = (values: FormValues) => {
@@ -111,14 +115,16 @@ function CreateCommentTypeModalForm() {
   };
 
   return (
-    <form onSubmit={form.onSubmit((values) => submitForm(values))}>
-      <CommentTypeForm form={form} />
-      <Group position="right" mt="md">
-        <Button type="submit" className={classes.control} loading={loading}>
-          Submit
-        </Button>
-      </Group>
-    </form>
+    <CommentTypeFormProvider form={form}>
+      <form onSubmit={form.onSubmit((values) => submitForm(values))}>
+        <CommentTypeForm form={form} />
+        <Group position="right" mt="md">
+          <Button type="submit" className={classes.control} loading={loading}>
+            Submit
+          </Button>
+        </Group>
+      </form>
+    </CommentTypeFormProvider>
   );
 }
 
