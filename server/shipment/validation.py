@@ -162,7 +162,7 @@ class ShipmentValidator:
             None
 
         Raises:
-            ValidationError: If the order is marked ready to bill and the status is not
+            ValidationError: If the shipment is marked ready to bill and the status is not
             completed.
         """
 
@@ -173,15 +173,15 @@ class ShipmentValidator:
             and self.shipment.status != StatusChoices.COMPLETED
         ):
             self.errors["ready_to_bill"] = _(
-                "Cannot mark an order ready to bill if status is not 'COMPLETED'. Please try again."
+                "Cannot mark an shipment ready to bill if status is not 'COMPLETED'. Please try again."
             )
 
     def validate_shipment_locations(self) -> None:
-        """Validate order location is entered.
+        """Validate shipment location is entered.
 
         Validate that either the `location` foreign key field has input or the
         `location_address` field has input for both origin and destination.For
-        example, if user creates the order without origin_location and origin_address
+        example, if user creates the shipment without origin_location and origin_address
         a ValidationError will be thrown letting the user know that either enter origin_location
         or origin_address. The same rules apply for the destination_location
         and destination_address
@@ -209,7 +209,7 @@ class ShipmentValidator:
             )
 
     def validate_duplicate_shipment_bol(self) -> None:
-        """Validate duplicate order BOL number.
+        """Validate duplicate shipment BOL number.
 
         Validate that the BOL number is not a duplicate. For example, if the user
         enters a BOL number that is already in use by another order, a ValidationError
@@ -242,24 +242,24 @@ class ShipmentValidator:
             )
 
     def validate_shipment_movements_completed(self) -> None:
-        """Validate that an order cannot be marked as 'COMPLETED' if all of its movements are not 'COMPLETED'.
+        """Validate that an shipment cannot be marked as 'COMPLETED' if all of its movements are not 'COMPLETED'.
 
         This function is used as a validation function in a Django form or model to ensure that if
-        an order's status is set to 'COMPLETED', all movements related to the order have a status
+        an order's status is set to 'COMPLETED', all movements related to the shipment have a status
         of 'COMPLETED' as well. If not, a validation error is raised.
 
         Args:
             self: The validation function is called on an instance of a Django form or model.
 
         Raises:
-            ValidationError: If the order status is 'COMPLETED' and not all movements are 'COMPLETED'.
+            ValidationError: If the shipment status is 'COMPLETED' and not all movements are 'COMPLETED'.
         """
         if self.shipment.status == StatusChoices.COMPLETED and all(
             movement.status != StatusChoices.COMPLETED
             for movement in self.shipment.movements.all()
         ):
             self.errors["status"] = _(
-                "Cannot mark order as 'COMPLETED' if all movements are not 'COMPLETED'. Please try again."
+                "Cannot mark shipment as 'COMPLETED' if all movements are not 'COMPLETED'. Please try again."
             )
 
     def validate_shipment_movement_in_progress(self) -> None:
@@ -272,20 +272,20 @@ class ShipmentValidator:
 
             if not in_progress_movements:
                 self.errors["status"] = _(
-                    "At least one movement must be `IN PROGRESS` for the order to be marked as `IN PROGRESS`. Please "
+                    "At least one movement must be `IN PROGRESS` for the shipment to be marked as `IN PROGRESS`. Please "
                     "try again."
                 )
 
     def validate_location_information_cannot_change_once_shipment_completed(
         self,
     ) -> None:
-        """Validate location information in an order cannot be changed once the order is completed.
+        """Validate location information in an shipment cannot be changed once the shipment is completed.
 
         Returns:
             None: This function does not return anything.
 
         Raises:
-            ValidationError: If the location information in an order is changed after the order is completed.
+            ValidationError: If the location information in an shipment is changed after the shipment is completed.
         """
         shipment = get_shipment_by_id(shipment_id=self.shipment.id)
 
@@ -316,7 +316,7 @@ class ShipmentValidator:
             for attribute, display_name in location_attributes:
                 if getattr(shipment, attribute) != getattr(self.shipment, attribute):
                     self.errors[attribute] = _(
-                        f"{display_name} cannot be changed once the order is completed. Please try again."
+                        f"{display_name} cannot be changed once the shipment is completed. Please try again."
                     )
 
     def validate_appointment_windows(self) -> None:
@@ -367,5 +367,5 @@ class ShipmentValidator:
 
         if shipment.status == StatusChoices.VOIDED:
             self.errors["status"] = _(
-                "Cannot update an order that has been voided. Please contact your administrator."
+                "Cannot update an shipment that has been voided. Please contact your administrator."
             )
