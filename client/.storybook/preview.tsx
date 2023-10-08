@@ -16,9 +16,50 @@
  */
 import type { Preview } from "@storybook/react";
 import "../src/assets/App.css";
+import { ThemeProvider, useTheme } from "../src/components/theme-provider";
+
+const withTheme = (Story, context) => {
+  const { setTheme } = useTheme();
+  setTheme(context.globals.theme);
+  return <Story />;
+};
 
 const preview: Preview = {
   parameters: {
+    globalTypes: {
+      locale: {
+        description: 'Internationalization locale',
+        defaultValue: 'en',
+        toolbar: {
+          icon: 'globe',
+          items: [
+            { value: 'en', right: '🇺🇸', title: 'English' },
+            { value: 'fr', right: '🇫🇷', title: 'Français' },
+            { value: 'es', right: '🇪🇸', title: 'Español' },
+            { value: 'zh', right: '🇨🇳', title: '中文' },
+            { value: 'kr', right: '🇰🇷', title: '한국어' },
+          ],
+        },
+      },
+      theme: {
+        name: 'Theme',
+        description: 'Global theme for components',
+        defaultValue: 'light',
+        toolbar: {
+          icon: 'circlehollow',
+          items: ['light', 'dark', 'system'],
+          showName: true,
+        },
+      },
+    },
+    decorators: [
+      (Story) => (
+        <ThemeProvider defaultTheme="dark">
+          <Story />
+        </ThemeProvider>
+      ),
+      withTheme,
+    ],
     actions: { argTypesRegex: "^on[A-Z].*" },
     controls: {
       matchers: {
