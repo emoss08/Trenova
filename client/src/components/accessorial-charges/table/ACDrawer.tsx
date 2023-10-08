@@ -25,7 +25,7 @@ import {
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { accessorialChargeSchema as Schema } from "@/lib/schemas/BillingSchema";
+import { accessorialChargeSchema as Schema } from "@/lib/validations/BillingSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { ACForm } from "@/components/accessorial-charges/table/CreateACModal";

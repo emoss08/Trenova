@@ -25,7 +25,7 @@ import {
   AccessorialCharge,
   AccessorialChargeFormValues as FormValues,
 } from "@/types/billing";
-import { accessorialChargeSchema as Schema } from "@/lib/schemas/BillingSchema";
+import { accessorialChargeSchema as Schema } from "@/lib/validations/BillingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";

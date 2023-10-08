@@ -16,64 +16,28 @@
  */
 
 import React from "react";
-import {
-  AppShell,
-  Container,
-  useMantineTheme,
-  createStyles,
-  rem,
-} from "@mantine/core";
-import { Breadcrumb } from "@/components/common/BreadCrumbs";
-import { AsideMenu } from "@/components/layout/Navbar/AsideMenu";
+import RainbowTopBar from "@/components/topbar";
 
 type LayoutProps = {
   children: React.ReactNode;
 };
 
-const useStyles = createStyles((theme) => ({
-  header: {
-    backgroundImage: `${theme.fn.linearGradient(
-      90,
-      "rgba(129,26,188,0.9)",
-      "rgba(219,52,52,0.9)",
-      "rgba(241, 196, 15,  .9)",
-      "rgba(34,230,171,0.9)",
-      "rgba(0,60,211,0.9)",
-    )}`,
-    height: rem(2),
-    minHeight: rem(2),
-    padding: rem(2),
-    zIndex: 100,
-    top: 0,
-    left: 0,
-    right: 0,
-    position: "fixed",
-    boxSizing: "border-box",
-  },
-}));
-
 export function Layout({ children }: LayoutProps): React.ReactElement {
-  const theme = useMantineTheme();
-  const { classes } = useStyles();
-
   return (
-    <AppShell
-      styles={{
-        main: {
-          background:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[8]
-              : theme.colors.gray[0],
-        },
-      }}
-      header={<header className={classes.header} />}
-      navbar={<AsideMenu />}
-    >
-      <Container size="xl">
-        <Breadcrumb />
-        {/* {shouldRenderBreadcrumbs && <Breadcrumb />} */}
-        {children}
-      </Container>
-    </AppShell>
+    <div className="h-screen flex flex-col">
+      <RainbowTopBar />
+      <div className="flex-1 overflow-auto">{children}</div>
+    </div>
+  );
+}
+
+export function UnprotectedLayout({
+  children,
+}: LayoutProps): React.ReactElement {
+  return (
+    <div className="h-screen flex flex-col overflow-hidden">
+      <RainbowTopBar />
+      <div className="h-screen">{children}</div>
+    </div>
   );
 }

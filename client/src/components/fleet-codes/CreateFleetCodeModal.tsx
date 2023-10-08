@@ -24,7 +24,7 @@ import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { FleetCode, FleetCodeFormValues as FormValues } from "@/types/dispatch";
-import { fleetCodeSchema } from "@/lib/schemas/DispatchSchema";
+import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { TChoiceProps } from "@/types";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";

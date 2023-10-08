@@ -25,7 +25,7 @@ import {
   HazardousMaterial,
   HazardousMaterialFormValues as FormValues,
 } from "@/types/commodities";
-import { hazardousMaterialSchema } from "@/lib/schemas/CommoditiesSchema";
+import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

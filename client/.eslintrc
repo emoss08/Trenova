@@ -2,11 +2,7 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "airbnb",
-    "airbnb/hooks",
     "prettier",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
     "plugin:import/typescript",
@@ -15,7 +11,6 @@
   "parser": "@typescript-eslint/parser",
   "plugins": [
     "@typescript-eslint",
-    "react-hooks",
     "prettier"
   ],
   "globals": {
@@ -55,17 +50,6 @@
     "react/jsx-props-no-spreading": "off",
     "react/prop-types": "off",
     "react/display-name": "off",
-    "react/jsx-filename-extension": [
-      2,
-      {
-        "extensions": [
-          ".js",
-          ".jsx",
-          ".ts",
-          ".tsx"
-        ]
-      }
-    ],
     "@typescript-eslint/no-explicit-any": "off",
     "react/no-unstable-nested-components": "off",
     "@typescript-eslint/no-unused-vars": [

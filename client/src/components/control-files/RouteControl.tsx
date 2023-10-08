@@ -37,13 +37,10 @@ import { RouteControl, RouteControlFormValues } from "@/types/route";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { routeControlSchema } from "@/lib/schemas/RouteSchema";
+import { routeControlSchema } from "@/lib/validations/RouteSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
-import {
-  distanceMethodChoices,
-  routeDistanceUnitChoices,
-} from "@/lib/choices";
+import { distanceMethodChoices, routeDistanceUnitChoices } from "@/lib/choices";
 
 interface Props {
   routeControl: RouteControl;

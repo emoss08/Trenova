@@ -29,6 +29,7 @@ export type APIError = {
   detail: string;
   attr: APIAttrs;
 };
+
 export type API_ENDPOINTS =
   | "/shipment_types/"
   | "/order_types/"

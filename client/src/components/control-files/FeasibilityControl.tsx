@@ -35,7 +35,7 @@ import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { emailControlSchema } from "@/lib/schemas/OrganizationSchema";
+import { emailControlSchema } from "@/lib/validations/OrganizationSchema";
 import {
   FeasibilityToolControl,
   FeasibilityToolControlFormValues as FormValues,

@@ -37,7 +37,7 @@ import { useQuery } from "react-query";
 import { exportModelTypes, TExportModelFormValue } from "@/types/forms";
 import { getColumns } from "@/services/ReportRequestService";
 import axios from "@/lib/AxiosConfig";
-import { ExportModelSchema } from "@/lib/schemas/GenericSchema";
+import { ExportModelSchema } from "@/lib/validations/GenericSchema";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 
 interface Props {

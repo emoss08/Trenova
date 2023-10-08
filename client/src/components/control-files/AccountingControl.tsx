@@ -36,7 +36,7 @@ import {
   AccountingControl,
   AccountingControlFormValues as FormValues,
 } from "@/types/accounting";
-import { accountingControlSchema } from "@/lib/schemas/AccountingSchema";
+import { accountingControlSchema } from "@/lib/validations/AccountingSchema";
 import { useAccountingControl } from "@/hooks/useAccounting";
 import {
   automaticJournalEntryChoices,

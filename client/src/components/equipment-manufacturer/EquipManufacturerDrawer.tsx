@@ -25,7 +25,7 @@ import {
 } from "@/types/equipment";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
-import { equipManufacturerSchema } from "@/lib/schemas/EquipmentSchema";
+import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { EquipmentManufacturerForm } from "./CreateEquipManfacturerModal";

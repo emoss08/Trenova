@@ -25,7 +25,7 @@ import {
   HazardousMaterialFormValues as FormValues,
 } from "@/types/commodities";
 import { hazardousMaterialTableStore as store } from "@/stores/CommodityStore";
-import { hazardousMaterialSchema } from "@/lib/schemas/CommoditiesSchema";
+import { hazardousMaterialSchema } from "@/lib/validations/CommoditiesSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { HMForm } from "@/components/hazardous-material/CreateHMModal";

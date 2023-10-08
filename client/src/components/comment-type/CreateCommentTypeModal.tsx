@@ -27,7 +27,7 @@ import {
   CommentType,
   CommentTypeFormValues as FormValues,
 } from "@/types/dispatch";
-import { commentTypeSchema } from "@/lib/schemas/DispatchSchema";
+import { commentTypeSchema } from "@/lib/validations/DispatchSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { statusChoices } from "@/lib/constants";

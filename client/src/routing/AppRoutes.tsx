@@ -19,8 +19,8 @@ import React, { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 
 const HomePage = lazy(() => import("../pages"));
-const LoginPage = lazy(() => import("../pages/LoginPage"));
-const ErrorPage = lazy(() => import("../pages/ErrorPage"));
+const LoginPage = lazy(() => import("../pages/login-page"));
+const ErrorPage = lazy(() => import("../pages/error-page"));
 const UserManagementPage = lazy(
   () => import("../pages/admin/users/UserManagement"),
 );
@@ -30,7 +30,7 @@ const DivisionCodesPage = lazy(
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
 const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
-const ResetPasswordPage = lazy(() => import("../pages/ResetPasswordPage"));
+const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
 const ControlFilesPage = lazy(
   () => import("../pages/admin/control-files/ControlFiles"),

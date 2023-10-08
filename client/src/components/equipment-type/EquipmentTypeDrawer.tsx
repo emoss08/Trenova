@@ -24,7 +24,7 @@ import {
   EquipmentTypeFormValues as FormValues,
 } from "@/types/equipment";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { equipmentTypeSchema } from "@/lib/schemas/EquipmentSchema";
+import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import {
   EquipmentTypeDetailForm,

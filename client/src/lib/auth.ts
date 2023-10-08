@@ -36,6 +36,7 @@ export function getCookie(name: string) {
   }
   return cookieValue;
 }
+
 /**
  * Retrieves the current user's organization ID from session storage.
  * @returns The organization's ID, or null if it was not found.

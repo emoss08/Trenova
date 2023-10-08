@@ -17,7 +17,7 @@
 
 import React, { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Layout } from "@/components/layout/Layout";
+import { Layout, UnprotectedLayout } from "@/components/layout/Layout";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 
@@ -28,8 +28,8 @@ export function ProtectedRoutes(): React.ReactElement {
   useEffect(() => {
     if (
       !isAuthenticated &&
-      location.pathname !== "/login"
-      // location.pathname !== "/logout"
+      location.pathname !== "/login" &&
+      location.pathname !== "/reset-password"
     ) {
       const returnUrl = location.pathname + location.search;
       sessionStorage.setItem("returnUrl", returnUrl);
@@ -60,7 +60,7 @@ export function ProtectedRoutes(): React.ReactElement {
         }
 
         const wrappedElement = isPublicRoute ? (
-          element
+          <UnprotectedLayout>{element}</UnprotectedLayout>
         ) : (
           <Layout>{element}</Layout>
         );

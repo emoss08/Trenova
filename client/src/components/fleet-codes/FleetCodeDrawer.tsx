@@ -21,7 +21,7 @@ import { notifications } from "@mantine/notifications";
 import { useForm, yupResolver } from "@mantine/form";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { useFleetCodeStore as store } from "@/stores/DispatchStore";
-import { fleetCodeSchema } from "@/lib/schemas/DispatchSchema";
+import { fleetCodeSchema } from "@/lib/validations/DispatchSchema";
 import { FleetCode, FleetCodeFormValues as FormValues } from "@/types/dispatch";
 import { useUsers } from "@/hooks/useUsers";
 import { TChoiceProps } from "@/types";

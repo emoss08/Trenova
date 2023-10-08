@@ -22,7 +22,7 @@ import { notifications } from "@mantine/notifications";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { DelayCode, DelayCodeFormValues as FormValues } from "@/types/dispatch";
 import { useDelayCodeStore as store } from "@/stores/DispatchStore";
-import { delayCodeSchema } from "@/lib/schemas/DispatchSchema";
+import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { DelayCodeForm } from "@/components/delay-codes/CreateDelayCodeModal";

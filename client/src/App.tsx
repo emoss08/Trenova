@@ -15,30 +15,18 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, {
-  memo,
-  PropsWithChildren,
-  Suspense,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { memo, Suspense } from "react";
 import { BrowserRouter } from "react-router-dom";
-import "./assets/styles/App.css";
-import {
-  ColorScheme,
-  ColorSchemeProvider,
-  MantineProvider,
-} from "@mantine/core";
+import "./assets/App.css";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { Notifications } from "@mantine/notifications";
 import { ReactQueryDevtools } from "react-query/devtools";
-import { ContextMenuProvider } from "mantine-contextmenu";
-import { ModalsProvider } from "@mantine/modals";
-import { useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { useAuthStore } from "@/stores/AuthStore";
-import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
 import { useVerifyToken } from "@/hooks/useVerifyToken";
+import { ThemeProvider } from "@/components/theme-provider";
+import LoadingSkeleton from "@/components/loading-skeleton";
+import "@fontsource-variable/inter";
+import { Toaster } from "./components/ui/toaster";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,72 +45,25 @@ export default function App() {
   const isLoading = isVerifying || initialLoading || !isInitializationComplete;
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingSkeleton />;
   }
-
   return (
-    <MantineColorProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="monta-ui-theme">
+      <Toaster />
       <AppImpl />
-    </MantineColorProvider>
-  );
-}
-
-function MantineColorProvider({
-  children,
-}: PropsWithChildren<NonNullable<unknown>>) {
-  const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
-    key: "mt-color-scheme",
-    defaultValue: "light",
-    getInitialValueInEffect: true,
-  });
-  useHotkeys([["mod+J", () => toggleColorScheme()]]);
-
-  useEffect(() => {
-    document.body.className =
-      colorScheme === "dark" ? "dark-theme" : "light-theme";
-  }, [colorScheme]);
-
-  const toggleColorScheme = useMemo(
-    () => (value?: ColorScheme) => {
-      setColorScheme(value || (colorScheme === "dark" ? "light" : "dark"));
-    },
-    [colorScheme, setColorScheme],
-  );
-
-  return (
-    <ColorSchemeProvider
-      colorScheme={colorScheme}
-      toggleColorScheme={toggleColorScheme}
-    >
-      <MantineProvider
-        theme={{
-          colorScheme,
-          fontFamily: "Inter, sans-serif",
-        }}
-        withGlobalStyles
-        withNormalizeCSS
-        withCSSVariables
-      >
-        {children}
-      </MantineProvider>
-    </ColorSchemeProvider>
+    </ThemeProvider>
   );
 }
 
 const AppImpl = memo(() => {
   return (
-    <ModalsProvider>
-      <ContextMenuProvider zIndex={1000} shadow="md" borderRadius="md">
-        <Notifications limit={3} position="top-right" zIndex={2077} />
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <Suspense fallback={<LoadingScreen />}>
-              <ProtectedRoutes />
-            </Suspense>
-          </BrowserRouter>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </QueryClientProvider>
-      </ContextMenuProvider>
-    </ModalsProvider>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Suspense fallback={<LoadingSkeleton />}>
+          <ProtectedRoutes />
+        </Suspense>
+      </BrowserRouter>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 });

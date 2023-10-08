@@ -25,7 +25,7 @@ import {
   GeneralLedgerAccount,
   GLAccountFormValues as FormValues,
 } from "@/types/accounting";
-import { glAccountSchema } from "@/lib/schemas/AccountingSchema";
+import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

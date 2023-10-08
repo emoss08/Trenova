@@ -16,27 +16,24 @@
  */
 
 import React from "react";
-import { Card, Container, Divider, Flex, Text } from "@mantine/core";
-import { usePageStyles } from "@/assets/styles/PageStyles";
+import { Button } from "@/components/ui/button";
+import { useLogout } from "@/hooks/useLogout";
 
 export default function Index() {
-  const { classes } = usePageStyles();
+  const logout = useLogout();
 
   return (
-    <Flex>
-      <Card className={classes.card}>
-        <Container mx="xs" my="xs">
-          <Text className={classes.text} fz="30px" fw={650}>
-            Under Development
-          </Text>
-          <Divider mb={5} variant="dashed" />
-          <Text>
-            Monta is currently undergoing comprehensive development. As a
-            result, certain features might not yet be accessible, or they may
-            not perform to their intended specifications.
-          </Text>
-        </Container>
-      </Card>
-    </Flex>
+    <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center">
+      <div className="p-8">
+        <p className="font-semibold text-lg mb-2">Development in progress...</p>
+        <p className="text-sm text-gray-400 mt-1">
+          If the operation exceeds a duration of 10 seconds, kindly verify the
+          status of your internet connectivity. <br />
+          In case of persistent difficulty, please get in touch with your
+          designated system administrator.
+        </p>
+        <Button onClick={() => logout()}>Logout</Button>
+      </div>
+    </div>
   );
 }

@@ -37,7 +37,7 @@ import { BillingControl, BillingControlFormValues } from "@/types/billing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { billingControlSchema } from "@/lib/schemas/BillingSchema";
+import { billingControlSchema } from "@/lib/validations/BillingSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import {

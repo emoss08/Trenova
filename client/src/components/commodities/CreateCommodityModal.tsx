@@ -26,7 +26,7 @@ import {
 } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
+import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { SelectInput } from "@/components/common/fields/SelectInput";

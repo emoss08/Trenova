@@ -17,6 +17,7 @@
 
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 import django_stubs_ext
@@ -69,6 +70,10 @@ INSTALLED_APPS = [
     "auditlog",
     "notifications",
     "channels",
+    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+    "allauth",
+    "allauth.account",
     # Monta Apps
     "backend",
     "core",
@@ -93,6 +98,8 @@ INSTALLED_APPS = [
     "plugin",
     "edi",
     "document_generator",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
 ]
 
 # Middleware configurations
@@ -284,6 +291,7 @@ REST_FRAMEWORK = {
         "accounts.authentication.BearerTokenAuthentication",
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -300,7 +308,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_THROTTLE_RATES": {"user": "20/second", "auth": "20/minute"},
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "20/second",
+        "auth": "20/minute",
+        "dj_rest_auth": "20/minute",
+    },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_FILTER_BACKENDS": [
@@ -754,6 +766,15 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "shipment.FormulaTemplate",
 )
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": False,
+    "UPDATE_LAST_LOGIN": True,
+    "SIGNING_KEY": "complexsigningkey",  # generate a key and replace me
+    "ALGORITHM": "HS512",
+}
 
 # Kafka Configurations
 KAFKA_BOOTSTRAP_SERVERS = env("KAFKA_BOOTSTRAP_SERVERS")
@@ -767,6 +788,18 @@ KAFKA_AUTO_COMMIT = env("KAFKA_AUTO_COMMIT")
 KAFKA_AUTO_COMMIT_INTERVAL_MS = env("KAFKA_AUTO_COMMIT_INTERVAL_MS")
 KAFKA_AUTO_OFFSET_RESET = env("KAFKA_OFFSET_RESET")
 
+# Allauth Configurations
+SITE_ID = 1  # make sure SITE_ID is set
+ACCOUNT_EMAIL_REQUIRED = False
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_AUTHENTICATION_METHOD = "username"
+
+# Django Rest Auth Configurations
+REST_AUTH = {
+    "USE_JWT": True,
+    "JWT_AUTH_HTTPONLY": False,
+    "LOGIN_SERIALIZER": "dj_rest_auth.serializers.LoginSerializer",
+}
 # Development Configurations
 if DEBUG:
     INSTALLED_APPS += [

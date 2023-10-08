@@ -22,7 +22,7 @@ import { useForm, yupResolver } from "@mantine/form";
 import { jobTitleTableStore as store } from "@/stores/UserTableStore";
 import { JobTitle, JobTitleFormValues as FormValues } from "@/types/accounts";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { jobTitleSchema } from "@/lib/schemas/AccountsSchema";
+import { jobTitleSchema } from "@/lib/validations/accounts";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { JobTitleForm } from "./CreateJobTitleModal";

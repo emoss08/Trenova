@@ -16,13 +16,13 @@
  */
 import React from "react";
 import {
-  Card,
-  Flex,
-  Text,
-  SimpleGrid,
   Button,
-  Group,
+  Card,
   Divider,
+  Flex,
+  Group,
+  SimpleGrid,
+  Text,
 } from "@mantine/core";
 import { useForm, yupResolver } from "@mantine/form";
 import { useMutation, useQueryClient } from "react-query";
@@ -36,7 +36,7 @@ import { CityAutoCompleteField } from "@/components/common/fields/CityAutoComple
 import { User } from "@/types/accounts";
 import { usePageStyles } from "@/assets/styles/PageStyles";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { UserSchema } from "@/lib/schemas/AccountsSchema";
+import { UserSchema } from "@/lib/validations/accounts";
 
 type Props = {
   user: User;

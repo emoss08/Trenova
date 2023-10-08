@@ -34,7 +34,7 @@ import {
   EquipmentType,
   EquipmentTypeFormValues as FormValues,
 } from "@/types/equipment";
-import { equipmentTypeSchema } from "@/lib/schemas/EquipmentSchema";
+import { equipmentTypeSchema } from "@/lib/validations/EquipmentSchema";
 import { useEquipTypeTableStore as store } from "@/stores/EquipmentStore";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { SelectInput } from "@/components/common/fields/SelectInput";

@@ -15,11 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-body.light-theme {
-    background-image: url('../images/background_white.webp');
+export default function RainbowTopBar() {
+  return (
+    <div>
+      <div className="h-1 bg-rainbow-gradient-light dark:bg-rainbow-gradient-dark" />
+    </div>
+  );
 }
-
-body.dark-theme {
-    background-image: url('../images/background_dark.webp');
-}
-

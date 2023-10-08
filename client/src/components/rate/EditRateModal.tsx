@@ -43,7 +43,7 @@ import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { rateMethodChoices, yesAndNoChoicesBoolean } from "@/lib/constants";
 import { ValidatedDateInput } from "@/components/common/fields/DateInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { rateSchema } from "@/lib/schemas/DispatchSchema";
+import { rateSchema } from "@/lib/validations/DispatchSchema";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCommodities } from "@/hooks/useCommodities";
 import { useLocations } from "@/hooks/useLocations";

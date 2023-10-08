@@ -39,7 +39,7 @@ import {
   rateFields,
   RateFormValues as FormValues,
 } from "@/types/dispatch";
-import { rateSchema } from "@/lib/schemas/DispatchSchema";
+import { rateSchema } from "@/lib/validations/DispatchSchema";
 import { useCommodities } from "@/hooks/useCommodities";
 import { useLocations } from "@/hooks/useLocations";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
