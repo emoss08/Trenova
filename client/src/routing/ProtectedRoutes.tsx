@@ -17,7 +17,7 @@
 
 import React, { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Layout, UnprotectedLayout } from "@/components/layout/Layout";
+import { Layout, UnprotectedLayout } from "@/components/Layout";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
 

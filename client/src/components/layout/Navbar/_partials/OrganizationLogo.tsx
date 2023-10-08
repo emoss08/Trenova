@@ -17,15 +17,12 @@
 
 import React from "react";
 import { useQuery, useQueryClient } from "react-query";
-import { Image, rem, Skeleton, Text } from "@mantine/core";
 import { Link } from "react-router-dom";
 import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
-import { useHeaderStyles } from "@/assets/styles/HeaderStyles";
 
 export function OrganizationLogo() {
   const queryClient = useQueryClient();
-  const { classes } = useHeaderStyles();
 
   // Get User organization data
   const organizationId = getUserOrganizationId() || "";
@@ -42,31 +39,25 @@ export function OrganizationLogo() {
         queryClient.getQueryData(["organization", organizationId]),
       staleTime: Infinity, // never refetch
     });
-
-  if (isOrganizationDataLoading) {
-    return <Skeleton width={rem(190)} height={rem(30)} />;
-  }
+  //
+  // if (isOrganizationDataLoading) {
+  //   return <Skeleton width={rem(190)} height={rem(30)} />;
+  // }
 
   if (organizationData && organizationData.logo) {
     return (
       <Link to="/" style={{ textDecoration: "none" }}>
-        <Image
-          radius="md"
-          width={rem(120)}
-          height={rem(40)}
-          maw={rem(150)}
-          src={organizationData?.logo}
-          alt="Organization Logo"
-        />
+        <img src={organizationData?.logo} alt="Organization Logo" />
       </Link>
     );
   }
 
   return (
-    <Link to="/" style={{ textDecoration: "none" }}>
-      <Text size="lg" fw={700} className={classes.logoText}>
-        {organizationData?.name}
-      </Text>
+    <Link
+      className="mr-6 flex items-center space-x-2 font-semibold text-accent-foreground"
+      to="/"
+    >
+      {organizationData?.name}
     </Link>
   );
 }
