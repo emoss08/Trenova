@@ -15,46 +15,53 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import * as Yup from "yup";
-import { ObjectSchema } from "yup";
+import * as yup from "yup";
 import { JobTitleFormValues } from "@/types/accounts";
 import { StatusChoiceProps } from "@/types";
 import { JobFunctionChoiceProps } from "@/lib/choices";
 
-export const jobTitleSchema: ObjectSchema<JobTitleFormValues> =
-  Yup.object().shape({
-    status: Yup.string<StatusChoiceProps>().required("Status is required"),
-    name: Yup.string().required("Name is required"),
-    description: Yup.string().notRequired(),
-    jobFunction: Yup.string<JobFunctionChoiceProps>().required(
-      "Job Function is required",
-    ),
+export const jobTitleSchema: yup.ObjectSchema<JobTitleFormValues> = yup
+  .object()
+  .shape({
+    status: yup.string<StatusChoiceProps>().required("Status is required"),
+    name: yup.string().required("Name is required"),
+    description: yup.string().notRequired(),
+    jobFunction: yup
+      .string<JobFunctionChoiceProps>()
+      .required("Job Function is required"),
   });
 
 /**
- * A Yup object schema for validating login data.
+ * A yup object schema for validating login data.
  * @property username - A required string.
  * @property password - A required string.
  */
-export const LoginSchema = Yup.object().shape({
-  username: Yup.string().required("Username is required."),
-  password: Yup.string().required("Password is required."),
+export const userAuthSchema = yup.object().shape({
+  username: yup.string().required("Username is required."),
+  password: yup.string().required("Password is required."),
+});
+
+export const resetPasswordSchema: yup.ObjectSchema<{
+  email: string;
+}> = yup.object().shape({
+  email: yup.string().email().required("Email is required."),
 });
 
 /**
- * A Yup object schema for validating user profile data.
+ * A yup object schema for validating user profile data.
  * @property profile - An object that includes properties:
  *                     first_name, last_name, address_line_1, city, state, zip_code, phone_number.
  */
-export const UserSchema = Yup.object().shape({
-  profile: Yup.object().shape({
-    firstName: Yup.string().required("First name is required"),
-    lastName: Yup.string().required("Last name is required"),
-    addressLine1: Yup.string().required("Address Line 1 is required"),
-    city: Yup.string().required("City is required"),
-    state: Yup.string().required("State is required"),
-    zipCode: Yup.string().required("Zip Code is required"),
-    phoneNumber: Yup.string()
+export const UserSchema = yup.object().shape({
+  profile: yup.object().shape({
+    firstName: yup.string().required("First name is required"),
+    lastName: yup.string().required("Last name is required"),
+    addressLine1: yup.string().required("Address Line 1 is required"),
+    city: yup.string().required("City is required"),
+    state: yup.string().required("State is required"),
+    zipCode: yup.string().required("Zip Code is required"),
+    phoneNumber: yup
+      .string()
       .nullable()
       .test(
         "phone_number_format",

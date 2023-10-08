@@ -37,7 +37,7 @@ import { DispatchControl, DispatchControlFormValues } from "@/types/dispatch";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { dispatchControlSchema } from "@/lib/schemas/DispatchSchema";
+import { dispatchControlSchema } from "@/lib/validations/DispatchSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { ServiceIncidentControlChoices } from "@/lib/choices";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";

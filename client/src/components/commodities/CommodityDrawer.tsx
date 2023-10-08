@@ -26,7 +26,7 @@ import {
 } from "@/types/commodities";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { commoditySchema } from "@/lib/schemas/CommoditiesSchema";
+import { commoditySchema } from "@/lib/validations/CommoditiesSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { useHazardousMaterial } from "@/hooks/useHazardousMaterial";

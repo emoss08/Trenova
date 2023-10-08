@@ -26,7 +26,7 @@ import {
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { divisionCodeSchema } from "@/lib/schemas/AccountingSchema";
+import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { useGLAccounts } from "@/hooks/useGLAccounts";

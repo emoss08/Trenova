@@ -34,7 +34,7 @@ import { CreateCustomerFormValues } from "@/types/customer";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
 import { DeliverySlotForm } from "@/components/customer/create/steps/DeliverySlotForm";
-import { CreateCustomerSchema } from "@/lib/schemas/CustomerSchema";
+import { CreateCustomerSchema } from "@/lib/validations/CustomerSchema";
 import { useUsers } from "@/hooks/useUsers";
 import { useLocations } from "@/hooks/useLocations";
 import { CreateCustomerModalForm } from "@/components/customer/create/steps/CustomerForm";

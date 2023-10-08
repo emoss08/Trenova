@@ -25,7 +25,7 @@ import {
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
-import { equipManufacturerSchema } from "@/lib/schemas/EquipmentSchema";
+import { equipManufacturerSchema } from "@/lib/validations/EquipmentSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { useEquipManufacturerTableStore as store } from "@/stores/EquipmentStore";
 import { TableStoreProps } from "@/types/tables";

@@ -26,7 +26,7 @@ import {
 } from "@/types/accounting";
 import { TChoiceProps } from "@/types";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { divisionCodeSchema } from "@/lib/schemas/AccountingSchema";
+import { divisionCodeSchema } from "@/lib/validations/AccountingSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

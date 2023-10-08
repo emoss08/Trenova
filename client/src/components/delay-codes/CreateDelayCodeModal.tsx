@@ -24,7 +24,7 @@ import { useFormStyles } from "@/assets/styles/FormStyles";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";
 import { DelayCode, DelayCodeFormValues as FormValues } from "@/types/dispatch";
-import { delayCodeSchema } from "@/lib/schemas/DispatchSchema";
+import { delayCodeSchema } from "@/lib/validations/DispatchSchema";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";

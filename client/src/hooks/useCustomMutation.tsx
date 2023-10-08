@@ -16,16 +16,12 @@
  */
 
 import { QueryClient, useMutation, useQueryClient } from "react-query";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheck, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import React from "react";
-import { NotificationsEvents } from "@mantine/notifications/lib/events";
-import { UseFormReturnType } from "@mantine/form";
 import { AxiosResponse } from "axios";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
 import { StoreType } from "@/lib/useGlobalStore";
 import { QueryKeys } from "@/types";
+import { ToasterToast } from "@/components/ui/use-toast";
 
 type MutationOptions = {
   path: string;
@@ -38,10 +34,11 @@ type MutationOptions = {
 };
 
 const DEFAULT_ERROR_MESSAGE = "An error occurred.";
+type Toast = Omit<ToasterToast, "id">;
 
 export function useCustomMutation<T, K>(
   form: UseFormReturnType<T>,
-  notifications: NotificationsEvents,
+  toast: (toast: Toast) => void,
   options: MutationOptions,
   onMutationSettled?: () => void,
   store?: StoreType<K>,
@@ -51,10 +48,8 @@ export function useCustomMutation<T, K>(
   return useMutation(
     (values: T) => executeApiMethod(options.method, options.path, values),
     {
-      onSuccess: () =>
-        handleSuccess(options, notifications, queryClient, store),
-      onError: (error: Error) =>
-        handleError(error, options, form, notifications),
+      onSuccess: () => handleSuccess(options, toast, queryClient, store),
+      onError: (error: Error) => handleError(error, options, form, toast),
       onSettled: onMutationSettled,
     },
   );
@@ -112,18 +107,12 @@ function sendFileData(
 }
 function handleSuccess<K>(
   options: MutationOptions,
-  notifications: NotificationsEvents,
+  toast: (toast: Toast) => void,
   queryClient: QueryClient,
   store?: StoreType<K>,
 ) {
   const notifySuccess = () => {
-    showNotification(
-      notifications,
-      "Success",
-      options.successMessage,
-      "green",
-      faCheck,
-    );
+    showNotification(toast, "Success", options.successMessage);
   };
 
   const invalidateQueries = async (queries?: string[]) => {
@@ -156,44 +145,32 @@ function handleError(
 }
 
 function showNotification(
-  notifications: NotificationsEvents,
+  toast: (toast: Toast) => void,
   title: string,
   message: string,
-  color: string,
-  icon: typeof faCheck,
 ) {
-  notifications.show({
-    title,
-    message,
-    color,
-    withCloseButton: true,
-    icon: <FontAwesomeIcon icon={icon} />,
-    autoClose: 2_000,
+  toast({
+    title: title,
+    description: message,
   });
 }
 
 function showErrorNotification(
-  notifications: NotificationsEvents,
+  toast: (toast: Toast) => void,
   errorMessage?: string,
 ) {
-  showNotification(
-    notifications,
-    "Error",
-    errorMessage || DEFAULT_ERROR_MESSAGE,
-    "red",
-    faXmark,
-  );
+  showNotification(toast, "Error", errorMessage || DEFAULT_ERROR_MESSAGE);
 }
 
 function handleValidationErrors<T>(
   errors: APIError[],
   form: UseFormReturnType<T>,
-  notifications: NotificationsEvents,
+  toast: (toast: Toast) => void,
 ) {
   errors.forEach((e: APIError) => {
     form.setFieldError(e.attr, e.detail);
     if (e.attr === "nonFieldErrors") {
-      showErrorNotification(notifications, e.detail);
+      showErrorNotification(toast, e.detail);
     }
   });
 }

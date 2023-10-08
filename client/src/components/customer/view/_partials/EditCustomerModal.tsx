@@ -26,7 +26,7 @@ import { customerStore as store } from "@/stores/CustomerStore";
 import { Customer, CustomerFormValues } from "@/types/customer";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
-import { customerSchema } from "@/lib/schemas/CustomerSchema";
+import { customerSchema } from "@/lib/validations/CustomerSchema";
 import { SelectInput } from "@/components/common/fields/SelectInput";
 import { statusChoices, yesAndNoChoices } from "@/lib/constants";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";

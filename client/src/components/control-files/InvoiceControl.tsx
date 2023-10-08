@@ -37,7 +37,7 @@ import { InvoiceControl, InvoiceControlFormValues } from "@/types/invoicing";
 import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
-import { invoiceControlSchema } from "@/lib/schemas/InvoicingSchema";
+import { invoiceControlSchema } from "@/lib/validations/InvoicingSchema";
 import { ValidatedTextInput } from "@/components/common/fields/TextInput";
 import { ValidatedNumberInput } from "@/components/common/fields/NumberInput";
 import { ValidatedTextArea } from "@/components/common/fields/TextArea";

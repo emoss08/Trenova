@@ -25,7 +25,7 @@ import {
   GLAccountFormValues as FormValues,
 } from "@/types/accounting";
 import { useFormStyles } from "@/assets/styles/FormStyles";
-import { glAccountSchema } from "@/lib/schemas/AccountingSchema";
+import { glAccountSchema } from "@/lib/validations/AccountingSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { useUsers } from "@/hooks/useUsers";

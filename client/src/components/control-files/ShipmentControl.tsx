@@ -38,7 +38,7 @@ import { useFormStyles } from "@/assets/styles/FormStyles";
 import axios from "@/lib/AxiosConfig";
 import { APIError } from "@/types/server";
 import { SwitchInput } from "@/components/common/fields/SwitchInput";
-import { shipmentControlSchema } from "@/lib/schemas/OrderSchema";
+import { shipmentControlSchema } from "@/lib/validations/OrderSchema";
 
 interface Props {
   shipmentControl: ShipmentControl;

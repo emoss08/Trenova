@@ -25,7 +25,7 @@ import {
   ChargeType,
   ChargeTypeFormValues as FormValues,
 } from "@/types/billing";
-import { chargeTypeSchema } from "@/lib/schemas/BillingSchema";
+import { chargeTypeSchema } from "@/lib/validations/BillingSchema";
 import { useCustomMutation } from "@/hooks/useCustomMutation";
 import { TableStoreProps } from "@/types/tables";
 import { SelectInput } from "@/components/common/fields/SelectInput";

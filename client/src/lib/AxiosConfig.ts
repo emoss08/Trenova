@@ -87,19 +87,4 @@ axios.interceptors.request.use(
   (error: any) => Promise.reject(error),
 );
 
-/**
- * Axios' response interceptor.
- * It handles 401 unauthorized errors by removing the user ID from session storage.
- * Other errors are simply forwarded.
- */
-// axios.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if (error.response.status === 401) {
-//       sessionStorage.removeItem(USER_ID_KEY);
-//     }
-//     return Promise.reject(error);
-//   },
-// );
-
 export default axios;
