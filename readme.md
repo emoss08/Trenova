@@ -61,8 +61,8 @@ towards strategic milestones, all without the added weight of extra manpower or 
 ### Frontend Technologies
 
 - [React](https://reactjs.org/)
-- [Mantine](https://mantine.dev/)
-- [Mantine React Table](https://www.mantine-react-table.com/)
+- [Shadcn](https://ui.shadcn.com/)
+- [Tailwind](https://tailwindcss.com/)
 - [React Query](https://react-query.tanstack.com/)
 - [React Router](https://reactrouter.com/)
 - [Font Awesome](https://fontawesome.com/)
