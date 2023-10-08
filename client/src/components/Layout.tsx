@@ -15,8 +15,10 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
+import { NavMenu } from "@/components/navbar";
 import RainbowTopBar from "@/components/topbar";
+import React from "react";
+import { UserAvatarMenu } from "./user-avatar-menu";
 
 type LayoutProps = {
   children: React.ReactNode;
@@ -24,9 +26,19 @@ type LayoutProps = {
 
 export function Layout({ children }: LayoutProps): React.ReactElement {
   return (
-    <div className="h-screen flex flex-col">
-      <RainbowTopBar />
-      <div className="flex-1 overflow-auto">{children}</div>
+    <div className="relative flex min-h-screen flex-col">
+      <header className="supports-backdrop-blur:bg-background/60 sticky top-0 z-50 w-full border-b background/95 backdrop-blur">
+        <RainbowTopBar />
+        <div className="container flex h-14 items-center">
+          <NavMenu />
+          <UserAvatarMenu />
+        </div>
+      </header>
+      <div className="flex-1 overflow-auto">
+        <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center p-8">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

@@ -15,25 +15,23 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { useLogout } from "@/hooks/useLogout";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 export default function Index() {
-  const logout = useLogout();
-
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center">
-      <div className="p-8">
-        <p className="font-semibold text-lg mb-2">Development in progress...</p>
-        <p className="text-sm text-gray-400 mt-1">
-          If the operation exceeds a duration of 10 seconds, kindly verify the
-          status of your internet connectivity. <br />
-          In case of persistent difficulty, please get in touch with your
-          designated system administrator.
+    <Card>
+      <CardHeader>
+        <p className="font-semibold text-lg mb-2 border-b border-dashed">
+          Development in progress...
         </p>
-        <Button onClick={() => logout()}>Logout</Button>
-      </div>
-    </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-gray-400 mt-1">
+          Monta is currently undergoing comprehensive development. As a result,
+          certain features might not yet be accessible, or they may not perform
+          to their intended specifications.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

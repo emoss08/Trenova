@@ -15,21 +15,21 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { ModeToggle } from "@/components/theme-switcher";
-import { cn } from "@/lib/utils";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore, useUserStore } from "@/stores/AuthStore";
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { userAuthSchema } from "@/lib/validations/accounts";
-import axios from "@/lib/AxiosConfig";
-import { Label } from "@/components/ui/label";
-import { InputField, PasswordField } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { InputField, PasswordField } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import axios from "@/lib/AxiosConfig";
+import { cn } from "@/lib/utils";
+import { userAuthSchema } from "@/lib/validations/accounts";
+import { useAuthStore, useUserStore } from "@/stores/AuthStore";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Loader2 } from "lucide-react";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 
 type LoginFormValues = {
   username: string;
@@ -186,7 +186,7 @@ export default function LoginPage() {
         </a>
       </p>
       <div className="flex flex-row justify-center items-start">
-        <Card className={cn("w-[420px]")}>
+        <Card className={cn("w-[420px] shadow-sm")}>
           <CardContent>
             <UserAuthForm />
           </CardContent>
