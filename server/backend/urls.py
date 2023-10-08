@@ -15,9 +15,6 @@
 #  Grant, and not modifying the license in any other way.                                          -
 # --------------------------------------------------------------------------------------------------
 
-from dj_rest_auth.jwt_auth import get_refresh_view
-from dj_rest_auth.registration.views import RegisterView
-from dj_rest_auth.views import LoginView, LogoutView, UserDetailsView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -28,7 +25,6 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from rest_framework_nested import routers
-from rest_framework_simplejwt.views import TokenVerifyView
 
 from accounting import api as accounting_api
 from accounts import api as accounts_api
@@ -424,12 +420,6 @@ urlpatterns = [
         accounts_api.RemoveUserSessionView.as_view(),
         name="kick-user-session",
     ),
-    path("api/auth/register/", RegisterView.as_view(), name="rest_register"),
-    path("api/auth/login/", LoginView.as_view(), name="rest_login"),
-    path("api/auth/logout/", LogoutView.as_view(), name="rest_logout"),
-    path("api/auth/user/", UserDetailsView.as_view(), name="rest_user_details"),
-    path("api/auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
-    path("api/auth/token/refresh/", get_refresh_view().as_view(), name="token_refresh"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
