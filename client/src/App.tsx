@@ -15,18 +15,19 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { memo, Suspense } from "react";
-import { BrowserRouter } from "react-router-dom";
-import "./assets/App.css";
+import LoadingSkeleton from "@/components/loading-skeleton";
+import { ThemeProvider } from "@/components/theme-provider";
+import { useVerifyToken } from "@/hooks/useVerifyToken";
+import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
+import { useAuthStore } from "@/stores/AuthStore";
+import "@fontsource-variable/inter";
+import { memo, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
-import { useAuthStore } from "@/stores/AuthStore";
-import { ProtectedRoutes } from "@/routing/ProtectedRoutes";
-import { useVerifyToken } from "@/hooks/useVerifyToken";
-import { ThemeProvider } from "@/components/theme-provider";
-import LoadingSkeleton from "@/components/loading-skeleton";
-import "@fontsource-variable/inter";
+import { BrowserRouter } from "react-router-dom";
+import "./assets/App.css";
 import { Toaster } from "./components/ui/toaster";
+import { UserPermissionsProvider } from "./context/user-permissions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,8 +50,10 @@ export default function App() {
   }
   return (
     <ThemeProvider defaultTheme="dark" storageKey="monta-ui-theme">
-      <Toaster />
-      <AppImpl />
+      <UserPermissionsProvider>
+        <Toaster />
+        <AppImpl />
+      </UserPermissionsProvider>
     </ThemeProvider>
   );
 }
