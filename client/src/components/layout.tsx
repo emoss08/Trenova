@@ -17,7 +17,10 @@
 
 import { NavMenu } from "@/components/navbar";
 import RainbowTopBar from "@/components/topbar";
+import { getUserDetails } from "@/services/UserRequestService";
+import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
+import { useQuery, useQueryClient } from "react-query";
 import { UserAvatarMenu } from "./user-avatar-menu";
 
 type LayoutProps = {
@@ -25,13 +28,36 @@ type LayoutProps = {
 };
 
 export function Layout({ children }: LayoutProps): React.ReactElement {
+  const { userId } = useUserStore.get("user");
+  const queryClient = useQueryClient();
+
+  const { data: userData, isLoading: isUserDataLoading } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => {
+      if (!userId) {
+        return Promise.resolve(null);
+      }
+      return getUserDetails(userId);
+    },
+    initialData: () => queryClient.getQueryData(["user", userId]),
+    staleTime: Infinity,
+  });
+
   return (
     <div className="relative flex min-h-screen flex-col">
       <header className="supports-backdrop-blur:bg-background/60 sticky top-0 z-50 w-full border-b background/95 backdrop-blur">
         <RainbowTopBar />
         <div className="container flex h-14 items-center">
           <NavMenu />
-          <UserAvatarMenu />
+          {isUserDataLoading ? (
+            <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+              <div className="animate-pulse flex space-x-4">
+                <div className="rounded-full bg-black dark:bg-white opacity-10 h-10 w-10"></div>
+              </div>
+            </div>
+          ) : (
+            userData && <UserAvatarMenu user={userData} />
+          )}
         </div>
       </header>
       <div className="flex-1 overflow-auto">

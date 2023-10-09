@@ -15,12 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
 import { faBoxTaped } from "@fortawesome/pro-duotone-svg-icons";
-import {
-  LinksGroup,
-  LinksGroupProps,
-} from "@/components/layout/Navbar/_partials/LinksGroup";
 
 /** Links for Shipment Navigation Menu */
 export const shipmentNavLinks = [

@@ -17,18 +17,18 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Group,
   Box,
   Collapse,
+  createStyles,
+  Group,
+  rem,
   Text,
   UnstyledButton,
-  createStyles,
-  rem,
 } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 import { useUserPermissions } from "@/hooks/useUserPermissions";
-import { LinkItem } from "./LinksGroup";
+import { LinkItem } from "../../../links-group";
 
 const useStyles = createStyles((theme) => ({
   control: {

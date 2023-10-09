@@ -1,4 +1,9 @@
+import { useLogout } from "@/hooks/useLogout";
+import { User } from "@/types/accounts";
 import { AvatarImage } from "@radix-ui/react-avatar";
+import { DropdownMenuSeparator } from "@radix-ui/react-dropdown-menu";
+import React from "react";
+import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import {
   DropdownMenu,
@@ -13,24 +18,30 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { DropdownMenuSeparator } from "@radix-ui/react-dropdown-menu";
-import React from "react";
-import { useLogout } from "@/hooks/useLogout";
-import { useTheme } from "./theme-provider";
 
-const UserAvatar = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof Avatar>
->((props, ref) => (
-  <Avatar ref={ref}>
-    <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-    <AvatarFallback>CN</AvatarFallback>
-  </Avatar>
-));
+type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
+  user: User;
+};
+
+const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
+  ({ user, ...props }, ref) => (
+    <Avatar ref={ref} {...props}>
+      <AvatarImage
+        className="w-full h-full rounded-full"
+        src={user.profile?.profilePicture}
+        alt={user.username}
+      />
+      <AvatarFallback>
+        {user.profile?.firstName.charAt(0)}
+        {user.profile?.lastName.charAt(0)}
+      </AvatarFallback>
+    </Avatar>
+  ),
+);
 
 UserAvatar.displayName = "UserAvatar";
 
-export function UserAvatarMenu() {
+export function UserAvatarMenu({ user }: { user: User }) {
   const logout = useLogout();
   const { setTheme } = useTheme();
 
@@ -38,7 +49,7 @@ export function UserAvatarMenu() {
     <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <UserAvatar />
+          <UserAvatar user={user} />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>

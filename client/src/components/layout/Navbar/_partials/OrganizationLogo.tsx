@@ -15,34 +15,38 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React from "react";
-import { useQuery, useQueryClient } from "react-query";
-import { Link } from "react-router-dom";
 import { getUserOrganizationId } from "@/lib/auth";
 import { getOrganizationDetails } from "@/services/OrganizationRequestService";
+import { useQuery, useQueryClient } from "react-query";
+import { Link } from "react-router-dom";
 
 export function OrganizationLogo() {
   const queryClient = useQueryClient();
 
   // Get User organization data
   const organizationId = getUserOrganizationId() || "";
-  const { data: organizationData, isLoading: isOrganizationDataLoading } =
-    useQuery({
-      queryKey: ["organization", organizationId],
-      queryFn: () => {
-        if (!organizationId) {
-          return Promise.resolve(null);
-        }
-        return getOrganizationDetails(organizationId);
-      },
-      initialData: () =>
-        queryClient.getQueryData(["organization", organizationId]),
-      staleTime: Infinity, // never refetch
-    });
-  //
-  // if (isOrganizationDataLoading) {
-  //   return <Skeleton width={rem(190)} height={rem(30)} />;
-  // }
+  const { data: organizationData, isLoading: IsOrgDataLoading } = useQuery({
+    queryKey: ["organization", organizationId],
+    queryFn: () => {
+      if (!organizationId) {
+        return Promise.resolve(null);
+      }
+      return getOrganizationDetails(organizationId);
+    },
+    initialData: () =>
+      queryClient.getQueryData(["organization", organizationId]),
+    staleTime: Infinity, // never refetch
+  });
+
+  if (IsOrgDataLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+        <div className="animate-pulse flex space-x-4">
+          <div className="rounded-lg bg-black dark:bg-white opacity-10 h-10 w-36"></div>
+        </div>
+      </div>
+    );
+  }
 
   if (organizationData && organizationData.logo) {
     return (

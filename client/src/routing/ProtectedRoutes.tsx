@@ -15,11 +15,11 @@
  * Grant, and not modifying the license in any other way.
  */
 
+import { Layout, UnprotectedLayout } from "@/components/layout";
+import { useUserPermissions } from "@/context/user-permissions";
 import React, { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Layout, UnprotectedLayout } from "@/components/Layout";
 import { RouteObjectWithPermission, routes } from "./AppRoutes";
-import { useUserPermissions } from "@/hooks/useUserPermissions";
 
 export function ProtectedRoutes(): React.ReactElement {
   const { isAuthenticated, userHasPermission } = useUserPermissions();

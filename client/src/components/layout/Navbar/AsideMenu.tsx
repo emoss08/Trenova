@@ -17,42 +17,25 @@
 
 import React from "react";
 import { Group, Navbar, rem, Skeleton, useMantineTheme } from "@mantine/core";
-import { useQuery, useQueryClient } from "react-query";
 import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
-import { getUserDetails } from "@/services/UserRequestService";
 import { ThemeSwitcher } from "@/components/layout/Header/_Partials/ThemeSwitcher";
 import { navbarScroll } from "@/components/layout/Navbar/_partials/NavbarScroll";
-import { BillingLinks } from "@/components/layout/Navbar/_partials/BillingLinks";
+import { BillingLinks } from "@/components/billing-links";
 import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import { AdminLinks } from "@/components/layout/Navbar/_partials/SystemHealthLinks";
 import { SearchSpotlight } from "@/components/layout/Header/Search";
-import { DispatchLinks } from "@/components/layout/Navbar/_partials/DispatchLinks";
+import { DispatchLinks } from "@/components/dispatch-links";
 import { MainLinks } from "@/components/layout/Navbar/_partials/MainLinks";
 import { MCode } from "@/components/common/Code";
 import { useNavbarStyles } from "@/assets/styles/AsideStyles";
-import { EquipLinks } from "@/components/layout/Navbar/_partials/EquipmentLinks";
+import { EquipLinks } from "@/components/equipment-links";
 import { UserNotifications } from "@/components/layout/Header/_Partials/UserNotifications";
 import { UserDownloads } from "@/components/layout/Header/_Partials/UserDownloads";
-import { useUserStore } from "@/stores/AuthStore";
 import { ShipmentLinks } from "@/components/layout/Navbar/_partials/ShipmentLinks";
 
 export function AsideMenu(): React.ReactElement {
   const { classes } = useNavbarStyles();
-  const queryClient = useQueryClient();
-  const { userId } = useUserStore.get("user");
   const theme = useMantineTheme();
-
-  const { data: userData, isLoading: isUserDataLoading } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: () => {
-      if (!userId) {
-        return Promise.resolve(null);
-      }
-      return getUserDetails(userId);
-    },
-    initialData: () => queryClient.getQueryData(["user", userId]),
-    staleTime: Infinity,
-  });
 
   return (
     <Navbar

@@ -17,10 +17,7 @@
 
 import React from "react";
 import { faUserCrown } from "@fortawesome/pro-duotone-svg-icons";
-import {
-  LinksGroup,
-  LinksGroupProps,
-} from "@/components/layout/Navbar/_partials/LinksGroup";
+import { LinksGroup, LinksGroupProps } from "@/components/links-group";
 
 /** Links for Administrator Navigation Menu */
 export const adminNavLinks = [
