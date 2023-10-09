@@ -14,9 +14,8 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
-import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -26,136 +25,179 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { useUserPermissions } from "@/context/user-permissions";
+import {
+  billingNavLinks,
+  dispatchNavLinks,
+  equipmentNavLinks,
+  shipmentNavLinks,
+} from "@/lib/nav-links";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { OrganizationLogo } from "@/components/layout/Navbar/_partials/OrganizationLogo";
+import { LinksComponent } from "./nav-links";
 
-const components: { title: string; href: string; description: string }[] = [
-  {
-    title: "Alert Dialog",
-    href: "/docs/primitives/alert-dialog",
-    description:
-      "A modal dialog that interrupts the user with important content and expects a response.",
-  },
-  {
-    title: "Hover Card",
-    href: "/docs/primitives/hover-card",
-    description:
-      "For sighted users to preview content available behind a link.",
-  },
-  {
-    title: "Progress",
-    href: "/docs/primitives/progress",
-    description:
-      "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",
-  },
-  {
-    title: "Scroll-area",
-    href: "/docs/primitives/scroll-area",
-    description: "Visually or semantically separates content.",
-  },
-  {
-    title: "Tabs",
-    href: "/docs/primitives/tabs",
-    description:
-      "A set of layered sections of content—known as tab panels—that are displayed one at a time.",
-  },
-  {
-    title: "Tooltip",
-    href: "/docs/primitives/tooltip",
-    description:
-      "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.",
-  },
-];
+type PermissionType = string;
+
+type MenuData = {
+  menuKey: string;
+  label: string;
+  permission?: PermissionType;
+  content?: React.ReactNode;
+  link?: string;
+};
+
+type NavigationMenuItemProps = {
+  data: MenuData;
+  // menuOpen: string | undefined;
+  setMenuOpen: React.Dispatch<React.SetStateAction<string | undefined>>;
+};
+
+type SubLink = {
+  label: string;
+  link: string;
+  permission?: string;
+  description: string;
+};
+
+type MainLink = {
+  label: string;
+  link?: string;
+  permission?: string;
+  description: string;
+  subLinks?: SubLink[];
+};
+
+type MainItem = {
+  links: MainLink[];
+};
+
+const userHasAccessToMenuContent = (
+  content: React.ReactNode,
+  userHasPermission: (permission: string) => boolean,
+  isAdmin: boolean,
+): boolean => {
+  // If the user is an admin, immediately grant access
+  if (isAdmin) return true;
+
+  // Check if content is a valid React Element and of type LinksComponent
+  if (React.isValidElement(content) && content.type === LinksComponent) {
+    const linkData = content.props.linkData as MainItem[];
+
+    return linkData.some((mainItem) => {
+      return mainItem.links.some((subItem) => {
+        if (subItem.subLinks && !subItem.permission) {
+          return subItem.subLinks.some(
+            (link) => !link.permission || userHasPermission(link.permission),
+          );
+        } else {
+          return !subItem.permission || userHasPermission(subItem.permission);
+        }
+      });
+    });
+  }
+  return false;
+};
+
+const NavigationMenuItemWithPermission: React.FC<NavigationMenuItemProps> = ({
+  data,
+  setMenuOpen,
+}) => {
+  const { userHasPermission, isAdmin } = useUserPermissions();
+
+  // Check for permissions and return null if not allowed
+  if (data.permission && !userHasPermission(data.permission)) {
+    return null;
+  }
+
+  // Check if the user has access to the menu content
+  const hasAccess = userHasAccessToMenuContent(
+    data.content,
+    userHasPermission,
+    isAdmin,
+  );
+  if (!hasAccess) {
+    return null;
+  }
+
+  if (data.link) {
+    console.info("data.link", data.link);
+    return (
+      <NavigationMenuItem>
+        <Link to={data.link} onMouseEnter={() => setMenuOpen(undefined)}>
+          <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+            {data.label}
+          </NavigationMenuLink>
+        </Link>
+      </NavigationMenuItem>
+    );
+  }
+  return (
+    <NavigationMenuItem>
+      <NavigationMenuTrigger onClick={() => setMenuOpen(data.menuKey)}>
+        {data.label}
+      </NavigationMenuTrigger>
+      <NavigationMenuContent>{data.content}</NavigationMenuContent>
+    </NavigationMenuItem>
+  );
+};
 
 export function NavMenu() {
+  const [menuOpen, setMenuOpen] = useState<string | undefined>();
+
+  const handleValueChange = (newValue: string) => {
+    if (newValue !== "") {
+      setMenuOpen(newValue);
+    }
+  };
+
+  const menuItems: MenuData[] = [
+    {
+      menuKey: "BillingMenu",
+      label: "Billing & AR",
+      content: <LinksComponent linkData={billingNavLinks} />,
+    },
+    {
+      menuKey: "DispatchMenu",
+      label: "Dispatch Management",
+      content: <LinksComponent linkData={dispatchNavLinks} />,
+    },
+    {
+      menuKey: "EquipmentMenu",
+      label: "Equipment Management",
+      content: <LinksComponent linkData={equipmentNavLinks} />,
+    },
+    {
+      menuKey: "ShipmentMenu",
+      label: "Shipment Management",
+      content: <LinksComponent linkData={shipmentNavLinks} />,
+    },
+    {
+      menuKey: "AdminMenu",
+      label: "Administrator",
+      link: "/admin",
+      permission: "view_admin",
+    },
+  ];
+
   return (
-    <NavigationMenu>
+    <NavigationMenu
+      value={menuOpen}
+      onValueChange={handleValueChange}
+      onMouseLeave={() => setMenuOpen(undefined)} // Close the menu on mouse leave
+    >
       <NavigationMenuList>
-        {/* begin:: Logo Text  */}
+        {/* Organization Logo */}
         <OrganizationLogo />
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Getting started</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid gap-3 p-4 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-              <li className="row-span-3">
-                <NavigationMenuLink asChild>
-                  <a
-                    className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                    href="/"
-                  >
-                    Monta Transportation
-                    <div className="mb-2 mt-4 text-lg font-medium">
-                      shadcn/ui
-                    </div>
-                    <p className="text-sm leading-tight text-muted-foreground">
-                      Beautifully designed components built with Radix UI and
-                      Tailwind CSS.
-                    </p>
-                  </a>
-                </NavigationMenuLink>
-              </li>
-              <ListItem href="/docs" title="Introduction">
-                Re-usable components built using Radix UI and Tailwind CSS.
-              </ListItem>
-              <ListItem href="/docs/installation" title="Installation">
-                How to install dependencies and structure your app.
-              </ListItem>
-              <ListItem href="/docs/primitives/typography" title="Typography">
-                Styles for headings, paragraphs, lists...etc
-              </ListItem>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Components</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-              {components.map((component) => (
-                <ListItem
-                  key={component.title}
-                  title={component.title}
-                  href={component.href}
-                >
-                  {component.description}
-                </ListItem>
-              ))}
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
-        <NavigationMenuItem>
-          <Link to="/docs">
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              Documentation
-            </NavigationMenuLink>
-          </Link>
-        </NavigationMenuItem>
+
+        {/* Navigation Menu Items */}
+        {menuItems.map((item) => (
+          <NavigationMenuItemWithPermission
+            key={item.menuKey}
+            data={item}
+            setMenuOpen={setMenuOpen}
+          />
+        ))}
       </NavigationMenuList>
     </NavigationMenu>
   );
 }
-
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className,
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none">{title}</div>
-          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  );
-});
-ListItem.displayName = "ListItem";
