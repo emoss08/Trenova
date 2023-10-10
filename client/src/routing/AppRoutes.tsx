@@ -15,7 +15,7 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import React, { lazy } from "react";
+import { lazy } from "react";
 import { RouteObject } from "react-router-dom";
 
 const HomePage = lazy(() => import("../pages"));
@@ -28,7 +28,7 @@ const DivisionCodesPage = lazy(
   () => import("../pages/accounting/DivisionCodes"),
 );
 const RevenueCodesPage = lazy(() => import("../pages/accounting/RevenueCodes"));
-const GLAccountsPage = lazy(() => import("../pages/accounting/GLAccounts"));
+const GLAccountsPage = lazy(() => import("../pages/gl-accounts"));
 const UserSettingsPage = lazy(() => import("../pages/users/UserSettings"));
 const ResetPasswordPage = lazy(() => import("../pages/reset-password-page"));
 const JobTitlePage = lazy(() => import("../pages/accounts/JobTitles"));
