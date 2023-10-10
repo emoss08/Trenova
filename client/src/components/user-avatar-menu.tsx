@@ -25,7 +25,7 @@ type UserAvatarProps = React.ComponentPropsWithoutRef<typeof Avatar> & {
 
 const UserAvatar = React.forwardRef<HTMLDivElement, UserAvatarProps>(
   ({ user, ...props }, ref) => (
-    <Avatar ref={ref} {...props}>
+    <Avatar ref={ref} {...props} className="focus-visible: outline-none">
       <AvatarImage
         className="w-full h-full rounded-full"
         src={user.profile?.profilePicture}
@@ -46,7 +46,7 @@ export function UserAvatarMenu({ user }: { user: User }) {
   const { setTheme } = useTheme();
 
   return (
-    <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+    <div className="hidden md:flex flex-1 items-center justify-between space-x-2 md:justify-end">
       <DropdownMenu>
         <DropdownMenuTrigger>
           <UserAvatar user={user} />
