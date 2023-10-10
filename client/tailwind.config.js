@@ -15,6 +15,8 @@
  * Grant, and not modifying the license in any other way.
  */
 
+const colors = require("tailwindcss/colors");
+
 /** @type {import("tailwindcss").Config} */
 module.exports = {
   darkMode: ["class"],
@@ -51,6 +53,14 @@ module.exports = {
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+        },
+        active: {
+          DEFAULT: colors.green[500],
+          foreground: colors.green[50],
+        },
+        inactive: {
+          DEFAULT: colors.red[500],
+          foreground: colors.red[50],
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
