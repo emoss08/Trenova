@@ -15,12 +15,13 @@
  * Grant, and not modifying the license in any other way.
  */
 
-import { NavMenu } from "@/components/navbar";
 import RainbowTopBar from "@/components/topbar";
 import { getUserDetails } from "@/services/UserRequestService";
 import { useUserStore } from "@/stores/AuthStore";
 import React from "react";
 import { useQuery, useQueryClient } from "react-query";
+import { NavMenu } from "./navbar";
+import { Skeleton } from "./ui/skeleton";
 import { UserAvatarMenu } from "./user-avatar-menu";
 
 type LayoutProps = {
@@ -44,26 +45,24 @@ export function Layout({ children }: LayoutProps): React.ReactElement {
   });
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex flex-col">
       <header className="supports-backdrop-blur:bg-background/60 sticky top-0 z-50 w-full border-b background/95 backdrop-blur">
         <RainbowTopBar />
         <div className="container flex h-14 items-center">
           <NavMenu />
           {isUserDataLoading ? (
-            <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-              <div className="animate-pulse flex space-x-4">
-                <div className="rounded-full bg-black dark:bg-white opacity-10 h-10 w-10"></div>
+            <>
+              <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+                <Skeleton className="h-10 w-10 rounded-full" />
               </div>
-            </div>
+            </>
           ) : (
             userData && <UserAvatarMenu user={userData} />
           )}
         </div>
       </header>
-      <div className="flex-1 overflow-auto">
-        <div className="flex flex-col sm:flex-row sm:justify-center sm:items-center p-8">
-          {children}
-        </div>
+      <div className="flex-1 pt-10 pb-4 md:pt-16 md:pb-8">
+        <div className="container relative">{children}</div>
       </div>
     </div>
   );

@@ -98,51 +98,49 @@ const userHasAccessToMenuContent = (
   return false;
 };
 
-const NavigationMenuItemWithPermission: React.FC<NavigationMenuItemProps> = ({
-  data,
-  setMenuOpen,
-}) => {
-  const { userHasPermission, isAdmin } = useUserPermissions();
+const NavigationMenuItemWithPermission = React.memo(
+  ({ data, setMenuOpen }: NavigationMenuItemProps) => {
+    const { userHasPermission, isAdmin } = useUserPermissions();
 
-  // Check for permissions and return null if not allowed
-  if (data.permission && !userHasPermission(data.permission)) {
-    return null;
-  }
+    // Check for permissions and return null if not allowed
+    if (data.permission && !userHasPermission(data.permission)) {
+      return null;
+    }
 
-  // Check if the user has access to the menu content
-  const hasAccess = userHasAccessToMenuContent(
-    data.content,
-    userHasPermission,
-    isAdmin,
-  );
-  if (!hasAccess) {
-    return null;
-  }
+    // Check if the user has access to the menu content
+    const hasAccess = userHasAccessToMenuContent(
+      data.content,
+      userHasPermission,
+      isAdmin,
+    );
+    if (!hasAccess) {
+      return null;
+    }
 
-  if (data.link) {
-    console.info("data.link", data.link);
+    if (data.link) {
+      return (
+        <NavigationMenuItem>
+          <Link to={data.link} onMouseEnter={() => setMenuOpen(undefined)}>
+            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              {data.label}
+            </NavigationMenuLink>
+          </Link>
+        </NavigationMenuItem>
+      );
+    }
     return (
       <NavigationMenuItem>
-        <Link to={data.link} onMouseEnter={() => setMenuOpen(undefined)}>
-          <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-            {data.label}
-          </NavigationMenuLink>
-        </Link>
+        <NavigationMenuTrigger onClick={() => setMenuOpen(data.menuKey)}>
+          {data.label}
+        </NavigationMenuTrigger>
+        <NavigationMenuContent>{data.content}</NavigationMenuContent>
       </NavigationMenuItem>
     );
-  }
-  return (
-    <NavigationMenuItem>
-      <NavigationMenuTrigger onClick={() => setMenuOpen(data.menuKey)}>
-        {data.label}
-      </NavigationMenuTrigger>
-      <NavigationMenuContent>{data.content}</NavigationMenuContent>
-    </NavigationMenuItem>
-  );
-};
+  },
+);
 
 export function NavMenu() {
-  const [menuOpen, setMenuOpen] = useState<string | undefined>();
+  const [menuOpen, setMenuOpen] = useState<string | undefined>(undefined);
 
   const handleValueChange = (newValue: string) => {
     if (newValue !== "") {
