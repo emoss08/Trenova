@@ -14,7 +14,9 @@
  * Change License as the GPL Version 2.0 or a compatible license, specifying an Additional Use
  * Grant, and not modifying the license in any other way.
  */
+
 import type { Preview } from "@storybook/react";
+import React from "react";
 import "../src/assets/App.css";
 import { ThemeProvider, useTheme } from "../src/components/theme-provider";
 
@@ -24,42 +26,48 @@ const withTheme = (Story, context) => {
   return <Story />;
 };
 
+
+const getTheme = (theme) => {
+  switch (theme) {
+    case "light":
+      return "light";
+    case "dark":
+      return "dark";
+    default:
+      return "light";
+  }
+}
+
+const withThemeProvider = (Story, context) => {
+  const theme = getTheme(context.globals.theme);
+  return (
+    <ThemeProvider defaultTheme="dark">
+      <Story />
+    </ThemeProvider>
+  );
+};
+
+
 const preview: Preview = {
+  decorators: [withThemeProvider, withTheme
+  ],
   parameters: {
     globalTypes: {
-      locale: {
-        description: 'Internationalization locale',
-        defaultValue: 'en',
-        toolbar: {
-          icon: 'globe',
-          items: [
-            { value: 'en', right: '🇺🇸', title: 'English' },
-            { value: 'fr', right: '🇫🇷', title: 'Français' },
-            { value: 'es', right: '🇪🇸', title: 'Español' },
-            { value: 'zh', right: '🇨🇳', title: '中文' },
-            { value: 'kr', right: '🇰🇷', title: '한국어' },
-          ],
-        },
-      },
       theme: {
-        name: 'Theme',
         description: 'Global theme for components',
         defaultValue: 'light',
         toolbar: {
+          // The label to show for this toolbar item
+          title: 'Theme',
           icon: 'circlehollow',
-          items: ['light', 'dark', 'system'],
-          showName: true,
+          // Array of plain string values or MenuItem shape (see below)
+          items: ['light', 'dark'],
+          // Change title based on selected value
+          dynamicTitle: true,
         },
       },
     },
-    decorators: [
-      (Story) => (
-        <ThemeProvider defaultTheme="dark">
-          <Story />
-        </ThemeProvider>
-      ),
-      withTheme,
-    ],
+
     actions: { argTypesRegex: "^on[A-Z].*" },
     controls: {
       matchers: {
